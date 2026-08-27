@@ -2002,6 +2002,24 @@ abstract class AppLocalizations {
   /// **'NO PROVIDERS AVAILABLE'**
   String get providerScreenNoProviders;
 
+  /// No description provided for @providerScreenSearchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SEARCH'**
+  String get providerScreenSearchLabel;
+
+  /// No description provided for @providerScreenSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter providers'**
+  String get providerScreenSearchHint;
+
+  /// No description provided for @providerScreenSearchNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'NO MATCHING PROVIDERS'**
+  String get providerScreenSearchNoMatches;
+
   /// No description provided for @providerScreenDefaultBadge.
   ///
   /// In en, this message translates to:

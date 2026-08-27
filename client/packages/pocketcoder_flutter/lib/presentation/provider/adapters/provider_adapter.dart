@@ -241,7 +241,19 @@ class ProviderView extends StatelessWidget {
       (h) => h.cliId == key.provider,
       orElse: () => _emptyHarnesse,
     );
-    final providerLabel = harness.id.isEmpty ? key.provider : harness.name;
+    // A self-scoped key's provider is a harness cliId (matches above); a
+    // multi-provider (Goose/OpenCode) key's provider is instead a
+    // models.dev catalog id, which only appears in providerCatalog, not
+    // harnesses -- fall back there before giving up and showing the raw id.
+    String providerLabel;
+    if (harness.id.isNotEmpty) {
+      providerLabel = harness.name;
+    } else {
+      final catalogEntry = state.providerCatalog
+          .where((p) => p.providerId == key.provider)
+          .firstOrNull;
+      providerLabel = catalogEntry?.name ?? key.provider;
+    }
 
     return TerminalCard(
       child: Row(

@@ -1031,6 +1031,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get providerScreenNoProviders => 'NO PROVIDERS AVAILABLE';
 
   @override
+  String get providerScreenSearchLabel => 'SEARCH';
+
+  @override
+  String get providerScreenSearchHint => 'Filter providers';
+
+  @override
+  String get providerScreenSearchNoMatches => 'NO MATCHING PROVIDERS';
+
+  @override
   String get providerScreenDefaultBadge => '[ DEFAULT ]';
 
   @override

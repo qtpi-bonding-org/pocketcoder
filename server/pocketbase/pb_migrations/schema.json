@@ -3415,6 +3415,16 @@
         "required": false,
         "system": false,
         "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "json_providers_api_key_envs",
+        "maxSize": 0,
+        "name": "api_key_envs",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
       }
     ],
     "indexes": [

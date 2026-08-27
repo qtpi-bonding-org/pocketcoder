@@ -459,6 +459,9 @@
   },
   "providerScreenSelectProvider": "SELECT PROVIDER",
   "providerScreenNoProviders": "NO PROVIDERS AVAILABLE",
+  "providerScreenSearchLabel": "SEARCH",
+  "providerScreenSearchHint": "Filter providers",
+  "providerScreenSearchNoMatches": "NO MATCHING PROVIDERS",
   "providerScreenDefaultBadge": "[ DEFAULT ]",
   "providerScreenErrorPrefix": "ERROR: {error}",
   "@providerScreenErrorPrefix": {

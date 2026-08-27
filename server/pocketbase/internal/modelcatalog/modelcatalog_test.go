@@ -107,8 +107,8 @@ func TestFetchParsesProvidersAndModels(t *testing.T) {
 	if !ok {
 		t.Fatal("missing anthropic provider")
 	}
-	if anthropic.APIKeyEnv != "ANTHROPIC_API_KEY" {
-		t.Errorf("anthropic.APIKeyEnv = %q, want ANTHROPIC_API_KEY", anthropic.APIKeyEnv)
+	if anthropic.PrimaryAPIKeyEnv() != "ANTHROPIC_API_KEY" {
+		t.Errorf("anthropic.PrimaryAPIKeyEnv() = %q, want ANTHROPIC_API_KEY", anthropic.PrimaryAPIKeyEnv())
 	}
 	model, ok := anthropic.Models["claude-sonnet-5"]
 	if !ok {
@@ -118,9 +118,22 @@ func TestFetchParsesProvidersAndModels(t *testing.T) {
 		t.Errorf("ContextWindow = %d, want 1000000", model.ContextWindow)
 	}
 
+	// Google is exactly the motivating case: models.dev lists three
+	// accepted names, not one -- PrimaryAPIKeyEnv is env[0] for display,
+	// but APIKeyEnvs must keep all three so renderEnv can inject every one
+	// rather than guess which single name a given harness actually reads.
 	google := providers["google"]
-	if google.APIKeyEnv != "GOOGLE_API_KEY" {
-		t.Errorf("google.APIKeyEnv = %q, want GOOGLE_API_KEY (env[0]), not one of its alternates", google.APIKeyEnv)
+	if google.PrimaryAPIKeyEnv() != "GOOGLE_API_KEY" {
+		t.Errorf("google.PrimaryAPIKeyEnv() = %q, want GOOGLE_API_KEY (env[0])", google.PrimaryAPIKeyEnv())
+	}
+	wantGoogleEnvs := []string{"GOOGLE_API_KEY", "GOOGLE_GENERATIVE_AI_API_KEY", "GEMINI_API_KEY"}
+	if len(google.APIKeyEnvs) != len(wantGoogleEnvs) {
+		t.Fatalf("google.APIKeyEnvs = %v, want %v", google.APIKeyEnvs, wantGoogleEnvs)
+	}
+	for i, want := range wantGoogleEnvs {
+		if google.APIKeyEnvs[i] != want {
+			t.Errorf("google.APIKeyEnvs[%d] = %q, want %q", i, google.APIKeyEnvs[i], want)
+		}
 	}
 }
 
@@ -166,7 +179,13 @@ func TestSyncPopulatesModelsForSelfScopedHarnessFromItsPinnedProvider(t *testing
 	}
 }
 
-func TestSyncPopulatesModelsForAnyScopedHarnessFromTheAllowlist(t *testing.T) {
+// TestSyncPopulatesModelsForAnyScopedHarnessFromEveryProvider verifies a
+// multi-provider harness draws from every fetched provider, not a
+// PocketCoder-curated subset -- Goose and OpenCode both already let a user
+// pick from models.dev's full catalog themselves, so there's no principled
+// place to cut it down; the client's own picker is expected to offer
+// search/filtering over the full list instead.
+func TestSyncPopulatesModelsForAnyScopedHarnessFromEveryProvider(t *testing.T) {
 	app := testApp(t)
 	srv := fixtureServer(t)
 	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
@@ -180,10 +199,53 @@ func TestSyncPopulatesModelsForAnyScopedHarnessFromTheAllowlist(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// anthropic (1 model) + openai (1 model) from the allowlist; google has
-	// none in the fixture and some-tiny-reseller isn't on the allowlist.
-	if len(hms) != 2 {
-		t.Fatalf("got %d harness_models for goose, want 2 (anthropic + openai models, not the reseller)", len(hms))
+	// anthropic (1) + openai (1) + some-tiny-reseller (1); google has none
+	// in the fixture.
+	if len(hms) != 3 {
+		t.Fatalf("got %d harness_models for goose, want 3 (every fetched provider's models, including the reseller)", len(hms))
+	}
+	found := map[string]bool{}
+	for _, hm := range hms {
+		found[hm.GetString("harness_model_id")] = true
+	}
+	for _, want := range []string{"claude-sonnet-5", "gpt-5.2", "reseller-model"} {
+		if !found[want] {
+			t.Errorf("harness_models for goose = %v, missing %q", found, want)
+		}
+	}
+}
+
+// TestSyncCoversAnyFutureAnyScopedHarnessNotJustGooseOrOpenCode proves the
+// sync isn't special-cased to today's two multi-provider harnesses: it
+// keys purely off harnesses.provider_scope, so a brand-new harness seeded
+// with provider_scope="any" (never mentioned anywhere in this package)
+// gets the exact same full-catalog treatment automatically.
+func TestSyncCoversAnyFutureAnyScopedHarnessNotJustGooseOrOpenCode(t *testing.T) {
+	app := testApp(t)
+	coll, err := app.FindCollectionByNameOrId("harnesses")
+	if err != nil {
+		t.Fatal(err)
+	}
+	future := core.NewRecord(coll)
+	future.Set("name", "Future Agnostic Harness")
+	future.Set("cli_id", "future-agnostic-harness")
+	future.Set("acp_transport", "stdio")
+	future.Set("provider_scope", "any")
+	if err := app.Save(future); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := fixtureServer(t)
+	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+		t.Fatal(err)
+	}
+
+	hms, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": future.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hms) != 3 {
+		t.Fatalf("got %d harness_models for the new any-scoped harness, want 3, same as Goose/OpenCode get", len(hms))
 	}
 }
 
@@ -207,7 +269,100 @@ func TestSyncIsIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(models) != 2 {
-		t.Fatalf("got %d models after two syncs, want 2 (claude-sonnet-5, gpt-5.2)", len(models))
+	if len(models) != 3 {
+		t.Fatalf("got %d models after two syncs, want 3 (claude-sonnet-5, gpt-5.2, reseller-model)", len(models))
 	}
 }
+
+// TestSyncSkipsSavingUnchangedRows verifies recordUnchanged actually
+// prevents a no-op re-Save: with curation removed, a full sync now touches
+// several thousand rows, and unconditionally re-Saving all of them on
+// every run (startup + every 6h) would mean that many writes against
+// SQLite's single writer for no reason when models.dev simply hasn't
+// changed since the last sync. providers/models/harness_models have no
+// created/updated autodate fields to compare (matching every sibling
+// collection), so this counts actual PocketBase save events directly via
+// OnModelAfterCreateSuccess/OnModelAfterUpdateSuccess rather than
+// inferring "did a Save happen" from a timestamp.
+func TestSyncSkipsSavingUnchangedRows(t *testing.T) {
+	app := testApp(t)
+	srv := fixtureServer(t)
+	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+		t.Fatal(err)
+	}
+
+	var saves int
+	countSave := func(e *core.ModelEvent) error {
+		saves++
+		return e.Next()
+	}
+	app.OnModelAfterCreateSuccess("providers", "models", "harness_models").BindFunc(countSave)
+	app.OnModelAfterUpdateSuccess("providers", "models", "harness_models").BindFunc(countSave)
+
+	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+		t.Fatal(err)
+	}
+	if saves != 0 {
+		t.Errorf("re-sync with identical upstream data triggered %d Save(s), want 0 -- an unchanged row must not be re-Saved", saves)
+	}
+}
+
+// smallerFixtureServer serves a catalog missing "some-tiny-reseller" (and
+// its model), simulating that provider disappearing from models.dev
+// between syncs.
+func smallerFixtureServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	const shrunk = `{
+		"anthropic": {
+			"id": "anthropic", "name": "Anthropic", "env": ["ANTHROPIC_API_KEY"],
+			"models": {"claude-sonnet-5": {"id": "claude-sonnet-5", "name": "Claude Sonnet 5", "limit": {"context": 1000000}}}
+		},
+		"openai": {
+			"id": "openai", "name": "OpenAI", "env": ["OPENAI_API_KEY"],
+			"models": {"gpt-5.2": {"id": "gpt-5.2", "name": "GPT-5.2", "limit": {"context": 400000}}}
+		}
+	}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(shrunk))
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+// TestSyncNeverDeletesRowsForProvidersRemovedUpstream is the invariant this
+// package is built on: a provider or model disappearing from models.dev
+// must not cascade into deleting a harness_models row a user's
+// chat.harness_model_override may still reference. Sync is strictly
+// additive -- upsert only, no delete/reconcile step -- so a stale row
+// lingering forever is the correct, safe behavior here, not a gap to close.
+func TestSyncNeverDeletesRowsForProvidersRemovedUpstream(t *testing.T) {
+	app := testApp(t)
+	full := fixtureServer(t)
+	if err := Sync(context.Background(), app, http.DefaultClient, full.URL); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.FindFirstRecordByFilter("providers", "provider_id = 'some-tiny-reseller'", nil); err != nil {
+		t.Fatal("precondition failed: some-tiny-reseller should exist after the first sync")
+	}
+
+	shrunk := smallerFixtureServer(t)
+	if err := Sync(context.Background(), app, http.DefaultClient, shrunk.URL); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := app.FindFirstRecordByFilter("providers", "provider_id = 'some-tiny-reseller'", nil); err != nil {
+		t.Error("some-tiny-reseller provider row was deleted after it disappeared upstream -- Sync must never delete")
+	}
+	if _, err := app.FindFirstRecordByFilter("models", "name = 'reseller-model'", nil); err != nil {
+		t.Error("reseller-model row was deleted after its provider disappeared upstream -- Sync must never delete")
+	}
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := app.FindFirstRecordByFilter("harness_models", "harness = {:h} && harness_model_id = 'reseller-model'", map[string]any{"h": goose.Id}); err != nil {
+		t.Error("goose's harness_models row for reseller-model was deleted -- this would break any chat.harness_model_override still pointing at it")
+	}
+}
+

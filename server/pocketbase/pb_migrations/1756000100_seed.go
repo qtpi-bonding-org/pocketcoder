@@ -194,8 +194,8 @@ func init() {
 		// its cli_id doesn't necessarily match the models.dev provider id
 		// (e.g. "codex" vs "openai"), so this must be explicit rather than
 		// inferred. Pass "" for a multi-provider (provider_scope "any")
-		// harness like OpenCode, which draws from modelcatalog's curated
-		// multi-provider allowlist instead of one pinned provider.
+		// harness like OpenCode, which draws from every provider
+		// internal/modelcatalog fetches instead of one pinned provider.
 		seedManagedHarness := func(name, cliID, version, description, image, command, apiKeyEnv, modelsDevProvider string) error {
 			rec := core.NewRecord(harnessesColl)
 			envTemplate := map[string]string{

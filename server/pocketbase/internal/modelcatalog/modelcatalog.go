@@ -22,7 +22,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // "models", and "harness_models" catalog rows -- rather than requiring an
 // admin to hand-populate them, or PocketCoder guessing an API key's env var
 // name by naively uppercasing a provider id (wrong for e.g. Google, which
-// accepts GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or GEMINI_API_KEY).
+// accepts GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or GEMINI_API_KEY --
+// this package keeps and injects all three instead of guessing which one a
+// given harness actually reads).
+//
+// Sync is strictly additive: it only ever creates or updates rows, never
+// deletes. A model or provider disappearing upstream must not cascade into
+// deleting a harness_models row a user's chat.harness_model_override still
+// points at -- a stale row lingering forever is harmless; deleting it out
+// from under existing user data is not.
 package modelcatalog
 
 import (
@@ -42,25 +50,30 @@ import (
 // compiled from.
 const DefaultCatalogURL = "https://models.dev/api.json"
 
-// MultiProviderAllowlist is the curated set of models.dev providers synced
-// for multi-provider (harnesses.provider_scope == "any") harnesses: today
-// Goose and OpenCode. Deliberately small -- models.dev lists 200+ providers,
-// most of them niche OpenAI-compatible resellers, so syncing all of them
-// into harness_models would drown the model picker. Extend this list to add
-// a provider; no schema change is needed.
-var MultiProviderAllowlist = []string{
-	"anthropic", "openai", "openrouter", "google", "groq", "deepseek", "mistral", "xai",
-}
-
 // ProviderInfo is the trimmed shape of one models.dev provider entry --
 // only the fields PocketCoder actually needs, decoded defensively so
 // unrelated upstream schema growth (pricing, capability flags, etc.) never
 // breaks this sync.
 type ProviderInfo struct {
-	ID        string
-	Name      string
-	APIKeyEnv string // env[0]; empty if the provider declares no env var (e.g. a local-only backend)
-	Models    map[string]ModelInfo
+	ID   string
+	Name string
+	// APIKeyEnvs lists every env var name models.dev says this provider's
+	// SDK accepts (its raw "env" array), e.g. Google's three alternates.
+	// Which one a given *harness* actually reads is not something
+	// models.dev encodes -- renderEnv (harness_provision.go) sets all of
+	// them to the same value rather than guess a single "the" name.
+	APIKeyEnvs []string
+	Models     map[string]ModelInfo
+}
+
+// PrimaryAPIKeyEnv is APIKeyEnvs[0] (models.dev's own preferred name),
+// empty if the provider declares no env var at all (e.g. a local-only
+// backend like Ollama or a project-scoped credential like Vertex).
+func (p ProviderInfo) PrimaryAPIKeyEnv() string {
+	if len(p.APIKeyEnvs) == 0 {
+		return ""
+	}
+	return p.APIKeyEnvs[0]
 }
 
 // ModelInfo is the trimmed shape of one models.dev model entry.
@@ -114,10 +127,7 @@ func Fetch(ctx context.Context, client *http.Client, url string) (map[string]Pro
 
 	providers := make(map[string]ProviderInfo, len(raw))
 	for id, p := range raw {
-		info := ProviderInfo{ID: id, Name: p.Name, Models: make(map[string]ModelInfo, len(p.Models))}
-		if len(p.Env) > 0 {
-			info.APIKeyEnv = p.Env[0]
-		}
+		info := ProviderInfo{ID: id, Name: p.Name, APIKeyEnvs: p.Env, Models: make(map[string]ModelInfo, len(p.Models))}
 		for modelID, m := range p.Models {
 			info.Models[modelID] = ModelInfo{
 				ID:            modelID,
@@ -137,17 +147,32 @@ func Fetch(ctx context.Context, client *http.Client, url string) (map[string]Pro
 //     has an up-to-date list to build its provider dropdown from.
 //   - models + harness_models: for each harnesses row, either its one pinned
 //     models_dev_provider (provider_scope == "self", e.g. Claude Code ->
-//     "anthropic") or MultiProviderAllowlist (provider_scope == "any", e.g.
-//     Goose/OpenCode). A harness with provider_scope == "self" and no
-//     models_dev_provider set is left untouched -- nothing to sync it from.
+//     "anthropic") or every fetched provider (provider_scope == "any", e.g.
+//     Goose/OpenCode -- both already let a user pick from models.dev's full
+//     catalog themselves, so there is no principled place to cut it down;
+//     the resulting few thousand rows are trivial for SQLite, and the
+//     client's own picker is expected to offer search/filtering rather than
+//     PocketCoder pre-curating the list). A harness with provider_scope ==
+//     "self" and no models_dev_provider set is left untouched -- nothing to
+//     sync it from.
+//
+// A single malformed upstream row is logged and skipped, not fatal to the
+// rest of the sync: models.dev is an external, community-edited registry,
+// and one bad entry must not leave every provider after it (in
+// nondeterministic map-iteration order) unsynced. ctx is checked between
+// each unit of work so a cancelled sync actually stops promptly instead of
+// grinding through the full catalog regardless.
 func Sync(ctx context.Context, app core.App, client *http.Client, url string) error {
 	providers, err := Fetch(ctx, client, url)
 	if err != nil {
 		return err
 	}
 	for _, p := range providers {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		if err := upsertProvider(app, p); err != nil {
-			return fmt.Errorf("upsert provider %s: %w", p.ID, err)
+			log.Printf("[ModelCatalog] skipping provider %s: %v", p.ID, err)
 		}
 	}
 
@@ -156,10 +181,15 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 		return fmt.Errorf("list harnesses: %w", err)
 	}
 	for _, h := range harnesses {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		var providerIDs []string
 		switch h.GetString("provider_scope") {
 		case "any":
-			providerIDs = MultiProviderAllowlist
+			for pid := range providers {
+				providerIDs = append(providerIDs, pid)
+			}
 		default: // "self", or unset
 			if pid := h.GetString("models_dev_provider"); pid != "" {
 				providerIDs = []string{pid}
@@ -170,13 +200,17 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 			if !ok {
 				continue
 			}
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
 			for _, m := range p.Models {
 				modelRec, err := upsertModel(app, p, m)
 				if err != nil {
-					return fmt.Errorf("upsert model %s/%s: %w", p.ID, m.ID, err)
+					log.Printf("[ModelCatalog] skipping model %s/%s: %v", p.ID, m.ID, err)
+					continue
 				}
 				if err := upsertHarnessModel(app, h, modelRec, m.ID); err != nil {
-					return fmt.Errorf("upsert harness_model %s/%s/%s: %w", h.GetString("cli_id"), p.ID, m.ID, err)
+					log.Printf("[ModelCatalog] skipping harness_model %s/%s/%s: %v", h.GetString("cli_id"), p.ID, m.ID, err)
 				}
 			}
 		}
@@ -184,14 +218,17 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 	return nil
 }
 
-// cronJobID is the app.Cron() job name for the daily resync.
+// cronJobID is the app.Cron() job name for the periodic resync.
 const cronJobID = "pocketcoder-model-catalog-sync"
 
+// syncEvery6Hours runs the resync at :00 past every 6th hour.
+const syncEvery6Hours = "0 */6 * * *"
+
 // RegisterSync runs Sync once eagerly (detached: a slow or unreachable
-// models.dev must never block startup) and schedules a daily resync via
-// app.Cron(), mirroring internal/schedule's own Cron().Add usage. Call once
-// from main's OnServe, after the app is otherwise ready to accept the
-// resulting Saves.
+// models.dev must never block startup) and schedules a resync every 6
+// hours via app.Cron(), mirroring internal/schedule's own Cron().Add usage.
+// Call once from main's OnServe, after the app is otherwise ready to accept
+// the resulting Saves.
 func RegisterSync(app core.App) {
 	sync := func() {
 		defer func() {
@@ -199,16 +236,47 @@ func RegisterSync(app core.App) {
 				log.Printf("[ModelCatalog] sync panicked: %v", r)
 			}
 		}()
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 		if err := Sync(ctx, app, http.DefaultClient, DefaultCatalogURL); err != nil {
 			log.Printf("[ModelCatalog] sync failed: %v", err)
 		}
 	}
 	go sync()
-	if err := app.Cron().Add(cronJobID, "@daily", sync); err != nil {
-		log.Printf("[ModelCatalog] failed to schedule daily sync: %v", err)
+	if err := app.Cron().Add(cronJobID, syncEvery6Hours, sync); err != nil {
+		log.Printf("[ModelCatalog] failed to schedule periodic sync: %v", err)
 	}
+}
+
+// recordUnchanged reports whether every (key, value) in fields already
+// matches rec's current stored value, so upsert* can skip a no-op Save.
+// With curation removed, a full sync now touches several thousand rows;
+// unconditionally re-Saving all of them on every run (startup + every 6h)
+// would mean that many writes against SQLite's single writer for no
+// reason on every sync where models.dev simply hasn't changed.
+//
+// Comparison goes through json.Marshal rather than fmt.Sprintf("%v", ...):
+// a freshly computed Go value (e.g. int(1000000)) and the same value
+// fetched back from PocketBase's storage layer (e.g. float64(1000000) for
+// a "number" field) format completely differently under %v ("1000000" vs
+// "1e+06"), which made this always report "changed" for numeric and JSON
+// fields specifically -- json.Marshal normalizes both to the same bytes
+// regardless of which concrete Go type carries the value.
+func recordUnchanged(rec *core.Record, fields map[string]any) bool {
+	for k, v := range fields {
+		current, err := json.Marshal(rec.Get(k))
+		if err != nil {
+			return false
+		}
+		want, err := json.Marshal(v)
+		if err != nil {
+			return false
+		}
+		if string(current) != string(want) {
+			return false
+		}
+	}
+	return true
 }
 
 func upsertProvider(app core.App, p ProviderInfo) error {
@@ -221,8 +289,17 @@ func upsertProvider(app core.App, p ProviderInfo) error {
 		rec = core.NewRecord(coll)
 		rec.Set("provider_id", p.ID)
 	}
-	rec.Set("name", p.Name)
-	rec.Set("api_key_env", p.APIKeyEnv)
+	fields := map[string]any{
+		"name":         p.Name,
+		"api_key_env":  p.PrimaryAPIKeyEnv(),
+		"api_key_envs": p.APIKeyEnvs,
+	}
+	if recordUnchanged(rec, fields) {
+		return nil
+	}
+	rec.Set("name", fields["name"])
+	rec.Set("api_key_env", fields["api_key_env"])
+	rec.Set("api_key_envs", fields["api_key_envs"])
 	return app.Save(rec)
 }
 
@@ -237,11 +314,18 @@ func upsertModel(app core.App, p ProviderInfo, m ModelInfo) (*core.Record, error
 		rec.Set("provider", p.ID)
 		rec.Set("name", m.ID)
 	}
-	rec.Set("display_name", m.Name)
-	rec.Set("description", m.Description)
-	rec.Set("context_window", m.ContextWindow)
-	if err := app.Save(rec); err != nil {
-		return nil, err
+	fields := map[string]any{
+		"display_name":   m.Name,
+		"description":    m.Description,
+		"context_window": m.ContextWindow,
+	}
+	if !recordUnchanged(rec, fields) {
+		rec.Set("display_name", fields["display_name"])
+		rec.Set("description", fields["description"])
+		rec.Set("context_window", fields["context_window"])
+		if err := app.Save(rec); err != nil {
+			return nil, err
+		}
 	}
 	return rec, nil
 }
@@ -256,6 +340,9 @@ func upsertHarnessModel(app core.App, harness, model *core.Record, harnessModelI
 		rec = core.NewRecord(coll)
 		rec.Set("harness", harness.Id)
 		rec.Set("model", model.Id)
+	}
+	if recordUnchanged(rec, map[string]any{"harness_model_id": harnessModelID}) {
+		return nil
 	}
 	rec.Set("harness_model_id", harnessModelID)
 	return app.Save(rec)

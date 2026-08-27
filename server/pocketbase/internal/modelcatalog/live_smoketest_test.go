@@ -26,11 +26,18 @@ func TestLiveModelsDevSmoke(t *testing.T) {
 	if !ok {
 		t.Fatal("live catalog missing anthropic provider")
 	}
-	if anthropic.APIKeyEnv != "ANTHROPIC_API_KEY" {
-		t.Errorf("anthropic.APIKeyEnv = %q, want ANTHROPIC_API_KEY", anthropic.APIKeyEnv)
+	if anthropic.PrimaryAPIKeyEnv() != "ANTHROPIC_API_KEY" {
+		t.Errorf("anthropic.PrimaryAPIKeyEnv() = %q, want ANTHROPIC_API_KEY", anthropic.PrimaryAPIKeyEnv())
+	}
+	google, ok := providers["google"]
+	if !ok {
+		t.Fatal("live catalog missing google provider")
+	}
+	if len(google.APIKeyEnvs) < 2 {
+		t.Errorf("live google.APIKeyEnvs = %v, want at least 2 accepted names (this is the motivating multi-name case)", google.APIKeyEnvs)
 	}
 	if len(anthropic.Models) == 0 {
 		t.Error("live anthropic provider has no models")
 	}
-	t.Logf("fetched %d providers live; anthropic has %d models", len(providers), len(anthropic.Models))
+	t.Logf("fetched %d providers live; anthropic has %d models; google accepts %v", len(providers), len(anthropic.Models), google.APIKeyEnvs)
 }

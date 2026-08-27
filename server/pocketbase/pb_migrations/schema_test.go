@@ -64,7 +64,7 @@ func TestHarnessesCollectionHasCapabilityFields(t *testing.T) {
 	if harnesses == nil {
 		t.Fatal("harnesses collection not found")
 	}
-	want := []string{"container_image", "launch_template", "supports_live_config", "provider_scope", "supports_ollama", "supports_session_delete", "supports_additional_directories"}
+	want := []string{"container_image", "launch_template", "supports_live_config", "provider_scope", "supports_ollama", "supports_session_delete", "supports_additional_directories", "models_dev_provider"}
 	got := map[string]bool{}
 	for _, f := range harnesses["fields"].([]any) {
 		got[f.(map[string]any)["name"].(string)] = true

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-26T18:03:23.320976
+// Generated at: 2026-08-26T18:38:30.300008
 
 import 'app_localizations.dart';
 
@@ -651,6 +651,9 @@ class L10nKeyResolver {
       'provider.screen.no.api.keys' => _l10n.providerScreenNoApiKeys,
       'provider.screen.no.harness.models' => _l10n.providerScreenNoHarnessModels,
       'provider.screen.no.providers' => _l10n.providerScreenNoProviders,
+      'provider.screen.search.hint' => _l10n.providerScreenSearchHint,
+      'provider.screen.search.label' => _l10n.providerScreenSearchLabel,
+      'provider.screen.search.no.matches' => _l10n.providerScreenSearchNoMatches,
       'provider.screen.select.provider' => _l10n.providerScreenSelectProvider,
       'provider.screen.title' => _l10n.providerScreenTitle,
       'provider.screen.update.key' => _l10n.providerScreenUpdateKey,
@@ -1617,6 +1620,9 @@ class L10nKeyResolver {
     'provider.screen.no.api.keys',
     'provider.screen.no.harness.models',
     'provider.screen.no.providers',
+    'provider.screen.search.hint',
+    'provider.screen.search.label',
+    'provider.screen.search.no.matches',
     'provider.screen.select.provider',
     'provider.screen.title',
     'provider.screen.update.key',
@@ -2518,6 +2524,9 @@ class L10nKeyResolver {
     'providerScreenNoApiKeys': 'provider.screen.no.api.keys',
     'providerScreenNoHarnessModels': 'provider.screen.no.harness.models',
     'providerScreenNoProviders': 'provider.screen.no.providers',
+    'providerScreenSearchHint': 'provider.screen.search.hint',
+    'providerScreenSearchLabel': 'provider.screen.search.label',
+    'providerScreenSearchNoMatches': 'provider.screen.search.no.matches',
     'providerScreenSelectProvider': 'provider.screen.select.provider',
     'providerScreenTitle': 'provider.screen.title',
     'providerScreenUpdateKey': 'provider.screen.update.key',
@@ -3416,6 +3425,9 @@ class L10nKeyResolver {
     'provider.screen.no.api.keys': 'providerScreenNoApiKeys',
     'provider.screen.no.harness.models': 'providerScreenNoHarnessModels',
     'provider.screen.no.providers': 'providerScreenNoProviders',
+    'provider.screen.search.hint': 'providerScreenSearchHint',
+    'provider.screen.search.label': 'providerScreenSearchLabel',
+    'provider.screen.search.no.matches': 'providerScreenSearchNoMatches',
     'provider.screen.select.provider': 'providerScreenSelectProvider',
     'provider.screen.title': 'providerScreenTitle',
     'provider.screen.update.key': 'providerScreenUpdateKey',
@@ -4321,6 +4333,9 @@ abstract class L10nKeys {
   static const providerScreenNoApiKeys = 'provider.screen.no.api.keys';
   static const providerScreenNoHarnessModels = 'provider.screen.no.harness.models';
   static const providerScreenNoProviders = 'provider.screen.no.providers';
+  static const providerScreenSearchHint = 'provider.screen.search.hint';
+  static const providerScreenSearchLabel = 'provider.screen.search.label';
+  static const providerScreenSearchNoMatches = 'provider.screen.search.no.matches';
   static const providerScreenSelectProvider = 'provider.screen.select.provider';
   static const providerScreenTitle = 'provider.screen.title';
   static const providerScreenUpdateKey = 'provider.screen.update.key';

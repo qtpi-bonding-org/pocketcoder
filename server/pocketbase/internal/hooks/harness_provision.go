@@ -398,29 +398,69 @@ func mintSecret() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-// apiKeyEnvVarName returns the env var name a provider_keys row's API_KEY
-// value should actually be delivered under for providerID, from the
-// models.dev-synced providers cache (internal/modelcatalog). Falls back to
-// the mechanical <PROVIDER>_API_KEY guess -- correct for the large majority
-// of providers -- when the cache has no entry (not yet synced, or a
-// provider id the cache doesn't recognize, e.g. the pre-catalog value
-// literally naming a harness like "goose" or "opencode").
-func apiKeyEnvVarName(app core.App, providerID string) string {
+// apiKeyEnvVarNames returns every env var name a provider_keys row's
+// API_KEY value should actually be delivered under for providerID, from
+// the models.dev-synced providers cache (internal/modelcatalog). models.dev
+// itself can list more than one accepted name for a provider (Google
+// accepts GOOGLE_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or GEMINI_API_KEY),
+// and which one a given *harness* actually reads isn't something models.dev
+// encodes -- setting all of them is cheap and correct regardless of which
+// one the harness checks, whereas picking just one is a guess. Falls back
+// to the mechanical <PROVIDER>_API_KEY guess -- correct for the large
+// majority of providers -- when the cache has no entry (not yet synced, or
+// a provider id the cache doesn't recognize).
+func apiKeyEnvVarNames(app core.App, providerID string) []string {
 	if rec, err := app.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": providerID}); err == nil {
+		var envs []string
+		if err := rec.UnmarshalJSONField("api_key_envs", &envs); err == nil && len(envs) > 0 {
+			return envs
+		}
 		if env := rec.GetString("api_key_env"); env != "" {
-			return env
+			return []string{env}
 		}
 	}
-	return strings.ToUpper(providerID) + "_API_KEY"
+	return []string{strings.ToUpper(providerID) + "_API_KEY"}
+}
+
+// isKnownCatalogProvider reports whether providerID names a real
+// models.dev provider (per the synced providers cache), as opposed to a
+// harness's own cli_id (e.g. "claude-code", "codex"). Used to keep a
+// multi-provider harness's "every key this user owns" query from also
+// picking up a different, self-scoped harness's key -- see
+// filterToCatalogProviders.
+func isKnownCatalogProvider(app core.App, providerID string) bool {
+	_, err := app.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": providerID})
+	return err == nil
+}
+
+// filterToCatalogProviders keeps only the provider_keys rows whose
+// `provider` field names a real models.dev provider. A multi-provider
+// harness's provider_keys query has no `provider = <harness cli_id>`
+// predicate (it needs the user's whole multi-provider key set, not one
+// harness's worth) -- without this filter, a key meant for a *different*,
+// self-scoped harness (provider="claude-code", say) would be swept in too,
+// and get mangled into a garbage env var name (apiKeyEnvVarNames falls
+// back to uppercasing "claude-code", which isn't even a legal shell
+// identifier) instead of ever reaching its actual intended harness.
+func filterToCatalogProviders(app core.App, keyRecs []*core.Record) []*core.Record {
+	kept := make([]*core.Record, 0, len(keyRecs))
+	for _, r := range keyRecs {
+		if isKnownCatalogProvider(app, r.GetString("provider")) {
+			kept = append(kept, r)
+		}
+	}
+	return kept
 }
 
 // renderEnv merges provider_keys according to the catalog harness's
-// provider_scope. ProviderKey.provider stores harnesses.cli_id in the Flutter
-// UI; provider-locked harnesses receive only their own keys, while
-// multi-provider harnesses receive the user's complete key set. It also adds
-// a reserved "__adapter_secret" key
-// for the minted per-instance secret, and renders each env_template value
-// as a Go text/template against that map . For example an entry
+// provider_scope. For a provider-locked ("self") harness, ProviderKey.provider
+// stores harnesses.cli_id and only that harness's own key is used. For a
+// multi-provider ("any") harness, ProviderKey.provider instead stores a real
+// models.dev provider id (e.g. "anthropic"), and the user's whole
+// multi-provider key set is used (filtered to real catalog providers --
+// see filterToCatalogProviders). It also adds a reserved "__adapter_secret"
+// key for the minted per-instance secret, and renders each env_template
+// value as a Go text/template against that map. For example an entry
 // {"ANTHROPIC_API_KEY": "{{.ANTHROPIC_API_KEY}}"} becomes
 // "ANTHROPIC_API_KEY=sk-..." in the returned KEY=VALUE slice Docker's
 // container-create API expects.
@@ -448,6 +488,15 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 		if err != nil {
 			return nil, fmt.Errorf("query provider_keys: %w", err)
 		}
+		if providerScopeAny {
+			// The "any" filter above deliberately has no `provider = <cli_id>`
+			// predicate (a multi-provider harness needs the user's whole
+			// multi-provider key set, not one harness's), but that means it
+			// otherwise also matches a different, self-scoped harness's key
+			// row (provider="claude-code", say) -- keep only the ones that
+			// actually name a real models.dev provider.
+			keyRecs = filterToCatalogProviders(app, keyRecs)
+		}
 	}
 	values := map[string]string{
 		"__adapter_secret": secret,
@@ -455,10 +504,13 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 		"__provider":       providerID,
 		"__model":          modelID,
 	}
-	if account.GetString("credential_mode") == harnessaccount.ModeAccount && provider != "goose" {
+	if account.GetString("credential_mode") == harnessaccount.ModeAccount && !providerScopeAny {
 		// Claude Code and Codex read their account login from the account-owned
 		// HOME volume; their adapter image still declares API_KEY in its launch
 		// template, so render it empty instead of requiring an unrelated key.
+		// Gated on !providerScopeAny (not a literal "!= goose" check): any
+		// future multi-provider harness must go through the same per-key
+		// translation below, not have its keys silently discarded here.
 		keyRecs = nil
 		values["API_KEY"] = ""
 	}
@@ -506,7 +558,9 @@ func renderEnv(app core.App, envTemplate map[string]string, secret, provider, us
 		// once and whichever the harness actually ends up using just works.
 		if providerScopeAny {
 			if key, ok := vars["API_KEY"]; ok && key != "" {
-				values[apiKeyEnvVarName(app, r.GetString("provider"))] = key
+				for _, name := range apiKeyEnvVarNames(app, r.GetString("provider")) {
+					values[name] = key
+				}
 				delete(vars, "API_KEY")
 			}
 		}

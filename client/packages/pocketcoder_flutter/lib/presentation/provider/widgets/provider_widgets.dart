@@ -273,36 +273,9 @@ class ProviderTargetPicker extends StatelessWidget {
       onTap: () async {
             final picked = await showDialog<ProviderKeyTarget>(
               context: context,
-              builder: (dialogContext) => TerminalDialog(
-                title: context.l10n.providerScreenSelectProvider,
-                content: SizedBox(
-                  width: double.maxFinite,
-                  height: 300,
-                  child: targets.isEmpty
-                      ? Center(
-                          child: TerminalText(
-                            context.l10n.providerScreenNoProviders,
-                            alpha: 0.5,
-                          ),
-                        )
-                      : ListView(
-                          children: [
-                            for (final t in targets)
-                              ProviderTargetOption(
-                                target: t,
-                                isSelected: selectedProvider == t.storedProvider,
-                                onTap: () => Navigator.of(dialogContext).pop(t),
-                              ),
-                          ],
-                        ),
-                ),
-                actions: [
-                  TerminalButton(
-                    label: context.l10n.actionCancel,
-                    isPrimary: false,
-                    onTap: () => Navigator.of(dialogContext).pop(),
-                  ),
-                ],
+              builder: (dialogContext) => _ProviderTargetSearchDialog(
+                targets: targets,
+                selectedProvider: selectedProvider,
               ),
             );
             if (picked != null) onSelected(picked);
@@ -317,6 +290,105 @@ class ProviderTargetPicker extends StatelessWidget {
       }
     }
     return context.l10n.providerScreenSelectProvider.toUpperCase();
+  }
+}
+
+/// The provider list is now synced from models.dev's full catalog (no
+/// PocketCoder-side curation -- see internal/modelcatalog), which can run
+/// to a couple hundred entries. A live text filter keeps that browsable
+/// instead of dumping the whole list in an unsearchable ListView.
+class _ProviderTargetSearchDialog extends StatefulWidget {
+  const _ProviderTargetSearchDialog({
+    required this.targets,
+    required this.selectedProvider,
+  });
+
+  final List<ProviderKeyTarget> targets;
+  final String? selectedProvider;
+
+  @override
+  State<_ProviderTargetSearchDialog> createState() =>
+      _ProviderTargetSearchDialogState();
+}
+
+class _ProviderTargetSearchDialogState
+    extends State<_ProviderTargetSearchDialog> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<ProviderKeyTarget> get _filtered {
+    if (_query.isEmpty) return widget.targets;
+    final q = _query.toLowerCase();
+    return widget.targets
+        .where((t) =>
+            t.label.toLowerCase().contains(q) ||
+            t.storedProvider.toLowerCase().contains(q))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _filtered;
+    return TerminalDialog(
+      title: context.l10n.providerScreenSelectProvider,
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 360,
+        child: widget.targets.isEmpty
+            ? Center(
+                child: TerminalText(
+                  context.l10n.providerScreenNoProviders,
+                  alpha: 0.5,
+                ),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TerminalTextField(
+                    controller: _searchController,
+                    label: context.l10n.providerScreenSearchLabel,
+                    hint: context.l10n.providerScreenSearchHint,
+                    onChanged: (value) => setState(() => _query = value),
+                  ),
+                  VSpace.x2,
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? Center(
+                            child: TerminalText(
+                              context.l10n.providerScreenSearchNoMatches,
+                              alpha: 0.5,
+                            ),
+                          )
+                        : ListView(
+                            children: [
+                              for (final t in filtered)
+                                ProviderTargetOption(
+                                  target: t,
+                                  isSelected:
+                                      widget.selectedProvider == t.storedProvider,
+                                  onTap: () => Navigator.of(context).pop(t),
+                                ),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
+      ),
+      actions: [
+        TerminalButton(
+          label: context.l10n.actionCancel,
+          isPrimary: false,
+          onTap: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
   }
 }
 
