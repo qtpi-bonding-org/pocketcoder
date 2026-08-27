@@ -18,12 +18,14 @@ import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 
 class _MockProviderRepository extends Mock implements IProviderRepository {}
 
 class _MockAuthRepository extends Mock implements IHarnessAuthRepository {}
+
+const _providerId = 'provider-1';
 
 Harnesse _harness(String id) => Harnesse(
       id: id,
@@ -35,6 +37,7 @@ Harnesse _harness(String id) => Harnesse(
 HarnessAuthStatus _status(String harnessId, String status) =>
     HarnessAuthStatus(
       harness: harnessId,
+      provider: _providerId,
       accountId: 'acct-1',
       accountName: 'acct',
       visibility: harnessAccountVisibilityPersonal,
@@ -52,10 +55,18 @@ void main() {
 
     when(() => providerRepository.watchHarnesses())
         .thenAnswer((_) => Stream.value([_harness('harness-1')]));
-    when(() => providerRepository.watchProviderKeys())
-        .thenAnswer((_) => Stream<List<ProviderKey>>.value(const []));
-    when(() => authRepository.status(harnessId: 'harness-1'))
-        .thenAnswer((_) => statusCompleter.future);
+    when(() => providerRepository.watchHarnessProviders()).thenAnswer((_) => Stream.value([
+          const HarnessProvider(
+            id: 'edge-1',
+            harness: 'harness-1',
+            provider: _providerId,
+            supportsOauth: true,
+          ),
+        ]));
+    when(() => authRepository.status(
+          harnessId: 'harness-1',
+          provider: any(named: 'provider'),
+        )).thenAnswer((_) => statusCompleter.future);
 
     final cubit = HarnessAuthCubit(
       providerRepository: providerRepository,

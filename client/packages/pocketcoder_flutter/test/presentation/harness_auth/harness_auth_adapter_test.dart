@@ -23,6 +23,7 @@ import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/adapters/harness_auth_adapter.dart';
@@ -34,8 +35,11 @@ class MockProviderRepository extends Mock implements IProviderRepository {}
 class MockHarnessAuthRepository extends Mock
     implements IHarnessAuthRepository {}
 
+const _providerId = 'provider-1';
+
 HarnessAuthStatus _status(String status) => HarnessAuthStatus(
       harness: 'harness-1',
+      provider: _providerId,
       accountId: 'acct-1',
       accountName: 'acct',
       visibility: harnessAccountVisibilityPersonal,
@@ -59,17 +63,25 @@ void main() {
     final providerRepo = MockProviderRepository();
     when(() => providerRepo.watchHarnesses())
         .thenAnswer((_) => Stream.value([harness]));
-    when(() => providerRepo.watchProviderKeys())
-        .thenAnswer((_) => const Stream.empty());
+    when(() => providerRepo.watchHarnessProviders()).thenAnswer((_) => Stream.value([
+          const HarnessProvider(
+            id: 'edge-1',
+            harness: 'harness-1',
+            provider: _providerId,
+            supportsOauth: true,
+          ),
+        ]));
 
     final authRepo = MockHarnessAuthRepository();
     when(() => authRepo.status(
           harnessId: 'harness-1',
+          provider: any(named: 'provider'),
           accountId: any(named: 'accountId'),
           attemptId: any(named: 'attemptId'),
         )).thenAnswer((_) async => _status('disconnected'));
     when(() => authRepo.submit(
           harnessId: 'harness-1',
+          provider: any(named: 'provider'),
           code: any(named: 'code'),
           accountId: any(named: 'accountId'),
           attemptId: any(named: 'attemptId'),

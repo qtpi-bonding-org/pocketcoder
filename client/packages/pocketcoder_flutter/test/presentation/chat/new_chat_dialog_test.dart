@@ -5,7 +5,8 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 
@@ -15,17 +16,22 @@ void main() {
       name: 'Goose',
       cliId: 'goose',
       acpTransport: HarnesseAcpTransport.websocket);
-  const model1 = Model(id: 'model-1', name: 'Claude', provider: 'anthropic');
+  const model1 = Model(id: 'model-1', name: 'Claude', provider: 'p-anthropic');
   const hm1 = HarnessModel(
       id: 'hm-1', harness: 'h1', model: 'model-1', harnessModelId: 'claude-3');
-  const key1 = ProviderKey(id: 'k1', user: 'u', provider: 'anthropic');
+  const key1 = ProviderApiKey(
+      id: 'k1', owner: 'u', provider: 'p-anthropic', apiKey: 'key');
   const ollamaModel1 = OllamaModel(name: 'qwen2.5:0.5b', size: 1);
 
   NewChatDialog dialog() => const NewChatDialog(
         harnesses: [harness1],
         models: [model1],
         harnessModels: [hm1],
-        providerKeys: [key1],
+        harnessProviders: [
+          const HarnessProvider(
+              id: 'hp1', harness: 'h1', provider: 'p-anthropic')
+        ],
+        providerAPIKeys: [key1],
         ollamaModels: [ollamaModel1],
       );
 

@@ -4,6 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 
 class _MockStorage extends Mock implements ErrorBoxStorage {}
@@ -30,7 +31,7 @@ void main() {
     );
   });
 
-  setUp(() {
+  setUp(() async {
     storage = _MockStorage();
     providerRepository = _MockProviderRepository();
     authRepository = _MockAuthRepository();
@@ -41,10 +42,21 @@ void main() {
       errorCodeMapper: (_) => 'ERR_TEST',
       exceptionMapper: (_) => null,
     ));
+    when(() => providerRepository.watchHarnesses())
+        .thenAnswer((_) => const Stream.empty());
+    when(() => providerRepository.watchHarnessProviders()).thenAnswer((_) => Stream.value([
+          const HarnessProvider(
+            id: 'edge-1',
+            harness: 'harness-1',
+            provider: 'provider-1',
+            supportsOauth: true,
+          ),
+        ]));
     cubit = HarnessAuthCubit(
       providerRepository: providerRepository,
       authRepository: authRepository,
-    );
+    )..watchData();
+    await pumpEventQueue();
   });
 
   tearDown(() => cubit.close());
@@ -52,7 +64,8 @@ void main() {
   test('captures a direct harness operation exactly once', () async {
     when(() => authRepository.start(
           harnessId: 'harness-1',
-          credentialMode: 'none',
+          provider: 'provider-1',
+          mode: 'none',
           visibility: harnessAccountVisibilityPersonal,
         )).thenThrow(StateError('not persisted'));
 

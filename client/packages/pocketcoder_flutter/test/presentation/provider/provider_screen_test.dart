@@ -60,19 +60,19 @@ void main() {
   testWidgets(
       'a multi-provider-harness key shows its catalog display name, not the raw provider id',
       (tester) async {
-    // provider="openai-compat-xyz" here is a models.dev catalog id (what
-    // Goose/OpenCode keys are scoped by), not a harness cliId -- it won't
-    // match any entry in `harnesses`, only in `providerCatalog`. Its
-    // catalog display name deliberately differs from the id so this test
-    // actually distinguishes "shows the catalog name" from "shows the id
-    // uppercased" -- before the fix, this rendered "OPENAI-COMPAT-XYZ".
+    // ProviderApiKey.provider is always a pc_providers RECORD id (never a
+    // provider_id string) -- 'p1' here matches providerCatalog[0].id, not
+    // its providerId. Its catalog display name deliberately differs from
+    // both so this test actually distinguishes "shows the catalog name"
+    // from "shows the id/providerId uppercased" -- before the fix, this
+    // rendered "OPENAI-COMPAT-XYZ".
     await tester.pumpWidget(_app(ProviderView(
       state: ProviderState(
         providerAPIKeys: const [
           ProviderApiKey(
             id: 'pk1',
             owner: 'u1',
-            provider: 'openai-compat-xyz',
+            provider: 'p1',
             apiKey: 'secret',
           ),
         ],
