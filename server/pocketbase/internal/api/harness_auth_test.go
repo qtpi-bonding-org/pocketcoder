@@ -43,6 +43,16 @@ func (f *fakeHarnessAuthRuntime) Disconnect(ctx context.Context, provider string
 
 func harnessRequest(t *testing.T, app core.App, runtime harnessAuthRuntime, user *core.Record, path, body string) (int, string) {
 	t.Helper()
+	_, rec := harnessRequestRaw(t, app, runtime, user, path, body)
+	b, _ := io.ReadAll(rec.Result().Body)
+	return rec.Code, string(b)
+}
+
+// harnessRequestRaw is harnessRequest's non-lossy sibling: it hands back the
+// real request and recorder so callers (e.g. contract tests) can validate
+// the full response, not just its status code and body string.
+func harnessRequestRaw(t *testing.T, app core.App, runtime harnessAuthRuntime, user *core.Record, path, body string) (*http.Request, *httptest.ResponseRecorder) {
+	t.Helper()
 	router, err := apis.NewRouter(app)
 	if err != nil {
 		t.Fatal(err)
@@ -64,8 +74,7 @@ func harnessRequest(t *testing.T, app core.App, runtime harnessAuthRuntime, user
 		t.Fatal(err)
 	}
 	mux.ServeHTTP(rec, req)
-	b, _ := io.ReadAll(rec.Result().Body)
-	return rec.Code, string(b)
+	return req, rec
 }
 
 func TestHarnessAuthOperationsRequireProvider(t *testing.T) {

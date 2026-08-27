@@ -241,6 +241,15 @@ func TestSendPushNotificationValidatesRequiredFields(t *testing.T) {
 
 func mountedRequest(t *testing.T, app core.App, method, url, body, token string) int {
 	t.Helper()
+	_, rec := mountedRequestRaw(t, app, method, url, body, token)
+	return rec.Code
+}
+
+// mountedRequestRaw is mountedRequest's non-lossy sibling: it hands back the
+// real request and recorder so callers (e.g. contract tests) can inspect the
+// full response, not just its status code.
+func mountedRequestRaw(t *testing.T, app core.App, method, url, body, token string) (*http.Request, *httptest.ResponseRecorder) {
+	t.Helper()
 	router, err := apis.NewRouter(app)
 	if err != nil {
 		t.Fatal(err)
@@ -249,11 +258,12 @@ func mountedRequest(t *testing.T, app core.App, method, url, body, token string)
 	mountAllPocketCoderOperations(t, app, e)
 	req := httptest.NewRequest(method, url, strings.NewReader(body))
 	req.Header.Set("Authorization", token)
+	req.Header.Set("Content-Type", "application/json")
 	mux, err := e.Router.BuildMux()
 	if err != nil {
 		t.Fatal(err)
 	}
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
-	return rec.Code
+	return req, rec
 }
