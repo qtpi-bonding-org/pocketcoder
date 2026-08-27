@@ -22,6 +22,10 @@ import 'package:pocketcoder_api/src/model/content_block.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
 import 'package:pocketcoder_api/src/model/file_entry.dart';
 import 'package:pocketcoder_api/src/model/file_list_response.dart';
+import 'package:pocketcoder_api/src/model/harness_auth_attempt.dart';
+import 'package:pocketcoder_api/src/model/harness_auth_challenge.dart';
+import 'package:pocketcoder_api/src/model/harness_auth_status.dart';
+import 'package:pocketcoder_api/src/model/harness_request.dart';
 import 'package:pocketcoder_api/src/model/mode_request.dart';
 import 'package:pocketcoder_api/src/model/model_request.dart';
 import 'package:pocketcoder_api/src/model/prompt_request.dart';
@@ -38,6 +42,10 @@ part 'serializers.g.dart';
   ErrorResponse,
   FileEntry,
   FileListResponse,
+  HarnessAuthAttempt,
+  HarnessAuthChallenge,
+  HarnessAuthStatus,
+  HarnessRequest,
   ModeRequest,
   ModelRequest,
   PromptRequest,

@@ -203,7 +203,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -227,7 +231,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -251,7 +259,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -275,7 +287,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -299,7 +315,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -323,7 +343,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -462,6 +486,7 @@ paths:
       tags:
         - mcp
       x-pocketcoder-roles:
+        - agent
         - admin
       security:
         - pocketbaseToken: []
@@ -550,6 +575,8 @@ paths:
       operationId: streamContainerLogs
       tags:
         - logs
+      x-pocketcoder-roles:
+        - admin
       x-pocketcoder-transport: sse
       security:
         - pocketbaseToken: []
@@ -616,6 +643,9 @@ paths:
       operationId: sendPushNotification
       tags:
         - push
+      x-pocketcoder-roles:
+        - agent
+        - admin
       security:
         - pocketbaseToken: []
       requestBody:
@@ -875,18 +905,64 @@ components:
           type: string
     HarnessAuthStatus:
       type: object
-      required: [harness, provider, mode, status]
+      required:
+        - harness
+        - provider
+        - mode
+        - status
+      additionalProperties: false
       properties:
-        harness: {type: string}
-        provider: {type: string}
-        accountId: {type: string}
-        accountName: {type: string}
-        visibility: {type: string}
-        mode: {type: string, enum: [oauth, none]}
-        status: {type: string}
-        lastError: {type: string}
-        attempt: {type: object}
-        challenge: {type: object}
+        harness:
+          type: string
+        provider:
+          type: string
+        accountId:
+          type: string
+        accountName:
+          type: string
+        visibility:
+          type: string
+        mode:
+          type: string
+          enum:
+            - oauth
+            - none
+        status:
+          type: string
+        lastError:
+          type: string
+        attempt:
+          $ref: '#/components/schemas/HarnessAuthAttempt'
+        challenge:
+          $ref: '#/components/schemas/HarnessAuthChallenge'
+    HarnessAuthAttempt:
+      type: object
+      required:
+        - id
+        - status
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        lastError:
+          type: string
+    HarnessAuthChallenge:
+      type: object
+      required:
+        - type
+        - text
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+        text:
+          type: string
+        target:
+          type: string
+        details:
+          type: string
     ModelRequest:
       type: object
       required:

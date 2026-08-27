@@ -21,6 +21,42 @@ const (
 	PocketbaseTokenScopes pocketbaseTokenContextKey = "pocketbaseToken.Scopes"
 )
 
+// Defines values for HarnessAuthStatusMode.
+const (
+	HarnessAuthStatusModeNone  HarnessAuthStatusMode = "none"
+	HarnessAuthStatusModeOauth HarnessAuthStatusMode = "oauth"
+)
+
+// Valid indicates whether the value is a known member of the HarnessAuthStatusMode enum.
+func (e HarnessAuthStatusMode) Valid() bool {
+	switch e {
+	case HarnessAuthStatusModeNone:
+		return true
+	case HarnessAuthStatusModeOauth:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for HarnessRequestMode.
+const (
+	HarnessRequestModeNone  HarnessRequestMode = "none"
+	HarnessRequestModeOauth HarnessRequestMode = "oauth"
+)
+
+// Valid indicates whether the value is a known member of the HarnessRequestMode enum.
+func (e HarnessRequestMode) Valid() bool {
+	switch e {
+	case HarnessRequestModeNone:
+		return true
+	case HarnessRequestModeOauth:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ScheduleRunAcceptedResponseStatus.
 const (
 	Started ScheduleRunAcceptedResponseStatus = "started"
@@ -93,8 +129,54 @@ type FileListResponse struct {
 	Path    string      `json:"path"`
 }
 
+// HarnessAuthAttempt defines model for HarnessAuthAttempt.
+type HarnessAuthAttempt struct {
+	Id        string  `json:"id"`
+	LastError *string `json:"lastError,omitempty"`
+	Status    string  `json:"status"`
+}
+
+// HarnessAuthChallenge defines model for HarnessAuthChallenge.
+type HarnessAuthChallenge struct {
+	Details *string `json:"details,omitempty"`
+	Target  *string `json:"target,omitempty"`
+	Text    string  `json:"text"`
+	Type    string  `json:"type"`
+}
+
+// HarnessAuthStatus defines model for HarnessAuthStatus.
+type HarnessAuthStatus struct {
+	AccountId   *string               `json:"accountId,omitempty"`
+	AccountName *string               `json:"accountName,omitempty"`
+	Attempt     *HarnessAuthAttempt   `json:"attempt,omitempty"`
+	Challenge   *HarnessAuthChallenge `json:"challenge,omitempty"`
+	Harness     string                `json:"harness"`
+	LastError   *string               `json:"lastError,omitempty"`
+	Mode        HarnessAuthStatusMode `json:"mode"`
+	Provider    string                `json:"provider"`
+	Status      string                `json:"status"`
+	Visibility  *string               `json:"visibility,omitempty"`
+}
+
+// HarnessAuthStatusMode defines model for HarnessAuthStatus.Mode.
+type HarnessAuthStatusMode string
+
 // HarnessRequest defines model for HarnessRequest.
-type HarnessRequest map[string]interface{}
+type HarnessRequest struct {
+	AccountId   *string             `json:"accountId,omitempty"`
+	AccountName *string             `json:"accountName,omitempty"`
+	AttemptId   *string             `json:"attemptId,omitempty"`
+	Code        *string             `json:"code,omitempty"`
+	Harness     string              `json:"harness"`
+	Mode        *HarnessRequestMode `json:"mode,omitempty"`
+
+	// Provider PocketBase providers record id
+	Provider   string  `json:"provider"`
+	Visibility *string `json:"visibility,omitempty"`
+}
+
+// HarnessRequestMode defines model for HarnessRequest.Mode.
+type HarnessRequestMode string
 
 // JsonObject defines model for JsonObject.
 type JsonObject map[string]interface{}
@@ -2120,7 +2202,7 @@ type CancelHarnessAuthResponseObject interface {
 	VisitCancelHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type CancelHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type CancelHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response CancelHarnessAuth200JSONResponse) VisitCancelHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2198,7 +2280,7 @@ type DisconnectHarnessAuthResponseObject interface {
 	VisitDisconnectHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type DisconnectHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type DisconnectHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response DisconnectHarnessAuth200JSONResponse) VisitDisconnectHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2276,7 +2358,7 @@ type PollHarnessAuthResponseObject interface {
 	VisitPollHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type PollHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type PollHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response PollHarnessAuth200JSONResponse) VisitPollHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2354,7 +2436,7 @@ type StartHarnessAuthResponseObject interface {
 	VisitStartHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type StartHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type StartHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response StartHarnessAuth200JSONResponse) VisitStartHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2432,7 +2514,7 @@ type GetHarnessAuthStatusResponseObject interface {
 	VisitGetHarnessAuthStatusResponse(w http.ResponseWriter) error
 }
 
-type GetHarnessAuthStatus200JSONResponse struct{ JsonSuccessJSONResponse }
+type GetHarnessAuthStatus200JSONResponse HarnessAuthStatus
 
 func (response GetHarnessAuthStatus200JSONResponse) VisitGetHarnessAuthStatusResponse(w http.ResponseWriter) error {
 
@@ -2510,7 +2592,7 @@ type SubmitHarnessAuthResponseObject interface {
 	VisitSubmitHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type SubmitHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type SubmitHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response SubmitHarnessAuth200JSONResponse) VisitSubmitHarnessAuthResponse(w http.ResponseWriter) error {
 

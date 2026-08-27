@@ -42,6 +42,8 @@ mixin _$ProviderState {
             const DeepCollectionEquality()
                 .equals(other.harnessModels, harnessModels) &&
             const DeepCollectionEquality()
+                .equals(other.harnessProviders, harnessProviders) &&
+            const DeepCollectionEquality()
                 .equals(other.providerAPIKeys, providerAPIKeys) &&
             const DeepCollectionEquality()
                 .equals(other.providerCatalog, providerCatalog) &&
@@ -55,13 +57,14 @@ mixin _$ProviderState {
       const DeepCollectionEquality().hash(harnesses),
       const DeepCollectionEquality().hash(models),
       const DeepCollectionEquality().hash(harnessModels),
+      const DeepCollectionEquality().hash(harnessProviders),
       const DeepCollectionEquality().hash(providerAPIKeys),
       const DeepCollectionEquality().hash(providerCatalog),
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'ProviderState(status: $status, harnesses: $harnesses, models: $models, harnessModels: $harnessModels, providerAPIKeys: $providerAPIKeys, providerCatalog: $providerCatalog, error: $error)';
+    return 'ProviderState(status: $status, harnesses: $harnesses, models: $models, harnessModels: $harnessModels, harnessProviders: $harnessProviders, providerAPIKeys: $providerAPIKeys, providerCatalog: $providerCatalog, error: $error)';
   }
 }
 
@@ -123,7 +126,8 @@ class _$ProviderStateCopyWithImpl<$Res>
               as List<HarnessModel>,
       harnessProviders: null == harnessProviders
           ? _self.harnessProviders
-          : harnessProviders as List<HarnessProvider>,
+          : harnessProviders // ignore: cast_nullable_to_non_nullable
+              as List<HarnessProvider>,
       providerAPIKeys: null == providerAPIKeys
           ? _self.providerAPIKeys
           : providerAPIKeys // ignore: cast_nullable_to_non_nullable
@@ -383,7 +387,6 @@ class _ProviderState extends ProviderState {
   }
 
   final List<HarnessModel> _harnessModels;
-  final List<HarnessProvider> _harnessProviders;
   @override
   @JsonKey()
   List<HarnessModel> get harnessModels {
@@ -392,11 +395,19 @@ class _ProviderState extends ProviderState {
     return EqualUnmodifiableListView(_harnessModels);
   }
 
+  final List<HarnessProvider> _harnessProviders;
+  @override
+  @JsonKey()
+  List<HarnessProvider> get harnessProviders {
+    if (_harnessProviders is EqualUnmodifiableListView)
+      return _harnessProviders;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_harnessProviders);
+  }
+
   final List<ProviderApiKey> _providerAPIKeys;
   @override
   @JsonKey()
-  List<HarnessProvider> get harnessProviders => _harnessProviders;
-
   List<ProviderApiKey> get providerAPIKeys {
     if (_providerAPIKeys is EqualUnmodifiableListView) return _providerAPIKeys;
     // ignore: implicit_dynamic_type
@@ -457,7 +468,7 @@ class _ProviderState extends ProviderState {
 
   @override
   String toString() {
-    return 'ProviderState(status: $status, harnesses: $harnesses, models: $models, harnessModels: $harnessModels, providerAPIKeys: $providerAPIKeys, providerCatalog: $providerCatalog, error: $error)';
+    return 'ProviderState(status: $status, harnesses: $harnesses, models: $models, harnessModels: $harnessModels, harnessProviders: $harnessProviders, providerAPIKeys: $providerAPIKeys, providerCatalog: $providerCatalog, error: $error)';
   }
 }
 
@@ -520,8 +531,9 @@ class __$ProviderStateCopyWithImpl<$Res>
           : harnessModels // ignore: cast_nullable_to_non_nullable
               as List<HarnessModel>,
       harnessProviders: null == harnessProviders
-          ? _self.harnessProviders
-          : harnessProviders as List<HarnessProvider>,
+          ? _self._harnessProviders
+          : harnessProviders // ignore: cast_nullable_to_non_nullable
+              as List<HarnessProvider>,
       providerAPIKeys: null == providerAPIKeys
           ? _self._providerAPIKeys
           : providerAPIKeys // ignore: cast_nullable_to_non_nullable

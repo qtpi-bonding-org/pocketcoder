@@ -8,11 +8,10 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
-import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
-import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/harness_auth_view.dart';
 
@@ -55,28 +54,17 @@ class HarnessAuthAdapter
         builder: (context, value, _) => HarnessAuthScreenView(
           onboarding: onboarding,
           harnesses: value.harnesses,
-          providerKeys: value.providerKeys,
+          harnessProviders: value.harnessProviders,
           statuses: value.statuses,
           error: value.error,
           isLoading: value.isLoading,
           isHarnessBusy: value.isHarnessBusy,
-          onStartAccount: (h) async {
-            final provider = h.cliId.trim();
-            if (provider.isEmpty) {
-              _showError(context,
-                  'This harness does not expose a provider identifier.');
-            } else {
-              final visibility = await _chooseVisibility(context);
-              if (visibility != null) {
-                cubit.startWithAccount(
-                  harnessId: h.id,
-                  provider: provider,
-                  visibility: visibility,
-                );
-              }
+          onStartAccount: (h, provider) async {
+            final visibility = await _chooseVisibility(context);
+            if (visibility != null) {
+              cubit.startWithAccount(harnessId: h.id, provider: provider, visibility: visibility);
             }
           },
-          onStartApiKey: (h) => _startApiKey(context, cubit, h),
           onStartNone: (h) async {
             final visibility = await _chooseVisibility(context);
             if (visibility != null) {
@@ -128,53 +116,6 @@ class HarnessAuthAdapter
     }
   }
 
-  Future<void> _startApiKey(
-    BuildContext context,
-    HarnessAuthCubit cubit,
-    Harnesse harness,
-  ) async {
-    final matching =
-        cubit.providerKeysForHarness(harness.cliId.trim().toLowerCase());
-    if (matching.isEmpty) {
-      _showError(
-          context, context.l10n.harnessAuthProviderKeyMissing(harness.cliId));
-      return;
-    }
-    final selected = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => TerminalDialog(
-        title: context.l10n.harnessAuthChooseProviderKey,
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final key in matching)
-              ListTile(
-                title: Text(key.id),
-                subtitle: Text(key.provider.toUpperCase()),
-                onTap: () => Navigator.of(dialogContext).pop(key.id),
-              ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.actionCancel),
-          ),
-        ],
-      ),
-    );
-    if (selected != null && context.mounted) {
-      final visibility = await _chooseVisibility(context);
-      if (visibility != null) {
-        cubit.startWithApiKey(
-          harnessId: harness.id,
-          providerKey: selected,
-          visibility: visibility,
-        );
-      }
-    }
-  }
-
   Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
         context: context,
         builder: (dialogContext) => TerminalDialog(
@@ -199,7 +140,4 @@ class HarnessAuthAdapter
         ),
       );
 
-  void _showError(BuildContext context, String message) {
-    VimToast.show(context, message, color: context.terminalColors.warning);
-  }
 }

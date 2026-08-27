@@ -12,6 +12,10 @@ doc/FileEntry.md
 doc/FileListResponse.md
 doc/FilesApi.md
 doc/HarnessAuthApi.md
+doc/HarnessAuthAttempt.md
+doc/HarnessAuthChallenge.md
+doc/HarnessAuthStatus.md
+doc/HarnessRequest.md
 doc/LiveActivitiesApi.md
 doc/LogsApi.md
 doc/McpApi.md
@@ -53,11 +57,13 @@ lib/src/model/date.dart
 lib/src/model/error_response.dart
 lib/src/model/file_entry.dart
 lib/src/model/file_list_response.dart
+lib/src/model/harness_auth_attempt.dart
+lib/src/model/harness_auth_challenge.dart
+lib/src/model/harness_auth_status.dart
+lib/src/model/harness_request.dart
 lib/src/model/mode_request.dart
 lib/src/model/model_request.dart
 lib/src/model/prompt_request.dart
 lib/src/model/schedule_run_accepted_response.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/container_list_response_test.dart
-test/container_summary_test.dart

@@ -50,6 +50,7 @@ class HarnessAuthAttempt {
 class HarnessAuthStatus {
   const HarnessAuthStatus({
     required this.harness,
+    required this.provider,
     required this.accountId,
     required this.accountName,
     required this.visibility,
@@ -61,6 +62,7 @@ class HarnessAuthStatus {
   });
 
   final String harness;
+  final String provider;
   final String accountId;
   final String accountName;
   final String visibility;
@@ -76,11 +78,12 @@ class HarnessAuthStatus {
 
     return HarnessAuthStatus(
       harness: json['harness']?.toString() ?? '',
+      provider: json['provider']?.toString() ?? '',
       accountId: json['accountId']?.toString() ?? '',
       accountName: json['accountName']?.toString() ?? '',
       visibility:
           json['visibility']?.toString() ?? harnessAccountVisibilityPersonal,
-      credentialMode: json['credentialMode']?.toString() ?? '',
+      credentialMode: json['mode']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       lastError: json['lastError']?.toString(),
       attempt: attemptJson is Map<String, dynamic>
