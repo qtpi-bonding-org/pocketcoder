@@ -311,8 +311,10 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i294.ModelDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i294.HarnessModelDao>(
         () => _i294.HarnessModelDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i294.ProviderKeyDao>(
-        () => _i294.ProviderKeyDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i294.ProviderAPIKeyDao>(
+        () => _i294.ProviderAPIKeyDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i294.HarnessProviderDao>(
+        () => _i294.HarnessProviderDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i294.ProviderCatalogDao>(
         () => _i294.ProviderCatalogDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i479.ScheduleOwnerDao>(
@@ -363,6 +365,14 @@ extension GetItInjectableX on _i174.GetIt {
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),
             ));
+    gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
+          gh<_i294.HarnesseDao>(),
+          gh<_i294.ModelDao>(),
+          gh<_i294.HarnessModelDao>(),
+          gh<_i294.ProviderAPIKeyDao>(),
+          gh<_i294.HarnessProviderDao>(),
+          gh<_i294.ProviderCatalogDao>(),
+        ));
     gh.lazySingleton<_i300.AgentActionsApi>(
         () => _i300.AgentActionsApi(gh<_i935.PocketCoderApiClient>()));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
@@ -418,13 +428,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i935.PocketCoderApiClient>(),
               gh<_i169.PocketBase>(),
             ));
-    gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
-          gh<_i294.HarnesseDao>(),
-          gh<_i294.ModelDao>(),
-          gh<_i294.HarnessModelDao>(),
-          gh<_i294.ProviderKeyDao>(),
-          gh<_i294.ProviderCatalogDao>(),
-        ));
     gh.lazySingleton<_i14.IHarnessAuthRepository>(
         () => _i417.HarnessAuthRepository(
               gh<_i935.PocketCoderApiClient>(),

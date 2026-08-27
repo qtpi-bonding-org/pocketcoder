@@ -5,7 +5,8 @@ import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
 
@@ -15,14 +16,16 @@ class ProviderRepository implements IProviderRepository {
     this._harnesseDao,
     this._modelDao,
     this._harnessModelDao,
-    this._providerKeyDao,
+    this._providerAPIKeyDao,
+    this._harnessProviderDao,
     this._providerCatalogDao,
   );
 
   final HarnesseDao _harnesseDao;
   final ModelDao _modelDao;
   final HarnessModelDao _harnessModelDao;
-  final ProviderKeyDao _providerKeyDao;
+  final ProviderAPIKeyDao _providerAPIKeyDao;
+  final HarnessProviderDao _harnessProviderDao;
   final ProviderCatalogDao _providerCatalogDao;
 
   @override
@@ -35,25 +38,36 @@ class ProviderRepository implements IProviderRepository {
   Stream<List<HarnessModel>> watchHarnessModels() => _harnessModelDao.watch();
 
   @override
-  Stream<List<ProviderKey>> watchProviderKeys() => _providerKeyDao.watch();
+  Stream<List<HarnessProvider>> watchHarnessProviders() =>
+      _harnessProviderDao.watch();
+
+  @override
+  Stream<List<ProviderApiKey>> watchProviderAPIKeys() =>
+      _providerAPIKeyDao.watch();
 
   @override
   Stream<List<domain.Provider>> watchProviderCatalog() =>
       _providerCatalogDao.watch();
 
   @override
-  Future<void> saveProviderKey(ProviderKey key) => tryMethod(
+  Future<void> saveProviderAPIKey(ProviderApiKey key) => tryMethod(
         () async {
-          await _providerKeyDao.save(key.id, key.toJson());
+          final body = key.toJson();
+          // The API key is hidden on reads. An empty key on an update means
+          // that the existing secret should remain unchanged.
+          if (key.id.isNotEmpty && key.apiKey.isEmpty) {
+            body.remove('api_key');
+          }
+          await _providerAPIKeyDao.save(key.id, body);
         },
         ProviderException.new,
-        'saveProviderKey',
+        'saveProviderAPIKey',
       );
 
   @override
-  Future<void> deleteProviderKey(String id) => tryMethod(
-        () => _providerKeyDao.delete(id),
+  Future<void> deleteProviderAPIKey(String id) => tryMethod(
+        () => _providerAPIKeyDao.delete(id),
         ProviderException.new,
-        'deleteProviderKey',
+        'deleteProviderAPIKey',
       );
 }
