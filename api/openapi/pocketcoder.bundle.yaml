@@ -436,7 +436,11 @@ paths:
         - pocketbaseToken: []
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Ollama model inventory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OllamaModelsResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -543,7 +547,11 @@ paths:
       security: []
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Release compatibility
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseCompatibilityResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -561,7 +569,11 @@ paths:
         - pocketbaseToken: []
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Release status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseStatusResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -589,6 +601,33 @@ paths:
             text/event-stream:
               schema:
                 $ref: '#/components/schemas/LogEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/pocketcoder/v1/logs/instance/{id}:
+    get:
+      operationId: getHarnessInstanceLogs
+      tags:
+        - logs
+      x-pocketcoder-roles:
+        - admin
+      security:
+        - pocketbaseToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Persisted container log excerpt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessInstanceLogResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1064,6 +1103,65 @@ components:
           type: string
         status:
           type: string
+    OllamaModelsResponse:
+      type: object
+      required:
+        - models
+        - enabled
+      additionalProperties: false
+      properties:
+        models:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        enabled:
+          type: boolean
+    ReleaseCompatibilityResponse:
+      type: object
+      required:
+        - schemaVersion
+        - dataVersion
+        - compatibility
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          type: integer
+        dataVersion:
+          type: integer
+        compatibility:
+          type: object
+          additionalProperties: true
+    ReleaseStatusResponse:
+      type: object
+      required:
+        - schemaVersion
+        - current
+        - metadataStatus
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          type: integer
+        current:
+          type: object
+          additionalProperties: false
+          properties:
+            releaseDigest:
+              type: string
+            sourceCommit:
+              type: string
+            serverVersion:
+              type: string
+            dataVersion:
+              type: integer
+            deploymentContractVersion:
+              type: integer
+            compatibility:
+              type: object
+              additionalProperties: true
+        metadataStatus:
+          type: object
+          additionalProperties: true
     OllamaProgress:
       type: object
       additionalProperties: true
@@ -1073,3 +1171,16 @@ components:
     LogEvent:
       type: object
       additionalProperties: true
+    HarnessInstanceLogResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - lines
+        - truncated
+      properties:
+        lines:
+          type: array
+          items:
+            type: string
+        truncated:
+          type: boolean

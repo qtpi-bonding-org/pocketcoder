@@ -19,18 +19,24 @@ List<HarnessModel> selectableModels({
   List<HarnessOauthAccount> harnessOAuthAccounts = const [],
 }) {
   final modelsById = {for (final m in models) m.id: m};
-  final apiKeyProviders = providerAPIKeys.map((k) => k.provider).toSet();
-  final oauthProviders = <String>{
-    for (final account in harnessOAuthAccounts)
-      if (account.harness == harnessId &&
-          account.status == HarnessOauthAccountStatus.connected)
-        account.provider,
-    for (final selection in credentialSelections)
-      if (selection.harness == harnessId &&
-          selection.mode == CredentialSelectionMode.oauth)
-        selection.provider,
-  };
-  final usableProviders = {...apiKeyProviders, ...oauthProviders};
+  final usableProviders = <String>{};
+  for (final edge in harnessProviders.where((e) => e.harness == harnessId)) {
+    final selection = credentialSelections
+        .where((s) => s.harness == harnessId && s.provider == edge.provider)
+        .firstOrNull;
+    if (selection?.mode == CredentialSelectionMode.none) continue;
+    if (selection?.mode == CredentialSelectionMode.oauth) {
+      final connected = harnessOAuthAccounts.any((account) =>
+          account.harness == harnessId &&
+          account.provider == edge.provider &&
+          account.status == HarnessOauthAccountStatus.connected);
+      if (edge.supportsOauth == true && connected) {
+        usableProviders.add(edge.provider);
+      }
+    } else if (providerAPIKeys.any((key) => key.provider == edge.provider)) {
+      usableProviders.add(edge.provider);
+    }
+  }
 
   return harnessModels.where((hm) {
     if (hm.harness != harnessId) return false;

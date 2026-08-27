@@ -240,7 +240,6 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
           ? null
           : HarnessAuthAttempt(
               id: attempt.id,
-              provider: '',
               status: attempt.status,
               lastError: attempt.lastError,
             ),

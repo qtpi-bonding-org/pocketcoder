@@ -2296,12 +2296,35 @@
         "type": "bool"
       },
       {
+        "hidden": false,
+        "id": "bool_hi_retryable",
+        "name": "retryable",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
         "autogeneratePattern": "",
         "hidden": false,
         "id": "text_hi_last_used",
         "max": 0,
         "min": 0,
         "name": "last_used",
+        "pattern": "",
+        "presentable": false,
+        "primaryKey": false,
+        "required": false,
+        "system": false,
+        "type": "text"
+      },
+      {
+        "autogeneratePattern": "",
+        "hidden": false,
+        "id": "text_hi_last_log_excerpt",
+        "max": 65536,
+        "min": 0,
+        "name": "last_log_excerpt",
         "pattern": "",
         "presentable": false,
         "primaryKey": false,

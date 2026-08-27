@@ -31,7 +31,7 @@ func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() coord
 	api.AddMcpOperations(app, registry, api.McpDeps{})
 	api.AddMcpOAuthOperations(app, registry)
 	api.AddProxyOperations(registry, api.ProxyDeps{})
-	api.AddLogOperations(registry, api.LogsDeps{})
+	api.AddLogOperations(registry, api.LogsDeps{App: app})
 	api.AddOllamaOperations(registry, api.OllamaDeps{})
 	api.AddReleaseStatusOperations(registry)
 	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, api.AgentDeps{})
@@ -132,11 +132,14 @@ func (r rawResponse) VisitGetHarnessAuthStatusResponse(w http.ResponseWriter) er
 func (r rawResponse) VisitSubmitHarnessAuthResponse(w http.ResponseWriter) error   { return r.write(w) }
 func (r rawResponse) VisitStreamContainerLogsResponse(w http.ResponseWriter) error { return r.write(w) }
 func (r rawResponse) VisitListContainersResponse(w http.ResponseWriter) error      { return r.write(w) }
-func (r rawResponse) VisitStoreMcpOAuthTokenResponse(w http.ResponseWriter) error  { return r.write(w) }
-func (r rawResponse) VisitExecuteMcpRequestResponse(w http.ResponseWriter) error   { return r.write(w) }
-func (r rawResponse) VisitListOllamaModelsResponse(w http.ResponseWriter) error    { return r.write(w) }
-func (r rawResponse) VisitPullOllamaModelResponse(w http.ResponseWriter) error     { return r.write(w) }
-func (r rawResponse) VisitProxyObservabilityResponse(w http.ResponseWriter) error  { return r.write(w) }
+func (r rawResponse) VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error {
+	return r.write(w)
+}
+func (r rawResponse) VisitStoreMcpOAuthTokenResponse(w http.ResponseWriter) error { return r.write(w) }
+func (r rawResponse) VisitExecuteMcpRequestResponse(w http.ResponseWriter) error  { return r.write(w) }
+func (r rawResponse) VisitListOllamaModelsResponse(w http.ResponseWriter) error   { return r.write(w) }
+func (r rawResponse) VisitPullOllamaModelResponse(w http.ResponseWriter) error    { return r.write(w) }
+func (r rawResponse) VisitProxyObservabilityResponse(w http.ResponseWriter) error { return r.write(w) }
 func (r rawResponse) VisitSendPushNotificationResponse(w http.ResponseWriter) error {
 	return r.write(w)
 }
@@ -197,6 +200,9 @@ func (s *server) StreamContainerLogs(ctx context.Context, _ openapi.StreamContai
 }
 func (s *server) ListContainers(ctx context.Context, _ openapi.ListContainersRequestObject) (openapi.ListContainersResponseObject, error) {
 	return s.dispatch(ctx, "listContainers", nil)
+}
+func (s *server) GetHarnessInstanceLogs(ctx context.Context, request openapi.GetHarnessInstanceLogsRequestObject) (openapi.GetHarnessInstanceLogsResponseObject, error) {
+	return s.dispatch(ctx, "getHarnessInstanceLogs", map[string]string{"id": request.Id})
 }
 func (s *server) StoreMcpOAuthToken(ctx context.Context, _ openapi.StoreMcpOAuthTokenRequestObject) (openapi.StoreMcpOAuthTokenResponseObject, error) {
 	return s.dispatch(ctx, "storeMcpOAuthToken", nil)

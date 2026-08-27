@@ -32,6 +32,7 @@ class StatusRepository implements IStatusRepository {
   @override
   Future<List<Healthcheck>> getHealthchecks() async {
     try {
+      // Intentional DAO bypass: health status is required before authentication.
       // Deliberate exception: health status is required before login.
       final records =
           await _pb.collection(Collections.healthchecks).getFullList(

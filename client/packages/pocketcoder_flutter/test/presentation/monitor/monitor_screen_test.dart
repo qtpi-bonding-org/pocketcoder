@@ -58,14 +58,17 @@ void main() {
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
         currentContainer: 'pocketcoder-sqlpage',
-        logs: ['line one', 'line two'],
+        logs: [
+          LogEntry(timestamp: null, message: 'line one'),
+          LogEntry(timestamp: null, message: 'line two'),
+        ],
       ),
       onRefresh: () {},
       onSelectContainer: (_) {},
     )));
 
-    expect(find.text('line one'), findsOneWidget);
-    expect(find.text('line two'), findsOneWidget);
+    expect(find.textContaining('line one'), findsOneWidget);
+    expect(find.textContaining('line two'), findsOneWidget);
     // Logs render plainly -- the only BiosFrame left on screen is the
     // Registry list; the log terminal is no longer boxed.
     expect(find.byType(BiosFrame), findsOneWidget);

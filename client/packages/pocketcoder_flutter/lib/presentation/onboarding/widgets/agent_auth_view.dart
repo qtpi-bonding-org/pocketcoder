@@ -14,12 +14,14 @@ class AgentAuthView extends StatelessWidget {
     required this.harnesses,
     required this.error,
     required this.onSelected,
+    required this.harnessProvidersLoaded,
   });
 
   final UiFlowStatus status;
   final List<Harnesse> harnesses;
   final Object? error;
   final ValueChanged<Harnesse> onSelected;
+  final bool harnessProvidersLoaded;
 
   @override
   Widget build(BuildContext context) {
@@ -68,12 +70,15 @@ class AgentAuthView extends StatelessWidget {
               alpha: 0.7,
             ),
             VSpace.x3,
+            if (!harnessProvidersLoaded)
+              const TerminalText('Loading provider connections…'),
             for (final harness in supported)
               Padding(
                 padding: EdgeInsets.only(bottom: AppSizes.space),
                 child: _HarnessChoiceCard(
                   harness: harness,
-                  onTap: () => onSelected(harness),
+                  onTap:
+                      harnessProvidersLoaded ? () => onSelected(harness) : null,
                 ),
               ),
           ],
@@ -87,7 +92,7 @@ class _HarnessChoiceCard extends StatelessWidget {
   const _HarnessChoiceCard({required this.harness, required this.onTap});
 
   final Harnesse harness;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

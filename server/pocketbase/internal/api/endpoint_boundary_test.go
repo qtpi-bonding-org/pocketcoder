@@ -91,6 +91,7 @@ var testsByEndpoint = []struct {
 	{"getReleaseStatus", http.MethodGet, "/api/pocketcoder/v1/release/status", ""},
 	{"streamContainerLogs", http.MethodGet, "/api/pocketcoder/v1/logs/pocketcoder-pocketbase", ""},
 	{"listContainers", http.MethodGet, "/api/pocketcoder/v1/containers", ""},
+	{"getHarnessInstanceLogs", http.MethodGet, "/api/pocketcoder/v1/logs/instance/test-instance", ""},
 	{"proxyObservability", http.MethodGet, "/api/pocketcoder/v1/proxy/observability/", ""},
 	{"sendPushNotification", http.MethodPost, "/api/pocketcoder/v1/push", `{"user_id":"test-user","type":"test"}`},
 	{"endLiveActivity", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/end", ""},

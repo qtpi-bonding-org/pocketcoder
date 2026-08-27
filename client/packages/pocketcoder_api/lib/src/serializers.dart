@@ -25,12 +25,17 @@ import 'package:pocketcoder_api/src/model/file_list_response.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_attempt.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_challenge.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_status.dart';
+import 'package:pocketcoder_api/src/model/harness_instance_log_response.dart';
 import 'package:pocketcoder_api/src/model/harness_request.dart';
 import 'package:pocketcoder_api/src/model/mcp_o_auth_request.dart';
 import 'package:pocketcoder_api/src/model/mode_request.dart';
 import 'package:pocketcoder_api/src/model/model_request.dart';
+import 'package:pocketcoder_api/src/model/ollama_models_response.dart';
 import 'package:pocketcoder_api/src/model/prompt_request.dart';
 import 'package:pocketcoder_api/src/model/push_request.dart';
+import 'package:pocketcoder_api/src/model/release_compatibility_response.dart';
+import 'package:pocketcoder_api/src/model/release_status_response.dart';
+import 'package:pocketcoder_api/src/model/release_status_response_current.dart';
 import 'package:pocketcoder_api/src/model/schedule_run_accepted_response.dart';
 
 part 'serializers.g.dart';
@@ -47,15 +52,24 @@ part 'serializers.g.dart';
   HarnessAuthAttempt,
   HarnessAuthChallenge,
   HarnessAuthStatus,
+  HarnessInstanceLogResponse,
   HarnessRequest,
   McpOAuthRequest,
   ModeRequest,
   ModelRequest,
+  OllamaModelsResponse,
   PromptRequest,
   PushRequest,
+  ReleaseCompatibilityResponse,
+  ReleaseStatusResponse,
+  ReleaseStatusResponseCurrent,
   ScheduleRunAcceptedResponse,
 ])
 Serializers serializers = (_$serializers.toBuilder()
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(BuiltMap, [FullType(String), FullType(JsonObject)])]),
+        () => ListBuilder<BuiltMap<String, JsonObject>>(),
+      )
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(FileEntry)]),
         () => ListBuilder<FileEntry>(),
@@ -71,6 +85,10 @@ Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(ContentBlock)]),
         () => ListBuilder<ContentBlock>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(String)]),
+        () => ListBuilder<String>(),
       )
       ..addBuilderFactory(
         const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),

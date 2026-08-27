@@ -28,6 +28,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     CubitAdapterState<ProviderCubit, ProviderState> adapter,
   ) {
     final harnesses = adapter.cubitField(selectHarnesses);
+    final auth = context.read<HarnessAuthCubit>();
     final status = adapter.cubitStatus();
     return ValueListenableBuilder<UiFlowStatus>(
       valueListenable: status,
@@ -38,6 +39,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
           harnesses: harnesses,
           error: context.read<ProviderCubit>().state.error,
           onSelected: (harness) => _select(context, harness),
+          harnessProvidersLoaded: auth.state.harnessProvidersLoaded,
         ),
       ),
     );
@@ -59,9 +61,15 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
 
   Future<void> _select(BuildContext context, Harnesse harness) async {
     final auth = context.read<HarnessAuthCubit>();
+    if (!auth.state.harnessProvidersLoaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Loading harness providers…')));
+      return;
+    }
     final provider = _oauthProviderFor(auth.state, harness.id);
     if (provider == null) return; // no oauth-capable provider for this harness
-    OnboardingLogger.event('harness selected', {'harness': harness.id, 'provider': provider});
+    OnboardingLogger.event(
+        'harness selected', {'harness': harness.id, 'provider': provider});
 
     // Decision 4: selecting an agent is the authorization action. The former
     // visibility confirmation is intentionally not part of this golden path.
@@ -85,13 +93,15 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => BlocBuilder<HarnessAuthCubit, HarnessAuthState>(
+      builder: (dialogContext) =>
+          BlocBuilder<HarnessAuthCubit, HarnessAuthState>(
         bloc: auth,
         builder: (context, state) {
-          final status = state.statuses[harness.id];
+          final status = state.statusFor(harness.id, provider);
           if (status?.isConnecting == true) {
             timer ??= Timer.periodic(const Duration(seconds: 4), (_) {
-              if (!auth.state.isHarnessBusy(harness.id)) unawaited(auth.poll(harness.id));
+              if (!auth.state.isHarnessBusy(harness.id))
+                unawaited(auth.poll(harness.id, provider));
             });
           }
           if (status?.isConnected == true && !openedChat) {
@@ -108,7 +118,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                   context.go('/chat/$chatId');
                 }
               } catch (error) {
-                OnboardingLogger.event('first chat creation failed', {'error': error.toString()});
+                OnboardingLogger.event(
+                    'first chat creation failed', {'error': error.toString()});
               }
             });
           }
@@ -116,9 +127,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             label: harness.name,
             isLoading: status?.isConnecting ?? state.isBusy,
             errorMessage: status?.lastError ??
-                (state.status == UiFlowStatus.failure ? context.l10n.errorGeneric : null),
+                (state.status == UiFlowStatus.failure
+                    ? context.l10n.errorGeneric
+                    : null),
             onCancel: () async {
-              await auth.cancel(harness.id);
+              await auth.cancel(harness.id, provider);
               if (dialogContext.mounted) Navigator.of(dialogContext).pop();
             },
             onRetry: () => auth.startWithAccount(
@@ -136,7 +149,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                     edge.provider == provider &&
                     edge.oauthAuthenticator == 'claude') &&
                 status?.challenge != null,
-            onSubmitCode: (code) => auth.submitCode(harnessId: harness.id, code: code),
+            onSubmitCode: (code) => auth.submitCode(
+                harnessId: harness.id, code: code, provider: provider),
             isBusy: state.isHarnessBusy(harness.id),
           );
         },
@@ -145,14 +159,16 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     timer?.cancel();
   }
 
-  Future<void> _openChallenge(BuildContext context, HarnessAuthChallenge challenge) async {
+  Future<void> _openChallenge(
+      BuildContext context, HarnessAuthChallenge challenge) async {
     final target = challenge.target;
     if (target == null || target.isEmpty) return;
     final uri = Uri.tryParse(target);
     if (uri == null) return;
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.errorCouldNotOpenBrowser)));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.errorCouldNotOpenBrowser)));
     }
   }
 }

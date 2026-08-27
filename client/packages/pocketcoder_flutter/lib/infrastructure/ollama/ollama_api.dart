@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/json_object.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -21,10 +23,11 @@ class OllamaApi {
 
   Future<List<OllamaModel>> listModels() async {
     final response = await _api.ollama.listOllamaModels();
-    final json = PocketCoderApiClient.decodeJson(response.data);
-    final models = (json['models'] as List<dynamic>? ?? const []);
+    final models = response.data?.models ?? const <BuiltMap<String, JsonObject?>>[];
     return models
-        .map((item) => OllamaModel.fromJson(item as Map<String, dynamic>))
+        .map((item) => OllamaModel.fromJson({
+              for (final entry in item.entries) entry.key: entry.value?.value,
+            }))
         .toList(growable: false);
   }
 

@@ -23,7 +23,7 @@ class ObservabilityRepository implements IObservabilityRepository {
       : _sse = SseStreamClient(httpClient: httpClient);
 
   @override
-  Stream<String> watchLogs(String containerName) {
+  Stream<LogEntry> watchLogs(String containerName) {
     final url = "${_pb.baseURL}${StreamingEndpoints.logs(containerName)}";
 
     logInfo('📈 [Observability] Subscribing to container log stream');
@@ -39,9 +39,16 @@ class ObservabilityRepository implements IObservabilityRepository {
       return request;
     });
 
-    final controller = StreamController<String>();
+    final controller = StreamController<LogEntry>();
     final subscription = frames.listen((frame) {
-      controller.add(frame.data);
+      for (final line in frame.data.split('\n')) {
+        if (line.isEmpty) continue;
+        final match = RegExp(r'^(\S+)\s(.*)$').firstMatch(line);
+        controller.add(LogEntry(
+          timestamp: match == null ? null : DateTime.tryParse(match.group(1)!),
+          message: match?.group(2) ?? line,
+        ));
+      }
     }, onError: (Object e, StackTrace stack) {
       logError('📈 [Observability] Log stream error', e, stack);
       controller.addError(e, stack);
@@ -64,9 +71,9 @@ class ObservabilityRepository implements IObservabilityRepository {
       () async {
         final response = await _pb
             .send(
-              StreamingEndpoints.observability,
-              method: 'GET',
-            )
+          StreamingEndpoints.observability,
+          method: 'GET',
+        )
             .catchError((Object e, StackTrace stackTrace) {
           logError('📈 [Observability] fetchSystemStats request failed', e,
               stackTrace);
@@ -102,8 +109,9 @@ class ObservabilityRepository implements IObservabilityRepository {
   Future<List<ContainerInfo>> listContainers() {
     return tryMethod(
       () async {
-        final response = await _api.logs.listContainers().catchError(
-            (Object e, StackTrace stackTrace) {
+        final response = await _api.logs
+            .listContainers()
+            .catchError((Object e, StackTrace stackTrace) {
           logError('📈 [Observability] listContainers request failed', e,
               stackTrace);
           throw e;

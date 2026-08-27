@@ -182,8 +182,8 @@ class MonitorView extends StatelessWidget {
       itemBuilder: (context, index) {
         final logLine = state.logs[state.logs.length - 1 - index];
         return TerminalText.mini(
-          logLine,
-          color: _getLogColor(context, logLine),
+          '${logLine.timestamp?.toLocal().toIso8601String() ?? 'unknown'} ${logLine.message}',
+          color: _getLogColor(context, logLine.message),
         );
       },
     );
@@ -193,7 +193,8 @@ class MonitorView extends StatelessWidget {
     final colors = context.colorScheme;
     final terminal = context.terminalColors;
     final upper = log.toUpperCase();
-    if (upper.contains('ERR') || upper.contains('FAIL')) return terminal.warning;
+    if (upper.contains('ERR') || upper.contains('FAIL'))
+      return terminal.warning;
     if (upper.contains('WARN')) return terminal.warning;
     if (upper.contains('INFO')) return colors.primary;
     if (upper.contains('DEBUG')) return colors.secondary;

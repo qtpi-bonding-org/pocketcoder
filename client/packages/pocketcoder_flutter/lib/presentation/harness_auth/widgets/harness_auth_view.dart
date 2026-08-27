@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -36,7 +37,7 @@ class HarnessAuthScreenView extends StatelessWidget {
   final bool onboarding;
   final List<Harnesse> harnesses;
   final List<HarnessProvider> harnessProviders;
-  final Map<String, HarnessAuthStatus> statuses;
+  final Map<HarnessProviderKey, HarnessAuthStatus> statuses;
   final Object? error;
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
@@ -95,7 +96,7 @@ class HarnessAuthView extends StatefulWidget {
   final bool onboarding;
   final List<Harnesse> harnesses;
   final List<HarnessProvider> harnessProviders;
-  final Map<String, HarnessAuthStatus> statuses;
+  final Map<HarnessProviderKey, HarnessAuthStatus> statuses;
   final Object? error;
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
@@ -127,6 +128,17 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
       !widget.onboarding ||
       ['claude-code', 'codex'].contains(h.cliId.trim().toLowerCase());
 
+  HarnessAuthStatus? _statusFor(Harnesse harness) {
+    final provider = widget.harnessProviders
+        .where(
+            (edge) => edge.harness == harness.id && edge.supportsOauth == true)
+        .firstOrNull
+        ?.provider;
+    return provider == null
+        ? null
+        : widget.statuses[HarnessProviderKey(harness.id, provider)];
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading && widget.harnesses.isEmpty) {
@@ -153,7 +165,7 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
         HarnessAuthCard(
             harness: h,
             harnessProviders: widget.harnessProviders,
-            status: widget.statuses[h.id],
+            status: _statusFor(h),
             codeController: _controller(h.id),
             isBusy: widget.isHarnessBusy(h.id),
             onStartAccount: (provider) => widget.onStartAccount(h, provider),
@@ -173,10 +185,10 @@ class HarnessAuthCard extends StatelessWidget {
       required this.harness,
       required this.harnessProviders,
       required this.status,
-        required this.codeController,
+      required this.codeController,
       required this.isBusy,
       required this.onStartAccount,
-        required this.onStartNone,
+      required this.onStartNone,
       required this.onPoll,
       required this.onSubmit,
       required this.onCancel,
@@ -198,7 +210,8 @@ class HarnessAuthCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final edges = harnessProviders.where((p) => p.harness == harness.id).toList();
+    final edges =
+        harnessProviders.where((p) => p.harness == harness.id).toList();
     final s = status ??
         HarnessAuthStatus(
             harness: harness.id,
@@ -223,8 +236,7 @@ class HarnessAuthCard extends StatelessWidget {
               if (s.lastError case final lastError?
                   when lastError.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText(lastError,
-                    color: context.terminalColors.warning)
+                TerminalText(lastError, color: context.terminalColors.warning)
               ],
               if (s.credentialMode.isNotEmpty) ...[
                 VSpace.x1,
@@ -276,7 +288,8 @@ class HarnessAuthCard extends StatelessWidget {
             ])));
   }
 
-  Widget _actions(BuildContext context, HarnessAuthStatus s, List<HarnessProvider> edges) {
+  Widget _actions(
+      BuildContext context, HarnessAuthStatus s, List<HarnessProvider> edges) {
     if (s.isDisconnected) {
       return Wrap(
           spacing: AppSizes.space,
@@ -360,8 +373,8 @@ class HarnessChallengePanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: TerminalText(
-                    context.l10n.harnessAuthDetails(details), alpha: .7),
+                child: TerminalText(context.l10n.harnessAuthDetails(details),
+                    alpha: .7),
               ),
               HSpace.x1,
               GestureDetector(

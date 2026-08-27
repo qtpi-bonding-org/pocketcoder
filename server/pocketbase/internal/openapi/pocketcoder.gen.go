@@ -161,6 +161,12 @@ type HarnessAuthStatus struct {
 // HarnessAuthStatusMode defines model for HarnessAuthStatus.Mode.
 type HarnessAuthStatusMode string
 
+// HarnessInstanceLogResponse defines model for HarnessInstanceLogResponse.
+type HarnessInstanceLogResponse struct {
+	Lines     []string `json:"lines"`
+	Truncated bool     `json:"truncated"`
+}
+
 // HarnessRequest defines model for HarnessRequest.
 type HarnessRequest struct {
 	AccountId   *string             `json:"accountId,omitempty"`
@@ -204,6 +210,12 @@ type ModelRequest struct {
 	Model string `json:"model"`
 }
 
+// OllamaModelsResponse defines model for OllamaModelsResponse.
+type OllamaModelsResponse struct {
+	Enabled bool                     `json:"enabled"`
+	Models  []map[string]interface{} `json:"models"`
+}
+
 // OllamaProgress defines model for OllamaProgress.
 type OllamaProgress map[string]interface{}
 
@@ -219,6 +231,27 @@ type PushRequest struct {
 	Title   *string `json:"title,omitempty"`
 	Type    string  `json:"type"`
 	UserId  string  `json:"user_id"`
+}
+
+// ReleaseCompatibilityResponse defines model for ReleaseCompatibilityResponse.
+type ReleaseCompatibilityResponse struct {
+	Compatibility map[string]interface{} `json:"compatibility"`
+	DataVersion   int                    `json:"dataVersion"`
+	SchemaVersion int                    `json:"schemaVersion"`
+}
+
+// ReleaseStatusResponse defines model for ReleaseStatusResponse.
+type ReleaseStatusResponse struct {
+	Current struct {
+		Compatibility             *map[string]interface{} `json:"compatibility,omitempty"`
+		DataVersion               *int                    `json:"dataVersion,omitempty"`
+		DeploymentContractVersion *int                    `json:"deploymentContractVersion,omitempty"`
+		ReleaseDigest             *string                 `json:"releaseDigest,omitempty"`
+		ServerVersion             *string                 `json:"serverVersion,omitempty"`
+		SourceCommit              *string                 `json:"sourceCommit,omitempty"`
+	} `json:"current"`
+	MetadataStatus map[string]interface{} `json:"metadataStatus"`
+	SchemaVersion  int                    `json:"schemaVersion"`
 }
 
 // ScheduleRunAcceptedResponse defines model for ScheduleRunAcceptedResponse.
@@ -474,6 +507,9 @@ type ServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
 	EndLiveActivity(w http.ResponseWriter, r *http.Request, id RequestId)
+
+	// (GET /api/pocketcoder/v1/logs/instance/{id})
+	GetHarnessInstanceLogs(w http.ResponseWriter, r *http.Request, id string)
 
 	// (GET /api/pocketcoder/v1/logs/{containerName})
 	StreamContainerLogs(w http.ResponseWriter, r *http.Request, containerName ContainerName)
@@ -1034,6 +1070,38 @@ func (siw *ServerInterfaceWrapper) EndLiveActivity(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetHarnessInstanceLogs operation middleware
+func (siw *ServerInterfaceWrapper) GetHarnessInstanceLogs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHarnessInstanceLogs(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // StreamContainerLogs operation middleware
 func (siw *ServerInterfaceWrapper) StreamContainerLogs(w http.ResponseWriter, r *http.Request) {
 
@@ -1388,6 +1456,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/status", wrapper.GetHarnessAuthStatus)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/submit", wrapper.SubmitHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/live-activities/{id}/end", wrapper.EndLiveActivity)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/logs/instance/{id}", wrapper.GetHarnessInstanceLogs)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/logs/{containerName}", wrapper.StreamContainerLogs)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/oauth/store", wrapper.StoreMcpOAuthToken)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/request", wrapper.ExecuteMcpRequest)
@@ -1979,7 +2048,7 @@ type GetReleaseCompatibilityResponseObject interface {
 	VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error
 }
 
-type GetReleaseCompatibility200JSONResponse struct{ JsonSuccessJSONResponse }
+type GetReleaseCompatibility200JSONResponse ReleaseCompatibilityResponse
 
 func (response GetReleaseCompatibility200JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
 
@@ -2744,6 +2813,56 @@ func (response EndLiveActivity409Response) VisitEndLiveActivityResponse(w http.R
 	return nil
 }
 
+type GetHarnessInstanceLogsRequestObject struct {
+	Id string `json:"id"`
+}
+
+type GetHarnessInstanceLogsResponseObject interface {
+	VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error
+}
+
+type GetHarnessInstanceLogs200JSONResponse HarnessInstanceLogResponse
+
+func (response GetHarnessInstanceLogs200JSONResponse) VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetHarnessInstanceLogs401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetHarnessInstanceLogs401JSONResponse) VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetHarnessInstanceLogs404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetHarnessInstanceLogs404JSONResponse) VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type StreamContainerLogsRequestObject struct {
 	ContainerName ContainerName `json:"containerName"`
 }
@@ -3014,7 +3133,7 @@ type ListOllamaModelsResponseObject interface {
 	VisitListOllamaModelsResponse(w http.ResponseWriter) error
 }
 
-type ListOllamaModels200JSONResponse struct{ JsonSuccessJSONResponse }
+type ListOllamaModels200JSONResponse OllamaModelsResponse
 
 func (response ListOllamaModels200JSONResponse) VisitListOllamaModelsResponse(w http.ResponseWriter) error {
 
@@ -3355,7 +3474,7 @@ type GetReleaseStatusResponseObject interface {
 	VisitGetReleaseStatusResponse(w http.ResponseWriter) error
 }
 
-type GetReleaseStatus200JSONResponse struct{ JsonSuccessJSONResponse }
+type GetReleaseStatus200JSONResponse ReleaseStatusResponse
 
 func (response GetReleaseStatus200JSONResponse) VisitGetReleaseStatusResponse(w http.ResponseWriter) error {
 
@@ -3545,6 +3664,9 @@ type StrictServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
 	EndLiveActivity(ctx context.Context, request EndLiveActivityRequestObject) (EndLiveActivityResponseObject, error)
+
+	// (GET /api/pocketcoder/v1/logs/instance/{id})
+	GetHarnessInstanceLogs(ctx context.Context, request GetHarnessInstanceLogsRequestObject) (GetHarnessInstanceLogsResponseObject, error)
 
 	// (GET /api/pocketcoder/v1/logs/{containerName})
 	StreamContainerLogs(ctx context.Context, request StreamContainerLogsRequestObject) (StreamContainerLogsResponseObject, error)
@@ -4128,6 +4250,32 @@ func (sh *strictHandler) EndLiveActivity(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(EndLiveActivityResponseObject); ok {
 		if err := validResponse.VisitEndLiveActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetHarnessInstanceLogs operation middleware
+func (sh *strictHandler) GetHarnessInstanceLogs(w http.ResponseWriter, r *http.Request, id string) {
+	var request GetHarnessInstanceLogsRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetHarnessInstanceLogs(ctx, request.(GetHarnessInstanceLogsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetHarnessInstanceLogs")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetHarnessInstanceLogsResponseObject); ok {
+		if err := validResponse.VisitGetHarnessInstanceLogsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

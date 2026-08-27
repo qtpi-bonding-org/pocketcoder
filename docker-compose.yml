@@ -7,6 +7,7 @@ services:
       context: .
       dockerfile: server/pocketbase/Dockerfile
     container_name: pocketcoder-pocketbase
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     ports:
       # Loopback-only: Caddy (host-level, see deploy/nixos/caddy.nix) proxies
       # this over TLS. Publishing on 0.0.0.0 would let anyone reach PocketBase
@@ -85,6 +86,7 @@ services:
     profiles: ["local-models"]
     image: ollama/ollama@sha256:f040603c11a11f125660eaf848170780e43b68973fc270e26f168536031ac258
     container_name: pocketcoder-ollama
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     labels:
       pc_managed: pocketcoder
       pc_release: ${POCKETCODER_RELEASE:-development}
@@ -163,6 +165,7 @@ services:
   docker-socket-proxy-mcp:
     image: tecnativa/docker-socket-proxy@sha256:9e4b9e7517a6b660f2cc903a19b257b1852d5b3344794e3ea334ff00ae677ac2
     container_name: pocketcoder-docker-proxy-mcp
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     environment:
       - CONTAINERS=1        # Spawn/inspect/stop MCP server containers
       - POST=1              # Allow POST requests (container/network create)
@@ -203,6 +206,7 @@ services:
       context: .
       dockerfile: server/mcp-gateway/Dockerfile
     container_name: pocketcoder-mcp-gateway
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     volumes:
       # docker-mcp v0.43+ requires --catalog/--enable-all-servers paths to
       # resolve under ~/.docker/mcp/catalogs/ -- an arbitrary bind-mounted
@@ -256,6 +260,7 @@ services:
         POCKET_MEMORY_MODEL_SHA256: ${POCKET_MEMORY_MODEL_SHA256:-0d5a5a0b0ad84faad6357a6145e769b0661f0efbf53acf74598afc34dab454f4}
         POCKET_MEMORY_REQUIRE_MODEL: ${POCKET_MEMORY_REQUIRE_MODEL:-0}
     container_name: pocketcoder-memory
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     environment:
       - POCKET_MEMORY_DATABASE_PATH=/memory_data/memory.sqlite3
       - POCKET_MEMORY_BIND_ADDRESS=0.0.0.0:8000
@@ -280,6 +285,7 @@ services:
   docker-socket-proxy-write:
     image: tecnativa/docker-socket-proxy@sha256:9e4b9e7517a6b660f2cc903a19b257b1852d5b3344794e3ea334ff00ae677ac2
     container_name: pocketcoder-docker-proxy-write
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     environment:
       # Enable container operations for PocketBase restart capability
       - CONTAINERS=1          # Allow container operations (list, inspect)
@@ -332,6 +338,7 @@ services:
     image: lovasoa/sqlpage:v0.32.0@sha256:8c286b2248188f379772ba45e5f05336c6f7204ebe75474490278aab8016648d
     user: root
     container_name: pocketcoder-sqlpage
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     environment:
       - SQLPAGE_ENVIRONMENT=production
       - SQLPAGE_SITE_PREFIX=/api/pocketcoder/v1/proxy/observability/
@@ -369,6 +376,7 @@ services:
   ntfy:
     image: binwiederhier/ntfy:v2.11.0@sha256:4a7d0f0adc6d5d9fc36e64ab55ef676e76e124a2bdd50ce115b6d9c1c7430294
     container_name: pocketcoder-ntfy
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     profiles:
       - foss
     command: serve
@@ -401,6 +409,7 @@ services:
   tailscale:
     image: tailscale/tailscale@sha256:cdf5612ded5be1344f1a704b8c5e53496db97376bb533e5e15f141e48bf60cc0
     container_name: pocketcoder-tailscale
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     profiles:
       - tailscale
     hostname: ${TS_HOSTNAME:-pocketcoder}
@@ -439,6 +448,7 @@ services:
   caddy:
     image: caddy@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: pocketcoder-caddy
+    logging: {driver: "json-file", options: {max-size: "10m", max-file: "3"}}
     profiles:
       - caddy
     ports:

@@ -9,9 +9,9 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
-import 'package:built_collection/built_collection.dart';
-import 'package:built_value/json_object.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
+import 'package:pocketcoder_api/src/model/release_compatibility_response.dart';
+import 'package:pocketcoder_api/src/model/release_status_response.dart';
 
 class ReleaseApi {
 
@@ -32,9 +32,9 @@ class ReleaseApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
+  /// Returns a [Future] containing a [Response] with a [ReleaseCompatibilityResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> getReleaseCompatibility({
+  Future<Response<ReleaseCompatibilityResponse>> getReleaseCompatibility({
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -63,14 +63,14 @@ class ReleaseApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    BuiltMap<String, JsonObject>? _responseData;
+    ReleaseCompatibilityResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),
-      ) as BuiltMap<String, JsonObject>;
+        specifiedType: const FullType(ReleaseCompatibilityResponse),
+      ) as ReleaseCompatibilityResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -82,7 +82,7 @@ class ReleaseApi {
       );
     }
 
-    return Response<BuiltMap<String, JsonObject>>(
+    return Response<ReleaseCompatibilityResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -105,9 +105,9 @@ class ReleaseApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
+  /// Returns a [Future] containing a [Response] with a [ReleaseStatusResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> getReleaseStatus({
+  Future<Response<ReleaseStatusResponse>> getReleaseStatus({
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -143,14 +143,14 @@ class ReleaseApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    BuiltMap<String, JsonObject>? _responseData;
+    ReleaseStatusResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),
-      ) as BuiltMap<String, JsonObject>;
+        specifiedType: const FullType(ReleaseStatusResponse),
+      ) as ReleaseStatusResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -162,7 +162,7 @@ class ReleaseApi {
       );
     }
 
-    return Response<BuiltMap<String, JsonObject>>(
+    return Response<ReleaseStatusResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

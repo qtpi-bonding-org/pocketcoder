@@ -37,6 +37,8 @@ import (
 
 var safeContainerName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
+const maxLogExcerptBytes = 64 * 1024
+
 // dockerLogSource streams a container's combined stdout/stderr log,
 // multiplexed in Docker's frame format, starting from the last 100 lines.
 type dockerLogSource interface {
@@ -75,6 +77,7 @@ func (dockerProxyLogSource) StreamLogs(ctx context.Context, containerName string
 }
 
 type LogsDeps struct {
+	App    core.App
 	Source dockerLogSource // nil -> dockerProxyLogSource{}
 	Lister containerLister // nil -> dockerProxyContainerLister{}
 }
@@ -152,6 +155,7 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 		// Reader for demuxing Docker's multiplexed log stream.
 		// Each frame starts with an 8-byte header: [streamType, 0, 0, 0, size1, size2, size3, size4]
 		reader := bufio.NewReader(body)
+		var excerpt strings.Builder
 
 		for {
 			_, payload, err := dockerapi.DecodeLogFrame(reader)
@@ -165,6 +169,13 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 
 			// Format each log line as an SSE data packet.
 			msg := string(payload)
+			if excerpt.Len() < maxLogExcerptBytes {
+				remaining := maxLogExcerptBytes - excerpt.Len()
+				if len(msg) > remaining {
+					msg = msg[len(msg)-remaining:]
+				}
+				excerpt.WriteString(msg)
+			}
 			lines := strings.Split(msg, "\n")
 			for _, line := range lines {
 				trimmed := strings.TrimSpace(line)
@@ -179,6 +190,30 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 			}
 		}
 
+		if deps.App != nil && excerpt.Len() > 0 {
+			if instance, findErr := deps.App.FindFirstRecordByFilter("harness_instances", "container_name = {:name}", map[string]any{"name": containerName}); findErr == nil && instance != nil {
+				instance.Set("last_log_excerpt", excerpt.String())
+				if saveErr := deps.App.Save(instance); saveErr != nil {
+					log.Printf("[Logs] save excerpt failed: %v", saveErr)
+				}
+			}
+		}
 		return nil
+	}})
+
+	registry.Add(operation.Route{OperationID: "getHarnessInstanceLogs", Method: http.MethodGet, Path: "/api/pocketcoder/v1/logs/instance/{id}", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
+		if err := requireRole(re, "admin"); err != nil {
+			return err
+		}
+		instance, err := deps.App.FindRecordById("harness_instances", re.Request.PathValue("id"))
+		if err != nil {
+			return re.NotFoundError("Harness instance not found", nil)
+		}
+		excerpt := instance.GetString("last_log_excerpt")
+		lines := []string{}
+		if excerpt != "" {
+			lines = strings.Split(strings.TrimSuffix(excerpt, "\n"), "\n")
+		}
+		return re.JSON(http.StatusOK, map[string]any{"lines": lines, "truncated": len(excerpt) >= maxLogExcerptBytes})
 	}})
 }

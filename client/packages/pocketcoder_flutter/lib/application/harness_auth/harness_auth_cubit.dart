@@ -44,7 +44,8 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
         status: UiFlowStatus.success,
         error: null,
       ));
-      OnboardingLogger.event('harness list loaded', {'count': harnesses.length});
+      OnboardingLogger.event(
+          'harness list loaded', {'count': harnesses.length});
       _refreshStatuses();
     }, onError: (Object e) {
       unawaited(pocketCoderDiagnosticCapture.capture(
@@ -61,11 +62,14 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
     _harnessProvidersSub?.cancel();
     _harnessProvidersSub = _providerRepository.watchHarnessProviders().listen(
       (providers) {
-        if (!isClosed) emit(state.copyWith(harnessProviders: providers));
+        if (!isClosed)
+          emit(state.copyWith(
+              harnessProviders: providers, harnessProvidersLoaded: true));
         _refreshStatuses();
       },
       onError: (Object e) {
-        if (!isClosed) emit(state.copyWith(status: UiFlowStatus.failure, error: e));
+        if (!isClosed)
+          emit(state.copyWith(status: UiFlowStatus.failure, error: e));
       },
     );
   }
@@ -82,39 +86,45 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
     return null;
   }
 
-  Future<void> _setBusy(String harnessId, bool busy) async {
+  Future<void> _setBusy(String harnessId, String provider, bool busy) async {
     if (isClosed) return;
-    final nextBusy = Set<String>.from(state.busyHarnesses);
+    final key = HarnessProviderKey(harnessId, provider);
+    final nextBusy = Set<HarnessProviderKey>.from(state.busyHarnesses);
     if (busy) {
-      nextBusy.add(harnessId);
+      nextBusy.add(key);
     } else {
-      nextBusy.remove(harnessId);
+      nextBusy.remove(key);
     }
     emit(state.copyWith(busyHarnesses: nextBusy));
   }
 
-  Future<void> _withBusy(String harnessId, Future<void> Function() action) async {
-    await _setBusy(harnessId, true);
+  Future<void> _withBusy(
+      String harnessId, String provider, Future<void> Function() action) async {
+    await _setBusy(harnessId, provider, true);
     try {
       await action();
-      if (!isClosed) emit(state.copyWith(status: UiFlowStatus.success, error: null));
+      if (!isClosed)
+        emit(state.copyWith(status: UiFlowStatus.success, error: null));
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(
         error: e,
         source: 'HarnessAuthCubit',
         operation: 'harnessOperation',
       );
-      if (!isClosed) emit(state.copyWith(status: UiFlowStatus.failure, error: e));
+      if (!isClosed)
+        emit(state.copyWith(status: UiFlowStatus.failure, error: e));
     } finally {
-      await _setBusy(harnessId, false);
+      await _setBusy(harnessId, provider, false);
     }
   }
 
-  void _updateStatus(String harnessId, HarnessAuthStatus status) {
+  void _updateStatus(
+      String harnessId, String provider, HarnessAuthStatus status) {
     if (isClosed) return;
-    final next = Map<String, HarnessAuthStatus>.from(state.statuses)
-      ..[harnessId] = status;
-    emit(state.copyWith(statuses: next, status: UiFlowStatus.success, error: null));
+    final next = Map<HarnessProviderKey, HarnessAuthStatus>.from(state.statuses)
+      ..[HarnessProviderKey(harnessId, provider)] = status;
+    emit(state.copyWith(
+        statuses: next, status: UiFlowStatus.success, error: null));
   }
 
   Future<void> _refreshStatuses() async {
@@ -124,110 +134,147 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
 
   Future<void> _safeRefreshHarness(String harnessId) async {
     final provider = _oauthProviderFor(harnessId);
-    if (provider == null) return; // no oauth-capable provider -- nothing to check
+    if (provider == null)
+      return; // no oauth-capable provider -- nothing to check
     try {
-      _updateStatus(harnessId,
-          await _authRepository.status(harnessId: harnessId, provider: provider));
+      _updateStatus(
+          harnessId,
+          provider,
+          await _authRepository.status(
+              harnessId: harnessId, provider: provider));
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(
         error: e,
         source: 'HarnessAuthCubit',
         operation: 'refreshStatus',
       );
-      if (!isClosed) emit(state.copyWith(status: UiFlowStatus.failure, error: e));
+      if (!isClosed)
+        emit(state.copyWith(status: UiFlowStatus.failure, error: e));
     }
   }
 
-  Future<void> refreshHarness(String harnessId) async {
-    final snapshot = state.statuses[harnessId];
-    final provider = snapshot?.provider.isNotEmpty == true
-        ? snapshot!.provider
-        : _oauthProviderFor(harnessId);
+  Future<void> refreshHarness(String harnessId,
+      [String? requestedProvider]) async {
+    final provider = requestedProvider ?? _oauthProviderFor(harnessId);
     if (provider == null) return;
-    return _withBusy(harnessId, () => _authRepository.status(
-      harnessId: harnessId,
-      provider: provider,
-      accountId: snapshot?.accountId,
-      attemptId: snapshot?.attempt?.id,
-    ).then((s) => _updateStatus(harnessId, s)));
+    final snapshot = state.statusFor(harnessId, provider);
+    return _withBusy(
+        harnessId,
+        provider,
+        () => _authRepository
+            .status(
+              harnessId: harnessId,
+              provider: provider,
+              accountId: snapshot?.accountId,
+              attemptId: snapshot?.attempt?.id,
+            )
+            .then((s) => _updateStatus(harnessId, provider, s)));
   }
 
   Future<void> startWithAccount({
     required String harnessId,
     required String provider,
     required String visibility,
-  }) async => _withBusy(harnessId, () => _authRepository.start(
-    harnessId: harnessId,
-    provider: provider,
-    mode: 'oauth',
-    visibility: visibility,
-  ).then((s) => _updateStatus(harnessId, s)));
+  }) async =>
+      _withBusy(
+          harnessId,
+          provider,
+          () => _authRepository
+              .start(
+                harnessId: harnessId,
+                provider: provider,
+                mode: 'oauth',
+                visibility: visibility,
+              )
+              .then((s) => _updateStatus(harnessId, provider, s)));
 
-  Future<void> startWithNone(String harnessId, {required String visibility}) async {
+  Future<void> startWithNone(String harnessId,
+      {required String visibility}) async {
     final provider = _oauthProviderFor(harnessId);
     if (provider == null) return;
-    await _withBusy(harnessId, () => _authRepository.start(
-      harnessId: harnessId,
-      provider: provider,
-      mode: 'none',
-      visibility: visibility,
-    ).then((s) => _updateStatus(harnessId, s)));
+    await _withBusy(
+        harnessId,
+        provider,
+        () => _authRepository
+            .start(
+              harnessId: harnessId,
+              provider: provider,
+              mode: 'none',
+              visibility: visibility,
+            )
+            .then((s) => _updateStatus(harnessId, provider, s)));
   }
 
-  Future<void> poll(String harnessId) async {
-    final snapshot = state.statuses[harnessId];
-    final provider = snapshot?.provider.isNotEmpty == true
-        ? snapshot!.provider
-        : _oauthProviderFor(harnessId);
+  Future<void> poll(String harnessId, [String? requestedProvider]) async {
+    final provider = requestedProvider ?? _oauthProviderFor(harnessId);
     if (provider == null) return;
-    await _withBusy(harnessId, () => _authRepository.poll(
-      harnessId: harnessId,
-      provider: provider,
-      accountId: snapshot?.accountId,
-      attemptId: snapshot?.attempt?.id,
-    ).then((s) => _updateStatus(harnessId, s)));
+    final snapshot = state.statusFor(harnessId, provider);
+    await _withBusy(
+        harnessId,
+        provider,
+        () => _authRepository
+            .poll(
+              harnessId: harnessId,
+              provider: provider,
+              accountId: snapshot?.accountId,
+              attemptId: snapshot?.attempt?.id,
+            )
+            .then((s) => _updateStatus(harnessId, provider, s)));
   }
 
-  Future<void> submitCode({required String harnessId, required String code}) async {
-    final snapshot = state.statuses[harnessId];
-    final provider = snapshot?.provider.isNotEmpty == true
-        ? snapshot!.provider
-        : _oauthProviderFor(harnessId);
+  Future<void> submitCode(
+      {required String harnessId,
+      required String code,
+      String? provider}) async {
+    provider ??= _oauthProviderFor(harnessId);
     if (provider == null) return;
-    await _withBusy(harnessId, () => _authRepository.submit(
-      harnessId: harnessId,
-      provider: provider,
-      accountId: snapshot?.accountId,
-      code: code,
-      attemptId: snapshot?.attempt?.id,
-    ).then((s) => _updateStatus(harnessId, s)));
+    final selectedProvider = provider;
+    final snapshot = state.statusFor(harnessId, selectedProvider);
+    await _withBusy(
+        harnessId,
+        selectedProvider,
+        () => _authRepository
+            .submit(
+              harnessId: harnessId,
+              provider: selectedProvider,
+              accountId: snapshot?.accountId,
+              code: code,
+              attemptId: snapshot?.attempt?.id,
+            )
+            .then((s) => _updateStatus(harnessId, selectedProvider, s)));
   }
 
-  Future<void> cancel(String harnessId) async {
-    final snapshot = state.statuses[harnessId];
-    final provider = snapshot?.provider.isNotEmpty == true
-        ? snapshot!.provider
-        : _oauthProviderFor(harnessId);
+  Future<void> cancel(String harnessId, [String? requestedProvider]) async {
+    final provider = requestedProvider ?? _oauthProviderFor(harnessId);
     if (provider == null) return;
-    await _withBusy(harnessId, () => _authRepository.cancel(
-      harnessId: harnessId,
-      provider: provider,
-      accountId: snapshot?.accountId,
-      attemptId: snapshot?.attempt?.id,
-    ).then((s) => _updateStatus(harnessId, s)));
+    final snapshot = state.statusFor(harnessId, provider);
+    await _withBusy(
+        harnessId,
+        provider,
+        () => _authRepository
+            .cancel(
+              harnessId: harnessId,
+              provider: provider,
+              accountId: snapshot?.accountId,
+              attemptId: snapshot?.attempt?.id,
+            )
+            .then((s) => _updateStatus(harnessId, provider, s)));
   }
 
-  Future<void> disconnect(String harnessId) async {
-    final snapshot = state.statuses[harnessId];
-    final provider = snapshot?.provider.isNotEmpty == true
-        ? snapshot!.provider
-        : _oauthProviderFor(harnessId);
+  Future<void> disconnect(String harnessId, [String? requestedProvider]) async {
+    final provider = requestedProvider ?? _oauthProviderFor(harnessId);
     if (provider == null) return;
-    await _withBusy(harnessId, () => _authRepository.disconnect(
-      harnessId: harnessId,
-      provider: provider,
-      accountId: snapshot?.accountId,
-    ).then((s) => _updateStatus(harnessId, s)));
+    final snapshot = state.statusFor(harnessId, provider);
+    await _withBusy(
+        harnessId,
+        provider,
+        () => _authRepository
+            .disconnect(
+              harnessId: harnessId,
+              provider: provider,
+              accountId: snapshot?.accountId,
+            )
+            .then((s) => _updateStatus(harnessId, provider, s)));
   }
 
   @override

@@ -1,8 +1,6 @@
 // Package harnessaccount resolves and selects the OAuth-account side of a
-// user's harness credentials -- see harness_oauth_accounts and
-// credential_selections in schema.json. API keys (provider_api_keys) are
-// plain PocketBase record CRUD with no bespoke resolution logic; they don't
-// go through this package at all (see internal/api/harness_auth.go).
+// user's harness credentials -- see harness_oauth_accounts,
+// provider_api_keys, and credential_selections in schema.json.
 package harnessaccount
 
 import (
@@ -54,6 +52,21 @@ func RegisterHooks(app core.App) {
 		for _, field := range []string{"owner", "harness", "provider", "status", "last_error"} {
 			e.Record.Set(field, original.Get(field))
 		}
+		return e.Next()
+	})
+	app.OnRecordCreateRequest("provider_api_keys").BindFunc(func(e *core.RecordRequestEvent) error {
+		if e.Auth == nil || e.Auth.Id == "" {
+			return fmt.Errorf("authentication required")
+		}
+		e.Record.Set("owner", e.Auth.Id)
+		return e.Next()
+	})
+	app.OnRecordUpdateRequest("provider_api_keys").BindFunc(func(e *core.RecordRequestEvent) error {
+		original := e.Record.Original()
+		if e.Auth == nil || e.Auth.Id == "" || original == nil || original.GetString("owner") != e.Auth.Id {
+			return fmt.Errorf("provider API key must belong to the authenticated user")
+		}
+		e.Record.Set("owner", original.Get("owner"))
 		return e.Next()
 	})
 	app.OnRecordCreateRequest("credential_selections").BindFunc(func(e *core.RecordRequestEvent) error {

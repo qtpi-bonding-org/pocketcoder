@@ -120,7 +120,7 @@ func (c *Client) Logs(ctx context.Context, containerName string, tail int) (stri
 		"stdout":     []string{"1"},
 		"stderr":     []string{"1"},
 		"follow":     []string{"0"},
-		"timestamps": []string{"0"},
+		"timestamps": []string{"1"},
 	}
 	if tail > 0 {
 		q.Set("tail", strconv.Itoa(tail))
@@ -157,11 +157,27 @@ func (c *Client) Logs(ctx context.Context, containerName string, tail int) (stri
 	return decoded, nil
 }
 
+// CaptureExitDiagnostics captures a stopped container's exit code and log tail before removal.
+func (c *Client) CaptureExitDiagnostics(ctx context.Context, containerID string) (int, string, error) {
+	insp, err := c.Inspect(ctx, containerID)
+	if err != nil {
+		return 0, "", err
+	}
+	logs, err := c.Logs(ctx, containerID, 200)
+	if err != nil {
+		return insp.State.ExitCode, "", err
+	}
+	if len(logs) > 64*1024 {
+		logs = logs[len(logs)-64*1024:]
+	}
+	return insp.State.ExitCode, logs, nil
+}
+
 // StreamLogs opens a live Docker log stream without buffering it. The normal
 // client timeout is unsuitable for follow=1; cancellation is controlled by
 // the caller's context instead.
 func (c *Client) StreamLogs(ctx context.Context, containerName string, tail int) (io.ReadCloser, error) {
-	q := url.Values{"stdout": {"1"}, "stderr": {"1"}, "follow": {"1"}, "timestamps": {"0"}}
+	q := url.Values{"stdout": {"1"}, "stderr": {"1"}, "follow": {"1"}, "timestamps": {"1"}}
 	if tail > 0 {
 		q.Set("tail", strconv.Itoa(tail))
 	} else {
@@ -350,6 +366,7 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 	hostConfig := map[string]any{
 		"Binds":         binds,
 		"RestartPolicy": map[string]any{"Name": restartPolicy},
+		"LogConfig":     map[string]any{"Type": "json-file", "Config": map[string]string{"max-size": "10m", "max-file": "3"}},
 	}
 	payload := map[string]any{
 		"Image":      spec.Image,

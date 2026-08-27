@@ -63,13 +63,15 @@ class AuthRepository implements IAuthRepository {
     await tryMethod(
       () async {
         final generatedResponse = await _api.release.getReleaseCompatibility();
-        final response =
-            PocketCoderApiClient.decodeJson(generatedResponse.data);
-        final compatibility = response['compatibility'];
-        if (compatibility is! Map<String, dynamic>) {
+        final compatibilityField = generatedResponse.data?.compatibility;
+        if (compatibilityField == null) {
           throw const FormatException(
               'Invalid release compatibility response.');
         }
+        final compatibility = {
+          for (final entry in compatibilityField.entries)
+            entry.key: entry.value?.value,
+        };
         final app = compatibility['app'];
         final server = compatibility['server'];
         final deployment = compatibility['deployment'];

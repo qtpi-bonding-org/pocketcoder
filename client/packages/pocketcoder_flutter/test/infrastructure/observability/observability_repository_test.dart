@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 import 'package:pocketcoder_flutter/infrastructure/observability/observability_repository.dart';
@@ -78,11 +79,17 @@ void main() {
 
   test('watchLogs emits decoded SSE data and closes when the body closes',
       () async {
-    httpClient = _FakeHttpClient(_sseBody('data: log line\n\n'));
+    httpClient = _FakeHttpClient(
+        _sseBody('data: 2024-01-01T00:00:00.000000000Z log line\n\n'));
     repository = _repository(httpClient);
 
     final stream = repository.watchLogs('worker');
-    await expectLater(stream, emitsInOrder(['log line', emitsDone]));
+    await expectLater(
+        stream,
+        emitsInOrder([
+          isA<LogEntry>().having((e) => e.message, 'message', 'log line'),
+          emitsDone,
+        ]));
 
     expect(httpClient.lastRequest?.url.toString(),
         'http://pb.local:8090${StreamingEndpoints.logs('worker')}');
@@ -93,21 +100,31 @@ void main() {
   test('watchLogs sends Authorization when authenticated', () async {
     final pb = PocketBase('http://pb.local:8090');
     pb.authStore.save('test-token', null);
-    httpClient = _FakeHttpClient(_sseBody('data: ok\n\n'));
+    httpClient = _FakeHttpClient(
+        _sseBody('data: 2024-01-01T00:00:00.000000000Z ok\n\n'));
     repository = _repository(httpClient, pb: pb);
 
     await expectLater(
-        repository.watchLogs('app'), emitsInOrder(['ok', emitsDone]));
+        repository.watchLogs('app'),
+        emitsInOrder([
+          isA<LogEntry>().having((e) => e.message, 'message', 'ok'),
+          emitsDone,
+        ]));
 
     expect(httpClient.lastRequest?.headers['authorization'], 'test-token');
   });
 
   test('watchLogs omits Authorization when signed out', () async {
-    httpClient = _FakeHttpClient(_sseBody('data: ok\n\n'));
+    httpClient = _FakeHttpClient(
+        _sseBody('data: 2024-01-01T00:00:00.000000000Z ok\n\n'));
     repository = _repository(httpClient);
 
     await expectLater(
-        repository.watchLogs('app'), emitsInOrder(['ok', emitsDone]));
+        repository.watchLogs('app'),
+        emitsInOrder([
+          isA<LogEntry>().having((e) => e.message, 'message', 'ok'),
+          emitsDone,
+        ]));
 
     expect(
         httpClient.lastRequest?.headers.containsKey('authorization'), isFalse);

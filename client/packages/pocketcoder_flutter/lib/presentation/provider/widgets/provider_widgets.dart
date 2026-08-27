@@ -87,9 +87,9 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
               VSpace.x2,
               TerminalTextField(
                   controller: _controller,
-                  label: 'API_KEY',
+                  label: 'API key',
                   hint: widget.existing == null
-                      ? 'API_KEY'
+                      ? 'API key'
                       : 'Leave blank to keep the existing key',
                   obscureText: true),
               VSpace.x2,

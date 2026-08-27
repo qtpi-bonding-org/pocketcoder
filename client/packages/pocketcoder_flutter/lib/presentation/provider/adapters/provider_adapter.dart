@@ -248,7 +248,7 @@ class ProviderView extends StatelessWidget {
                   weight: TerminalTextWeight.heavy,
                 ),
                 TerminalText.mini(
-                  _maskKeyPreview(<String, dynamic>{'API_KEY': key.apiKey}),
+                  _maskKeyPreview(key.apiKey),
                   alpha: 0.5,
                 ),
               ],
@@ -293,20 +293,12 @@ class ProviderView extends StatelessWidget {
 
   // ── HELPERS ──
 
-  /// Same shape as `_maskKeyPreview` in the legacy `llm_management_screen.dart`
-  /// — show a short prefix and suffix of the first env var value, or a fixed
-  /// placeholder when no value is present.
-  String _maskKeyPreview(dynamic envVars) {
-    if (envVars == null) return '***';
-    if (envVars is Map && envVars.isNotEmpty) {
-      final firstValue = envVars.values.first.toString();
-      if (firstValue.length > 8) {
-        final head = firstValue.substring(0, 4);
-        final tail = firstValue.substring(firstValue.length - 4);
-        return '$head..$tail';
-      }
-      return '****';
+  /// Shows a short prefix and suffix of the provider API key.
+  String _maskKeyPreview(String? apiKey) {
+    if (apiKey == null || apiKey.isEmpty) return '***';
+    if (apiKey.length > 8) {
+      return '${apiKey.substring(0, 4)}..${apiKey.substring(apiKey.length - 4)}';
     }
-    return '***';
+    return '****';
   }
 }

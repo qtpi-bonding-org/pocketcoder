@@ -17,8 +17,9 @@ mixin _$HarnessAuthState {
   UiFlowStatus get status;
   List<Harnesse> get harnesses;
   List<HarnessProvider> get harnessProviders;
-  Map<String, HarnessAuthStatus> get statuses;
-  Set<String> get busyHarnesses;
+  Map<HarnessProviderKey, HarnessAuthStatus> get statuses;
+  Set<HarnessProviderKey> get busyHarnesses;
+  bool get harnessProvidersLoaded;
   Object? get error;
 
   /// Create a copy of HarnessAuthState
@@ -41,6 +42,8 @@ mixin _$HarnessAuthState {
             const DeepCollectionEquality().equals(other.statuses, statuses) &&
             const DeepCollectionEquality()
                 .equals(other.busyHarnesses, busyHarnesses) &&
+            (identical(other.harnessProvidersLoaded, harnessProvidersLoaded) ||
+                other.harnessProvidersLoaded == harnessProvidersLoaded) &&
             const DeepCollectionEquality().equals(other.error, error));
   }
 
@@ -52,11 +55,12 @@ mixin _$HarnessAuthState {
       const DeepCollectionEquality().hash(harnessProviders),
       const DeepCollectionEquality().hash(statuses),
       const DeepCollectionEquality().hash(busyHarnesses),
+      harnessProvidersLoaded,
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'HarnessAuthState(status: $status, harnesses: $harnesses, harnessProviders: $harnessProviders, statuses: $statuses, busyHarnesses: $busyHarnesses, error: $error)';
+    return 'HarnessAuthState(status: $status, harnesses: $harnesses, harnessProviders: $harnessProviders, statuses: $statuses, busyHarnesses: $busyHarnesses, harnessProvidersLoaded: $harnessProvidersLoaded, error: $error)';
   }
 }
 
@@ -70,8 +74,9 @@ abstract mixin class $HarnessAuthStateCopyWith<$Res> {
       {UiFlowStatus status,
       List<Harnesse> harnesses,
       List<HarnessProvider> harnessProviders,
-      Map<String, HarnessAuthStatus> statuses,
-      Set<String> busyHarnesses,
+      Map<HarnessProviderKey, HarnessAuthStatus> statuses,
+      Set<HarnessProviderKey> busyHarnesses,
+      bool harnessProvidersLoaded,
       Object? error});
 }
 
@@ -93,6 +98,7 @@ class _$HarnessAuthStateCopyWithImpl<$Res>
     Object? harnessProviders = null,
     Object? statuses = null,
     Object? busyHarnesses = null,
+    Object? harnessProvidersLoaded = null,
     Object? error = freezed,
   }) {
     return _then(_self.copyWith(
@@ -111,11 +117,15 @@ class _$HarnessAuthStateCopyWithImpl<$Res>
       statuses: null == statuses
           ? _self.statuses
           : statuses // ignore: cast_nullable_to_non_nullable
-              as Map<String, HarnessAuthStatus>,
+              as Map<HarnessProviderKey, HarnessAuthStatus>,
       busyHarnesses: null == busyHarnesses
           ? _self.busyHarnesses
           : busyHarnesses // ignore: cast_nullable_to_non_nullable
-              as Set<String>,
+              as Set<HarnessProviderKey>,
+      harnessProvidersLoaded: null == harnessProvidersLoaded
+          ? _self.harnessProvidersLoaded
+          : harnessProvidersLoaded // ignore: cast_nullable_to_non_nullable
+              as bool,
       error: freezed == error ? _self.error : error,
     ));
   }
@@ -216,8 +226,9 @@ extension HarnessAuthStatePatterns on HarnessAuthState {
             UiFlowStatus status,
             List<Harnesse> harnesses,
             List<HarnessProvider> harnessProviders,
-            Map<String, HarnessAuthStatus> statuses,
-            Set<String> busyHarnesses,
+            Map<HarnessProviderKey, HarnessAuthStatus> statuses,
+            Set<HarnessProviderKey> busyHarnesses,
+            bool harnessProvidersLoaded,
             Object? error)?
         $default, {
     required TResult orElse(),
@@ -225,8 +236,14 @@ extension HarnessAuthStatePatterns on HarnessAuthState {
     final _that = this;
     switch (_that) {
       case _HarnessAuthState() when $default != null:
-        return $default(_that.status, _that.harnesses, _that.harnessProviders,
-            _that.statuses, _that.busyHarnesses, _that.error);
+        return $default(
+            _that.status,
+            _that.harnesses,
+            _that.harnessProviders,
+            _that.statuses,
+            _that.busyHarnesses,
+            _that.harnessProvidersLoaded,
+            _that.error);
       case _:
         return orElse();
     }
@@ -251,16 +268,23 @@ extension HarnessAuthStatePatterns on HarnessAuthState {
             UiFlowStatus status,
             List<Harnesse> harnesses,
             List<HarnessProvider> harnessProviders,
-            Map<String, HarnessAuthStatus> statuses,
-            Set<String> busyHarnesses,
+            Map<HarnessProviderKey, HarnessAuthStatus> statuses,
+            Set<HarnessProviderKey> busyHarnesses,
+            bool harnessProvidersLoaded,
             Object? error)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _HarnessAuthState():
-        return $default(_that.status, _that.harnesses, _that.harnessProviders,
-            _that.statuses, _that.busyHarnesses, _that.error);
+        return $default(
+            _that.status,
+            _that.harnesses,
+            _that.harnessProviders,
+            _that.statuses,
+            _that.busyHarnesses,
+            _that.harnessProvidersLoaded,
+            _that.error);
     }
   }
 
@@ -282,16 +306,23 @@ extension HarnessAuthStatePatterns on HarnessAuthState {
             UiFlowStatus status,
             List<Harnesse> harnesses,
             List<HarnessProvider> harnessProviders,
-            Map<String, HarnessAuthStatus> statuses,
-            Set<String> busyHarnesses,
+            Map<HarnessProviderKey, HarnessAuthStatus> statuses,
+            Set<HarnessProviderKey> busyHarnesses,
+            bool harnessProvidersLoaded,
             Object? error)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _HarnessAuthState() when $default != null:
-        return $default(_that.status, _that.harnesses, _that.harnessProviders,
-            _that.statuses, _that.busyHarnesses, _that.error);
+        return $default(
+            _that.status,
+            _that.harnesses,
+            _that.harnessProviders,
+            _that.statuses,
+            _that.busyHarnesses,
+            _that.harnessProvidersLoaded,
+            _that.error);
       case _:
         return null;
     }
@@ -305,9 +336,11 @@ class _HarnessAuthState extends HarnessAuthState {
       {this.status = UiFlowStatus.idle,
       final List<Harnesse> harnesses = const <Harnesse>[],
       final List<HarnessProvider> harnessProviders = const <HarnessProvider>[],
-      final Map<String, HarnessAuthStatus> statuses =
-          const <String, HarnessAuthStatus>{},
-      final Set<String> busyHarnesses = const <String>{},
+      final Map<HarnessProviderKey, HarnessAuthStatus> statuses =
+          const <HarnessProviderKey, HarnessAuthStatus>{},
+      final Set<HarnessProviderKey> busyHarnesses =
+          const <HarnessProviderKey>{},
+      this.harnessProvidersLoaded = false,
       this.error})
       : _harnesses = harnesses,
         _harnessProviders = harnessProviders,
@@ -337,24 +370,27 @@ class _HarnessAuthState extends HarnessAuthState {
     return EqualUnmodifiableListView(_harnessProviders);
   }
 
-  final Map<String, HarnessAuthStatus> _statuses;
+  final Map<HarnessProviderKey, HarnessAuthStatus> _statuses;
   @override
   @JsonKey()
-  Map<String, HarnessAuthStatus> get statuses {
+  Map<HarnessProviderKey, HarnessAuthStatus> get statuses {
     if (_statuses is EqualUnmodifiableMapView) return _statuses;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableMapView(_statuses);
   }
 
-  final Set<String> _busyHarnesses;
+  final Set<HarnessProviderKey> _busyHarnesses;
   @override
   @JsonKey()
-  Set<String> get busyHarnesses {
+  Set<HarnessProviderKey> get busyHarnesses {
     if (_busyHarnesses is EqualUnmodifiableSetView) return _busyHarnesses;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableSetView(_busyHarnesses);
   }
 
+  @override
+  @JsonKey()
+  final bool harnessProvidersLoaded;
   @override
   final Object? error;
 
@@ -379,6 +415,8 @@ class _HarnessAuthState extends HarnessAuthState {
             const DeepCollectionEquality().equals(other._statuses, _statuses) &&
             const DeepCollectionEquality()
                 .equals(other._busyHarnesses, _busyHarnesses) &&
+            (identical(other.harnessProvidersLoaded, harnessProvidersLoaded) ||
+                other.harnessProvidersLoaded == harnessProvidersLoaded) &&
             const DeepCollectionEquality().equals(other.error, error));
   }
 
@@ -390,11 +428,12 @@ class _HarnessAuthState extends HarnessAuthState {
       const DeepCollectionEquality().hash(_harnessProviders),
       const DeepCollectionEquality().hash(_statuses),
       const DeepCollectionEquality().hash(_busyHarnesses),
+      harnessProvidersLoaded,
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'HarnessAuthState(status: $status, harnesses: $harnesses, harnessProviders: $harnessProviders, statuses: $statuses, busyHarnesses: $busyHarnesses, error: $error)';
+    return 'HarnessAuthState(status: $status, harnesses: $harnesses, harnessProviders: $harnessProviders, statuses: $statuses, busyHarnesses: $busyHarnesses, harnessProvidersLoaded: $harnessProvidersLoaded, error: $error)';
   }
 }
 
@@ -410,8 +449,9 @@ abstract mixin class _$HarnessAuthStateCopyWith<$Res>
       {UiFlowStatus status,
       List<Harnesse> harnesses,
       List<HarnessProvider> harnessProviders,
-      Map<String, HarnessAuthStatus> statuses,
-      Set<String> busyHarnesses,
+      Map<HarnessProviderKey, HarnessAuthStatus> statuses,
+      Set<HarnessProviderKey> busyHarnesses,
+      bool harnessProvidersLoaded,
       Object? error});
 }
 
@@ -433,6 +473,7 @@ class __$HarnessAuthStateCopyWithImpl<$Res>
     Object? harnessProviders = null,
     Object? statuses = null,
     Object? busyHarnesses = null,
+    Object? harnessProvidersLoaded = null,
     Object? error = freezed,
   }) {
     return _then(_HarnessAuthState(
@@ -451,11 +492,15 @@ class __$HarnessAuthStateCopyWithImpl<$Res>
       statuses: null == statuses
           ? _self._statuses
           : statuses // ignore: cast_nullable_to_non_nullable
-              as Map<String, HarnessAuthStatus>,
+              as Map<HarnessProviderKey, HarnessAuthStatus>,
       busyHarnesses: null == busyHarnesses
           ? _self._busyHarnesses
           : busyHarnesses // ignore: cast_nullable_to_non_nullable
-              as Set<String>,
+              as Set<HarnessProviderKey>,
+      harnessProvidersLoaded: null == harnessProvidersLoaded
+          ? _self.harnessProvidersLoaded
+          : harnessProvidersLoaded // ignore: cast_nullable_to_non_nullable
+              as bool,
       error: freezed == error ? _self.error : error,
     ));
   }

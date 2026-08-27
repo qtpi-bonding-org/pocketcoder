@@ -5,13 +5,19 @@ part 'i_observability_repository.g.dart';
 
 abstract class IObservabilityRepository {
   /// Stream of logs for a specific container.
-  Stream<String> watchLogs(String containerName);
+  Stream<LogEntry> watchLogs(String containerName);
 
   /// Fetches the system stats from the SQLPage dashboard.
   Future<SystemStats> fetchSystemStats();
 
   /// Lists this deployment's containers for the observability registry.
   Future<List<ContainerInfo>> listContainers();
+}
+
+class LogEntry {
+  const LogEntry({required this.timestamp, required this.message});
+  final DateTime? timestamp;
+  final String message;
 }
 
 @freezed

@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -127,6 +128,10 @@ type dockerProvisioner interface {
 	Start(ctx context.Context, containerName string) error
 }
 
+type dockerRemover interface {
+	Remove(context.Context, string) error
+}
+
 var ensureReleaseHarnessImage = func(ctx context.Context, client dockerProvisioner, harnessID, image string) error {
 	return releaseartifact.EnsureHarnessImage(ctx, client, harnessID, image)
 }
@@ -147,6 +152,22 @@ func FindHarnessInstance(app core.App, harnessID, launchKey, userID, oauthAccoun
 	}
 	for _, rec := range candidates {
 		if rec.GetString("launch_key") == launchKey && rec.GetString("oauth_account") == oauthAccountID {
+			// A retryable failed provisioning row is one-shot: return this
+			// record so the current caller can still see
+			// status="error"/last_error (sessionprofile.Build's switch
+			// reports it as ErrHarnessFailed), then delete the persisted
+			// row so it doesn't permanently block a later retry. Deleting
+			// rec's DB row does not clear the already-loaded in-memory
+			// fields the caller is about to read. A non-retryable failure
+			// (structurally broken launch_template, discovered only after
+			// Create+Start already succeeded -- see fail()'s doc comment)
+			// stays as-is: retrying would just recreate the same broken
+			// container, so the row is left for a person to investigate.
+			if rec.GetString("status") == "error" && rec.GetBool("retryable") {
+				if err := app.Delete(rec); err != nil {
+					return nil, fmt.Errorf("delete failed harness instance %s: %w", rec.Id, err)
+				}
+			}
 			return rec, nil
 		}
 	}
@@ -181,11 +202,36 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// (providerID/modelID both stay empty; renderEnv then injects every
 	// credentialed provider per spec §6, matched by supports_live_config).
 	providerID, modelID := "", ""
-	if launchKey != "" {
-		if hm, hmErr := app.FindRecordById("harness_models", launchKey); hmErr == nil {
-			modelID = hm.GetString("harness_model_id")
-			if model, modelErr := app.FindRecordById("models", hm.GetString("model")); modelErr == nil {
-				providerID = model.GetString("provider") // pc_providers record id (Task 1)
+	if launchKey != "" && !harness.GetBool("supports_live_config") {
+		hm, hmErr := app.FindRecordById("harness_models", launchKey)
+		if hmErr != nil {
+			return nil, fmt.Errorf("resolve pinned launch %s: harness_models row not found: %w", launchKey, hmErr)
+		}
+		modelID = hm.GetString("harness_model_id")
+		model, modelErr := app.FindRecordById("models", hm.GetString("model"))
+		if modelErr != nil {
+			return nil, fmt.Errorf("resolve pinned launch %s: model row not found: %w", launchKey, modelErr)
+		}
+		providerID = model.GetString("provider")
+		if providerID == "" {
+			return nil, fmt.Errorf("resolve pinned launch %s: model has no provider", launchKey)
+		}
+		if _, providerErr := app.FindRecordById("providers", providerID); providerErr != nil {
+			return nil, fmt.Errorf("resolve pinned launch %s: provider row not found: %w", launchKey, providerErr)
+		}
+		edges, edgeErr := app.FindRecordsByFilter("harness_providers", "harness = {:h} && provider = {:p}", "", 0, 0, map[string]any{"h": harnessID, "p": providerID})
+		if edgeErr != nil || len(edges) == 0 {
+			return nil, fmt.Errorf("resolve pinned launch %s: harness/provider edge not found: %v", launchKey, edgeErr)
+		}
+	}
+	if harness.GetBool("supports_live_config") {
+		if edges, edgeErr := app.FindRecordsByFilter("harness_providers", "harness = {:h}", "", 0, 0, map[string]any{"h": harnessID}); edgeErr != nil {
+			return nil, fmt.Errorf("check live-config provider edges: %w", edgeErr)
+		} else {
+			for _, edge := range edges {
+				if edge.GetBool("supports_oauth") {
+					return nil, fmt.Errorf("live-config harness %s with OAuth-capable provider edges is not supported yet", harnessID)
+				}
 			}
 		}
 	}
@@ -218,11 +264,21 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		return nil, err
 	}
 	if existing != nil {
-		if status := existing.GetString("status"); status == "stopped" {
+		switch status := existing.GetString("status"); status {
+		case "stopped":
 			if err := app.Delete(existing); err != nil {
 				return nil, fmt.Errorf("delete stale harness instance: %w", err)
 			}
-		} else {
+		case "error":
+			// A retryable row: FindHarnessInstance already deleted the
+			// persisted row for this one-shot failure report, so provision
+			// a fresh instance below instead of re-returning the stale
+			// failure. A non-retryable row is returned as-is -- retrying
+			// would just recreate the same structurally-broken container.
+			if !existing.GetBool("retryable") {
+				return existing, nil
+			}
+		default:
 			return existing, nil
 		}
 	}
@@ -262,19 +318,46 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		}
 		return nil, fmt.Errorf("save pending harness_instances row: %w", err)
 	}
-	fail := func(err error) (*core.Record, error) {
+	// fail persists a failed provisioning attempt. retryable distinguishes
+	// two genuinely different situations: a Docker/config resolution step
+	// itself failing (retryable -- the container likely never started, or
+	// started into a broken state worth tearing down; FindHarnessInstance
+	// clears the row after reporting it once so a later request retries
+	// cleanly) versus a launch_template that is structurally missing
+	// required data, discovered only after Create+Start already succeeded
+	// (not retryable -- the same container would be recreated with the
+	// exact same broken config every time; the row must stay in "error"
+	// so a person fixes the harness definition instead of the client
+	// silently hammering Docker with identical doomed attempts).
+	fail := func(err error, retryable bool) (*core.Record, error) {
 		log.Printf("[HarnessProvision] harness=%s container=%s failed: %v", harnessID, containerName, err)
 		rec.Set("status", "error")
 		rec.Set("last_error", err.Error())
+		rec.Set("retryable", retryable)
+		if retryable {
+			if remover, ok := client.(dockerRemover); ok {
+				if removeErr := remover.Remove(ctx, containerName); removeErr != nil && !errors.Is(removeErr, dockerapi.ErrContainerNotFound) {
+					log.Printf("[HarnessProvision] cleanup container %s: %v", containerName, removeErr)
+				}
+			}
+		}
+		// Persist the error status (not delete): the caller of this
+		// synchronous call is almost always a fire-and-forget background
+		// goroutine (see sessionprofile.Build) whose return value is only
+		// logged, never surfaced to the request that triggered it. The row
+		// must survive so the client's *next* poll (FindHarnessInstance)
+		// can report the actual failure via ErrHarnessFailed instead of
+		// silently retrying forever. FindHarnessInstance clears a retryable
+		// row after that one report, so a later request retries cleanly.
 		if saveErr := app.Save(rec); saveErr != nil {
-			log.Printf("[HarnessProvision] harness=%s container=%s: failed to persist error status: %v", harnessID, containerName, saveErr)
+			log.Printf("[HarnessProvision] persist error status for instance %s: %v", rec.Id, saveErr)
 		}
 		return rec, nil
 	}
 
 	volumeName, networkName, err := ResolveWorkspaceVolumeAndNetwork(ctx, client)
 	if err != nil {
-		return fail(err)
+		return fail(err, true)
 	}
 
 	image := harness.GetString("container_image")
@@ -289,25 +372,25 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 
 	env, err := renderEnv(app, launch.EnvTemplate, secret, harness, userID, providerID, modelID)
 	if err != nil {
-		return fail(fmt.Errorf("render launch_template.env_template: %w", err))
+		return fail(fmt.Errorf("render launch_template.env_template: %w", err), true)
 	}
 	local, err := client.ImageExists(ctx, image)
 	if err != nil {
-		return fail(err)
+		return fail(err, true)
 	}
 	if !local {
 		if releaseartifact.ManagedReleaseImage(image, os.Getenv("POCKETCODER_RELEASE")) {
 			if err := ensureReleaseHarnessImage(ctx, client, harness.GetString("cli_id"), image); err != nil {
-				return fail(err)
+				return fail(err, true)
 			}
 		} else if err := client.PullImage(ctx, image); err != nil {
-			return fail(err)
+			return fail(err, true)
 		}
 	}
 
 	volumes, err := harnessvolume.Resolve(volumeName, userID, harness.GetString("cli_id"), oauthAccountID)
 	if err != nil {
-		return fail(fmt.Errorf("resolve harness volumes: %w", err))
+		return fail(fmt.Errorf("resolve harness volumes: %w", err), true)
 	}
 	volumeBinds := []string{
 		volumes.Workspace + ":/workspace",
@@ -325,7 +408,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	env = append(env, "GIT_SSH_COMMAND=ssh -F "+harnessvolume.GitSSHMount+"/current/ssh_config")
 	networkNames := []string{networkName, HarnessEgressNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
 	if running, err := ollamaRunning(ctx, client); err != nil {
-		return fail(fmt.Errorf("check local-models availability: %w", err))
+		return fail(fmt.Errorf("check local-models availability: %w", err), true)
 	} else if running {
 		networkNames = append(networkNames, ModelNetwork)
 	}
@@ -345,10 +428,10 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		},
 	})
 	if err != nil {
-		return fail(err)
+		return fail(err, true)
 	}
 	if err := client.Start(ctx, containerName); err != nil {
-		return fail(err)
+		return fail(err, true)
 	}
 
 	// Checked here (after Create+Start, not before) rather than as an
@@ -356,9 +439,12 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	// URL below, not by the Docker create/start calls themselves, and a
 	// pending row with no port must still count as "one Create call" for
 	// a subsequent ProvisionHarnessInstance call; FindHarnessInstance matches this error row and
-	// returns it rather than attempting a second Create.
+	// returns it rather than attempting a second Create. Not retryable: the
+	// container is already running fine, and the launch_template is
+	// structurally missing data that a retry would not fix -- retrying
+	// would only spawn another identically-broken container.
 	if launch.Port == 0 {
-		return fail(fmt.Errorf("harness %s's launch_template has no port", harnessID))
+		return fail(fmt.Errorf("harness %s's launch_template has no port", harnessID), false)
 	}
 
 	rec.Set("status", "running")
@@ -368,7 +454,7 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 	}
 	if copier, ok := client.(archiveCopier); ok {
 		if err := MaterializeUserHarnessFiles(ctx, app, copier, rec); err != nil {
-			return fail(err)
+			return fail(err, true)
 		}
 	}
 	return rec, nil
@@ -383,6 +469,8 @@ func ResolveOAuthAccountForLaunch(app core.App, userID, harnessID, providerID st
 	mode := ""
 	if selErr == nil {
 		mode = sel.GetString("mode")
+	} else if !isRecordNotFound(selErr) {
+		return nil, fmt.Errorf("resolve credential selection for provider %s: %w", providerID, selErr)
 	}
 	switch mode {
 	case "api_key", "none":
@@ -391,6 +479,9 @@ func ResolveOAuthAccountForLaunch(app core.App, userID, harnessID, providerID st
 		account, err := app.FindRecordById("harness_oauth_accounts", sel.GetString("oauth_account"))
 		if err != nil {
 			return nil, fmt.Errorf("selected oauth account %s not found", sel.GetString("oauth_account"))
+		}
+		if account.GetString("harness") != harnessID || account.GetString("provider") != providerID {
+			return nil, fmt.Errorf("selected oauth account does not belong to this harness/provider")
 		}
 		if account.GetString("status") != "connected" {
 			return nil, fmt.Errorf("selected oauth account is not connected (status=%s) -- reconnect it before launching", account.GetString("status"))
@@ -406,11 +497,23 @@ func ResolveOAuthAccountForLaunch(app core.App, userID, harnessID, providerID st
 			"", 1, 0,
 			map[string]any{"h": harnessID, "p": providerID, "u": userID},
 		)
-		if err != nil || len(accounts) == 0 {
+		if err != nil && !isRecordNotFound(err) {
+			return nil, fmt.Errorf("resolve default OAuth account for provider %s: %w", providerID, err)
+		}
+		if len(accounts) == 0 {
 			return nil, nil
 		}
 		return accounts[0], nil
 	}
+}
+
+// isRecordNotFound reports whether err is PocketBase's "record not found"
+// signal (FindRecordById/FindFirstRecordByFilter both return sql.ErrNoRows
+// verbatim -- see dbx.SelectQuery.One and core.FindFirstRecordByFilter), as
+// opposed to any other DB/lookup failure, which callers must treat as a
+// hard error rather than "nothing selected".
+func isRecordNotFound(err error) bool {
+	return errors.Is(err, sql.ErrNoRows)
 }
 
 // mintSecret generates the per-instance credential the bundled adapter
@@ -449,6 +552,11 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string, harne
 		return nil, err
 	}
 	if harness.GetBool("supports_live_config") {
+		for _, edge := range edges {
+			if edge.GetBool("supports_oauth") {
+				return nil, fmt.Errorf("live-config harness %s with OAuth-capable provider edges is not supported yet", harness.Id)
+			}
+		}
 		// __provider/__model seed a live-config harness's INITIAL
 		// provider/model before the chat's first ACP session/new call --
 		// coordinator.PerSessionApplier then overrides both live via
@@ -482,13 +590,19 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string, harne
 	for _, edge := range edges {
 		providerRec, err := app.FindRecordById("providers", edge.GetString("provider"))
 		if err != nil {
-			continue
+			if isRecordNotFound(err) {
+				return nil, fmt.Errorf("provider %s referenced by harness edge was not found", edge.GetString("provider"))
+			}
+			return nil, fmt.Errorf("resolve provider %s: %w", edge.GetString("provider"), err)
 		}
-		sel, _ := app.FindFirstRecordByFilter(
+		sel, selErr := app.FindFirstRecordByFilter(
 			"credential_selections",
 			"user = {:u} && harness = {:h} && provider = {:p}",
 			map[string]any{"u": userID, "h": harness.Id, "p": providerRec.Id},
 		)
+		if selErr != nil && !isRecordNotFound(selErr) {
+			return nil, fmt.Errorf("resolve credential selection for provider %s: %w", providerRec.Id, selErr)
+		}
 		mode := ""
 		if sel != nil {
 			mode = sel.GetString("mode")
@@ -506,17 +620,27 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string, harne
 			// decide "oauth" while ProvisionHarnessInstance's oauthAccountID
 			// stayed empty, launching a container with no credentials at
 			// all). There must be exactly one place that decides this.
-			if account, err := ResolveOAuthAccountForLaunch(app, userID, harness.Id, providerRec.Id); err == nil && account != nil {
+			if account, err := ResolveOAuthAccountForLaunch(app, userID, harness.Id, providerRec.Id); err != nil {
+				return nil, err
+			} else if account != nil {
 				mode = "oauth"
-			} else if key, _ := app.FindFirstRecordByFilter("provider_api_keys", "owner = {:u} && provider = {:p}", map[string]any{"u": userID, "p": providerRec.Id}); key != nil {
+			} else if key, keyErr := app.FindFirstRecordByFilter("provider_api_keys", "owner = {:u} && provider = {:p}", map[string]any{"u": userID, "p": providerRec.Id}); keyErr != nil && !isRecordNotFound(keyErr) {
+				return nil, fmt.Errorf("resolve API key for provider %s: %w", providerRec.Id, keyErr)
+			} else if key != nil {
 				mode = "api_key"
 			}
 		}
 		switch mode {
 		case "api_key":
 			key, err := app.FindFirstRecordByFilter("provider_api_keys", "owner = {:u} && provider = {:p}", map[string]any{"u": userID, "p": providerRec.Id})
-			if err != nil || key == nil {
-				continue
+			if err != nil {
+				if isRecordNotFound(err) {
+					return nil, fmt.Errorf("selected API key for provider %s was not found", providerRec.Id)
+				}
+				return nil, fmt.Errorf("resolve selected API key for provider %s: %w", providerRec.Id, err)
+			}
+			if key == nil {
+				return nil, fmt.Errorf("selected API key for provider %s was not found", providerRec.Id)
 			}
 			names := envVarNamesFor(edge, providerRec)
 			for _, name := range names {
@@ -534,6 +658,9 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string, harne
 				}
 			}
 		case "oauth":
+			if _, err := ResolveOAuthAccountForLaunch(app, userID, harness.Id, providerRec.Id); err != nil {
+				return nil, err
+			}
 			// No env vars: the credential lives on the mounted auth-home
 			// volume. ProvisionHarnessInstance (Step 5) resolves and
 			// validates the actual oauth_account BEFORE calling renderEnv

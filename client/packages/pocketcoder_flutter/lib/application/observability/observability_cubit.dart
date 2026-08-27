@@ -61,7 +61,7 @@ class ObservabilityCubit extends AppCubit<ObservabilityState> {
     _logSub = _repository.watchLogs(containerName).listen(
       (logLine) {
         // Keep only last 500 lines for performance
-        final updatedLogs = List<String>.from(state.logs)..add(logLine);
+        final updatedLogs = List<LogEntry>.from(state.logs)..add(logLine);
         if (updatedLogs.length > 500) {
           updatedLogs.removeAt(0);
         }

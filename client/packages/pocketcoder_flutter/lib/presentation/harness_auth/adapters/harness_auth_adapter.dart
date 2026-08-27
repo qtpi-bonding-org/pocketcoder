@@ -62,7 +62,8 @@ class HarnessAuthAdapter
           onStartAccount: (h, provider) async {
             final visibility = await _chooseVisibility(context);
             if (visibility != null) {
-              cubit.startWithAccount(harnessId: h.id, provider: provider, visibility: visibility);
+              cubit.startWithAccount(
+                  harnessId: h.id, provider: provider, visibility: visibility);
             }
           },
           onStartNone: (h) async {
@@ -85,7 +86,10 @@ class HarnessAuthAdapter
       .where((h) =>
           !onboarding ||
           ['claude-code', 'codex'].contains(h.cliId.trim().toLowerCase()))
-      .any((h) => state.statuses[h.id]?.isConnected == true);
+      .any((h) =>
+          state.statuses.values
+              .any((status) => status.harness == h.id && status.isConnected) ==
+          true);
 
   Future<void> _openFirstChat(
     BuildContext context,
@@ -96,7 +100,10 @@ class HarnessAuthAdapter
         .where((h) =>
             !onboarding ||
             ['claude-code', 'codex'].contains(h.cliId.trim().toLowerCase()))
-        .firstWhere((h) => state.statuses[h.id]?.isConnected == true);
+        .firstWhere((h) =>
+            state.statuses.values.any(
+                (status) => status.harness == h.id && status.isConnected) ==
+            true);
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final l10n = context.l10n;
@@ -139,5 +146,4 @@ class HarnessAuthAdapter
           ],
         ),
       );
-
 }

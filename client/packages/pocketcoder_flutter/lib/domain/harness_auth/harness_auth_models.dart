@@ -27,20 +27,17 @@ class HarnessAuthChallenge {
 class HarnessAuthAttempt {
   const HarnessAuthAttempt({
     required this.id,
-    required this.provider,
     required this.status,
     this.lastError,
   });
 
   final String id;
-  final String provider;
   final String status;
   final String? lastError;
 
   factory HarnessAuthAttempt.fromJson(Map<String, dynamic> json) {
     return HarnessAuthAttempt(
       id: json['id']?.toString() ?? '',
-      provider: json['provider']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       lastError: json['lastError']?.toString(),
     );
@@ -101,7 +98,6 @@ class HarnessAuthStatus {
       status == 'awaiting_input' ||
       status == 'starting';
   bool get isDisconnected => status == 'disconnected';
-  bool get needsApiKey => status == 'needs_api_key';
   bool get isDeploymentVisible =>
       visibility == harnessAccountVisibilityDeployment;
 }
