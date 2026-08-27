@@ -185,7 +185,11 @@ type JsonObject map[string]interface{}
 type LogEvent map[string]interface{}
 
 // McpOAuthRequest defines model for McpOAuthRequest.
-type McpOAuthRequest map[string]interface{}
+type McpOAuthRequest struct {
+	AccessToken  string  `json:"access_token"`
+	RefreshToken *string `json:"refresh_token,omitempty"`
+	ServerName   string  `json:"server_name"`
+}
 
 // McpRequest defines model for McpRequest.
 type McpRequest map[string]interface{}
@@ -209,7 +213,13 @@ type PromptRequest struct {
 }
 
 // PushRequest defines model for PushRequest.
-type PushRequest map[string]interface{}
+type PushRequest struct {
+	Chat    *string `json:"chat,omitempty"`
+	Message *string `json:"message,omitempty"`
+	Title   *string `json:"title,omitempty"`
+	Type    string  `json:"type"`
+	UserId  string  `json:"user_id"`
+}
 
 // ScheduleRunAcceptedResponse defines model for ScheduleRunAcceptedResponse.
 type ScheduleRunAcceptedResponse struct {

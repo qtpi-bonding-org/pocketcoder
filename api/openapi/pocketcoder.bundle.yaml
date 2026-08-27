@@ -977,10 +977,38 @@ components:
       additionalProperties: true
     McpOAuthRequest:
       type: object
-      additionalProperties: true
+      required:
+        - server_name
+        - access_token
+      additionalProperties: false
+      properties:
+        server_name:
+          type: string
+          minLength: 1
+        access_token:
+          type: string
+          minLength: 1
+        refresh_token:
+          type: string
     PushRequest:
       type: object
-      additionalProperties: true
+      required:
+        - user_id
+        - type
+      additionalProperties: false
+      properties:
+        user_id:
+          type: string
+          minLength: 1
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          minLength: 1
+        chat:
+          type: string
     FileListResponse:
       type: object
       required:

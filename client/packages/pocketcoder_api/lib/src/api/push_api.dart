@@ -12,6 +12,7 @@ import 'package:dio/dio.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/json_object.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
+import 'package:pocketcoder_api/src/model/push_request.dart';
 
 class PushApi {
 
@@ -25,7 +26,7 @@ class PushApi {
   ///
   ///
   /// Parameters:
-  /// * [requestBody]
+  /// * [pushRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -36,7 +37,7 @@ class PushApi {
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<BuiltMap<String, JsonObject>>> sendPushNotification({
-    required BuiltMap<String, JsonObject> requestBody,
+    required PushRequest pushRequest,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -68,8 +69,8 @@ class PushApi {
     dynamic _bodyData;
 
     try {
-      const _type = FullType(BuiltMap, [FullType(String), FullType(JsonObject)]);
-      _bodyData = _serializers.serialize(requestBody, specifiedType: _type);
+      const _type = FullType(PushRequest);
+      _bodyData = _serializers.serialize(pushRequest, specifiedType: _type);
 
     } catch(error, stackTrace) {
       throw DioException(

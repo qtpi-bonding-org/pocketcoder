@@ -12,6 +12,7 @@ import 'package:dio/dio.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/json_object.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
+import 'package:pocketcoder_api/src/model/mcp_o_auth_request.dart';
 
 class McpApi {
 
@@ -127,7 +128,7 @@ class McpApi {
   ///
   ///
   /// Parameters:
-  /// * [requestBody]
+  /// * [mcpOAuthRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -138,7 +139,7 @@ class McpApi {
   /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
   /// Throws [DioException] if API call or serialization fails
   Future<Response<BuiltMap<String, JsonObject>>> storeMcpOAuthToken({
-    required BuiltMap<String, JsonObject> requestBody,
+    required McpOAuthRequest mcpOAuthRequest,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -170,8 +171,8 @@ class McpApi {
     dynamic _bodyData;
 
     try {
-      const _type = FullType(BuiltMap, [FullType(String), FullType(JsonObject)]);
-      _bodyData = _serializers.serialize(requestBody, specifiedType: _type);
+      const _type = FullType(McpOAuthRequest);
+      _bodyData = _serializers.serialize(mcpOAuthRequest, specifiedType: _type);
 
     } catch(error, stackTrace) {
       throw DioException(

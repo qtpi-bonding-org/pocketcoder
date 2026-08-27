@@ -245,8 +245,8 @@ components:
     HarnessAuthChallenge: {type: object, required: [type, text], additionalProperties: false, properties: {type: {type: string}, text: {type: string}, target: {type: string}, details: {type: string}}}
     ModelRequest: {type: object, required: [model], additionalProperties: false, properties: {model: {type: string, minLength: 1}}}
     McpRequest: {type: object, additionalProperties: true}
-    McpOAuthRequest: {type: object, additionalProperties: true}
-    PushRequest: {type: object, additionalProperties: true}
+    McpOAuthRequest: {type: object, required: [server_name, access_token], additionalProperties: false, properties: {server_name: {type: string, minLength: 1}, access_token: {type: string, minLength: 1}, refresh_token: {type: string}}}
+    PushRequest: {type: object, required: [user_id, type], additionalProperties: false, properties: {user_id: {type: string, minLength: 1}, title: {type: string}, message: {type: string}, type: {type: string, minLength: 1}, chat: {type: string}}}
     FileListResponse: {type: object, required: [path, entries], additionalProperties: false, properties: {path: {type: string}, entries: {type: array, items: {$ref: '#/components/schemas/FileEntry'}}}}
     FileEntry: {type: object, required: [name, isDir, size, modTime], additionalProperties: false, properties: {name: {type: string}, isDir: {type: boolean}, size: {type: integer, format: int64}, modTime: {type: string}}}
     ContainerListResponse: {type: object, required: [containers], additionalProperties: false, properties: {containers: {type: array, items: {$ref: '#/components/schemas/ContainerSummary'}}}}

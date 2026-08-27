@@ -26,9 +26,11 @@ import 'package:pocketcoder_api/src/model/harness_auth_attempt.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_challenge.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_status.dart';
 import 'package:pocketcoder_api/src/model/harness_request.dart';
+import 'package:pocketcoder_api/src/model/mcp_o_auth_request.dart';
 import 'package:pocketcoder_api/src/model/mode_request.dart';
 import 'package:pocketcoder_api/src/model/model_request.dart';
 import 'package:pocketcoder_api/src/model/prompt_request.dart';
+import 'package:pocketcoder_api/src/model/push_request.dart';
 import 'package:pocketcoder_api/src/model/schedule_run_accepted_response.dart';
 
 part 'serializers.g.dart';
@@ -46,9 +48,11 @@ part 'serializers.g.dart';
   HarnessAuthChallenge,
   HarnessAuthStatus,
   HarnessRequest,
+  McpOAuthRequest,
   ModeRequest,
   ModelRequest,
   PromptRequest,
+  PushRequest,
   ScheduleRunAcceptedResponse,
 ])
 Serializers serializers = (_$serializers.toBuilder()
