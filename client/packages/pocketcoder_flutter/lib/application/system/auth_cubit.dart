@@ -85,4 +85,14 @@ class AuthCubit extends AppCubit<AuthState> {
       return createSuccessState();
     });
   }
+
+  /// Unlike [logout], also forgets the saved server URL so the app returns
+  /// to a clean connect-to-a-server state rather than re-offering the same
+  /// (possibly stale) deployment on the next login attempt.
+  Future<void> factoryReset() async {
+    return tryOperation(() async {
+      await _authRepository.clearSession();
+      return createSuccessState();
+    });
+  }
 }

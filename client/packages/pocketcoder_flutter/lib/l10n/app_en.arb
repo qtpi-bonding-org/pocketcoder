@@ -379,6 +379,10 @@
   "settingsLogoutConfirmBody": "This will end your current session. You will need to log in again to continue.",
   "settingsLogoutCancel": "CANCEL",
   "settingsLogoutConfirm": "SIGN OUT",
+  "settingsFactoryResetConfirmTitle": "RESET",
+  "settingsFactoryResetConfirmBody": "This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.",
+  "settingsFactoryResetCancel": "CANCEL",
+  "settingsFactoryResetConfirm": "RESET",
 
   "agentTitle": "AGENT REGISTRY",
   "agentModelsPersonas": "MODELS & PERSONAS",

@@ -10,11 +10,13 @@ class SettingsView extends StatelessWidget {
     required this.hasPendingMcp,
     required this.onNavigate,
     required this.onLogout,
+    required this.onFactoryReset,
   });
 
   final bool hasPendingMcp;
   final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
+  final VoidCallback onFactoryReset;
 
   List<(String, List<(String, String, String)>)> _sections(
       BuildContext context) {
@@ -69,6 +71,7 @@ class SettingsView extends StatelessWidget {
         [
           ('NOTIFICATIONS', '[CONFIGURE]', 'configureNotifications'),
           ('LOGOUT', '[SIGN OUT]', 'logout'),
+          ('RESET', '[FACTORY RESET]', 'factoryReset'),
         ]
       ),
     ];
@@ -92,10 +95,13 @@ class SettingsView extends StatelessWidget {
                       label: item.$1,
                       value: item.$2,
                       hasBadge: item.$3 == 'configureMcp' && hasPendingMcp,
-                      isDestructive: item.$3 == 'logout',
-                      onTap: () => item.$3 == 'logout'
-                          ? onLogout()
-                          : onNavigate(item.$3),
+                      isDestructive:
+                          item.$3 == 'logout' || item.$3 == 'factoryReset',
+                      onTap: () => switch (item.$3) {
+                        'logout' => onLogout(),
+                        'factoryReset' => onFactoryReset(),
+                        _ => onNavigate(item.$3),
+                      },
                     ),
                 ],
               ),

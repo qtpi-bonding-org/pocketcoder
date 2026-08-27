@@ -44,6 +44,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
             hasPendingMcp: _hasPendingMcp(snapshot.data ?? mcpCubit.state),
             onNavigate: (routeKey) => _navigateTo(context, routeKey),
             onLogout: () => _confirmLogout(context, authCubit),
+            onFactoryReset: () => _confirmFactoryReset(context, authCubit),
           ),
         ),
       ),
@@ -67,6 +68,29 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
               cubit.logout();
             },
             child: Text(context.l10n.settingsLogoutConfirm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmFactoryReset(BuildContext context, AuthCubit cubit) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => TerminalDialog(
+        title: context.l10n.settingsFactoryResetConfirmTitle,
+        content: Text(context.l10n.settingsFactoryResetConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.l10n.settingsFactoryResetCancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              cubit.factoryReset();
+            },
+            child: Text(context.l10n.settingsFactoryResetConfirm),
           ),
         ],
       ),

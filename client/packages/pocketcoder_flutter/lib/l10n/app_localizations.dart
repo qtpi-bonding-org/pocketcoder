@@ -1720,6 +1720,30 @@ abstract class AppLocalizations {
   /// **'SIGN OUT'**
   String get settingsLogoutConfirm;
 
+  /// No description provided for @settingsFactoryResetConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get settingsFactoryResetConfirmTitle;
+
+  /// No description provided for @settingsFactoryResetConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.'**
+  String get settingsFactoryResetConfirmBody;
+
+  /// No description provided for @settingsFactoryResetCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get settingsFactoryResetCancel;
+
+  /// No description provided for @settingsFactoryResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get settingsFactoryResetConfirm;
+
   /// No description provided for @agentTitle.
   ///
   /// In en, this message translates to:

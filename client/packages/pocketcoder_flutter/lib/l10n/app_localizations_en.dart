@@ -878,6 +878,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLogoutConfirm => 'SIGN OUT';
 
   @override
+  String get settingsFactoryResetConfirmTitle => 'RESET';
+
+  @override
+  String get settingsFactoryResetConfirmBody =>
+      'This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.';
+
+  @override
+  String get settingsFactoryResetCancel => 'CANCEL';
+
+  @override
+  String get settingsFactoryResetConfirm => 'RESET';
+
+  @override
   String get agentTitle => 'AGENT REGISTRY';
 
   @override
