@@ -604,6 +604,12 @@ abstract class AppLocalizations {
   /// **'CHATGPT ACCOUNT LOGIN'**
   String get onboardingCodexAccountLogin;
 
+  /// No description provided for @onboardingHarnessAccountLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'{harness} ACCOUNT LOGIN'**
+  String onboardingHarnessAccountLogin(String harness);
+
   /// No description provided for @onboardingHarnessLoginTitle.
   ///
   /// In en, this message translates to:

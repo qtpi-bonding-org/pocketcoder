@@ -275,6 +275,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingCodexAccountLogin => 'CHATGPT ACCOUNT LOGIN';
 
   @override
+  String onboardingHarnessAccountLogin(String harness) {
+    return '$harness ACCOUNT LOGIN';
+  }
+
+  @override
   String onboardingHarnessLoginTitle(String provider) {
     return '$provider LOGIN';
   }

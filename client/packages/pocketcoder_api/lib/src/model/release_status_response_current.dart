@@ -19,6 +19,7 @@ part 'release_status_response_current.g.dart';
 /// * [dataVersion]
 /// * [deploymentContractVersion]
 /// * [compatibility]
+/// * [selectedHarnesses]
 @BuiltValue()
 abstract class ReleaseStatusResponseCurrent implements Built<ReleaseStatusResponseCurrent, ReleaseStatusResponseCurrentBuilder> {
   @BuiltValueField(wireName: r'releaseDigest')
@@ -38,6 +39,9 @@ abstract class ReleaseStatusResponseCurrent implements Built<ReleaseStatusRespon
 
   @BuiltValueField(wireName: r'compatibility')
   BuiltMap<String, JsonObject?>? get compatibility;
+
+  @BuiltValueField(wireName: r'selectedHarnesses')
+  BuiltList<String>? get selectedHarnesses;
 
   ReleaseStatusResponseCurrent._();
 
@@ -102,6 +106,13 @@ class _$ReleaseStatusResponseCurrentSerializer implements PrimitiveSerializer<Re
       yield serializers.serialize(
         object.compatibility,
         specifiedType: const FullType(BuiltMap, [FullType(String), FullType.nullable(JsonObject)]),
+      );
+    }
+    if (object.selectedHarnesses != null) {
+      yield r'selectedHarnesses';
+      yield serializers.serialize(
+        object.selectedHarnesses,
+        specifiedType: const FullType(BuiltList, [FullType(String)]),
       );
     }
   }
@@ -174,6 +185,14 @@ class _$ReleaseStatusResponseCurrentSerializer implements PrimitiveSerializer<Re
           ) as BuiltMap<String, JsonObject?>?;
           if (valueDes == null) continue;
           result.compatibility.replace(valueDes);
+          break;
+        case r'selectedHarnesses':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(BuiltList, [FullType(String)]),
+          ) as BuiltList<String>?;
+          if (valueDes == null) continue;
+          result.selectedHarnesses.replace(valueDes);
           break;
         default:
           unhandled.add(key);

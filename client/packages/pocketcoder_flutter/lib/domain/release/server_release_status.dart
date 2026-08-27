@@ -12,6 +12,7 @@ class ServerReleaseStatusSnapshot {
     required this.currentDataVersion,
     required this.currentReleaseDigest,
     required this.checkedAt,
+    this.selectedHarnesses = const [],
     this.availableVersion,
     this.availableDataVersion,
     this.availableReleaseDigest,
@@ -27,6 +28,7 @@ class ServerReleaseStatusSnapshot {
   final int currentDataVersion;
   final String currentReleaseDigest;
   final DateTime? checkedAt;
+  final List<String> selectedHarnesses;
   final String? availableVersion;
   final int? availableDataVersion;
   final String? availableReleaseDigest;
@@ -61,6 +63,7 @@ class ServerReleaseStatusSnapshot {
         metadata['currentReleaseDigest'] ?? release['releaseDigest'],
       ),
       checkedAt: DateTime.tryParse(_string(metadata['checkedAt'])),
+      selectedHarnesses: _stringList(release['selectedHarnesses']),
       availableVersion: _nullableString(metadata['availableVersion']),
       availableDataVersion: _nullableInteger(
         metadata['availableDataVersion'],
@@ -96,4 +99,7 @@ class ServerReleaseStatusSnapshot {
   static int _integer(Object? value) => value is int ? value : 0;
 
   static int? _nullableInteger(Object? value) => value is int ? value : null;
+
+  static List<String> _stringList(Object? value) =>
+      value is List ? value.whereType<String>().toList() : const [];
 }

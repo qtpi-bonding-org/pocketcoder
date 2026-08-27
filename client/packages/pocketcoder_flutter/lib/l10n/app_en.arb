@@ -101,6 +101,10 @@
   "onboardingHarnessNotFound": "HARNESS NOT FOUND",
   "onboardingClaudeAccountLogin": "CLAUDE ACCOUNT LOGIN",
   "onboardingCodexAccountLogin": "CHATGPT ACCOUNT LOGIN",
+  "onboardingHarnessAccountLogin": "{harness} ACCOUNT LOGIN",
+  "@onboardingHarnessAccountLogin": {
+    "placeholders": {"harness": {"type": "String"}}
+  },
   "onboardingHarnessLoginTitle": "{provider} LOGIN",
   "@onboardingHarnessLoginTitle": {
     "placeholders": {"provider": {"type": "String"}}

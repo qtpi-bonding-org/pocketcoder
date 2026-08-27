@@ -499,6 +499,7 @@ func (s *server) GetReleaseStatus(ctx context.Context, _ openapi.GetReleaseStatu
 	response.Current.ServerVersion = &current.ServerVersion
 	response.Current.DataVersion = &current.DataVersion
 	response.Current.DeploymentContractVersion = &current.DeploymentContractVersion
+	response.Current.SelectedHarnesses = &current.SelectedHarnesses
 	return openapi.GetReleaseStatus200JSONResponse(response), nil
 }
 func (s *server) RunScheduleNow(ctx context.Context, request openapi.RunScheduleNowRequestObject) (openapi.RunScheduleNowResponseObject, error) {

@@ -15,6 +15,7 @@ class AgentAuthView extends StatelessWidget {
     required this.error,
     required this.onSelected,
     required this.harnessProvidersLoaded,
+    this.selectedHarnesses = const [],
   });
 
   final UiFlowStatus status;
@@ -23,11 +24,22 @@ class AgentAuthView extends StatelessWidget {
   final ValueChanged<Harnesse> onSelected;
   final bool harnessProvidersLoaded;
 
+  /// The harness cli_ids chosen for this deployment during initial
+  /// provisioning (server/pocketbase's getReleaseStatus, sourced from
+  /// release-manager's current.json). Falls back to the original
+  /// claude-code/codex-only allowlist when empty -- either this is an older
+  /// deployment predating this field, or ReleaseStatusCubit hasn't loaded
+  /// yet.
+  final List<String> selectedHarnesses;
+
   @override
   Widget build(BuildContext context) {
+    final allowlist = selectedHarnesses.isNotEmpty
+        ? selectedHarnesses.map((id) => id.trim().toLowerCase()).toSet()
+        : {'claude-code', 'codex'};
     final supported = harnesses.where((harness) {
       final cli = harness.cliId.trim().toLowerCase();
-      return cli == 'claude-code' || cli == 'codex';
+      return allowlist.contains(cli);
     }).toList();
 
     return PocketCoderShell(
@@ -119,9 +131,12 @@ class _HarnessChoiceCard extends StatelessWidget {
                   ),
                   VSpace.x1,
                   TerminalText(
-                    harness.cliId.toLowerCase() == 'codex'
-                        ? context.l10n.onboardingCodexAccountLogin
-                        : context.l10n.onboardingClaudeAccountLogin,
+                    switch (harness.cliId.trim().toLowerCase()) {
+                      'codex' => context.l10n.onboardingCodexAccountLogin,
+                      'claude-code' => context.l10n.onboardingClaudeAccountLogin,
+                      _ => context.l10n
+                          .onboardingHarnessAccountLogin(harness.name),
+                    },
                     alpha: 0.6,
                   ),
                 ],

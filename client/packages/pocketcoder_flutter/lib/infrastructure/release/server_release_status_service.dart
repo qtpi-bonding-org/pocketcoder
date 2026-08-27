@@ -39,6 +39,7 @@ class ServerReleaseStatusService implements IServerReleaseStatusService {
         'dataVersion': current.dataVersion,
         'deploymentContractVersion': current.deploymentContractVersion,
         'compatibility': _decodeNullableJsonMap(current.compatibility),
+        'selectedHarnesses': current.selectedHarnesses?.toList(),
       },
       'metadataStatus': _decodeNullableJsonMap(status.metadataStatus),
     });

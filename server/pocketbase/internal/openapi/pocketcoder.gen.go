@@ -247,6 +247,7 @@ type ReleaseStatusResponse struct {
 		DataVersion               *int                    `json:"dataVersion,omitempty"`
 		DeploymentContractVersion *int                    `json:"deploymentContractVersion,omitempty"`
 		ReleaseDigest             *string                 `json:"releaseDigest,omitempty"`
+		SelectedHarnesses         *[]string               `json:"selectedHarnesses,omitempty"`
 		ServerVersion             *string                 `json:"serverVersion,omitempty"`
 		SourceCommit              *string                 `json:"sourceCommit,omitempty"`
 	} `json:"current"`

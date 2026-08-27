@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/external_auth_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/agent_auth_view.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,6 +31,9 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     final harnesses = adapter.cubitField(selectHarnesses);
     final auth = context.read<HarnessAuthCubit>();
     final status = adapter.cubitStatus();
+    final selectedHarnesses =
+        ReleaseStatusScope.maybeOf(context)?.state.snapshot?.selectedHarnesses ??
+            const [];
     return ValueListenableBuilder<UiFlowStatus>(
       valueListenable: status,
       builder: (context, status, _) => ValueListenableBuilder<List<Harnesse>>(
@@ -40,6 +44,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
           error: context.read<ProviderCubit>().state.error,
           onSelected: (harness) => _select(context, harness),
           harnessProvidersLoaded: auth.state.harnessProvidersLoaded,
+          selectedHarnesses: selectedHarnesses,
         ),
       ),
     );

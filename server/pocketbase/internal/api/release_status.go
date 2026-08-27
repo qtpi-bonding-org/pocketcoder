@@ -22,14 +22,16 @@ type releasePointerResponse struct {
 	DataVersion               int             `json:"dataVersion"`
 	DeploymentContractVersion int             `json:"deploymentContractVersion"`
 	Compatibility             json.RawMessage `json:"compatibility"`
+	SelectedHarnesses         []string        `json:"selectedHarnesses"`
 }
 
 type ReleaseStatusDocument struct {
-	ReleaseDigest             string `json:"releaseDigest"`
-	SourceCommit              string `json:"sourceCommit"`
-	ServerVersion             string `json:"serverVersion"`
-	DataVersion               int    `json:"dataVersion"`
-	DeploymentContractVersion int    `json:"deploymentContractVersion"`
+	ReleaseDigest             string   `json:"releaseDigest"`
+	SourceCommit              string   `json:"sourceCommit"`
+	ServerVersion             string   `json:"serverVersion"`
+	DataVersion               int      `json:"dataVersion"`
+	DeploymentContractVersion int      `json:"deploymentContractVersion"`
+	SelectedHarnesses         []string `json:"selectedHarnesses"`
 }
 
 func ReleaseStatus() (ReleaseStatusDocument, map[string]any, error) {
@@ -41,7 +43,7 @@ func ReleaseStatus() (ReleaseStatusDocument, map[string]any, error) {
 	if err := readJSON(filepath.Join(releaseStateDir(), "metadata-status.json"), &metadata); err != nil {
 		metadata = map[string]any{"schemaVersion": 1, "status": "unknown"}
 	}
-	return ReleaseStatusDocument{pointer.ReleaseDigest, pointer.SourceCommit, pointer.ServerVersion, pointer.DataVersion, pointer.DeploymentContractVersion}, metadata, nil
+	return ReleaseStatusDocument{pointer.ReleaseDigest, pointer.SourceCommit, pointer.ServerVersion, pointer.DataVersion, pointer.DeploymentContractVersion, pointer.SelectedHarnesses}, metadata, nil
 }
 
 var developmentCompatibility = map[string]any{

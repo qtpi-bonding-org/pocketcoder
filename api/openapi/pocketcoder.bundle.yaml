@@ -1159,6 +1159,10 @@ components:
             compatibility:
               type: object
               additionalProperties: true
+            selectedHarnesses:
+              type: array
+              items:
+                type: string
         metadataStatus:
           type: object
           additionalProperties: true
