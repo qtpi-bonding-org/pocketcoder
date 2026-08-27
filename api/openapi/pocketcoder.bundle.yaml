@@ -836,12 +836,12 @@ components:
     ErrorResponse:
       type: object
       required:
-        - code
+        - status
         - message
         - data
       additionalProperties: false
       properties:
-        code:
+        status:
           type: integer
         message:
           type: string

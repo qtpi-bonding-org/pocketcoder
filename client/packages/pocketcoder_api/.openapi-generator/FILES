@@ -81,8 +81,3 @@ lib/src/model/release_status_response_current.dart
 lib/src/model/schedule_run_accepted_response.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/harness_instance_log_response_test.dart
-test/ollama_models_response_test.dart
-test/release_compatibility_response_test.dart
-test/release_status_response_current_test.dart
-test/release_status_response_test.dart
