@@ -182,6 +182,23 @@ class ChatCubit extends AppCubit<ChatState> {
     final myGeneration = _generation;
     _lastPrompt = text;
     logDebug('🤖 [ChatCubit] sendPrompt', {'chatId': chatId, 'length': text.length});
+    // Optimistic local echo: the transcript's only real source of truth is
+    // ConversationReducer, fed by the backend's AG-UI event stream — and
+    // that stream never echoes the user's own prompt back (it's one-way
+    // input to the run, not a replayed event). Without this, the user's
+    // turn never renders even though the agent clearly received it. Insert
+    // it directly via addLocalMessage so it appears immediately; if some
+    // backend ever does echo it back under the same id, _upsert's keying
+    // supersedes this entry in place instead of duplicating it.
+    final reducer = _reducer;
+    if (reducer != null) {
+      reducer.addLocalMessage(
+        id: 'local-${DateTime.now().microsecondsSinceEpoch}',
+        role: 'user',
+        text: text,
+      );
+      emit(state.copyWith(conversation: reducer.current));
+    }
     await tryOperation(() async {
       try {
         await transport.sendMessage(text);

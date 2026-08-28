@@ -140,8 +140,8 @@ void main() {
   });
 
   test(
-      'sendPrompt calls the repository via transport and does not mutate '
-      'conversation directly (effect only arrives via the event stream)',
+      'sendPrompt optimistically inserts the user\'s message into the '
+      'conversation immediately, before any event arrives',
       () async {
     cubit.open('chat-1');
     await _settle();
@@ -149,10 +149,34 @@ void main() {
     await cubit.sendPrompt('hello agent');
 
     expect(repo.promptCalls, ['hello agent']);
-    // No direct mutation: sendPrompt alone (with no event emission) leaves
-    // the conversation exactly where the reducer left it — empty, since the
-    // fake never pushed events in this test.
-    expect(cubit.state.conversation, agui_widgets.Conversation.empty);
+    expect(cubit.state.conversation.timeline, hasLength(1));
+    final item = cubit.state.conversation.timeline.single
+        as agui_widgets.TextTimelineItem;
+    expect(item.role, 'user');
+    expect(item.text, 'hello agent');
+  });
+
+  test(
+      'a locally-inserted user message is superseded, not duplicated, if '
+      'the backend later echoes a real event for the same run',
+      () async {
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.sendPrompt('hello agent');
+
+    final localId = (cubit.state.conversation.timeline.single
+            as agui_widgets.TextTimelineItem)
+        .id;
+    repo.controllerFor('chat-1').add([
+      agui.TextMessageStartEvent(
+          messageId: localId, role: agui.TextMessageRole.user),
+      agui.TextMessageContentEvent(
+          messageId: localId, delta: 'hello agent'),
+      agui.TextMessageEndEvent(messageId: localId),
+    ]);
+    await _settle();
+
+    expect(cubit.state.conversation.timeline, hasLength(1));
   });
 
   test(
