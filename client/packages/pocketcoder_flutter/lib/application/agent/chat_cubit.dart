@@ -4,6 +4,7 @@ import 'package:ag_ui/ag_ui.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
+import 'package:uuid/uuid.dart';
 
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
@@ -191,10 +192,11 @@ class ChatCubit extends AppCubit<ChatState> {
     // it directly via addLocalMessage so it appears immediately; if some
     // backend ever does echo it back under the same id, _upsert's keying
     // supersedes this entry in place instead of duplicating it.
+    final messageId = const Uuid().v4();
     final reducer = _reducer;
     if (reducer != null) {
       reducer.addLocalMessage(
-        id: 'local-${DateTime.now().microsecondsSinceEpoch}',
+        id: messageId,
         role: 'user',
         text: text,
       );
@@ -202,7 +204,7 @@ class ChatCubit extends AppCubit<ChatState> {
     }
     await tryOperation(() async {
       try {
-        await transport.sendMessage(text);
+        await transport.sendMessage(text, messageId: messageId);
       } catch (error, stackTrace) {
         logError(
             '🤖 [ChatCubit] sendPrompt failed | {chatId: $chatId, '

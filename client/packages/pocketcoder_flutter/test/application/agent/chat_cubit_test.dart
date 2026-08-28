@@ -8,6 +8,7 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
     as agui_widgets;
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:uuid/uuid.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
@@ -22,6 +23,7 @@ import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.
 class _FakeAgentChatRepository implements AgentChatRepository {
   final Map<String, StreamController<List<agui.BaseEvent>>> _controllers = {};
   final List<String> promptCalls = [];
+  final List<String?> promptMessageIds = [];
   final List<int> cursorForCalls = [];
   final List<int> ingestCalls = [];
   int _nextCursor = 0;
@@ -67,8 +69,10 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   }
 
   @override
-  Future<String> sendPrompt(String chatId, String text) async {
+  Future<String> sendPrompt(String chatId, String text,
+      {String? messageId}) async {
     promptCalls.add(text);
+    promptMessageIds.add(messageId);
     final gate = _sendPromptGate;
     if (gate != null) await gate.future;
     return 'run-123';
@@ -241,5 +245,19 @@ void main() {
     await cubit.close();
 
     expect(repo.cancelStreamsCalls, 1);
+  });
+
+  test(
+      'sendPrompt uses a real UUID for the optimistic message id, and sends '
+      'the same id to the server', () async {
+    cubit.open('chat-1');
+    await _settle();
+
+    await cubit.sendPrompt('hello agent');
+
+    final item = cubit.state.conversation.timeline.single
+        as agui_widgets.TextTimelineItem;
+    expect(Uuid.isValidUUID(fromString: item.id), isTrue);
+    expect(repo.promptMessageIds, [item.id]);
   });
 }
