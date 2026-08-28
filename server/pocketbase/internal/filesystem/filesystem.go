@@ -33,12 +33,14 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-// fileEntry is one immediate child of a listed directory.
-type FileEntry struct {
-	Name    string `json:"name"`
-	IsDir   bool   `json:"isDir"`
-	Size    int64  `json:"size"`
-	ModTime string `json:"modTime"`
+// FileTreeEntry is one node of a full recursive directory tree. Size/ModTime
+// are only meaningful for files; Children is only populated for directories.
+type FileTreeEntry struct {
+	Name     string          `json:"name"`
+	IsDir    bool            `json:"isDir"`
+	Size     int64           `json:"size,omitempty"`
+	ModTime  string          `json:"modTime,omitempty"`
+	Children []FileTreeEntry `json:"children,omitempty"`
 }
 
 // workspaceRoot is the directory the file endpoints serve. It's a package
@@ -75,74 +77,109 @@ func resolveWorkspacePath(pathParam string) (cleanPath string, ok bool) {
 	return cleanPath, true
 }
 
-// groupImmediateChildren collapses a flat, recursive listing (as returned by
-// filesystem.System.List, which never sets blob.ListOptions.Delimiter and so
-// never populates ListObject.IsDir) into immediate-children-only entries
-// relative to prefix. Deeper descendants of a subdirectory are deduped into
-// a single directory entry.
-func groupImmediateChildren(prefix string, objects []*blob.ListObject) []FileEntry {
-	seen := map[string]FileEntry{}
-	order := []string{}
-	for _, obj := range objects {
-		rel := strings.TrimPrefix(obj.Key, prefix)
-		if rel == "" {
-			continue
-		}
-		parts := strings.SplitN(rel, "/", 2)
-		name := parts[0]
-		isDir := len(parts) > 1
-
-		if existing, exists := seen[name]; exists {
-			if isDir && !existing.IsDir {
-				existing.IsDir = true
-				existing.Size = 0
-				existing.ModTime = ""
-				seen[name] = existing
-			}
-			continue
-		}
-
-		entry := FileEntry{Name: name, IsDir: isDir}
-		if !isDir {
-			entry.Size = obj.Size
-			entry.ModTime = obj.ModTime.Format(time.RFC3339)
-		}
-		seen[name] = entry
-		order = append(order, name)
-	}
-	sort.Strings(order)
-	result := make([]FileEntry, 0, len(order))
-	for _, name := range order {
-		result = append(result, seen[name])
-	}
-	return result
-}
-
-func ListWorkspaceFiles(re *core.RequestEvent) (string, []FileEntry, error) {
+// listObjectsForPath resolves the request's ?path= query param against
+// workspaceRoot (rejecting any escape attempt) and returns the full flat,
+// recursive object listing under it, for ListWorkspaceFileTree to nest into
+// a full tree.
+func listObjectsForPath(re *core.RequestEvent) (cleanPath, prefix string, objects []*blob.ListObject, err error) {
 	if re.Auth == nil {
-		return "", nil, re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
+		return "", "", nil, re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
 	}
 	pathParam := re.Request.URL.Query().Get("path")
 	cleanPath, ok := resolveWorkspacePath(pathParam)
 	if !ok {
-		return "", nil, re.ForbiddenError("Path escape attempt detected.", nil)
+		return "", "", nil, re.ForbiddenError("Path escape attempt detected.", nil)
 	}
-	fsys, err := filesystem.NewLocal(workspaceRoot)
-	if err != nil {
-		return "", nil, re.InternalServerError("Sovereign storage failure.", err)
+	fsys, ferr := filesystem.NewLocal(workspaceRoot)
+	if ferr != nil {
+		return "", "", nil, re.InternalServerError("Sovereign storage failure.", ferr)
 	}
 	defer fsys.Close()
-	prefix := cleanPath
+	prefix = cleanPath
 	if prefix == "." {
 		prefix = ""
 	} else {
 		prefix += "/"
 	}
-	objects, err := fsys.List(prefix)
-	if err != nil {
-		return "", nil, re.NotFoundError("Directory not found.", err)
+	objects, lerr := fsys.List(prefix)
+	if lerr != nil {
+		return "", "", nil, re.NotFoundError("Directory not found.", lerr)
 	}
-	return cleanPath, groupImmediateChildren(prefix, objects), nil
+	return cleanPath, prefix, objects, nil
+}
+
+func ListWorkspaceFileTree(re *core.RequestEvent) (string, []FileTreeEntry, error) {
+	cleanPath, prefix, objects, err := listObjectsForPath(re)
+	if err != nil {
+		return "", nil, err
+	}
+	return cleanPath, buildFileTree(prefix, objects), nil
+}
+
+// fileTreeNode is buildFileTree's scratch structure -- a directory's children
+// keyed by name, plus insertion order so the final sort is deterministic
+// regardless of how the flat object list from fsys.List was ordered.
+type fileTreeNode struct {
+	entry    FileTreeEntry
+	children map[string]*fileTreeNode
+	order    []string
+}
+
+func newFileTreeNode(name string) *fileTreeNode {
+	return &fileTreeNode{entry: FileTreeEntry{Name: name}, children: map[string]*fileTreeNode{}}
+}
+
+// buildFileTree nests a flat, recursive listing (as returned by
+// filesystem.System.List) into a full directory tree relative to prefix.
+// Mirrors groupImmediateChildren's conflict resolution: a path that appears
+// both as its own object key and as an ancestor of deeper keys (e.g. "src"
+// and "src/a.go" both present) always resolves to a directory, regardless of
+// which one was seen first.
+func buildFileTree(prefix string, objects []*blob.ListObject) []FileTreeEntry {
+	root := newFileTreeNode("")
+	for _, obj := range objects {
+		rel := strings.TrimPrefix(obj.Key, prefix)
+		if rel == "" {
+			continue
+		}
+		parts := strings.Split(rel, "/")
+		node := root
+		for i, part := range parts {
+			child, exists := node.children[part]
+			if !exists {
+				child = newFileTreeNode(part)
+				node.children[part] = child
+				node.order = append(node.order, part)
+			}
+			isLast := i == len(parts)-1
+			if isLast {
+				if !child.entry.IsDir {
+					child.entry.Size = obj.Size
+					child.entry.ModTime = obj.ModTime.Format(time.RFC3339)
+				}
+			} else {
+				child.entry.IsDir = true
+				child.entry.Size = 0
+				child.entry.ModTime = ""
+			}
+			node = child
+		}
+	}
+	return flattenFileTree(root)
+}
+
+func flattenFileTree(node *fileTreeNode) []FileTreeEntry {
+	sort.Strings(node.order)
+	result := make([]FileTreeEntry, 0, len(node.order))
+	for _, name := range node.order {
+		child := node.children[name]
+		entry := child.entry
+		if entry.IsDir {
+			entry.Children = flattenFileTree(child)
+		}
+		result = append(result, entry)
+	}
+	return result
 }
 
 func AddFileOperations(registry *operation.Registry) {
@@ -196,8 +233,8 @@ func AddFileOperations(registry *operation.Registry) {
 		return err
 	}})
 
-	registry.Add(operation.Route{OperationID: "listWorkspaceFiles", Method: http.MethodGet, Path: "/api/pocketcoder/v1/files-list", Auth: true, Action: func(re *core.RequestEvent) error {
-		cleanPath, entries, err := ListWorkspaceFiles(re)
+	registry.Add(operation.Route{OperationID: "listWorkspaceFileTree", Method: http.MethodGet, Path: "/api/pocketcoder/v1/files-tree", Auth: true, Action: func(re *core.RequestEvent) error {
+		cleanPath, entries, err := ListWorkspaceFileTree(re)
 		if err != nil {
 			return err
 		}

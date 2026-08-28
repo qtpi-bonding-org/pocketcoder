@@ -12,8 +12,8 @@ void main() {
       // TODO
     });
 
-    //Future<FileListResponse> listWorkspaceFiles({ String path }) async
-    test('test listWorkspaceFiles', () async {
+    //Future<FileTreeResponse> listWorkspaceFileTree({ String path }) async
+    test('test listWorkspaceFileTree', () async {
       // TODO
     });
 

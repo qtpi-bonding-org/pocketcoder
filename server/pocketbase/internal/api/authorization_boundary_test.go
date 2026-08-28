@@ -44,12 +44,12 @@ var authorizationBoundaryTable = []authorizationBoundaryCase{
 	{operationID: "pollHarnessAuth"}, {operationID: "submitHarnessAuth"},
 	{operationID: "cancelHarnessAuth"}, {operationID: "disconnectHarnessAuth"},
 	{operationID: "runScheduleNow", owned: true},
-	// getWorkspaceFile/listWorkspaceFiles have no role gate, but
+	// getWorkspaceFile/listWorkspaceFileTree have no role gate, but
 	// filesystem.resolveWorkspacePath legitimately 403s here because the
 	// test process has no real workspace root to resolve -- see
 	// skipRoleGateCheck's doc comment.
 	{operationID: "getWorkspaceFile", skipRoleGateCheck: true},
-	{operationID: "listWorkspaceFiles", skipRoleGateCheck: true},
+	{operationID: "listWorkspaceFileTree", skipRoleGateCheck: true},
 	{operationID: "listOllamaModels", adminOnly: true},
 	{operationID: "pullOllamaModel", adminOnly: true},
 	{operationID: "executeMcpRequest", agentOrAdmin: true},

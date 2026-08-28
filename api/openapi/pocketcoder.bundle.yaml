@@ -405,9 +405,9 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/pocketcoder/v1/files-list:
+  /api/pocketcoder/v1/files-tree:
     get:
-      operationId: listWorkspaceFiles
+      operationId: listWorkspaceFileTree
       tags:
         - files
       security:
@@ -416,11 +416,11 @@ paths:
         - $ref: '#/components/parameters/DirectoryPath'
       responses:
         '200':
-          description: Immediate directory entries
+          description: Full recursive directory tree
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileListResponse'
+                $ref: '#/components/schemas/FileTreeResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1084,7 +1084,7 @@ components:
           minLength: 1
         chat:
           type: string
-    FileListResponse:
+    FileTreeResponse:
       type: object
       required:
         - path
@@ -1096,14 +1096,12 @@ components:
         entries:
           type: array
           items:
-            $ref: '#/components/schemas/FileEntry'
-    FileEntry:
+            $ref: '#/components/schemas/FileTreeEntry'
+    FileTreeEntry:
       type: object
       required:
         - name
         - isDir
-        - size
-        - modTime
       additionalProperties: false
       properties:
         name:
@@ -1115,6 +1113,10 @@ components:
           format: int64
         modTime:
           type: string
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileTreeEntry'
     ContainerListResponse:
       type: object
       required:

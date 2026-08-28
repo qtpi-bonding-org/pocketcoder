@@ -3,81 +3,65 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:built_collection/built_collection.dart';
+import 'package:pocketcoder_api/src/model/file_tree_entry.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
-part 'file_entry.g.dart';
+part 'file_tree_response.g.dart';
 
-/// FileEntry
+/// FileTreeResponse
 ///
 /// Properties:
-/// * [name]
-/// * [isDir]
-/// * [size]
-/// * [modTime]
+/// * [path]
+/// * [entries]
 @BuiltValue()
-abstract class FileEntry implements Built<FileEntry, FileEntryBuilder> {
-  @BuiltValueField(wireName: r'name')
-  String get name;
+abstract class FileTreeResponse implements Built<FileTreeResponse, FileTreeResponseBuilder> {
+  @BuiltValueField(wireName: r'path')
+  String get path;
 
-  @BuiltValueField(wireName: r'isDir')
-  bool get isDir;
+  @BuiltValueField(wireName: r'entries')
+  BuiltList<FileTreeEntry> get entries;
 
-  @BuiltValueField(wireName: r'size')
-  int get size;
+  FileTreeResponse._();
 
-  @BuiltValueField(wireName: r'modTime')
-  String get modTime;
-
-  FileEntry._();
-
-  factory FileEntry([void updates(FileEntryBuilder b)]) = _$FileEntry;
+  factory FileTreeResponse([void updates(FileTreeResponseBuilder b)]) = _$FileTreeResponse;
 
   @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(FileEntryBuilder b) => b;
+  static void _defaults(FileTreeResponseBuilder b) => b;
 
   @BuiltValueSerializer(custom: true)
-  static Serializer<FileEntry> get serializer => _$FileEntrySerializer();
+  static Serializer<FileTreeResponse> get serializer => _$FileTreeResponseSerializer();
 }
 
-class _$FileEntrySerializer implements PrimitiveSerializer<FileEntry> {
+class _$FileTreeResponseSerializer implements PrimitiveSerializer<FileTreeResponse> {
   @override
-  final Iterable<Type> types = const [FileEntry, _$FileEntry];
+  final Iterable<Type> types = const [FileTreeResponse, _$FileTreeResponse];
 
   @override
-  final String wireName = r'FileEntry';
+  final String wireName = r'FileTreeResponse';
 
   Iterable<Object?> _serializeProperties(
     Serializers serializers,
-    FileEntry object, {
+    FileTreeResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
-    yield r'name';
+    yield r'path';
     yield serializers.serialize(
-      object.name,
+      object.path,
       specifiedType: const FullType(String),
     );
-    yield r'isDir';
+    yield r'entries';
     yield serializers.serialize(
-      object.isDir,
-      specifiedType: const FullType(bool),
-    );
-    yield r'size';
-    yield serializers.serialize(
-      object.size,
-      specifiedType: const FullType(int),
-    );
-    yield r'modTime';
-    yield serializers.serialize(
-      object.modTime,
-      specifiedType: const FullType(String),
+      object.entries,
+      specifiedType: const FullType(BuiltList, [FullType(FileTreeEntry)]),
     );
   }
 
   @override
   Object serialize(
     Serializers serializers,
-    FileEntry object, {
+    FileTreeResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) {
     return _serializeProperties(serializers, object, specifiedType: specifiedType).toList();
@@ -88,40 +72,26 @@ class _$FileEntrySerializer implements PrimitiveSerializer<FileEntry> {
     Object serialized, {
     FullType specifiedType = FullType.unspecified,
     required List<Object?> serializedList,
-    required FileEntryBuilder result,
+    required FileTreeResponseBuilder result,
     required List<Object?> unhandled,
   }) {
     for (var i = 0; i < serializedList.length; i += 2) {
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
-        case r'name':
+        case r'path':
           final valueDes = serializers.deserialize(
             value,
             specifiedType: const FullType(String),
           ) as String;
-          result.name = valueDes;
+          result.path = valueDes;
           break;
-        case r'isDir':
+        case r'entries':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(bool),
-          ) as bool;
-          result.isDir = valueDes;
-          break;
-        case r'size':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(int),
-          ) as int;
-          result.size = valueDes;
-          break;
-        case r'modTime':
-          final valueDes = serializers.deserialize(
-            value,
-            specifiedType: const FullType(String),
-          ) as String;
-          result.modTime = valueDes;
+            specifiedType: const FullType(BuiltList, [FullType(FileTreeEntry)]),
+          ) as BuiltList<FileTreeEntry>;
+          result.entries.replace(valueDes);
           break;
         default:
           unhandled.add(key);
@@ -132,12 +102,12 @@ class _$FileEntrySerializer implements PrimitiveSerializer<FileEntry> {
   }
 
   @override
-  FileEntry deserialize(
+  FileTreeResponse deserialize(
     Serializers serializers,
     Object serialized, {
     FullType specifiedType = FullType.unspecified,
   }) {
-    final result = FileEntryBuilder();
+    final result = FileTreeResponseBuilder();
     final serializedList = (serialized as Iterable<Object?>).toList();
     final unhandled = <Object?>[];
     _deserializeProperties(

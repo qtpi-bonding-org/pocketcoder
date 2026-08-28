@@ -21,8 +21,8 @@ import 'package:pocketcoder_api/src/model/container_summary.dart';
 import 'package:pocketcoder_api/src/model/content_block.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
 import 'package:pocketcoder_api/src/model/execute_mcp_request_response.dart';
-import 'package:pocketcoder_api/src/model/file_entry.dart';
-import 'package:pocketcoder_api/src/model/file_list_response.dart';
+import 'package:pocketcoder_api/src/model/file_tree_entry.dart';
+import 'package:pocketcoder_api/src/model/file_tree_response.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_attempt.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_challenge.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_status.dart';
@@ -51,8 +51,8 @@ part 'serializers.g.dart';
   ContentBlock,
   ErrorResponse,
   ExecuteMcpRequestResponse,
-  FileEntry,
-  FileListResponse,
+  FileTreeEntry,
+  FileTreeResponse,
   HarnessAuthAttempt,
   HarnessAuthChallenge,
   HarnessAuthStatus,
@@ -77,16 +77,16 @@ Serializers serializers = (_$serializers.toBuilder()
         () => ListBuilder<BuiltMap<String, JsonObject>>(),
       )
       ..addBuilderFactory(
-        const FullType(BuiltList, [FullType(FileEntry)]),
-        () => ListBuilder<FileEntry>(),
-      )
-      ..addBuilderFactory(
         const FullType(BuiltList, [FullType(ContainerSummary)]),
         () => ListBuilder<ContainerSummary>(),
       )
       ..addBuilderFactory(
         const FullType(BuiltMap, [FullType(String), FullType.nullable(JsonObject)]),
         () => MapBuilder<String, JsonObject?>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(FileTreeEntry)]),
+        () => ListBuilder<FileTreeEntry>(),
       )
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(ContentBlock)]),

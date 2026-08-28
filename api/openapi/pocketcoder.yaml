@@ -118,13 +118,13 @@ paths:
       security: [{pocketbaseToken: []}]
       parameters: [{ $ref: '#/components/parameters/FilePath' }]
       responses: {'200': {description: Raw file bytes, content: {application/octet-stream: {schema: {type: string, format: binary}}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
-  /api/pocketcoder/v1/files-list:
+  /api/pocketcoder/v1/files-tree:
     get:
-      operationId: listWorkspaceFiles
+      operationId: listWorkspaceFileTree
       tags: [files]
       security: [{pocketbaseToken: []}]
       parameters: [{ $ref: '#/components/parameters/DirectoryPath' }]
-      responses: {'200': {description: Immediate directory entries, content: {application/json: {schema: {$ref: '#/components/schemas/FileListResponse'}}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+      responses: {'200': {description: Full recursive directory tree, content: {application/json: {schema: {$ref: '#/components/schemas/FileTreeResponse'}}}}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
   /api/pocketcoder/v1/ollama/models:
     get:
       operationId: listOllamaModels
@@ -256,8 +256,8 @@ components:
     McpRequest: {type: object, additionalProperties: true}
     McpOAuthRequest: {type: object, required: [server_name, access_token], additionalProperties: false, properties: {server_name: {type: string, minLength: 1}, access_token: {type: string, minLength: 1}, refresh_token: {type: string}}}
     PushRequest: {type: object, required: [user_id, type], additionalProperties: false, properties: {user_id: {type: string, minLength: 1}, title: {type: string}, message: {type: string}, type: {type: string, minLength: 1}, chat: {type: string}}}
-    FileListResponse: {type: object, required: [path, entries], additionalProperties: false, properties: {path: {type: string}, entries: {type: array, items: {$ref: '#/components/schemas/FileEntry'}}}}
-    FileEntry: {type: object, required: [name, isDir, size, modTime], additionalProperties: false, properties: {name: {type: string}, isDir: {type: boolean}, size: {type: integer, format: int64}, modTime: {type: string}}}
+    FileTreeResponse: {type: object, required: [path, entries], additionalProperties: false, properties: {path: {type: string}, entries: {type: array, items: {$ref: '#/components/schemas/FileTreeEntry'}}}}
+    FileTreeEntry: {type: object, required: [name, isDir], additionalProperties: false, properties: {name: {type: string}, isDir: {type: boolean}, size: {type: integer, format: int64}, modTime: {type: string}, children: {type: array, items: {$ref: '#/components/schemas/FileTreeEntry'}}}}
     ContainerListResponse: {type: object, required: [containers], additionalProperties: false, properties: {containers: {type: array, items: {$ref: '#/components/schemas/ContainerSummary'}}}}
     ContainerSummary: {type: object, required: [name, state, status], additionalProperties: false, properties: {name: {type: string}, state: {type: string}, status: {type: string}}}
     OllamaModelsResponse: {type: object, required: [models, enabled], additionalProperties: false, properties: {models: {type: array, items: {type: object, additionalProperties: true}}, enabled: {type: boolean}}}

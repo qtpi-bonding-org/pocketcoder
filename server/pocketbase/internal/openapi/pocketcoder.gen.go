@@ -122,18 +122,19 @@ type ExecuteMcpRequestResponse struct {
 	Synced *bool  `json:"synced,omitempty"`
 }
 
-// FileEntry defines model for FileEntry.
-type FileEntry struct {
-	IsDir   bool   `json:"isDir"`
-	ModTime string `json:"modTime"`
-	Name    string `json:"name"`
-	Size    int64  `json:"size"`
+// FileTreeEntry defines model for FileTreeEntry.
+type FileTreeEntry struct {
+	Children *[]FileTreeEntry `json:"children,omitempty"`
+	IsDir    bool             `json:"isDir"`
+	ModTime  *string          `json:"modTime,omitempty"`
+	Name     string           `json:"name"`
+	Size     *int64           `json:"size,omitempty"`
 }
 
-// FileListResponse defines model for FileListResponse.
-type FileListResponse struct {
-	Entries []FileEntry `json:"entries"`
-	Path    string      `json:"path"`
+// FileTreeResponse defines model for FileTreeResponse.
+type FileTreeResponse struct {
+	Entries []FileTreeEntry `json:"entries"`
+	Path    string          `json:"path"`
 }
 
 // HarnessAuthAttempt defines model for HarnessAuthAttempt.
@@ -332,8 +333,8 @@ type GetWorkspaceFileParams struct {
 	Path FilePath `form:"path" json:"path"`
 }
 
-// ListWorkspaceFilesParams defines parameters for ListWorkspaceFiles.
-type ListWorkspaceFilesParams struct {
+// ListWorkspaceFileTreeParams defines parameters for ListWorkspaceFileTree.
+type ListWorkspaceFileTreeParams struct {
 	Path *DirectoryPath `form:"path,omitempty" json:"path,omitempty"`
 }
 
@@ -496,8 +497,8 @@ type ServerInterface interface {
 	// (GET /api/pocketcoder/v1/files)
 	GetWorkspaceFile(w http.ResponseWriter, r *http.Request, params GetWorkspaceFileParams)
 
-	// (GET /api/pocketcoder/v1/files-list)
-	ListWorkspaceFiles(w http.ResponseWriter, r *http.Request, params ListWorkspaceFilesParams)
+	// (GET /api/pocketcoder/v1/files-tree)
+	ListWorkspaceFileTree(w http.ResponseWriter, r *http.Request, params ListWorkspaceFileTreeParams)
 
 	// (POST /api/pocketcoder/v1/harness-auth/cancel)
 	CancelHarnessAuth(w http.ResponseWriter, r *http.Request)
@@ -891,8 +892,8 @@ func (siw *ServerInterfaceWrapper) GetWorkspaceFile(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
-// ListWorkspaceFiles operation middleware
-func (siw *ServerInterfaceWrapper) ListWorkspaceFiles(w http.ResponseWriter, r *http.Request) {
+// ListWorkspaceFileTree operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkspaceFileTree(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	_ = err
@@ -904,7 +905,7 @@ func (siw *ServerInterfaceWrapper) ListWorkspaceFiles(w http.ResponseWriter, r *
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params ListWorkspaceFilesParams
+	var params ListWorkspaceFileTreeParams
 
 	// ------------- Optional query parameter "path" -------------
 
@@ -920,7 +921,7 @@ func (siw *ServerInterfaceWrapper) ListWorkspaceFiles(w http.ResponseWriter, r *
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListWorkspaceFiles(w, r, params)
+		siw.Handler.ListWorkspaceFileTree(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1460,7 +1461,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/compatibility", wrapper.GetReleaseCompatibility)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/containers", wrapper.ListContainers)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files", wrapper.GetWorkspaceFile)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files-list", wrapper.ListWorkspaceFiles)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files-tree", wrapper.ListWorkspaceFileTree)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/cancel", wrapper.CancelHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/disconnect", wrapper.DisconnectHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/poll", wrapper.PollHarnessAuth)
@@ -2233,17 +2234,17 @@ func (response GetWorkspaceFile404JSONResponse) VisitGetWorkspaceFileResponse(w 
 	return err
 }
 
-type ListWorkspaceFilesRequestObject struct {
-	Params ListWorkspaceFilesParams
+type ListWorkspaceFileTreeRequestObject struct {
+	Params ListWorkspaceFileTreeParams
 }
 
-type ListWorkspaceFilesResponseObject interface {
-	VisitListWorkspaceFilesResponse(w http.ResponseWriter) error
+type ListWorkspaceFileTreeResponseObject interface {
+	VisitListWorkspaceFileTreeResponse(w http.ResponseWriter) error
 }
 
-type ListWorkspaceFiles200JSONResponse FileListResponse
+type ListWorkspaceFileTree200JSONResponse FileTreeResponse
 
-func (response ListWorkspaceFiles200JSONResponse) VisitListWorkspaceFilesResponse(w http.ResponseWriter) error {
+func (response ListWorkspaceFileTree200JSONResponse) VisitListWorkspaceFileTreeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -2255,9 +2256,9 @@ func (response ListWorkspaceFiles200JSONResponse) VisitListWorkspaceFilesRespons
 	return err
 }
 
-type ListWorkspaceFiles401JSONResponse struct{ UnauthorizedJSONResponse }
+type ListWorkspaceFileTree401JSONResponse struct{ UnauthorizedJSONResponse }
 
-func (response ListWorkspaceFiles401JSONResponse) VisitListWorkspaceFilesResponse(w http.ResponseWriter) error {
+func (response ListWorkspaceFileTree401JSONResponse) VisitListWorkspaceFileTreeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -2269,9 +2270,9 @@ func (response ListWorkspaceFiles401JSONResponse) VisitListWorkspaceFilesRespons
 	return err
 }
 
-type ListWorkspaceFiles404JSONResponse struct{ NotFoundJSONResponse }
+type ListWorkspaceFileTree404JSONResponse struct{ NotFoundJSONResponse }
 
-func (response ListWorkspaceFiles404JSONResponse) VisitListWorkspaceFilesResponse(w http.ResponseWriter) error {
+func (response ListWorkspaceFileTree404JSONResponse) VisitListWorkspaceFileTreeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -3651,8 +3652,8 @@ type StrictServerInterface interface {
 	// (GET /api/pocketcoder/v1/files)
 	GetWorkspaceFile(ctx context.Context, request GetWorkspaceFileRequestObject) (GetWorkspaceFileResponseObject, error)
 
-	// (GET /api/pocketcoder/v1/files-list)
-	ListWorkspaceFiles(ctx context.Context, request ListWorkspaceFilesRequestObject) (ListWorkspaceFilesResponseObject, error)
+	// (GET /api/pocketcoder/v1/files-tree)
+	ListWorkspaceFileTree(ctx context.Context, request ListWorkspaceFileTreeRequestObject) (ListWorkspaceFileTreeResponseObject, error)
 
 	// (POST /api/pocketcoder/v1/harness-auth/cancel)
 	CancelHarnessAuth(ctx context.Context, request CancelHarnessAuthRequestObject) (CancelHarnessAuthResponseObject, error)
@@ -4029,25 +4030,25 @@ func (sh *strictHandler) GetWorkspaceFile(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// ListWorkspaceFiles operation middleware
-func (sh *strictHandler) ListWorkspaceFiles(w http.ResponseWriter, r *http.Request, params ListWorkspaceFilesParams) {
-	var request ListWorkspaceFilesRequestObject
+// ListWorkspaceFileTree operation middleware
+func (sh *strictHandler) ListWorkspaceFileTree(w http.ResponseWriter, r *http.Request, params ListWorkspaceFileTreeParams) {
+	var request ListWorkspaceFileTreeRequestObject
 
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListWorkspaceFiles(ctx, request.(ListWorkspaceFilesRequestObject))
+		return sh.ssi.ListWorkspaceFileTree(ctx, request.(ListWorkspaceFileTreeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListWorkspaceFiles")
+		handler = middleware(handler, "ListWorkspaceFileTree")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListWorkspaceFilesResponseObject); ok {
-		if err := validResponse.VisitListWorkspaceFilesResponse(w); err != nil {
+	} else if validResponse, ok := response.(ListWorkspaceFileTreeResponseObject); ok {
+		if err := validResponse.VisitListWorkspaceFileTreeResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

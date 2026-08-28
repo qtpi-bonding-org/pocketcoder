@@ -290,20 +290,41 @@ func (s *server) StreamChatEvents(ctx context.Context, _ openapi.StreamChatEvent
 func (s *server) GetWorkspaceFile(ctx context.Context, _ openapi.GetWorkspaceFileRequestObject) (openapi.GetWorkspaceFileResponseObject, error) {
 	return nil, errors.New("direct operation is mounted separately")
 }
-func (s *server) ListWorkspaceFiles(ctx context.Context, _ openapi.ListWorkspaceFilesRequestObject) (openapi.ListWorkspaceFilesResponseObject, error) {
+func (s *server) ListWorkspaceFileTree(ctx context.Context, _ openapi.ListWorkspaceFileTreeRequestObject) (openapi.ListWorkspaceFileTreeResponseObject, error) {
 	re, err := requestEventFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	path, entries, err := filesystem.ListWorkspaceFiles(re)
+	path, entries, err := filesystem.ListWorkspaceFileTree(re)
 	if err != nil {
-		return nil, errorutil.Internal("list workspace files", err)
+		return nil, errorutil.Internal("list workspace file tree", err)
 	}
-	result := make([]openapi.FileEntry, 0, len(entries))
+	result := make([]openapi.FileTreeEntry, 0, len(entries))
 	for _, entry := range entries {
-		result = append(result, openapi.FileEntry{Name: entry.Name, IsDir: entry.IsDir, Size: entry.Size, ModTime: entry.ModTime})
+		result = append(result, convertFileTreeEntry(entry))
 	}
-	return openapi.ListWorkspaceFiles200JSONResponse{Path: path, Entries: result}, nil
+	return openapi.ListWorkspaceFileTree200JSONResponse{Path: path, Entries: result}, nil
+}
+
+// convertFileTreeEntry maps filesystem.FileTreeEntry (plain values) onto the
+// generated openapi.FileTreeEntry (pointer fields for the properties that are
+// only meaningful for one node kind: Size/ModTime for files, Children for
+// directories), recursing into Children for directory nodes.
+func convertFileTreeEntry(entry filesystem.FileTreeEntry) openapi.FileTreeEntry {
+	out := openapi.FileTreeEntry{Name: entry.Name, IsDir: entry.IsDir}
+	if entry.IsDir {
+		children := make([]openapi.FileTreeEntry, 0, len(entry.Children))
+		for _, child := range entry.Children {
+			children = append(children, convertFileTreeEntry(child))
+		}
+		out.Children = &children
+		return out
+	}
+	size := entry.Size
+	out.Size = &size
+	modTime := entry.ModTime
+	out.ModTime = &modTime
+	return out
 }
 func (s *server) CancelHarnessAuth(ctx context.Context, _ openapi.CancelHarnessAuthRequestObject) (openapi.CancelHarnessAuthResponseObject, error) {
 	re, err := requestEventFromContext(ctx)

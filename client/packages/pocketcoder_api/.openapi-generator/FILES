@@ -9,8 +9,8 @@ doc/ContainerSummary.md
 doc/ContentBlock.md
 doc/ErrorResponse.md
 doc/ExecuteMcpRequestResponse.md
-doc/FileEntry.md
-doc/FileListResponse.md
+doc/FileTreeEntry.md
+doc/FileTreeResponse.md
 doc/FilesApi.md
 doc/HarnessAuthApi.md
 doc/HarnessAuthAttempt.md
@@ -66,8 +66,8 @@ lib/src/model/content_block.dart
 lib/src/model/date.dart
 lib/src/model/error_response.dart
 lib/src/model/execute_mcp_request_response.dart
-lib/src/model/file_entry.dart
-lib/src/model/file_list_response.dart
+lib/src/model/file_tree_entry.dart
+lib/src/model/file_tree_response.dart
 lib/src/model/harness_auth_attempt.dart
 lib/src/model/harness_auth_challenge.dart
 lib/src/model/harness_auth_status.dart
@@ -87,6 +87,3 @@ lib/src/model/schedule_run_accepted_response.dart
 lib/src/model/store_mcp_o_auth_token_response.dart
 lib/src/serializers.dart
 pubspec.yaml
-test/execute_mcp_request_response_test.dart
-test/ok_response_test.dart
-test/store_mcp_o_auth_token_response_test.dart

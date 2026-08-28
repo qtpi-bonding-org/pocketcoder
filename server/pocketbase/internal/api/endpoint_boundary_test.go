@@ -83,7 +83,7 @@ var testsByEndpoint = []struct {
 	{"disconnectHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/disconnect", `{"harness":"test-harness"}`},
 	{"runScheduleNow", http.MethodPost, "/api/pocketcoder/v1/schedules/test-schedule/run", ""},
 	{"getWorkspaceFile", http.MethodGet, "/api/pocketcoder/v1/files?path=test.txt", ""},
-	{"listWorkspaceFiles", http.MethodGet, "/api/pocketcoder/v1/files-list", ""},
+	{"listWorkspaceFileTree", http.MethodGet, "/api/pocketcoder/v1/files-tree", ""},
 	{"listOllamaModels", http.MethodGet, "/api/pocketcoder/v1/ollama/models", ""},
 	{"pullOllamaModel", http.MethodPost, "/api/pocketcoder/v1/ollama/pull", `{"model":"qwen3:0.6b"}`},
 	{"executeMcpRequest", http.MethodPost, "/api/pocketcoder/v1/mcp/request", `{"server_name":"test-server"}`},

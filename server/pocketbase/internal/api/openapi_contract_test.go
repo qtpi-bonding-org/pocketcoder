@@ -211,12 +211,12 @@ func TestSimpleGetOperationsResponsesMatchOpenAPIContract(t *testing.T) {
 	cases := []string{
 		"getReleaseStatus",
 		"listOllamaModels",
-		"listWorkspaceFiles",
+		"listWorkspaceFileTree",
 	}
 	paths := map[string]string{
-		"getReleaseStatus":   "/api/pocketcoder/v1/release/status",
-		"listOllamaModels":   "/api/pocketcoder/v1/ollama/models",
-		"listWorkspaceFiles": "/api/pocketcoder/v1/files-list",
+		"getReleaseStatus":      "/api/pocketcoder/v1/release/status",
+		"listOllamaModels":      "/api/pocketcoder/v1/ollama/models",
+		"listWorkspaceFileTree": "/api/pocketcoder/v1/files-tree",
 	}
 	for _, name := range cases {
 		t.Run(name, func(t *testing.T) {

@@ -130,103 +130,96 @@ func TestResolveWorkspacePath_AllowsSymlinkWithinRoot(t *testing.T) {
 	}
 }
 
-func TestGroupImmediateChildren_RootPrefix(t *testing.T) {
+func TestBuildFileTree_RootPrefix(t *testing.T) {
 	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
 	objects := []*blob.ListObject{
 		{Key: "main.go", Size: 1203, ModTime: mod},
 		{Key: "internal/filesystem/filesystem.go", Size: 900, ModTime: mod},
 		{Key: "internal/filesystem/filesystem_test.go", Size: 500, ModTime: mod},
+		{Key: "internal/hooks/mcp.go", Size: 300, ModTime: mod},
 		{Key: "go.mod", Size: 50, ModTime: mod},
 	}
 
-	got := groupImmediateChildren("", objects)
+	got := buildFileTree("", objects)
 
 	if len(got) != 3 {
-		t.Fatalf("got %d entries, want 3 (main.go, internal, go.mod); got=%+v", len(got), got)
+		t.Fatalf("got %d top-level entries, want 3 (go.mod, internal, main.go); got=%+v", len(got), got)
 	}
-	// Sorted alphabetically: go.mod, internal, main.go
-	if got[0].Name != "go.mod" || got[0].IsDir {
-		t.Fatalf("entry[0] = %+v, want file go.mod", got[0])
+	if got[0].Name != "go.mod" || got[0].IsDir || got[0].Size != 50 {
+		t.Fatalf("entry[0] = %+v, want file go.mod size 50", got[0])
 	}
 	if got[1].Name != "internal" || !got[1].IsDir {
 		t.Fatalf("entry[1] = %+v, want dir internal", got[1])
 	}
-	if got[1].Size != 0 {
-		t.Fatalf("directory entry Size = %d, want 0", got[1].Size)
+	if len(got[1].Children) != 2 {
+		t.Fatalf("internal.Children = %+v, want 2 (filesystem, hooks)", got[1].Children)
+	}
+	if got[1].Children[0].Name != "filesystem" || !got[1].Children[0].IsDir {
+		t.Fatalf("internal.Children[0] = %+v, want dir filesystem", got[1].Children[0])
+	}
+	if len(got[1].Children[0].Children) != 2 {
+		t.Fatalf("internal/filesystem.Children = %+v, want 2 files", got[1].Children[0].Children)
+	}
+	if got[1].Children[0].Children[0].Name != "filesystem.go" || got[1].Children[0].Children[0].Size != 900 {
+		t.Fatalf("internal/filesystem.Children[0] = %+v, want file filesystem.go size 900", got[1].Children[0].Children[0])
+	}
+	if got[1].Children[1].Name != "hooks" || !got[1].Children[1].IsDir {
+		t.Fatalf("internal.Children[1] = %+v, want dir hooks", got[1].Children[1])
 	}
 	if got[2].Name != "main.go" || got[2].IsDir || got[2].Size != 1203 {
 		t.Fatalf("entry[2] = %+v, want file main.go size 1203", got[2])
 	}
 }
 
-func TestGroupImmediateChildren_NestedPrefix(t *testing.T) {
-	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
-	objects := []*blob.ListObject{
-		{Key: "internal/filesystem/filesystem.go", Size: 900, ModTime: mod},
-		{Key: "internal/filesystem/filesystem_test.go", Size: 500, ModTime: mod},
-		{Key: "internal/hooks/mcp.go", Size: 300, ModTime: mod},
-	}
-
-	got := groupImmediateChildren("internal/", objects)
-
-	if len(got) != 2 {
-		t.Fatalf("got %d entries, want 2 (filesystem, hooks); got=%+v", len(got), got)
-	}
-	if got[0].Name != "filesystem" || !got[0].IsDir {
-		t.Fatalf("entry[0] = %+v, want dir filesystem", got[0])
-	}
-	if got[1].Name != "hooks" || !got[1].IsDir {
-		t.Fatalf("entry[1] = %+v, want dir hooks", got[1])
-	}
-}
-
-func TestGroupImmediateChildren_EmptyInput(t *testing.T) {
-	got := groupImmediateChildren("", nil)
+func TestBuildFileTree_EmptyInput(t *testing.T) {
+	got := buildFileTree("", nil)
 	if len(got) != 0 {
 		t.Fatalf("got %d entries, want 0 for empty input", len(got))
 	}
 }
 
-func TestGroupImmediateChildren_ConflictResolvesToDirRegardlessOfOrder(t *testing.T) {
+func TestBuildFileTree_ConflictResolvesToDirRegardlessOfOrder(t *testing.T) {
 	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
 
 	fileFirst := []*blob.ListObject{
 		{Key: "src", Size: 5, ModTime: mod},
 		{Key: "src/a.go", Size: 10, ModTime: mod},
 	}
-	got := groupImmediateChildren("", fileFirst)
+	got := buildFileTree("", fileFirst)
 	if len(got) != 1 || got[0].Name != "src" || !got[0].IsDir {
 		t.Fatalf("file-first order: got %+v, want single dir entry named src", got)
 	}
-	if got[0].Size != 0 {
-		t.Fatalf("file-first order: directory entry Size = %d, want 0", got[0].Size)
+	if got[0].Size != 0 || len(got[0].Children) != 1 {
+		t.Fatalf("file-first order: got %+v, want dir with 1 child, size 0", got[0])
 	}
 
 	dirFirst := []*blob.ListObject{
 		{Key: "src/a.go", Size: 10, ModTime: mod},
 		{Key: "src", Size: 5, ModTime: mod},
 	}
-	got = groupImmediateChildren("", dirFirst)
-	if len(got) != 1 || got[0].Name != "src" || !got[0].IsDir {
-		t.Fatalf("dir-first order: got %+v, want single dir entry named src", got)
+	got = buildFileTree("", dirFirst)
+	if len(got) != 1 || got[0].Name != "src" || !got[0].IsDir || len(got[0].Children) != 1 {
+		t.Fatalf("dir-first order: got %+v, want single dir entry named src with 1 child", got)
 	}
 }
 
-func TestGroupImmediateChildren_DedupesDirectory(t *testing.T) {
+func TestBuildFileTree_NestedPrefix(t *testing.T) {
 	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
 	objects := []*blob.ListObject{
-		{Key: "src/a.go", Size: 10, ModTime: mod},
-		{Key: "src/b.go", Size: 20, ModTime: mod},
-		{Key: "src/nested/c.go", Size: 30, ModTime: mod},
+		{Key: "internal/filesystem/filesystem.go", Size: 900, ModTime: mod},
+		{Key: "internal/hooks/mcp.go", Size: 300, ModTime: mod},
 	}
 
-	got := groupImmediateChildren("", objects)
+	got := buildFileTree("internal/", objects)
 
-	if len(got) != 1 {
-		t.Fatalf("got %d entries, want 1 (src, deduped across 3 descendants); got=%+v", len(got), got)
+	if len(got) != 2 {
+		t.Fatalf("got %d entries, want 2 (filesystem, hooks); got=%+v", len(got), got)
 	}
-	if got[0].Name != "src" || !got[0].IsDir {
-		t.Fatalf("entry[0] = %+v, want dir src", got[0])
+	if got[0].Name != "filesystem" || !got[0].IsDir || len(got[0].Children) != 1 {
+		t.Fatalf("entry[0] = %+v, want dir filesystem with 1 child", got[0])
+	}
+	if got[0].Children[0].Name != "filesystem.go" {
+		t.Fatalf("entry[0].Children[0] = %+v, want filesystem.go", got[0].Children[0])
 	}
 }
 
@@ -245,17 +238,88 @@ func newFilesTestUser(t testing.TB, app core.App, email string) *core.Record {
 	return u
 }
 
-func TestFilesListEndpoint_RequiresAuth(t *testing.T) {
+func TestFilesTreeEndpoint_RequiresAuth(t *testing.T) {
 	withTestWorkspaceRoot(t, t.TempDir())
 
 	scenario := tests.ApiScenario{
-		Name:            "files-list without auth is rejected",
+		Name:            "files-tree without auth is rejected",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/v1/files-list",
+		URL:             "/api/pocketcoder/v1/files-tree",
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			mountFileOperations(e)
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestFilesTreeEndpoint_ReturnsFullNestedTree(t *testing.T) {
+	dir := t.TempDir()
+	withTestWorkspaceRoot(t, dir)
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(filepath.Join(dir, "internal"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "internal", "nested.go"), []byte("package internal"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	headers := map[string]string{}
+	scenario := tests.ApiScenario{
+		Name:           "files-tree returns the full recursive tree as JSON",
+		Method:         http.MethodGet,
+		URL:            "/api/pocketcoder/v1/files-tree",
+		Headers:        headers,
+		ExpectedStatus: 200,
+		ExpectedContent: []string{
+			`"name":"main.go"`,
+			`"name":"internal"`,
+			`"isDir":true`,
+			`"name":"nested.go"`,
+		},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			mountFileOperations(e)
+			user := newFilesTestUser(t, app, "files-tree@example.com")
+			token, err := user.NewAuthToken()
+			if err != nil {
+				t.Fatal(err)
+			}
+			headers["Authorization"] = token
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestFilesTreeEndpoint_RejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	outside := t.TempDir()
+	if err := os.WriteFile(filepath.Join(outside, "secret.txt"), []byte("top secret"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(root, "escape")); err != nil {
+		t.Fatal(err)
+	}
+	withTestWorkspaceRoot(t, root)
+
+	headers := map[string]string{}
+	scenario := tests.ApiScenario{
+		Name:            "files-tree rejects a symlink that escapes the workspace root",
+		Method:          http.MethodGet,
+		URL:             "/api/pocketcoder/v1/files-tree?path=escape",
+		Headers:         headers,
+		ExpectedStatus:  403,
+		ExpectedContent: []string{"escape attempt"},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			mountFileOperations(e)
+			user := newFilesTestUser(t, app, "tree-symlink-escape@example.com")
+			token, err := user.NewAuthToken()
+			if err != nil {
+				t.Fatal(err)
+			}
+			headers["Authorization"] = token
 		},
 	}
 	scenario.Test(t)
@@ -272,43 +336,6 @@ func TestFilesReadEndpoint_RequiresAuth(t *testing.T) {
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			mountFileOperations(e)
-		},
-	}
-	scenario.Test(t)
-}
-
-func TestFilesListEndpoint_ReturnsImmediateChildren(t *testing.T) {
-	dir := t.TempDir()
-	withTestWorkspaceRoot(t, dir)
-	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Mkdir(filepath.Join(dir, "internal"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	// The underlying blob abstraction lists flat object keys, so an empty
-	// directory (no descendant keys) never appears in the listing — give it
-	// a child so it shows up, matching real workspace usage.
-	if err := os.WriteFile(filepath.Join(dir, "internal", "nested.go"), []byte("package internal"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	headers := map[string]string{}
-	scenario := tests.ApiScenario{
-		Name:            "files-list returns immediate children as JSON",
-		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/v1/files-list",
-		Headers:         headers,
-		ExpectedStatus:  200,
-		ExpectedContent: []string{`"name":"main.go"`, `"name":"internal"`, `"isDir":true`},
-		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
-			user := newFilesTestUser(t, app, "files-list@example.com")
-			token, err := user.NewAuthToken()
-			if err != nil {
-				t.Fatal(err)
-			}
-			headers["Authorization"] = token
 		},
 	}
 	scenario.Test(t)
@@ -389,38 +416,6 @@ func TestFilesReadEndpoint_ReturnsNotFoundForMissingFile(t *testing.T) {
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
 			mountFileOperations(e)
 			user := newFilesTestUser(t, app, "files-read-missing@example.com")
-			token, err := user.NewAuthToken()
-			if err != nil {
-				t.Fatal(err)
-			}
-			headers["Authorization"] = token
-		},
-	}
-	scenario.Test(t)
-}
-
-func TestFilesListEndpoint_RejectsSymlinkEscape(t *testing.T) {
-	root := t.TempDir()
-	outside := t.TempDir()
-	if err := os.WriteFile(filepath.Join(outside, "secret.txt"), []byte("top secret"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(outside, filepath.Join(root, "escape")); err != nil {
-		t.Fatal(err)
-	}
-	withTestWorkspaceRoot(t, root)
-
-	headers := map[string]string{}
-	scenario := tests.ApiScenario{
-		Name:            "files-list rejects a symlink that escapes the workspace root",
-		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/v1/files-list?path=escape",
-		Headers:         headers,
-		ExpectedStatus:  403,
-		ExpectedContent: []string{"escape attempt"},
-		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
-			user := newFilesTestUser(t, app, "symlink-escape@example.com")
 			token, err := user.NewAuthToken()
 			if err != nil {
 				t.Fatal(err)

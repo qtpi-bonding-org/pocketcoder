@@ -202,14 +202,14 @@ assert_unauthenticated() {
   [ "$file_response" = "$content" ]
 
   local listing
-  listing=$(curl -fsS -G "$PB_URL/api/pocketcoder/v1/files-list" \
+  listing=$(curl -fsS -G "$PB_URL/api/pocketcoder/v1/files-tree" \
     -H "Authorization: $USER_TOKEN" \
     --data-urlencode 'path=')
   jq -e --arg name "$FLOW_FILE" '.entries[] | select(.name == $name and .isDir == false)' \
     >/dev/null <<<"$listing"
 
   assert_unauthenticated GET "/api/pocketcoder/v1/files?path=$FLOW_FILE"
-  assert_unauthenticated GET /api/pocketcoder/v1/files-list
+  assert_unauthenticated GET /api/pocketcoder/v1/files-tree
 }
 
 @test "authenticated control endpoints return stable JSON shapes" {
