@@ -21,6 +21,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -141,7 +142,54 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 	var service coordinator.AgentRuntime = deps.Runtime
 	var configErr error
 	if service == nil {
-		concrete, err := coordinator.New(coordinator.Config{Workspace: coordinator.DefaultWorkspace(), PermissionTimeout: coordinator.DefaultPermissionTimeout(), Dial: deps.Dial})
+		concrete, err := coordinator.New(coordinator.Config{
+			Workspace:         coordinator.DefaultWorkspace(),
+			PermissionTimeout: coordinator.DefaultPermissionTimeout(),
+			Dial:              deps.Dial,
+			OnPermissionPending: func(ctx context.Context, chatID string, payload map[string]any) {
+				go func() {
+					chat, err := app.FindRecordById("chats", chatID)
+					if err != nil {
+						return
+					}
+					payloadJSON, err := json.Marshal(payload)
+					if err != nil {
+						return
+					}
+					requestID, _ := payload["requestId"].(string)
+					title, _ := payload["title"].(string)
+					body := "Action needs your approval"
+					if title != "" {
+						body = title
+					}
+					extra := map[string]string{"request_id": requestID, "permission": string(payloadJSON)}
+					if err := hooks.SendPushNotificationWithExtra(app, chat.GetString("user"), "Signature required", body, "permission", chatID, extra); err != nil {
+						log.Printf("[Push] permission-pending dispatch: %v", err)
+					}
+				}()
+			},
+			OnElicitationPending: func(ctx context.Context, chatID string, payload map[string]any) {
+				go func() {
+					chat, err := app.FindRecordById("chats", chatID)
+					if err != nil {
+						return
+					}
+					payloadJSON, err := json.Marshal(payload)
+					if err != nil {
+						return
+					}
+					requestID, _ := payload["elicitationId"].(string)
+					body, _ := payload["message"].(string)
+					if body == "" {
+						body = "Open the app to reply"
+					}
+					extra := map[string]string{"request_id": requestID, "elicitation": string(payloadJSON)}
+					if err := hooks.SendPushNotificationWithExtra(app, chat.GetString("user"), "PocketCoder has a question", body, "question", chatID, extra); err != nil {
+						log.Printf("[Push] elicitation-pending dispatch: %v", err)
+					}
+				}()
+			},
+		})
 		configErr = err
 		if concrete != nil {
 			service = concrete
