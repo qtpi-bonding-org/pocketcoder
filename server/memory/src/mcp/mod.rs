@@ -36,6 +36,11 @@ pub fn router(service: MemoryService, cancellation: CancellationToken) -> Router
         move || Ok(tools::MemoryMcp::new(service.clone())),
         LocalSessionManager::default().into(),
         StreamableHttpServerConfig::default()
+            // Every harness reaches this service at http://pocket-memory:8000/mcp
+            // (the docker-compose service hostname, hooks.memoryURL) -- rmcp's
+            // default DNS-rebinding allowlist only covers loopback hosts, which
+            // rejects that real inbound Host header with a 403.
+            .with_allowed_hosts(["localhost", "127.0.0.1", "::1", "pocket-memory:8000"])
             .with_legacy_session_mode(false)
             .with_json_response(true)
             .with_cancellation_token(cancellation),
