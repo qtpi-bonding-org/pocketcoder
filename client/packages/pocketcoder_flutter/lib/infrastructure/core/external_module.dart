@@ -98,7 +98,7 @@ abstract class ExternalModule {
 
         logDebug(
             'PocketBaseInit: Caching schema synchronously via drift client...');
-        await client.cacheSchema(reEncoded);
+        await client.setSchema(reEncoded);
         logDebug(
             'PocketBaseInit: Schema cached successfully inside pocketbase_drift!');
       } catch (e, stack) {

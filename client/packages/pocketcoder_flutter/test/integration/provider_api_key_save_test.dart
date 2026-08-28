@@ -41,12 +41,18 @@ void main() {
   test(
       'saveProviderAPIKey persists a real key through the drift-backed '
       'client and it reads back correctly', () async {
+    if (email == null || password == null) {
+      markTestSkipped(
+          'API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
+          'tests/compose/api/run.sh, not directly');
+      return;
+    }
     // A plain, non-drift client to authenticate and to independently
     // verify what actually landed server-side, so the assertions below
     // aren't just reading the drift client's own local cache back at
     // itself.
     final verifyClient = pocketbase.PocketBase(baseUrl);
-    await verifyClient.collection('users').authWithPassword(email!, password!);
+    await verifyClient.collection('users').authWithPassword(email, password);
     final userId = verifyClient.authStore.record!.id;
     final token = verifyClient.authStore.token;
 
@@ -85,7 +91,7 @@ void main() {
     final schemaJson = await rootBundle.loadString('assets/pb_schema.json');
     final decoded = jsonDecode(schemaJson);
     final schemaList = decoded is Map ? decoded['items'] as List<dynamic> : decoded as List<dynamic>;
-    await client.cacheSchema(jsonEncode(schemaList));
+    await client.setSchema(jsonEncode(schemaList));
 
     final repository = ProviderRepository(
       HarnesseDao(client),
