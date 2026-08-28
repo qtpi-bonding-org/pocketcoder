@@ -12,9 +12,11 @@ import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/external_auth_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/agent_auth_view.dart';
+import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -72,7 +74,14 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
       return;
     }
     final provider = _oauthProviderFor(auth.state, harness.id);
-    if (provider == null) return; // no oauth-capable provider for this harness
+    if (provider == null) {
+      // Multi-provider / non-oauth harness (e.g. Goose, OpenCode): no single
+      // oauth-capable edge to log in with. These authenticate via a plain
+      // provider_api_keys credential instead (mode: none) -- see
+      // _selectWithApiKey.
+      await _selectWithApiKey(context, harness);
+      return;
+    }
     OnboardingLogger.event(
         'harness selected', {'harness': harness.id, 'provider': provider});
 
@@ -85,6 +94,65 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     ));
     if (!context.mounted) return;
     await _showAuthDialog(context, auth, harness, provider);
+  }
+
+  /// mode: none is synchronous on the server (it just records which
+  /// provider's credential to use -- see harness_auth.go's StartHarnessAuth,
+  /// there is no connecting/polling phase at all), so this never opens the
+  /// OAuth dialog: it resolves a provider (an existing key, or one just
+  /// entered), starts the credential selection, and goes straight to chat.
+  Future<void> _selectWithApiKey(BuildContext context, Harnesse harness) async {
+    final auth = context.read<HarnessAuthCubit>();
+    final providerCubit = context.read<ProviderCubit>();
+    final providerIds = auth.state.harnessProviders
+        .where((edge) => edge.harness == harness.id)
+        .map((edge) => edge.provider)
+        .toSet();
+    if (providerIds.isEmpty) return; // this harness has no usable provider yet
+
+    var providerId = providerCubit.state.providerAPIKeys
+        .where((key) => providerIds.contains(key.provider))
+        .firstOrNull
+        ?.provider;
+
+    if (providerId == null) {
+      final catalog = providerCubit.state.providerCatalog
+          .where((p) => providerIds.contains(p.id))
+          .toList();
+      if (catalog.isEmpty) return; // provider catalog hasn't loaded yet
+      final saved = await showDialog<ProviderApiKey>(
+        context: context,
+        builder: (dialogContext) => ProviderKeyEditorDialog(
+          providerCatalog: catalog,
+          onSave: (key) => Navigator.of(dialogContext).pop(key),
+        ),
+      );
+      if (saved == null) return; // user cancelled
+      await providerCubit.saveProviderAPIKey(saved);
+      providerId = saved.provider;
+    }
+
+    OnboardingLogger.event(
+        'harness selected', {'harness': harness.id, 'provider': providerId});
+    if (!context.mounted) return;
+    await auth.startWithNone(harness.id,
+        provider: providerId, visibility: harnessAccountVisibilityPersonal);
+    if (!context.mounted) return;
+    await _openChat(context, harness);
+  }
+
+  Future<void> _openChat(BuildContext context, Harnesse harness) async {
+    final chats = context.read<ChatListCubit>();
+    try {
+      await chats.createAndOpen(harness: harness.id);
+      final chatId = chats.state.lastCreatedChatId;
+      if (context.mounted && chatId != null && chatId.isNotEmpty) {
+        context.go('/chat/$chatId');
+      }
+    } catch (error) {
+      OnboardingLogger.event(
+          'first chat creation failed', {'error': error.toString()});
+    }
   }
 
   Future<void> _showAuthDialog(
@@ -113,19 +181,9 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             openedChat = true;
             WidgetsBinding.instance.addPostFrameCallback((_) async {
               Navigator.of(dialogContext).pop();
-              final chats = context.read<ChatListCubit>();
-              try {
-                await chats.createAndOpen(harness: harness.id);
-                final chatId = chats.state.lastCreatedChatId;
-                if (context.mounted && chatId != null && chatId.isNotEmpty) {
-                  // The caller's shell remains underneath the modal; chat is
-                  // entered exactly as the retired login screen did.
-                  context.go('/chat/$chatId');
-                }
-              } catch (error) {
-                OnboardingLogger.event(
-                    'first chat creation failed', {'error': error.toString()});
-              }
+              // The caller's shell remains underneath the modal; chat is
+              // entered exactly as the retired login screen did.
+              await _openChat(context, harness);
             });
           }
           return ExternalAuthDialog(

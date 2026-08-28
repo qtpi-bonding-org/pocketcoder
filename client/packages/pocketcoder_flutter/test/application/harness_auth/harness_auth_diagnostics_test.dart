@@ -61,6 +61,61 @@ void main() {
 
   tearDown(() => cubit.close());
 
+  test(
+      'startWithNone with an explicit provider bypasses '
+      '_oauthProviderFor entirely -- required for multi-provider harnesses '
+      '(Goose, OpenCode), which never have a single oauth-capable edge',
+      () async {
+    when(() => authRepository.start(
+          harnessId: 'goose-1',
+          provider: 'provider-anthropic',
+          mode: 'none',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => const HarnessAuthStatus(
+          harness: 'goose-1',
+          provider: 'provider-anthropic',
+          accountId: '',
+          accountName: '',
+          visibility: harnessAccountVisibilityPersonal,
+          credentialMode: 'none',
+          status: 'disconnected',
+        ));
+
+    // 'goose-1' has no harness_providers edge at all in this cubit's state
+    // (only 'harness-1'/'provider-1' does, seeded in setUp), so
+    // _oauthProviderFor('goose-1') resolves to null -- proving the explicit
+    // provider argument, not a lucky fallback, is what drives the call.
+    await cubit.startWithNone('goose-1',
+        provider: 'provider-anthropic',
+        visibility: harnessAccountVisibilityPersonal);
+
+    verify(() => authRepository.start(
+          harnessId: 'goose-1',
+          provider: 'provider-anthropic',
+          mode: 'none',
+          visibility: harnessAccountVisibilityPersonal,
+        )).called(1);
+    expect(
+        cubit.state.statusFor('goose-1', 'provider-anthropic')?.status,
+        'disconnected');
+  });
+
+  test(
+      'startWithNone with no explicit provider and no oauth-capable edge '
+      'silently no-ops, same as before -- the explicit-provider path above '
+      'is what fixes multi-provider harnesses, not a change to this default',
+      () async {
+    await cubit.startWithNone('goose-1',
+        visibility: harnessAccountVisibilityPersonal);
+
+    verifyNever(() => authRepository.start(
+          harnessId: any(named: 'harnessId'),
+          provider: any(named: 'provider'),
+          mode: any(named: 'mode'),
+          visibility: any(named: 'visibility'),
+        ));
+  });
+
   test('captures a direct harness operation exactly once', () async {
     when(() => authRepository.start(
           harnessId: 'harness-1',

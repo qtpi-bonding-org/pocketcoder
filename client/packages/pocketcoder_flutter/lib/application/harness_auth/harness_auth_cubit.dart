@@ -188,21 +188,27 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
               )
               .then((s) => _updateStatus(harnessId, provider, s)));
 
+  /// [provider] is required for a multi-provider/non-oauth harness (e.g.
+  /// Goose, OpenCode) -- those have no single [_oauthProviderFor] result, so
+  /// the caller must resolve which provider's credential this applies to
+  /// (e.g. the one the user just entered an API key for). Falls back to
+  /// [_oauthProviderFor] when omitted, for the existing single-provider
+  /// harness call site.
   Future<void> startWithNone(String harnessId,
-      {required String visibility}) async {
-    final provider = _oauthProviderFor(harnessId);
-    if (provider == null) return;
+      {String? provider, required String visibility}) async {
+    final resolvedProvider = provider ?? _oauthProviderFor(harnessId);
+    if (resolvedProvider == null) return;
     await _withBusy(
         harnessId,
-        provider,
+        resolvedProvider,
         () => _authRepository
             .start(
               harnessId: harnessId,
-              provider: provider,
+              provider: resolvedProvider,
               mode: 'none',
               visibility: visibility,
             )
-            .then((s) => _updateStatus(harnessId, provider, s)));
+            .then((s) => _updateStatus(harnessId, resolvedProvider, s)));
   }
 
   Future<void> poll(String harnessId, [String? requestedProvider]) async {
