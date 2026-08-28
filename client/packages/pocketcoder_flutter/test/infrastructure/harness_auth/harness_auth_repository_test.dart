@@ -7,7 +7,7 @@ void main() {
     final challenge = generated.HarnessAuthChallenge((b) {
       b.type = 'device';
       b.text = 'Use the browser to continue';
-      b.kind = 'device_code';
+      b.kind = generated.HarnessAuthChallengeKindEnum.deviceCode;
       b.verificationUri = 'https://example.test/device';
       b.userCode = 'ABCD-1234';
       b.codeDestination =

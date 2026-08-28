@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
@@ -56,6 +57,37 @@ func intPtr(value int) *int {
 	return &value
 }
 
+func challengeKindPtr(value string) *openapi.HarnessAuthChallengeKind {
+	if value == "" {
+		return nil
+	}
+	kind := openapi.HarnessAuthChallengeKind(value)
+	return &kind
+}
+
+func challengeCodeDestinationPtr(value string) *openapi.HarnessAuthChallengeCodeDestination {
+	if value == "" {
+		return nil
+	}
+	destination := openapi.HarnessAuthChallengeCodeDestination(value)
+	return &destination
+}
+
+// challengeExpiresAtPtr parses the domain Challenge's plain-string ExpiresAt
+// (RFC3339, set by the harnessauth authenticators) into the generated OpenAPI
+// type's *time.Time. An empty or unparseable value omits the field rather
+// than erroring, matching stringPtr/intPtr's existing "no value" convention.
+func challengeExpiresAtPtr(value string) *time.Time {
+	if value == "" {
+		return nil
+	}
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err != nil {
+		return nil
+	}
+	return &parsed
+}
+
 func harnessStatusResponse(status api.HarnessAuthStatusResponse) openapi.HarnessAuthStatus {
 	response := openapi.HarnessAuthStatus{Harness: status.Harness, Provider: status.Provider, Status: status.Status, Mode: openapi.HarnessAuthStatusMode(status.Mode)}
 	if status.AccountID != "" {
@@ -77,7 +109,7 @@ func harnessStatusResponse(status api.HarnessAuthStatusResponse) openapi.Harness
 		}
 	}
 	if status.Challenge != nil {
-		response.Challenge = &openapi.HarnessAuthChallenge{Type: status.Challenge.Type, Text: status.Challenge.Text, Kind: stringPtr(status.Challenge.Kind), VerificationUri: stringPtr(status.Challenge.VerificationURI), UserCode: stringPtr(status.Challenge.UserCode), CodeDestination: stringPtr(status.Challenge.CodeDestination), ExpiresAt: stringPtr(status.Challenge.ExpiresAt), PollIntervalSeconds: intPtr(status.Challenge.PollIntervalSeconds)}
+		response.Challenge = &openapi.HarnessAuthChallenge{Type: status.Challenge.Type, Text: stringPtr(status.Challenge.Text), Kind: challengeKindPtr(status.Challenge.Kind), VerificationUri: stringPtr(status.Challenge.VerificationURI), UserCode: stringPtr(status.Challenge.UserCode), CodeDestination: challengeCodeDestinationPtr(status.Challenge.CodeDestination), ExpiresAt: challengeExpiresAtPtr(status.Challenge.ExpiresAt), PollIntervalSeconds: intPtr(status.Challenge.PollIntervalSeconds)}
 		if status.Challenge.Target != "" {
 			response.Challenge.Target = &status.Challenge.Target
 		}
@@ -413,7 +445,7 @@ func (s *server) GetHarnessAuthStatus(ctx context.Context, _ openapi.GetHarnessA
 		}
 	}
 	if status.Challenge != nil {
-		response.Challenge = &openapi.HarnessAuthChallenge{Type: status.Challenge.Type, Text: status.Challenge.Text, Kind: stringPtr(status.Challenge.Kind), VerificationUri: stringPtr(status.Challenge.VerificationURI), UserCode: stringPtr(status.Challenge.UserCode), CodeDestination: stringPtr(status.Challenge.CodeDestination), ExpiresAt: stringPtr(status.Challenge.ExpiresAt), PollIntervalSeconds: intPtr(status.Challenge.PollIntervalSeconds)}
+		response.Challenge = &openapi.HarnessAuthChallenge{Type: status.Challenge.Type, Text: stringPtr(status.Challenge.Text), Kind: challengeKindPtr(status.Challenge.Kind), VerificationUri: stringPtr(status.Challenge.VerificationURI), UserCode: stringPtr(status.Challenge.UserCode), CodeDestination: challengeCodeDestinationPtr(status.Challenge.CodeDestination), ExpiresAt: challengeExpiresAtPtr(status.Challenge.ExpiresAt), PollIntervalSeconds: intPtr(status.Challenge.PollIntervalSeconds)}
 		if status.Challenge.Target != "" {
 			response.Challenge.Target = &status.Challenge.Target
 		}

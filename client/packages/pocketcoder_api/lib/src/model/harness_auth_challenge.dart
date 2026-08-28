@@ -27,17 +27,21 @@ abstract class HarnessAuthChallenge implements Built<HarnessAuthChallenge, Harne
   @BuiltValueField(wireName: r'type')
   String get type;
 
+  @Deprecated('text has been deprecated')
   @BuiltValueField(wireName: r'text')
-  String get text;
+  String? get text;
 
+  @Deprecated('target has been deprecated')
   @BuiltValueField(wireName: r'target')
   String? get target;
 
+  @Deprecated('details has been deprecated')
   @BuiltValueField(wireName: r'details')
   String? get details;
 
   @BuiltValueField(wireName: r'kind')
-  String? get kind;
+  HarnessAuthChallengeKindEnum? get kind;
+  // enum kindEnum {  device_code,  browser_code,  };
 
   @BuiltValueField(wireName: r'verificationUri')
   String? get verificationUri;
@@ -47,6 +51,7 @@ abstract class HarnessAuthChallenge implements Built<HarnessAuthChallenge, Harne
 
   @BuiltValueField(wireName: r'codeDestination')
   HarnessAuthChallengeCodeDestinationEnum? get codeDestination;
+  // enum codeDestinationEnum {  browser,  app,  none,  };
 
   @BuiltValueField(wireName: r'expiresAt')
   DateTime? get expiresAt;
@@ -63,31 +68,6 @@ abstract class HarnessAuthChallenge implements Built<HarnessAuthChallenge, Harne
 
   @BuiltValueSerializer(custom: true)
   static Serializer<HarnessAuthChallenge> get serializer => _$HarnessAuthChallengeSerializer();
-}
-
-class HarnessAuthChallengeCodeDestinationEnum extends EnumClass {
-  @BuiltValueEnumConst(wireName: r'browser')
-  static const HarnessAuthChallengeCodeDestinationEnum browser =
-      _$harnessAuthChallengeCodeDestinationEnumBrowser;
-  @BuiltValueEnumConst(wireName: r'app')
-  static const HarnessAuthChallengeCodeDestinationEnum app =
-      _$harnessAuthChallengeCodeDestinationEnumApp;
-  @BuiltValueEnumConst(wireName: r'none')
-  static const HarnessAuthChallengeCodeDestinationEnum none =
-      _$harnessAuthChallengeCodeDestinationEnumNone;
-  @BuiltValueEnumConst(wireName: r'unknown_default_open_api', fallback: true)
-  static const HarnessAuthChallengeCodeDestinationEnum unknownDefaultOpenApi =
-      _$harnessAuthChallengeCodeDestinationEnumUnknownDefaultOpenApi;
-
-  static Serializer<HarnessAuthChallengeCodeDestinationEnum> get serializer =>
-      _$harnessAuthChallengeCodeDestinationEnumSerializer;
-
-  const HarnessAuthChallengeCodeDestinationEnum._(String name) : super(name);
-
-  static BuiltSet<HarnessAuthChallengeCodeDestinationEnum> get values =>
-      _$harnessAuthChallengeCodeDestinationEnumValues;
-  static HarnessAuthChallengeCodeDestinationEnum valueOf(String name) =>
-      _$harnessAuthChallengeCodeDestinationEnumValueOf(name);
 }
 
 class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAuthChallenge> {
@@ -107,11 +87,13 @@ class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAut
       object.type,
       specifiedType: const FullType(String),
     );
-    yield r'text';
-    yield serializers.serialize(
-      object.text,
-      specifiedType: const FullType(String),
-    );
+    if (object.text != null) {
+      yield r'text';
+      yield serializers.serialize(
+        object.text,
+        specifiedType: const FullType(String),
+      );
+    }
     if (object.target != null) {
       yield r'target';
       yield serializers.serialize(
@@ -128,28 +110,45 @@ class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAut
     }
     if (object.kind != null) {
       yield r'kind';
-      yield serializers.serialize(object.kind, specifiedType: const FullType(String));
+      yield serializers.serialize(
+        object.kind,
+        specifiedType: const FullType(HarnessAuthChallengeKindEnum),
+      );
     }
     if (object.verificationUri != null) {
       yield r'verificationUri';
-      yield serializers.serialize(object.verificationUri, specifiedType: const FullType(String));
+      yield serializers.serialize(
+        object.verificationUri,
+        specifiedType: const FullType(String),
+      );
     }
     if (object.userCode != null) {
       yield r'userCode';
-      yield serializers.serialize(object.userCode, specifiedType: const FullType(String));
+      yield serializers.serialize(
+        object.userCode,
+        specifiedType: const FullType(String),
+      );
     }
     if (object.codeDestination != null) {
       yield r'codeDestination';
-      yield serializers.serialize(object.codeDestination,
-          specifiedType: const FullType(HarnessAuthChallengeCodeDestinationEnum));
+      yield serializers.serialize(
+        object.codeDestination,
+        specifiedType: const FullType(HarnessAuthChallengeCodeDestinationEnum),
+      );
     }
     if (object.expiresAt != null) {
       yield r'expiresAt';
-      yield serializers.serialize(object.expiresAt, specifiedType: const FullType(DateTime));
+      yield serializers.serialize(
+        object.expiresAt,
+        specifiedType: const FullType(DateTime),
+      );
     }
     if (object.pollIntervalSeconds != null) {
       yield r'pollIntervalSeconds';
-      yield serializers.serialize(object.pollIntervalSeconds, specifiedType: const FullType(int));
+      yield serializers.serialize(
+        object.pollIntervalSeconds,
+        specifiedType: const FullType(int),
+      );
     }
   }
 
@@ -184,8 +183,9 @@ class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAut
         case r'text':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.text = valueDes;
           break;
         case r'target':
@@ -205,23 +205,52 @@ class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAut
           result.details = valueDes;
           break;
         case r'kind':
-          result.kind = serializers.deserialize(value, specifiedType: const FullType.nullable(String)) as String?;
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(HarnessAuthChallengeKindEnum),
+          ) as HarnessAuthChallengeKindEnum?;
+          if (valueDes == null) continue;
+          result.kind = valueDes;
           break;
         case r'verificationUri':
-          result.verificationUri = serializers.deserialize(value, specifiedType: const FullType.nullable(String)) as String?;
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.verificationUri = valueDes;
           break;
         case r'userCode':
-          result.userCode = serializers.deserialize(value, specifiedType: const FullType.nullable(String)) as String?;
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.userCode = valueDes;
           break;
         case r'codeDestination':
-          result.codeDestination = serializers.deserialize(value,
-              specifiedType: const FullType.nullable(HarnessAuthChallengeCodeDestinationEnum)) as HarnessAuthChallengeCodeDestinationEnum?;
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(HarnessAuthChallengeCodeDestinationEnum),
+          ) as HarnessAuthChallengeCodeDestinationEnum?;
+          if (valueDes == null) continue;
+          result.codeDestination = valueDes;
           break;
         case r'expiresAt':
-          result.expiresAt = serializers.deserialize(value, specifiedType: const FullType.nullable(DateTime)) as DateTime?;
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
+          result.expiresAt = valueDes;
           break;
         case r'pollIntervalSeconds':
-          result.pollIntervalSeconds = serializers.deserialize(value, specifiedType: const FullType.nullable(int)) as int?;
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
+          result.pollIntervalSeconds = valueDes;
           break;
         default:
           unhandled.add(key);
@@ -250,4 +279,40 @@ class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAut
     );
     return result.build();
   }
+}
+
+class HarnessAuthChallengeKindEnum extends EnumClass {
+
+  @BuiltValueEnumConst(wireName: r'device_code')
+  static const HarnessAuthChallengeKindEnum deviceCode = _$harnessAuthChallengeKindEnum_deviceCode;
+  @BuiltValueEnumConst(wireName: r'browser_code')
+  static const HarnessAuthChallengeKindEnum browserCode = _$harnessAuthChallengeKindEnum_browserCode;
+  @BuiltValueEnumConst(wireName: r'unknown_default_open_api', fallback: true)
+  static const HarnessAuthChallengeKindEnum unknownDefaultOpenApi = _$harnessAuthChallengeKindEnum_unknownDefaultOpenApi;
+
+  static Serializer<HarnessAuthChallengeKindEnum> get serializer => _$harnessAuthChallengeKindEnumSerializer;
+
+  const HarnessAuthChallengeKindEnum._(String name): super(name);
+
+  static BuiltSet<HarnessAuthChallengeKindEnum> get values => _$harnessAuthChallengeKindEnumValues;
+  static HarnessAuthChallengeKindEnum valueOf(String name) => _$harnessAuthChallengeKindEnumValueOf(name);
+}
+
+class HarnessAuthChallengeCodeDestinationEnum extends EnumClass {
+
+  @BuiltValueEnumConst(wireName: r'browser')
+  static const HarnessAuthChallengeCodeDestinationEnum browser = _$harnessAuthChallengeCodeDestinationEnum_browser;
+  @BuiltValueEnumConst(wireName: r'app')
+  static const HarnessAuthChallengeCodeDestinationEnum app = _$harnessAuthChallengeCodeDestinationEnum_app;
+  @BuiltValueEnumConst(wireName: r'none')
+  static const HarnessAuthChallengeCodeDestinationEnum none = _$harnessAuthChallengeCodeDestinationEnum_none;
+  @BuiltValueEnumConst(wireName: r'unknown_default_open_api', fallback: true)
+  static const HarnessAuthChallengeCodeDestinationEnum unknownDefaultOpenApi = _$harnessAuthChallengeCodeDestinationEnum_unknownDefaultOpenApi;
+
+  static Serializer<HarnessAuthChallengeCodeDestinationEnum> get serializer => _$harnessAuthChallengeCodeDestinationEnumSerializer;
+
+  const HarnessAuthChallengeCodeDestinationEnum._(String name): super(name);
+
+  static BuiltSet<HarnessAuthChallengeCodeDestinationEnum> get values => _$harnessAuthChallengeCodeDestinationEnumValues;
+  static HarnessAuthChallengeCodeDestinationEnum valueOf(String name) => _$harnessAuthChallengeCodeDestinationEnumValueOf(name);
 }

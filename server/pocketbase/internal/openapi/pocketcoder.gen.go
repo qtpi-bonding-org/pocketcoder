@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -21,6 +22,45 @@ import (
 const (
 	PocketbaseTokenScopes pocketbaseTokenContextKey = "pocketbaseToken.Scopes"
 )
+
+// Defines values for HarnessAuthChallengeCodeDestination.
+const (
+	HarnessAuthChallengeCodeDestinationApp     HarnessAuthChallengeCodeDestination = "app"
+	HarnessAuthChallengeCodeDestinationBrowser HarnessAuthChallengeCodeDestination = "browser"
+	HarnessAuthChallengeCodeDestinationNone    HarnessAuthChallengeCodeDestination = "none"
+)
+
+// Valid indicates whether the value is a known member of the HarnessAuthChallengeCodeDestination enum.
+func (e HarnessAuthChallengeCodeDestination) Valid() bool {
+	switch e {
+	case HarnessAuthChallengeCodeDestinationApp:
+		return true
+	case HarnessAuthChallengeCodeDestinationBrowser:
+		return true
+	case HarnessAuthChallengeCodeDestinationNone:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for HarnessAuthChallengeKind.
+const (
+	BrowserCode HarnessAuthChallengeKind = "browser_code"
+	DeviceCode  HarnessAuthChallengeKind = "device_code"
+)
+
+// Valid indicates whether the value is a known member of the HarnessAuthChallengeKind enum.
+func (e HarnessAuthChallengeKind) Valid() bool {
+	switch e {
+	case BrowserCode:
+		return true
+	case DeviceCode:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for HarnessAuthStatusMode.
 const (
@@ -42,16 +82,16 @@ func (e HarnessAuthStatusMode) Valid() bool {
 
 // Defines values for HarnessRequestMode.
 const (
-	HarnessRequestModeNone  HarnessRequestMode = "none"
-	HarnessRequestModeOauth HarnessRequestMode = "oauth"
+	None  HarnessRequestMode = "none"
+	Oauth HarnessRequestMode = "oauth"
 )
 
 // Valid indicates whether the value is a known member of the HarnessRequestMode enum.
 func (e HarnessRequestMode) Valid() bool {
 	switch e {
-	case HarnessRequestModeNone:
+	case None:
 		return true
-	case HarnessRequestModeOauth:
+	case Oauth:
 		return true
 	default:
 		return false
@@ -147,17 +187,26 @@ type HarnessAuthAttempt struct {
 
 // HarnessAuthChallenge defines model for HarnessAuthChallenge.
 type HarnessAuthChallenge struct {
-	CodeDestination     *string `json:"codeDestination,omitempty"`
-	Details             *string `json:"details,omitempty"`
-	ExpiresAt           *string `json:"expiresAt,omitempty"`
-	Kind                *string `json:"kind,omitempty"`
-	PollIntervalSeconds *int    `json:"pollIntervalSeconds,omitempty"`
-	Target              *string `json:"target,omitempty"`
-	Text                string  `json:"text"`
-	Type                string  `json:"type"`
-	UserCode            *string `json:"userCode,omitempty"`
-	VerificationUri     *string `json:"verificationUri,omitempty"`
+	CodeDestination *HarnessAuthChallengeCodeDestination `json:"codeDestination,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Details             *string                   `json:"details,omitempty"`
+	ExpiresAt           *time.Time                `json:"expiresAt,omitempty"`
+	Kind                *HarnessAuthChallengeKind `json:"kind,omitempty"`
+	PollIntervalSeconds *int                      `json:"pollIntervalSeconds,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Target *string `json:"target,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Text            *string `json:"text,omitempty"`
+	Type            string  `json:"type"`
+	UserCode        *string `json:"userCode,omitempty"`
+	VerificationUri *string `json:"verificationUri,omitempty"`
 }
+
+// HarnessAuthChallengeCodeDestination defines model for HarnessAuthChallenge.CodeDestination.
+type HarnessAuthChallengeCodeDestination string
+
+// HarnessAuthChallengeKind defines model for HarnessAuthChallenge.Kind.
+type HarnessAuthChallengeKind string
 
 // HarnessAuthStatus defines model for HarnessAuthStatus.
 type HarnessAuthStatus struct {

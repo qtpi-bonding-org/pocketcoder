@@ -36,8 +36,13 @@ class HarnessAuthChallenge {
     dynamic generated,
   ) {
     final destination = generated.codeDestination?.name;
+    final kind = generated.kind?.name;
     return HarnessAuthChallenge(
-      kind: generated.kind,
+      kind: switch (kind) {
+        'deviceCode' => 'device_code',
+        'browserCode' => 'browser_code',
+        _ => null,
+      },
       verificationUri: _parseUri(generated.verificationUri),
       userCode: generated.userCode,
       expiresAt: generated.expiresAt,

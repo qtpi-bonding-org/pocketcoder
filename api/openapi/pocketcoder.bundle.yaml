@@ -1070,17 +1070,41 @@ components:
       type: object
       required:
         - type
-        - text
       additionalProperties: false
       properties:
         type:
           type: string
         text:
           type: string
+          deprecated: true
         target:
           type: string
+          deprecated: true
         details:
           type: string
+          deprecated: true
+        kind:
+          type: string
+          enum:
+            - device_code
+            - browser_code
+        verificationUri:
+          type: string
+          format: uri
+        userCode:
+          type: string
+        codeDestination:
+          type: string
+          enum:
+            - browser
+            - app
+            - none
+        expiresAt:
+          type: string
+          format: date-time
+        pollIntervalSeconds:
+          type: integer
+          minimum: 1
     ModelRequest:
       type: object
       required:
