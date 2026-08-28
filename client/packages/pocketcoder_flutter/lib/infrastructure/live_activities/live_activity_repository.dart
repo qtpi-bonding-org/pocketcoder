@@ -15,6 +15,11 @@ class LiveActivityRepository implements ILiveActivityRepository {
 
   LiveActivityRepository(this._dao, this._api, this._pb);
 
+  /// Apple hard-errors ActivityKit's `Activity.request()` with
+  /// `tooManyRequests` past 8 concurrent Live Activities per app; this cap
+  /// stays under that so the client never needs to handle that error.
+  static const maxConcurrentActivities = 5;
+
   @override
   Future<LiveActivitie> startActivity({
     required String chatId,
@@ -27,6 +32,15 @@ class LiveActivityRepository implements ILiveActivityRepository {
         final userId = _pb.authStore.record?.id;
         if (userId == null) {
           throw LiveActivityException('User not authenticated');
+        }
+
+        final active = await _dao.getFullList(
+          filter: 'user = "$userId" && status = "active"',
+        );
+        if (active.length >= maxConcurrentActivities) {
+          throw LiveActivityException(
+            'Live activity limit reached ($maxConcurrentActivities)',
+          );
         }
 
         try {

@@ -69,6 +69,8 @@ void main() {
 
   group('LiveActivityRepository.startActivity', () {
     test('creates a new active row through the collection DAO', () async {
+      when(() => dao.getFullList(filter: any(named: 'filter')))
+          .thenAnswer((_) async => <LiveActivitie>[]);
       when(() => dao.save(any(), any()))
           .thenAnswer((_) async => activeActivity);
 
@@ -133,6 +135,8 @@ void main() {
     });
 
     test('a non-400 failure is not treated as the collision', () async {
+      when(() => dao.getFullList(filter: any(named: 'filter')))
+          .thenAnswer((_) async => <LiveActivitie>[]);
       when(() => dao.save(any(), any()))
           .thenThrow(ClientException(statusCode: 500));
 
@@ -144,7 +148,42 @@ void main() {
         ),
         throwsA(isA<LiveActivityException>()),
       );
-      verifyNever(() => dao.getFullList(filter: any(named: 'filter')));
+      // getFullList is called once for the pre-create concurrency cap
+      // check, but never with the collision-recovery filter -- that
+      // lookup only fires on a 400 from dao.save, not this test's 500.
+      verifyNever(() => dao.getFullList(
+            filter:
+                'chat = "chat-1" && device = "device-1" && status = "active"',
+          ));
+    });
+
+    test('refuses to start a 6th concurrent active activity', () async {
+      final fiveActive = List.generate(
+        5,
+        (i) => LiveActivitie(
+          id: 'activity-$i',
+          device: 'device-$i',
+          chat: 'chat-$i',
+          user: 'user-1',
+          platform: LiveActivitiePlatform.ios,
+          status: LiveActivitieStatus.active,
+          contentStateVersion: 1,
+        ),
+      );
+      when(() => dao.getFullList(filter: any(named: 'filter')))
+          .thenAnswer((_) async => fiveActive);
+
+      expect(
+        () => repository.startActivity(
+          chatId: 'chat-6',
+          deviceId: 'device-6',
+          platform: 'ios',
+        ),
+        throwsA(isA<LiveActivityException>()),
+      );
+      verify(() => dao.getFullList(filter: 'user = "user-1" && status = "active"'))
+          .called(1);
+      verifyNever(() => dao.save(any(), any()));
     });
   });
 
