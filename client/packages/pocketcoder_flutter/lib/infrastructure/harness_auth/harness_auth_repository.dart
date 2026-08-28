@@ -245,12 +245,7 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
             ),
       challenge: challenge == null
           ? null
-          : HarnessAuthChallenge.fromJson({
-              'type': challenge.type,
-              'text': challenge.text,
-              'target': challenge.target,
-              'details': challenge.details,
-            }),
+          : HarnessAuthChallenge.fromGenerated(challenge),
     );
   }
 }

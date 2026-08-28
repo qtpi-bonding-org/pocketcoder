@@ -3,6 +3,7 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -15,6 +16,12 @@ part 'harness_auth_challenge.g.dart';
 /// * [text]
 /// * [target]
 /// * [details]
+/// * [kind]
+/// * [verificationUri]
+/// * [userCode]
+/// * [codeDestination]
+/// * [expiresAt]
+/// * [pollIntervalSeconds]
 @BuiltValue()
 abstract class HarnessAuthChallenge implements Built<HarnessAuthChallenge, HarnessAuthChallengeBuilder> {
   @BuiltValueField(wireName: r'type')
@@ -29,6 +36,24 @@ abstract class HarnessAuthChallenge implements Built<HarnessAuthChallenge, Harne
   @BuiltValueField(wireName: r'details')
   String? get details;
 
+  @BuiltValueField(wireName: r'kind')
+  String? get kind;
+
+  @BuiltValueField(wireName: r'verificationUri')
+  String? get verificationUri;
+
+  @BuiltValueField(wireName: r'userCode')
+  String? get userCode;
+
+  @BuiltValueField(wireName: r'codeDestination')
+  HarnessAuthChallengeCodeDestinationEnum? get codeDestination;
+
+  @BuiltValueField(wireName: r'expiresAt')
+  DateTime? get expiresAt;
+
+  @BuiltValueField(wireName: r'pollIntervalSeconds')
+  int? get pollIntervalSeconds;
+
   HarnessAuthChallenge._();
 
   factory HarnessAuthChallenge([void updates(HarnessAuthChallengeBuilder b)]) = _$HarnessAuthChallenge;
@@ -38,6 +63,31 @@ abstract class HarnessAuthChallenge implements Built<HarnessAuthChallenge, Harne
 
   @BuiltValueSerializer(custom: true)
   static Serializer<HarnessAuthChallenge> get serializer => _$HarnessAuthChallengeSerializer();
+}
+
+class HarnessAuthChallengeCodeDestinationEnum extends EnumClass {
+  @BuiltValueEnumConst(wireName: r'browser')
+  static const HarnessAuthChallengeCodeDestinationEnum browser =
+      _$harnessAuthChallengeCodeDestinationEnumBrowser;
+  @BuiltValueEnumConst(wireName: r'app')
+  static const HarnessAuthChallengeCodeDestinationEnum app =
+      _$harnessAuthChallengeCodeDestinationEnumApp;
+  @BuiltValueEnumConst(wireName: r'none')
+  static const HarnessAuthChallengeCodeDestinationEnum none =
+      _$harnessAuthChallengeCodeDestinationEnumNone;
+  @BuiltValueEnumConst(wireName: r'unknown_default_open_api', fallback: true)
+  static const HarnessAuthChallengeCodeDestinationEnum unknownDefaultOpenApi =
+      _$harnessAuthChallengeCodeDestinationEnumUnknownDefaultOpenApi;
+
+  static Serializer<HarnessAuthChallengeCodeDestinationEnum> get serializer =>
+      _$harnessAuthChallengeCodeDestinationEnumSerializer;
+
+  const HarnessAuthChallengeCodeDestinationEnum._(String name) : super(name);
+
+  static BuiltSet<HarnessAuthChallengeCodeDestinationEnum> get values =>
+      _$harnessAuthChallengeCodeDestinationEnumValues;
+  static HarnessAuthChallengeCodeDestinationEnum valueOf(String name) =>
+      _$harnessAuthChallengeCodeDestinationEnumValueOf(name);
 }
 
 class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAuthChallenge> {
@@ -75,6 +125,31 @@ class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAut
         object.details,
         specifiedType: const FullType(String),
       );
+    }
+    if (object.kind != null) {
+      yield r'kind';
+      yield serializers.serialize(object.kind, specifiedType: const FullType(String));
+    }
+    if (object.verificationUri != null) {
+      yield r'verificationUri';
+      yield serializers.serialize(object.verificationUri, specifiedType: const FullType(String));
+    }
+    if (object.userCode != null) {
+      yield r'userCode';
+      yield serializers.serialize(object.userCode, specifiedType: const FullType(String));
+    }
+    if (object.codeDestination != null) {
+      yield r'codeDestination';
+      yield serializers.serialize(object.codeDestination,
+          specifiedType: const FullType(HarnessAuthChallengeCodeDestinationEnum));
+    }
+    if (object.expiresAt != null) {
+      yield r'expiresAt';
+      yield serializers.serialize(object.expiresAt, specifiedType: const FullType(DateTime));
+    }
+    if (object.pollIntervalSeconds != null) {
+      yield r'pollIntervalSeconds';
+      yield serializers.serialize(object.pollIntervalSeconds, specifiedType: const FullType(int));
     }
   }
 
@@ -128,6 +203,25 @@ class _$HarnessAuthChallengeSerializer implements PrimitiveSerializer<HarnessAut
           ) as String?;
           if (valueDes == null) continue;
           result.details = valueDes;
+          break;
+        case r'kind':
+          result.kind = serializers.deserialize(value, specifiedType: const FullType.nullable(String)) as String?;
+          break;
+        case r'verificationUri':
+          result.verificationUri = serializers.deserialize(value, specifiedType: const FullType.nullable(String)) as String?;
+          break;
+        case r'userCode':
+          result.userCode = serializers.deserialize(value, specifiedType: const FullType.nullable(String)) as String?;
+          break;
+        case r'codeDestination':
+          result.codeDestination = serializers.deserialize(value,
+              specifiedType: const FullType.nullable(HarnessAuthChallengeCodeDestinationEnum)) as HarnessAuthChallengeCodeDestinationEnum?;
+          break;
+        case r'expiresAt':
+          result.expiresAt = serializers.deserialize(value, specifiedType: const FullType.nullable(DateTime)) as DateTime?;
+          break;
+        case r'pollIntervalSeconds':
+          result.pollIntervalSeconds = serializers.deserialize(value, specifiedType: const FullType.nullable(int)) as int?;
           break;
         default:
           unhandled.add(key);
