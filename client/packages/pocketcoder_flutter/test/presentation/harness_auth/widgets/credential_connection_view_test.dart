@@ -42,6 +42,29 @@ void main() {
     expect(submitted, isFalse);
   });
 
+  testWidgets('shows an expiry notice only for an exact non-null timestamp',
+      (tester) async {
+    final expiresAt = DateTime.utc(2030, 4, 5, 12, 30);
+    Widget view(DateTime? expiry) => host(CredentialConnectionView(
+          step: BrowserVerificationConnectionStep(
+            verificationUri: Uri.parse('https://example.test'),
+            codeDestination: HarnessAuthCodeDestination.browser,
+            userCode: 'EXPIRY-CODE',
+            expiresAt: expiry,
+          ),
+          onOpenAuthorizationPage: () {},
+          onCopyCode: (_) {},
+          onSubmitCode: (_) {},
+          onCancel: () {},
+          onRetry: () {},
+        ));
+
+    await tester.pumpWidget(view(expiresAt));
+    expect(find.textContaining('Expires at'), findsOneWidget);
+    await tester.pumpWidget(view(null));
+    expect(find.textContaining('Expires at'), findsNothing);
+  });
+
   testWidgets('copy writes the exact device code to the platform clipboard',
       (tester) async {
     const channel = SystemChannels.platform;

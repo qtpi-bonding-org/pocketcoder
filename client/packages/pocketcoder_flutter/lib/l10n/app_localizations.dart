@@ -5104,6 +5104,12 @@ abstract class AppLocalizations {
   /// **'Could not open the authorization page. Please try again.'**
   String get credentialConnectionOpenFailed;
 
+  /// No description provided for @credentialConnectionExpiresAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires at {expiresAt}'**
+  String credentialConnectionExpiresAt(DateTime expiresAt);
+
   /// No description provided for @agentModeLabel.
   ///
   /// In en, this message translates to:

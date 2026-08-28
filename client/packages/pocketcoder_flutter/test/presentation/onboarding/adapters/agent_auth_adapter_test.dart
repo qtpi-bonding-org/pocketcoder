@@ -198,6 +198,24 @@ void main() {
           title: 'New Chat',
           user: 'admin',
         ));
+    // Every test taps CANCEL to close its dialog cleanly; an unstubbed
+    // cancel() leaves the per-harness status unchanged (isConnecting still
+    // true), which causes the poll timer to be recreated on the very next
+    // rebuild instead of staying cancelled.
+    when(() => authRepo.cancel(
+          harnessId: any(named: 'harnessId'),
+          provider: any(named: 'provider'),
+          accountId: any(named: 'accountId'),
+          attemptId: any(named: 'attemptId'),
+        )).thenAnswer((_) async => const HarnessAuthStatus(
+          harness: _codexId,
+          provider: _providerId,
+          accountId: '',
+          accountName: '',
+          visibility: harnessAccountVisibilityPersonal,
+          credentialMode: 'account',
+          status: 'disconnected',
+        ));
   });
 
   testWidgets(
@@ -256,6 +274,20 @@ void main() {
       pollCount++;
       return _awaitingChallenge(pollIntervalSeconds: 2);
     });
+    when(() => authRepo.cancel(
+          harnessId: _codexId,
+          provider: _providerId,
+          accountId: any(named: 'accountId'),
+          attemptId: any(named: 'attemptId'),
+        )).thenAnswer((_) async => const HarnessAuthStatus(
+          harness: _codexId,
+          provider: _providerId,
+          accountId: '',
+          accountName: '',
+          visibility: harnessAccountVisibilityPersonal,
+          credentialMode: 'account',
+          status: 'disconnected',
+        ));
 
     await tester.runAsync(() async {});
     await _pumpScreen(tester,
@@ -285,6 +317,68 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
+  });
+
+  testWidgets(
+      'cancelling stops the poll timer immediately -- no further poll calls '
+      'even once enough virtual time elapses for another tick', (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => _awaitingChallenge(pollIntervalSeconds: 2));
+    var pollCount = 0;
+    when(() => authRepo.poll(
+          harnessId: _codexId,
+          provider: _providerId,
+          accountId: any(named: 'accountId'),
+          attemptId: any(named: 'attemptId'),
+        )).thenAnswer((_) async {
+      pollCount++;
+      return _awaitingChallenge(pollIntervalSeconds: 2);
+    });
+    when(() => authRepo.cancel(
+          harnessId: _codexId,
+          provider: _providerId,
+          accountId: any(named: 'accountId'),
+          attemptId: any(named: 'attemptId'),
+        )).thenAnswer((_) async => const HarnessAuthStatus(
+          harness: _codexId,
+          provider: _providerId,
+          accountId: '',
+          accountName: '',
+          visibility: harnessAccountVisibilityPersonal,
+          credentialMode: 'account',
+          status: 'disconnected',
+        ));
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
+    await tester.pump(const Duration(seconds: 2, milliseconds: 100));
+    await tester.pump();
+    expect(pollCount, greaterThanOrEqualTo(1));
+
+    await tester.tap(find.text('CANCEL'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+    final countAtCancel = pollCount;
+
+    // Enough virtual time for several more ticks, if the timer were still
+    // alive.
+    await tester.pump(const Duration(seconds: 10));
+    await tester.pump();
+    expect(pollCount, countAtCancel);
   });
 
   testWidgets(

@@ -189,8 +189,19 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                   unawaited(auth.poll(harness.id, provider));
               });
             }
+          } else {
+            // A terminal response (failure, cancellation, or disconnect)
+            // must stop polling before the dialog is dismissed.  In
+            // particular, a failure can leave this builder mounted so that
+            // the user can retry.
+            timer?.cancel();
+            timer = null;
+            timerInterval = null;
           }
           if (status?.isConnected == true && !openedChat) {
+            timer?.cancel();
+            timer = null;
+            timerInterval = null;
             openedChat = true;
             WidgetsBinding.instance.addPostFrameCallback((_) async {
               Navigator.of(dialogContext).pop();
@@ -244,6 +255,9 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                   onSubmitCode: (code) => auth.submitCode(
                       harnessId: harness.id, code: code, provider: provider),
                   onCancel: () async {
+                    timer?.cancel();
+                    timer = null;
+                    timerInterval = null;
                     await auth.cancel(harness.id, provider);
                     if (dialogContext.mounted)
                       Navigator.of(dialogContext).pop();

@@ -2818,6 +2818,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not open the authorization page. Please try again.';
 
   @override
+  String credentialConnectionExpiresAt(DateTime expiresAt) {
+    final intl.DateFormat expiresAtDateFormat = intl.DateFormat.yMd(localeName);
+    final String expiresAtString = expiresAtDateFormat.format(expiresAt);
+
+    return 'Expires at $expiresAtString';
+  }
+
+  @override
   String get agentModeLabel => 'MODE:';
 
   @override

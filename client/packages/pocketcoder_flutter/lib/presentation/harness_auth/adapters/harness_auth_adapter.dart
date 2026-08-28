@@ -48,6 +48,11 @@ class HarnessAuthAdapter
         }
       },
     );
+    final pollIntervals = adapter.keep<Map<String, int>>(
+      'harnessPollIntervals',
+      () => <String, int>{},
+      dispose: (intervals) => intervals.clear(),
+    );
     void syncPollTimers(HarnessAuthState value) {
       final awaiting = <String, int>{};
       for (final status in value.statuses.values) {
@@ -57,12 +62,15 @@ class HarnessAuthAdapter
         }
       }
       for (final id in pollTimers.keys.toList()) {
-        if (!awaiting.containsKey(id)) {
+        if (!awaiting.containsKey(id) ||
+            pollIntervals[id] != awaiting[id]) {
           pollTimers.remove(id)?.cancel();
+          pollIntervals.remove(id);
         }
       }
       for (final entry in awaiting.entries) {
         if (!pollTimers.containsKey(entry.key)) {
+          pollIntervals[entry.key] = entry.value;
           pollTimers[entry.key] = Timer.periodic(
             Duration(seconds: entry.value),
             (_) => cubit.poll(entry.key),

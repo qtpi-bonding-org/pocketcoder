@@ -1126,6 +1126,15 @@
   "credentialConnectionCancel": "CANCEL",
   "credentialConnectionRetry": "RETRY",
   "credentialConnectionOpenFailed": "Could not open the authorization page. Please try again.",
+  "credentialConnectionExpiresAt": "Expires at {expiresAt}",
+  "@credentialConnectionExpiresAt": {
+    "placeholders": {
+      "expiresAt": {
+        "type": "DateTime",
+        "format": "yMd"
+      }
+    }
+  },
   "agentModeLabel": "MODE:",
   "agentConfigLabel": "CONFIG",
   "pocketCoderUpdateChecking": "$ CHECKING VERIFIED RELEASE STATUS...",
