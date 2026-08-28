@@ -254,7 +254,25 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	// harnesses (Goose, OpenCode; supports_live_config) are deliberately
 	// excluded -- they have no single provider to default to (§10).
 	if ollamaModel == "" && hmID == "" && !harnessRec.GetBool("supports_live_config") {
-		if hm, err := app.FindFirstRecordByFilter("harness_models", "harness = {:h} && is_default = true", map[string]any{"h": harnessRec.Id}); err == nil && hm != nil {
+		hm, hmErr := app.FindFirstRecordByFilter("harness_models", "harness = {:h} && is_default = true", map[string]any{"h": harnessRec.Id})
+		if hmErr != nil || hm == nil {
+			// No admin/migration has ever curated an is_default row for
+			// this harness -- true of every real deployment today, since
+			// neither the seed migration nor modelcatalog's models.dev sync
+			// sets is_default on harness_models. Fall back to ANY
+			// harness_models row for this harness instead of leaving the
+			// provider unresolved: a non-live-config harness is
+			// single-provider by construction (its harness_providers pin
+			// only ever names one provider), so every harness_models row
+			// for it shares that same provider regardless of which
+			// specific model gets picked -- only the provider identity
+			// matters for credential resolution, not the model choice.
+			rows, rowsErr := app.FindRecordsByFilter("harness_models", "harness = {:h}", "harness_model_id", 1, 0, map[string]any{"h": harnessRec.Id})
+			if rowsErr == nil && len(rows) > 0 {
+				hm = rows[0]
+			}
+		}
+		if hm != nil {
 			p.Model = hm.GetString("harness_model_id")
 			if m, err := app.FindRecordById("models", hm.GetString("model")); err == nil {
 				if pr, err := app.FindRecordById("providers", m.GetString("provider")); err == nil {

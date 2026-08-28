@@ -911,6 +911,16 @@ func TestBuildSessionProfileSetsAccountLoginForEveryAccountModeHarness(t *testin
 // existing test up to this one explicitly set harness_model_override in its
 // chat fixture, which is exactly why this was never caught: it tested a path
 // real users don't take on first contact with a harness.
+//
+// This fixture deliberately does NOT set harness_models.is_default anywhere
+// -- confirmed live 2026-08-28 that neither the seed migration nor
+// modelcatalog's models.dev sync ever sets that field on a real deployment,
+// so a fix that only worked via an is_default row would have been a no-op
+// in production. Multiple undefaulted rows are seeded (mirroring a real
+// models.dev catalog sync creating one row per model) to prove the fallback
+// resolves the correct provider regardless of which specific model it picks
+// -- correct because a non-live-config harness is single-provider by
+// construction, so every one of its harness_models rows shares that provider.
 func TestBuildSessionProfileResolvesDefaultModelProviderWithoutOverride(t *testing.T) {
 	app := testApp(t)
 	for _, cliID := range []string{"claude-code", "codex"} {
@@ -938,16 +948,22 @@ func TestBuildSessionProfileResolvesDefaultModelProviderWithoutOverride(t *testi
 				t.Fatal(err)
 			}
 
-			model := testModel(t, app, provider.Id, "default-model-"+cliID)
-			hm := testHarnessModel(t, app, harness.Id, model.Id, "default-model-"+cliID)
-			hm.Set("is_default", true)
-			if err := app.Save(hm); err != nil {
-				t.Fatal(err)
-			}
+			// Two undefaulted rows, neither is_default -- matches the real
+			// deployment shape from models.dev sync exactly. The fallback
+			// sorts by harness_model_id ascending, so "catalog-model-a"
+			// deterministically wins over "catalog-model-b" -- the instance
+			// below is scoped to that same row so the full resolution
+			// (provider AND the harness_instances lookup) succeeds, proving
+			// the fallback's chosen row is actually usable end to end, not
+			// just that *some* provider string got set.
+			modelA := testModel(t, app, provider.Id, "catalog-model-a-"+cliID)
+			hmA := testHarnessModel(t, app, harness.Id, modelA.Id, "catalog-model-a-"+cliID)
+			modelB := testModel(t, app, provider.Id, "catalog-model-b-"+cliID)
+			testHarnessModel(t, app, harness.Id, modelB.Id, "catalog-model-b-"+cliID)
 
 			instance := runningInstanceFor(t, app, harness, userID)
 			instance.Set("oauth_account", account.Id)
-			instance.Set("launch_key", hm.Id)
+			instance.Set("launch_key", hmA.Id)
 			if err := app.Save(instance); err != nil {
 				t.Fatal(err)
 			}
@@ -960,10 +976,10 @@ func TestBuildSessionProfileResolvesDefaultModelProviderWithoutOverride(t *testi
 			}
 
 			if profile.Provider != providerID {
-				t.Errorf("Provider = %q, want %q -- default harness_models row was not resolved", profile.Provider, providerID)
+				t.Errorf("Provider = %q, want %q -- fallback did not resolve any harness_models row", profile.Provider, providerID)
 			}
 			if !profile.AccountLogin {
-				t.Error("AccountLogin = false, want true -- the connected oauth account should have been resolved via the default model's provider")
+				t.Error("AccountLogin = false, want true -- the connected oauth account should have been resolved via the fallback-picked model's provider")
 			}
 		})
 	}
