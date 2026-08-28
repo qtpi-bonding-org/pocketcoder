@@ -7,12 +7,20 @@ class TypewriterText extends StatefulWidget {
   final Duration speed;
   final VoidCallback? onComplete;
 
+  /// When true, skips the incremental reveal entirely: [text] renders in
+  /// full on the first frame and [onComplete] fires once, synchronously.
+  /// For a message the caller already knows has been shown before (e.g. a
+  /// list item recycled back into view on scrollback), so it doesn't replay
+  /// the animation as if it were appearing for the first time.
+  final bool instant;
+
   const TypewriterText({
     super.key,
     required this.text,
     this.style,
     this.speed = const Duration(milliseconds: 10),
     this.onComplete,
+    this.instant = false,
   });
 
   @override
@@ -34,13 +42,24 @@ class _TypewriterTextState extends State<TypewriterText> {
   @override
   void didUpdateWidget(TypewriterText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.text != widget.text) {
+    if (oldWidget.text != widget.text || oldWidget.instant != widget.instant) {
       _startTyping();
     }
   }
 
   void _startTyping() {
     _timer?.cancel();
+
+    if (widget.instant) {
+      setState(() {
+        _displayedText = widget.text;
+        _currentIndex = widget.text.length;
+        _elapsedMicros = 0;
+      });
+      widget.onComplete?.call();
+      return;
+    }
+
     _displayedText = '';
     _currentIndex = 0;
     _elapsedMicros = 0;
