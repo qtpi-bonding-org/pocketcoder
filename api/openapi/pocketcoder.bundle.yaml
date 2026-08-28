@@ -944,6 +944,10 @@ components:
           minItems: 1
           items:
             $ref: '#/components/schemas/ContentBlock'
+        messageId:
+          type: string
+          format: uuid
+          description: Client-generated unique identifier for this user message, echoed back into the AG-UI event stream so it survives reconnect/cache-replay. Optional for backward compatibility with older clients.
     ContentBlock:
       type: object
       required:

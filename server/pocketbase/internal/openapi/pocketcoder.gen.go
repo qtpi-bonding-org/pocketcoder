@@ -15,6 +15,7 @@ import (
 	"net/http"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 const (
@@ -231,7 +232,9 @@ type OllamaProgress map[string]interface{}
 
 // PromptRequest defines model for PromptRequest.
 type PromptRequest struct {
-	Prompt []ContentBlock `json:"prompt"`
+	// MessageId Client-generated unique identifier for this user message, echoed back into the AG-UI event stream so it survives reconnect/cache-replay. Optional for backward compatibility with older clients.
+	MessageId *openapi_types.UUID `json:"messageId,omitempty"`
+	Prompt    []ContentBlock      `json:"prompt"`
 }
 
 // PushRequest defines model for PushRequest.
