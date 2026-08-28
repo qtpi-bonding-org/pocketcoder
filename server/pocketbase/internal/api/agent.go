@@ -118,7 +118,7 @@ func PromptChat(app core.App, service coordinator.AgentRuntime, ollamaBaseURL st
 					log.Printf("[Push] run finished: %v", err)
 				}
 			}()
-		}))
+		}), coordinator.WithUserMessageIDOpt(input.MessageId))
 	if err != nil {
 		if errors.Is(err, coordinator.ErrRunInProgress) {
 			return "", apis.NewApiError(http.StatusConflict, "A run is already active for this chat", nil)

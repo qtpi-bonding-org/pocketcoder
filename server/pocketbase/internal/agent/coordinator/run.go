@@ -75,11 +75,33 @@ const (
 
 type RunOption func(*runOptions)
 type runOptions struct {
-	onRunEnded func(context.Context, string, RunOutcome)
+	onRunEnded    func(context.Context, string, RunOutcome)
+	userMessageID string
 }
 
 func WithOnRunEnded(fn func(context.Context, string, RunOutcome)) RunOption {
 	return func(o *runOptions) { o.onRunEnded = fn }
+}
+
+// WithUserMessageID carries the client-generated id from PromptRequest.MessageId
+// (acp-go-sdk) through to runLoop, which echoes it back into the hub as a
+// user-role TEXT_MESSAGE_START/CONTENT/END sequence — see runLoop's use of
+// this value for why: the client already renders this id optimistically, and
+// the client's ConversationReducer dedupes by exact id, so echoing the same
+// id here (rather than minting a new one) is what makes the optimistic
+// insert get superseded instead of duplicated once this arrives.
+func WithUserMessageID(id string) RunOption {
+	return func(o *runOptions) { o.userMessageID = id }
+}
+
+// WithUserMessageIDOpt is WithUserMessageID for a caller holding the
+// acp-go-sdk *string shape directly (PromptRequest.MessageId) — a no-op
+// RunOption when nil or empty, so call sites don't need their own branch.
+func WithUserMessageIDOpt(id *string) RunOption {
+	if id == nil || *id == "" {
+		return func(*runOptions) {}
+	}
+	return WithUserMessageID(*id)
 }
 
 type DialFunc func(context.Context, acpsdk.Client, Target) (acp.Conn, error)
@@ -907,7 +929,7 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 	accepting := &atomic.Bool{}
 	h := &runHandle{runID: runID, cancel: cancel, accepting: accepting}
 	c.registerRun(chatID, h)
-	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created, finished, options.onRunEnded)
+	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created, finished, options.onRunEnded, options.userMessageID)
 	return runID, nil
 }
 
@@ -915,7 +937,7 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 // a single panic recover that publishes RUN_ERROR, and the publish-through-
 // hub `emit` so RequestPermission (which also calls s.emit) remains safe on
 // the detached path with no client lifetime dependency.
-func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished, onRunEnded func(context.Context, string, RunOutcome)) {
+func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished, onRunEnded func(context.Context, string, RunOutcome), userMessageID string) {
 	hub := c.hubFor(chatID)
 	outcome := RunFailed
 	defer func() {
@@ -970,6 +992,12 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 	bridge := agui.NewBridge(chatID, runID)
 	hub.StartRun(runID, bridge.Snapshot)
+
+	if userMessageID != "" {
+		hub.Publish(events.NewTextMessageStartEvent(userMessageID, events.WithRole("user")))
+		hub.Publish(events.NewTextMessageContentEvent(userMessageID, prompt))
+		hub.Publish(events.NewTextMessageEndEvent(userMessageID))
+	}
 
 	// Detached path routes ALL client callbacks (SessionUpdate AND
 	// RequestPermission — both call s.emit) through the hub, so emit is never

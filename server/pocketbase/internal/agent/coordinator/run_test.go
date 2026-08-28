@@ -539,6 +539,78 @@ func TestRequestPermissionForwardsToolCallID(t *testing.T) {
 	c.waitRunDone(t, "A")
 }
 
+func TestStartPromptWithUserMessageIDEchoesTextMessage(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	att := c.hubFor("A").Attach(0)
+	defer att.Unsubscribe()
+
+	_, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil,
+		WithUserMessageID("user-msg-1"),
+	)
+	if err != nil {
+		t.Fatalf("StartPrompt err=%v", err)
+	}
+	c.waitRunDone(t, "A")
+
+	var sawStart, sawContent, sawEnd bool
+	for i := 0; i < 20; i++ {
+		select {
+		case se := <-att.Live:
+			switch ev := se.Ev.(type) {
+			case *events.TextMessageStartEvent:
+				if ev.MessageID == "user-msg-1" && ev.Role != nil && *ev.Role == "user" {
+					sawStart = true
+				}
+			case *events.TextMessageContentEvent:
+				if ev.MessageID == "user-msg-1" && ev.Delta == "hi" {
+					sawContent = true
+				}
+			case *events.TextMessageEndEvent:
+				if ev.MessageID == "user-msg-1" {
+					sawEnd = true
+				}
+			}
+		default:
+		}
+	}
+	if !sawStart || !sawContent || !sawEnd {
+		t.Fatalf("user message echo incomplete: start=%v content=%v end=%v",
+			sawStart, sawContent, sawEnd)
+	}
+}
+
+func TestStartPromptWithoutUserMessageIDEchoesNothing(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	att := c.hubFor("A").Attach(0)
+	defer att.Unsubscribe()
+
+	_, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	if err != nil {
+		t.Fatalf("StartPrompt err=%v", err)
+	}
+	c.waitRunDone(t, "A")
+
+	for i := 0; i < 20; i++ {
+		select {
+		case se := <-att.Live:
+			if _, ok := se.Ev.(*events.TextMessageStartEvent); ok {
+				t.Fatal("no user message echo expected when WithUserMessageID is not set")
+			}
+		default:
+		}
+	}
+}
+
 // testCoordinatorWithConnAndConfig is testCoordinatorWithConn plus a hook
 // to set additional Config fields (e.g. OnPermissionPending) that the
 // 3-arg helper has no room for.
