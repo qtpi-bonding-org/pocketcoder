@@ -1360,6 +1360,15 @@
       },
       {
         "hidden": false,
+        "id": "bool_harnesses_supports_live_credential_registration",
+        "name": "supports_live_credential_registration",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
+      },
+      {
+        "hidden": false,
         "id": "bool_harnesses_provider_fanout",
         "name": "provider_fanout",
         "presentable": false,

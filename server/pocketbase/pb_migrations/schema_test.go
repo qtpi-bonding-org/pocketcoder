@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"testing"
+
+	"github.com/pocketbase/pocketbase/tests"
 )
 
 func TestChatsCollectionHasHarnessFields(t *testing.T) {
@@ -157,5 +159,45 @@ func TestAgentSessionsHasHarnessInstance(t *testing.T) {
 	}
 	if !found {
 		t.Error("agent_sessions.harness_instance field missing")
+	}
+}
+
+func TestHarnessesHasLiveCredentialRegistrationField(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	coll, err := app.FindCollectionByNameOrId("harnesses")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if coll.Fields.GetByName("supports_live_credential_registration") == nil {
+		t.Fatal("harnesses missing supports_live_credential_registration field")
+	}
+}
+
+func TestGooseHarnessSeedHasLiveCredentialRegistration(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !goose.GetBool("supports_live_credential_registration") {
+		t.Fatal("goose harness should have supports_live_credential_registration = true")
+	}
+
+	opencode, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'opencode'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opencode.GetBool("supports_live_credential_registration") {
+		t.Fatal("opencode harness should have supports_live_credential_registration = false")
 	}
 }

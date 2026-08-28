@@ -172,6 +172,7 @@ func init() {
 			},
 		})
 		gooseHarness.Set("supports_live_config", true)
+		gooseHarness.Set("supports_live_credential_registration", true)
 		gooseHarness.Set("provider_fanout", true)
 		gooseHarness.Set("supports_ollama", true)
 		gooseHarness.Set("supports_session_delete", true)
