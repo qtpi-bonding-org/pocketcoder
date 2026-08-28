@@ -52,6 +52,22 @@ void main() {
       expect(block['type'], 'text');
       expect(block['text'], 'hi');
     });
+
+    test('POSTs messageId when provided', () async {
+      nextResponseBody = {'runId': 'run-123'};
+      await api.prompt('chat-1', 'hi', messageId: 'abc-123');
+
+      final body = adapter.lastJsonBody;
+      expect(body['messageId'], 'abc-123');
+    });
+
+    test('omits messageId when not provided', () async {
+      nextResponseBody = {'runId': 'run-123'};
+      await api.prompt('chat-1', 'hi');
+
+      final body = adapter.lastJsonBody;
+      expect(body.containsKey('messageId'), isFalse);
+    });
   });
 
   group('cancel', () {

@@ -36,7 +36,8 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   Future<void> cancelStreams() async {}
 
   @override
-  Future<String> sendPrompt(String chatId, String text) async => 'run-1';
+  Future<String> sendPrompt(String chatId, String text,
+      {String? messageId}) async => 'run-1';
 
   @override
   Future<void> cancel(String chatId) async {}

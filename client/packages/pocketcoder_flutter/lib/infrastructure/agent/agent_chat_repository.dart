@@ -75,8 +75,8 @@ class AgentChatRepository {
     return await _cache.maxSeq(chatId) ?? 0;
   }
 
-  Future<String> sendPrompt(String chatId, String text) {
-    return _actions.prompt(chatId, text);
+  Future<String> sendPrompt(String chatId, String text, {String? messageId}) {
+    return _actions.prompt(chatId, text, messageId: messageId);
   }
 
   Future<void> cancel(String chatId) {

@@ -63,6 +63,7 @@ class AgentActionsApi {
   static void _writeTextPrompt(
     dynamic builder,
     String text,
+    String? messageId,
   ) {
     final prompt = builder?.prompt;
     if (prompt == null) {
@@ -73,6 +74,9 @@ class AgentActionsApi {
         (block) => _writeTextContentBlock(block, text),
       ),
     );
+    if (messageId != null) {
+      builder.messageId = messageId;
+    }
   }
 
   static void _writeTextContentBlock(
@@ -164,9 +168,9 @@ class AgentActionsApi {
   /// POST `session/prompt` with a single text ContentBlock. Returns the
   /// server-assigned `runId`. Throws [RunInProgressFailure] (409) if a run
   /// is already active for this chat.
-  Future<String> prompt(String chatId, String text) {
+  Future<String> prompt(String chatId, String text, {String? messageId}) {
     final request = generated.PromptRequest(
-      (builder) => _writeTextPrompt(builder, text),
+      (builder) => _writeTextPrompt(builder, text, messageId),
     );
     return _call(
       () async {
