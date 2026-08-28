@@ -130,6 +130,10 @@ void main() {
     await tester.pump();
     expect(find.byType(VimToast), findsOneWidget);
     expect(find.textContaining('RUN INTERRUPTED'), findsOneWidget);
+    // VimToast self-dismisses via Future.delayed(3s) -- drain it before the
+    // widget tree tears down, or flutter_test's teardown invariant check
+    // fails with "A Timer is still pending".
+    await tester.pump(const Duration(seconds: 4));
   });
 
   testWidgets('reauth-required transition shows a VimToast, not an inline banner',
@@ -149,6 +153,8 @@ void main() {
     await tester.pumpWidget(build(true));
     await tester.pump();
     expect(find.byType(VimToast), findsOneWidget);
+    // See the same drain comment in the interrupted-outcome test above.
+    await tester.pump(const Duration(seconds: 4));
   });
 
   testWidgets('haptics once when a run completes', (tester) async {

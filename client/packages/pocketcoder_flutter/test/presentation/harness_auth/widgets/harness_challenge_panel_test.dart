@@ -63,6 +63,11 @@ void main() {
 
     expect(copied, hasLength(1));
     expect(copied.single.text, 'ABCD-1234');
+    // The copy action shows a VimToast, which self-dismisses via
+    // Future.delayed(3s) -- drain it before the widget tree tears down, or
+    // flutter_test's teardown invariant check fails with "A Timer is still
+    // pending".
+    await tester.pump(const Duration(seconds: 4));
   });
 
   testWidgets('does not show a [COPY] action when there is no code to copy',
