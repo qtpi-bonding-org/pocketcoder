@@ -229,6 +229,63 @@ func TestRenderEnvLiveConfigHarnessInjectsEveryCredentialedProviderRegardlessOfP
 	}
 }
 
+// TestRenderEnvInjectsApiKeyWhenCredentialSelectionModeIsNone is a
+// regression test for a bug found by an audit 2026-08-28: renderEnv's mode
+// switch only handled "api_key" and "oauth" -- an explicit mode="none"
+// credential_selections row (exactly what harness_auth.go's
+// clearSelectionToNone / the Flutter onboarding API-key path records)
+// skipped the mode=="" auto-detect branch (which DOES find and inject a
+// saved provider_api_keys row) and matched no case at all, so the key was
+// silently never injected. ResolveOAuthAccountForLaunch already treated
+// "api_key" and "none" identically (case "api_key", "none": return nil,
+// nil) -- renderEnv's switch just never got the matching case. This bug was
+// dormant until tonight's onboarding fix made the client actually call
+// startWithNone for a multi-provider harness, which is the only thing that
+// ever creates a real mode="none" row.
+func TestRenderEnvInjectsApiKeyWhenCredentialSelectionModeIsNone(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "none-mode-"+uuid.NewString()[:8]+"@example.com").Id
+
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createProviderAPIKey(t, app, userID, openai.Id, "sk-openai-key")
+
+	codex, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Reproduces exactly what clearSelectionToNone (harness_auth.go) records
+	// for the API-key onboarding path: an EXPLICIT credential_selections row
+	// with mode="none", not just the absence of one.
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", codex.Id)
+	sel.Set("provider", openai.Id)
+	sel.Set("mode", "none")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, codex.Id, "", userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := rec.GetString("status"); status == "error" {
+		t.Fatalf("codex provisioning failed: %s", rec.GetString("last_error"))
+	}
+	if !containsString(fake.lastCreateSpec.Env, "OPENAI_API_KEY=sk-openai-key") {
+		t.Errorf("codex env = %v, want OPENAI_API_KEY=sk-openai-key -- an explicit mode=none selection must still inject the saved API key, not silently omit it", fake.lastCreateSpec.Env)
+	}
+}
+
 type fakeDockerClient struct {
 	imageExists bool
 	inspectErr  error

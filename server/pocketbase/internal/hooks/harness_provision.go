@@ -631,7 +631,20 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string, harne
 			}
 		}
 		switch mode {
-		case "api_key":
+		case "api_key", "none":
+			// "none" means "no OAuth account for this (harness, provider)"
+			// -- the same meaning ResolveOAuthAccountForLaunch already gives
+			// it (case "api_key", "none": return nil, nil). It does NOT mean
+			// "no credential at all": it's exactly the mode
+			// HarnessAuthCubit.startWithNone records for a plain
+			// provider_api_keys credential (Goose/OpenCode's API-key
+			// onboarding path). Before this, an explicit "none" selection
+			// skipped the mode=="" auto-detect branch above (which does
+			// find and use the key) and had no matching case here, so the
+			// container launched with the credential silently never
+			// injected -- invisible until a real "none" selection actually
+			// existed, which onboarding didn't produce until Goose/OpenCode
+			// API-key auth was wired up.
 			key, err := app.FindFirstRecordByFilter("provider_api_keys", "owner = {:u} && provider = {:p}", map[string]any{"u": userID, "p": providerRec.Id})
 			if err != nil {
 				if isRecordNotFound(err) {
