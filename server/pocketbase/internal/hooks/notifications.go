@@ -75,8 +75,11 @@ func SendLiveActivityUpdate(token, fcmToken, userID string, state LiveActivityCo
 }
 
 // PushProvider defines the interface for different notification services.
+// extra carries notification-type-specific structured data (e.g. a pending
+// permission's request_id and offered options) that a provider merges into
+// its payload if it can; a provider with no such support just ignores it.
 type PushProvider interface {
-	Send(token, title, body string) error
+	Send(token, title, body string, extra map[string]string) error
 }
 
 // NtfyDirectProvider sends notifications directly to a UnifiedPush (ntfy) endpoint.
@@ -86,7 +89,9 @@ type NtfyDirectProvider struct {
 	Type   string
 }
 
-func (p *NtfyDirectProvider) Send(endpoint, title, body string) error {
+// extra is ignored here: ntfy's direct path has no structured-action
+// support yet -- that's out of scope for this slice.
+func (p *NtfyDirectProvider) Send(endpoint, title, body string, extra map[string]string) error {
 	req, err := http.NewRequest("POST", endpoint, strings.NewReader(body))
 	if err != nil {
 		return err
@@ -129,7 +134,7 @@ type FcmRelayProvider struct {
 	Type     string
 }
 
-func (p *FcmRelayProvider) Send(token, title, body string) error {
+func (p *FcmRelayProvider) Send(token, title, body string, extra map[string]string) error {
 	if p.RelayURL == "" {
 		log.Printf("⚠️ [Push/FCM] Relay URL not configured. Skipping.")
 		return nil
@@ -143,6 +148,9 @@ func (p *FcmRelayProvider) Send(token, title, body string) error {
 		"message": body,
 		"type":    p.Type,
 		"chat":    p.ChatID,
+	}
+	for k, v := range extra {
+		payload[k] = v
 	}
 
 	bodyBytes, err := json.Marshal(payload)
@@ -234,6 +242,13 @@ func SendPushOperation(app core.App, re *core.RequestEvent) error {
 // SendPushNotification is the unified dispatch function.
 // Flow: rules check -> presence check -> device dispatch
 func SendPushNotification(app core.App, userID, title, message, notifType, chatID string) error {
+	return SendPushNotificationWithExtra(app, userID, title, message, notifType, chatID, nil)
+}
+
+// SendPushNotificationWithExtra is SendPushNotification plus structured
+// type-specific data (e.g. a pending permission's request_id and offered
+// options) merged into the outgoing payload -- see PushProvider.Send.
+func SendPushNotificationWithExtra(app core.App, userID, title, message, notifType, chatID string, extra map[string]string) error {
 	// 1. Notification Rules: check if this type is enabled for the user
 	if !isNotificationTypeEnabled(app, userID, notifType) {
 		log.Printf("🔕 [Push] User %s has disabled '%s' notifications. Skipping.", userID, notifType)
@@ -247,7 +262,7 @@ func SendPushNotification(app core.App, userID, title, message, notifType, chatI
 	}
 
 	// 3. Dispatch to all active devices
-	return dispatchToDevices(app, userID, title, message, notifType, chatID)
+	return dispatchToDevices(app, userID, title, message, notifType, chatID, extra)
 }
 
 // isNotificationTypeEnabled checks the user's notification_rules record.
@@ -314,7 +329,7 @@ func IsUserOnline(app core.App, userID string) bool {
 }
 
 // dispatchToDevices sends notifications to every active device registered to the user.
-func dispatchToDevices(app core.App, userID, title, message, notifType, chatID string) error {
+func dispatchToDevices(app core.App, userID, title, message, notifType, chatID string, extra map[string]string) error {
 	devices, err := app.FindRecordsByFilter(
 		"devices",
 		"user = {:userID} && is_active = true",
@@ -357,7 +372,7 @@ func dispatchToDevices(app core.App, userID, title, message, notifType, chatID s
 		}
 
 		if provider != nil {
-			if err := provider.Send(token, title, message); err != nil {
+			if err := provider.Send(token, title, message, extra); err != nil {
 				log.Printf("❌ [Push] %s dispatch error: %v", serviceType, err)
 			} else {
 				log.Printf("✅ [Push] '%s' notification dispatched via %s", notifType, serviceType)
