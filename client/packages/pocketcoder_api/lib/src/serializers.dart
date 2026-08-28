@@ -39,6 +39,7 @@ import 'package:pocketcoder_api/src/model/release_compatibility_response.dart';
 import 'package:pocketcoder_api/src/model/release_status_response.dart';
 import 'package:pocketcoder_api/src/model/release_status_response_current.dart';
 import 'package:pocketcoder_api/src/model/schedule_run_accepted_response.dart';
+import 'package:pocketcoder_api/src/model/set_live_activity_token_request.dart';
 import 'package:pocketcoder_api/src/model/store_mcp_o_auth_token_response.dart';
 
 part 'serializers.g.dart';
@@ -69,6 +70,7 @@ part 'serializers.g.dart';
   ReleaseStatusResponse,
   ReleaseStatusResponseCurrent,
   ScheduleRunAcceptedResponse,
+  SetLiveActivityTokenRequest,
   StoreMcpOAuthTokenResponse,
 ])
 Serializers serializers = (_$serializers.toBuilder()

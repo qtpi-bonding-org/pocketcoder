@@ -47,4 +47,5 @@ export 'package:pocketcoder_api/src/model/release_compatibility_response.dart';
 export 'package:pocketcoder_api/src/model/release_status_response.dart';
 export 'package:pocketcoder_api/src/model/release_status_response_current.dart';
 export 'package:pocketcoder_api/src/model/schedule_run_accepted_response.dart';
+export 'package:pocketcoder_api/src/model/set_live_activity_token_request.dart';
 export 'package:pocketcoder_api/src/model/store_mcp_o_auth_token_response.dart';

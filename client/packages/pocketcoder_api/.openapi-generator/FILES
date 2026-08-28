@@ -37,6 +37,7 @@ doc/ReleaseStatusResponse.md
 doc/ReleaseStatusResponseCurrent.md
 doc/ScheduleRunAcceptedResponse.md
 doc/SchedulesApi.md
+doc/SetLiveActivityTokenRequest.md
 doc/StoreMcpOAuthTokenResponse.md
 lib/pocketcoder_api.dart
 lib/src/api.dart
@@ -84,6 +85,7 @@ lib/src/model/release_compatibility_response.dart
 lib/src/model/release_status_response.dart
 lib/src/model/release_status_response_current.dart
 lib/src/model/schedule_run_accepted_response.dart
+lib/src/model/set_live_activity_token_request.dart
 lib/src/model/store_mcp_o_auth_token_response.dart
 lib/src/serializers.dart
 pubspec.yaml

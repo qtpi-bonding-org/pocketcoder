@@ -497,6 +497,20 @@ func (s *server) EndLiveActivity(ctx context.Context, request openapi.EndLiveAct
 	}
 	return openapi.EndLiveActivity200JSONResponse{Ok: true}, nil
 }
+func (s *server) SetLiveActivityToken(ctx context.Context, request openapi.SetLiveActivityTokenRequestObject) (openapi.SetLiveActivityTokenResponseObject, error) {
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	re.Request.SetPathValue("id", string(request.Id))
+	if request.Body == nil || strings.TrimSpace(request.Body.ActivityPushToken) == "" {
+		return nil, re.BadRequestError("activity_push_token is required", nil)
+	}
+	if err := api.SetLiveActivityTokenByID(s.app, re, string(request.Id), request.Body.ActivityPushToken); err != nil {
+		return nil, errorutil.Internal("set live activity token", err)
+	}
+	return openapi.SetLiveActivityToken200JSONResponse{Ok: true}, nil
+}
 func (s *server) GetReleaseCompatibility(_ context.Context, _ openapi.GetReleaseCompatibilityRequestObject) (openapi.GetReleaseCompatibilityResponseObject, error) {
 	dataVersion, compatibility := api.ReleaseCompatibility()
 	compatMap, ok := compatibility.(map[string]any)

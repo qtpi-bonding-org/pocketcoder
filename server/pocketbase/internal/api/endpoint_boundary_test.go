@@ -95,6 +95,7 @@ var testsByEndpoint = []struct {
 	{"proxyObservability", http.MethodGet, "/api/pocketcoder/v1/proxy/observability/", ""},
 	{"sendPushNotification", http.MethodPost, "/api/pocketcoder/v1/push", `{"user_id":"test-user","type":"test"}`},
 	{"endLiveActivity", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/end", ""},
+	{"setLiveActivityToken", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/token", `{"activity_push_token":"tok"}`},
 }
 
 func TestCompatibilityEndpointIsPublicAtTheOperationBoundary(t *testing.T) {

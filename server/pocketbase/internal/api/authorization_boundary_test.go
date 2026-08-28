@@ -64,6 +64,7 @@ var authorizationBoundaryTable = []authorizationBoundaryCase{
 	{operationID: "proxyObservability", skipRoleGateCheck: true},
 	{operationID: "sendPushNotification", agentOrAdmin: true},
 	{operationID: "endLiveActivity", owned: true},
+	{operationID: "setLiveActivityToken", owned: true},
 }
 
 func TestAuthorizationBoundaryTableIsExplicit(t *testing.T) {

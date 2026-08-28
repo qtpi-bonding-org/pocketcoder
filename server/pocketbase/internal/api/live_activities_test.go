@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -129,6 +130,86 @@ func TestEndLiveActivityRejectsAlreadyEnded(t *testing.T) {
 
 	if recorder.Code != 409 {
 		t.Fatalf("status = %d, want 409 for an already-ended activity", recorder.Code)
+	}
+}
+
+func setLiveActivityTokenAction(t *testing.T, app core.App) operation.Action {
+	t.Helper()
+	registry := operation.NewRegistry()
+	AddLiveActivityOperations(app, registry)
+	route, ok := registry.Get("setLiveActivityToken")
+	if !ok {
+		t.Fatal("setLiveActivityToken operation not registered")
+	}
+	return route.Action
+}
+
+func callSetLiveActivityToken(t *testing.T, action operation.Action, auth *core.Record, activityID, token string) *httptest.ResponseRecorder {
+	t.Helper()
+	recorder := httptest.NewRecorder()
+	body := strings.NewReader(`{"activity_push_token":"` + token + `"}`)
+	req := httptest.NewRequest("POST", "/api/pocketcoder/v1/live-activities/"+activityID+"/token", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", activityID)
+	re := &core.RequestEvent{Event: router.Event{Response: recorder, Request: req}}
+	re.Auth = auth
+	if err := action(re); err != nil {
+		router.ErrorHandler(recorder, req, err)
+	}
+	return recorder
+}
+
+func TestSetLiveActivityTokenRejectsNonOwner(t *testing.T) {
+	app := testApp(t)
+	owner := liveActivityRouteTestUser(t, app, "la-token-owner@example.com")
+	other := liveActivityRouteTestUser(t, app, "la-token-other@example.com")
+	row := liveActivityRouteTestRow(t, app, owner.Id, "active")
+
+	action := setLiveActivityTokenAction(t, app)
+	recorder := callSetLiveActivityToken(t, action, other, row.Id, "new-token")
+
+	if recorder.Code != 404 {
+		t.Fatalf("status = %d, want 404", recorder.Code)
+	}
+	reloaded, err := app.FindRecordById("live_activities", row.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reloaded.GetString("activity_push_token") == "new-token" {
+		t.Fatal("token was set despite non-owner caller")
+	}
+}
+
+func TestSetLiveActivityTokenRejectsInactiveRow(t *testing.T) {
+	app := testApp(t)
+	owner := liveActivityRouteTestUser(t, app, "la-token-ended@example.com")
+	row := liveActivityRouteTestRow(t, app, owner.Id, "ended")
+
+	action := setLiveActivityTokenAction(t, app)
+	recorder := callSetLiveActivityToken(t, action, owner, row.Id, "new-token")
+
+	if recorder.Code != 409 {
+		t.Fatalf("status = %d, want 409 for a non-active activity", recorder.Code)
+	}
+}
+
+func TestSetLiveActivityTokenSucceedsOnOwnedActiveRow(t *testing.T) {
+	app := testApp(t)
+	owner := liveActivityRouteTestUser(t, app, "la-token-success@example.com")
+	row := liveActivityRouteTestRow(t, app, owner.Id, "active")
+
+	action := setLiveActivityTokenAction(t, app)
+	recorder := callSetLiveActivityToken(t, action, owner, row.Id, "new-token")
+
+	if recorder.Code != 200 {
+		t.Fatalf("status = %d, want 200; body: %s", recorder.Code, recorder.Body.String())
+	}
+	reloaded, err := app.FindRecordById("live_activities", row.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reloaded.GetString("activity_push_token") != "new-token" {
+		t.Fatalf("activity_push_token = %q, want %q", reloaded.GetString("activity_push_token"), "new-token")
 	}
 }
 

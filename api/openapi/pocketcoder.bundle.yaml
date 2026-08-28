@@ -740,6 +740,36 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           description: Activity is not active
+  /api/pocketcoder/v1/live-activities/{id}/token:
+    post:
+      operationId: setLiveActivityToken
+      tags:
+        - live-activities
+      security:
+        - pocketbaseToken: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetLiveActivityTokenRequest'
+      responses:
+        '200':
+          description: Token updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Activity is not active
 components:
   securitySchemes:
     pocketbaseToken:
@@ -932,6 +962,15 @@ components:
       additionalProperties: false
       properties:
         modeId:
+          type: string
+          minLength: 1
+    SetLiveActivityTokenRequest:
+      type: object
+      required:
+        - activity_push_token
+      additionalProperties: false
+      properties:
+        activity_push_token:
           type: string
           minLength: 1
     ConfigOptionRequest:

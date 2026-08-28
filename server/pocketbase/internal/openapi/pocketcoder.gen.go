@@ -273,6 +273,11 @@ type ScheduleRunAcceptedResponse struct {
 // ScheduleRunAcceptedResponseStatus defines model for ScheduleRunAcceptedResponse.Status.
 type ScheduleRunAcceptedResponseStatus string
 
+// SetLiveActivityTokenRequest defines model for SetLiveActivityTokenRequest.
+type SetLiveActivityTokenRequest struct {
+	ActivityPushToken string `json:"activity_push_token"`
+}
+
 // StoreMcpOAuthTokenResponse defines model for StoreMcpOAuthTokenResponse.
 type StoreMcpOAuthTokenResponse struct {
 	Stored bool `json:"stored"`
@@ -370,6 +375,9 @@ type GetHarnessAuthStatusJSONRequestBody = HarnessRequest
 
 // SubmitHarnessAuthJSONRequestBody defines body for SubmitHarnessAuth for application/json ContentType.
 type SubmitHarnessAuthJSONRequestBody = HarnessRequest
+
+// SetLiveActivityTokenJSONRequestBody defines body for SetLiveActivityToken for application/json ContentType.
+type SetLiveActivityTokenJSONRequestBody = SetLiveActivityTokenRequest
 
 // StoreMcpOAuthTokenJSONRequestBody defines body for StoreMcpOAuthToken for application/json ContentType.
 type StoreMcpOAuthTokenJSONRequestBody = McpOAuthRequest
@@ -520,6 +528,9 @@ type ServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
 	EndLiveActivity(w http.ResponseWriter, r *http.Request, id RequestId)
+
+	// (POST /api/pocketcoder/v1/live-activities/{id}/token)
+	SetLiveActivityToken(w http.ResponseWriter, r *http.Request, id RequestId)
 
 	// (GET /api/pocketcoder/v1/logs/instance/{id})
 	GetHarnessInstanceLogs(w http.ResponseWriter, r *http.Request, id string)
@@ -1083,6 +1094,38 @@ func (siw *ServerInterfaceWrapper) EndLiveActivity(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// SetLiveActivityToken operation middleware
+func (siw *ServerInterfaceWrapper) SetLiveActivityToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RequestId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetLiveActivityToken(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetHarnessInstanceLogs operation middleware
 func (siw *ServerInterfaceWrapper) GetHarnessInstanceLogs(w http.ResponseWriter, r *http.Request) {
 
@@ -1469,6 +1512,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/status", wrapper.GetHarnessAuthStatus)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/submit", wrapper.SubmitHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/live-activities/{id}/end", wrapper.EndLiveActivity)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/live-activities/{id}/token", wrapper.SetLiveActivityToken)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/logs/instance/{id}", wrapper.GetHarnessInstanceLogs)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/logs/{containerName}", wrapper.StreamContainerLogs)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/oauth/store", wrapper.StoreMcpOAuthToken)
@@ -2824,6 +2868,79 @@ func (response EndLiveActivity409Response) VisitEndLiveActivityResponse(w http.R
 	return nil
 }
 
+type SetLiveActivityTokenRequestObject struct {
+	Id   RequestId `json:"id"`
+	Body *SetLiveActivityTokenJSONRequestBody
+}
+
+type SetLiveActivityTokenResponseObject interface {
+	VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error
+}
+
+type SetLiveActivityToken200JSONResponse OkResponse
+
+func (response SetLiveActivityToken200JSONResponse) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetLiveActivityToken400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response SetLiveActivityToken400JSONResponse) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetLiveActivityToken401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response SetLiveActivityToken401JSONResponse) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetLiveActivityToken404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response SetLiveActivityToken404JSONResponse) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetLiveActivityToken409Response struct {
+}
+
+func (response SetLiveActivityToken409Response) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
 type GetHarnessInstanceLogsRequestObject struct {
 	Id string `json:"id"`
 }
@@ -3676,6 +3793,9 @@ type StrictServerInterface interface {
 	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
 	EndLiveActivity(ctx context.Context, request EndLiveActivityRequestObject) (EndLiveActivityResponseObject, error)
 
+	// (POST /api/pocketcoder/v1/live-activities/{id}/token)
+	SetLiveActivityToken(ctx context.Context, request SetLiveActivityTokenRequestObject) (SetLiveActivityTokenResponseObject, error)
+
 	// (GET /api/pocketcoder/v1/logs/instance/{id})
 	GetHarnessInstanceLogs(ctx context.Context, request GetHarnessInstanceLogsRequestObject) (GetHarnessInstanceLogsResponseObject, error)
 
@@ -4261,6 +4381,39 @@ func (sh *strictHandler) EndLiveActivity(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(EndLiveActivityResponseObject); ok {
 		if err := validResponse.VisitEndLiveActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetLiveActivityToken operation middleware
+func (sh *strictHandler) SetLiveActivityToken(w http.ResponseWriter, r *http.Request, id RequestId) {
+	var request SetLiveActivityTokenRequestObject
+
+	request.Id = id
+
+	var body SetLiveActivityTokenJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetLiveActivityToken(ctx, request.(SetLiveActivityTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetLiveActivityToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetLiveActivityTokenResponseObject); ok {
+		if err := validResponse.VisitSetLiveActivityTokenResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
