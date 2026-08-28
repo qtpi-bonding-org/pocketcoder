@@ -1,54 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
+enum VimToastType { info, success, warning }
+
 class VimToast extends StatelessWidget {
   final String message;
   final Color? color;
+  final VimToastType type;
+
+  static OverlayEntry? _overlayEntry;
 
   const VimToast({
     super.key,
     required this.message,
     this.color,
+    this.type = VimToastType.info,
   });
 
-  /// Shows [message] as a terminal toast on the nearest [ScaffoldMessenger].
-  ///
-  /// Always use this instead of `showSnackBar(SnackBar(...))` — a bare
-  /// [SnackBar] renders Material's grey rounded surface in Roboto, which is
-  /// jarringly off-theme against the phosphor CRT chrome.
   static void show(
     BuildContext context,
     String message, {
     Color? color,
+    VimToastType type = VimToastType.info,
   }) {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-    showOn(messenger, message, color: color);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+    showOn(overlay, message, color: color, type: type);
   }
 
-  /// Variant for callers that captured a messenger before an `await`, so they
-  /// never touch a [BuildContext] across an async gap.
   static void showOn(
-    ScaffoldMessengerState messenger,
+    OverlayState overlay,
     String message, {
     Color? color,
+    VimToastType type = VimToastType.info,
   }) {
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
-        content: VimToast(message: message, color: color),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
+    _overlayEntry?.remove();
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.viewPaddingOf(context).top + AppSizes.space,
+        left: AppSizes.space,
+        right: AppSizes.space,
+        child: Center(
+          child: Material(
+            color: Colors.transparent,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _remove(entry),
+              onVerticalDragEnd: (_) => _remove(entry),
+              child: VimToast(message: message, color: color, type: type),
+            ),
+          ),
+        ),
       ),
     );
+    _overlayEntry = entry;
+    overlay.insert(entry);
+    Future.delayed(const Duration(seconds: 3), () => _remove(entry));
+  }
+
+  static void _remove(OverlayEntry entry) {
+    if (_overlayEntry != entry) return;
+    entry.remove();
+    _overlayEntry = null;
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final accentColor = color ?? colors.onSurface;
+    final accentColor = color ??
+        switch (type) {
+          VimToastType.info => colors.onSurface,
+          VimToastType.success => colors.primary,
+          VimToastType.warning => context.terminalColors.warning,
+        };
 
     // Calculate dashes based on message length (min 40)
     final int dashCount = (message.length + 4).clamp(40, 60);

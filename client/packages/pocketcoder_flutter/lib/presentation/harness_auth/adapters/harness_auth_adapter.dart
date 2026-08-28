@@ -105,7 +105,7 @@ class HarnessAuthAdapter
                 (status) => status.harness == h.id && status.isConnected) ==
             true);
     final router = GoRouter.of(context);
-    final messenger = ScaffoldMessenger.of(context);
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
     final l10n = context.l10n;
     try {
       final chats = context.read<ChatListCubit>();
@@ -117,8 +117,12 @@ class HarnessAuthAdapter
       // Retryable on the next connected emission, not permanently locked
       // out by one failed attempt.
       openedFirstChat.value = false;
-      if (context.mounted) {
-        VimToast.showOn(messenger, l10n.onboardingOpenChatFailed);
+      if (context.mounted && overlay != null) {
+        VimToast.showOn(
+          overlay,
+          l10n.onboardingOpenChatFailed,
+          type: VimToastType.warning,
+        );
       }
     }
   }

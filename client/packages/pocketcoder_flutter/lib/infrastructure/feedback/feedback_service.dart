@@ -10,16 +10,20 @@ class AppFeedbackService implements cubit_ui_flow.IFeedbackService {
   void show(cubit_ui_flow.FeedbackMessage message) {
     final state = AppRouter.messengerKey.currentState;
     if (state == null) return;
-
-    state.clearSnackBars();
-    state.showSnackBar(
-      SnackBar(
-        content: VimToast(message: message.message),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
+    final overlay = Overlay.maybeOf(
+      state.context,
+      rootOverlay: true,
+    );
+    if (overlay == null) return;
+    VimToast.showOn(
+      overlay,
+      message.message,
+      type: switch (message.type) {
+        cubit_ui_flow.MessageType.success => VimToastType.success,
+        cubit_ui_flow.MessageType.warning => VimToastType.warning,
+        cubit_ui_flow.MessageType.error => VimToastType.warning,
+        _ => VimToastType.info,
+      },
     );
   }
 }
