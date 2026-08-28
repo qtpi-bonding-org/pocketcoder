@@ -13,13 +13,19 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/harness_auth_view.dart';
 
 class HarnessAuthAdapter
     extends CubitAdapter<HarnessAuthCubit, HarnessAuthState> {
-  const HarnessAuthAdapter({super.key, this.onboarding = false});
+  const HarnessAuthAdapter({
+    super.key,
+    this.onboarding = false,
+    required this.launcher,
+  });
 
   final bool onboarding;
+  final InAppBrowserLauncher launcher;
 
   static HarnessAuthState _selectState(HarnessAuthState state) => state;
 
@@ -30,6 +36,41 @@ class HarnessAuthAdapter
   ) {
     final state = adapter.cubitField(_selectState);
     final cubit = context.read<HarnessAuthCubit>();
+    // Rechecked on every emission inside the listener below (not here in
+    // buildAdapter, which only runs once per mount) so a challenge that
+    // arrives after the initial build still starts its poll timer.
+    final pollTimers = adapter.keep<Map<String, Timer>>(
+      'harnessPollTimers',
+      () => <String, Timer>{},
+      dispose: (timers) {
+        for (final timer in timers.values) {
+          timer.cancel();
+        }
+      },
+    );
+    void syncPollTimers(HarnessAuthState value) {
+      final awaiting = <String, int>{};
+      for (final status in value.statuses.values) {
+        final seconds = status.challenge?.pollIntervalSeconds;
+        if (status.isConnecting && seconds != null && seconds > 0) {
+          awaiting[status.harness] = seconds;
+        }
+      }
+      for (final id in pollTimers.keys.toList()) {
+        if (!awaiting.containsKey(id)) {
+          pollTimers.remove(id)?.cancel();
+        }
+      }
+      for (final entry in awaiting.entries) {
+        if (!pollTimers.containsKey(entry.key)) {
+          pollTimers[entry.key] = Timer.periodic(
+            Duration(seconds: entry.value),
+            (_) => cubit.poll(entry.key),
+          );
+        }
+      }
+    }
+    syncPollTimers(state.value);
     // Whether a harness is connected lives in the per-harness `statuses`
     // map, not the cubit's top-level status/error -- those routinely stay
     // success/null across a connect/poll transition, so this must fire on
@@ -44,6 +85,7 @@ class HarnessAuthAdapter
     return UiFlowListener<HarnessAuthCubit, HarnessAuthState>(
       listenWhen: (_, __) => true,
       listener: (context, value) {
+        syncPollTimers(value);
         if (onboarding && !openedFirstChat.value && _hasConnected(value)) {
           openedFirstChat.value = true;
           unawaited(_openFirstChat(context, value, openedFirstChat));
@@ -77,9 +119,22 @@ class HarnessAuthAdapter
           onCancel: (h) => cubit.cancel(h.id),
           onDisconnect: (h) => cubit.disconnect(h.id),
           onRefresh: (h) => cubit.refreshHarness(h.id),
+          onOpenAuthorizationPage: (h, uri) =>
+              _openAuthorizationPage(context, uri),
         ),
       ),
     );
+  }
+
+  Future<void> _openAuthorizationPage(BuildContext context, Uri uri) async {
+    final opened = await launcher.open(uri);
+    if (!opened && context.mounted) {
+      final overlay = Overlay.maybeOf(context, rootOverlay: true);
+      if (overlay != null) {
+        VimToast.showOn(overlay, context.l10n.credentialConnectionOpenFailed,
+            type: VimToastType.warning);
+      }
+    }
   }
 
   bool _hasConnected(HarnessAuthState state) => state.harnesses

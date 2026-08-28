@@ -55,10 +55,16 @@ class CredentialConnectionView extends StatelessWidget {
       BrowserVerificationConnectionStep(
         codeDestination: HarnessAuthCodeDestination.browser,
         userCode: final code?
-      ) => _deviceCode(context, code),
+      ) =>
+        _deviceCode(context, code),
       BrowserVerificationConnectionStep(
         codeDestination: HarnessAuthCodeDestination.app
-      ) => _browserCode(context),
+      ) =>
+        _browserCode(context),
+      BrowserVerificationConnectionStep(
+        codeDestination: HarnessAuthCodeDestination.browser,
+      ) =>
+        _browserOnly(context),
       BrowserVerificationConnectionStep() => _actions(context),
     };
   }
@@ -95,6 +101,17 @@ class CredentialConnectionView extends StatelessWidget {
       actions: _actions(context),
     );
   }
+
+  Widget _browserOnly(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TerminalButton(
+            label: context.l10n.credentialConnectionOpenAuthorizationPage,
+            onTap: onOpenAuthorizationPage,
+          ),
+          _actions(context),
+        ],
+      );
 
   Widget _actions(BuildContext context) {
     return Row(

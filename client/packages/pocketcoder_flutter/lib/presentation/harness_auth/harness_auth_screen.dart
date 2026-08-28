@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/adapters/harness_auth_adapter.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 
 class HarnessAuthScreen extends StatelessWidget {
   const HarnessAuthScreen({super.key, this.onboarding = false});
@@ -13,7 +14,10 @@ class HarnessAuthScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => getIt<HarnessAuthCubit>()..watchData(),
-      child: HarnessAuthAdapter(onboarding: onboarding),
+      child: HarnessAuthAdapter(
+        onboarding: onboarding,
+        launcher: getIt<InAppBrowserLauncher>(),
+      ),
     );
   }
 }

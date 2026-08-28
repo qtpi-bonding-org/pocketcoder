@@ -2814,6 +2814,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get credentialConnectionRetry => 'RETRY';
 
   @override
+  String get credentialConnectionOpenFailed =>
+      'Could not open the authorization page. Please try again.';
+
+  @override
   String get agentModeLabel => 'MODE:';
 
   @override

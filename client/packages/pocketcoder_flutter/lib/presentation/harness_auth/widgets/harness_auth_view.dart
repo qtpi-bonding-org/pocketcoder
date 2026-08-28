@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
@@ -11,9 +10,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
+import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
 
 class HarnessAuthScreenView extends StatelessWidget {
   const HarnessAuthScreenView({
@@ -32,6 +30,7 @@ class HarnessAuthScreenView extends StatelessWidget {
     required this.onCancel,
     required this.onDisconnect,
     required this.onRefresh,
+    required this.onOpenAuthorizationPage,
   });
 
   final bool onboarding;
@@ -48,6 +47,7 @@ class HarnessAuthScreenView extends StatelessWidget {
   final void Function(Harnesse) onCancel;
   final void Function(Harnesse) onDisconnect;
   final void Function(Harnesse) onRefresh;
+  final void Function(Harnesse, Uri) onOpenAuthorizationPage;
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
@@ -71,6 +71,7 @@ class HarnessAuthScreenView extends StatelessWidget {
           onCancel: onCancel,
           onDisconnect: onDisconnect,
           onRefresh: onRefresh,
+          onOpenAuthorizationPage: onOpenAuthorizationPage,
         ),
       );
 }
@@ -92,6 +93,7 @@ class HarnessAuthView extends StatefulWidget {
     required this.onCancel,
     required this.onDisconnect,
     required this.onRefresh,
+    required this.onOpenAuthorizationPage,
   });
   final bool onboarding;
   final List<Harnesse> harnesses;
@@ -107,6 +109,7 @@ class HarnessAuthView extends StatefulWidget {
   final void Function(Harnesse) onCancel;
   final void Function(Harnesse) onDisconnect;
   final void Function(Harnesse) onRefresh;
+  final void Function(Harnesse, Uri) onOpenAuthorizationPage;
 
   @override
   State<HarnessAuthView> createState() => _HarnessAuthViewState();
@@ -174,7 +177,11 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
             onSubmit: (code) => widget.onSubmit(h, code),
             onCancel: () => widget.onCancel(h),
             onDisconnect: () => widget.onDisconnect(h),
-            onRefresh: () => widget.onRefresh(h)),
+            onRefresh: () => widget.onRefresh(h),
+            onOpenAuthorizationPage: (uri) =>
+                widget.onOpenAuthorizationPage(h, uri),
+            onCopyCode: (_) {},
+            onRetry: () => widget.onPoll(h)),
     ]);
   }
 }
@@ -193,7 +200,10 @@ class HarnessAuthCard extends StatelessWidget {
       required this.onSubmit,
       required this.onCancel,
       required this.onDisconnect,
-      required this.onRefresh});
+      required this.onRefresh,
+      required this.onOpenAuthorizationPage,
+      required this.onCopyCode,
+      required this.onRetry});
   final Harnesse harness;
   final List<HarnessProvider> harnessProviders;
   final HarnessAuthStatus? status;
@@ -206,6 +216,9 @@ class HarnessAuthCard extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onDisconnect;
   final VoidCallback onRefresh;
+  final void Function(Uri) onOpenAuthorizationPage;
+  final ValueChanged<String> onCopyCode;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -253,23 +266,7 @@ class HarnessAuthCard extends StatelessWidget {
               ],
               VSpace.x2,
               if (s.challenge case final challenge?)
-                HarnessChallengePanel(challenge: challenge),
-              if (s.challenge != null) ...[
-                VSpace.x1,
-                TerminalTextField(
-                    controller: codeController,
-                    label: l10n.harnessAuthOneTimeCode,
-                    hint: l10n.harnessAuthPasteCode,
-                    onSubmitted: _submit,
-                    enabled: !isBusy),
-                VSpace.x1,
-                Align(
-                    alignment: Alignment.centerRight,
-                    child: TerminalButton(
-                        label: l10n.harnessAuthSubmit,
-                        onTap: () => _submit(codeController.text),
-                        isLoading: isBusy))
-              ],
+                _connectionView(context, challenge),
               VSpace.x2,
               _actions(context, s, edges),
               VSpace.x2,
@@ -286,6 +283,29 @@ class HarnessAuthCard extends StatelessWidget {
                     child: TerminalText(l10n.harnessAuthAttempt(attempt.id),
                         alpha: .5)),
             ])));
+  }
+
+  Widget _connectionView(BuildContext context, HarnessAuthChallenge challenge) {
+    final uri = challenge.verificationUri;
+    final destination = challenge.codeDestination;
+    if (uri == null ||
+        (destination != HarnessAuthCodeDestination.browser &&
+            destination != HarnessAuthCodeDestination.app)) {
+      return TerminalText(challenge.legacyText ?? challenge.text);
+    }
+    return CredentialConnectionView(
+      step: BrowserVerificationConnectionStep(
+        verificationUri: uri,
+        codeDestination: destination,
+        userCode: challenge.userCode,
+        expiresAt: challenge.expiresAt,
+      ),
+      onOpenAuthorizationPage: () => onOpenAuthorizationPage(uri),
+      onCopyCode: onCopyCode,
+      onSubmitCode: _submit,
+      onCancel: onCancel,
+      onRetry: onRetry,
+    );
   }
 
   Widget _actions(
@@ -340,54 +360,4 @@ class HarnessAuthCard extends StatelessWidget {
     await onSubmit(value);
     codeController.clear();
   }
-}
-
-class HarnessChallengePanel extends StatelessWidget {
-  const HarnessChallengePanel({super.key, required this.challenge});
-  final HarnessAuthChallenge challenge;
-  @override
-  Widget build(BuildContext context) => Container(
-      margin: EdgeInsets.only(bottom: AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space),
-      decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(context).colorScheme.primary)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        TerminalText(context.l10n.harnessAuthChallenge,
-            weight: TerminalTextWeight.heavy),
-        VSpace.x1,
-        TerminalText(challenge.text),
-        if (challenge.target case final target? when target.isNotEmpty) ...[
-          VSpace.x1,
-          GestureDetector(
-              onLongPress: () {
-                Clipboard.setData(ClipboardData(text: target));
-                VimToast.show(
-                    context, context.l10n.harnessAuthChallengeTargetCopied);
-              },
-              child: TerminalText(target,
-                  color: Theme.of(context).colorScheme.primary, alpha: .9))
-        ],
-        if (challenge.details case final details? when details.isNotEmpty) ...[
-          VSpace.x1,
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: TerminalText(context.l10n.harnessAuthDetails(details),
-                    alpha: .7),
-              ),
-              HSpace.x1,
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: details));
-                  VimToast.show(
-                      context, context.l10n.harnessAuthChallengeDetailsCopied);
-                },
-                child: TerminalText(context.l10n.harnessAuthCopy,
-                    color: Theme.of(context).colorScheme.primary),
-              ),
-            ],
-          ),
-        ],
-      ]));
 }

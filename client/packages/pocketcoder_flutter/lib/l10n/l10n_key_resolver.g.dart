@@ -130,6 +130,15 @@ class L10nKeyResolver {
       'choose.provider.coming.soon' => _l10n.chooseProviderComingSoon,
       'choose.provider.pro.badge' => _l10n.chooseProviderProBadge,
       'choose.provider.title' => _l10n.chooseProviderTitle,
+      'credential.connection.api.key' => _l10n.credentialConnectionApiKey,
+      'credential.connection.cancel' => _l10n.credentialConnectionCancel,
+      'credential.connection.copy' => _l10n.credentialConnectionCopy,
+      'credential.connection.enter.code' => _l10n.credentialConnectionEnterCode,
+      'credential.connection.open.authorization.page' => _l10n.credentialConnectionOpenAuthorizationPage,
+      'credential.connection.open.failed' => _l10n.credentialConnectionOpenFailed,
+      'credential.connection.paste.code' => _l10n.credentialConnectionPasteCode,
+      'credential.connection.retry' => _l10n.credentialConnectionRetry,
+      'credential.connection.submit' => _l10n.credentialConnectionSubmit,
       'deploy.choose.provider' => _l10n.deployChooseProvider,
       'deploy.select.provider' => _l10n.deploySelectProvider,
       'deployment.action.back' => _l10n.deploymentActionBack,
@@ -698,6 +707,10 @@ class L10nKeyResolver {
       'settings.account.section' => _l10n.settingsAccountSection,
       'settings.ai.agents.section' => _l10n.settingsAiAgentsSection,
       'settings.automation.section' => _l10n.settingsAutomationSection,
+      'settings.factory.reset.cancel' => _l10n.settingsFactoryResetCancel,
+      'settings.factory.reset.confirm' => _l10n.settingsFactoryResetConfirm,
+      'settings.factory.reset.confirm.body' => _l10n.settingsFactoryResetConfirmBody,
+      'settings.factory.reset.confirm.title' => _l10n.settingsFactoryResetConfirmTitle,
       'settings.governance.section' => _l10n.settingsGovernanceSection,
       'settings.logout.cancel' => _l10n.settingsLogoutCancel,
       'settings.logout.confirm' => _l10n.settingsLogoutConfirm,
@@ -893,6 +906,7 @@ class L10nKeyResolver {
       'mcp.update.config.dialog.title' => _l10n.mcpUpdateConfigDialogTitle(args?['name'] as String? ?? ''),
       'notification.signal.received' => _l10n.notificationSignalReceived(args?['title'] as String? ?? ''),
       'onboarding.failure.connection.poco' => _l10n.onboardingFailureConnectionPoco(args?['providerName'] as String? ?? ''),
+      'onboarding.harness.account.login' => _l10n.onboardingHarnessAccountLogin(args?['harness'] as String? ?? ''),
       'onboarding.harness.login.title' => _l10n.onboardingHarnessLoginTitle(args?['provider'] as String? ?? ''),
       'onboarding.os.debian.description' => _l10n.onboardingOsDebianDescription(args?['minutes'] as int? ?? 0),
       'onboarding.os.nixos.description' => _l10n.onboardingOsNixosDescription(args?['minutes'] as int? ?? 0),
@@ -1044,6 +1058,15 @@ class L10nKeyResolver {
     'choose.provider.coming.soon',
     'choose.provider.pro.badge',
     'choose.provider.title',
+    'credential.connection.api.key',
+    'credential.connection.cancel',
+    'credential.connection.copy',
+    'credential.connection.enter.code',
+    'credential.connection.open.authorization.page',
+    'credential.connection.open.failed',
+    'credential.connection.paste.code',
+    'credential.connection.retry',
+    'credential.connection.submit',
     'deploy.choose.provider',
     'deploy.select.provider',
     'deployment.action.back',
@@ -1393,6 +1416,7 @@ class L10nKeyResolver {
     'onboarding.failure.action.view.server.details',
     'onboarding.failure.connection.poco',
     'onboarding.failure.create.poco',
+    'onboarding.harness.account.login',
     'onboarding.harness.account.visibility.body',
     'onboarding.harness.account.visibility.cancel',
     'onboarding.harness.account.visibility.personal',
@@ -1671,6 +1695,10 @@ class L10nKeyResolver {
     'settings.account.section',
     'settings.ai.agents.section',
     'settings.automation.section',
+    'settings.factory.reset.cancel',
+    'settings.factory.reset.confirm',
+    'settings.factory.reset.confirm.body',
+    'settings.factory.reset.confirm.title',
     'settings.governance.section',
     'settings.logout.cancel',
     'settings.logout.confirm',
@@ -1948,6 +1976,15 @@ class L10nKeyResolver {
     'chooseProviderComingSoon': 'choose.provider.coming.soon',
     'chooseProviderProBadge': 'choose.provider.pro.badge',
     'chooseProviderTitle': 'choose.provider.title',
+    'credentialConnectionApiKey': 'credential.connection.api.key',
+    'credentialConnectionCancel': 'credential.connection.cancel',
+    'credentialConnectionCopy': 'credential.connection.copy',
+    'credentialConnectionEnterCode': 'credential.connection.enter.code',
+    'credentialConnectionOpenAuthorizationPage': 'credential.connection.open.authorization.page',
+    'credentialConnectionOpenFailed': 'credential.connection.open.failed',
+    'credentialConnectionPasteCode': 'credential.connection.paste.code',
+    'credentialConnectionRetry': 'credential.connection.retry',
+    'credentialConnectionSubmit': 'credential.connection.submit',
     'deployChooseProvider': 'deploy.choose.provider',
     'deploySelectProvider': 'deploy.select.provider',
     'deploymentActionBack': 'deployment.action.back',
@@ -2297,6 +2334,7 @@ class L10nKeyResolver {
     'onboardingFailureActionViewServerDetails': 'onboarding.failure.action.view.server.details',
     'onboardingFailureConnectionPoco': 'onboarding.failure.connection.poco',
     'onboardingFailureCreatePoco': 'onboarding.failure.create.poco',
+    'onboardingHarnessAccountLogin': 'onboarding.harness.account.login',
     'onboardingHarnessAccountVisibilityBody': 'onboarding.harness.account.visibility.body',
     'onboardingHarnessAccountVisibilityCancel': 'onboarding.harness.account.visibility.cancel',
     'onboardingHarnessAccountVisibilityPersonal': 'onboarding.harness.account.visibility.personal',
@@ -2575,6 +2613,10 @@ class L10nKeyResolver {
     'settingsAccountSection': 'settings.account.section',
     'settingsAiAgentsSection': 'settings.ai.agents.section',
     'settingsAutomationSection': 'settings.automation.section',
+    'settingsFactoryResetCancel': 'settings.factory.reset.cancel',
+    'settingsFactoryResetConfirm': 'settings.factory.reset.confirm',
+    'settingsFactoryResetConfirmBody': 'settings.factory.reset.confirm.body',
+    'settingsFactoryResetConfirmTitle': 'settings.factory.reset.confirm.title',
     'settingsGovernanceSection': 'settings.governance.section',
     'settingsLogoutCancel': 'settings.logout.cancel',
     'settingsLogoutConfirm': 'settings.logout.confirm',
@@ -2849,6 +2891,15 @@ class L10nKeyResolver {
     'choose.provider.coming.soon': 'chooseProviderComingSoon',
     'choose.provider.pro.badge': 'chooseProviderProBadge',
     'choose.provider.title': 'chooseProviderTitle',
+    'credential.connection.api.key': 'credentialConnectionApiKey',
+    'credential.connection.cancel': 'credentialConnectionCancel',
+    'credential.connection.copy': 'credentialConnectionCopy',
+    'credential.connection.enter.code': 'credentialConnectionEnterCode',
+    'credential.connection.open.authorization.page': 'credentialConnectionOpenAuthorizationPage',
+    'credential.connection.open.failed': 'credentialConnectionOpenFailed',
+    'credential.connection.paste.code': 'credentialConnectionPasteCode',
+    'credential.connection.retry': 'credentialConnectionRetry',
+    'credential.connection.submit': 'credentialConnectionSubmit',
     'deploy.choose.provider': 'deployChooseProvider',
     'deploy.select.provider': 'deploySelectProvider',
     'deployment.action.back': 'deploymentActionBack',
@@ -3198,6 +3249,7 @@ class L10nKeyResolver {
     'onboarding.failure.action.view.server.details': 'onboardingFailureActionViewServerDetails',
     'onboarding.failure.connection.poco': 'onboardingFailureConnectionPoco',
     'onboarding.failure.create.poco': 'onboardingFailureCreatePoco',
+    'onboarding.harness.account.login': 'onboardingHarnessAccountLogin',
     'onboarding.harness.account.visibility.body': 'onboardingHarnessAccountVisibilityBody',
     'onboarding.harness.account.visibility.cancel': 'onboardingHarnessAccountVisibilityCancel',
     'onboarding.harness.account.visibility.personal': 'onboardingHarnessAccountVisibilityPersonal',
@@ -3476,6 +3528,10 @@ class L10nKeyResolver {
     'settings.account.section': 'settingsAccountSection',
     'settings.ai.agents.section': 'settingsAiAgentsSection',
     'settings.automation.section': 'settingsAutomationSection',
+    'settings.factory.reset.cancel': 'settingsFactoryResetCancel',
+    'settings.factory.reset.confirm': 'settingsFactoryResetConfirm',
+    'settings.factory.reset.confirm.body': 'settingsFactoryResetConfirmBody',
+    'settings.factory.reset.confirm.title': 'settingsFactoryResetConfirmTitle',
     'settings.governance.section': 'settingsGovernanceSection',
     'settings.logout.cancel': 'settingsLogoutCancel',
     'settings.logout.confirm': 'settingsLogoutConfirm',
@@ -3757,6 +3813,15 @@ abstract class L10nKeys {
   static const chooseProviderComingSoon = 'choose.provider.coming.soon';
   static const chooseProviderProBadge = 'choose.provider.pro.badge';
   static const chooseProviderTitle = 'choose.provider.title';
+  static const credentialConnectionApiKey = 'credential.connection.api.key';
+  static const credentialConnectionCancel = 'credential.connection.cancel';
+  static const credentialConnectionCopy = 'credential.connection.copy';
+  static const credentialConnectionEnterCode = 'credential.connection.enter.code';
+  static const credentialConnectionOpenAuthorizationPage = 'credential.connection.open.authorization.page';
+  static const credentialConnectionOpenFailed = 'credential.connection.open.failed';
+  static const credentialConnectionPasteCode = 'credential.connection.paste.code';
+  static const credentialConnectionRetry = 'credential.connection.retry';
+  static const credentialConnectionSubmit = 'credential.connection.submit';
   static const deployChooseProvider = 'deploy.choose.provider';
   static const deploySelectProvider = 'deploy.select.provider';
   static const deploymentActionBack = 'deployment.action.back';
@@ -4106,6 +4171,7 @@ abstract class L10nKeys {
   static const onboardingFailureActionViewServerDetails = 'onboarding.failure.action.view.server.details';
   static (String, Map<String, dynamic>) onboardingFailureConnectionPoco(String providerName) => ('onboarding.failure.connection.poco', {'providerName': providerName});
   static const onboardingFailureCreatePoco = 'onboarding.failure.create.poco';
+  static (String, Map<String, dynamic>) onboardingHarnessAccountLogin(String harness) => ('onboarding.harness.account.login', {'harness': harness});
   static const onboardingHarnessAccountVisibilityBody = 'onboarding.harness.account.visibility.body';
   static const onboardingHarnessAccountVisibilityCancel = 'onboarding.harness.account.visibility.cancel';
   static const onboardingHarnessAccountVisibilityPersonal = 'onboarding.harness.account.visibility.personal';
@@ -4384,6 +4450,10 @@ abstract class L10nKeys {
   static const settingsAccountSection = 'settings.account.section';
   static const settingsAiAgentsSection = 'settings.ai.agents.section';
   static const settingsAutomationSection = 'settings.automation.section';
+  static const settingsFactoryResetCancel = 'settings.factory.reset.cancel';
+  static const settingsFactoryResetConfirm = 'settings.factory.reset.confirm';
+  static const settingsFactoryResetConfirmBody = 'settings.factory.reset.confirm.body';
+  static const settingsFactoryResetConfirmTitle = 'settings.factory.reset.confirm.title';
   static const settingsGovernanceSection = 'settings.governance.section';
   static const settingsLogoutCancel = 'settings.logout.cancel';
   static const settingsLogoutConfirm = 'settings.logout.confirm';

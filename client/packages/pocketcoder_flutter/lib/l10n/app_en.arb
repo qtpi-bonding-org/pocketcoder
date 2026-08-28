@@ -1125,6 +1125,7 @@
   "credentialConnectionSubmit": "[SUBMIT]",
   "credentialConnectionCancel": "CANCEL",
   "credentialConnectionRetry": "RETRY",
+  "credentialConnectionOpenFailed": "Could not open the authorization page. Please try again.",
   "agentModeLabel": "MODE:",
   "agentConfigLabel": "CONFIG",
   "pocketCoderUpdateChecking": "$ CHECKING VERIFIED RELEASE STATUS...",

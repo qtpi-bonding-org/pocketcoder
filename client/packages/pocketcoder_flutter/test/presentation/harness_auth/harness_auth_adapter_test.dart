@@ -27,6 +27,7 @@ import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/adapters/harness_auth_adapter.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 
 class MockChatListRepository extends Mock implements IChatListRepository {}
 
@@ -51,8 +52,7 @@ void main() {
   testWidgets(
       'opens the first chat exactly once when a harness reaches connected, '
       'even though status/error never change across the transition, and '
-      'does not re-open on a later still-connected emission',
-      (tester) async {
+      'does not re-open on a later still-connected emission', (tester) async {
     final harness = Harnesse(
       id: 'harness-1',
       name: 'Claude Code',
@@ -63,14 +63,15 @@ void main() {
     final providerRepo = MockProviderRepository();
     when(() => providerRepo.watchHarnesses())
         .thenAnswer((_) => Stream.value([harness]));
-    when(() => providerRepo.watchHarnessProviders()).thenAnswer((_) => Stream.value([
-          const HarnessProvider(
-            id: 'edge-1',
-            harness: 'harness-1',
-            provider: _providerId,
-            supportsOauth: true,
-          ),
-        ]));
+    when(() => providerRepo.watchHarnessProviders())
+        .thenAnswer((_) => Stream.value([
+              const HarnessProvider(
+                id: 'edge-1',
+                harness: 'harness-1',
+                provider: _providerId,
+                supportsOauth: true,
+              ),
+            ]));
 
     final authRepo = MockHarnessAuthRepository();
     when(() => authRepo.status(
@@ -125,7 +126,10 @@ void main() {
               BlocProvider<HarnessAuthCubit>.value(value: harnessAuthCubit),
               BlocProvider<ChatListCubit>.value(value: chatListCubit),
             ],
-            child: const HarnessAuthAdapter(onboarding: true),
+            child: HarnessAuthAdapter(
+              onboarding: true,
+              launcher: UrlLauncherInAppBrowserLauncher(),
+            ),
           ),
         ),
         GoRoute(

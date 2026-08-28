@@ -5098,6 +5098,12 @@ abstract class AppLocalizations {
   /// **'RETRY'**
   String get credentialConnectionRetry;
 
+  /// No description provided for @credentialConnectionOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the authorization page. Please try again.'**
+  String get credentialConnectionOpenFailed;
+
   /// No description provided for @agentModeLabel.
   ///
   /// In en, this message translates to:
