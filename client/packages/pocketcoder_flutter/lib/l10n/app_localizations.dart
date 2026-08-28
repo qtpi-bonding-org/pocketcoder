@@ -5050,6 +5050,54 @@ abstract class AppLocalizations {
   /// **'Details: {details}'**
   String harnessAuthDetails(String details);
 
+  /// No description provided for @credentialConnectionApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect with an API key.'**
+  String get credentialConnectionApiKey;
+
+  /// No description provided for @credentialConnectionCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'[COPY]'**
+  String get credentialConnectionCopy;
+
+  /// No description provided for @credentialConnectionOpenAuthorizationPage.
+  ///
+  /// In en, this message translates to:
+  /// **'[OPEN AUTHORIZATION PAGE]'**
+  String get credentialConnectionOpenAuthorizationPage;
+
+  /// No description provided for @credentialConnectionPasteCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste this code on the authorization page.'**
+  String get credentialConnectionPasteCode;
+
+  /// No description provided for @credentialConnectionEnterCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code shown on the authorization page.'**
+  String get credentialConnectionEnterCode;
+
+  /// No description provided for @credentialConnectionSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'[SUBMIT]'**
+  String get credentialConnectionSubmit;
+
+  /// No description provided for @credentialConnectionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get credentialConnectionCancel;
+
+  /// No description provided for @credentialConnectionRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get credentialConnectionRetry;
+
   /// No description provided for @agentModeLabel.
   ///
   /// In en, this message translates to:

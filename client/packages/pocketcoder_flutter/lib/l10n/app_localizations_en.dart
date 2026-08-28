@@ -2787,6 +2787,33 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get credentialConnectionApiKey => 'Connect with an API key.';
+
+  @override
+  String get credentialConnectionCopy => '[COPY]';
+
+  @override
+  String get credentialConnectionOpenAuthorizationPage =>
+      '[OPEN AUTHORIZATION PAGE]';
+
+  @override
+  String get credentialConnectionPasteCode =>
+      'Paste this code on the authorization page.';
+
+  @override
+  String get credentialConnectionEnterCode =>
+      'Enter the code shown on the authorization page.';
+
+  @override
+  String get credentialConnectionSubmit => '[SUBMIT]';
+
+  @override
+  String get credentialConnectionCancel => 'CANCEL';
+
+  @override
+  String get credentialConnectionRetry => 'RETRY';
+
+  @override
   String get agentModeLabel => 'MODE:';
 
   @override
