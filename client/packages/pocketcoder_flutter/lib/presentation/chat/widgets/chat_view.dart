@@ -35,6 +35,8 @@ class ChatView extends StatefulWidget {
     required this.onSetOption,
     required this.onPermissionOptionSelected,
     required this.onElicitationRespond,
+    required this.animatedMessageIds,
+    required this.onMessageAnimated,
     required this.onFiles,
   });
 
@@ -55,6 +57,8 @@ class ChatView extends StatefulWidget {
       onPermissionOptionSelected;
   final void Function(String requestId, Map<String, dynamic> response)
       onElicitationRespond;
+  final Set<String> animatedMessageIds;
+  final ValueChanged<String> onMessageAnimated;
   final VoidCallback onFiles;
 
   @override
@@ -192,6 +196,8 @@ class _ChatViewState extends State<ChatView> {
       latestReasoningId: _latestReasoningId(widget.conversation.timeline),
       onPermissionOptionSelected: widget.onPermissionOptionSelected,
       onElicitationRespond: widget.onElicitationRespond,
+      animatedMessageIds: widget.animatedMessageIds,
+      onMessageAnimated: widget.onMessageAnimated,
     );
     return PocketCoderShell(
       title: widget.title,
@@ -249,8 +255,7 @@ class _ChatViewState extends State<ChatView> {
                     theme: ag_ui_widgets.ChatTheme.fromThemeData(
                         Theme.of(context)),
                     textMessageBuilder: builders.textMessageBuilder,
-                    textStreamMessageBuilder:
-                        builders.textStreamMessageBuilder,
+                    textStreamMessageBuilder: builders.textStreamMessageBuilder,
                     toolCallBuilder: builders.toolCallBuilder,
                     permissionBuilder: builders.permissionBuilder,
                     elicitationBuilder: builders.elicitationBuilder,

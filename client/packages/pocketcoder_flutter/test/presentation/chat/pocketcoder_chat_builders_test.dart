@@ -55,6 +55,8 @@ void main() {
           context,
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
         );
         return host(
           context,
@@ -84,6 +86,8 @@ void main() {
           context,
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
         );
         return host(
           context,
@@ -106,6 +110,41 @@ void main() {
     expect(find.byType(TypewriterText), findsOneWidget);
   });
 
+  testWidgets(
+      'a poco text message already in animatedMessageIds renders instantly',
+      (tester) async {
+    late StackedChatBuilders builders;
+    await tester.pumpWidget(wrap(
+      Builder(builder: (context) {
+        builders = pocketcoderChatBuilders(
+          context,
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {'m1'},
+          onMessageAnimated: (_) {},
+        );
+        return host(
+          context,
+          builders,
+          const Conversation(timeline: [
+            TimelineItem.text(
+              id: 'm1',
+              kind: ChatMessageKind.text,
+              role: 'assistant',
+              text: 'already complete',
+              order: OrderKey(1),
+            ),
+          ]),
+        );
+      }),
+    ));
+
+    // No pump-forward: instant rendering makes the complete text available
+    // on the first frame.
+    await tester.pump();
+    expect(find.text('already complete'), findsOneWidget);
+  });
+
   testWidgets('permissionCardBuilder renders pocketcoder\'s own PermissionCard',
       (tester) async {
     late StackedChatBuilders builders;
@@ -115,6 +154,8 @@ void main() {
           context,
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
         );
         return host(
           context,
@@ -145,6 +186,8 @@ void main() {
           context,
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
         );
         return host(
           context,

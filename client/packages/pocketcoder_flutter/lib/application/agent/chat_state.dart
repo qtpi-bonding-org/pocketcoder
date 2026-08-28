@@ -20,6 +20,6 @@ sealed class ChatState with _$ChatState, UiFlowStateMixin {
     @Default(UiFlowStatus.idle) UiFlowStatus status,
     Object? error,
     AgentChatOperation? lastOperation,
+    @Default(<String>{}) Set<String> animatedMessageIds,
   }) = _ChatState;
-
 }

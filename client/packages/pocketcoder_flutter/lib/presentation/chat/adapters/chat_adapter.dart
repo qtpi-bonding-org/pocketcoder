@@ -92,6 +92,8 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
               };
               context.read<ElicitationCubit>().submit(result);
             },
+            animatedMessageIds: value.animatedMessageIds,
+            onMessageAnimated: chatCubit.markMessageAnimated,
             onFiles: () => AppNavigation.toFiles(context),
           );
         },

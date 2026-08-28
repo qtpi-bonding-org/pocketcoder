@@ -39,6 +39,8 @@ StackedChatBuilders pocketcoderChatBuilders(
       onPermissionOptionSelected,
   required void Function(String requestId, Map<String, dynamic> response)
       onElicitationRespond,
+  required Set<String> animatedMessageIds,
+  required void Function(String messageId) onMessageAnimated,
   String? latestReasoningId,
 }) {
   final colors = context.colorScheme;
@@ -83,7 +85,8 @@ StackedChatBuilders pocketcoderChatBuilders(
     ),
   );
 
-  return _PocketcoderChatBuilders(style, callbacks, latestReasoningId);
+  return _PocketcoderChatBuilders(style, callbacks, latestReasoningId,
+      animatedMessageIds, onMessageAnimated);
 }
 
 /// Intercepts only reasoning ("thinking") messages -- completed or still
@@ -91,10 +94,12 @@ StackedChatBuilders pocketcoderChatBuilders(
 /// the generic full-width bubble every other message kind still gets via the
 /// inherited [StackedChatBuilders] behavior.
 class _PocketcoderChatBuilders extends StackedChatBuilders {
-  _PocketcoderChatBuilders(
-      super.style, super.callbacks, this.latestReasoningId);
+  _PocketcoderChatBuilders(super.style, super.callbacks, this.latestReasoningId,
+      this.animatedMessageIds, this.onMessageAnimated);
 
   final String? latestReasoningId;
+  final Set<String> animatedMessageIds;
+  final void Function(String messageId) onMessageAnimated;
 
   @override
   CustomCardBuilder get toolCallBuilder =>
@@ -134,11 +139,14 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
             speaker: TerminalConversationSpeaker.user,
             child: TerminalTranscriptLine(
               prefix: 'root@device \$ ',
-              color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
+              color: emphasize(context.colorScheme.secondary, Emphasis.selected)
+                  .text,
               child: Text(
                 message.text,
                 style: TextStyle(
-                  color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
+                  color: emphasize(
+                          context.colorScheme.secondary, Emphasis.selected)
+                      .text,
                   fontFamily: AppFonts.bodyFamily,
                   package: 'pocketcoder_flutter',
                   fontSize: AppSizes.fontStandard,
@@ -149,7 +157,12 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
             ),
           );
         }
-        return PocoTerminalResponse(message: message.text);
+        return PocoTerminalResponse(
+          messageId: message.id,
+          message: message.text,
+          instant: animatedMessageIds.contains(message.id),
+          onAnimationComplete: () => onMessageAnimated(message.id),
+        );
       };
 
   @override
@@ -174,7 +187,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           showTime: false,
           showStatus: false,
           sentTextStyle: style.textStyle.copyWith(
-            color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
+            color: emphasize(context.colorScheme.secondary, Emphasis.selected)
+                .text,
             fontWeight: AppFonts.medium,
           ),
           receivedTextStyle: style.textStyle,
@@ -184,7 +198,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
             speaker: TerminalConversationSpeaker.user,
             child: TerminalTranscriptLine(
               prefix: 'root@device \$ ',
-              color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
+              color: emphasize(context.colorScheme.secondary, Emphasis.selected)
+                  .text,
               child: child,
             ),
           );

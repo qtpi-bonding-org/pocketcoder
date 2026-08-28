@@ -181,7 +181,8 @@ class ChatCubit extends AppCubit<ChatState> {
     // state.
     final myGeneration = _generation;
     _lastPrompt = text;
-    logDebug('🤖 [ChatCubit] sendPrompt', {'chatId': chatId, 'length': text.length});
+    logDebug(
+        '🤖 [ChatCubit] sendPrompt', {'chatId': chatId, 'length': text.length});
     // Optimistic local echo: the transcript's only real source of truth is
     // ConversationReducer, fed by the backend's AG-UI event stream — and
     // that stream never echoes the user's own prompt back (it's one-way
@@ -203,8 +204,11 @@ class ChatCubit extends AppCubit<ChatState> {
       try {
         await transport.sendMessage(text);
       } catch (error, stackTrace) {
-        logError('🤖 [ChatCubit] sendPrompt failed | {chatId: $chatId, '
-            'error: $error}', error, stackTrace);
+        logError(
+            '🤖 [ChatCubit] sendPrompt failed | {chatId: $chatId, '
+            'error: $error}',
+            error,
+            stackTrace);
         if (myGeneration != _generation) return state;
         rethrow;
       }
@@ -219,6 +223,13 @@ class ChatCubit extends AppCubit<ChatState> {
     final prompt = _lastPrompt;
     if (prompt == null || prompt.isEmpty) return;
     await sendPrompt(prompt);
+  }
+
+  void markMessageAnimated(String messageId) {
+    if (state.animatedMessageIds.contains(messageId)) return;
+    emit(state.copyWith(
+      animatedMessageIds: {...state.animatedMessageIds, messageId},
+    ));
   }
 
   Future<void> cancel() async {

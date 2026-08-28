@@ -46,6 +46,8 @@ void main() {
         onSetOption: (_) {},
         onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
         onElicitationRespond: (_, __) {},
+        animatedMessageIds: const {},
+        onMessageAnimated: (_) {},
         onFiles: () {},
       ));
 
@@ -94,8 +96,34 @@ void main() {
       (tester) async {
     final conversation = ag_ui_widgets.Conversation();
     Widget build(bool interrupted) => wrap(ChatView(
+          chatId: 'chat-1',
+          conversation: conversation,
+          title: 'CHAT',
+          isLoading: false,
+          isRunning: false,
+          requiresProviderReauthentication: false,
+          modes: null,
+          config: null,
+          onOpen: (_) {},
+          onSendPrompt: (_) {},
+          onCancel: () {},
+          onSelectMode: (_) {},
+          onSetOption: (_) {},
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
+          onFiles: () {},
+        ));
+    await tester.pumpWidget(build(false));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(wrap(ChatView(
       chatId: 'chat-1',
-      conversation: conversation,
+      conversation: ag_ui_widgets.Conversation(
+        sessionState: const ag_ui_widgets.SessionState(
+          runOutcome: ag_ui_widgets.RunOutcome.interrupted,
+        ),
+      ),
       title: 'CHAT',
       isLoading: false,
       isRunning: false,
@@ -109,23 +137,9 @@ void main() {
       onSetOption: (_) {},
       onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
       onElicitationRespond: (_, __) {},
+      animatedMessageIds: const {},
+      onMessageAnimated: (_) {},
       onFiles: () {},
-    ));
-    await tester.pumpWidget(build(false));
-    await tester.pumpAndSettle();
-    await tester.pumpWidget(wrap(ChatView(
-      chatId: 'chat-1',
-      conversation: ag_ui_widgets.Conversation(
-        sessionState: const ag_ui_widgets.SessionState(
-          runOutcome: ag_ui_widgets.RunOutcome.interrupted,
-        ),
-      ),
-      title: 'CHAT', isLoading: false, isRunning: false,
-      requiresProviderReauthentication: false, modes: null, config: null,
-      onOpen: (_) {}, onSendPrompt: (_) {}, onCancel: () {},
-      onSelectMode: (_) {}, onSetOption: (_) {},
-      onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
-      onElicitationRespond: (_, __) {}, onFiles: () {},
     )));
     await tester.pump();
     expect(find.byType(VimToast), findsOneWidget);
@@ -136,17 +150,29 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
   });
 
-  testWidgets('reauth-required transition shows a VimToast, not an inline banner',
+  testWidgets(
+      'reauth-required transition shows a VimToast, not an inline banner',
       (tester) async {
     final conversation = ag_ui_widgets.Conversation();
     Widget build(bool requiresReauth) => wrap(ChatView(
-          chatId: 'chat-1', conversation: conversation, title: 'CHAT',
-          isLoading: false, isRunning: false,
+          chatId: 'chat-1',
+          conversation: conversation,
+          title: 'CHAT',
+          isLoading: false,
+          isRunning: false,
           requiresProviderReauthentication: requiresReauth,
-          modes: null, config: null, onOpen: (_) {}, onSendPrompt: (_) {},
-          onCancel: () {}, onSelectMode: (_) {}, onSetOption: (_) {},
+          modes: null,
+          config: null,
+          onOpen: (_) {},
+          onSendPrompt: (_) {},
+          onCancel: () {},
+          onSelectMode: (_) {},
+          onSetOption: (_) {},
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
-          onElicitationRespond: (_, __) {}, onFiles: () {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
+          onFiles: () {},
         ));
     await tester.pumpWidget(build(false));
     await tester.pumpAndSettle();
@@ -188,6 +214,8 @@ void main() {
           onSetOption: (_) {},
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
           onFiles: () {},
         );
 
@@ -245,11 +273,11 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
-    final position =
-        tester.widget<CustomScrollView>(find.byType(CustomScrollView))
-            .controller
-            ?.position;
-    expect(position?.pixels, moreOrLessEquals(position?.maxScrollExtent ?? 0,
-        epsilon: 1));
+    final position = tester
+        .widget<CustomScrollView>(find.byType(CustomScrollView))
+        .controller
+        ?.position;
+    expect(position?.pixels,
+        moreOrLessEquals(position?.maxScrollExtent ?? 0, epsilon: 1));
   });
 }

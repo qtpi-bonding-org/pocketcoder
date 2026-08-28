@@ -11,11 +11,17 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/typewriter_text.da
 class PocoTerminalResponse extends StatelessWidget {
   const PocoTerminalResponse({
     super.key,
+    required this.messageId,
     required this.message,
+    required this.instant,
+    this.onAnimationComplete,
     this.speed = const Duration(milliseconds: 10),
   });
 
+  final String messageId;
   final String message;
+  final bool instant;
+  final VoidCallback? onAnimationComplete;
   final Duration speed;
 
   @override
@@ -26,8 +32,11 @@ class PocoTerminalResponse extends StatelessWidget {
         prefix: '[poco] ',
         color: context.colorScheme.primary,
         child: TypewriterText(
+          key: ValueKey(messageId),
           text: message,
           speed: speed,
+          instant: instant,
+          onComplete: onAnimationComplete,
           style: TextStyle(
             color: context.colorScheme.primary,
             fontFamily: AppFonts.bodyFamily,
