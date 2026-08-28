@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+// LiveActivityAttributesType is the exact ActivityAttributes Swift type
+// name the future widget extension must declare -- fixed here as part of
+// the wire contract between server and client.
+const LiveActivityAttributesType = "PocketCoderChatActivityAttributes"
+const MaxConcurrentLiveActivities = 5
+
 type LiveActivityContentState struct {
 	Status    string `json:"status"`
 	Title     string `json:"title"`
@@ -24,6 +30,58 @@ func NotifyRunStarted(app core.App, chatID string) error {
 	}
 	for _, r := range rows {
 		_ = dispatchLiveActivityUpdate(app, r, LiveActivityContentState{Status: "running", Title: "Agent is running", UpdatedAt: time.Now().Unix()})
+	}
+	if len(rows) == 0 {
+		_ = maybeStartLiveActivities(app, chatID)
+	}
+	return nil
+}
+
+func maybeStartLiveActivities(app core.App, chatID string) error {
+	chat, err := app.FindRecordById("chats", chatID)
+	if err != nil || !chat.GetBool("monitored") {
+		return nil
+	}
+	userID := chat.GetString("user")
+	active, err := app.FindRecordsByFilter("live_activities", "user = {:user} && status = 'active'", "", 0, 0, map[string]any{"user": userID})
+	if err != nil || len(active) >= MaxConcurrentLiveActivities {
+		return nil
+	}
+	devices, err := app.FindRecordsByFilter("devices", "user = {:user} && platform = 'ios' && is_active = true && push_to_start_token != ''", "", 0, 0, map[string]any{"user": userID})
+	if err != nil {
+		return nil
+	}
+	coll, err := app.FindCollectionByNameOrId("live_activities")
+	if err != nil {
+		return nil
+	}
+	for _, d := range devices {
+		if len(active) >= MaxConcurrentLiveActivities {
+			break
+		}
+		existing, _ := app.FindRecordsByFilter("live_activities", "chat = {:chat} && device = {:device} && status = 'active'", "", 1, 0, map[string]any{"chat": chatID, "device": d.Id})
+		if len(existing) > 0 {
+			continue
+		}
+		row := core.NewRecord(coll)
+		row.Set("user", userID)
+		row.Set("device", d.Id)
+		row.Set("chat", chatID)
+		row.Set("platform", "ios")
+		row.Set("status", "active")
+		row.Set("content_state_version", 1)
+		if err := app.Save(row); err != nil {
+			log.Printf("live activities: server-create for push-to-start: %v", err)
+			continue
+		}
+		active = append(active, row)
+		err = SendLiveActivityUpdate(d.GetString("push_to_start_token"), d.GetString("push_token"), userID,
+			LiveActivityContentState{Status: "running", Title: "Agent is running", UpdatedAt: time.Now().Unix()},
+			1, "start", LiveActivityAttributesType, map[string]any{"chatId": chatID})
+		if err != nil {
+			row.Set("last_error", err.Error())
+			_ = app.Save(row)
+		}
 	}
 	return nil
 }
@@ -75,7 +133,7 @@ func dispatchLiveActivityUpdate(app core.App, activity *core.Record, state LiveA
 		return nil
 	}
 
-	err := SendLiveActivityUpdate(activity.GetString("activity_push_token"), device.GetString("push_token"), activity.GetString("user"), state, v, "update")
+	err := SendLiveActivityUpdate(activity.GetString("activity_push_token"), device.GetString("push_token"), activity.GetString("user"), state, v, "update", "", nil)
 	if err != nil {
 		activity.Set("last_error", err.Error())
 		log.Printf("%v", err)

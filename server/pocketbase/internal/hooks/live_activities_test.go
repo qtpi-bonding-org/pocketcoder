@@ -540,3 +540,165 @@ func TestDispatchLiveActivityUpdateSkipsAndSetsLastErrorWhenDeviceNotFCM(t *test
 		t.Fatal("last_error was left blank when the device isn't FCM-registered")
 	}
 }
+
+func TestSendLiveActivityUpdateIncludesAttributesOnlyForStartEvent(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	lastBody := withFakeRelayCapturing(t, http.StatusOK)
+
+	if err := SendLiveActivityUpdate("activity-tok", "fcm-tok", "user-1",
+		LiveActivityContentState{Status: "running"}, 1, "start",
+		LiveActivityAttributesType, map[string]any{"chatId": "chat-1"}); err != nil {
+		t.Fatalf("SendLiveActivityUpdate returned error: %v", err)
+	}
+	body := lastBody()
+	if body["attributes_type"] != LiveActivityAttributesType {
+		t.Fatalf("attributes_type = %v, want %q", body["attributes_type"], LiveActivityAttributesType)
+	}
+	attrs, ok := body["attributes"].(map[string]any)
+	if !ok || attrs["chatId"] != "chat-1" {
+		t.Fatalf("attributes = %#v, want {\"chatId\":\"chat-1\"}", body["attributes"])
+	}
+
+	if err := SendLiveActivityUpdate("activity-tok", "fcm-tok", "user-1",
+		LiveActivityContentState{Status: "running"}, 2, "update", "", nil); err != nil {
+		t.Fatalf("SendLiveActivityUpdate (update event) returned error: %v", err)
+	}
+	body = lastBody()
+	if _, present := body["attributes_type"]; present {
+		t.Fatalf("attributes_type present on an update event: %v", body["attributes_type"])
+	}
+	if _, present := body["attributes"]; present {
+		t.Fatalf("attributes present on an update event: %v", body["attributes"])
+	}
+}
+
+func liveActivityTestDeviceWithPushToStart(t *testing.T, app core.App, userID string) *core.Record {
+	t.Helper()
+	coll, err := app.FindCollectionByNameOrId("devices")
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := core.NewRecord(coll)
+	d.Set("user", userID)
+	d.Set("name", "test ios device")
+	d.Set("push_token", "fcm-reg-token")
+	d.Set("push_service", "fcm")
+	d.Set("platform", "ios")
+	d.Set("is_active", true)
+	d.Set("push_to_start_token", "start-token")
+	if err := app.Save(d); err != nil {
+		t.Fatal(err)
+	}
+	return d
+}
+
+func TestNotifyRunStartedCreatesRowForMonitoredChatWithEligibleDevice(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	calls := withFakeRelay(t, http.StatusOK)
+	user := liveActivityTestUser(t, app, "pts-1@example.com")
+	device := liveActivityTestDeviceWithPushToStart(t, app, user.Id)
+	chat := liveActivityTestChat(t, app, user.Id)
+	chat.Set("monitored", true)
+	if err := app.Save(chat); err != nil {
+		t.Fatal(err)
+	}
+	if err := NotifyRunStarted(app, chat.Id); err != nil {
+		t.Fatalf("NotifyRunStarted returned error: %v", err)
+	}
+	if got := calls(); got != 1 {
+		t.Fatalf("relay received %d POSTs, want exactly 1 (the push-to-start dispatch)", got)
+	}
+	rows, err := app.FindRecordsByFilter("live_activities", "chat = {:c} && device = {:d}", "", 0, 0, map[string]any{"c": chat.Id, "d": device.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("live_activities rows for chat/device = %d, want 1", len(rows))
+	}
+	if rows[0].GetString("status") != "active" {
+		t.Fatalf("status = %q, want %q", rows[0].GetString("status"), "active")
+	}
+}
+
+func TestNotifyRunStartedSkipsUnmonitoredChat(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	calls := withFakeRelay(t, http.StatusOK)
+	user := liveActivityTestUser(t, app, "pts-2@example.com")
+	liveActivityTestDeviceWithPushToStart(t, app, user.Id)
+	chat := liveActivityTestChat(t, app, user.Id)
+	if err := NotifyRunStarted(app, chat.Id); err != nil {
+		t.Fatalf("NotifyRunStarted returned error: %v", err)
+	}
+	if got := calls(); got != 0 {
+		t.Fatalf("relay received %d POSTs, want 0 for an unmonitored chat", got)
+	}
+}
+
+func TestNotifyRunStartedSkipsAtCap(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	calls := withFakeRelay(t, http.StatusOK)
+	user := liveActivityTestUser(t, app, "pts-3@example.com")
+	liveActivityTestDeviceWithPushToStart(t, app, user.Id)
+	chat := liveActivityTestChat(t, app, user.Id)
+	chat.Set("monitored", true)
+	if err := app.Save(chat); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < MaxConcurrentLiveActivities; i++ {
+		d := liveActivityTestDevice(t, app, user.Id)
+		c := liveActivityTestChat(t, app, user.Id)
+		liveActivityTestRow(t, app, user.Id, d.Id, c.Id, "active")
+	}
+	if err := NotifyRunStarted(app, chat.Id); err != nil {
+		t.Fatalf("NotifyRunStarted returned error: %v", err)
+	}
+	if got := calls(); got != 0 {
+		t.Fatalf("relay received %d POSTs, want 0 when the user is already at the concurrency cap", got)
+	}
+}
+
+func TestNotifyRunStartedSkipsDeviceWithExistingActiveRowForChat(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	calls := withFakeRelay(t, http.StatusOK)
+	user := liveActivityTestUser(t, app, "pts-5@example.com")
+	device := liveActivityTestDeviceWithPushToStart(t, app, user.Id)
+	chat := liveActivityTestChat(t, app, user.Id)
+	chat.Set("monitored", true)
+	if err := app.Save(chat); err != nil {
+		t.Fatal(err)
+	}
+	liveActivityTestRow(t, app, user.Id, device.Id, chat.Id, "active")
+	if err := NotifyRunStarted(app, chat.Id); err != nil {
+		t.Fatalf("NotifyRunStarted returned error: %v", err)
+	}
+	if got := calls(); got != 1 {
+		t.Fatalf("relay received %d POSTs, want exactly 1 (only the existing row's update, no duplicate push-to-start)", got)
+	}
+	rows, err := app.FindRecordsByFilter("live_activities", "chat = {:c} && device = {:d}", "", 0, 0, map[string]any{"c": chat.Id, "d": device.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("live_activities rows for chat/device = %d, want 1 (no duplicate created)", len(rows))
+	}
+}

@@ -40,7 +40,7 @@ import (
 // activity's own push token in the same request to deliver an
 // ActivityKit update (see the push-relay Worker's push_type ==
 // "live_activity" branch).
-func SendLiveActivityUpdate(token, fcmToken, userID string, state LiveActivityContentState, version int, event string) error {
+func SendLiveActivityUpdate(token, fcmToken, userID string, state LiveActivityContentState, version int, event, attributesType string, attributes any) error {
 	url := os.Getenv("PN_URL")
 	if url == "" {
 		return nil
@@ -50,6 +50,10 @@ func SendLiveActivityUpdate(token, fcmToken, userID string, state LiveActivityCo
 		"token": token, "fcm_token": fcmToken,
 		"content_state": state, "content_state_version": version,
 		"event": event, "stale_date": time.Now().Add(time.Hour).Unix(),
+	}
+	if event == "start" {
+		payload["attributes_type"] = attributesType
+		payload["attributes"] = attributes
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {
