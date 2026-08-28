@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/adapters/agent_auth_adapter.dart';
 
 class AgentAuthScreen extends StatelessWidget {
@@ -15,7 +16,7 @@ class AgentAuthScreen extends StatelessWidget {
         BlocProvider(create: (_) => getIt<ProviderCubit>()..watchAll()),
         BlocProvider(create: (_) => getIt<HarnessAuthCubit>()..watchData()),
       ],
-      child: const AgentAuthAdapter(),
+      child: AgentAuthAdapter(launcher: getIt<InAppBrowserLauncher>()),
     );
   }
 }

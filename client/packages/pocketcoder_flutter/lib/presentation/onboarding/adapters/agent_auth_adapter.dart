@@ -13,15 +13,20 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/external_auth_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/agent_auth_view.dart';
 import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
-  const AgentAuthAdapter({super.key});
+  const AgentAuthAdapter({super.key, required this.launcher});
+
+  final InAppBrowserLauncher launcher;
 
   static List<Harnesse> selectHarnesses(ProviderState state) => state.harnesses;
 
@@ -33,9 +38,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     final harnesses = adapter.cubitField(selectHarnesses);
     final auth = context.read<HarnessAuthCubit>();
     final status = adapter.cubitStatus();
-    final selectedHarnesses =
-        ReleaseStatusScope.maybeOf(context)?.state.snapshot?.selectedHarnesses ??
-            const [];
+    final selectedHarnesses = ReleaseStatusScope.maybeOf(context)
+            ?.state
+            .snapshot
+            ?.selectedHarnesses ??
+        const [];
     return ValueListenableBuilder<UiFlowStatus>(
       valueListenable: status,
       builder: (context, status, _) => ValueListenableBuilder<List<Harnesse>>(
@@ -162,6 +169,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     String provider,
   ) async {
     Timer? timer;
+    int? timerInterval;
     var openedChat = false;
     await showDialog<void>(
       context: context,
@@ -172,10 +180,15 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
         builder: (context, state) {
           final status = state.statusFor(harness.id, provider);
           if (status?.isConnecting == true) {
-            timer ??= Timer.periodic(const Duration(seconds: 4), (_) {
-              if (!auth.state.isHarnessBusy(harness.id))
-                unawaited(auth.poll(harness.id, provider));
-            });
+            final interval = status?.challenge?.pollIntervalSeconds ?? 4;
+            if (timer == null || timerInterval != interval) {
+              timer?.cancel();
+              timerInterval = interval;
+              timer = Timer.periodic(Duration(seconds: interval), (_) {
+                if (!auth.state.isHarnessBusy(harness.id))
+                  unawaited(auth.poll(harness.id, provider));
+              });
+            }
           }
           if (status?.isConnected == true && !openedChat) {
             openedChat = true;
@@ -186,35 +199,66 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
               await _openChat(context, harness);
             });
           }
-          return ExternalAuthDialog(
-            label: harness.name,
-            isLoading: status?.isConnecting ?? state.isBusy,
-            errorMessage: status?.lastError ??
-                (state.status == UiFlowStatus.failure
-                    ? context.l10n.errorGeneric
-                    : null),
-            onCancel: () async {
-              await auth.cancel(harness.id, provider);
-              if (dialogContext.mounted) Navigator.of(dialogContext).pop();
-            },
-            onRetry: () => auth.startWithAccount(
-              harnessId: harness.id,
-              provider: provider,
-              visibility: harnessAccountVisibilityPersonal,
+          final challenge = status?.challenge;
+          final uri = challenge?.verificationUri;
+          final destination = challenge?.codeDestination;
+          final step = uri != null &&
+                  (destination == HarnessAuthCodeDestination.browser ||
+                      destination == HarnessAuthCodeDestination.app)
+              ? BrowserVerificationConnectionStep(
+                  verificationUri: uri,
+                  codeDestination:
+                      destination ?? HarnessAuthCodeDestination.unknown,
+                  userCode: challenge?.userCode,
+                  expiresAt: challenge?.expiresAt,
+                )
+              : const ApiKeyConnectionStep();
+          final errorMessage = status?.lastError ??
+              (state.status == UiFlowStatus.failure
+                  ? context.l10n.errorGeneric
+                  : null);
+          return TerminalDialog(
+            title: context.l10n.externalAuthTitle,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TerminalLoadingIndicator(label: harness.name),
+                TerminalText(
+                  context.l10n.externalAuthConnecting(harness.name),
+                  alpha: status?.isConnecting == true ? 1 : .6,
+                ),
+                if (errorMessage case final message?) TerminalText(message),
+                if (step is ApiKeyConnectionStep && challenge != null)
+                  if (challenge.legacyText case final legacyText?
+                      when legacyText.isNotEmpty)
+                    TerminalText(legacyText),
+                CredentialConnectionView(
+                  step: step,
+                  onOpenAuthorizationPage: () {
+                    if (uri != null) unawaited(_openChallenge(context, uri));
+                  },
+                  onCopyCode: (code) {
+                    // The view handles the clipboard operation; this callback
+                    // remains available for adapter-side analytics/future use.
+                  },
+                  onSubmitCode: (code) => auth.submitCode(
+                      harnessId: harness.id, code: code, provider: provider),
+                  onCancel: () async {
+                    await auth.cancel(harness.id, provider);
+                    if (dialogContext.mounted)
+                      Navigator.of(dialogContext).pop();
+                  },
+                  onRetry: () => auth.startWithAccount(
+                    harnessId: harness.id,
+                    provider: provider,
+                    visibility: harnessAccountVisibilityPersonal,
+                  ),
+                ),
+              ],
             ),
-            challengeText: status?.challenge?.text,
-            challengeTarget: status?.challenge?.target,
-            onOpenChallenge: status?.challenge == null
-                ? null
-                : () => _openChallenge(context, status!.challenge!),
-            showCodeInput: state.harnessProviders.any((edge) =>
-                    edge.harness == harness.id &&
-                    edge.provider == provider &&
-                    edge.oauthAuthenticator == 'claude') &&
-                status?.challenge != null,
-            onSubmitCode: (code) => auth.submitCode(
-                harnessId: harness.id, code: code, provider: provider),
-            isBusy: state.isHarnessBusy(harness.id),
+            // CredentialConnectionView owns the cancel/retry controls and
+            // receives the adapter's side-effect callbacks above.
+            actions: const [],
           );
         },
       ),
@@ -222,13 +266,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     timer?.cancel();
   }
 
-  Future<void> _openChallenge(
-      BuildContext context, HarnessAuthChallenge challenge) async {
-    final target = challenge.target;
-    if (target == null || target.isEmpty) return;
-    final uri = Uri.tryParse(target);
-    if (uri == null) return;
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  Future<void> _openChallenge(BuildContext context, Uri uri) async {
+    final opened = await launcher.open(uri);
     if (!opened && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(context.l10n.errorCouldNotOpenBrowser)));

@@ -33,6 +33,7 @@ import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/adapters/agent_auth_adapter.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 
 class MockProviderRepository extends Mock implements IProviderRepository {}
@@ -79,7 +80,8 @@ Future<void> _pumpScreen(
         path: '/harness-auth',
         builder: (context, state) => MultiBlocProvider(
           providers: [
-            BlocProvider(create: (_) => ProviderCubit(providerRepo)..watchAll()),
+            BlocProvider(
+                create: (_) => ProviderCubit(providerRepo)..watchAll()),
             BlocProvider(
               create: (_) => HarnessAuthCubit(
                 providerRepository: providerRepo,
@@ -100,7 +102,7 @@ Future<void> _pumpScreen(
               ),
             ),
             onDismiss: () {},
-            child: const AgentAuthAdapter(),
+            child: AgentAuthAdapter(launcher: _AlwaysOpenLauncher()),
           ),
         ),
       ),
@@ -151,21 +153,23 @@ void main() {
         .thenAnswer((_) => const Stream.empty());
     when(() => providerRepo.watchHarnessModels())
         .thenAnswer((_) => const Stream.empty());
-    when(() => providerRepo.watchHarnessProviders()).thenAnswer((_) => Stream.value([
-          const HarnessProvider(
-            id: 'edge-1',
-            harness: _gooseId,
-            provider: _providerId,
-            supportsOauth: false,
-          ),
-        ]));
-    when(() => providerRepo.watchProviderCatalog()).thenAnswer((_) => Stream.value([
-          const domain.Provider(
-            id: _providerId,
-            providerId: 'anthropic',
-            name: 'Anthropic',
-          ),
-        ]));
+    when(() => providerRepo.watchHarnessProviders())
+        .thenAnswer((_) => Stream.value([
+              const HarnessProvider(
+                id: 'edge-1',
+                harness: _gooseId,
+                provider: _providerId,
+                supportsOauth: false,
+              ),
+            ]));
+    when(() => providerRepo.watchProviderCatalog())
+        .thenAnswer((_) => Stream.value([
+              const domain.Provider(
+                id: _providerId,
+                providerId: 'anthropic',
+                name: 'Anthropic',
+              ),
+            ]));
 
     when(() => chatRepo.watchChats()).thenAnswer((_) => const Stream.empty());
     when(() => chatRepo.createChat(
@@ -184,14 +188,15 @@ void main() {
   testWidgets(
       'a multi-provider harness with an existing API key skips the dialog '
       'entirely and goes straight to chat', (tester) async {
-    when(() => providerRepo.watchProviderAPIKeys()).thenAnswer((_) => Stream.value([
-          const ProviderApiKey(
-            id: 'key-1',
-            owner: 'u1',
-            provider: _providerId,
-            apiKey: 'sk-existing',
-          ),
-        ]));
+    when(() => providerRepo.watchProviderAPIKeys())
+        .thenAnswer((_) => Stream.value([
+              const ProviderApiKey(
+                id: 'key-1',
+                owner: 'u1',
+                provider: _providerId,
+                apiKey: 'sk-existing',
+              ),
+            ]));
     when(() => authRepo.start(
           harnessId: _gooseId,
           provider: _providerId,
@@ -254,8 +259,7 @@ void main() {
       'provider and proceeds to chat', (tester) async {
     when(() => providerRepo.watchProviderAPIKeys())
         .thenAnswer((_) => Stream.value(const []));
-    when(() => providerRepo.saveProviderAPIKey(any()))
-        .thenAnswer((_) async {});
+    when(() => providerRepo.saveProviderAPIKey(any())).thenAnswer((_) async {});
     when(() => authRepo.start(
           harnessId: _gooseId,
           provider: _providerId,
@@ -305,4 +309,9 @@ void main() {
           workspaceOverride: any(named: 'workspaceOverride'),
         )).called(1);
   });
+}
+
+class _AlwaysOpenLauncher implements InAppBrowserLauncher {
+  @override
+  Future<bool> open(Uri uri) async => true;
 }
