@@ -978,6 +978,15 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		}
 	}()
 
+	bridge := agui.NewBridge(chatID, runID)
+	hub.StartRun(runID, bridge.Snapshot)
+
+	if userMessageID != "" {
+		hub.Publish(events.NewTextMessageStartEvent(userMessageID, events.WithRole("user")))
+		hub.Publish(events.NewTextMessageContentEvent(userMessageID, prompt))
+		hub.Publish(events.NewTextMessageEndEvent(userMessageID))
+	}
+
 	sessionID, err := resolve(runCtx)
 	if err != nil {
 		log.Printf("coordinator: session mapping failed for chat %s run %s: %v", chatID, runID, err)
@@ -989,14 +998,6 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		log.Printf("coordinator: profile resolution failed for chat %s run %s: %v", chatID, runID, err)
 		hub.Publish(events.NewRunErrorEvent("profile resolution", events.WithErrorCode("goose_unavailable")))
 		return
-	}
-	bridge := agui.NewBridge(chatID, runID)
-	hub.StartRun(runID, bridge.Snapshot)
-
-	if userMessageID != "" {
-		hub.Publish(events.NewTextMessageStartEvent(userMessageID, events.WithRole("user")))
-		hub.Publish(events.NewTextMessageContentEvent(userMessageID, prompt))
-		hub.Publish(events.NewTextMessageEndEvent(userMessageID))
 	}
 
 	// Detached path routes ALL client callbacks (SessionUpdate AND
@@ -1043,10 +1044,14 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	maxTimer := c.clock.AfterFunc(c.maxRun, func() { h.cancel() })
 	c.trackTimer(chatID, runID, maxTimer)
 
-	resp, err := conn.Prompt(runCtx, acpsdk.PromptRequest{
+	promptReq := acpsdk.PromptRequest{
 		SessionId: acpsdk.SessionId(sessionID),
 		Prompt:    []acpsdk.ContentBlock{{Text: &acpsdk.ContentBlockText{Type: "text", Text: prompt}}},
-	})
+	}
+	if userMessageID != "" {
+		promptReq.MessageId = &userMessageID
+	}
+	resp, err := conn.Prompt(runCtx, promptReq)
 	if err != nil {
 		code := "goose_unavailable"
 		message := "goose turn failed"

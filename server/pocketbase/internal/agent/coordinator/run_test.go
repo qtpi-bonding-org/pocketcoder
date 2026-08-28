@@ -584,6 +584,47 @@ func TestStartPromptWithUserMessageIDEchoesTextMessage(t *testing.T) {
 	}
 }
 
+// TestStartPromptWithUserMessageIDEchoesEvenWhenSessionResolveFails covers
+// the fix for the final-review finding that the echo was published only
+// after resolve/profileFn succeeded, so a real provisioning/auth failure
+// dropped the user's message on reconnect exactly like the original bug
+// this feature was meant to fix. The echo must now happen unconditionally
+// as soon as the run starts, before resolve/profileFn are ever called.
+func TestStartPromptWithUserMessageIDEchoesEvenWhenSessionResolveFails(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	att := c.hubFor("A").Attach(0)
+	defer att.Unsubscribe()
+
+	_, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "", errors.New("session mapping failed") },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil,
+		WithUserMessageID("user-msg-2"),
+	)
+	if err != nil {
+		t.Fatalf("StartPrompt err=%v", err)
+	}
+	c.waitRunDone(t, "A")
+
+	var sawStart bool
+	for i := 0; i < 20; i++ {
+		select {
+		case se := <-att.Live:
+			if ev, ok := se.Ev.(*events.TextMessageStartEvent); ok {
+				if ev.MessageID == "user-msg-2" && ev.Role != nil && *ev.Role == "user" {
+					sawStart = true
+				}
+			}
+		default:
+		}
+	}
+	if !sawStart {
+		t.Fatal("expected user message echo even though session resolution failed")
+	}
+}
+
 func TestStartPromptWithoutUserMessageIDEchoesNothing(t *testing.T) {
 	f := newFakeConn()
 	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
