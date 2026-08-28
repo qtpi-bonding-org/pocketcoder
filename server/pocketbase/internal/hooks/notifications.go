@@ -34,16 +34,20 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
-// SendLiveActivityUpdate posts the forward-compatible live-activity payload
-// directly to push-relay. The Worker currently ignores push_type and
-// content_state; APNs live-activity handling is a later slice.
-func SendLiveActivityUpdate(token string, state LiveActivityContentState, version int, event string) error {
+// SendLiveActivityUpdate posts the live-activity payload directly to
+// push-relay. fcmToken is the device's normal FCM registration token
+// (devices.push_token) -- FCM's v1 API requires it alongside the
+// activity's own push token in the same request to deliver an
+// ActivityKit update (see the push-relay Worker's push_type ==
+// "live_activity" branch).
+func SendLiveActivityUpdate(token, fcmToken, userID string, state LiveActivityContentState, version int, event string) error {
 	url := os.Getenv("PN_URL")
 	if url == "" {
 		return nil
 	}
 	payload := map[string]any{
-		"push_type": "live_activity", "activity_token": token,
+		"push_type": "live_activity", "user_id": userID,
+		"token": token, "fcm_token": fcmToken,
 		"content_state": state, "content_state_version": version,
 		"event": event, "stale_date": time.Now().Add(time.Hour).Unix(),
 	}

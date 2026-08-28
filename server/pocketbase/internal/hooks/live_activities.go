@@ -60,7 +60,22 @@ func dispatchLiveActivityUpdate(app core.App, activity *core.Record, state LiveA
 		return nil
 	}
 
-	err := SendLiveActivityUpdate(activity.GetString("activity_push_token"), state, v, "update")
+	device, derr := app.FindRecordById("devices", activity.GetString("device"))
+	if derr != nil || device.GetString("push_service") != "fcm" {
+		// FCM v1's Live Activity delivery needs a normal FCM
+		// registration token alongside the activity's own push token
+		// (see notifications.go's SendLiveActivityUpdate doc) -- a
+		// missing device or a non-FCM one (e.g. unifiedpush) can't
+		// carry that, so skip the send rather than dispatch a request
+		// the relay can never fulfill.
+		activity.Set("last_error", "live activity device is missing or not FCM-registered")
+		if err := app.Save(activity); err != nil {
+			log.Printf("live activities: save activity: %v", err)
+		}
+		return nil
+	}
+
+	err := SendLiveActivityUpdate(activity.GetString("activity_push_token"), device.GetString("push_token"), activity.GetString("user"), state, v, "update")
 	if err != nil {
 		activity.Set("last_error", err.Error())
 		log.Printf("%v", err)

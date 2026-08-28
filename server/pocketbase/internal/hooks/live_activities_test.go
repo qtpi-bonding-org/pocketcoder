@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -39,6 +41,39 @@ func withFakeRelay(t *testing.T, status int) (count func() int) {
 		mu.Lock()
 		defer mu.Unlock()
 		return n
+	}
+}
+
+// withFakeRelayCapturing is like withFakeRelay but hands back the JSON body
+// of the most recent POST, so tests can assert on payload shape (user_id,
+// fcm_token) rather than just delivery/no-delivery.
+func withFakeRelayCapturing(t *testing.T, status int) (lastBody func() map[string]any) {
+	t.Helper()
+	var mu sync.Mutex
+	var body map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		var parsed map[string]any
+		_ = json.Unmarshal(b, &parsed)
+		mu.Lock()
+		body = parsed
+		mu.Unlock()
+		w.WriteHeader(status)
+	}))
+	t.Cleanup(srv.Close)
+	prev, hadPrev := os.LookupEnv("PN_URL")
+	os.Setenv("PN_URL", srv.URL)
+	t.Cleanup(func() {
+		if hadPrev {
+			os.Setenv("PN_URL", prev)
+		} else {
+			os.Unsetenv("PN_URL")
+		}
+	})
+	return func() map[string]any {
+		mu.Lock()
+		defer mu.Unlock()
+		return body
 	}
 }
 
@@ -438,5 +473,70 @@ func TestDispatchLiveActivityUpdateClearsLastErrorOnSuccess(t *testing.T) {
 	}
 	if reloaded.GetString("last_error") != "" {
 		t.Fatalf("last_error = %q, want cleared after a confirmed 2xx delivery", reloaded.GetString("last_error"))
+	}
+}
+
+func TestDispatchLiveActivityUpdateSendsUserIDAndFCMToken(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	lastBody := withFakeRelayCapturing(t, http.StatusOK)
+
+	user := liveActivityTestUser(t, app, "la-dispatch-4@example.com")
+	device := liveActivityTestDevice(t, app, user.Id)
+	chat := liveActivityTestChat(t, app, user.Id)
+	row := liveActivityTestRow(t, app, user.Id, device.Id, chat.Id, "active")
+
+	if err := dispatchLiveActivityUpdate(app, row, LiveActivityContentState{Status: "running"}); err != nil {
+		t.Fatalf("dispatchLiveActivityUpdate returned error: %v", err)
+	}
+
+	body := lastBody()
+	if body == nil {
+		t.Fatal("relay never received a request")
+	}
+	if body["user_id"] != user.Id {
+		t.Fatalf("payload user_id = %v, want %q", body["user_id"], user.Id)
+	}
+	if body["fcm_token"] != "test-token" {
+		t.Fatalf("payload fcm_token = %v, want %q (the device's push_token)", body["fcm_token"], "test-token")
+	}
+	if body["token"] != "activity-token" {
+		t.Fatalf("payload token = %v, want %q (the activity_push_token)", body["token"], "activity-token")
+	}
+}
+
+func TestDispatchLiveActivityUpdateSkipsAndSetsLastErrorWhenDeviceNotFCM(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	calls := withFakeRelay(t, http.StatusOK)
+
+	user := liveActivityTestUser(t, app, "la-dispatch-5@example.com")
+	device := liveActivityTestDevice(t, app, user.Id)
+	device.Set("push_service", "unifiedpush")
+	if err := app.Save(device); err != nil {
+		t.Fatal(err)
+	}
+	chat := liveActivityTestChat(t, app, user.Id)
+	row := liveActivityTestRow(t, app, user.Id, device.Id, chat.Id, "active")
+
+	if err := dispatchLiveActivityUpdate(app, row, LiveActivityContentState{Status: "running"}); err != nil {
+		t.Fatalf("dispatchLiveActivityUpdate returned error: %v", err)
+	}
+
+	if got := calls(); got != 0 {
+		t.Fatalf("relay received %d POSTs, want 0 (non-fcm device must be skipped)", got)
+	}
+	reloaded, err := app.FindRecordById("live_activities", row.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reloaded.GetString("last_error") == "" {
+		t.Fatal("last_error was left blank when the device isn't FCM-registered")
 	}
 }
