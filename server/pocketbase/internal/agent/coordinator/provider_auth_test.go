@@ -33,3 +33,33 @@ func TestProviderAuthFailure(t *testing.T) {
 		})
 	}
 }
+
+func TestProviderApiKeyFailure(t *testing.T) {
+	for _, test := range []struct {
+		name         string
+		accountLogin bool
+		err          string
+		want         bool
+	}{
+		// The api_key-mode counterpart of TestProviderAuthFailure: goose and
+		// opencode never set AccountLogin, so a genuine upstream credential
+		// rejection needs its own classifier to avoid collapsing into the
+		// generic "goose_unavailable" code alongside crashed containers and
+		// network failures.
+		{"api-key/unauthorized", false, "401 unauthorized", true},
+		{"api-key/forbidden", false, "403 forbidden", true},
+		{"api-key/invalid api key", false, "invalid api key provided", true},
+		{"api-key/network failure", false, "temporary network failure", false},
+		// account-login sessions already have their own reauth path via
+		// providerAuthFailure -- providerApiKeyFailure must not also fire for
+		// them, or a single OAuth failure would surface two contradictory
+		// error codes depending on call order.
+		{"account-login/unauthorized", true, "401 unauthorized", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := providerApiKeyFailure(test.accountLogin, errors.New(test.err)); got != test.want {
+				t.Fatalf("providerApiKeyFailure() = %v, want %v", got, test.want)
+			}
+		})
+	}
+}

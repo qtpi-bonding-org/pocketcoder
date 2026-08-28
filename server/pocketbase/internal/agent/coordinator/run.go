@@ -1001,9 +1001,13 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	if err != nil {
 		code := "goose_unavailable"
 		message := "goose turn failed"
-		if providerAuthFailure(profile.AccountLogin, err) {
+		switch {
+		case providerAuthFailure(profile.AccountLogin, err):
 			code = providerAuthRequiredCode
 			message = reauthRequiredMessage(profile.HarnessName)
+		case providerApiKeyFailure(profile.AccountLogin, err):
+			code = providerApiKeyInvalidCode
+			message = apiKeyInvalidMessage(profile.HarnessName)
 		}
 		switch {
 		case runCtx.Err() != nil:
@@ -1034,10 +1038,16 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 }
 
 func providerRunError(accountLogin bool, harnessName, fallback string, err error) events.Event {
-	if providerAuthFailure(accountLogin, err) {
+	switch {
+	case providerAuthFailure(accountLogin, err):
 		return events.NewRunErrorEvent(
 			reauthRequiredMessage(harnessName),
 			events.WithErrorCode(providerAuthRequiredCode),
+		)
+	case providerApiKeyFailure(accountLogin, err):
+		return events.NewRunErrorEvent(
+			apiKeyInvalidMessage(harnessName),
+			events.WithErrorCode(providerApiKeyInvalidCode),
 		)
 	}
 	return events.NewRunErrorEvent(fallback, events.WithErrorCode("goose_unavailable"))
