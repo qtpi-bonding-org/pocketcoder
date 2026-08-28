@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -151,5 +152,53 @@ func TestHarnessAuthOAuthUsesResolvedAuthenticatorAndRejectsUnsupportedPair(t *t
 	code, body = harnessRequest(t, app, fake, user, "/api/pocketcoder/v1/harness-auth/start", `{"harness":"`+goose.Id+`","provider":"`+anthropic.Id+`","mode":"oauth"}`)
 	if code < 400 || code >= 500 || !strings.Contains(body, "does not support account login for this harness") {
 		t.Fatalf("unsupported Goose OAuth = %d: %s", code, body)
+	}
+}
+
+func TestHarnessAuthPublishesStructuredChallenge(t *testing.T) {
+	app := testApp(t)
+	user := testUser(t, app, "harness-auth-structured-"+randomSuffix()+"@example.com")
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'")
+	if err != nil {
+		t.Fatal(err)
+	}
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fake := &fakeHarnessAuthRuntime{start: &harnessauth.AttemptState{Status: harnessauth.AttemptStatusAwaiting, Challenge: &harnessauth.Challenge{Type: "device-code", Text: "Enter this code: 9OCA-MITN8", Kind: "device_code", VerificationURI: "https://auth.openai.com/codex/device", UserCode: "9OCA-MITN8", CodeDestination: "browser", PollIntervalSeconds: 4}}}
+	code, body := harnessRequest(t, app, fake, user, "/api/pocketcoder/v1/harness-auth/start", `{"harness":"`+harness.Id+`","provider":"`+provider.Id+`","mode":"oauth"}`)
+	if code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", code, body)
+	}
+	var response map[string]any
+	if err := json.Unmarshal([]byte(body), &response); err != nil {
+		t.Fatal(err)
+	}
+	challenge := response["challenge"].(map[string]any)
+	for key, want := range map[string]any{"kind": "device_code", "verificationUri": "https://auth.openai.com/codex/device", "userCode": "9OCA-MITN8", "codeDestination": "browser", "pollIntervalSeconds": float64(4)} {
+		if challenge[key] != want {
+			t.Errorf("challenge[%q]=%v, want %v", key, challenge[key], want)
+		}
+	}
+
+	claudeHarness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'claude-code'")
+	if err != nil {
+		t.Fatal(err)
+	}
+	claudeProvider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fake.start = &harnessauth.AttemptState{Status: harnessauth.AttemptStatusAwaiting, Challenge: &harnessauth.Challenge{
+		Type: "browser-code", Text: "Open the authorization URL", Kind: "browser_code",
+		VerificationURI: "https://example.test/authorize", CodeDestination: "app", PollIntervalSeconds: 4,
+	}}
+	code, body = harnessRequest(t, app, fake, user, "/api/pocketcoder/v1/harness-auth/start", `{"harness":"`+claudeHarness.Id+`","provider":"`+claudeProvider.Id+`","mode":"oauth"}`)
+	if code != http.StatusOK {
+		t.Fatalf("Claude status=%d body=%s", code, body)
+	}
+	if !strings.Contains(body, `"codeDestination":"app"`) {
+		t.Fatalf("Claude challenge missing app destination: %s", body)
 	}
 }

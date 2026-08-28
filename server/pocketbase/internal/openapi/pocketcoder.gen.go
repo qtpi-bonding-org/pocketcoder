@@ -147,10 +147,16 @@ type HarnessAuthAttempt struct {
 
 // HarnessAuthChallenge defines model for HarnessAuthChallenge.
 type HarnessAuthChallenge struct {
-	Details *string `json:"details,omitempty"`
-	Target  *string `json:"target,omitempty"`
-	Text    string  `json:"text"`
-	Type    string  `json:"type"`
+	CodeDestination     *string `json:"codeDestination,omitempty"`
+	Details             *string `json:"details,omitempty"`
+	ExpiresAt           *string `json:"expiresAt,omitempty"`
+	Kind                *string `json:"kind,omitempty"`
+	PollIntervalSeconds *int    `json:"pollIntervalSeconds,omitempty"`
+	Target              *string `json:"target,omitempty"`
+	Text                string  `json:"text"`
+	Type                string  `json:"type"`
+	UserCode            *string `json:"userCode,omitempty"`
+	VerificationUri     *string `json:"verificationUri,omitempty"`
 }
 
 // HarnessAuthStatus defines model for HarnessAuthStatus.

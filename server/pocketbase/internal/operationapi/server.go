@@ -42,6 +42,20 @@ func requestEventFromContext(ctx context.Context) (*core.RequestEvent, error) {
 	return re, nil
 }
 
+func stringPtr(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+func intPtr(value int) *int {
+	if value <= 0 {
+		return nil
+	}
+	return &value
+}
+
 func harnessStatusResponse(status api.HarnessAuthStatusResponse) openapi.HarnessAuthStatus {
 	response := openapi.HarnessAuthStatus{Harness: status.Harness, Provider: status.Provider, Status: status.Status, Mode: openapi.HarnessAuthStatusMode(status.Mode)}
 	if status.AccountID != "" {
@@ -63,7 +77,7 @@ func harnessStatusResponse(status api.HarnessAuthStatusResponse) openapi.Harness
 		}
 	}
 	if status.Challenge != nil {
-		response.Challenge = &openapi.HarnessAuthChallenge{Type: status.Challenge.Type, Text: status.Challenge.Text}
+		response.Challenge = &openapi.HarnessAuthChallenge{Type: status.Challenge.Type, Text: status.Challenge.Text, Kind: stringPtr(status.Challenge.Kind), VerificationUri: stringPtr(status.Challenge.VerificationURI), UserCode: stringPtr(status.Challenge.UserCode), CodeDestination: stringPtr(status.Challenge.CodeDestination), ExpiresAt: stringPtr(status.Challenge.ExpiresAt), PollIntervalSeconds: intPtr(status.Challenge.PollIntervalSeconds)}
 		if status.Challenge.Target != "" {
 			response.Challenge.Target = &status.Challenge.Target
 		}
@@ -399,7 +413,7 @@ func (s *server) GetHarnessAuthStatus(ctx context.Context, _ openapi.GetHarnessA
 		}
 	}
 	if status.Challenge != nil {
-		response.Challenge = &openapi.HarnessAuthChallenge{Type: status.Challenge.Type, Text: status.Challenge.Text}
+		response.Challenge = &openapi.HarnessAuthChallenge{Type: status.Challenge.Type, Text: status.Challenge.Text, Kind: stringPtr(status.Challenge.Kind), VerificationUri: stringPtr(status.Challenge.VerificationURI), UserCode: stringPtr(status.Challenge.UserCode), CodeDestination: stringPtr(status.Challenge.CodeDestination), ExpiresAt: stringPtr(status.Challenge.ExpiresAt), PollIntervalSeconds: intPtr(status.Challenge.PollIntervalSeconds)}
 		if status.Challenge.Target != "" {
 			response.Challenge.Target = &status.Challenge.Target
 		}

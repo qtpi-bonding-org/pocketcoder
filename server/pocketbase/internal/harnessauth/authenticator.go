@@ -28,6 +28,12 @@ const (
 	ProviderCodex  = "codex"
 	ProviderClaude = "claude"
 
+	ChallengeKindDeviceCode     = "device_code"
+	ChallengeKindBrowserCode    = "browser_code"
+	ChallengeDestinationBrowser = "browser"
+	ChallengeDestinationApp     = "app"
+	ChallengeDestinationNone    = "none"
+
 	AttemptStatusStarting  = "starting"
 	AttemptStatusAwaiting  = "awaiting_input"
 	AttemptStatusSucceeded = "succeeded"
@@ -38,10 +44,16 @@ const (
 
 // Challenge is returned to UI layers when a provider requires user action.
 type Challenge struct {
-	Type    string `json:"type"`
-	Text    string `json:"text"`
-	Target  string `json:"target,omitempty"`
-	Details string `json:"details,omitempty"`
+	Type                string `json:"type"`
+	Text                string `json:"text"`
+	Target              string `json:"target,omitempty"`
+	Details             string `json:"details,omitempty"`
+	Kind                string `json:"kind,omitempty"`
+	VerificationURI     string `json:"verificationUri,omitempty"`
+	UserCode            string `json:"userCode,omitempty"`
+	CodeDestination     string `json:"codeDestination,omitempty"`
+	ExpiresAt           string `json:"expiresAt,omitempty"`
+	PollIntervalSeconds int    `json:"pollIntervalSeconds,omitempty"`
 }
 
 // AttemptState mirrors the fields persisted in harness_oauth_attempts and is used

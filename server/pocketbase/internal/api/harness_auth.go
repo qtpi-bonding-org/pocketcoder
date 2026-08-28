@@ -37,10 +37,28 @@ type harnessAuthRequest struct {
 }
 
 type harnessAuthChallengeResp struct {
-	Type    string `json:"type"`
-	Text    string `json:"text"`
-	Target  string `json:"target,omitempty"`
-	Details string `json:"details,omitempty"`
+	Type                string `json:"type"`
+	Text                string `json:"text"`
+	Target              string `json:"target,omitempty"`
+	Details             string `json:"details,omitempty"`
+	Kind                string `json:"kind,omitempty"`
+	VerificationURI     string `json:"verificationUri,omitempty"`
+	UserCode            string `json:"userCode,omitempty"`
+	CodeDestination     string `json:"codeDestination,omitempty"`
+	ExpiresAt           string `json:"expiresAt,omitempty"`
+	PollIntervalSeconds int    `json:"pollIntervalSeconds,omitempty"`
+}
+
+func challengeResponse(c *harnessauth.Challenge) *harnessAuthChallengeResp {
+	if c == nil {
+		return nil
+	}
+	return &harnessAuthChallengeResp{
+		Type: c.Type, Text: c.Text, Target: c.Target, Details: c.Details,
+		Kind: c.Kind, VerificationURI: c.VerificationURI, UserCode: c.UserCode,
+		CodeDestination: c.CodeDestination, ExpiresAt: c.ExpiresAt,
+		PollIntervalSeconds: c.PollIntervalSeconds,
+	}
 }
 
 type harnessAuthAttemptResp struct {
@@ -212,7 +230,7 @@ func StartHarnessAuth(app core.App, runtime harnessAuthRuntime, re *core.Request
 	}
 	response := renderHarnessAuthStatus(account, attempt, "oauth")
 	if state.Challenge != nil {
-		response.Challenge = &harnessAuthChallengeResp{Type: state.Challenge.Type, Text: state.Challenge.Text, Target: state.Challenge.Target, Details: state.Challenge.Details}
+		response.Challenge = challengeResponse(state.Challenge)
 	}
 	return response, nil
 }
@@ -282,7 +300,7 @@ func PollHarnessAuth(app core.App, runtime harnessAuthRuntime, re *core.RequestE
 	}
 	response := renderHarnessAuthStatus(account, attempt, "oauth")
 	if state.Challenge != nil {
-		response.Challenge = &harnessAuthChallengeResp{Type: state.Challenge.Type, Text: state.Challenge.Text, Target: state.Challenge.Target, Details: state.Challenge.Details}
+		response.Challenge = challengeResponse(state.Challenge)
 	}
 	_ = input
 	return response, nil
@@ -471,7 +489,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		}
 		response := renderHarnessAuthStatus(account, attempt, "oauth")
 		if state.Challenge != nil {
-			response.Challenge = &harnessAuthChallengeResp{Type: state.Challenge.Type, Text: state.Challenge.Text, Target: state.Challenge.Target, Details: state.Challenge.Details}
+			response.Challenge = challengeResponse(state.Challenge)
 		}
 		return re.JSON(200, response)
 	}})
