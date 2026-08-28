@@ -44,3 +44,29 @@ EOF
 
 docker compose -f docker-compose.yml -f docker-compose.agent-test.yml \
   --profile api-test run --build --rm api-flow-test
+
+# The bats suite above deliberately never exercises real harness
+# provisioning (curl+jq black-box coverage only). This second pass drives
+# the SAME live stack through the actual generated pocketcoder_api Dart
+# client -- the real request/response encoding the app uses, not curl+jq --
+# covering harness auth (oauth start/poll/submit and the API-key "none"
+# mode), chat creation, and the first prompt actually reaching a real
+# harness container. This is the layer four real bugs lived at 2026-08-28
+# (BaseDao's write race, sessionprofile's missing default provider, the
+# renderEnv "none"-mode gap, and provider_api_keys.hidden blocking every
+# real user's own write) -- none of the Go unit tests or the bats suite
+# above could have caught the last three, since neither one round-trips a
+# real record through PocketBase's own hidden-field access-control layer.
+#
+# docker-socket-proxy-write + mcp-gateway aren't pocketbase's own
+# dependencies (the bats run above never starts them) but ARE required for
+# real harness container provisioning to get past "network ... not found" /
+# "no such host" -- bring them up explicitly rather than silently testing a
+# harness-provisioning path that can never actually reach a container.
+docker compose -f docker-compose.yml -f docker-compose.agent-test.yml \
+  up -d --build --wait docker-socket-proxy-write mcp-gateway pocketbase
+
+pushd client/packages/pocketcoder_flutter >/dev/null
+PB_URL="${PB_URL:-http://127.0.0.1:8090}" \
+  flutter test test/integration/local_golden_path_test.dart
+popd >/dev/null
