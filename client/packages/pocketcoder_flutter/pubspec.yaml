@@ -84,7 +84,7 @@ dependencies:
   ag_ui_widgets_flutter:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
-      ref: 21c2a311762aba68fd78960f4df2e4567bfb6cb0
+      ref: 0e818c83834b9a61987518189f02e357f8f4b534
   flutter_aeroform:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
