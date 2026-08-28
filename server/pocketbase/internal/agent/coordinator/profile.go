@@ -59,12 +59,15 @@ type SessionProfile struct {
 	AccountLogin bool
 	HarnessName  string // display name (harnesses.name, e.g. "Codex"), for user-facing reauth copy
 
-	Target                        Target
-	ResolvedInstanceID            string // the harness_instances id this chat resolves to right now
-	PinnedInstanceID              string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
-	SupportsLiveConfig            bool
-	SupportsSessionDelete         bool
-	SupportsAdditionalDirectories bool
+	Target                             Target
+	ResolvedInstanceID                 string // the harness_instances id this chat resolves to right now
+	PinnedInstanceID                   string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
+	SupportsLiveConfig                 bool
+	SupportsLiveCredentialRegistration bool
+	CredentialFieldName                string
+	CredentialFieldValue               string
+	SupportsSessionDelete              bool
+	SupportsAdditionalDirectories      bool
 }
 
 // ToolPermissionAction is the PocketBase policy decision for one ACP tool

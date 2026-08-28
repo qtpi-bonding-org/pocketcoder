@@ -351,8 +351,36 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	}
 
 	p.SupportsLiveConfig = harnessRec.GetBool("supports_live_config")
+	p.SupportsLiveCredentialRegistration = harnessRec.GetBool("supports_live_credential_registration")
 	p.SupportsSessionDelete = harnessRec.GetBool("supports_session_delete")
 	p.SupportsAdditionalDirectories = harnessRec.GetBool("supports_additional_directories")
+
+	if harnessRec.GetBool("supports_live_config") && providerRec != nil {
+		edge, edgeErr := app.FindFirstRecordByFilter(
+			"harness_providers",
+			"harness = {:h} && provider = {:p}",
+			map[string]any{"h": harnessRec.Id, "p": providerRec.Id},
+		)
+		if edgeErr != nil && !errors.Is(edgeErr, sql.ErrNoRows) {
+			return p, fmt.Errorf("resolve harness_providers edge for provider %s: %w", providerRec.Id, edgeErr)
+		}
+		if edge != nil {
+			key, keyErr := app.FindFirstRecordByFilter(
+				"provider_api_keys",
+				"owner = {:u} && provider = {:p}",
+				map[string]any{"u": userID, "p": providerRec.Id},
+			)
+			if keyErr != nil && !errors.Is(keyErr, sql.ErrNoRows) {
+				return p, fmt.Errorf("resolve API key for provider %s: %w", providerRec.Id, keyErr)
+			}
+			if key != nil {
+				if names := hooks.EnvVarNamesForCredential(edge, providerRec); len(names) > 0 {
+					p.CredentialFieldName = names[0]
+					p.CredentialFieldValue = key.GetString("api_key")
+				}
+			}
+		}
+	}
 
 	// All harnesses receive PocketBase-owned MCP services through the standard
 	// ACP session/new request. This keeps the harness boundary identical and

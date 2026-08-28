@@ -1089,6 +1089,138 @@ func TestBuildSessionProfileResolvesLiveConfigProviderFromCredentialSelection(t 
 	}
 }
 
+func seedLiveConfigCredentialTest(t *testing.T, app core.App, withEdge bool, withKey bool) *core.Record {
+	t.Helper()
+	userID := testUser(t, app, "liveconfig-credential-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := testModel(t, app, provider.Id, "goose-openai-credential-model-"+randomSuffix())
+	testHarnessModel(t, app, harness.Id, model.Id, model.GetString("name"))
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", harness.Id)
+	sel.Set("provider", provider.Id)
+	sel.Set("mode", "none")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+	if withEdge {
+		edges, err := app.FindCollectionByNameOrId("harness_providers")
+		if err != nil {
+			t.Fatal(err)
+		}
+		edge := core.NewRecord(edges)
+		edge.Set("harness", harness.Id)
+		edge.Set("provider", provider.Id)
+		if err := app.Save(edge); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if withKey {
+		keys, err := app.FindCollectionByNameOrId("provider_api_keys")
+		if err != nil {
+			t.Fatal(err)
+		}
+		key := core.NewRecord(keys)
+		key.Set("owner", userID)
+		key.Set("provider", provider.Id)
+		key.Set("api_key", "the-seeded-api-key-value")
+		if err := app.Save(key); err != nil {
+			t.Fatal(err)
+		}
+	}
+	runningInstanceFor(t, app, harness, userID)
+	return createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+}
+
+func TestBuildSessionProfilePopulatesCredentialFieldForLiveConfigProvider(t *testing.T) {
+	app := testApp(t)
+	chat := seedLiveConfigCredentialTest(t, app, true, true)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), "")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if !profile.SupportsLiveCredentialRegistration {
+		t.Fatal("expected SupportsLiveCredentialRegistration = true for a goose-like harness")
+	}
+	if profile.CredentialFieldName == "" {
+		t.Fatal("expected a non-empty CredentialFieldName")
+	}
+	if profile.CredentialFieldValue != "the-seeded-api-key-value" {
+		t.Fatalf("CredentialFieldValue = %q, want the seeded key", profile.CredentialFieldValue)
+	}
+}
+
+func TestBuildSessionProfileLeavesCredentialFieldEmptyWithoutSavedKey(t *testing.T) {
+	app := testApp(t)
+	chat := seedLiveConfigCredentialTest(t, app, true, false)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), "")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if profile.CredentialFieldName != "" || profile.CredentialFieldValue != "" {
+		t.Fatalf("expected empty credential field with no saved key, got %+v", profile)
+	}
+}
+
+func TestBuildSessionProfileLeavesCredentialFieldEmptyWithoutHarnessProvidersEdge(t *testing.T) {
+	app := testApp(t)
+	chat := seedLiveConfigCredentialTest(t, app, false, true)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), "")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if profile.CredentialFieldName != "" || profile.CredentialFieldValue != "" {
+		t.Fatalf("expected empty credential field with no harness_providers edge, got %+v", profile)
+	}
+}
+
+func TestBuildSessionProfileLeavesCredentialFieldEmptyForOllama(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"models":[{"name":"qwen2.5:0.5b"}]}`))
+	}))
+	defer server.Close()
+	app := testApp(t)
+	userID := testUser(t, app, "ollama-credential-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	instances, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		t.Fatal(err)
+	}
+	instance := core.NewRecord(instances)
+	instance.Set("harness", harness.Id)
+	instance.Set("user", userID)
+	instance.Set("oauth_account", "")
+	instance.Set("launch_key", "")
+	instance.Set("container_name", "pocketcoder-goose-"+randomSuffix())
+	instance.Set("status", "running")
+	instance.Set("managed", false)
+	if err := app.Save(instance); err != nil {
+		t.Fatal(err)
+	}
+	chat := createTestChat(t, app, map[string]any{"user": userID, "harness": harness.Id, "ollama_model_override": "qwen2.5:0.5b"})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), server.URL)
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if profile.CredentialFieldName != "" || profile.CredentialFieldValue != "" {
+		t.Fatalf("expected empty credential field for Ollama, got %+v", profile)
+	}
+}
+
 // TestBuildSessionProfileLeavesAccountLoginFalseForApiKeyMode guards the
 // other direction: a harness account still on api_key (or none) credential
 // mode must not be treated as account-login, or a bad API key would

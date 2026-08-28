@@ -655,7 +655,7 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string, harne
 			if key == nil {
 				return nil, fmt.Errorf("selected API key for provider %s was not found", providerRec.Id)
 			}
-			names := envVarNamesFor(edge, providerRec)
+			names := EnvVarNamesForCredential(edge, providerRec)
 			for _, name := range names {
 				values[name] = key.GetString("api_key")
 			}
@@ -727,11 +727,11 @@ func providersForLaunch(app core.App, harness *core.Record, providerID string) (
 	return app.FindRecordsByFilter("harness_providers", filter, "", 0, 0, params)
 }
 
-// envVarNamesFor returns every env var name a provider_api_keys value
+// EnvVarNamesForCredential returns every env var name a provider_api_keys value
 // should be delivered under: harness_providers.api_key_env_override if
 // set (an escape hatch for a harness reading a nonstandard name), else
 // every name providers.api_key_envs lists.
-func envVarNamesFor(edge, provider *core.Record) []string {
+func EnvVarNamesForCredential(edge, provider *core.Record) []string {
 	if override := edge.GetString("api_key_env_override"); override != "" {
 		return []string{override}
 	}

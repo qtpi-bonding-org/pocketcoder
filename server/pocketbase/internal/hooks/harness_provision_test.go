@@ -48,6 +48,15 @@ func TestResolveWorkspaceVolumeAndNetworkMatchesByDestinationAndSuffix(t *testin
 	}
 }
 
+func TestEnvVarNamesForRequiresNonNilEdge(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected EnvVarNamesForCredential(nil, ...) to panic -- if this now succeeds, the contract changed; update this test")
+		}
+	}()
+	EnvVarNamesForCredential(nil, &core.Record{})
+}
+
 func TestResolveWorkspaceVolumeAndNetworkErrorsWhenNoMatch(t *testing.T) {
 	fake := &fakeInspectClient{insp: dockerapi.ContainerInspect{}}
 	_, _, err := ResolveWorkspaceVolumeAndNetwork(context.Background(), fake)
