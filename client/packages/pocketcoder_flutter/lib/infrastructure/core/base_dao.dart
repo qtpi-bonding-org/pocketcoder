@@ -49,10 +49,15 @@ abstract class BaseDao<T> {
     if (_pb.authStore.token.isEmpty) {
       return Stream<List<T>>.error(AuthException.notAuthenticated());
     }
-    // DAO reads are cache-first so a recoverable expired token never hides an
-    // already persisted snapshot. Callers opt into network authentication by
-    // passing cacheAndNetwork or networkOnly.
-    final policy = requestPolicy ?? RequestPolicy.cacheFirst;
+    // DAO reads always try the network first, falling back to cache only on
+    // failure -- there is no meaningful offline mode here (every screen
+    // needs the user's own PocketBase deployment to do anything), so a
+    // stale-but-present cache must never outrank fresh server data. This
+    // also means a recoverable expired token surfaces as an error (see
+    // _cachedThenAuthError below) rather than silently hiding behind an
+    // already persisted snapshot; callers that need pure offline resilience
+    // instead can opt out with an explicit cacheFirst/cacheOnly override.
+    final policy = requestPolicy ?? RequestPolicy.networkFirst;
     Stream<List<T>> records = service
         .watchRecords(
           filter: filter,
