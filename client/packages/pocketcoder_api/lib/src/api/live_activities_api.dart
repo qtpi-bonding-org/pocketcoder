@@ -9,10 +9,9 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
-import 'package:built_collection/built_collection.dart';
-import 'package:built_value/json_object.dart';
 import 'package:pocketcoder_api/src/api_util.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
+import 'package:pocketcoder_api/src/model/ok_response.dart';
 
 class LiveActivitiesApi {
 
@@ -34,9 +33,9 @@ class LiveActivitiesApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
+  /// Returns a [Future] containing a [Response] with a [OkResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> endLiveActivity({
+  Future<Response<OkResponse>> endLiveActivity({
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -73,14 +72,14 @@ class LiveActivitiesApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    BuiltMap<String, JsonObject>? _responseData;
+    OkResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),
-      ) as BuiltMap<String, JsonObject>;
+        specifiedType: const FullType(OkResponse),
+      ) as OkResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -92,7 +91,7 @@ class LiveActivitiesApi {
       );
     }
 
-    return Response<BuiltMap<String, JsonObject>>(
+    return Response<OkResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

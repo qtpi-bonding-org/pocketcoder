@@ -13,11 +13,11 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"net/http"
 
-	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/router"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/api"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/errorutil"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/filesystem"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/mcpserver"
@@ -28,6 +28,19 @@ import (
 )
 
 type requestEventContextKey struct{}
+
+// requestEventFromContext extracts the *core.RequestEvent PocketBase stashes
+// on ctx. Every strict handler needing PocketBase-native access (SetPathValue,
+// auth, etc.) does this exact lookup -- shared here so the "missing request
+// event" case is logged and wrapped in exactly one place instead of once per
+// call site.
+func requestEventFromContext(ctx context.Context) (*core.RequestEvent, error) {
+	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
+	if !ok {
+		return nil, errorutil.Internal("request context unavailable", errors.New("missing *core.RequestEvent in context"))
+	}
+	return re, nil
+}
 
 func harnessStatusResponse(status api.HarnessAuthStatusResponse) openapi.HarnessAuthStatus {
 	response := openapi.HarnessAuthStatus{Harness: status.Harness, Provider: status.Provider, Status: status.Status, Mode: openapi.HarnessAuthStatusMode(status.Mode)}
@@ -83,12 +96,12 @@ func authMiddleware(registry *operation.Registry) openapi.StrictMiddlewareFunc {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 			route, ok := registry.Get(operationID)
 			if !ok {
-				return nil, errors.New("operation is not registered: " + operationID)
+				return nil, errorutil.Internal("operation is not registered", errors.New("operation is not registered: "+operationID))
 			}
 			if route.Auth {
-				re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-				if !ok {
-					return nil, errors.New("PocketBase request context is unavailable")
+				re, err := requestEventFromContext(ctx)
+				if err != nil {
+					return nil, err
 				}
 				if re.Auth == nil {
 					return nil, apis.NewUnauthorizedError("Authentication required", nil)
@@ -103,7 +116,7 @@ func authMiddleware(registry *operation.Registry) openapi.StrictMiddlewareFunc {
 // request/response operations cross the generated strict server interface.
 // Streaming, proxy, and binary operations remain direct because buffering
 // those responses would alter their transport semantics.
-func Register(app *pocketbase.PocketBase, e *core.ServeEvent, coord func() coordinator.AgentRuntime) (coordinator.AgentRuntime, error) {
+func Register(app core.App, e *core.ServeEvent, coord func() coordinator.AgentRuntime) (coordinator.AgentRuntime, error) {
 	registry := operation.NewRegistry()
 	api.AddMcpOperations(app, registry, api.McpDeps{})
 	api.AddMcpOAuthOperations(app, registry)
@@ -153,26 +166,26 @@ type server struct {
 
 func (s *server) CancelChatSession(ctx context.Context, request openapi.CancelChatSessionRequestObject) (openapi.CancelChatSessionResponseObject, error) {
 	if s.agentErr != nil {
-		return nil, s.agentErr
+		return nil, errorutil.Internal("retrieve agent runtime", s.agentErr)
 	}
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	re.Request.SetPathValue("chatId", string(request.ChatId))
 	if err := api.CancelChatSession(s.app, s.agent, re); err != nil {
-		return nil, err
+		return nil, errorutil.Internal("cancel chat session", err)
 	}
 	return openapi.CancelChatSession202Response{}, nil
 }
 
 func (s *server) agentRequestEvent(ctx context.Context, chatID string) (*core.RequestEvent, error) {
 	if s.agentErr != nil {
-		return nil, s.agentErr
+		return nil, errorutil.Internal("retrieve agent runtime", s.agentErr)
 	}
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	re.Request.SetPathValue("chatId", chatID)
 	if _, err := api.RequireOwnedRecordForOperation(s.app, re, "chats", chatID); err != nil {
@@ -191,7 +204,7 @@ func (s *server) RespondToElicitation(ctx context.Context, request openapi.Respo
 	}
 	b, err := json.Marshal(request.Body)
 	if err != nil {
-		return nil, err
+		return nil, apis.NewBadRequestError("invalid elicitation response format", nil)
 	}
 	if err := json.Unmarshal(b, &input); err != nil {
 		return nil, re.BadRequestError("Invalid elicitation response", err)
@@ -208,7 +221,7 @@ func (s *server) RespondToElicitation(ctx context.Context, request openapi.Respo
 		return nil, re.BadRequestError("action must be accept, decline, or cancel", nil)
 	}
 	if err := api.RespondToElicitation(re, s.agent, string(request.ChatId), string(request.Id), resp); err != nil {
-		return nil, err
+		return nil, errorutil.Internal("respond to elicitation", err)
 	}
 	return openapi.RespondToElicitation202Response{}, nil
 }
@@ -222,7 +235,7 @@ func (s *server) PromptChat(ctx context.Context, request openapi.PromptChatReque
 	}
 	runID, err := api.PromptChat(s.app, s.agent, ollama.ResolveBaseURL(), re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("prompt chat", err)
 	}
 	return openapi.PromptChat202JSONResponse{RunId: runID}, nil
 }
@@ -234,13 +247,13 @@ func (s *server) RespondToPermission(ctx context.Context, request openapi.Respon
 	var input acpsdk.RequestPermissionResponse
 	b, err := json.Marshal(request.Body)
 	if err != nil {
-		return nil, err
+		return nil, apis.NewBadRequestError("invalid permission response format", nil)
 	}
 	if err := json.Unmarshal(b, &input); err != nil {
 		return nil, re.BadRequestError("Invalid permission response", err)
 	}
 	if err := api.RespondToPermission(re, s.agent, string(request.ChatId), string(request.Id), input); err != nil {
-		return nil, err
+		return nil, errorutil.Internal("respond to permission", err)
 	}
 	return openapi.RespondToPermission202Response{}, nil
 }
@@ -254,7 +267,7 @@ func (s *server) SetChatConfigOption(ctx context.Context, request openapi.SetCha
 	}
 	req := acpsdk.SetSessionConfigOptionRequest{ValueId: &acpsdk.SetSessionConfigOptionValueId{ConfigId: acpsdk.SessionConfigId(request.Body.ConfigId), Value: acpsdk.SessionConfigValueId(request.Body.Value)}}
 	if err := api.SetChatConfigOption(re, s.agent, string(request.ChatId), req); err != nil {
-		return nil, err
+		return nil, errorutil.Internal("set chat config option", err)
 	}
 	return openapi.SetChatConfigOption202Response{}, nil
 }
@@ -267,7 +280,7 @@ func (s *server) SetChatMode(ctx context.Context, request openapi.SetChatModeReq
 		return nil, re.BadRequestError("modeId is required", nil)
 	}
 	if err := api.SetChatMode(re, s.agent, string(request.ChatId), request.Body.ModeId); err != nil {
-		return nil, err
+		return nil, errorutil.Internal("set chat mode", err)
 	}
 	return openapi.SetChatMode202Response{}, nil
 }
@@ -278,13 +291,13 @@ func (s *server) GetWorkspaceFile(ctx context.Context, _ openapi.GetWorkspaceFil
 	return nil, errors.New("direct operation is mounted separately")
 }
 func (s *server) ListWorkspaceFiles(ctx context.Context, _ openapi.ListWorkspaceFilesRequestObject) (openapi.ListWorkspaceFilesResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	path, entries, err := filesystem.ListWorkspaceFiles(re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("list workspace files", err)
 	}
 	result := make([]openapi.FileEntry, 0, len(entries))
 	for _, entry := range entries {
@@ -293,57 +306,57 @@ func (s *server) ListWorkspaceFiles(ctx context.Context, _ openapi.ListWorkspace
 	return openapi.ListWorkspaceFiles200JSONResponse{Path: path, Entries: result}, nil
 }
 func (s *server) CancelHarnessAuth(ctx context.Context, _ openapi.CancelHarnessAuthRequestObject) (openapi.CancelHarnessAuthResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	status, err := api.CancelHarnessAuth(s.app, s.harnessRuntime, re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("cancel harness auth", err)
 	}
 	return openapi.CancelHarnessAuth200JSONResponse(harnessStatusResponse(status)), nil
 }
 func (s *server) DisconnectHarnessAuth(ctx context.Context, _ openapi.DisconnectHarnessAuthRequestObject) (openapi.DisconnectHarnessAuthResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	status, err := api.DisconnectHarnessAuth(s.app, s.harnessRuntime, re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("disconnect harness auth", err)
 	}
 	return openapi.DisconnectHarnessAuth200JSONResponse(harnessStatusResponse(status)), nil
 }
 func (s *server) PollHarnessAuth(ctx context.Context, _ openapi.PollHarnessAuthRequestObject) (openapi.PollHarnessAuthResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	status, err := api.PollHarnessAuth(s.app, s.harnessRuntime, re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("poll harness auth", err)
 	}
 	return openapi.PollHarnessAuth200JSONResponse(harnessStatusResponse(status)), nil
 }
 func (s *server) StartHarnessAuth(ctx context.Context, _ openapi.StartHarnessAuthRequestObject) (openapi.StartHarnessAuthResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	status, err := api.StartHarnessAuth(s.app, s.harnessRuntime, re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("start harness auth", err)
 	}
 	return openapi.StartHarnessAuth200JSONResponse(harnessStatusResponse(status)), nil
 }
 func (s *server) GetHarnessAuthStatus(ctx context.Context, _ openapi.GetHarnessAuthStatusRequestObject) (openapi.GetHarnessAuthStatusResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	status, err := api.GetHarnessAuthStatus(s.app, re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("get harness auth status", err)
 	}
 	response := openapi.GetHarnessAuthStatus200JSONResponse{Harness: status.Harness, Provider: status.Provider, Status: status.Status, Mode: openapi.HarnessAuthStatusMode(status.Mode)}
 	if status.AccountID != "" {
@@ -376,13 +389,13 @@ func (s *server) GetHarnessAuthStatus(ctx context.Context, _ openapi.GetHarnessA
 	return response, nil
 }
 func (s *server) SubmitHarnessAuth(ctx context.Context, _ openapi.SubmitHarnessAuthRequestObject) (openapi.SubmitHarnessAuthResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	status, err := api.SubmitHarnessAuth(s.app, s.harnessRuntime, re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("submit harness auth", err)
 	}
 	return openapi.SubmitHarnessAuth200JSONResponse(harnessStatusResponse(status)), nil
 }
@@ -396,38 +409,39 @@ func (s *server) GetHarnessInstanceLogs(ctx context.Context, request openapi.Get
 	return nil, errors.New("direct operation is mounted separately")
 }
 func (s *server) StoreMcpOAuthToken(ctx context.Context, _ openapi.StoreMcpOAuthTokenRequestObject) (openapi.StoreMcpOAuthTokenResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
-	}
-	if err := api.StoreMcpOAuthToken(s.app, re); err != nil {
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
 		return nil, err
 	}
-	return openapi.StoreMcpOAuthToken200JSONResponse{JsonSuccessJSONResponse: openapi.JsonSuccessJSONResponse{"stored": true}}, nil
+	if err := api.StoreMcpOAuthToken(s.app, re); err != nil {
+		return nil, errorutil.Internal("store MCP OAuth token", err)
+	}
+	return openapi.StoreMcpOAuthToken200JSONResponse{Stored: true}, nil
 }
 func (s *server) ExecuteMcpRequest(ctx context.Context, _ openapi.ExecuteMcpRequestRequestObject) (openapi.ExecuteMcpRequestResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	result, err := api.ExecuteMcpRequest(s.app, mcpserver.ResolveImageDigest, re)
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("execute MCP request", err)
 	}
-	payload := openapi.JsonSuccessJSONResponse{"id": result.ID, "status": result.Status}
+	response := openapi.ExecuteMcpRequest200JSONResponse{Id: result.ID, Status: result.Status}
 	if result.Synced {
-		payload["synced"] = true
+		synced := true
+		response.Synced = &synced
 	}
-	return openapi.ExecuteMcpRequest200JSONResponse{JsonSuccessJSONResponse: payload}, nil
+	return response, nil
 }
 func (s *server) ListOllamaModels(ctx context.Context, _ openapi.ListOllamaModelsRequestObject) (openapi.ListOllamaModelsResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	models, enabled, err := api.ListOllamaModels(re, ollama.HTTPClient(), ollama.ResolveBaseURL())
 	if err != nil {
-		return nil, err
+		return nil, errorutil.Internal("list Ollama models", err)
 	}
 	items := make([]map[string]interface{}, 0, len(models))
 	for _, model := range models {
@@ -442,25 +456,25 @@ func (s *server) ProxyObservability(ctx context.Context, _ openapi.ProxyObservab
 	return nil, errors.New("direct operation is mounted separately")
 }
 func (s *server) SendPushNotification(ctx context.Context, _ openapi.SendPushNotificationRequestObject) (openapi.SendPushNotificationResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
-	}
-	if err := hooks.SendPushOperation(s.app, re); err != nil {
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
 		return nil, err
 	}
-	return openapi.SendPushNotification200JSONResponse{JsonSuccessJSONResponse: openapi.JsonSuccessJSONResponse{"ok": true}}, nil
+	if err := hooks.SendPushOperation(s.app, re); err != nil {
+		return nil, errorutil.Internal("send push notification", err)
+	}
+	return openapi.SendPushNotification200JSONResponse{Ok: true}, nil
 }
 func (s *server) EndLiveActivity(ctx context.Context, request openapi.EndLiveActivityRequestObject) (openapi.EndLiveActivityResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	re.Request.SetPathValue("id", string(request.Id))
 	if err := api.EndLiveActivity(s.app, re); err != nil {
-		return nil, err
+		return nil, errorutil.Internal("end live activity", err)
 	}
-	return openapi.EndLiveActivity200JSONResponse{JsonSuccessJSONResponse: openapi.JsonSuccessJSONResponse{"ok": true}}, nil
+	return openapi.EndLiveActivity200JSONResponse{Ok: true}, nil
 }
 func (s *server) GetReleaseCompatibility(_ context.Context, _ openapi.GetReleaseCompatibilityRequestObject) (openapi.GetReleaseCompatibilityResponseObject, error) {
 	dataVersion, compatibility := api.ReleaseCompatibility()
@@ -476,10 +490,10 @@ func (s *server) GetReleaseCompatibility(_ context.Context, _ openapi.GetRelease
 		// makes that shape assumption explicit.
 		raw, isRaw := compatibility.(json.RawMessage)
 		if !isRaw {
-			return nil, fmt.Errorf("unexpected release compatibility value type %T", compatibility)
+			return nil, errorutil.Internal("unexpected release compatibility value type", fmt.Errorf("unexpected release compatibility value type %T", compatibility))
 		}
 		if err := json.Unmarshal(raw, &compatMap); err != nil {
-			return nil, fmt.Errorf("decode release compatibility document: %w", err)
+			return nil, errorutil.Internal("decode release compatibility document", fmt.Errorf("decode release compatibility document: %w", err))
 		}
 	}
 	return openapi.GetReleaseCompatibility200JSONResponse{
@@ -503,13 +517,13 @@ func (s *server) GetReleaseStatus(ctx context.Context, _ openapi.GetReleaseStatu
 	return openapi.GetReleaseStatus200JSONResponse(response), nil
 }
 func (s *server) RunScheduleNow(ctx context.Context, request openapi.RunScheduleNowRequestObject) (openapi.RunScheduleNowResponseObject, error) {
-	re, ok := ctx.Value(requestEventContextKey{}).(*core.RequestEvent)
-	if !ok {
-		return nil, errors.New("PocketBase request context is unavailable")
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
 	}
 	re.Request.SetPathValue("scheduleId", request.ScheduleId)
 	if err := api.RunScheduleNow(s.app, s.scheduleRunner, re); err != nil {
-		return nil, err
+		return nil, errorutil.Internal("run schedule now", err)
 	}
 	return openapi.RunScheduleNow202JSONResponse{Status: openapi.ScheduleRunAcceptedResponseStatus("started")}, nil
 }

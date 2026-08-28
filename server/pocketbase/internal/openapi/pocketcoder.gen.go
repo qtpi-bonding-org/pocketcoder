@@ -115,6 +115,13 @@ type ErrorResponse struct {
 	Status  int                    `json:"status"`
 }
 
+// ExecuteMcpRequestResponse defines model for ExecuteMcpRequestResponse.
+type ExecuteMcpRequestResponse struct {
+	Id     string `json:"id"`
+	Status string `json:"status"`
+	Synced *bool  `json:"synced,omitempty"`
+}
+
 // FileEntry defines model for FileEntry.
 type FileEntry struct {
 	IsDir   bool   `json:"isDir"`
@@ -184,9 +191,6 @@ type HarnessRequest struct {
 // HarnessRequestMode defines model for HarnessRequest.Mode.
 type HarnessRequestMode string
 
-// JsonObject defines model for JsonObject.
-type JsonObject map[string]interface{}
-
 // LogEvent defines model for LogEvent.
 type LogEvent map[string]interface{}
 
@@ -208,6 +212,11 @@ type ModeRequest struct {
 // ModelRequest defines model for ModelRequest.
 type ModelRequest struct {
 	Model string `json:"model"`
+}
+
+// OkResponse defines model for OkResponse.
+type OkResponse struct {
+	Ok bool `json:"ok"`
 }
 
 // OllamaModelsResponse defines model for OllamaModelsResponse.
@@ -263,6 +272,11 @@ type ScheduleRunAcceptedResponse struct {
 // ScheduleRunAcceptedResponseStatus defines model for ScheduleRunAcceptedResponse.Status.
 type ScheduleRunAcceptedResponseStatus string
 
+// StoreMcpOAuthTokenResponse defines model for StoreMcpOAuthTokenResponse.
+type StoreMcpOAuthTokenResponse struct {
+	Stored bool `json:"stored"`
+}
+
 // ChatId defines model for ChatId.
 type ChatId = string
 
@@ -292,9 +306,6 @@ type Forbidden = ErrorResponse
 
 // InternalError defines model for InternalError.
 type InternalError = ErrorResponse
-
-// JsonSuccess defines model for JsonSuccess.
-type JsonSuccess = JsonObject
 
 // NotFound defines model for NotFound.
 type NotFound = ErrorResponse
@@ -1478,8 +1489,6 @@ type BadRequestJSONResponse ErrorResponse
 type ForbiddenJSONResponse ErrorResponse
 
 type InternalErrorJSONResponse ErrorResponse
-
-type JsonSuccessJSONResponse JsonObject
 
 type NotFoundJSONResponse ErrorResponse
 
@@ -2750,7 +2759,7 @@ type EndLiveActivityResponseObject interface {
 	VisitEndLiveActivityResponse(w http.ResponseWriter) error
 }
 
-type EndLiveActivity200JSONResponse struct{ JsonSuccessJSONResponse }
+type EndLiveActivity200JSONResponse OkResponse
 
 func (response EndLiveActivity200JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
 
@@ -2951,7 +2960,7 @@ type StoreMcpOAuthTokenResponseObject interface {
 	VisitStoreMcpOAuthTokenResponse(w http.ResponseWriter) error
 }
 
-type StoreMcpOAuthToken200JSONResponse struct{ JsonSuccessJSONResponse }
+type StoreMcpOAuthToken200JSONResponse StoreMcpOAuthTokenResponse
 
 func (response StoreMcpOAuthToken200JSONResponse) VisitStoreMcpOAuthTokenResponse(w http.ResponseWriter) error {
 
@@ -3029,7 +3038,7 @@ type ExecuteMcpRequestResponseObject interface {
 	VisitExecuteMcpRequestResponse(w http.ResponseWriter) error
 }
 
-type ExecuteMcpRequest200JSONResponse struct{ JsonSuccessJSONResponse }
+type ExecuteMcpRequest200JSONResponse ExecuteMcpRequestResponse
 
 func (response ExecuteMcpRequest200JSONResponse) VisitExecuteMcpRequestResponse(w http.ResponseWriter) error {
 
@@ -3404,7 +3413,7 @@ type SendPushNotificationResponseObject interface {
 	VisitSendPushNotificationResponse(w http.ResponseWriter) error
 }
 
-type SendPushNotification200JSONResponse struct{ JsonSuccessJSONResponse }
+type SendPushNotification200JSONResponse OkResponse
 
 func (response SendPushNotification200JSONResponse) VisitSendPushNotificationResponse(w http.ResponseWriter) error {
 

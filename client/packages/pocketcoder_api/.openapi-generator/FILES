@@ -8,6 +8,7 @@ doc/ContainerListResponse.md
 doc/ContainerSummary.md
 doc/ContentBlock.md
 doc/ErrorResponse.md
+doc/ExecuteMcpRequestResponse.md
 doc/FileEntry.md
 doc/FileListResponse.md
 doc/FilesApi.md
@@ -24,6 +25,7 @@ doc/McpOAuthRequest.md
 doc/ModeRequest.md
 doc/ModelRequest.md
 doc/ObservabilityApi.md
+doc/OkResponse.md
 doc/OllamaApi.md
 doc/OllamaModelsResponse.md
 doc/PromptRequest.md
@@ -35,6 +37,7 @@ doc/ReleaseStatusResponse.md
 doc/ReleaseStatusResponseCurrent.md
 doc/ScheduleRunAcceptedResponse.md
 doc/SchedulesApi.md
+doc/StoreMcpOAuthTokenResponse.md
 lib/pocketcoder_api.dart
 lib/src/api.dart
 lib/src/api/agent_api.dart
@@ -62,6 +65,7 @@ lib/src/model/container_summary.dart
 lib/src/model/content_block.dart
 lib/src/model/date.dart
 lib/src/model/error_response.dart
+lib/src/model/execute_mcp_request_response.dart
 lib/src/model/file_entry.dart
 lib/src/model/file_list_response.dart
 lib/src/model/harness_auth_attempt.dart
@@ -72,6 +76,7 @@ lib/src/model/harness_request.dart
 lib/src/model/mcp_o_auth_request.dart
 lib/src/model/mode_request.dart
 lib/src/model/model_request.dart
+lib/src/model/ok_response.dart
 lib/src/model/ollama_models_response.dart
 lib/src/model/prompt_request.dart
 lib/src/model/push_request.dart
@@ -79,5 +84,9 @@ lib/src/model/release_compatibility_response.dart
 lib/src/model/release_status_response.dart
 lib/src/model/release_status_response_current.dart
 lib/src/model/schedule_run_accepted_response.dart
+lib/src/model/store_mcp_o_auth_token_response.dart
 lib/src/serializers.dart
 pubspec.yaml
+test/execute_mcp_request_response_test.dart
+test/ok_response_test.dart
+test/store_mcp_o_auth_token_response_test.dart

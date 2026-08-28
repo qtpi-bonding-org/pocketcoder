@@ -502,7 +502,11 @@ paths:
               $ref: '#/components/schemas/McpRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: MCP request result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteMcpRequestResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -530,7 +534,11 @@ paths:
               $ref: '#/components/schemas/McpOAuthRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: OAuth token stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreMcpOAuthTokenResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -695,7 +703,11 @@ paths:
               $ref: '#/components/schemas/PushRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Push notification sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
         '204':
           description: Operation completed
         '400':
@@ -715,7 +727,11 @@ paths:
         - $ref: '#/components/parameters/RequestId'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Live activity ended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -775,12 +791,6 @@ components:
         type: string
         minLength: 1
   responses:
-    JsonSuccess:
-      description: Successful JSON response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/JsonObject'
     BadRequest:
       description: Invalid request
       content:
@@ -830,9 +840,6 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
-    JsonObject:
-      type: object
-      additionalProperties: true
     ErrorResponse:
       type: object
       required:
@@ -848,6 +855,35 @@ components:
         data:
           type: object
           additionalProperties: true
+    OkResponse:
+      type: object
+      required:
+        - ok
+      additionalProperties: false
+      properties:
+        ok:
+          type: boolean
+    StoreMcpOAuthTokenResponse:
+      type: object
+      required:
+        - stored
+      additionalProperties: false
+      properties:
+        stored:
+          type: boolean
+    ExecuteMcpRequestResponse:
+      type: object
+      required:
+        - id
+        - status
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        synced:
+          type: boolean
     AcceptedResponse:
       type: object
       required:

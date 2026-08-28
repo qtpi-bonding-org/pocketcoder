@@ -19,12 +19,25 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package harnessauth
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+)
+
+// Sentinel errors ResolveAccountAndAttempt returns for the two genuinely
+// "not found" cases, so callers can return a real 404 instead of blanket-
+// converting every error from this function into a 400. Live-confirmed
+// 2026-08-27: internal/api/harness_auth.go's poll/submit/cancel/authRequest
+// all did `return re.BadRequestError(err.Error(), nil)` unconditionally,
+// so a caller with no account at all got a 400 "account not found" instead
+// of the 404 that both the wording and REST convention call for.
+var (
+	ErrAccountNotFound = errors.New("account not found")
+	ErrAttemptNotFound = errors.New("attempt not found")
 )
 
 const (
@@ -91,13 +104,13 @@ func ResolveAccountAndAttempt(app core.App, userID, harness, provider, accountID
 		return nil, nil, err
 	}
 	if account == nil {
-		return nil, nil, fmt.Errorf("account not found")
+		return nil, nil, ErrAccountNotFound
 	}
 	var attempt *core.Record
 	if attemptID != "" {
 		attempt, err = app.FindRecordById("harness_oauth_attempts", attemptID)
 		if err != nil {
-			return account, nil, fmt.Errorf("attempt not found")
+			return account, nil, ErrAttemptNotFound
 		}
 		if attempt.GetString("account") != account.Id {
 			return account, nil, fmt.Errorf("attempt does not belong to this account")

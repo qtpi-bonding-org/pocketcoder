@@ -217,6 +217,20 @@ func StartHarnessAuth(app core.App, runtime harnessAuthRuntime, re *core.Request
 	return response, nil
 }
 
+// resolveAccountAndAttemptError classifies harnessauth.ResolveAccountAndAttempt's
+// error: the two genuinely-not-found cases become a real 404, everything
+// else (malformed input, ownership mismatches surfaced as plain errors,
+// etc.) stays a 400. Live-confirmed 2026-08-27: every one of this
+// function's four call sites previously did `re.BadRequestError(err.Error(),
+// nil)` unconditionally, so a caller with no matching account at all got a
+// misleading 400 instead of 404.
+func resolveAccountAndAttemptError(re *core.RequestEvent, err error) error {
+	if errors.Is(err, harnessauth.ErrAccountNotFound) || errors.Is(err, harnessauth.ErrAttemptNotFound) {
+		return re.NotFoundError(err.Error(), nil)
+	}
+	return re.BadRequestError(err.Error(), nil)
+}
+
 func authRequest(app core.App, re *core.RequestEvent) (harnessAuthRequest, *core.Record, *core.Record, error) {
 	var input harnessAuthRequest
 	if err := re.BindBody(&input); err != nil {
@@ -227,7 +241,7 @@ func authRequest(app core.App, re *core.RequestEvent) (harnessAuthRequest, *core
 	}
 	account, attempt, err := harnessauth.ResolveAccountAndAttempt(app, re.Auth.Id, input.Harness, input.Provider, input.AccountID, input.AttemptID)
 	if err != nil {
-		return input, nil, nil, re.BadRequestError(err.Error(), nil)
+		return input, nil, nil, resolveAccountAndAttemptError(re, err)
 	}
 	if account.GetString("owner") != re.Auth.Id {
 		return input, nil, nil, re.ForbiddenError("Only the account owner can manage harness authentication", nil)
@@ -416,7 +430,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		}
 		account, attempt, err := harnessauth.ResolveAccountAndAttempt(app, re.Auth.Id, input.Harness, input.Provider, input.AccountID, input.AttemptID)
 		if err != nil {
-			return re.BadRequestError(err.Error(), nil)
+			return resolveAccountAndAttemptError(re, err)
 		}
 		if account.GetString("owner") != re.Auth.Id {
 			return re.ForbiddenError("Only the account owner can manage harness authentication", nil)
@@ -475,7 +489,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		}
 		account, attempt, err := harnessauth.ResolveAccountAndAttempt(app, re.Auth.Id, input.Harness, input.Provider, input.AccountID, input.AttemptID)
 		if err != nil {
-			return re.BadRequestError(err.Error(), nil)
+			return resolveAccountAndAttemptError(re, err)
 		}
 		if account.GetString("owner") != re.Auth.Id {
 			return re.ForbiddenError("Only the account owner can manage harness authentication", nil)
@@ -528,7 +542,7 @@ func AddHarnessAuthOperations(app core.App, registry *operation.Registry, deps H
 		}
 		account, attempt, err := harnessauth.ResolveAccountAndAttempt(app, re.Auth.Id, input.Harness, input.Provider, input.AccountID, input.AttemptID)
 		if err != nil {
-			return re.BadRequestError(err.Error(), nil)
+			return resolveAccountAndAttemptError(re, err)
 		}
 		if account.GetString("owner") != re.Auth.Id {
 			return re.ForbiddenError("Only the account owner can manage harness authentication", nil)

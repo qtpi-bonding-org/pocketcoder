@@ -20,6 +20,7 @@ import 'package:pocketcoder_api/src/model/container_list_response.dart';
 import 'package:pocketcoder_api/src/model/container_summary.dart';
 import 'package:pocketcoder_api/src/model/content_block.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
+import 'package:pocketcoder_api/src/model/execute_mcp_request_response.dart';
 import 'package:pocketcoder_api/src/model/file_entry.dart';
 import 'package:pocketcoder_api/src/model/file_list_response.dart';
 import 'package:pocketcoder_api/src/model/harness_auth_attempt.dart';
@@ -30,6 +31,7 @@ import 'package:pocketcoder_api/src/model/harness_request.dart';
 import 'package:pocketcoder_api/src/model/mcp_o_auth_request.dart';
 import 'package:pocketcoder_api/src/model/mode_request.dart';
 import 'package:pocketcoder_api/src/model/model_request.dart';
+import 'package:pocketcoder_api/src/model/ok_response.dart';
 import 'package:pocketcoder_api/src/model/ollama_models_response.dart';
 import 'package:pocketcoder_api/src/model/prompt_request.dart';
 import 'package:pocketcoder_api/src/model/push_request.dart';
@@ -37,6 +39,7 @@ import 'package:pocketcoder_api/src/model/release_compatibility_response.dart';
 import 'package:pocketcoder_api/src/model/release_status_response.dart';
 import 'package:pocketcoder_api/src/model/release_status_response_current.dart';
 import 'package:pocketcoder_api/src/model/schedule_run_accepted_response.dart';
+import 'package:pocketcoder_api/src/model/store_mcp_o_auth_token_response.dart';
 
 part 'serializers.g.dart';
 
@@ -47,6 +50,7 @@ part 'serializers.g.dart';
   ContainerSummary,
   ContentBlock,
   ErrorResponse,
+  ExecuteMcpRequestResponse,
   FileEntry,
   FileListResponse,
   HarnessAuthAttempt,
@@ -57,6 +61,7 @@ part 'serializers.g.dart';
   McpOAuthRequest,
   ModeRequest,
   ModelRequest,
+  OkResponse,
   OllamaModelsResponse,
   PromptRequest,
   PushRequest,
@@ -64,6 +69,7 @@ part 'serializers.g.dart';
   ReleaseStatusResponse,
   ReleaseStatusResponseCurrent,
   ScheduleRunAcceptedResponse,
+  StoreMcpOAuthTokenResponse,
 ])
 Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(

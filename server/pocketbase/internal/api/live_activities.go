@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/errorutil"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 	"net/http"
 	"time"
@@ -38,7 +39,7 @@ func EndLiveActivity(app core.App, re *core.RequestEvent) error {
 	rec.Set("status", "ended")
 	rec.Set("ended_at", time.Now())
 	if err := app.Save(rec); err != nil {
-		return err
+		return errorutil.Internal("update live activity status", err)
 	}
 	return nil
 }
