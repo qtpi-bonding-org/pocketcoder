@@ -84,6 +84,43 @@ func validateWorkspacePath(p string) error {
 // system prompt, workspace cwd/additional directories, per-chat MCP servers
 // (stdio only), and mode. It also resolves the harness identity and
 // harness_instances row, and validates workspace paths.
+// resolveDefaultHarnessModel finds a harness_models row to treat as the
+// default when no explicit harness_model_override was given. It prefers a
+// row with is_default = true, but falls back to any row for the harness --
+// no admin/migration/sync writer sets is_default on a real deployment today
+// (confirmed 2026-08-28: neither the seed migration nor modelcatalog's
+// models.dev sync ever writes that field), so treating it as authoritative
+// would make this whole fallback a no-op in production.
+//
+// When providerID is non-empty, only rows whose model belongs to that
+// provider are considered -- needed for a live-config harness (Goose,
+// OpenCode), which can have harness_models rows spanning multiple providers,
+// unlike a single-provider harness where every row already shares the one
+// pinned provider. Returns (nil, nil, nil) if no matching row exists.
+func resolveDefaultHarnessModel(app core.App, harnessID, providerID string) (*core.Record, *core.Record, error) {
+	rows, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "harness_model_id", 0, 0, map[string]any{"h": harnessID})
+	if err != nil {
+		return nil, nil, err
+	}
+	var fallbackHM, fallbackModel *core.Record
+	for _, hm := range rows {
+		model, mErr := app.FindRecordById("models", hm.GetString("model"))
+		if mErr != nil {
+			continue
+		}
+		if providerID != "" && model.GetString("provider") != providerID {
+			continue
+		}
+		if fallbackHM == nil {
+			fallbackHM, fallbackModel = hm, model
+		}
+		if hm.GetBool("is_default") {
+			return hm, model, nil
+		}
+	}
+	return fallbackHM, fallbackModel, nil
+}
+
 func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL string) (coordinator.SessionProfile, error) {
 	p := coordinator.SessionProfile{Instructions: pocoprompt.Default}
 
@@ -250,37 +287,48 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	// Without this, a single-provider harness (Claude Code, Codex) never
 	// resolves a provider at all -- providerRec stays nil, so the OAuth
 	// account lookup below never runs, and the ACP subprocess gets no
-	// credential and fails with "Authentication required". Multi-provider
-	// harnesses (Goose, OpenCode; supports_live_config) are deliberately
-	// excluded -- they have no single provider to default to (§10).
+	// credential and fails with "Authentication required".
 	if ollamaModel == "" && hmID == "" && !harnessRec.GetBool("supports_live_config") {
-		hm, hmErr := app.FindFirstRecordByFilter("harness_models", "harness = {:h} && is_default = true", map[string]any{"h": harnessRec.Id})
-		if hmErr != nil || hm == nil {
-			// No admin/migration has ever curated an is_default row for
-			// this harness -- true of every real deployment today, since
-			// neither the seed migration nor modelcatalog's models.dev sync
-			// sets is_default on harness_models. Fall back to ANY
-			// harness_models row for this harness instead of leaving the
-			// provider unresolved: a non-live-config harness is
-			// single-provider by construction (its harness_providers pin
-			// only ever names one provider), so every harness_models row
-			// for it shares that same provider regardless of which
-			// specific model gets picked -- only the provider identity
-			// matters for credential resolution, not the model choice.
-			rows, rowsErr := app.FindRecordsByFilter("harness_models", "harness = {:h}", "harness_model_id", 1, 0, map[string]any{"h": harnessRec.Id})
-			if rowsErr == nil && len(rows) > 0 {
-				hm = rows[0]
-			}
-		}
-		if hm != nil {
+		if hm, model, err := resolveDefaultHarnessModel(app, harnessRec.Id, ""); err == nil && hm != nil {
 			p.Model = hm.GetString("harness_model_id")
-			if m, err := app.FindRecordById("models", hm.GetString("model")); err == nil {
-				if pr, err := app.FindRecordById("providers", m.GetString("provider")); err == nil {
+			if model != nil {
+				if pr, err := app.FindRecordById("providers", model.GetString("provider")); err == nil {
 					providerRec = pr
 					p.Provider = pr.GetString("provider_id")
 				}
 			}
 			hmID = hm.Id // so the launchKey resolution below scopes the harness instance consistently
+		}
+	}
+	// Multi-provider harnesses (Goose, OpenCode; supports_live_config) have
+	// no single provider to default to the way a single-provider harness
+	// does -- but the onboarding API-key flow (HarnessAuthCubit.startWithNone)
+	// DOES record exactly which provider the user picked, as a
+	// credential_selections row for (user, harness, provider). Use the most
+	// recently updated one as "the provider this chat should actually start
+	// on" and resolve a model for it the same way. This does NOT change what
+	// ProvisionHarnessInstance boots the container with -- it always seeds a
+	// placeholder provider/model for a live-config harness (see
+	// harness_provision.go's renderEnv), by design, since that's resolved
+	// independently of any specific chat. What it DOES feed is
+	// coordinator.PerSessionApplier's live ACP set_config_option call, which
+	// unconditionally corrects a live-config session to p.Provider/p.Model
+	// right after it's established -- reusing the exact mechanism Goose/
+	// OpenCode already have for this, rather than threading a second,
+	// duplicate resolution path through provisioning (see the "one place
+	// decides this" precedent in renderEnv's own mode-handling comment).
+	// Without p.Provider/p.Model populated here, that correction never
+	// fires and the session is silently left on the boot placeholder.
+	if ollamaModel == "" && hmID == "" && harnessRec.GetBool("supports_live_config") {
+		sels, selErr := app.FindRecordsByFilter("credential_selections", "user = {:u} && harness = {:h}", "-updated", 1, 0, map[string]any{"u": userID, "h": harnessRec.Id})
+		if selErr == nil && len(sels) > 0 {
+			if pr, err := app.FindRecordById("providers", sels[0].GetString("provider")); err == nil {
+				if hm, _, err := resolveDefaultHarnessModel(app, harnessRec.Id, pr.Id); err == nil && hm != nil {
+					p.Model = hm.GetString("harness_model_id")
+					providerRec = pr
+					p.Provider = pr.GetString("provider_id")
+				}
+			}
 		}
 	}
 	if ollamaModel != "" {

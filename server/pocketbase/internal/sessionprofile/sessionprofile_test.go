@@ -1025,6 +1025,70 @@ func TestBuildSessionProfileSkipsDefaultModelForLiveConfigHarness(t *testing.T) 
 	}
 }
 
+// TestBuildSessionProfileResolvesLiveConfigProviderFromCredentialSelection is
+// a regression test for a real bug found live 2026-08-28, in the same audit
+// that found finding #1 above: a live-config harness (Goose, OpenCode)
+// reached through the real onboarding API-key flow
+// (HarnessAuthCubit.startWithNone) never got Provider/Model populated at
+// all, even though the user had explicitly picked a provider and entered a
+// key for it. ProvisionHarnessInstance boots the container on a hardcoded
+// anthropic/MiniMax-M2.5 placeholder regardless (by design -- a live-config
+// harness's boot doesn't pin one chat's choice), but
+// coordinator.PerSessionApplier is supposed to correct that live via ACP
+// set_config_option right after the session starts -- it only does that
+// when SessionProfile.Provider/Model are non-empty, which they never were
+// for this path. The fix reads the same signal the onboarding flow already
+// records -- the most recently updated credential_selections row for
+// (user, harness) -- rather than inventing a second resolution path.
+func TestBuildSessionProfileResolvesLiveConfigProviderFromCredentialSelection(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "liveconfig-selection-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !harness.GetBool("supports_live_config") {
+		t.Fatal("expected goose to have supports_live_config = true")
+	}
+
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := testModel(t, app, provider.Id, "goose-openai-model")
+	testHarnessModel(t, app, harness.Id, model.Id, "goose-openai-model")
+
+	// Exactly what HarnessAuthCubit.startWithNone / clearSelectionToNone
+	// record for the real onboarding API-key path.
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", harness.Id)
+	sel.Set("provider", provider.Id)
+	sel.Set("mode", "none")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+	runningInstanceFor(t, app, harness, userID)
+
+	// The real golden path: no harness_model_override at all.
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if profile.Provider != "openai" {
+		t.Errorf("Provider = %q, want %q -- the user's credential_selections choice was not resolved", profile.Provider, "openai")
+	}
+	if profile.Model != "goose-openai-model" {
+		t.Errorf("Model = %q, want %q", profile.Model, "goose-openai-model")
+	}
+}
+
 // TestBuildSessionProfileLeavesAccountLoginFalseForApiKeyMode guards the
 // other direction: a harness account still on api_key (or none) credential
 // mode must not be treated as account-login, or a bad API key would
