@@ -3301,7 +3301,7 @@
       },
       {
         "autogeneratePattern": "",
-        "hidden": true,
+        "hidden": false,
         "id": "text_pak_api_key",
         "max": 0,
         "min": 0,
