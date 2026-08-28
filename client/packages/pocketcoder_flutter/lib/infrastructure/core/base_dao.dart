@@ -172,11 +172,14 @@ abstract class BaseDao<T> {
   }
 
   /// Persists a record (creates if ID is missing or empty).
-  Future<T> save(
-    String? id,
-    Map<String, dynamic> data, {
-    RequestPolicy? requestPolicy,
-  }) async {
+  ///
+  /// Always confirmed against the server before returning -- drift is a read
+  /// cache only, never a write queue. Forces [RequestPolicy.networkFirst]
+  /// regardless of the app's default read policy (`cacheAndNetwork`), so a
+  /// write can never be silently local-only: it either succeeds against the
+  /// real server (and the cache is populated from that confirmed response)
+  /// or throws immediately, including immediately when offline.
+  Future<T> save(String? id, Map<String, dynamic> data) async {
     logDebug('DAO [$_collection]: save(id: $id)');
     try {
       RecordModel record;
@@ -184,7 +187,7 @@ abstract class BaseDao<T> {
         record = await service
             .create(
           body: data,
-          requestPolicy: requestPolicy,
+          requestPolicy: RequestPolicy.networkFirst,
         )
             .timeout(const Duration(seconds: 10), onTimeout: () {
           logWarning('DAO [$_collection]: create TIMEOUT after 10s');
@@ -195,7 +198,7 @@ abstract class BaseDao<T> {
             .update(
           id,
           body: data,
-          requestPolicy: requestPolicy,
+          requestPolicy: RequestPolicy.networkFirst,
         )
             .timeout(const Duration(seconds: 10), onTimeout: () {
           logWarning('DAO [$_collection]: update($id) TIMEOUT after 10s');
@@ -210,13 +213,14 @@ abstract class BaseDao<T> {
     }
   }
 
-  Future<void> delete(String id, {RequestPolicy? requestPolicy}) async {
+  /// Always confirmed against the server -- see [save].
+  Future<void> delete(String id) async {
     logDebug('DAO [$_collection]: delete(id: $id)');
     try {
       await service
           .delete(
         id,
-        requestPolicy: requestPolicy,
+        requestPolicy: RequestPolicy.networkFirst,
       )
           .timeout(const Duration(seconds: 10), onTimeout: () {
         logWarning('DAO [$_collection]: delete($id) TIMEOUT after 10s');

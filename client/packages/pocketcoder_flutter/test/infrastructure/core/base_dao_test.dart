@@ -186,4 +186,34 @@ void main() {
     await subscription.cancel();
     await repository.changes.close();
   });
+
+  test(
+      'save() never falls back to a local-only write when there is no real '
+      'server -- drift is a read cache, not a write queue', () async {
+    // The test client's own default policy is cacheFirst (see _client
+    // above), which would normally let a write succeed purely locally with
+    // no network attempt at all. save() must override that default and
+    // force networkFirst regardless, so against a nonexistent backend
+    // (http://unused.local) it fails loudly instead of silently succeeding
+    // against the local cache only.
+    client = await _client(_token(expiry: 4102444800));
+    dao = HealthcheckDao(client);
+    await expectLater(
+      dao.save(null, {'name': 'new', 'status': 'ready'}),
+      throwsA(anything),
+    );
+    final cached = await dao.getFullList(requestPolicy: RequestPolicy.cacheOnly);
+    expect(cached.map((h) => h.name), isNot(contains('new')));
+  });
+
+  test(
+      'delete() never falls back to a local-only write when there is no '
+      'real server', () async {
+    client = await _client(_token(expiry: 4102444800));
+    dao = HealthcheckDao(client);
+    await _seed(client);
+    await expectLater(dao.delete('h1'), throwsA(anything));
+    final cached = await dao.getFullList(requestPolicy: RequestPolicy.cacheOnly);
+    expect(cached.map((h) => h.id), contains('h1'));
+  });
 }
