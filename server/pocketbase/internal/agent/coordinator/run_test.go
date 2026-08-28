@@ -114,6 +114,9 @@ type fakeConn struct {
 	lastExtensionMethod string
 	lastExtensionParams any
 	callExtensionCalls  int
+	extensionResponse   json.RawMessage
+	extensionErr        error
+	callOrder           []string
 
 	resumeCalls                int
 	lastResumeSessionReq       acpsdk.ResumeSessionRequest
@@ -245,6 +248,7 @@ func (f *fakeConn) SetSessionConfigOption(_ context.Context, req acpsdk.SetSessi
 	f.mu.Lock()
 	f.lastSetConfigOption = req
 	f.setConfigOptionCalls = append(f.setConfigOptionCalls, req)
+	f.callOrder = append(f.callOrder, "set_config_option")
 	f.mu.Unlock()
 	return acpsdk.SetSessionConfigOptionResponse{}, nil
 }
@@ -333,8 +337,12 @@ func (f *fakeConn) CallExtension(_ context.Context, method string, params any) (
 	f.lastExtensionMethod = method
 	f.lastExtensionParams = params
 	f.callExtensionCalls++
+	f.callOrder = append(f.callOrder, "call_extension")
 	f.mu.Unlock()
-	return json.RawMessage(`{}`), nil
+	if f.extensionResponse == nil && f.extensionErr == nil {
+		return json.RawMessage(`{}`), nil
+	}
+	return f.extensionResponse, f.extensionErr
 }
 
 func (f *fakeConn) Close() error {

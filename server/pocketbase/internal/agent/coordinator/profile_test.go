@@ -137,6 +137,39 @@ func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 	}
 }
 
+func TestPerSessionApplierRegistersGooseCredentialBeforeProvider(t *testing.T) {
+	cases := []struct {
+		name, fieldName                     string
+		supportsRegistration, wantExtension bool
+	}{
+		{"goose credential", "OPENAI_API_KEY", true, true},
+		{"ollama or no saved key", "", true, false},
+		{"opencode", "OPENAI_API_KEY", false, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fc := &fakeConn{extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`)}
+			err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+				Provider: "openai", SupportsLiveConfig: true,
+				SupportsLiveCredentialRegistration: tc.supportsRegistration,
+				CredentialFieldName:                tc.fieldName, CredentialFieldValue: "sk-test",
+			}, nil)
+			if err != nil {
+				t.Fatalf("Apply: %v", err)
+			}
+			if (fc.callExtensionCalls > 0) != tc.wantExtension {
+				t.Fatalf("extension calls = %d, want extension=%v", fc.callExtensionCalls, tc.wantExtension)
+			}
+			if len(fc.setConfigOptionCalls) != 1 {
+				t.Fatalf("config calls = %d, want 1", len(fc.setConfigOptionCalls))
+			}
+			if tc.wantExtension && (len(fc.callOrder) < 2 || fc.callOrder[0] != "call_extension" || fc.callOrder[1] != "set_config_option") {
+				t.Fatalf("call order = %v, want extension before config", fc.callOrder)
+			}
+		})
+	}
+}
+
 func TestPerSessionApplierSkipsEmptyFields(t *testing.T) {
 	fc := &fakeConn{}
 	// Empty SessionProfile — GlobalConfigApplier already returns nil for

@@ -232,6 +232,11 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 	}
 	if p.SupportsLiveConfig {
 		if p.Provider != "" {
+			if p.SupportsLiveCredentialRegistration && p.CredentialFieldName != "" {
+				if err := registerProviderCredential(ctx, conn, p.Provider, p.CredentialFieldName, p.CredentialFieldValue); err != nil {
+					return err
+				}
+			}
 			if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
 				ValueId: &acpsdk.SetSessionConfigOptionValueId{
 					SessionId: acpsdk.SessionId(sessionID),
