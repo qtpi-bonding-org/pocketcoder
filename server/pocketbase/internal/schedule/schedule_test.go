@@ -126,6 +126,53 @@ func TestScheduleRunnerRunSuccessAndClock(t *testing.T) {
 	}
 }
 
+func TestScheduleRunnerCallsNotifyHooksAroundTheRun(t *testing.T) {
+	app := testApp(t)
+	user := testUser(t, app, "schedule-notify-"+randomSuffix()+"@example.com")
+	seedTestHarnessAndInstance(t, app, "goose", true, user.Id)
+	s := newSchedule(t, app, user.Id, "Notify check", false)
+
+	var startedChatID, finishedChatID string
+	startedCh := make(chan struct{}, 1)
+	finishedCh := make(chan struct{}, 1)
+	origStarted, origFinished := notifyRunStarted, notifyRunFinished
+	notifyRunStarted = func(_ core.App, chatID string) error {
+		startedChatID = chatID
+		startedCh <- struct{}{}
+		return nil
+	}
+	notifyRunFinished = func(_ core.App, chatID, outcome string) error {
+		finishedChatID = chatID
+		finishedCh <- struct{}{}
+		return nil
+	}
+	t.Cleanup(func() { notifyRunStarted, notifyRunFinished = origStarted, origFinished })
+
+	c := scheduleCoordinator(t, func(_ context.Context, _ acpsdk.Client, _ coordinator.Target) (acp.Conn, error) {
+		return &scheduleFakeConn{}, nil
+	})
+	r := &Runner{App: app, Coord: func() coordinator.AgentRuntime { return c }}
+
+	if err := r.Run(context.Background(), s.Id); err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	waitForHarnessProvisioning(t, app, "goose", user.Id)
+
+	select {
+	case <-startedCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("notifyRunStarted was never called")
+	}
+	select {
+	case <-finishedCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("notifyRunFinished was never called")
+	}
+	if startedChatID == "" || startedChatID != finishedChatID {
+		t.Fatalf("started/finished chatID mismatch: %q vs %q", startedChatID, finishedChatID)
+	}
+}
+
 func TestScheduleRunnerRunPausedIsNoOp(t *testing.T) {
 	app := testApp(t)
 	user := testUser(t, app, "schedule-paused-"+randomSuffix()+"@example.com")
