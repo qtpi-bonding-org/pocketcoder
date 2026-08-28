@@ -47,6 +47,19 @@ type Config struct {
 	ElicitationTimeout time.Duration
 	MaxRunEvents       int
 	LiveBuffer         int
+	// OnPermissionPending fires whenever a permission request actually goes
+	// pending (i.e. session-profile rules didn't auto-resolve it) -- the
+	// hook point for dispatching a push notification. payload is exactly
+	// what agui.PermissionPayload builds -- the same AG-UI STATE_DELTA shape
+	// (requestId/status/options[].optionId,name,kind/toolCallId/title/kind)
+	// the Flutter client already parses from the live SSE stream, not a
+	// second ACP-shaped schema it's never had to speak. Called from a
+	// goroutine by the caller; must not block or delay the permission wait.
+	OnPermissionPending func(ctx context.Context, chatID string, payload map[string]any)
+	// OnElicitationPending mirrors OnPermissionPending for elicitation
+	// (spec N5's separate id-space): payload is agui.ElicitationPayload's
+	// shape (elicitationId/message/mode/requestedSchema/url).
+	OnElicitationPending func(ctx context.Context, chatID string, payload map[string]any)
 }
 type Emit func(events.Event) error
 type ResolveSession func(context.Context) (string, error)
@@ -495,6 +508,10 @@ func (s *sessionClient) RequestPermission(ctx context.Context, req acpsdk.Reques
 	s.emitMu.Lock()
 	_ = s.emit(s.bridge.PermissionPending(id, req.Options, string(req.ToolCall.ToolCallId), req.ToolCall.Title, req.ToolCall.Kind))
 	s.emitMu.Unlock()
+	if s.c.config.OnPermissionPending != nil {
+		payload := agui.PermissionPayload(id, req.Options, string(req.ToolCall.ToolCallId), req.ToolCall.Title, req.ToolCall.Kind)
+		go s.c.config.OnPermissionPending(ctx, s.chatID, payload)
+	}
 	select {
 	case d := <-p.decision:
 		s.emitMu.Lock()
@@ -626,6 +643,10 @@ func (s *sessionClient) UnstableCreateElicitation(ctx context.Context, req acpsd
 	s.emitMu.Lock()
 	_ = s.emit(s.bridge.ElicitationPending(id, message, mode, schema, url))
 	s.emitMu.Unlock()
+	if s.c.config.OnElicitationPending != nil {
+		payload := agui.ElicitationPayload(id, message, mode, schema, url)
+		go s.c.config.OnElicitationPending(ctx, s.chatID, payload)
+	}
 	select {
 	case d := <-p.decision:
 		s.emitMu.Lock()

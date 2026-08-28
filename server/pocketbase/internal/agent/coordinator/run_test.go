@@ -539,6 +539,143 @@ func TestRequestPermissionForwardsToolCallID(t *testing.T) {
 	c.waitRunDone(t, "A")
 }
 
+// testCoordinatorWithConnAndConfig is testCoordinatorWithConn plus a hook
+// to set additional Config fields (e.g. OnPermissionPending) that the
+// 3-arg helper has no room for.
+func testCoordinatorWithConnAndConfig(t *testing.T, f *fakeConn, clk Clock, configure func(*Config)) *Coordinator {
+	t.Helper()
+	cfg := Config{Workspace: "/w", Clock: clk,
+		Dial: func(_ context.Context, client acpsdk.Client, _ Target) (acp.Conn, error) {
+			f.mu.Lock()
+			f.client = client
+			f.mu.Unlock()
+			return f, nil
+		}}
+	configure(&cfg)
+	c, err := New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+// TestRequestPermissionFiresOnPermissionPendingWithAGUIShapedPayload covers
+// this session's push-schema slice: OnPermissionPending must fire with
+// exactly the AG-UI STATE_DELTA payload shape (agui.PermissionPayload) the
+// live SSE stream already carries -- not a second, ACP-shaped schema.
+func TestRequestPermissionFiresOnPermissionPendingWithAGUIShapedPayload(t *testing.T) {
+	f := newFakeConn()
+	f.requestPermission = true
+	var gotChatID string
+	var gotPayload map[string]any
+	done := make(chan struct{})
+	c := testCoordinatorWithConnAndConfig(t, f, NewFakeClock(time.Unix(0, 0)), func(cfg *Config) {
+		cfg.OnPermissionPending = func(_ context.Context, chatID string, payload map[string]any) {
+			gotChatID, gotPayload = chatID, payload
+			close(done)
+		}
+	})
+	c.StartPrompt("A", "do it",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	id := c.waitForPendingPermission(t, "A")
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("OnPermissionPending never fired")
+	}
+	if gotChatID != "A" {
+		t.Fatalf("chatID = %q, want %q", gotChatID, "A")
+	}
+	if gotPayload["requestId"] != id {
+		t.Fatalf("payload[\"requestId\"] = %v, want %q", gotPayload["requestId"], id)
+	}
+	if gotPayload["status"] != "pending" {
+		t.Fatalf("payload[\"status\"] = %v, want \"pending\"", gotPayload["status"])
+	}
+	options, ok := gotPayload["options"].([]map[string]string)
+	if !ok || len(options) == 0 {
+		t.Fatalf("payload[\"options\"] = %#v, want a non-empty []map[string]string (AG-UI shape)", gotPayload["options"])
+	}
+
+	if err := c.Approve(context.Background(), "A", id, options[0]["optionId"]); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A")
+}
+
+// TestUnstableCreateElicitationFiresOnElicitationPendingWithAGUIShapedPayload
+// mirrors the permission test above -- OnElicitationPending must fire with
+// agui.ElicitationPayload's exact shape (elicitationId/message/mode/url),
+// the same one the live SSE STATE_DELTA carries.
+func TestUnstableCreateElicitationFiresOnElicitationPendingWithAGUIShapedPayload(t *testing.T) {
+	f := newFakeConn()
+	f.emitElicitationURL = true
+	var gotChatID string
+	var gotPayload map[string]any
+	done := make(chan struct{})
+	c := testCoordinatorWithConnAndConfig(t, f, NewFakeClock(time.Unix(0, 0)), func(cfg *Config) {
+		cfg.OnElicitationPending = func(_ context.Context, chatID string, payload map[string]any) {
+			gotChatID, gotPayload = chatID, payload
+			close(done)
+		}
+	})
+	c.StartPrompt("A", "need input",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	id := c.waitForPendingElicitation(t, "A")
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("OnElicitationPending never fired")
+	}
+	if gotChatID != "A" {
+		t.Fatalf("chatID = %q, want %q", gotChatID, "A")
+	}
+	if gotPayload["elicitationId"] != id {
+		t.Fatalf("payload[\"elicitationId\"] = %v, want %q", gotPayload["elicitationId"], id)
+	}
+	if gotPayload["message"] != "Please authorize in your browser" {
+		t.Fatalf("payload[\"message\"] = %v, want %q", gotPayload["message"], "Please authorize in your browser")
+	}
+	if gotPayload["mode"] != "url" {
+		t.Fatalf("payload[\"mode\"] = %v, want \"url\"", gotPayload["mode"])
+	}
+	if gotPayload["url"] != "https://example.com/auth" {
+		t.Fatalf("payload[\"url\"] = %v, want %q", gotPayload["url"], "https://example.com/auth")
+	}
+
+	if err := c.ResolveElicitation("A", id, acpsdk.UnstableCreateElicitationResponse{
+		Accept: &acpsdk.UnstableCreateElicitationAccept{},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A")
+}
+
+func TestNoPermissionRequestDoesNotFireOnPermissionPending(t *testing.T) {
+	f := newFakeConn()
+	fired := false
+	c := testCoordinatorWithConnAndConfig(t, f, NewFakeClock(time.Unix(0, 0)), func(cfg *Config) {
+		cfg.OnPermissionPending = func(context.Context, string, map[string]any) { fired = true }
+	})
+	c.StartPrompt("B", "do it",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	c.waitRunDone(t, "B")
+	if fired {
+		t.Fatal("OnPermissionPending fired for a run with no permission request at all")
+	}
+}
+
 func TestAutomaticPermissionResponseUsesOneShotOption(t *testing.T) {
 	resp := automaticPermissionResponse([]acpsdk.PermissionOption{
 		{OptionId: "allow_always", Kind: acpsdk.PermissionOptionKindAllowAlways},

@@ -300,6 +300,17 @@ func (b *Bridge) messageChunk(role string, msgID *string, content acpsdk.Content
 // keeps passing on the payload, and Task 8's Snapshot-omits-resolved becomes
 // reachable because the value is now retained.
 func (b *Bridge) PermissionPending(requestID string, options []acpsdk.PermissionOption, toolCallID string, title *string, kind *acpsdk.ToolKind) events.Event {
+	return b.state.set("permission", PermissionPayload(requestID, options, toolCallID, title, kind))
+}
+
+// PermissionPayload builds the same AG-UI-shaped payload PermissionPending
+// wraps into a STATE_DELTA -- exported so a non-SSE consumer (push
+// notification dispatch) can carry the exact vocabulary the client already
+// parses (requestId/options[].optionId,name,kind/toolCallId/title/kind)
+// instead of a second, narrower schema. Single source of truth: the live
+// STATE stream and any push payload are built from this one function, so
+// they cannot drift apart.
+func PermissionPayload(requestID string, options []acpsdk.PermissionOption, toolCallID string, title *string, kind *acpsdk.ToolKind) map[string]any {
 	choices := make([]map[string]string, 0, len(options))
 	for _, option := range options {
 		choices = append(choices, map[string]string{"optionId": string(option.OptionId), "name": option.Name, "kind": string(option.Kind)})
@@ -314,7 +325,7 @@ func (b *Bridge) PermissionPending(requestID string, options []acpsdk.Permission
 	if kind != nil {
 		payload["kind"] = string(*kind)
 	}
-	return b.state.set("permission", payload)
+	return payload
 }
 
 // Finished closes all lifecycle events. Call this only after the correlated
@@ -526,6 +537,13 @@ func (b *Bridge) ResolveElicitation(id string) []events.Event {
 // returned STATE_DELTA mirrors PermissionPending's shape so the client UI can
 // render any pending side-channel request from the same STATE stream.
 func (b *Bridge) ElicitationPending(id, message, mode string, schema any, url string) events.Event {
+	return b.state.set("elicitation", ElicitationPayload(id, message, mode, schema, url))
+}
+
+// ElicitationPayload is ElicitationPending's payload-builder, exported for
+// the same reason as PermissionPayload -- one shape shared by the live
+// STATE stream and any push notification dispatch.
+func ElicitationPayload(id, message, mode string, schema any, url string) map[string]any {
 	payload := map[string]any{
 		"elicitationId":   id,
 		"message":         message,
@@ -535,7 +553,7 @@ func (b *Bridge) ElicitationPending(id, message, mode string, schema any, url st
 	if url != "" {
 		payload["url"] = url
 	}
-	return b.state.set("elicitation", payload)
+	return payload
 }
 
 // sessionModes projects an ACP session-mode slice into the AG-UI client's
