@@ -899,6 +899,116 @@ func TestBuildSessionProfileSetsAccountLoginForEveryAccountModeHarness(t *testin
 	}
 }
 
+// TestBuildSessionProfileResolvesDefaultModelProviderWithoutOverride is a
+// regression test for a real bug found live 2026-08-28: a chat created
+// straight from the onboarding harness picker (ChatListCubit.createAndOpen)
+// never sets harness_model_override, and Build's provider/model resolution
+// used to run ONLY inside the `hmID != ""` branch -- so providerRec stayed
+// nil, ResolveOAuthAccountForLaunch never ran, and the harness instance
+// lookup got an empty oauthAccountID. The ACP subprocess then correctly
+// reported "Authentication required" since no credential was ever resolved,
+// even though the user's harness account was genuinely connected. Every
+// existing test up to this one explicitly set harness_model_override in its
+// chat fixture, which is exactly why this was never caught: it tested a path
+// real users don't take on first contact with a harness.
+func TestBuildSessionProfileResolvesDefaultModelProviderWithoutOverride(t *testing.T) {
+	app := testApp(t)
+	for _, cliID := range []string{"claude-code", "codex"} {
+		t.Run(cliID, func(t *testing.T) {
+			userID := testUser(t, app, "defaultmodel-"+cliID+"-"+randomSuffix()+"@example.com").Id
+			harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:c}", map[string]any{"c": cliID})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			providerID := "anthropic"
+			if cliID == "codex" {
+				providerID = "openai"
+			}
+			provider, err := app.FindFirstRecordByFilter("providers", "provider_id = {:p}", map[string]any{"p": providerID})
+			if err != nil {
+				t.Fatal(err)
+			}
+			account, err := harnessaccount.SelectOrCreate(app, userID, harness.Id, provider.Id, "", "", harnessaccount.VisibilityPersonal)
+			if err != nil {
+				t.Fatal(err)
+			}
+			account.Set("status", "connected")
+			if err := app.Save(account); err != nil {
+				t.Fatal(err)
+			}
+
+			model := testModel(t, app, provider.Id, "default-model-"+cliID)
+			hm := testHarnessModel(t, app, harness.Id, model.Id, "default-model-"+cliID)
+			hm.Set("is_default", true)
+			if err := app.Save(hm); err != nil {
+				t.Fatal(err)
+			}
+
+			instance := runningInstanceFor(t, app, harness, userID)
+			instance.Set("oauth_account", account.Id)
+			instance.Set("launch_key", hm.Id)
+			if err := app.Save(instance); err != nil {
+				t.Fatal(err)
+			}
+
+			// The real golden path: no harness_model_override at all.
+			chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+			profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if profile.Provider != providerID {
+				t.Errorf("Provider = %q, want %q -- default harness_models row was not resolved", profile.Provider, providerID)
+			}
+			if !profile.AccountLogin {
+				t.Error("AccountLogin = false, want true -- the connected oauth account should have been resolved via the default model's provider")
+			}
+		})
+	}
+}
+
+// TestBuildSessionProfileSkipsDefaultModelForLiveConfigHarness guards the
+// other direction: Goose/OpenCode (supports_live_config) must NOT have a
+// single default provider resolved for them even if a default harness_models
+// row exists -- multi-provider harnesses have no single provider to
+// authenticate as (spec §10), and every credentialed provider is injected at
+// launch time instead (see hooks.ProvisionHarnessInstance).
+func TestBuildSessionProfileSkipsDefaultModelForLiveConfigHarness(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "liveconfig-nodefault-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !harness.GetBool("supports_live_config") {
+		t.Fatal("expected goose to have supports_live_config = true")
+	}
+
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := testModel(t, app, provider.Id, "goose-default-model")
+	hm := testHarnessModel(t, app, harness.Id, model.Id, "goose-default-model")
+	hm.Set("is_default", true)
+	if err := app.Save(hm); err != nil {
+		t.Fatal(err)
+	}
+	runningInstanceFor(t, app, harness, userID)
+
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if profile.Provider != "" {
+		t.Errorf("Provider = %q, want empty -- a live-config harness must not default to a single provider", profile.Provider)
+	}
+}
+
 // TestBuildSessionProfileLeavesAccountLoginFalseForApiKeyMode guards the
 // other direction: a harness account still on api_key (or none) credential
 // mode must not be treated as account-login, or a bad API key would

@@ -244,6 +244,27 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 			return p, err
 		}
 	}
+	// No explicit model override was given (the common case: a chat created
+	// straight from the onboarding harness picker, per
+	// ChatListCubit.createAndOpen, never sets harness_model_override).
+	// Without this, a single-provider harness (Claude Code, Codex) never
+	// resolves a provider at all -- providerRec stays nil, so the OAuth
+	// account lookup below never runs, and the ACP subprocess gets no
+	// credential and fails with "Authentication required". Multi-provider
+	// harnesses (Goose, OpenCode; supports_live_config) are deliberately
+	// excluded -- they have no single provider to default to (§10).
+	if ollamaModel == "" && hmID == "" && !harnessRec.GetBool("supports_live_config") {
+		if hm, err := app.FindFirstRecordByFilter("harness_models", "harness = {:h} && is_default = true", map[string]any{"h": harnessRec.Id}); err == nil && hm != nil {
+			p.Model = hm.GetString("harness_model_id")
+			if m, err := app.FindRecordById("models", hm.GetString("model")); err == nil {
+				if pr, err := app.FindRecordById("providers", m.GetString("provider")); err == nil {
+					providerRec = pr
+					p.Provider = pr.GetString("provider_id")
+				}
+			}
+			hmID = hm.Id // so the launchKey resolution below scopes the harness instance consistently
+		}
+	}
 	if ollamaModel != "" {
 		if !ollama.ModelNameValid(ollamaModel) {
 			return p, fmt.Errorf("invalid Ollama model name %q", ollamaModel)
