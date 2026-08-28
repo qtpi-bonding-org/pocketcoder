@@ -215,6 +215,8 @@ import 'package:pocketcoder_flutter/infrastructure/tool_permissions/tool_permiss
     as _i398;
 import 'package:pocketcoder_flutter/infrastructure/tool_permissions/tool_permission_repository.dart'
     as _i220;
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart'
+    as _i1070;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -229,6 +231,8 @@ extension GetItInjectableX on _i174.GetIt {
     );
     final externalModule = _$ExternalModule();
     gh.singleton<_i704.ThemeService>(() => _i704.ThemeService());
+    gh.lazySingleton<_i1070.InAppBrowserLauncher>(
+        () => _i1070.UrlLauncherInAppBrowserLauncher());
     await gh.singletonAsync<_i824.PocketBase>(
       () => externalModule.pocketBase,
       preResolve: true,
