@@ -738,6 +738,11 @@ func (c *Coordinator) establishSession(
 	}
 	initResp = &initRespVal
 
+	if err := selectProviderBootstrap(profile).Bootstrap(ctx, dialedConn, profile); err != nil {
+		dialedConn.Close()
+		return nil, "", nil, nil, nil, false, fmt.Errorf("bootstrap provider: %w", err)
+	}
+
 	cwd := profile.Cwd
 	if cwd == "" {
 		cwd = c.config.Workspace

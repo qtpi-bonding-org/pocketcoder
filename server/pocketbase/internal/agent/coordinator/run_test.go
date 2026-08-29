@@ -188,6 +188,7 @@ func (f *fakeConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk
 	f.mu.Lock()
 	f.initializeCalls++
 	initResp := f.initResp
+	f.callOrder = append(f.callOrder, "initialize")
 	f.mu.Unlock()
 	return initResp, nil
 }
@@ -195,12 +196,14 @@ func (f *fakeConn) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (
 	f.mu.Lock()
 	f.lastNewSessionReq = req
 	f.newSessionCalls++
+	f.callOrder = append(f.callOrder, "new_session")
 	f.mu.Unlock()
 	return acpsdk.NewSessionResponse{SessionId: acpsdk.SessionId(f.newSession)}, nil
 }
 func (f *fakeConn) LoadSession(_ context.Context, req acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error) {
 	f.mu.Lock()
 	f.lastLoadSessionReq = req
+	f.callOrder = append(f.callOrder, "load_session")
 	f.mu.Unlock()
 	return acpsdk.LoadSessionResponse{}, nil
 }
@@ -208,12 +211,128 @@ func (f *fakeConn) ResumeSession(_ context.Context, req acpsdk.ResumeSessionRequ
 	f.mu.Lock()
 	f.lastResumeSessionReq = req
 	f.resumeCalls++
+	f.callOrder = append(f.callOrder, "resume_session")
 	err := f.resumeErr
 	f.mu.Unlock()
 	if err != nil {
 		return acpsdk.ResumeSessionResponse{}, err
 	}
 	return acpsdk.ResumeSessionResponse{}, nil
+}
+
+// newTestCoordinatorDialing builds a minimal Coordinator whose Dial always
+// returns fc, for exercising establishSession directly.
+func newTestCoordinatorDialing(fc *fakeConn) *Coordinator {
+	return &Coordinator{config: Config{Dial: func(context.Context, acpsdk.Client, Target) (acp.Conn, error) {
+		return fc, nil
+	}}}
+}
+
+func TestEstablishSessionBootstrapsProviderBeforeNewSession(t *testing.T) {
+	fc := &fakeConn{
+		newSession:        "sess-1",
+		extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+	}
+	c := newTestCoordinatorDialing(fc)
+	profile := SessionProfile{
+		Provider:                           "openai",
+		SupportsLiveConfig:                 true,
+		SupportsLiveCredentialRegistration: true,
+		CredentialFieldName:                "OPENAI_API_KEY",
+		CredentialFieldValue:               "sk-test",
+	}
+	// sessionID == "" selects the NewSession branch (run.go:746-760).
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	want := []string{"initialize", "call_extension", "new_session"}
+	if len(fc.callOrder) != len(want) {
+		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+	}
+	for i := range want {
+		if fc.callOrder[i] != want[i] {
+			t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+		}
+	}
+}
+
+func TestEstablishSessionBootstrapsProviderBeforeResumeSession(t *testing.T) {
+	fc := &fakeConn{
+		extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+		// A non-nil Resume capability selects the ResumeSession branch
+		// for a non-empty sessionID (run.go:762-772).
+		initResp: acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{
+			SessionCapabilities: acpsdk.SessionCapabilities{Resume: &acpsdk.SessionResumeCapabilities{}},
+		}},
+	}
+	c := newTestCoordinatorDialing(fc)
+	profile := SessionProfile{
+		Provider:                           "openai",
+		SupportsLiveConfig:                 true,
+		SupportsLiveCredentialRegistration: true,
+		CredentialFieldName:                "OPENAI_API_KEY",
+		CredentialFieldValue:               "sk-test",
+	}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "sess-existing", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	want := []string{"initialize", "call_extension", "resume_session"}
+	if len(fc.callOrder) != len(want) {
+		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+	}
+	for i := range want {
+		if fc.callOrder[i] != want[i] {
+			t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+		}
+	}
+}
+
+func TestEstablishSessionBootstrapsProviderBeforeLoadSession(t *testing.T) {
+	fc := &fakeConn{
+		extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+		// Resume is nil and LoadSession is true, selecting the LoadSession
+		// branch for a non-empty sessionID (run.go:774-786).
+		initResp: acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{LoadSession: true}},
+	}
+	c := newTestCoordinatorDialing(fc)
+	profile := SessionProfile{
+		Provider:                           "openai",
+		SupportsLiveConfig:                 true,
+		SupportsLiveCredentialRegistration: true,
+		CredentialFieldName:                "OPENAI_API_KEY",
+		CredentialFieldValue:               "sk-test",
+	}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "sess-existing", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	want := []string{"initialize", "call_extension", "load_session"}
+	if len(fc.callOrder) != len(want) {
+		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+	}
+	for i := range want {
+		if fc.callOrder[i] != want[i] {
+			t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+		}
+	}
+}
+
+func TestEstablishSessionSkipsBootstrapCallForStaticEnvHarness(t *testing.T) {
+	fc := &fakeConn{newSession: "sess-1"}
+	c := newTestCoordinatorDialing(fc)
+	// opencode-shaped profile: SupportsLiveConfig true, registration false
+	// -- selectProviderBootstrap must still pick StaticEnvBootstrap.
+	profile := SessionProfile{Provider: "openai", SupportsLiveConfig: true, SupportsLiveCredentialRegistration: false}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	want := []string{"initialize", "new_session"}
+	if len(fc.callOrder) != len(want) {
+		t.Fatalf("callOrder = %v, want %v (no call_extension for a static-env harness)", fc.callOrder, want)
+	}
 }
 func (f *fakeConn) Done() <-chan struct{} {
 	f.mu.Lock()
