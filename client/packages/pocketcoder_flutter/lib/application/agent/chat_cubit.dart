@@ -15,16 +15,25 @@ import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dar
 import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_transport.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
+import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
+import 'package:pocketcoder_flutter/application/agent/seen_messages_registry.dart';
 import 'chat_state.dart';
 import 'provider_reauthentication_required.dart';
 
 @injectable
 class ChatCubit extends AppCubit<ChatState> {
-  ChatCubit(this._repository, this._networkRecoverySignal)
+  ChatCubit(
+    this._repository,
+    this._networkRecoverySignal,
+    this._chatListRepository,
+    this._seenMessages,
+  )
       : super(const ChatState());
 
   final AgentChatRepository _repository;
   final NetworkRecoverySignal _networkRecoverySignal;
+  final IChatListRepository _chatListRepository;
+  final SeenMessagesRegistry _seenMessages;
   PocketcoderAgUiTransport? _transport;
   ConversationReducer? _reducer;
   StreamSubscription<BaseEvent>? _eventSub;
@@ -74,6 +83,7 @@ class ChatCubit extends AppCubit<ChatState> {
       chatId: chatId,
       status: UiFlowStatus.loading,
       lastOperation: AgentChatOperation.open,
+      animatedMessageIds: _seenMessages.seenIdsFor(chatId),
     ));
 
     _eventSub = transport.events.listen(
@@ -280,7 +290,10 @@ class ChatCubit extends AppCubit<ChatState> {
   }
 
   void markMessageAnimated(String messageId) {
+    final chatId = state.chatId;
+    if (chatId == null) return;
     if (state.animatedMessageIds.contains(messageId)) return;
+    _seenMessages.markSeen(chatId, messageId);
     emit(state.copyWith(
       animatedMessageIds: {...state.animatedMessageIds, messageId},
     ));

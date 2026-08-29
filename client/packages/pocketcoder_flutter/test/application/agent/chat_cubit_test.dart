@@ -11,10 +11,58 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:uuid/uuid.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
+import 'package:pocketcoder_flutter/application/agent/seen_messages_registry.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
     show AgentUnavailableFailure;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
+import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/chat.dart';
+
+class FakeChatListRepository implements IChatListRepository {
+  final Map<String, ({String text, ChatTurn turn, bool isFirst})> _recorded = {};
+
+  ({String text, ChatTurn turn, bool isFirst})? lastRecorded(String chatId) =>
+      _recorded[chatId];
+
+  // Not on IChatListRepository -- unused by ChatCubit today, but records
+  // its arguments so a caller added later has an assertable fake to hit.
+  Future<void> recordMessagePreview(String chatId,
+      {required String text, required ChatTurn turn, required bool isFirst}) async {
+    _recorded[chatId] = (
+      text: text,
+      turn: turn,
+      isFirst: isFirst,
+    );
+  }
+
+  @override
+  Stream<List<Chat>> watchChats() => const Stream.empty();
+
+  @override
+  Future<bool> hasAnyChats() async => false;
+
+  @override
+  Future<Chat> createChat({
+    String? title,
+    String? harness,
+    String? harnessModelOverride,
+    String? ollamaModelOverride,
+    List<String>? workspaceOverride,
+  }) async => const Chat(id: 'fake', title: 'fake', user: 'fake');
+
+  @override
+  Future<void> archiveChat(String id) async {}
+
+  @override
+  Future<void> deleteChat(String id) async {}
+
+  @override
+  Stream<Chat?> watchChat(String id) => const Stream.empty();
+
+  @override
+  Future<void> setMonitored(String id, bool monitored) async {}
+}
 
 /// Minimal fake standing in for AgentChatRepository: `watchRawEvents` is driven by a
 /// per-chat StreamController the test controls directly; `ingestOnce`
@@ -114,11 +162,20 @@ Future<void> _settle() => Future<void>.delayed(Duration.zero);
 
 void main() {
   late _FakeAgentChatRepository repo;
+  late FakeChatListRepository fakeChatListRepository;
+  late SeenMessagesRegistry seenMessages;
   late ChatCubit cubit;
 
   setUp(() {
     repo = _FakeAgentChatRepository();
-    cubit = ChatCubit(repo, NetworkRecoverySignal());
+    fakeChatListRepository = FakeChatListRepository();
+    seenMessages = SeenMessagesRegistry();
+    cubit = ChatCubit(
+      repo,
+      NetworkRecoverySignal(),
+      fakeChatListRepository,
+      seenMessages,
+    );
   });
 
   tearDown(() async {
