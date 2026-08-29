@@ -11,6 +11,8 @@ import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
+import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/server_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/create_account_screen.dart';
@@ -36,7 +38,11 @@ void main() {
     when(() => secureStorage.read(key: any(named: 'key')))
         .thenAnswer((_) async => null);
     GetIt.I.registerFactory<FlutterSecureStorage>(() => secureStorage);
-    GetIt.I.registerFactory<AuthCubit>(() => AuthCubit(authRepository));
+    GetIt.I.registerFactory<AuthCubit>(() => AuthCubit(
+          authRepository,
+          CaddyCaPinStore(secureStorage),
+          const NoopFactoryResetHook(),
+        ));
   });
 
   tearDown(() => GetIt.I.reset());

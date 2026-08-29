@@ -3,6 +3,7 @@ import 'package:pocketcoder_flutter/app/app_dependency_module.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
+import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_billing_service.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_provider_option_service.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/ntfy_push_service.dart';
@@ -18,5 +19,8 @@ class FossAppModule implements AppDependencyModule {
     getIt.registerSingleton<OnboardingSetupFlow>(
       const SelfHostedOnboardingSetupFlow(),
     );
+    // FOSS has no extra deployment-tracking stores beyond what AuthCubit
+    // already clears directly (auth session, CA pin store).
+    getIt.registerSingleton<FactoryResetHook>(const NoopFactoryResetHook());
   }
 }

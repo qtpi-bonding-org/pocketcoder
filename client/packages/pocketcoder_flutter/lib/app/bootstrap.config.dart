@@ -115,6 +115,8 @@ import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart'
     as _i165;
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
     as _i190;
+import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart'
+    as _i1021;
 import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart'
     as _i800;
 import 'package:pocketcoder_flutter/domain/tool_permissions/i_tool_permission_repository.dart'
@@ -464,8 +466,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i50.IAuthRepository>(),
           gh<_i72.NetworkRecoverySignal>(),
         ));
-    gh.factory<_i464.AuthCubit>(
-        () => _i464.AuthCubit(gh<_i50.IAuthRepository>()));
     gh.lazySingleton<_i763.AgentChatRepository>(() => _i763.AgentChatRepository(
           gh<_i313.AgentStreamClient>(),
           gh<_i619.AgentCacheDb>(),
@@ -474,6 +474,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i328.McpCubit>(() => _i328.McpCubit(
           gh<_i922.IMcpRepository>(),
           gh<_i904.IMcpOAuthService>(),
+        ));
+    gh.factory<_i464.AuthCubit>(() => _i464.AuthCubit(
+          gh<_i50.IAuthRepository>(),
+          gh<_i888.CaddyCaPinStore>(),
+          gh<_i1021.FactoryResetHook>(),
         ));
     gh.factory<_i1031.ProviderCubit>(
         () => _i1031.ProviderCubit(gh<_i422.IProviderRepository>()));

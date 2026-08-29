@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -10,6 +11,8 @@ import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 
@@ -17,18 +20,34 @@ class MockAuthRepository extends Mock implements IAuthRepository {}
 
 class MockMcpCubit extends Mock implements McpCubit {}
 
+class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
+
 void main() {
   late MockAuthRepository authRepo;
   late MockMcpCubit mcpCubit;
+  late MockFlutterSecureStorage secureStorage;
 
   setUp(() {
     authRepo = MockAuthRepository();
     mcpCubit = MockMcpCubit();
+    secureStorage = MockFlutterSecureStorage();
     when(() => mcpCubit.state).thenReturn(const McpState());
     when(() => mcpCubit.stream)
         .thenAnswer((_) => const Stream<McpState>.empty());
+    when(() => secureStorage.readAll(
+          aOptions: any(named: 'aOptions'),
+          iOptions: any(named: 'iOptions'),
+          lOptions: any(named: 'lOptions'),
+          webOptions: any(named: 'webOptions'),
+          mOptions: any(named: 'mOptions'),
+          wOptions: any(named: 'wOptions'),
+        )).thenAnswer((_) async => {});
 
-    getIt.registerFactory<AuthCubit>(() => AuthCubit(authRepo));
+    getIt.registerFactory<AuthCubit>(() => AuthCubit(
+          authRepo,
+          CaddyCaPinStore(secureStorage),
+          const NoopFactoryResetHook(),
+        ));
   });
 
   tearDown(() {

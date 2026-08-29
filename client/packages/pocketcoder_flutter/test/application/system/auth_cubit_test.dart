@@ -1,23 +1,51 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 
 class MockAuthRepository extends Mock implements IAuthRepository {}
 
+// CaddyCaPinStore is a `final class`, so it can't be mocked directly from
+// this test library -- build a real instance over a mocked
+// FlutterSecureStorage instead (FlutterSecureStorage isn't final).
+class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
+
+class MockFactoryResetHook extends Mock implements FactoryResetHook {}
+
 void main() {
   late MockAuthRepository repo;
+  late MockFlutterSecureStorage secureStorage;
+  late MockFactoryResetHook factoryResetHook;
   AuthCubit? lastCubit;
 
   AuthCubit buildCubit() {
-    final cubit = AuthCubit(repo);
+    final cubit = AuthCubit(
+      repo,
+      CaddyCaPinStore(secureStorage),
+      factoryResetHook,
+    );
     lastCubit = cubit;
     return cubit;
   }
 
   setUp(() {
     repo = MockAuthRepository();
+    secureStorage = MockFlutterSecureStorage();
+    factoryResetHook = MockFactoryResetHook();
+    when(() => secureStorage.readAll(
+          aOptions: any(named: 'aOptions'),
+          iOptions: any(named: 'iOptions'),
+          lOptions: any(named: 'lOptions'),
+          webOptions: any(named: 'webOptions'),
+          mOptions: any(named: 'mOptions'),
+          wOptions: any(named: 'wOptions'),
+        )).thenAnswer((_) async => {});
+    when(() => factoryResetHook.resetForFactoryReset())
+        .thenAnswer((_) async {});
   });
 
   tearDown(() async {
@@ -127,6 +155,58 @@ void main() {
       verify(() => repo.updateBaseUrl('https://old-good-server.example'))
           .called(1);
       expect(cubit.state.status, UiFlowStatus.failure);
+    });
+  });
+
+  group('AuthCubit.factoryReset', () {
+    test('clears the auth session, every stored CA pin, and the '
+        'app-specific hook, and emits success', () async {
+      when(() => repo.clearSession()).thenAnswer((_) async {});
+      when(() => secureStorage.readAll(
+            aOptions: any(named: 'aOptions'),
+            iOptions: any(named: 'iOptions'),
+            lOptions: any(named: 'lOptions'),
+            webOptions: any(named: 'webOptions'),
+            mOptions: any(named: 'mOptions'),
+            wOptions: any(named: 'wOptions'),
+          )).thenAnswer((_) async => {
+            'pocketcoder.caddy-ca-pin.instance-1': 'stale-pin-json',
+            'unrelated.other.key': 'untouched',
+          });
+      when(() => secureStorage.delete(
+            key: any(named: 'key'),
+            aOptions: any(named: 'aOptions'),
+            iOptions: any(named: 'iOptions'),
+            lOptions: any(named: 'lOptions'),
+            webOptions: any(named: 'webOptions'),
+            mOptions: any(named: 'mOptions'),
+            wOptions: any(named: 'wOptions'),
+          )).thenAnswer((_) async {});
+      final cubit = buildCubit();
+
+      await cubit.factoryReset();
+
+      verify(() => repo.clearSession()).called(1);
+      verify(() => secureStorage.delete(
+            key: 'pocketcoder.caddy-ca-pin.instance-1',
+            aOptions: any(named: 'aOptions'),
+            iOptions: any(named: 'iOptions'),
+            lOptions: any(named: 'lOptions'),
+            webOptions: any(named: 'webOptions'),
+            mOptions: any(named: 'mOptions'),
+            wOptions: any(named: 'wOptions'),
+          )).called(1);
+      verifyNever(() => secureStorage.delete(
+            key: 'unrelated.other.key',
+            aOptions: any(named: 'aOptions'),
+            iOptions: any(named: 'iOptions'),
+            lOptions: any(named: 'lOptions'),
+            webOptions: any(named: 'webOptions'),
+            mOptions: any(named: 'mOptions'),
+            wOptions: any(named: 'wOptions'),
+          ));
+      verify(() => factoryResetHook.resetForFactoryReset()).called(1);
+      expect(cubit.state.status, UiFlowStatus.success);
     });
   });
 }

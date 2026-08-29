@@ -28,6 +28,19 @@ final class CaddyCaPinStore {
   Future<void> clear(String deploymentId) =>
       _storage.delete(key: _key(deploymentId));
 
-  static String _key(String deploymentId) =>
-      'pocketcoder.caddy-ca-pin.$deploymentId';
+  /// Clears every pinned CA this store has ever recorded, for any
+  /// deployment id -- used by a factory reset, which must not leave a
+  /// stale pin behind for the next deployment to silently inherit.
+  Future<void> clearAll() async {
+    final all = await _storage.readAll();
+    for (final key in all.keys) {
+      if (key.startsWith(_prefix)) {
+        await _storage.delete(key: key);
+      }
+    }
+  }
+
+  static const _prefix = 'pocketcoder.caddy-ca-pin.';
+
+  static String _key(String deploymentId) => '$_prefix$deploymentId';
 }
