@@ -230,13 +230,12 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 	if err := (GlobalConfigApplier{}).Apply(ctx, conn, sessionID, p, modes); err != nil {
 		return err
 	}
+	// Provider-credential registration now happens in ProviderBootstrap,
+	// before this session ever existed (see establishSession in run.go) --
+	// SetSessionConfigOption below is always a genuine switch, never a
+	// bootstrap. See docs/superpowers/specs/2026-08-28-harness-provider-bootstrap-design.md.
 	if p.SupportsLiveConfig {
 		if p.Provider != "" {
-			if p.SupportsLiveCredentialRegistration && p.CredentialFieldName != "" {
-				if err := registerProviderCredential(ctx, conn, p.Provider, p.CredentialFieldName, p.CredentialFieldValue); err != nil {
-					return err
-				}
-			}
 			if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
 				ValueId: &acpsdk.SetSessionConfigOptionValueId{
 					SessionId: acpsdk.SessionId(sessionID),
