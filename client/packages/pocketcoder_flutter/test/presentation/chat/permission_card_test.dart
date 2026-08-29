@@ -203,6 +203,13 @@ void main() {
           ));
       await _settle(tester);
 
+      // Regression check: this item has no toolTitle and no description
+      // (a real, observed shape -- goose omits ACP's optional
+      // ToolCallUpdate.Title for some tool calls). Without a fallback the
+      // card showed nothing at all to say what permission was even being
+      // asked for, just its own internal request id in tiny gray text.
+      expect(find.text('Permission requested'), findsOneWidget);
+
       await tester.tap(find.text('DENY'));
       await _settle(tester);
 
