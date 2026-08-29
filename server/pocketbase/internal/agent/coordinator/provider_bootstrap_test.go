@@ -62,7 +62,11 @@ func TestLiveConfigBootstrapRegistersCredentialWhenPresent(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			fc := &fakeConn{extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true},"providerId":"openai"}`)}
+			fc := &fakeConn{extensionResponseByMethod: map[string]json.RawMessage{
+				gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+				gooseProvidersListMethod:      json.RawMessage(`{"entries":[{"providerId":"openai","defaultModel":"gpt-5"}]}`),
+				gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":"gpt-5"}`),
+			}}
 			err := LiveConfigBootstrap{}.Bootstrap(context.Background(), fc, SessionProfile{
 				Provider:                           "openai",
 				SupportsLiveCredentialRegistration: tc.supportsRegistration,
@@ -92,40 +96,45 @@ func TestLiveConfigBootstrapPropagatesRegistrationError(t *testing.T) {
 	}
 }
 
-func TestLiveConfigBootstrapCallsRegistrationThenDefaults(t *testing.T) {
-	fc := &fakeConn{extensionResponse: json.RawMessage(`{"status":{"isConfigured":true},"providerId":"openai"}`)}
+func TestLiveConfigBootstrapCallsRegistrationThenListThenDefaults(t *testing.T) {
+	fc := &fakeConn{extensionResponseByMethod: map[string]json.RawMessage{
+		gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"isConfigured":true},"providerId":"openai"}`),
+		gooseProvidersListMethod:      json.RawMessage(`{"entries":[{"providerId":"openai","defaultModel":"gpt-5"}]}`),
+		gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":"gpt-5"}`),
+	}}
+	// Model is deliberately a catalog value goose's inventory doesn't carry
+	// (only "gpt-5" is in the fake inventory above) -- Bootstrap must never
+	// use it for defaults/save, so this must still succeed.
 	err := LiveConfigBootstrap{}.Bootstrap(context.Background(), fc, SessionProfile{
-		Provider: "openai", Model: "gpt-5", SupportsLiveCredentialRegistration: true,
+		Provider: "openai", Model: "some-catalog-model-goose-has-never-heard-of", SupportsLiveCredentialRegistration: true,
 		CredentialFieldName: "OPENAI_API_KEY", CredentialFieldValue: "sk-test",
 	})
 	if err != nil {
 		t.Fatalf("Bootstrap: %v", err)
 	}
-	if fc.callExtensionCalls != 2 {
-		t.Fatalf("extension calls = %d, want 2", fc.callExtensionCalls)
+	if fc.callExtensionCalls != 3 {
+		t.Fatalf("extension calls = %d, want 3", fc.callExtensionCalls)
 	}
-	if len(fc.extensionMethods) != 2 || fc.extensionMethods[0] != gooseProviderConfigSaveMethod || fc.extensionMethods[1] != gooseDefaultsSaveMethod {
-		t.Fatalf("extension methods = %v, want registration followed by defaults", fc.extensionMethods)
+	want := []string{gooseProviderConfigSaveMethod, gooseProvidersListMethod, gooseDefaultsSaveMethod}
+	if len(fc.extensionMethods) != len(want) {
+		t.Fatalf("extension methods = %v, want %v", fc.extensionMethods, want)
 	}
-	if fc.lastExtensionMethod != gooseDefaultsSaveMethod {
-		t.Fatalf("last extension method = %q, want %q", fc.lastExtensionMethod, gooseDefaultsSaveMethod)
+	for i := range want {
+		if fc.extensionMethods[i] != want[i] {
+			t.Fatalf("extension methods = %v, want %v", fc.extensionMethods, want)
+		}
 	}
-	// defaults/save must never carry a modelId, even though the profile has
-	// a Model set: goose validates any modelId it's given against its own
-	// live provider inventory, but p.Model comes from PocketBase's own
-	// harness_models catalog and can name a model goose's inventory
-	// disagrees with (a real incident: catalog fell back to an
-	// alphabetically-first row with no is_default set, landing on a model
-	// goose's openrouter inventory didn't recognize, which made
-	// defaults/save -- and therefore session establishment -- fail
-	// entirely). The real model is applied afterward via the ordinary
-	// per-session model switch, which is unaffected by this.
+	// defaults/save must use goose's own reported default model
+	// ("gpt-5"), never the profile's catalog Model value.
 	raw, err := json.Marshal(fc.lastExtensionParams)
 	if err != nil {
 		t.Fatalf("marshal last extension params: %v", err)
 	}
-	if strings.Contains(string(raw), "modelId") {
-		t.Fatalf("defaults/save params must not include modelId, got %s", raw)
+	if !strings.Contains(string(raw), `"modelId":"gpt-5"`) {
+		t.Fatalf("defaults/save params must use goose's own default model, got %s", raw)
+	}
+	if strings.Contains(string(raw), "some-catalog-model") {
+		t.Fatalf("defaults/save params must not carry the profile's catalog model, got %s", raw)
 	}
 }
 

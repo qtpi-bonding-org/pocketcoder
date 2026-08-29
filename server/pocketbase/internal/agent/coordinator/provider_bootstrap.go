@@ -59,18 +59,20 @@ func (StaticEnvBootstrap) Bootstrap(context.Context, acp.Conn, SessionProfile) e
 // later SetSessionConfigOption("provider", ...) switch call has a live
 // current provider to switch from.
 //
-// Deliberately omits p.Model here: goose's defaults/save strictly validates
-// the model against its own live provider inventory, but p.Model comes from
-// PocketBase's own harness_models catalog, which can resolve to a model
-// goose's inventory doesn't currently carry (e.g. a stale/fallback catalog
-// pick with no explicit is_default row) -- rejecting Bootstrap entirely over
-// that would block session establishment for a reason that has nothing to
-// do with whether the provider itself is live. Letting defaults/save fall
-// back to the provider's own known-valid default model here is enough to
-// get session/new working; PerSessionApplier's existing, unconditional
-// post-session model switch (profile.go, unrelated to this bootstrap) is
-// what actually applies p.Model, exactly as it already did before this
-// bootstrap existed.
+// Deliberately does not use p.Model for the defaults/save call: goose
+// strictly validates a modelId against its own live provider inventory, but
+// p.Model comes from PocketBase's own harness_models catalog, which can
+// resolve to a model goose's inventory doesn't currently carry (a real
+// incident: a fallback pick with no explicit is_default row landed on a
+// model goose's openrouter inventory didn't recognize, which failed this
+// call and blocked session establishment entirely, for a reason that has
+// nothing to do with whether the provider itself is live). Instead this
+// asks goose for ITS OWN default model for the provider
+// (gooseProviderDefaultModel), which is guaranteed to exist in its
+// inventory. The caller's actual desired model is applied separately,
+// afterward, via PerSessionApplier's existing, unconditional post-session
+// model switch (profile.go, unrelated to this bootstrap) -- exactly as it
+// already did before this bootstrap existed.
 type LiveConfigBootstrap struct{}
 
 func (LiveConfigBootstrap) Bootstrap(ctx context.Context, conn acp.Conn, p SessionProfile) error {
@@ -80,7 +82,11 @@ func (LiveConfigBootstrap) Bootstrap(ctx context.Context, conn acp.Conn, p Sessi
 	if err := registerProviderCredential(ctx, conn, p.Provider, p.CredentialFieldName, p.CredentialFieldValue); err != nil {
 		return err
 	}
-	return setGooseDefaultProvider(ctx, conn, p.Provider)
+	defaultModel, err := gooseProviderDefaultModel(ctx, conn, p.Provider)
+	if err != nil {
+		return err
+	}
+	return setGooseDefaultProvider(ctx, conn, p.Provider, defaultModel)
 }
 
 // selectProviderBootstrap picks the bootstrap strategy for a resolved

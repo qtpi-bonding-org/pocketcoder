@@ -241,7 +241,8 @@ func TestEstablishSessionBootstrapsProviderBeforeNewSession(t *testing.T) {
 		newSession: "sess-1",
 		extensionResponseByMethod: map[string]json.RawMessage{
 			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
-			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":""}`),
+			gooseProvidersListMethod:      json.RawMessage(`{"entries":[{"providerId":"openai","defaultModel":"gpt-5"}]}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":"gpt-5"}`),
 		},
 	}
 	c := newTestCoordinatorDialing(fc)
@@ -260,7 +261,7 @@ func TestEstablishSessionBootstrapsProviderBeforeNewSession(t *testing.T) {
 	// LiveConfigBootstrap now makes two CallExtension calls -- register the
 	// credential, then set it as goose's active default provider -- before
 	// NewSession ever runs.
-	want := []string{"initialize", "call_extension", "call_extension", "new_session"}
+	want := []string{"initialize", "call_extension", "call_extension", "call_extension", "new_session"}
 	if len(fc.callOrder) != len(want) {
 		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
 	}
@@ -275,7 +276,8 @@ func TestEstablishSessionBootstrapsProviderBeforeResumeSession(t *testing.T) {
 	fc := &fakeConn{
 		extensionResponseByMethod: map[string]json.RawMessage{
 			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
-			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":""}`),
+			gooseProvidersListMethod:      json.RawMessage(`{"entries":[{"providerId":"openai","defaultModel":"gpt-5"}]}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":"gpt-5"}`),
 		},
 		// A non-nil Resume capability selects the ResumeSession branch
 		// for a non-empty sessionID (run.go:762-772).
@@ -295,7 +297,7 @@ func TestEstablishSessionBootstrapsProviderBeforeResumeSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("establishSession: %v", err)
 	}
-	want := []string{"initialize", "call_extension", "call_extension", "resume_session"}
+	want := []string{"initialize", "call_extension", "call_extension", "call_extension", "resume_session"}
 	if len(fc.callOrder) != len(want) {
 		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
 	}
@@ -310,7 +312,8 @@ func TestEstablishSessionBootstrapsProviderBeforeLoadSession(t *testing.T) {
 	fc := &fakeConn{
 		extensionResponseByMethod: map[string]json.RawMessage{
 			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
-			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":""}`),
+			gooseProvidersListMethod:      json.RawMessage(`{"entries":[{"providerId":"openai","defaultModel":"gpt-5"}]}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":"gpt-5"}`),
 		},
 		// Resume is nil and LoadSession is true, selecting the LoadSession
 		// branch for a non-empty sessionID (run.go:774-786).
@@ -328,7 +331,7 @@ func TestEstablishSessionBootstrapsProviderBeforeLoadSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("establishSession: %v", err)
 	}
-	want := []string{"initialize", "call_extension", "call_extension", "load_session"}
+	want := []string{"initialize", "call_extension", "call_extension", "call_extension", "load_session"}
 	if len(fc.callOrder) != len(want) {
 		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
 	}

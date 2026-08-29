@@ -10,6 +10,7 @@ import (
 
 const gooseProviderConfigSaveMethod = "_goose/unstable/providers/config/save"
 const gooseDefaultsSaveMethod = "_goose/unstable/defaults/save"
+const gooseProvidersListMethod = "_goose/unstable/providers/list"
 
 type providerConfigFieldUpdate struct {
 	Key   string `json:"key"`
@@ -61,6 +62,7 @@ func registerProviderCredential(ctx context.Context, conn acp.Conn, providerIDSt
 
 type defaultsSaveRequest struct {
 	ProviderID string `json:"providerId"`
+	ModelID    string `json:"modelId,omitempty"`
 }
 
 type defaultsSaveResponse struct {
@@ -68,17 +70,53 @@ type defaultsSaveResponse struct {
 	ModelID    string `json:"modelId"`
 }
 
+type providersListRequest struct {
+	ProviderIDs []string `json:"providerIds"`
+}
+
+type providerInventoryEntry struct {
+	ProviderID   string `json:"providerId"`
+	DefaultModel string `json:"defaultModel"`
+}
+
+type providersListResponse struct {
+	Entries []providerInventoryEntry `json:"entries"`
+}
+
+// gooseProviderDefaultModel asks goose for the model it would itself pick
+// as the default for providerIDString -- guaranteed to exist in goose's own
+// live provider inventory, unlike anything sourced from PocketBase's own
+// harness_models catalog (see LiveConfigBootstrap's doc comment for why
+// that distinction matters).
+func gooseProviderDefaultModel(ctx context.Context, conn acp.Conn, providerIDString string) (string, error) {
+	raw, err := conn.CallExtension(ctx, gooseProvidersListMethod, providersListRequest{ProviderIDs: []string{providerIDString}})
+	if err != nil {
+		return "", fmt.Errorf("list goose providers: %w", err)
+	}
+	var resp providersListResponse
+	if err := json.Unmarshal(raw, &resp); err != nil {
+		return "", fmt.Errorf("decode providers list response: %w", err)
+	}
+	for _, entry := range resp.Entries {
+		if entry.ProviderID == providerIDString {
+			return entry.DefaultModel, nil
+		}
+	}
+	return "", fmt.Errorf("provider %s not found in goose's provider inventory", providerIDString)
+}
+
 // setGooseDefaultProvider sets providerIDString as goose's active default
-// provider. It deliberately never sends a modelId: defaults/save validates
-// any model it's given against goose's own live provider inventory, and the
-// caller's model choice may come from a catalog goose's inventory doesn't
-// agree with (see LiveConfigBootstrap's doc comment). Omitting it lets
-// defaults/save fall back to the provider's own known-valid default model,
-// which is all this call needs to guarantee -- the caller's actual desired
-// model is applied separately, afterward, via the ordinary per-session
-// model switch.
-func setGooseDefaultProvider(ctx context.Context, conn acp.Conn, providerIDString string) error {
-	req := defaultsSaveRequest{ProviderID: providerIDString}
+// provider, using modelID as the default model. Callers should pass a model
+// sourced from goose's own inventory (gooseProviderDefaultModel), not from
+// PocketBase's own harness_models catalog: defaults/save strictly validates
+// modelID against goose's live provider inventory, and a catalog pick with
+// no is_default row set can resolve to a model that inventory doesn't
+// recognize, which fails this call outright -- see LiveConfigBootstrap's
+// doc comment. The caller's actual desired model (which may differ from
+// modelID here) is applied separately, afterward, via the ordinary
+// per-session model switch.
+func setGooseDefaultProvider(ctx context.Context, conn acp.Conn, providerIDString, modelID string) error {
+	req := defaultsSaveRequest{ProviderID: providerIDString, ModelID: modelID}
 	raw, err := conn.CallExtension(ctx, gooseDefaultsSaveMethod, req)
 	if err != nil {
 		return fmt.Errorf("set goose default provider: %w", err)
