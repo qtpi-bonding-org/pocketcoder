@@ -74,7 +74,7 @@ void main() {
       }),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('root@device \$ '), findsOneWidget);
+    expect(find.textContaining('root@device \$ '), findsOneWidget);
     expect(find.byType(TerminalConversationFrame), findsOneWidget);
   });
 
@@ -106,7 +106,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('[poco] '), findsOneWidget);
+    expect(find.textContaining('[poco] '), findsOneWidget);
     expect(find.byType(TypewriterText), findsOneWidget);
   });
 
@@ -142,7 +142,7 @@ void main() {
     // No pump-forward: instant rendering makes the complete text available
     // on the first frame.
     await tester.pump();
-    expect(find.text('already complete'), findsOneWidget);
+    expect(find.textContaining('already complete'), findsOneWidget);
   });
 
   testWidgets('permissionCardBuilder renders pocketcoder\'s own PermissionCard',

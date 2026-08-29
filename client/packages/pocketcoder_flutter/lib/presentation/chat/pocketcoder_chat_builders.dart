@@ -135,24 +135,29 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           );
         }
         if (isSentByMe) {
+          final color =
+              emphasize(context.colorScheme.secondary, Emphasis.selected).text;
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
-            child: TerminalTranscriptLine(
-              prefix: 'root@device \$ ',
-              color: emphasize(context.colorScheme.secondary, Emphasis.selected)
-                  .text,
-              child: Text(
-                message.text,
-                style: TextStyle(
-                  color: emphasize(
-                          context.colorScheme.secondary, Emphasis.selected)
-                      .text,
-                  fontFamily: AppFonts.bodyFamily,
-                  package: 'pocketcoder_flutter',
-                  fontSize: AppSizes.fontStandard,
-                  fontWeight: AppFonts.medium,
-                  height: 1.4,
-                ),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'root@device \$ ',
+                    style: TextStyle(color: color),
+                  ),
+                  TextSpan(
+                    text: message.text,
+                    style: TextStyle(
+                      color: color,
+                      fontFamily: AppFonts.bodyFamily,
+                      package: 'pocketcoder_flutter',
+                      fontSize: AppSizes.fontStandard,
+                      fontWeight: AppFonts.medium,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
               ),
             ),
           );

@@ -14,6 +14,12 @@ class TypewriterText extends StatefulWidget {
   /// the animation as if it were appearing for the first time.
   final bool instant;
 
+  /// Rendered as part of the same paragraph as the revealed text, so a
+  /// wrapped continuation line starts at the container's own left edge
+  /// instead of being boxed separately from the prefix.
+  final String? prefix;
+  final TextStyle? prefixStyle;
+
   const TypewriterText({
     super.key,
     required this.text,
@@ -21,6 +27,8 @@ class TypewriterText extends StatefulWidget {
     this.speed = const Duration(milliseconds: 10),
     this.onComplete,
     this.instant = false,
+    this.prefix,
+    this.prefixStyle,
   });
 
   @override
@@ -100,9 +108,17 @@ class _TypewriterTextState extends State<TypewriterText> {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      _displayedText,
-      style: widget.style,
+    final prefix = widget.prefix;
+    if (prefix == null) {
+      return Text(_displayedText, style: widget.style, softWrap: true);
+    }
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: prefix, style: widget.prefixStyle ?? widget.style),
+          TextSpan(text: _displayedText, style: widget.style),
+        ],
+      ),
       softWrap: true,
     );
   }

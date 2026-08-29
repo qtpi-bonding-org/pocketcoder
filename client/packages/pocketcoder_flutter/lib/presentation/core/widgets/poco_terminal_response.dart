@@ -28,23 +28,28 @@ class PocoTerminalResponse extends StatelessWidget {
   Widget build(BuildContext context) {
     return TerminalConversationFrame(
       speaker: TerminalConversationSpeaker.poco,
-      child: TerminalTranscriptLine(
+      child: TypewriterText(
+        key: ValueKey(messageId),
         prefix: '[poco] ',
-        color: context.colorScheme.primary,
-        child: TypewriterText(
-          key: ValueKey(messageId),
-          text: message,
-          speed: speed,
-          instant: instant,
-          onComplete: onAnimationComplete,
-          style: TextStyle(
-            color: context.colorScheme.primary,
-            fontFamily: AppFonts.bodyFamily,
-            package: 'pocketcoder_flutter',
-            fontSize: AppSizes.fontStandard,
-            fontWeight: AppFonts.medium,
-            height: 1.4,
-          ),
+        prefixStyle: TextStyle(
+          color: context.colorScheme.primary,
+          fontFamily: AppFonts.bodyFamily,
+          package: 'pocketcoder_flutter',
+          fontSize: AppSizes.fontStandard,
+          fontWeight: AppFonts.medium,
+          height: 1.4,
+        ),
+        text: message,
+        speed: speed,
+        instant: instant,
+        onComplete: onAnimationComplete,
+        style: TextStyle(
+          color: context.colorScheme.primary,
+          fontFamily: AppFonts.bodyFamily,
+          package: 'pocketcoder_flutter',
+          fontSize: AppSizes.fontStandard,
+          fontWeight: AppFonts.medium,
+          height: 1.4,
         ),
       ),
     );
