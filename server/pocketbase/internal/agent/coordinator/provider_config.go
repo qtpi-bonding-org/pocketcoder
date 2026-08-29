@@ -61,7 +61,6 @@ func registerProviderCredential(ctx context.Context, conn acp.Conn, providerIDSt
 
 type defaultsSaveRequest struct {
 	ProviderID string `json:"providerId"`
-	ModelID    string `json:"modelId,omitempty"`
 }
 
 type defaultsSaveResponse struct {
@@ -69,8 +68,17 @@ type defaultsSaveResponse struct {
 	ModelID    string `json:"modelId"`
 }
 
-func setGooseDefaultProvider(ctx context.Context, conn acp.Conn, providerIDString, modelID string) error {
-	req := defaultsSaveRequest{ProviderID: providerIDString, ModelID: modelID}
+// setGooseDefaultProvider sets providerIDString as goose's active default
+// provider. It deliberately never sends a modelId: defaults/save validates
+// any model it's given against goose's own live provider inventory, and the
+// caller's model choice may come from a catalog goose's inventory doesn't
+// agree with (see LiveConfigBootstrap's doc comment). Omitting it lets
+// defaults/save fall back to the provider's own known-valid default model,
+// which is all this call needs to guarantee -- the caller's actual desired
+// model is applied separately, afterward, via the ordinary per-session
+// model switch.
+func setGooseDefaultProvider(ctx context.Context, conn acp.Conn, providerIDString string) error {
+	req := defaultsSaveRequest{ProviderID: providerIDString}
 	raw, err := conn.CallExtension(ctx, gooseDefaultsSaveMethod, req)
 	if err != nil {
 		return fmt.Errorf("set goose default provider: %w", err)

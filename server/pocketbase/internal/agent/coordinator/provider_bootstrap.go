@@ -53,11 +53,24 @@ func (StaticEnvBootstrap) Bootstrap(context.Context, acp.Conn, SessionProfile) e
 }
 
 // LiveConfigBootstrap covers goose: it registers the resolved provider's
-// credential into goose's own provider registry and sets its active default
-// provider/model via custom ACP methods before any session exists on this
+// credential into goose's own provider registry and sets it as the active
+// default provider via custom ACP methods before any session exists on this
 // connection. This ensures session/new resolves the intended provider and a
 // later SetSessionConfigOption("provider", ...) switch call has a live
 // current provider to switch from.
+//
+// Deliberately omits p.Model here: goose's defaults/save strictly validates
+// the model against its own live provider inventory, but p.Model comes from
+// PocketBase's own harness_models catalog, which can resolve to a model
+// goose's inventory doesn't currently carry (e.g. a stale/fallback catalog
+// pick with no explicit is_default row) -- rejecting Bootstrap entirely over
+// that would block session establishment for a reason that has nothing to
+// do with whether the provider itself is live. Letting defaults/save fall
+// back to the provider's own known-valid default model here is enough to
+// get session/new working; PerSessionApplier's existing, unconditional
+// post-session model switch (profile.go, unrelated to this bootstrap) is
+// what actually applies p.Model, exactly as it already did before this
+// bootstrap existed.
 type LiveConfigBootstrap struct{}
 
 func (LiveConfigBootstrap) Bootstrap(ctx context.Context, conn acp.Conn, p SessionProfile) error {
@@ -67,7 +80,7 @@ func (LiveConfigBootstrap) Bootstrap(ctx context.Context, conn acp.Conn, p Sessi
 	if err := registerProviderCredential(ctx, conn, p.Provider, p.CredentialFieldName, p.CredentialFieldValue); err != nil {
 		return err
 	}
-	return setGooseDefaultProvider(ctx, conn, p.Provider, p.Model)
+	return setGooseDefaultProvider(ctx, conn, p.Provider)
 }
 
 // selectProviderBootstrap picks the bootstrap strategy for a resolved

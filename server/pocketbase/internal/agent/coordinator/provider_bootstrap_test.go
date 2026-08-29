@@ -3,6 +3,7 @@ package coordinator
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 )
 
@@ -108,6 +109,23 @@ func TestLiveConfigBootstrapCallsRegistrationThenDefaults(t *testing.T) {
 	}
 	if fc.lastExtensionMethod != gooseDefaultsSaveMethod {
 		t.Fatalf("last extension method = %q, want %q", fc.lastExtensionMethod, gooseDefaultsSaveMethod)
+	}
+	// defaults/save must never carry a modelId, even though the profile has
+	// a Model set: goose validates any modelId it's given against its own
+	// live provider inventory, but p.Model comes from PocketBase's own
+	// harness_models catalog and can name a model goose's inventory
+	// disagrees with (a real incident: catalog fell back to an
+	// alphabetically-first row with no is_default set, landing on a model
+	// goose's openrouter inventory didn't recognize, which made
+	// defaults/save -- and therefore session establishment -- fail
+	// entirely). The real model is applied afterward via the ordinary
+	// per-session model switch, which is unaffected by this.
+	raw, err := json.Marshal(fc.lastExtensionParams)
+	if err != nil {
+		t.Fatalf("marshal last extension params: %v", err)
+	}
+	if strings.Contains(string(raw), "modelId") {
+		t.Fatalf("defaults/save params must not include modelId, got %s", raw)
 	}
 }
 
