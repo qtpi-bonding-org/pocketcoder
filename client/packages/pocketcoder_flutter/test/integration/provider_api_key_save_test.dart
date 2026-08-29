@@ -21,9 +21,50 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart' as pocketbase;
 import 'package:pocketbase_drift/pocketbase_drift.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_repository.dart';
+
+/// Reports a fixed user id as ProviderRepository.saveProviderAPIKey now
+/// requires -- see that method's own doc comment for why owner can only be
+/// set client-side, never via a server-side create hook.
+class _FixedUserAuthRepository implements IAuthRepository {
+  _FixedUserAuthRepository(this.currentUserId);
+
+  @override
+  final String? currentUserId;
+
+  @override
+  Stream<bool> get connectionStatus => const Stream.empty();
+  @override
+  Stream<void> get authChanges => const Stream.empty();
+  @override
+  Future<bool> login(String email, String password) =>
+      throw UnimplementedError();
+  @override
+  Future<void> logout() => throw UnimplementedError();
+  @override
+  Future<void> clearSession() => throw UnimplementedError();
+  @override
+  Future<AuthRefreshResult> refreshToken() => throw UnimplementedError();
+  @override
+  Future<void> verifyServerCompatibility() => throw UnimplementedError();
+  @override
+  bool get isAuthenticated => true;
+  @override
+  String? get currentUserEmail => null;
+  @override
+  String? get currentUserRole => null;
+  @override
+  String? get currentBaseUrl => null;
+  @override
+  Future<void> updateBaseUrl(String url) => throw UnimplementedError();
+  @override
+  Future<void> persistBaseUrl(String url) => throw UnimplementedError();
+  @override
+  Future<String?> getSavedBaseUrl() => throw UnimplementedError();
+}
 
 void main() {
   // Deliberately NOT TestWidgetsFlutterBinding: that binding fakes/blocks
@@ -100,11 +141,16 @@ void main() {
       ProviderAPIKeyDao(client),
       HarnessProviderDao(client),
       ProviderCatalogDao(client),
+      _FixedUserAuthRepository(userId),
     );
 
+    // owner is deliberately empty here, matching what the real onboarding
+    // dialog actually sends for a brand-new key (it only ever copies an
+    // *existing* record's owner) -- saveProviderAPIKey must fill it in
+    // itself from the authenticated user, not from this field.
     await repository.saveProviderAPIKey(ProviderApiKey(
       id: '',
-      owner: userId,
+      owner: '',
       provider: provider.id,
       apiKey: 'sk-real-dart-save-flow-check',
     ));

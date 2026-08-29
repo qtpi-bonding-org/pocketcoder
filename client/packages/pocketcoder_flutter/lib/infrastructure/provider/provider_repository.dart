@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/provider_exception.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
@@ -19,6 +20,7 @@ class ProviderRepository implements IProviderRepository {
     this._providerAPIKeyDao,
     this._harnessProviderDao,
     this._providerCatalogDao,
+    this._auth,
   );
 
   final HarnesseDao _harnesseDao;
@@ -27,6 +29,7 @@ class ProviderRepository implements IProviderRepository {
   final ProviderAPIKeyDao _providerAPIKeyDao;
   final HarnessProviderDao _harnessProviderDao;
   final ProviderCatalogDao _providerCatalogDao;
+  final IAuthRepository _auth;
 
   @override
   Stream<List<Harnesse>> watchHarnesses() => _harnesseDao.watch();
@@ -57,6 +60,16 @@ class ProviderRepository implements IProviderRepository {
           // that the existing secret should remain unchanged.
           if (key.id.isNotEmpty && key.apiKey.isEmpty) {
             body.remove('api_key');
+          }
+          // A brand-new key's owner is always empty (the dialog only ever
+          // copies an existing record's owner). provider_api_keys.createRule
+          // requires owner = @request.auth.id, and PocketBase evaluates that
+          // rule against the client-submitted data itself -- there is no
+          // server-side hook that can fix up owner afterward, since the
+          // access check runs before any OnRecordCreateRequest hook fires.
+          // The client is the only place this can be set correctly.
+          if (key.id.isEmpty) {
+            body['owner'] = _auth.currentUserId;
           }
           await _providerAPIKeyDao.save(key.id, body);
         },
