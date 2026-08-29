@@ -110,6 +110,12 @@ func TestSeedDoesNotCreateAComposeHarnessInstance(t *testing.T) {
 	if launch.Port != 3000 || launch.EnvTemplate["GOOSE_SERVER__SECRET_KEY"] != "{{.__adapter_secret}}" {
 		t.Errorf("goose launch template = %+v, want port 3000 and per-instance secret", launch)
 	}
+	if _, ok := launch.EnvTemplate["GOOSE_PROVIDER"]; ok {
+		t.Error("goose env_template must not set GOOSE_PROVIDER: it permanently shadows any live provider switch")
+	}
+	if _, ok := launch.EnvTemplate["GOOSE_MODEL"]; ok {
+		t.Error("goose env_template must not set GOOSE_MODEL: same reason as GOOSE_PROVIDER")
+	}
 }
 
 func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {

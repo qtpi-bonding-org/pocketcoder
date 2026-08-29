@@ -557,32 +557,7 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string, harne
 				return nil, fmt.Errorf("live-config harness %s with OAuth-capable provider edges is not supported yet", harness.Id)
 			}
 		}
-		// __provider/__model seed a live-config harness's INITIAL
-		// provider/model before the chat's first ACP session/new call --
-		// coordinator.PerSessionApplier then overrides both live via
-		// SetSessionConfigOption per spec §6/§4.3. providerID here is
-		// still a pc_providers RECORD id (this function's own contract,
-		// consistent with providersForLaunch below) so it must be resolved
-		// back to its provider_id STRING before use -- Goose reads
-		// GOOSE_PROVIDER as e.g. "anthropic", never a PocketBase id.
-		values["__provider"] = ""
-		if providerID != "" {
-			if providerRec, err := app.FindRecordById("providers", providerID); err == nil {
-				values["__provider"] = providerRec.GetString("provider_id")
-			}
-		}
-		values["__model"] = modelID
-		if values["__provider"] == "" {
-			values["__provider"] = "anthropic"
-		}
-		if values["__model"] == "" {
-			values["__model"] = "MiniMax-M2.5"
-		}
 		if testProvider := os.Getenv("POCKETCODER_AGENT_TEST_PROVIDER"); testProvider != "" {
-			values["__provider"] = testProvider
-			if testModel := os.Getenv("POCKETCODER_AGENT_TEST_MODEL"); testModel != "" {
-				values["__model"] = testModel
-			}
 			values["OPENROUTER_API_KEY"] = os.Getenv("POCKETCODER_AGENT_TEST_API_KEY")
 		}
 	}

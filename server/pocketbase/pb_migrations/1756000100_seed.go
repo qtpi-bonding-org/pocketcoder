@@ -151,8 +151,6 @@ func init() {
 			"port": 3000,
 			"env_template": map[string]string{
 				"GOOSE_SERVER__SECRET_KEY": "{{.__adapter_secret}}",
-				"GOOSE_PROVIDER":           "{{.__provider}}",
-				"GOOSE_MODEL":              "{{.__model}}",
 				// No static *_API_KEY entry here: Goose's actual env var name
 				// depends on which provider is selected (GOOSE_PROVIDER=openai
 				// wants OPENAI_API_KEY, =anthropic wants ANTHROPIC_API_KEY,
