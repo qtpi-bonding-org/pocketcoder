@@ -49,10 +49,23 @@ func TestReporterHeartbeatRefreshesStatus(t *testing.T) {
 
 	stop := reporter.StartHeartbeat(10 * time.Millisecond)
 	t.Cleanup(stop)
-	time.Sleep(1100 * time.Millisecond)
-	second := readDocument(t, path).UpdatedAt
-	if first == second {
-		t.Fatalf("heartbeat did not refresh updatedAt: %q", first)
+
+	// updatedAt has whole-second resolution (RFC3339), so a single fixed
+	// sleep can land in the same second as `first` under a slow/throttled
+	// CI scheduler even though the heartbeat itself is firing correctly.
+	// Poll instead of sleeping once, so the test only fails if the
+	// heartbeat genuinely never refreshes the timestamp within a generous
+	// deadline.
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		second := readDocument(t, path).UpdatedAt
+		if second != first {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("heartbeat did not refresh updatedAt within 3s: %q", first)
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 
