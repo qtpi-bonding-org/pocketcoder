@@ -7,8 +7,6 @@ class TerminalInput extends StatefulWidget {
   final VoidCallback onSubmitted;
   final String prompt;
   final bool enabled;
-  final bool showSendButton;
-  final String? sendTooltip;
   final FocusNode? focusNode;
 
   const TerminalInput({
@@ -17,8 +15,6 @@ class TerminalInput extends StatefulWidget {
     required this.onSubmitted,
     this.prompt = '%',
     this.enabled = true,
-    this.showSendButton = false,
-    this.sendTooltip,
     this.focusNode,
   });
 
@@ -118,27 +114,6 @@ class _TerminalInputState extends State<TerminalInput> {
               ),
             ),
           ),
-          if (widget.showSendButton)
-            TextButton(
-              onPressed: widget.enabled ? widget.onSubmitted : null,
-              style: TextButton.styleFrom(
-                minimumSize: Size.zero,
-                padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                'SEND',
-                style: TextStyle(
-                  color: widget.enabled
-                      ? colors.secondary
-                      : colors.onSurface.withValues(alpha: 0.3),
-                  fontFamily: AppFonts.bodyFamily,
-                  package: 'pocketcoder_flutter',
-                  fontSize: AppSizes.fontStandard,
-                  fontWeight: AppFonts.heavy,
-                ),
-              ),
-            ),
         ],
       ),
     );

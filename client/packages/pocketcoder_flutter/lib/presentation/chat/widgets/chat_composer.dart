@@ -30,7 +30,6 @@ class ChatComposer extends StatelessWidget {
           focusNode: focusNode,
           prompt: 'root@device \$',
           enabled: enabled,
-          showSendButton: true,
           onSubmitted: onSubmitted,
         ),
       ),
