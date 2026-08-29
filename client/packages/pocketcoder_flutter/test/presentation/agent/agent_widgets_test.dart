@@ -33,8 +33,14 @@ void main() {
       onSelectMode: (id) => selected = id,
     )));
     expect(find.text('AUTO'), findsOneWidget);
+    expect(find.text('CHAT'), findsNothing);
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
     expect(find.text('CHAT'), findsOneWidget);
-    await tester.tap(find.text('CHAT'));
+
+    await tester.tap(find.text('CHAT').last);
+    await tester.pumpAndSettle();
     expect(selected, 'chat');
   });
 

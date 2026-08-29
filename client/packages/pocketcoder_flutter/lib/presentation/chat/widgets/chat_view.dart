@@ -78,7 +78,6 @@ class _ChatViewState extends State<ChatView> {
   final _inputFocusNode = FocusNode();
   final _transcriptKey = GlobalKey<ag_ui_widgets.AgUiTranscriptState>();
   bool _opened = false;
-  bool _sessionPanelExpanded = false;
   bool _reauthAnnounced = false;
 
   @override
@@ -230,12 +229,6 @@ class _ChatViewState extends State<ChatView> {
         TerminalAction(
             label: context.l10n.chatFilesAction, onTap: widget.onFiles),
         TerminalAction(
-          label: context.l10n.chatSessionAction,
-          isActive: _sessionPanelExpanded,
-          onTap: () =>
-              setState(() => _sessionPanelExpanded = !_sessionPanelExpanded),
-        ),
-        TerminalAction(
           label: context.l10n.chatMonitorAction,
           isActive: widget.monitored,
           onTap: widget.onToggleMonitored,
@@ -247,13 +240,9 @@ class _ChatViewState extends State<ChatView> {
       padding: EdgeInsets.zero,
       body: Column(
         children: [
-          if (_sessionPanelExpanded) ...[
-            PlanPanel(plan: widget.conversation.sessionState.plan),
-            ModeSwitcher(
-                modes: widget.modes, onSelectMode: widget.onSelectMode),
-            ConfigPicker(
-                config: widget.config, onSetOption: widget.onSetOption),
-          ],
+          PlanPanel(plan: widget.conversation.sessionState.plan),
+          ModeSwitcher(modes: widget.modes, onSelectMode: widget.onSelectMode),
+          ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
           Expanded(
             child: Column(
               children: [
