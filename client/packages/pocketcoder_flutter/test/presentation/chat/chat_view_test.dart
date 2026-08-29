@@ -109,7 +109,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.getTopLeft(find.text('root@device \$ ')).dy,
-        greaterThan(tester.getTopLeft(find.text('a response')).dy));
+        greaterThan(tester.getTopLeft(find.textContaining('a response')).dy));
   });
 
   testWidgets('interrupted outcome transition shows a VimToast',
