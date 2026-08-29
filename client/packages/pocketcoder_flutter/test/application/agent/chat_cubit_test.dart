@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:uuid/uuid.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
+import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
+    show AgentUnavailableFailure;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 
@@ -68,6 +70,8 @@ class _FakeAgentChatRepository implements AgentChatRepository {
     return 0;
   }
 
+  int failWithHarnessUnavailableTimes = 0;
+
   @override
   Future<String> sendPrompt(String chatId, String text,
       {String? messageId}) async {
@@ -75,6 +79,11 @@ class _FakeAgentChatRepository implements AgentChatRepository {
     promptMessageIds.add(messageId);
     final gate = _sendPromptGate;
     if (gate != null) await gate.future;
+    if (failWithHarnessUnavailableTimes > 0) {
+      failWithHarnessUnavailableTimes--;
+      throw const AgentUnavailableFailure('Harness is starting; retry '
+          'shortly.');
+    }
     return 'run-123';
   }
 
@@ -158,6 +167,35 @@ void main() {
     expect(item.role, 'user');
     expect(item.text, 'hello agent');
   });
+
+  test(
+      'sendPrompt auto-retries on AgentUnavailableFailure and shows '
+      'awaitingHarnessStart until it succeeds, without duplicating the '
+      'optimistic local echo', () async {
+    cubit.open('chat-1');
+    await _settle();
+    repo.failWithHarnessUnavailableTimes = 1;
+
+    final send = cubit.sendPrompt('hello agent');
+    await pumpEventQueue();
+
+    expect(cubit.state.awaitingHarnessStart, isTrue);
+    expect(cubit.state.status, UiFlowStatus.loading);
+
+    await send;
+
+    expect(repo.promptCalls, ['hello agent', 'hello agent'],
+        reason: 'the first (failing) attempt and the retry both call '
+            'sendPrompt with the same text');
+    expect(repo.promptMessageIds.toSet(), hasLength(1),
+        reason: 'the retry must reuse the same optimistic message id, not '
+            'mint a new one');
+    expect(cubit.state.awaitingHarnessStart, isFalse);
+    expect(cubit.state.status, UiFlowStatus.success);
+    expect(cubit.state.conversation.timeline, hasLength(1),
+        reason: 'the optimistic local echo must be inserted exactly once, '
+            'not once per retry attempt');
+  }, timeout: const Timeout(Duration(seconds: 10)));
 
   test('markMessageAnimated adds the id once and is idempotent', () async {
     cubit.open('chat-1');

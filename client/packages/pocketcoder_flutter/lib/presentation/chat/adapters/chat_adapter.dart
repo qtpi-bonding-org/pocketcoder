@@ -64,6 +64,7 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                 title: value.conversation.sessionState.title ??
                     context.l10n.chatSessionTitle,
                 isLoading: value.isLoading,
+                awaitingHarnessStart: value.awaitingHarnessStart,
                 isRunning: value.conversation.sessionState.isRunning,
                 requiresProviderReauthentication:
                     value.error is ProviderReauthenticationRequired,

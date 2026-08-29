@@ -21,5 +21,10 @@ sealed class ChatState with _$ChatState, UiFlowStateMixin {
     Object? error,
     AgentChatOperation? lastOperation,
     @Default(<String>{}) Set<String> animatedMessageIds,
+    // True while ChatCubit is auto-retrying a prompt after the harness
+    // container reported not-ready-yet (a real, expected cold-start window
+    // -- observed up to ~150s -- not an error). The view uses this to show
+    // "starting the harness..." instead of a generic spinner/error toast.
+    @Default(false) bool awaitingHarnessStart,
   }) = _ChatState;
 }
