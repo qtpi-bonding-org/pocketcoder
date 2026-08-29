@@ -8,6 +8,8 @@ import 'package:uuid/uuid.dart';
 
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
+    show AgentUnavailableFailure;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_transport.dart';
@@ -168,6 +170,18 @@ class ChatCubit extends AppCubit<ChatState> {
     }
   }
 
+  // A fresh container's harness can take up to ~150s to finish its cold
+  // start (image load + compose up + agent init -- observed live against a
+  // real deployment), during which every prompt gets a 503
+  // AgentUnavailableFailure ("Harness is starting; retry shortly."). That's
+  // an expected, temporary condition, not a real failure -- surfacing it as
+  // a generic error toast and making the user manually resend is exactly
+  // the friction this retry loop removes. 40 attempts * 4s covers the
+  // observed cold-start window with margin; beyond that it's surfaced as a
+  // real failure like any other.
+  static const _harnessRetryDelay = Duration(seconds: 4);
+  static const _harnessRetryMaxAttempts = 40;
+
   Future<void> sendPrompt(String text) async {
     final chatId = state.chatId;
     final transport = _transport;
@@ -202,23 +216,61 @@ class ChatCubit extends AppCubit<ChatState> {
       );
       emit(state.copyWith(conversation: reducer.current));
     }
-    await tryOperation(() async {
-      try {
-        await transport.sendMessage(text, messageId: messageId);
-      } catch (error, stackTrace) {
-        logError(
-            '🤖 [ChatCubit] sendPrompt failed | {chatId: $chatId, '
-            'error: $error}',
-            error,
-            stackTrace);
-        if (myGeneration != _generation) return state;
-        rethrow;
-      }
+    await tryOperation(() => _sendWithHarnessRetry(
+          text: text,
+          messageId: messageId,
+          chatId: chatId,
+          transport: transport,
+          myGeneration: myGeneration,
+          attempt: 0,
+        ));
+  }
+
+  Future<ChatState> _sendWithHarnessRetry({
+    required String text,
+    required String messageId,
+    required String chatId,
+    required PocketcoderAgUiTransport transport,
+    required int myGeneration,
+    required int attempt,
+  }) async {
+    try {
+      await transport.sendMessage(text, messageId: messageId);
+    } catch (error, stackTrace) {
       if (myGeneration != _generation) return state;
-      return state.copyWith(
-          status: UiFlowStatus.success,
-          lastOperation: AgentChatOperation.sendPrompt);
-    });
+      if (error is AgentUnavailableFailure &&
+          attempt < _harnessRetryMaxAttempts) {
+        logDebug('🤖 [ChatCubit] harness not ready yet, retrying', {
+          'chatId': chatId,
+          'attempt': attempt + 1,
+          'maxAttempts': _harnessRetryMaxAttempts,
+        });
+        emit(state.copyWith(
+            status: UiFlowStatus.loading, awaitingHarnessStart: true));
+        await Future<void>.delayed(_harnessRetryDelay);
+        if (myGeneration != _generation || _closed) return state;
+        return _sendWithHarnessRetry(
+          text: text,
+          messageId: messageId,
+          chatId: chatId,
+          transport: transport,
+          myGeneration: myGeneration,
+          attempt: attempt + 1,
+        );
+      }
+      logError(
+          '🤖 [ChatCubit] sendPrompt failed | {chatId: $chatId, '
+          'error: $error}',
+          error,
+          stackTrace);
+      if (myGeneration != _generation) return state;
+      rethrow;
+    }
+    if (myGeneration != _generation) return state;
+    return state.copyWith(
+        status: UiFlowStatus.success,
+        awaitingHarnessStart: false,
+        lastOperation: AgentChatOperation.sendPrompt);
   }
 
   Future<void> retryLastPrompt() async {

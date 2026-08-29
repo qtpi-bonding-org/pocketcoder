@@ -24,6 +24,7 @@ class ChatView extends StatefulWidget {
     required this.conversation,
     required this.title,
     required this.isLoading,
+    this.awaitingHarnessStart = false,
     required this.isRunning,
     required this.requiresProviderReauthentication,
     required this.modes,
@@ -47,6 +48,7 @@ class ChatView extends StatefulWidget {
   final ag_ui_widgets.Conversation conversation;
   final String title;
   final bool isLoading;
+  final bool awaitingHarnessStart;
   final bool isRunning;
   final bool requiresProviderReauthentication;
   final Map<String, dynamic>? modes;
@@ -257,9 +259,12 @@ class _ChatViewState extends State<ChatView> {
               children: [
                 if (widget.isLoading &&
                     _latestReasoningId(widget.conversation.timeline) == null)
-                  const Center(
+                  Center(
                     child: ThinkingBlock(
-                      text: 'Working through the request.',
+                      text: widget.awaitingHarnessStart
+                          ? 'Starting the harness -- this can take a '
+                              'minute or two on a fresh container.'
+                          : 'Working through the request.',
                       isLatest: true,
                       isStreaming: true,
                     ),
