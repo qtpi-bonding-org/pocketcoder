@@ -20,15 +20,17 @@ import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 
 class FakeChatListRepository implements IChatListRepository {
-  final Map<String, ({String text, ChatTurn turn, bool isFirst})> _recorded = {};
+  final Map<String, ({String text, ChatTurn turn, bool isFirst})> _recorded =
+      {};
 
   ({String text, ChatTurn turn, bool isFirst})? lastRecorded(String chatId) =>
       _recorded[chatId];
 
-  // Not on IChatListRepository -- unused by ChatCubit today, but records
-  // its arguments so a caller added later has an assertable fake to hit.
+  @override
   Future<void> recordMessagePreview(String chatId,
-      {required String text, required ChatTurn turn, required bool isFirst}) async {
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {
     _recorded[chatId] = (
       text: text,
       turn: turn,
@@ -49,7 +51,8 @@ class FakeChatListRepository implements IChatListRepository {
     String? harnessModelOverride,
     String? ollamaModelOverride,
     List<String>? workspaceOverride,
-  }) async => const Chat(id: 'fake', title: 'fake', user: 'fake');
+  }) async =>
+      const Chat(id: 'fake', title: 'fake', user: 'fake');
 
   @override
   Future<void> archiveChat(String id) async {}
@@ -209,7 +212,8 @@ void main() {
     expect((item as agui_widgets.TextTimelineItem).text, 'Hello, world!');
   });
 
-  test('a message is marked animated the instant its stream ends, before '
+  test(
+      'a message is marked animated the instant its stream ends, before '
       'it is ever rendered as completed', () async {
     cubit.open('chat-1');
     await _settle();

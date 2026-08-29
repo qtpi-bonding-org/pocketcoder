@@ -24,6 +24,7 @@ mixin _$Harnesse {
   String? get containerImage;
   dynamic get launchTemplate;
   bool? get supportsLiveConfig;
+  bool? get supportsLiveCredentialRegistration;
   bool? get providerFanout;
   bool? get supportsOllama;
   bool? get supportsSessionDelete;
@@ -58,6 +59,10 @@ mixin _$Harnesse {
                 .equals(other.launchTemplate, launchTemplate) &&
             (identical(other.supportsLiveConfig, supportsLiveConfig) ||
                 other.supportsLiveConfig == supportsLiveConfig) &&
+            (identical(other.supportsLiveCredentialRegistration,
+                    supportsLiveCredentialRegistration) ||
+                other.supportsLiveCredentialRegistration ==
+                    supportsLiveCredentialRegistration) &&
             (identical(other.providerFanout, providerFanout) ||
                 other.providerFanout == providerFanout) &&
             (identical(other.supportsOllama, supportsOllama) ||
@@ -83,6 +88,7 @@ mixin _$Harnesse {
       containerImage,
       const DeepCollectionEquality().hash(launchTemplate),
       supportsLiveConfig,
+      supportsLiveCredentialRegistration,
       providerFanout,
       supportsOllama,
       supportsSessionDelete,
@@ -90,7 +96,7 @@ mixin _$Harnesse {
 
   @override
   String toString() {
-    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerFanout: $providerFanout, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
+    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, supportsLiveCredentialRegistration: $supportsLiveCredentialRegistration, providerFanout: $providerFanout, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
   }
 }
 
@@ -110,6 +116,7 @@ abstract mixin class $HarnesseCopyWith<$Res> {
       String? containerImage,
       dynamic launchTemplate,
       bool? supportsLiveConfig,
+      bool? supportsLiveCredentialRegistration,
       bool? providerFanout,
       bool? supportsOllama,
       bool? supportsSessionDelete,
@@ -137,6 +144,7 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
     Object? containerImage = freezed,
     Object? launchTemplate = freezed,
     Object? supportsLiveConfig = freezed,
+    Object? supportsLiveCredentialRegistration = freezed,
     Object? providerFanout = freezed,
     Object? supportsOllama = freezed,
     Object? supportsSessionDelete = freezed,
@@ -178,6 +186,11 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
       supportsLiveConfig: freezed == supportsLiveConfig
           ? _self.supportsLiveConfig
           : supportsLiveConfig // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      supportsLiveCredentialRegistration: freezed ==
+              supportsLiveCredentialRegistration
+          ? _self.supportsLiveCredentialRegistration
+          : supportsLiveCredentialRegistration // ignore: cast_nullable_to_non_nullable
               as bool?,
       providerFanout: freezed == providerFanout
           ? _self.providerFanout
@@ -303,6 +316,7 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
+            bool? supportsLiveCredentialRegistration,
             bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
@@ -323,6 +337,7 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
+            _that.supportsLiveCredentialRegistration,
             _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
@@ -358,6 +373,7 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
+            bool? supportsLiveCredentialRegistration,
             bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
@@ -377,6 +393,7 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
+            _that.supportsLiveCredentialRegistration,
             _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
@@ -411,6 +428,7 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
+            bool? supportsLiveCredentialRegistration,
             bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
@@ -430,6 +448,7 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
+            _that.supportsLiveCredentialRegistration,
             _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
@@ -454,6 +473,7 @@ class _Harnesse implements Harnesse {
       this.containerImage,
       this.launchTemplate,
       this.supportsLiveConfig,
+      this.supportsLiveCredentialRegistration,
       this.providerFanout,
       this.supportsOllama,
       this.supportsSessionDelete,
@@ -480,6 +500,8 @@ class _Harnesse implements Harnesse {
   final dynamic launchTemplate;
   @override
   final bool? supportsLiveConfig;
+  @override
+  final bool? supportsLiveCredentialRegistration;
   @override
   final bool? providerFanout;
   @override
@@ -523,6 +545,10 @@ class _Harnesse implements Harnesse {
                 .equals(other.launchTemplate, launchTemplate) &&
             (identical(other.supportsLiveConfig, supportsLiveConfig) ||
                 other.supportsLiveConfig == supportsLiveConfig) &&
+            (identical(other.supportsLiveCredentialRegistration,
+                    supportsLiveCredentialRegistration) ||
+                other.supportsLiveCredentialRegistration ==
+                    supportsLiveCredentialRegistration) &&
             (identical(other.providerFanout, providerFanout) ||
                 other.providerFanout == providerFanout) &&
             (identical(other.supportsOllama, supportsOllama) ||
@@ -548,6 +574,7 @@ class _Harnesse implements Harnesse {
       containerImage,
       const DeepCollectionEquality().hash(launchTemplate),
       supportsLiveConfig,
+      supportsLiveCredentialRegistration,
       providerFanout,
       supportsOllama,
       supportsSessionDelete,
@@ -555,7 +582,7 @@ class _Harnesse implements Harnesse {
 
   @override
   String toString() {
-    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerFanout: $providerFanout, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
+    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, supportsLiveCredentialRegistration: $supportsLiveCredentialRegistration, providerFanout: $providerFanout, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
   }
 }
 
@@ -577,6 +604,7 @@ abstract mixin class _$HarnesseCopyWith<$Res>
       String? containerImage,
       dynamic launchTemplate,
       bool? supportsLiveConfig,
+      bool? supportsLiveCredentialRegistration,
       bool? providerFanout,
       bool? supportsOllama,
       bool? supportsSessionDelete,
@@ -604,6 +632,7 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
     Object? containerImage = freezed,
     Object? launchTemplate = freezed,
     Object? supportsLiveConfig = freezed,
+    Object? supportsLiveCredentialRegistration = freezed,
     Object? providerFanout = freezed,
     Object? supportsOllama = freezed,
     Object? supportsSessionDelete = freezed,
@@ -645,6 +674,11 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
       supportsLiveConfig: freezed == supportsLiveConfig
           ? _self.supportsLiveConfig
           : supportsLiveConfig // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      supportsLiveCredentialRegistration: freezed ==
+              supportsLiveCredentialRegistration
+          ? _self.supportsLiveCredentialRegistration
+          : supportsLiveCredentialRegistration // ignore: cast_nullable_to_non_nullable
               as bool?,
       providerFanout: freezed == providerFanout
           ? _self.providerFanout

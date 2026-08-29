@@ -36,7 +36,13 @@ class MockProviderRepository extends Mock implements IProviderRepository {}
 class MockHarnessAuthRepository extends Mock
     implements IHarnessAuthRepository {}
 
-class MockChatListRepository extends Mock implements IChatListRepository {}
+class MockChatListRepository extends Mock implements IChatListRepository {
+  @override
+  Future<void> recordMessagePreview(String chatId,
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {}
+}
 
 class _RecordingLauncher implements InAppBrowserLauncher {
   _RecordingLauncher({this.result = true});

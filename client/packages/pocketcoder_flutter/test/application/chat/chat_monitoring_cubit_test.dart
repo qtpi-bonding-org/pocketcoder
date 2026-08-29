@@ -48,6 +48,12 @@ class _FakeChatListRepository implements IChatListRepository {
 
   @override
   Future<void> deleteChat(String id) async {}
+
+  @override
+  Future<void> recordMessagePreview(String chatId,
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {}
 }
 
 class _FakeLiveActivityEnder implements ILiveActivityEnder {

@@ -13,6 +13,36 @@ class MockAuthRepository extends Mock implements IAuthRepository {}
 
 class _FakeChat extends Fake implements Chat {}
 
+class _PreviewChatDao extends Mock implements ChatDao {
+  final Map<String, Map<String, dynamic>> _saved = {};
+  final Map<String, int> _saveCalls = {};
+  Duration _firstDelay = Duration.zero;
+  int getOneCallCount = 0;
+
+  void saveDelayFor(String chatId, {required Duration firstCall}) {
+    _firstDelay = firstCall;
+  }
+
+  Map<String, dynamic> lastSaved(String chatId) => _saved[chatId] ?? {};
+
+  @override
+  Future<Chat> getOne(String id,
+      {String? expand, RequestPolicy? requestPolicy}) async {
+    getOneCallCount++;
+    return Chat(id: id, title: 'test', user: 'test');
+  }
+
+  @override
+  Future<Chat> save(String? id, Map<String, dynamic> data) async {
+    final chatId = id ?? '';
+    final call = (_saveCalls[chatId] ?? 0) + 1;
+    _saveCalls[chatId] = call;
+    if (call == 1) await Future<void>.delayed(_firstDelay);
+    _saved[chatId] = Map<String, dynamic>.from(data);
+    return Chat(id: chatId, title: 'test', user: 'test');
+  }
+}
+
 void main() {
   late ChatListRepository repo;
   late MockChatDao dao;
@@ -231,11 +261,9 @@ void main() {
   });
 
   group('ChatListRepository.watchChat', () {
-    test('watches filtered to the given id and maps to the single record',
-        () {
+    test('watches filtered to the given id and maps to the single record', () {
       when(() => dao.watch(filter: 'id = "chat-1"')).thenAnswer(
-        (_) => Stream.value(
-            [const Chat(id: 'chat-1', title: 'x', user: 'u')]),
+        (_) => Stream.value([const Chat(id: 'chat-1', title: 'x', user: 'u')]),
       );
 
       expect(
@@ -255,8 +283,8 @@ void main() {
   group('ChatListRepository.setMonitored', () {
     test('sets monitored via dao.save', () async {
       when(() => dao.save('chat-1', {'monitored': true})).thenAnswer(
-        (_) async => const Chat(
-            id: 'chat-1', title: 'x', user: 'u', monitored: true),
+        (_) async =>
+            const Chat(id: 'chat-1', title: 'x', user: 'u', monitored: true),
       );
 
       await repo.setMonitored('chat-1', true);
@@ -272,6 +300,52 @@ void main() {
         () => repo.setMonitored('chat-1', true),
         throwsA(isA<ChatListException>()),
       );
+    });
+  });
+
+  group('ChatListRepository.recordMessagePreview', () {
+    late _PreviewChatDao previewDao;
+
+    setUp(() {
+      previewDao = _PreviewChatDao();
+      repo = ChatListRepository(previewDao, auth);
+    });
+
+    test(
+        'always sets preview/turn, and first_message only when isFirst is true',
+        () async {
+      await repo.recordMessagePreview('chat-1',
+          text: 'hello', turn: ChatTurn.user, isFirst: true);
+      var saved = previewDao.lastSaved('chat-1');
+      expect(saved['preview'], 'hello');
+      expect(saved['turn'], 'user');
+      expect(saved['first_message'], 'hello');
+
+      await repo.recordMessagePreview('chat-1',
+          text: 'a follow-up', turn: ChatTurn.assistant, isFirst: false);
+      saved = previewDao.lastSaved('chat-1');
+      expect(saved['preview'], 'a follow-up');
+      expect(saved['turn'], 'assistant');
+      expect(saved.containsKey('first_message'), isFalse);
+    });
+
+    test('never reads the record before writing', () async {
+      await repo.recordMessagePreview('chat-1',
+          text: 'hello', turn: ChatTurn.user, isFirst: true);
+      expect(previewDao.getOneCallCount, 0);
+    });
+
+    test('two concurrent calls write in call order, not completion order',
+        () async {
+      previewDao.saveDelayFor('chat-1',
+          firstCall: const Duration(milliseconds: 50));
+      final call1 = repo.recordMessagePreview('chat-1',
+          text: 'first call', turn: ChatTurn.user, isFirst: true);
+      final call2 = repo.recordMessagePreview('chat-1',
+          text: 'second call', turn: ChatTurn.assistant, isFirst: false);
+      await Future.wait([call1, call2]);
+
+      expect(previewDao.lastSaved('chat-1')['preview'], 'second call');
     });
   });
 }

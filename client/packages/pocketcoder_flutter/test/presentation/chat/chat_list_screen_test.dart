@@ -13,7 +13,13 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/adapters/chat_list_adapter.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 
-class MockChatListRepository extends Mock implements IChatListRepository {}
+class MockChatListRepository extends Mock implements IChatListRepository {
+  @override
+  Future<void> recordMessagePreview(String chatId,
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {}
+}
 
 class MockProviderRepository extends Mock implements IProviderRepository {}
 

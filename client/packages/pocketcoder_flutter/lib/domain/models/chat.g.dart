@@ -14,6 +14,7 @@ _Chat _$ChatFromJson(Map<String, dynamic> json) => _Chat(
           ? null
           : DateTime.parse(json['last_active'] as String),
       preview: json['preview'] as String?,
+      firstMessage: json['first_message'] as String?,
       turn: $enumDecodeNullable(_$ChatTurnEnumMap, json['turn'],
           unknownValue: ChatTurn.unknown),
       description: json['description'] as String?,
@@ -39,6 +40,7 @@ Map<String, dynamic> _$ChatToJson(_Chat instance) => <String, dynamic>{
       'user': instance.user,
       'last_active': instance.lastActive?.toIso8601String(),
       'preview': instance.preview,
+      'first_message': instance.firstMessage,
       'turn': _$ChatTurnEnumMap[instance.turn],
       'description': instance.description,
       'archived': instance.archived,

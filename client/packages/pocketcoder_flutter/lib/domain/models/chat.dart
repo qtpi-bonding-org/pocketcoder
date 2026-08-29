@@ -12,6 +12,7 @@ abstract class Chat with _$Chat {
     required String user,
     DateTime? lastActive,
     String? preview,
+    String? firstMessage,
     @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
     String? description,
     bool? archived,

@@ -29,7 +29,13 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/adapters/harness_auth_adapter.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 
-class MockChatListRepository extends Mock implements IChatListRepository {}
+class MockChatListRepository extends Mock implements IChatListRepository {
+  @override
+  Future<void> recordMessagePreview(String chatId,
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {}
+}
 
 class MockProviderRepository extends Mock implements IProviderRepository {}
 

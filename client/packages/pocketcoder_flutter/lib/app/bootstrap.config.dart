@@ -20,12 +20,12 @@ import 'package:pocketbase/pocketbase.dart' as _i169;
 import 'package:pocketbase_drift/pocketbase_drift.dart' as _i824;
 import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart'
     as _i1066;
-import 'package:pocketcoder_flutter/application/agent/seen_messages_registry.dart'
-    as _i1067;
 import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart'
     as _i710;
 import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart'
     as _i225;
+import 'package:pocketcoder_flutter/application/agent/seen_messages_registry.dart'
+    as _i313;
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart'
     as _i312;
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_cubit.dart'
@@ -246,6 +246,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i7.CaddyCaPinningHttpClient>(
         () => externalModule.caddyCaPinningHttpClient);
     gh.singleton<_i888.CaddyCaPinStore>(() => externalModule.caddyCaPinStore);
+    gh.lazySingleton<_i313.SeenMessagesRegistry>(
+        () => _i313.SeenMessagesRegistry());
     gh.lazySingleton<_i992.PocoCubit>(() => _i992.PocoCubit());
     gh.lazySingleton<_i619.AgentCacheDb>(() => _i619.AgentCacheDb());
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
@@ -491,13 +493,11 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
     gh.factory<_i718.ChatMonitoringCubit>(
         () => _i718.ChatMonitoringCubit(gh<_i34.IChatListRepository>()));
-    gh.lazySingleton<_i1067.SeenMessagesRegistry>(
-        () => _i1067.SeenMessagesRegistry());
     gh.factory<_i1066.ChatCubit>(() => _i1066.ChatCubit(
           gh<_i763.AgentChatRepository>(),
           gh<_i72.NetworkRecoverySignal>(),
           gh<_i34.IChatListRepository>(),
-          gh<_i1067.SeenMessagesRegistry>(),
+          gh<_i313.SeenMessagesRegistry>(),
         ));
     return this;
   }

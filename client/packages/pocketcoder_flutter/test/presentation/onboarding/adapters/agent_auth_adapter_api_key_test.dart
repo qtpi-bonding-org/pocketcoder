@@ -41,7 +41,13 @@ class MockProviderRepository extends Mock implements IProviderRepository {}
 class MockHarnessAuthRepository extends Mock
     implements IHarnessAuthRepository {}
 
-class MockChatListRepository extends Mock implements IChatListRepository {}
+class MockChatListRepository extends Mock implements IChatListRepository {
+  @override
+  Future<void> recordMessagePreview(String chatId,
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {}
+}
 
 const _gooseId = 'goose-1';
 const _providerId = 'provider-anthropic';

@@ -16,6 +16,7 @@ abstract class Harnesse with _$Harnesse {
     String? containerImage,
     dynamic launchTemplate,
     bool? supportsLiveConfig,
+    bool? supportsLiveCredentialRegistration,
     bool? providerFanout,
     bool? supportsOllama,
     bool? supportsSessionDelete,

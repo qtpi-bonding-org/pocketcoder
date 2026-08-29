@@ -27,7 +27,10 @@ mixin _$HarnessInstance {
   HarnessInstanceStatus get status;
   String? get lastError;
   bool? get managed;
+  bool? get retryable;
   String? get lastUsed;
+  String? get lastLogExcerpt;
+  dynamic get syncedCredentials;
   DateTime? get created;
   DateTime? get updated;
 
@@ -65,8 +68,14 @@ mixin _$HarnessInstance {
             (identical(other.lastError, lastError) ||
                 other.lastError == lastError) &&
             (identical(other.managed, managed) || other.managed == managed) &&
+            (identical(other.retryable, retryable) ||
+                other.retryable == retryable) &&
             (identical(other.lastUsed, lastUsed) ||
                 other.lastUsed == lastUsed) &&
+            (identical(other.lastLogExcerpt, lastLogExcerpt) ||
+                other.lastLogExcerpt == lastLogExcerpt) &&
+            const DeepCollectionEquality()
+                .equals(other.syncedCredentials, syncedCredentials) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
@@ -87,13 +96,16 @@ mixin _$HarnessInstance {
       status,
       lastError,
       managed,
+      retryable,
       lastUsed,
+      lastLogExcerpt,
+      const DeepCollectionEquality().hash(syncedCredentials),
       created,
       updated);
 
   @override
   String toString() {
-    return 'HarnessInstance(id: $id, harness: $harness, user: $user, harnessModel: $harnessModel, oauthAccount: $oauthAccount, launchKey: $launchKey, containerName: $containerName, acpEndpoint: $acpEndpoint, secret: $secret, status: $status, lastError: $lastError, managed: $managed, lastUsed: $lastUsed, created: $created, updated: $updated)';
+    return 'HarnessInstance(id: $id, harness: $harness, user: $user, harnessModel: $harnessModel, oauthAccount: $oauthAccount, launchKey: $launchKey, containerName: $containerName, acpEndpoint: $acpEndpoint, secret: $secret, status: $status, lastError: $lastError, managed: $managed, retryable: $retryable, lastUsed: $lastUsed, lastLogExcerpt: $lastLogExcerpt, syncedCredentials: $syncedCredentials, created: $created, updated: $updated)';
   }
 }
 
@@ -117,7 +129,10 @@ abstract mixin class $HarnessInstanceCopyWith<$Res> {
       HarnessInstanceStatus status,
       String? lastError,
       bool? managed,
+      bool? retryable,
       String? lastUsed,
+      String? lastLogExcerpt,
+      dynamic syncedCredentials,
       DateTime? created,
       DateTime? updated});
 }
@@ -147,7 +162,10 @@ class _$HarnessInstanceCopyWithImpl<$Res>
     Object? status = null,
     Object? lastError = freezed,
     Object? managed = freezed,
+    Object? retryable = freezed,
     Object? lastUsed = freezed,
+    Object? lastLogExcerpt = freezed,
+    Object? syncedCredentials = freezed,
     Object? created = freezed,
     Object? updated = freezed,
   }) {
@@ -200,10 +218,22 @@ class _$HarnessInstanceCopyWithImpl<$Res>
           ? _self.managed
           : managed // ignore: cast_nullable_to_non_nullable
               as bool?,
+      retryable: freezed == retryable
+          ? _self.retryable
+          : retryable // ignore: cast_nullable_to_non_nullable
+              as bool?,
       lastUsed: freezed == lastUsed
           ? _self.lastUsed
           : lastUsed // ignore: cast_nullable_to_non_nullable
               as String?,
+      lastLogExcerpt: freezed == lastLogExcerpt
+          ? _self.lastLogExcerpt
+          : lastLogExcerpt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      syncedCredentials: freezed == syncedCredentials
+          ? _self.syncedCredentials
+          : syncedCredentials // ignore: cast_nullable_to_non_nullable
+              as dynamic,
       created: freezed == created
           ? _self.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -323,7 +353,10 @@ extension HarnessInstancePatterns on HarnessInstance {
             HarnessInstanceStatus status,
             String? lastError,
             bool? managed,
+            bool? retryable,
             String? lastUsed,
+            String? lastLogExcerpt,
+            dynamic syncedCredentials,
             DateTime? created,
             DateTime? updated)?
         $default, {
@@ -345,7 +378,10 @@ extension HarnessInstancePatterns on HarnessInstance {
             _that.status,
             _that.lastError,
             _that.managed,
+            _that.retryable,
             _that.lastUsed,
+            _that.lastLogExcerpt,
+            _that.syncedCredentials,
             _that.created,
             _that.updated);
       case _:
@@ -382,7 +418,10 @@ extension HarnessInstancePatterns on HarnessInstance {
             HarnessInstanceStatus status,
             String? lastError,
             bool? managed,
+            bool? retryable,
             String? lastUsed,
+            String? lastLogExcerpt,
+            dynamic syncedCredentials,
             DateTime? created,
             DateTime? updated)
         $default,
@@ -403,7 +442,10 @@ extension HarnessInstancePatterns on HarnessInstance {
             _that.status,
             _that.lastError,
             _that.managed,
+            _that.retryable,
             _that.lastUsed,
+            _that.lastLogExcerpt,
+            _that.syncedCredentials,
             _that.created,
             _that.updated);
       case _:
@@ -439,7 +481,10 @@ extension HarnessInstancePatterns on HarnessInstance {
             HarnessInstanceStatus status,
             String? lastError,
             bool? managed,
+            bool? retryable,
             String? lastUsed,
+            String? lastLogExcerpt,
+            dynamic syncedCredentials,
             DateTime? created,
             DateTime? updated)?
         $default,
@@ -460,7 +505,10 @@ extension HarnessInstancePatterns on HarnessInstance {
             _that.status,
             _that.lastError,
             _that.managed,
+            _that.retryable,
             _that.lastUsed,
+            _that.lastLogExcerpt,
+            _that.syncedCredentials,
             _that.created,
             _that.updated);
       case _:
@@ -486,7 +534,10 @@ class _HarnessInstance implements HarnessInstance {
       required this.status,
       this.lastError,
       this.managed,
+      this.retryable,
       this.lastUsed,
+      this.lastLogExcerpt,
+      this.syncedCredentials,
       this.created,
       this.updated});
   factory _HarnessInstance.fromJson(Map<String, dynamic> json) =>
@@ -518,7 +569,13 @@ class _HarnessInstance implements HarnessInstance {
   @override
   final bool? managed;
   @override
+  final bool? retryable;
+  @override
   final String? lastUsed;
+  @override
+  final String? lastLogExcerpt;
+  @override
+  final dynamic syncedCredentials;
   @override
   final DateTime? created;
   @override
@@ -562,8 +619,14 @@ class _HarnessInstance implements HarnessInstance {
             (identical(other.lastError, lastError) ||
                 other.lastError == lastError) &&
             (identical(other.managed, managed) || other.managed == managed) &&
+            (identical(other.retryable, retryable) ||
+                other.retryable == retryable) &&
             (identical(other.lastUsed, lastUsed) ||
                 other.lastUsed == lastUsed) &&
+            (identical(other.lastLogExcerpt, lastLogExcerpt) ||
+                other.lastLogExcerpt == lastLogExcerpt) &&
+            const DeepCollectionEquality()
+                .equals(other.syncedCredentials, syncedCredentials) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
@@ -584,13 +647,16 @@ class _HarnessInstance implements HarnessInstance {
       status,
       lastError,
       managed,
+      retryable,
       lastUsed,
+      lastLogExcerpt,
+      const DeepCollectionEquality().hash(syncedCredentials),
       created,
       updated);
 
   @override
   String toString() {
-    return 'HarnessInstance(id: $id, harness: $harness, user: $user, harnessModel: $harnessModel, oauthAccount: $oauthAccount, launchKey: $launchKey, containerName: $containerName, acpEndpoint: $acpEndpoint, secret: $secret, status: $status, lastError: $lastError, managed: $managed, lastUsed: $lastUsed, created: $created, updated: $updated)';
+    return 'HarnessInstance(id: $id, harness: $harness, user: $user, harnessModel: $harnessModel, oauthAccount: $oauthAccount, launchKey: $launchKey, containerName: $containerName, acpEndpoint: $acpEndpoint, secret: $secret, status: $status, lastError: $lastError, managed: $managed, retryable: $retryable, lastUsed: $lastUsed, lastLogExcerpt: $lastLogExcerpt, syncedCredentials: $syncedCredentials, created: $created, updated: $updated)';
   }
 }
 
@@ -616,7 +682,10 @@ abstract mixin class _$HarnessInstanceCopyWith<$Res>
       HarnessInstanceStatus status,
       String? lastError,
       bool? managed,
+      bool? retryable,
       String? lastUsed,
+      String? lastLogExcerpt,
+      dynamic syncedCredentials,
       DateTime? created,
       DateTime? updated});
 }
@@ -646,7 +715,10 @@ class __$HarnessInstanceCopyWithImpl<$Res>
     Object? status = null,
     Object? lastError = freezed,
     Object? managed = freezed,
+    Object? retryable = freezed,
     Object? lastUsed = freezed,
+    Object? lastLogExcerpt = freezed,
+    Object? syncedCredentials = freezed,
     Object? created = freezed,
     Object? updated = freezed,
   }) {
@@ -699,10 +771,22 @@ class __$HarnessInstanceCopyWithImpl<$Res>
           ? _self.managed
           : managed // ignore: cast_nullable_to_non_nullable
               as bool?,
+      retryable: freezed == retryable
+          ? _self.retryable
+          : retryable // ignore: cast_nullable_to_non_nullable
+              as bool?,
       lastUsed: freezed == lastUsed
           ? _self.lastUsed
           : lastUsed // ignore: cast_nullable_to_non_nullable
               as String?,
+      lastLogExcerpt: freezed == lastLogExcerpt
+          ? _self.lastLogExcerpt
+          : lastLogExcerpt // ignore: cast_nullable_to_non_nullable
+              as String?,
+      syncedCredentials: freezed == syncedCredentials
+          ? _self.syncedCredentials
+          : syncedCredentials // ignore: cast_nullable_to_non_nullable
+              as dynamic,
       created: freezed == created
           ? _self.created
           : created // ignore: cast_nullable_to_non_nullable

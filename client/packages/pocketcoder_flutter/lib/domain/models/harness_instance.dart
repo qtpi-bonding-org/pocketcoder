@@ -19,7 +19,10 @@ abstract class HarnessInstance with _$HarnessInstance {
     @JsonKey(unknownEnumValue: HarnessInstanceStatus.unknown) required HarnessInstanceStatus status,
     String? lastError,
     bool? managed,
+    bool? retryable,
     String? lastUsed,
+    String? lastLogExcerpt,
+    dynamic syncedCredentials,
     DateTime? created,
     DateTime? updated,
   }) = _HarnessInstance;

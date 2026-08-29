@@ -23,4 +23,11 @@ abstract class IChatListRepository {
   /// automatically (including when no device is in the foreground, via
   /// server-side push-to-start) the next time a run starts on it.
   Future<void> setMonitored(String id, bool monitored);
+
+  Future<void> recordMessagePreview(
+    String chatId, {
+    required String text,
+    required ChatTurn turn,
+    required bool isFirst,
+  });
 }

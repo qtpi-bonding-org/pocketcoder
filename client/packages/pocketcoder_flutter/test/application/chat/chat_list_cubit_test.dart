@@ -8,7 +8,13 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 
-class MockChatListRepository extends Mock implements IChatListRepository {}
+class MockChatListRepository extends Mock implements IChatListRepository {
+  @override
+  Future<void> recordMessagePreview(String chatId,
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {}
+}
 
 void main() {
   late MockChatListRepository repo;
@@ -136,7 +142,9 @@ void main() {
       expect(cubit.state.lastCreatedChatId, isNull);
     });
 
-    test('threads harness/harnessModelOverride/workspaceOverride through to repo', () async {
+    test(
+        'threads harness/harnessModelOverride/workspaceOverride through to repo',
+        () async {
       when(() => repo.createChat(
             title: any(named: 'title'),
             harness: any(named: 'harness'),
@@ -193,8 +201,7 @@ void main() {
         'only runs once per cubit lifetime -- a second call (e.g. from '
         're-entering the chat-list screen, which mounts a fresh adapter '
         'each time even though the cubit itself is app-lifetime) is a '
-        'no-op, even if the user has deleted their only chat since',
-        () async {
+        'no-op, even if the user has deleted their only chat since', () async {
       when(() => repo.hasAnyChats()).thenAnswer((_) async => false);
       when(() => repo.createChat(title: any(named: 'title')))
           .thenAnswer((_) async => testChat);

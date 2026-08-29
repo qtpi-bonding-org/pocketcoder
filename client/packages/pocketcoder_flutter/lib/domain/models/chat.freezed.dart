@@ -19,6 +19,7 @@ mixin _$Chat {
   String get user;
   DateTime? get lastActive;
   String? get preview;
+  String? get firstMessage;
   @JsonKey(unknownEnumValue: ChatTurn.unknown)
   ChatTurn? get turn;
   String? get description;
@@ -54,6 +55,8 @@ mixin _$Chat {
             (identical(other.lastActive, lastActive) ||
                 other.lastActive == lastActive) &&
             (identical(other.preview, preview) || other.preview == preview) &&
+            (identical(other.firstMessage, firstMessage) ||
+                other.firstMessage == firstMessage) &&
             (identical(other.turn, turn) || other.turn == turn) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -84,6 +87,7 @@ mixin _$Chat {
       user,
       lastActive,
       preview,
+      firstMessage,
       turn,
       description,
       archived,
@@ -99,7 +103,7 @@ mixin _$Chat {
 
   @override
   String toString() {
-    return 'Chat(id: $id, title: $title, user: $user, lastActive: $lastActive, preview: $preview, turn: $turn, description: $description, archived: $archived, tags: $tags, created: $created, updated: $updated, agentProfile: $agentProfile, harnessModelOverride: $harnessModelOverride, ollamaModelOverride: $ollamaModelOverride, harness: $harness, workspaceOverride: $workspaceOverride, monitored: $monitored)';
+    return 'Chat(id: $id, title: $title, user: $user, lastActive: $lastActive, preview: $preview, firstMessage: $firstMessage, turn: $turn, description: $description, archived: $archived, tags: $tags, created: $created, updated: $updated, agentProfile: $agentProfile, harnessModelOverride: $harnessModelOverride, ollamaModelOverride: $ollamaModelOverride, harness: $harness, workspaceOverride: $workspaceOverride, monitored: $monitored)';
   }
 }
 
@@ -114,6 +118,7 @@ abstract mixin class $ChatCopyWith<$Res> {
       String user,
       DateTime? lastActive,
       String? preview,
+      String? firstMessage,
       @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
       String? description,
       bool? archived,
@@ -145,6 +150,7 @@ class _$ChatCopyWithImpl<$Res> implements $ChatCopyWith<$Res> {
     Object? user = null,
     Object? lastActive = freezed,
     Object? preview = freezed,
+    Object? firstMessage = freezed,
     Object? turn = freezed,
     Object? description = freezed,
     Object? archived = freezed,
@@ -178,6 +184,10 @@ class _$ChatCopyWithImpl<$Res> implements $ChatCopyWith<$Res> {
       preview: freezed == preview
           ? _self.preview
           : preview // ignore: cast_nullable_to_non_nullable
+              as String?,
+      firstMessage: freezed == firstMessage
+          ? _self.firstMessage
+          : firstMessage // ignore: cast_nullable_to_non_nullable
               as String?,
       turn: freezed == turn
           ? _self.turn
@@ -330,6 +340,7 @@ extension ChatPatterns on Chat {
             String user,
             DateTime? lastActive,
             String? preview,
+            String? firstMessage,
             @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
             String? description,
             bool? archived,
@@ -354,6 +365,7 @@ extension ChatPatterns on Chat {
             _that.user,
             _that.lastActive,
             _that.preview,
+            _that.firstMessage,
             _that.turn,
             _that.description,
             _that.archived,
@@ -392,6 +404,7 @@ extension ChatPatterns on Chat {
             String user,
             DateTime? lastActive,
             String? preview,
+            String? firstMessage,
             @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
             String? description,
             bool? archived,
@@ -415,6 +428,7 @@ extension ChatPatterns on Chat {
             _that.user,
             _that.lastActive,
             _that.preview,
+            _that.firstMessage,
             _that.turn,
             _that.description,
             _that.archived,
@@ -452,6 +466,7 @@ extension ChatPatterns on Chat {
             String user,
             DateTime? lastActive,
             String? preview,
+            String? firstMessage,
             @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
             String? description,
             bool? archived,
@@ -475,6 +490,7 @@ extension ChatPatterns on Chat {
             _that.user,
             _that.lastActive,
             _that.preview,
+            _that.firstMessage,
             _that.turn,
             _that.description,
             _that.archived,
@@ -502,6 +518,7 @@ class _Chat implements Chat {
       required this.user,
       this.lastActive,
       this.preview,
+      this.firstMessage,
       @JsonKey(unknownEnumValue: ChatTurn.unknown) this.turn,
       this.description,
       this.archived,
@@ -526,6 +543,8 @@ class _Chat implements Chat {
   final DateTime? lastActive;
   @override
   final String? preview;
+  @override
+  final String? firstMessage;
   @override
   @JsonKey(unknownEnumValue: ChatTurn.unknown)
   final ChatTurn? turn;
@@ -578,6 +597,8 @@ class _Chat implements Chat {
             (identical(other.lastActive, lastActive) ||
                 other.lastActive == lastActive) &&
             (identical(other.preview, preview) || other.preview == preview) &&
+            (identical(other.firstMessage, firstMessage) ||
+                other.firstMessage == firstMessage) &&
             (identical(other.turn, turn) || other.turn == turn) &&
             (identical(other.description, description) ||
                 other.description == description) &&
@@ -608,6 +629,7 @@ class _Chat implements Chat {
       user,
       lastActive,
       preview,
+      firstMessage,
       turn,
       description,
       archived,
@@ -623,7 +645,7 @@ class _Chat implements Chat {
 
   @override
   String toString() {
-    return 'Chat(id: $id, title: $title, user: $user, lastActive: $lastActive, preview: $preview, turn: $turn, description: $description, archived: $archived, tags: $tags, created: $created, updated: $updated, agentProfile: $agentProfile, harnessModelOverride: $harnessModelOverride, ollamaModelOverride: $ollamaModelOverride, harness: $harness, workspaceOverride: $workspaceOverride, monitored: $monitored)';
+    return 'Chat(id: $id, title: $title, user: $user, lastActive: $lastActive, preview: $preview, firstMessage: $firstMessage, turn: $turn, description: $description, archived: $archived, tags: $tags, created: $created, updated: $updated, agentProfile: $agentProfile, harnessModelOverride: $harnessModelOverride, ollamaModelOverride: $ollamaModelOverride, harness: $harness, workspaceOverride: $workspaceOverride, monitored: $monitored)';
   }
 }
 
@@ -639,6 +661,7 @@ abstract mixin class _$ChatCopyWith<$Res> implements $ChatCopyWith<$Res> {
       String user,
       DateTime? lastActive,
       String? preview,
+      String? firstMessage,
       @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
       String? description,
       bool? archived,
@@ -670,6 +693,7 @@ class __$ChatCopyWithImpl<$Res> implements _$ChatCopyWith<$Res> {
     Object? user = null,
     Object? lastActive = freezed,
     Object? preview = freezed,
+    Object? firstMessage = freezed,
     Object? turn = freezed,
     Object? description = freezed,
     Object? archived = freezed,
@@ -703,6 +727,10 @@ class __$ChatCopyWithImpl<$Res> implements _$ChatCopyWith<$Res> {
       preview: freezed == preview
           ? _self.preview
           : preview // ignore: cast_nullable_to_non_nullable
+              as String?,
+      firstMessage: freezed == firstMessage
+          ? _self.firstMessage
+          : firstMessage // ignore: cast_nullable_to_non_nullable
               as String?,
       turn: freezed == turn
           ? _self.turn

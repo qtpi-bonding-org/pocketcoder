@@ -21,7 +21,10 @@ _HarnessInstance _$HarnessInstanceFromJson(Map<String, dynamic> json) =>
           unknownValue: HarnessInstanceStatus.unknown),
       lastError: json['last_error'] as String?,
       managed: json['managed'] as bool?,
+      retryable: json['retryable'] as bool?,
       lastUsed: json['last_used'] as String?,
+      lastLogExcerpt: json['last_log_excerpt'] as String?,
+      syncedCredentials: json['synced_credentials'],
       created: json['created'] == null
           ? null
           : DateTime.parse(json['created'] as String),
@@ -44,7 +47,10 @@ Map<String, dynamic> _$HarnessInstanceToJson(_HarnessInstance instance) =>
       'status': _$HarnessInstanceStatusEnumMap[instance.status]!,
       'last_error': instance.lastError,
       'managed': instance.managed,
+      'retryable': instance.retryable,
       'last_used': instance.lastUsed,
+      'last_log_excerpt': instance.lastLogExcerpt,
+      'synced_credentials': instance.syncedCredentials,
       'created': instance.created?.toIso8601String(),
       'updated': instance.updated?.toIso8601String(),
     };
