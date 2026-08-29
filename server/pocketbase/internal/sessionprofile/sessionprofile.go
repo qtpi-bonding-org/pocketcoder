@@ -433,6 +433,11 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		case "error":
 			return p, fmt.Errorf("%w: %s", ErrHarnessFailed, instance.GetString("last_error"))
 		}
+		if p.CredentialFieldValue != "" {
+			if err := selectCredentialSyncer(harnessRec).Sync(ctx, app, instance, providerRec, p.CredentialFieldValue); err != nil {
+				return p, fmt.Errorf("sync harness credential: %w", err)
+			}
+		}
 	} else {
 		// No harness_instances row yet for this (harness, launch_key) pair —
 		// kick off provisioning (Task 6) in the background rather than

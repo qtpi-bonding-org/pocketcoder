@@ -65,7 +65,7 @@ func RegisterMcpHooks(app core.App) {
 				log.Printf("❌ [MCP] Failed to render config: %v", err)
 				return e.Next()
 			}
-			if err := restartContainer(GatewayContainer, 30*time.Second); err != nil {
+			if err := RestartContainer(GatewayContainer, 30*time.Second); err != nil {
 				log.Printf("❌ [MCP] Failed to restart gateway: %v", err)
 			}
 		case "denied":

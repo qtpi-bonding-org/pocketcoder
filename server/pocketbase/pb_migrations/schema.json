@@ -2343,6 +2343,16 @@
       },
       {
         "hidden": false,
+        "id": "json_harness_instances_synced_credentials",
+        "maxSize": 0,
+        "name": "synced_credentials",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "json"
+      },
+      {
+        "hidden": false,
         "id": "autodate_hi_created",
         "name": "created",
         "onCreate": true,

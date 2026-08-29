@@ -36,7 +36,7 @@ func renderAndRestart(prefix string, renderFn func() error, container string, e 
 		log.Printf("❌ %s Failed to render: %v", prefix, err)
 		return e.Next()
 	}
-	if err := restartContainer(container, 30*time.Second); err != nil {
+	if err := RestartContainer(container, 30*time.Second); err != nil {
 		log.Printf("❌ %s Failed to restart %s: %v", prefix, container, err)
 	}
 	return e.Next()
