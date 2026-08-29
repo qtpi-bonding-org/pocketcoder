@@ -6,8 +6,10 @@ import 'dart:async';
 
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_monitoring_cubit.dart';
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
+import 'package:pocketcoder_flutter/domain/live_activities/i_live_activity_ender.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 
 class _FakeChatListRepository implements IChatListRepository {
@@ -48,6 +50,15 @@ class _FakeChatListRepository implements IChatListRepository {
   Future<void> deleteChat(String id) async {}
 }
 
+class _FakeLiveActivityEnder implements ILiveActivityEnder {
+  final calls = <String>[];
+
+  @override
+  Future<void> endForChat(String chatId) async {
+    calls.add(chatId);
+  }
+}
+
 Future<void> _settle() => Future<void>.delayed(Duration.zero);
 
 void main() {
@@ -61,6 +72,9 @@ void main() {
 
   tearDown(() async {
     await cubit.close();
+    if (GetIt.instance.isRegistered<ILiveActivityEnder>()) {
+      await GetIt.instance.unregister<ILiveActivityEnder>();
+    }
   });
 
   test('an emitted chat surfaces its monitored flag in state', () async {
@@ -120,5 +134,21 @@ void main() {
 
     expect(repo.setMonitoredCalls.last, {'id': 'chat-1', 'monitored': false});
     expect(cubit.state.monitored, isFalse);
+  });
+
+  test('turning monitoring off ends the optional Live Activity', () async {
+    final ender = _FakeLiveActivityEnder();
+    GetIt.instance.registerSingleton<ILiveActivityEnder>(ender);
+    cubit.open('chat-1');
+    await _settle();
+    repo.controllerFor('chat-1').add(
+          const Chat(id: 'chat-1', title: 'x', user: 'u', monitored: true),
+        );
+    await _settle();
+
+    await cubit.toggle();
+
+    expect(repo.setMonitoredCalls.last, {'id': 'chat-1', 'monitored': false});
+    expect(ender.calls, ['chat-1']);
   });
 }
