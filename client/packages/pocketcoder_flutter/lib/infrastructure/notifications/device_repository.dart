@@ -72,6 +72,31 @@ class DeviceRepository implements IDeviceRepository {
   }
 
   @override
+  Future<void> setPushToStartToken(
+    String pushToken,
+    String pushToStartToken,
+  ) async {
+    return tryMethod(
+      () async {
+        final userId = _pb.authStore.record?.id;
+        if (userId == null) return;
+
+        final result = await _deviceDao.getFullList(
+          filter: 'user = "$userId" && push_token = "$pushToken"',
+        );
+
+        for (final item in result) {
+          await _deviceDao.save(item.id, {
+            'push_to_start_token': pushToStartToken,
+          });
+        }
+      },
+      RepositoryException.new,
+      'setPushToStartToken',
+    );
+  }
+
+  @override
   Future<List<Device>> getDevices() async {
     return tryMethod(
       () async {
