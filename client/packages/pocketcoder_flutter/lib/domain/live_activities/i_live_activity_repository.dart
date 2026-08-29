@@ -24,4 +24,10 @@ abstract class ILiveActivityRepository {
     required String chatId,
     required String deviceId,
   });
+
+  /// All active activities owned by the signed-in user.
+  ///
+  /// This is used to reconstruct the deterministic ActivityKit-id-to-row-id
+  /// correlation after an app relaunch.
+  Future<List<LiveActivitie>> getActiveActivities();
 }

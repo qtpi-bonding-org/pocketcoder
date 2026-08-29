@@ -196,4 +196,27 @@ void main() {
     );
     expect(adapter.lastRequest?.method, 'POST');
   });
+
+  group('LiveActivityRepository.getActiveActivities', () {
+    test('lists all active rows for the signed-in user', () async {
+      when(() => dao.getFullList(filter: any(named: 'filter')))
+          .thenAnswer((_) async => [activeActivity]);
+
+      final result = await repository.getActiveActivities();
+
+      expect(result, [activeActivity]);
+      verify(() => dao.getFullList(
+          filter: 'user = "user-1" && status = "active"')).called(1);
+    });
+
+    test('wraps a DAO failure in LiveActivityException', () async {
+      when(() => dao.getFullList(filter: any(named: 'filter')))
+          .thenThrow(Exception('offline'));
+
+      expect(
+        () => repository.getActiveActivities(),
+        throwsA(isA<LiveActivityException>()),
+      );
+    });
+  });
 }

@@ -101,4 +101,21 @@ class LiveActivityRepository implements ILiveActivityRepository {
       'getActiveActivity',
     );
   }
+
+  @override
+  Future<List<LiveActivitie>> getActiveActivities() {
+    return tryMethod(
+      () async {
+        final userId = _pb.authStore.record?.id;
+        if (userId == null) {
+          throw LiveActivityException('User not authenticated');
+        }
+        return _dao.getFullList(
+          filter: 'user = "$userId" && status = "active"',
+        );
+      },
+      LiveActivityException.new,
+      'getActiveActivities',
+    );
+  }
 }
