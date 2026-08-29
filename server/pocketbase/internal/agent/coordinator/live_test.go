@@ -45,13 +45,25 @@ func liveConfig(t *testing.T) Config {
 // config-option path production uses for a chat's selected harness model.
 // Keeping it opt-in preserves the generic live test while allowing the Docker
 // Ollama integration test to be self-contained on a fresh Goose volume.
+//
+// GOOSE_LIVE_CREDENTIAL_FIELD_NAME/VALUE are a second, independent opt-in on
+// top of provider/model: when both are set, the profile also carries
+// SupportsLiveCredentialRegistration and a real credential, driving
+// ProviderBootstrap's LiveConfigBootstrap path exactly as production does.
+// This is what TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer
+// (below) needs to reproduce the "Provider not set" bug's exact conditions
+// against a real, freshly-started goose process with no baked-in provider.
 func liveProfile() SessionProfile {
 	provider, model := os.Getenv("GOOSE_LIVE_PROVIDER"), os.Getenv("GOOSE_LIVE_MODEL")
+	fieldName, fieldValue := os.Getenv("GOOSE_LIVE_CREDENTIAL_FIELD_NAME"), os.Getenv("GOOSE_LIVE_CREDENTIAL_FIELD_VALUE")
 	return SessionProfile{
-		Target:             Target{URL: os.Getenv("GOOSE_ACP_URL"), Secret: os.Getenv("GOOSE_SERVER__SECRET_KEY")},
-		Provider:           provider,
-		Model:              model,
-		SupportsLiveConfig: provider != "" || model != "",
+		Target:                              Target{URL: os.Getenv("GOOSE_ACP_URL"), Secret: os.Getenv("GOOSE_SERVER__SECRET_KEY")},
+		Provider:                            provider,
+		Model:                               model,
+		SupportsLiveConfig:                  provider != "" || model != "",
+		SupportsLiveCredentialRegistration:  fieldName != "" && fieldValue != "",
+		CredentialFieldName:                 fieldName,
+		CredentialFieldValue:                fieldValue,
 	}
 }
 
@@ -155,6 +167,66 @@ func TestLiveRunNewSession(t *testing.T) {
 	if len(att2.Buffered) != len(got) {
 		t.Fatalf("reattach saw %d buffered events, want %d (no gap/dup)", len(att2.Buffered), len(got))
 	}
+}
+
+// TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer is the
+// checked-in, local version of the manual spike (2026-08-29) that
+// root-caused and validated the fix for "Provider not set" on a fresh
+// goose container. It requires GOOSE_LIVE_PROVIDER, GOOSE_LIVE_MODEL,
+// GOOSE_LIVE_CREDENTIAL_FIELD_NAME, and GOOSE_LIVE_CREDENTIAL_FIELD_VALUE
+// in addition to the base live-test env vars, and is meaningful only
+// against a genuinely fresh goose process that never had any provider
+// credential configured -- e.g. docker-compose.agent-test.yml's `goose`
+// service brought up with no ANTHROPIC_API_KEY/OPENROUTER_API_KEY set:
+//
+//	docker compose --profile agent-test up -d --force-recreate -V goose
+//	GOOSE_ACP_URL=ws://127.0.0.1:3000/acp \
+//	GOOSE_SERVER__SECRET_KEY=<the GOOSE_SERVER__SECRET_KEY you set> \
+//	GOOSE_LIVE_PROVIDER=openrouter GOOSE_LIVE_MODEL=<any model id> \
+//	GOOSE_LIVE_CREDENTIAL_FIELD_NAME=OPENROUTER_API_KEY \
+//	GOOSE_LIVE_CREDENTIAL_FIELD_VALUE=<a real or placeholder key> \
+//	go test -tags live_acp ./internal/agent/coordinator/ -run TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer -v
+//
+// Before the fix (ProviderBootstrap running before session/new), this
+// reliably reproduced RUN_ERROR with the harness returning
+// {"code":-32603,"data":"Failed to get provider: Provider not set"} on
+// the very first prompt against such a container. This test proves it no
+// longer does: it does not require the model call itself to succeed
+// (a placeholder key still exercises the RPC layer fully and typically
+// fails downstream at the provider, not at "Provider not set"), it only
+// asserts the run does not fail with that specific error.
+func TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer(t *testing.T) {
+	profile := liveProfile()
+	if !profile.SupportsLiveCredentialRegistration {
+		t.Skip("set GOOSE_LIVE_CREDENTIAL_FIELD_NAME and GOOSE_LIVE_CREDENTIAL_FIELD_VALUE (plus GOOSE_LIVE_PROVIDER) to run this test")
+	}
+
+	c, err := New(liveConfig(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chatID := "live-chat-fresh-provider"
+	resolve := func(context.Context) (string, error) { return "", nil }
+	profileFn := func(context.Context) (SessionProfile, error) { return profile, nil }
+	created := func(context.Context, string) error { return nil }
+	finished := func(context.Context, acpsdk.StopReason) error { return nil }
+
+	if _, err := c.StartPrompt(chatID, livePrompt(), resolve, profileFn, created, finished); err != nil {
+		t.Fatalf("StartPrompt failed: %v", err)
+	}
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	got := drainEventTypes(t, att, liveTimeout())
+
+	if len(got) == 0 {
+		t.Fatal("expected at least one event")
+	}
+	if last := got[len(got)-1]; last == events.EventTypeRunError {
+		t.Fatalf("run ended in RUN_ERROR -- if this mentions \"Provider not set\", the fix has regressed; events: %v", got)
+	}
+	t.Logf("provider bootstrap on fresh container ok: events=%d, last=%v", len(got), got[len(got)-1])
 }
 
 // TestLiveWrongSecretRejected proves the WS endpoint enforces auth: a bad
