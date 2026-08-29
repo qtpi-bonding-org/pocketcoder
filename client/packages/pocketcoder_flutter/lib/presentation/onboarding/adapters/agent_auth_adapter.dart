@@ -136,6 +136,15 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
       );
       if (saved == null) return; // user cancelled
       await providerCubit.saveProviderAPIKey(saved);
+      // saveProviderAPIKey goes through tryOperation, which records a
+      // failure in cubit state instead of throwing -- awaiting it alone
+      // never signals failure to this caller. Without this check, a save
+      // that failed on the server (e.g. a rejected create) was silently
+      // treated as success: onboarding proceeded to select a provider with
+      // no credential actually persisted, so the harness could never be
+      // provisioned and every chat prompt failed with a permanent
+      // "Harness is starting" retry loop.
+      if (providerCubit.state.status == UiFlowStatus.failure) return;
       providerId = saved.provider;
     }
 
