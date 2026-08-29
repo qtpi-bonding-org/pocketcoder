@@ -28,6 +28,8 @@ class ChatView extends StatefulWidget {
     required this.requiresProviderReauthentication,
     required this.modes,
     required this.config,
+    required this.monitored,
+    required this.onToggleMonitored,
     required this.onOpen,
     required this.onSendPrompt,
     required this.onCancel,
@@ -48,6 +50,8 @@ class ChatView extends StatefulWidget {
   final bool requiresProviderReauthentication;
   final Map<String, dynamic>? modes;
   final Map<String, dynamic>? config;
+  final bool monitored;
+  final VoidCallback onToggleMonitored;
   final ValueChanged<String> onOpen;
   final ValueChanged<String> onSendPrompt;
   final VoidCallback onCancel;
@@ -211,6 +215,11 @@ class _ChatViewState extends State<ChatView> {
           isActive: _sessionPanelExpanded,
           onTap: () =>
               setState(() => _sessionPanelExpanded = !_sessionPanelExpanded),
+        ),
+        TerminalAction(
+          label: context.l10n.chatMonitorAction,
+          isActive: widget.monitored,
+          onTap: widget.onToggleMonitored,
         ),
         if (widget.isRunning)
           TerminalAction(

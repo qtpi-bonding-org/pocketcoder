@@ -922,6 +922,12 @@ abstract class AppLocalizations {
   /// **'SESSION'**
   String get chatSessionAction;
 
+  /// No description provided for @chatMonitorAction.
+  ///
+  /// In en, this message translates to:
+  /// **'WATCH'**
+  String get chatMonitorAction;
+
   /// No description provided for @chatSendTooltip.
   ///
   /// In en, this message translates to:

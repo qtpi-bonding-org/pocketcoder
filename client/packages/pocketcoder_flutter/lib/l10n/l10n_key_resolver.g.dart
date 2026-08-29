@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-08-28T18:19:36.568629
 
 import 'app_localizations.dart';
 
@@ -105,6 +106,7 @@ class L10nKeyResolver {
       'chat.model.default' => _l10n.chatModelDefault,
       'chat.model.label' => _l10n.chatModelLabel,
       'chat.model.per.chat' => _l10n.chatModelPerChat,
+      'chat.monitor.action' => _l10n.chatMonitorAction,
       'chat.new.capability.request' => _l10n.chatNewCapabilityRequest,
       'chat.no.fields.requested' => _l10n.chatNoFieldsRequested,
       'chat.not.found' => _l10n.chatNotFound,
@@ -872,6 +874,7 @@ class L10nKeyResolver {
       'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
+      'credential.connection.expires.at' => _l10n.credentialConnectionExpiresAt(args?['expiresAt'] as DateTime? ?? DateTime.now()),
       'deployment.discard.attempt.resource.id' => _l10n.deploymentDiscardAttemptResourceId(args?['resourceId'] as String? ?? ''),
       'deployment.memory.gb' => _l10n.deploymentMemoryGb(args?['value'] as int? ?? 0),
       'deployment.memory.mb' => _l10n.deploymentMemoryMb(args?['value'] as int? ?? 0),
@@ -1033,6 +1036,7 @@ class L10nKeyResolver {
     'chat.model.default',
     'chat.model.label',
     'chat.model.per.chat',
+    'chat.monitor.action',
     'chat.new.capability.request',
     'chat.no.fields.requested',
     'chat.not.found',
@@ -1062,6 +1066,7 @@ class L10nKeyResolver {
     'credential.connection.cancel',
     'credential.connection.copy',
     'credential.connection.enter.code',
+    'credential.connection.expires.at',
     'credential.connection.open.authorization.page',
     'credential.connection.open.failed',
     'credential.connection.paste.code',
@@ -1951,6 +1956,7 @@ class L10nKeyResolver {
     'chatModelDefault': 'chat.model.default',
     'chatModelLabel': 'chat.model.label',
     'chatModelPerChat': 'chat.model.per.chat',
+    'chatMonitorAction': 'chat.monitor.action',
     'chatNewCapabilityRequest': 'chat.new.capability.request',
     'chatNoFieldsRequested': 'chat.no.fields.requested',
     'chatNotFound': 'chat.not.found',
@@ -1980,6 +1986,7 @@ class L10nKeyResolver {
     'credentialConnectionCancel': 'credential.connection.cancel',
     'credentialConnectionCopy': 'credential.connection.copy',
     'credentialConnectionEnterCode': 'credential.connection.enter.code',
+    'credentialConnectionExpiresAt': 'credential.connection.expires.at',
     'credentialConnectionOpenAuthorizationPage': 'credential.connection.open.authorization.page',
     'credentialConnectionOpenFailed': 'credential.connection.open.failed',
     'credentialConnectionPasteCode': 'credential.connection.paste.code',
@@ -2866,6 +2873,7 @@ class L10nKeyResolver {
     'chat.model.default': 'chatModelDefault',
     'chat.model.label': 'chatModelLabel',
     'chat.model.per.chat': 'chatModelPerChat',
+    'chat.monitor.action': 'chatMonitorAction',
     'chat.new.capability.request': 'chatNewCapabilityRequest',
     'chat.no.fields.requested': 'chatNoFieldsRequested',
     'chat.not.found': 'chatNotFound',
@@ -2895,6 +2903,7 @@ class L10nKeyResolver {
     'credential.connection.cancel': 'credentialConnectionCancel',
     'credential.connection.copy': 'credentialConnectionCopy',
     'credential.connection.enter.code': 'credentialConnectionEnterCode',
+    'credential.connection.expires.at': 'credentialConnectionExpiresAt',
     'credential.connection.open.authorization.page': 'credentialConnectionOpenAuthorizationPage',
     'credential.connection.open.failed': 'credentialConnectionOpenFailed',
     'credential.connection.paste.code': 'credentialConnectionPasteCode',
@@ -3788,6 +3797,7 @@ abstract class L10nKeys {
   static const chatModelDefault = 'chat.model.default';
   static const chatModelLabel = 'chat.model.label';
   static const chatModelPerChat = 'chat.model.per.chat';
+  static const chatMonitorAction = 'chat.monitor.action';
   static const chatNewCapabilityRequest = 'chat.new.capability.request';
   static const chatNoFieldsRequested = 'chat.no.fields.requested';
   static const chatNotFound = 'chat.not.found';
@@ -3817,6 +3827,7 @@ abstract class L10nKeys {
   static const credentialConnectionCancel = 'credential.connection.cancel';
   static const credentialConnectionCopy = 'credential.connection.copy';
   static const credentialConnectionEnterCode = 'credential.connection.enter.code';
+  static (String, Map<String, dynamic>) credentialConnectionExpiresAt(DateTime expiresAt) => ('credential.connection.expires.at', {'expiresAt': expiresAt});
   static const credentialConnectionOpenAuthorizationPage = 'credential.connection.open.authorization.page';
   static const credentialConnectionOpenFailed = 'credential.connection.open.failed';
   static const credentialConnectionPasteCode = 'credential.connection.paste.code';

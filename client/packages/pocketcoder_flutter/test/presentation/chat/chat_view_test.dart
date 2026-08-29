@@ -28,6 +28,8 @@ void main() {
     String? chatId = 'chat-1',
     bool isLoading = false,
     bool isRunning = false,
+    bool monitored = false,
+    VoidCallback? onToggleMonitored,
     void Function(String)? onSendPrompt,
   }) =>
       wrap(ChatView(
@@ -39,6 +41,8 @@ void main() {
         requiresProviderReauthentication: false,
         modes: null,
         config: null,
+        monitored: monitored,
+        onToggleMonitored: onToggleMonitored ?? () {},
         onOpen: (_) {},
         onSendPrompt: onSendPrompt ?? (_) {},
         onCancel: () {},
@@ -60,6 +64,20 @@ void main() {
 
     expect(find.byType(ag_ui_widgets.AgUiTranscript), findsOneWidget);
     expect(find.text('root@device \$ '), findsOneWidget);
+  });
+
+  testWidgets('tapping WATCH calls onToggleMonitored', (tester) async {
+    var toggled = false;
+    await tester.pumpWidget(buildChatView(
+      conversation: const ag_ui_widgets.Conversation(),
+      onToggleMonitored: () => toggled = true,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('WATCH'));
+    await tester.pump();
+
+    expect(toggled, isTrue);
   });
 
   testWidgets('exactly one composer is rendered', (tester) async {
@@ -104,6 +122,8 @@ void main() {
           requiresProviderReauthentication: false,
           modes: null,
           config: null,
+          monitored: false,
+          onToggleMonitored: () {},
           onOpen: (_) {},
           onSendPrompt: (_) {},
           onCancel: () {},
@@ -130,6 +150,8 @@ void main() {
       requiresProviderReauthentication: false,
       modes: null,
       config: null,
+      monitored: false,
+      onToggleMonitored: () {},
       onOpen: (_) {},
       onSendPrompt: (_) {},
       onCancel: () {},
@@ -163,6 +185,8 @@ void main() {
           requiresProviderReauthentication: requiresReauth,
           modes: null,
           config: null,
+          monitored: false,
+          onToggleMonitored: () {},
           onOpen: (_) {},
           onSendPrompt: (_) {},
           onCancel: () {},
@@ -207,6 +231,8 @@ void main() {
           requiresProviderReauthentication: false,
           modes: null,
           config: null,
+          monitored: false,
+          onToggleMonitored: () {},
           onOpen: (_) {},
           onSendPrompt: (_) {},
           onCancel: () {},

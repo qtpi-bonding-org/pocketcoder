@@ -450,6 +450,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatSessionAction => 'SESSION';
 
   @override
+  String get chatMonitorAction => 'WATCH';
+
+  @override
   String get chatSendTooltip => 'Send';
 
   @override

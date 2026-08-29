@@ -182,6 +182,7 @@
   "chatThought": "THOUGHT",
   "chatCommandOutput": "OUTPUT",
   "chatSessionAction": "SESSION",
+  "chatMonitorAction": "WATCH",
   "chatSendTooltip": "Send",
   "chatCommanderRole": "COMMANDER",
   "chatThinkingRole": "THINKING",

@@ -229,4 +229,49 @@ void main() {
       verify(() => dao.delete('chat-1')).called(1);
     });
   });
+
+  group('ChatListRepository.watchChat', () {
+    test('watches filtered to the given id and maps to the single record',
+        () {
+      when(() => dao.watch(filter: 'id = "chat-1"')).thenAnswer(
+        (_) => Stream.value(
+            [const Chat(id: 'chat-1', title: 'x', user: 'u')]),
+      );
+
+      expect(
+        repo.watchChat('chat-1'),
+        emits(const Chat(id: 'chat-1', title: 'x', user: 'u')),
+      );
+    });
+
+    test('emits null when the record is gone', () {
+      when(() => dao.watch(filter: 'id = "chat-1"'))
+          .thenAnswer((_) => Stream.value(const []));
+
+      expect(repo.watchChat('chat-1'), emits(null));
+    });
+  });
+
+  group('ChatListRepository.setMonitored', () {
+    test('sets monitored via dao.save', () async {
+      when(() => dao.save('chat-1', {'monitored': true})).thenAnswer(
+        (_) async => const Chat(
+            id: 'chat-1', title: 'x', user: 'u', monitored: true),
+      );
+
+      await repo.setMonitored('chat-1', true);
+
+      verify(() => dao.save('chat-1', {'monitored': true})).called(1);
+    });
+
+    test('wraps failures in ChatListException', () async {
+      when(() => dao.save('chat-1', {'monitored': true}))
+          .thenThrow(Exception('offline'));
+
+      await expectLater(
+        () => repo.setMonitored('chat-1', true),
+        throwsA(isA<ChatListException>()),
+      );
+    });
+  });
 }

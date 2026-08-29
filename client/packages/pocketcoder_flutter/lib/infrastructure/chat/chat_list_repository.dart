@@ -86,4 +86,22 @@ class ChatListRepository implements IChatListRepository {
       'deleteChat',
     );
   }
+
+  @override
+  Stream<Chat?> watchChat(String id) {
+    return _dao
+        .watch(filter: 'id = "$id"')
+        .map((chats) => chats.isEmpty ? null : chats.first);
+  }
+
+  @override
+  Future<void> setMonitored(String id, bool monitored) {
+    return tryMethod(
+      () async {
+        await _dao.save(id, {'monitored': monitored});
+      },
+      ChatListException.new,
+      'setMonitored',
+    );
+  }
 }
