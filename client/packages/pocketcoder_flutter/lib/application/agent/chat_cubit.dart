@@ -92,8 +92,14 @@ class ChatCubit extends AppCubit<ChatState> {
         final reducer = _reducer;
         if (reducer == null) return;
         reducer.apply(event);
+        var animatedIds = state.animatedMessageIds;
+        if (event is TextMessageEndEvent) {
+          _seenMessages.markSeen(chatId, event.messageId);
+          animatedIds = {...animatedIds, event.messageId};
+        }
         emit(state.copyWith(
           conversation: reducer.current,
+          animatedMessageIds: animatedIds,
           status: UiFlowStatus.success,
           error:
               event is RunErrorEvent && event.code == 'provider_auth_required'

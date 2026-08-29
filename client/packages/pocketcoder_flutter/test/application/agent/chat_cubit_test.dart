@@ -209,6 +209,28 @@ void main() {
     expect((item as agui_widgets.TextTimelineItem).text, 'Hello, world!');
   });
 
+  test('a message is marked animated the instant its stream ends, before '
+      'it is ever rendered as completed', () async {
+    cubit.open('chat-1');
+    await _settle();
+
+    repo.controllerFor('chat-1').add([
+      const agui.TextMessageStartEvent(
+        messageId: 'poco-1',
+        role: agui.TextMessageRole.assistant,
+      ),
+      const agui.TextMessageContentEvent(
+        messageId: 'poco-1',
+        delta: 'hello there',
+      ),
+      const agui.TextMessageEndEvent(messageId: 'poco-1'),
+    ]);
+    await _settle();
+
+    expect(cubit.state.animatedMessageIds, contains('poco-1'));
+    expect(seenMessages.hasSeen('chat-1', 'poco-1'), isTrue);
+  });
+
   test(
       'sendPrompt optimistically inserts the user\'s message into the '
       'conversation immediately, before any event arrives', () async {
