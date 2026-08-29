@@ -127,11 +127,15 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
   chat_core.TextMessageBuilder get textMessageBuilder =>
       (context, message, index, {required isSentByMe, groupStatus}) {
         if (_isReasoning(message)) {
-          return ThinkingBlock(
-            key: ValueKey(message.id),
-            text: message.text,
-            isLatest: message.id == latestReasoningId,
-            isStreaming: false,
+          return TerminalConversationFrame(
+            speaker: TerminalConversationSpeaker.poco,
+            showUserBorder: false,
+            child: ThinkingBlock(
+              key: ValueKey(message.id),
+              text: message.text,
+              isLatest: message.id == latestReasoningId,
+              isStreaming: false,
+            ),
           );
         }
         if (isSentByMe) {
@@ -175,13 +179,17 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
       (context, message, index,
           {required isSentByMe, groupStatus, required streamState}) {
         if (_isReasoning(message)) {
-          return ThinkingBlock(
-            key: ValueKey(message.id),
-            text: streamState is chat_stream.StreamStateStreaming
-                ? streamState.accumulatedText
-                : '',
-            isLatest: message.id == latestReasoningId,
-            isStreaming: true,
+          return TerminalConversationFrame(
+            speaker: TerminalConversationSpeaker.poco,
+            showUserBorder: false,
+            child: ThinkingBlock(
+              key: ValueKey(message.id),
+              text: streamState is chat_stream.StreamStateStreaming
+                  ? streamState.accumulatedText
+                  : '',
+              isLatest: message.id == latestReasoningId,
+              isStreaming: true,
+            ),
           );
         }
         final child = chat_stream.FlyerChatTextStreamMessage(

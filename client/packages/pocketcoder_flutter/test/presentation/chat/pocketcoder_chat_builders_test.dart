@@ -110,6 +110,41 @@ void main() {
     expect(find.byType(TypewriterText), findsOneWidget);
   });
 
+  testWidgets('reasoning messages render inside a Poco frame with the '
+      'default (non-warning) accent', (tester) async {
+    late StackedChatBuilders builders;
+    await tester.pumpWidget(wrap(
+      Builder(builder: (context) {
+        builders = pocketcoderChatBuilders(
+          context,
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
+        );
+        return host(
+          context,
+          builders,
+          const Conversation(timeline: [
+            TimelineItem.text(
+              id: 'reasoning-1',
+              kind: ChatMessageKind.reasoning,
+              role: 'assistant',
+              text: 'thinking...',
+              order: OrderKey(1),
+            ),
+          ]),
+        );
+      }),
+    ));
+    await tester.pumpAndSettle();
+
+    final frame = tester.widget<TerminalConversationFrame>(
+        find.byType(TerminalConversationFrame));
+    expect(frame.speaker, TerminalConversationSpeaker.poco);
+    expect(frame.isReasoning, isFalse);
+  });
+
   testWidgets(
       'a poco text message already in animatedMessageIds renders instantly',
       (tester) async {
