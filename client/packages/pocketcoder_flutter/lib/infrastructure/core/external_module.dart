@@ -6,6 +6,7 @@ import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'auth_aware_http_client.dart';
 import 'auth_store.dart';
 import 'caddy_ca_pinning_http_client.dart';
@@ -182,4 +183,15 @@ abstract class ExternalModule {
   /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.
   @lazySingleton
   ErrorBoxStorage get errorBoxStorage => SharedPrefsErrorBoxStorage();
+
+  /// Registered here, not via @LazySingleton on the class itself:
+  /// injectable's generator can't register UrlLauncherInAppBrowserLauncher's
+  /// LaunchUrlDelegate constructor parameter (a bare function type -- "is
+  /// not a class element"), so a class-level annotation would either fail
+  /// codegen or force an unregistered gh<LaunchUrlDelegate>() call that
+  /// throws at runtime. Calling the constructor directly here lets its
+  /// real Dart default value (launchUrl) apply untouched.
+  @lazySingleton
+  InAppBrowserLauncher get inAppBrowserLauncher =>
+      UrlLauncherInAppBrowserLauncher();
 }
