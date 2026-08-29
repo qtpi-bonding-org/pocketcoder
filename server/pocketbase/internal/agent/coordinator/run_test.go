@@ -117,6 +117,14 @@ type fakeConn struct {
 	extensionResponse   json.RawMessage
 	extensionErr        error
 	callOrder           []string
+	extensionMethods    []string
+	// extensionResponseByMethod lets a test return a different fake response
+	// per extension method (e.g. providers/config/save vs defaults/save),
+	// which a single fixed extensionResponse can't do now that
+	// LiveConfigBootstrap makes two distinct CallExtension calls in a row.
+	// Checked first; falls back to extensionResponse/extensionErr when the
+	// method has no entry.
+	extensionResponseByMethod map[string]json.RawMessage
 
 	resumeCalls                int
 	lastResumeSessionReq       acpsdk.ResumeSessionRequest
@@ -230,8 +238,11 @@ func newTestCoordinatorDialing(fc *fakeConn) *Coordinator {
 
 func TestEstablishSessionBootstrapsProviderBeforeNewSession(t *testing.T) {
 	fc := &fakeConn{
-		newSession:        "sess-1",
-		extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+		newSession: "sess-1",
+		extensionResponseByMethod: map[string]json.RawMessage{
+			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":""}`),
+		},
 	}
 	c := newTestCoordinatorDialing(fc)
 	profile := SessionProfile{
@@ -246,7 +257,10 @@ func TestEstablishSessionBootstrapsProviderBeforeNewSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("establishSession: %v", err)
 	}
-	want := []string{"initialize", "call_extension", "new_session"}
+	// LiveConfigBootstrap now makes two CallExtension calls -- register the
+	// credential, then set it as goose's active default provider -- before
+	// NewSession ever runs.
+	want := []string{"initialize", "call_extension", "call_extension", "new_session"}
 	if len(fc.callOrder) != len(want) {
 		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
 	}
@@ -259,7 +273,10 @@ func TestEstablishSessionBootstrapsProviderBeforeNewSession(t *testing.T) {
 
 func TestEstablishSessionBootstrapsProviderBeforeResumeSession(t *testing.T) {
 	fc := &fakeConn{
-		extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+		extensionResponseByMethod: map[string]json.RawMessage{
+			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":""}`),
+		},
 		// A non-nil Resume capability selects the ResumeSession branch
 		// for a non-empty sessionID (run.go:762-772).
 		initResp: acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{
@@ -278,7 +295,7 @@ func TestEstablishSessionBootstrapsProviderBeforeResumeSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("establishSession: %v", err)
 	}
-	want := []string{"initialize", "call_extension", "resume_session"}
+	want := []string{"initialize", "call_extension", "call_extension", "resume_session"}
 	if len(fc.callOrder) != len(want) {
 		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
 	}
@@ -291,7 +308,10 @@ func TestEstablishSessionBootstrapsProviderBeforeResumeSession(t *testing.T) {
 
 func TestEstablishSessionBootstrapsProviderBeforeLoadSession(t *testing.T) {
 	fc := &fakeConn{
-		extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+		extensionResponseByMethod: map[string]json.RawMessage{
+			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":""}`),
+		},
 		// Resume is nil and LoadSession is true, selecting the LoadSession
 		// branch for a non-empty sessionID (run.go:774-786).
 		initResp: acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{LoadSession: true}},
@@ -308,7 +328,7 @@ func TestEstablishSessionBootstrapsProviderBeforeLoadSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("establishSession: %v", err)
 	}
-	want := []string{"initialize", "call_extension", "load_session"}
+	want := []string{"initialize", "call_extension", "call_extension", "load_session"}
 	if len(fc.callOrder) != len(want) {
 		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
 	}
@@ -457,7 +477,12 @@ func (f *fakeConn) CallExtension(_ context.Context, method string, params any) (
 	f.lastExtensionParams = params
 	f.callExtensionCalls++
 	f.callOrder = append(f.callOrder, "call_extension")
+	f.extensionMethods = append(f.extensionMethods, method)
+	byMethod := f.extensionResponseByMethod
 	f.mu.Unlock()
+	if resp, ok := byMethod[method]; ok {
+		return resp, nil
+	}
 	if f.extensionResponse == nil && f.extensionErr == nil {
 		return json.RawMessage(`{}`), nil
 	}

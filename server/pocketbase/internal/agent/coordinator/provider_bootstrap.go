@@ -53,17 +53,21 @@ func (StaticEnvBootstrap) Bootstrap(context.Context, acp.Conn, SessionProfile) e
 }
 
 // LiveConfigBootstrap covers goose: it registers the resolved provider's
-// credential into goose's own provider registry via its custom ACP
-// method before any session exists on this connection, so a later
-// SetSessionConfigOption("provider", ...) switch call always has a
-// live current provider to switch from.
+// credential into goose's own provider registry and sets its active default
+// provider/model via custom ACP methods before any session exists on this
+// connection. This ensures session/new resolves the intended provider and a
+// later SetSessionConfigOption("provider", ...) switch call has a live
+// current provider to switch from.
 type LiveConfigBootstrap struct{}
 
 func (LiveConfigBootstrap) Bootstrap(ctx context.Context, conn acp.Conn, p SessionProfile) error {
 	if p.Provider == "" || !p.SupportsLiveCredentialRegistration || p.CredentialFieldName == "" {
 		return nil
 	}
-	return registerProviderCredential(ctx, conn, p.Provider, p.CredentialFieldName, p.CredentialFieldValue)
+	if err := registerProviderCredential(ctx, conn, p.Provider, p.CredentialFieldName, p.CredentialFieldValue); err != nil {
+		return err
+	}
+	return setGooseDefaultProvider(ctx, conn, p.Provider, p.Model)
 }
 
 // selectProviderBootstrap picks the bootstrap strategy for a resolved

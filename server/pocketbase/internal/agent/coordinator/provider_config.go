@@ -9,6 +9,7 @@ import (
 )
 
 const gooseProviderConfigSaveMethod = "_goose/unstable/providers/config/save"
+const gooseDefaultsSaveMethod = "_goose/unstable/defaults/save"
 
 type providerConfigFieldUpdate struct {
 	Key   string `json:"key"`
@@ -54,6 +55,32 @@ func registerProviderCredential(ctx context.Context, conn acp.Conn, providerIDSt
 	}
 	if !resp.Status.IsConfigured {
 		return fmt.Errorf("provider %s not configured after registration attempt", providerIDString)
+	}
+	return nil
+}
+
+type defaultsSaveRequest struct {
+	ProviderID string `json:"providerId"`
+	ModelID    string `json:"modelId,omitempty"`
+}
+
+type defaultsSaveResponse struct {
+	ProviderID string `json:"providerId"`
+	ModelID    string `json:"modelId"`
+}
+
+func setGooseDefaultProvider(ctx context.Context, conn acp.Conn, providerIDString, modelID string) error {
+	req := defaultsSaveRequest{ProviderID: providerIDString, ModelID: modelID}
+	raw, err := conn.CallExtension(ctx, gooseDefaultsSaveMethod, req)
+	if err != nil {
+		return fmt.Errorf("set goose default provider: %w", err)
+	}
+	var resp defaultsSaveResponse
+	if err := json.Unmarshal(raw, &resp); err != nil {
+		return fmt.Errorf("decode defaults save response: %w", err)
+	}
+	if resp.ProviderID != providerIDString {
+		return fmt.Errorf("provider %s not set as default after defaults/save (got %q)", providerIDString, resp.ProviderID)
 	}
 	return nil
 }

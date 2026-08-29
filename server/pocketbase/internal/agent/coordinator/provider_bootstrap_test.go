@@ -61,7 +61,7 @@ func TestLiveConfigBootstrapRegistersCredentialWhenPresent(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			fc := &fakeConn{extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`)}
+			fc := &fakeConn{extensionResponse: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true},"providerId":"openai"}`)}
 			err := LiveConfigBootstrap{}.Bootstrap(context.Background(), fc, SessionProfile{
 				Provider:                           "openai",
 				SupportsLiveCredentialRegistration: tc.supportsRegistration,
@@ -88,5 +88,39 @@ func TestLiveConfigBootstrapPropagatesRegistrationError(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected an error when the response reports isConfigured=false")
+	}
+}
+
+func TestLiveConfigBootstrapCallsRegistrationThenDefaults(t *testing.T) {
+	fc := &fakeConn{extensionResponse: json.RawMessage(`{"status":{"isConfigured":true},"providerId":"openai"}`)}
+	err := LiveConfigBootstrap{}.Bootstrap(context.Background(), fc, SessionProfile{
+		Provider: "openai", Model: "gpt-5", SupportsLiveCredentialRegistration: true,
+		CredentialFieldName: "OPENAI_API_KEY", CredentialFieldValue: "sk-test",
+	})
+	if err != nil {
+		t.Fatalf("Bootstrap: %v", err)
+	}
+	if fc.callExtensionCalls != 2 {
+		t.Fatalf("extension calls = %d, want 2", fc.callExtensionCalls)
+	}
+	if len(fc.extensionMethods) != 2 || fc.extensionMethods[0] != gooseProviderConfigSaveMethod || fc.extensionMethods[1] != gooseDefaultsSaveMethod {
+		t.Fatalf("extension methods = %v, want registration followed by defaults", fc.extensionMethods)
+	}
+	if fc.lastExtensionMethod != gooseDefaultsSaveMethod {
+		t.Fatalf("last extension method = %q, want %q", fc.lastExtensionMethod, gooseDefaultsSaveMethod)
+	}
+}
+
+func TestLiveConfigBootstrapStopsBeforeDefaultsWhenRegistrationFails(t *testing.T) {
+	fc := &fakeConn{extensionErr: context.Canceled}
+	err := LiveConfigBootstrap{}.Bootstrap(context.Background(), fc, SessionProfile{
+		Provider: "openai", SupportsLiveCredentialRegistration: true,
+		CredentialFieldName: "OPENAI_API_KEY", CredentialFieldValue: "sk-test",
+	})
+	if err == nil {
+		t.Fatal("expected registration error")
+	}
+	if fc.callExtensionCalls != 1 {
+		t.Fatalf("extension calls = %d, want 1", fc.callExtensionCalls)
 	}
 }
