@@ -249,6 +249,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i519.Client>(() => externalModule.httpClient);
     gh.lazySingleton<_i145.ErrorBoxStorage>(
         () => externalModule.errorBoxStorage);
+    gh.lazySingleton<_i344.InAppBrowserLauncher>(
+        () => externalModule.inAppBrowserLauncher);
     gh.lazySingleton<_i72.NetworkRecoverySignal>(
         () => _i72.NetworkRecoverySignal());
     gh.lazySingleton<String>(
@@ -343,22 +345,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1000.AppLocalizationService());
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
         () => _i853.SandboxAgentRepository(gh<_i464.SandboxAgentDao>()));
-    gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
-          gh<_i294.HarnesseDao>(),
-          gh<_i294.ModelDao>(),
-          gh<_i294.HarnessModelDao>(),
-          gh<_i294.ProviderAPIKeyDao>(),
-          gh<_i294.HarnessProviderDao>(),
-          gh<_i294.ProviderCatalogDao>(),
-        ));
     gh.lazySingleton<_i623.IHealthcheckRepository>(
         () => _i40.HealthcheckRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i922.IMcpRepository>(() => _i662.McpRepository(
           gh<_i444.McpServerDao>(),
           gh<_i935.PocketCoderApiClient>(),
         ));
-    gh.factory<_i1031.ProviderCubit>(
-        () => _i1031.ProviderCubit(gh<_i422.IProviderRepository>()));
     gh.factory<_i304.BillingCubit>(
         () => _i304.BillingCubit(gh<_i619.BillingService>()));
     gh.lazySingleton<_i209.IFilesRepository>(
@@ -401,9 +393,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),
             ));
-    gh.lazySingleton<_i344.InAppBrowserLauncher>(() =>
-        _i344.UrlLauncherInAppBrowserLauncher(
-            launch: gh<_i344.LaunchUrlDelegate>()));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
           httpClient: gh<_i519.Client>(),
@@ -454,6 +443,15 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
     gh.factory<_i614.ReleaseStatusCubit>(() =>
         _i614.ReleaseStatusCubit(gh<_i472.IServerReleaseStatusService>()));
+    gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
+          gh<_i294.HarnesseDao>(),
+          gh<_i294.ModelDao>(),
+          gh<_i294.HarnessModelDao>(),
+          gh<_i294.ProviderAPIKeyDao>(),
+          gh<_i294.HarnessProviderDao>(),
+          gh<_i294.ProviderCatalogDao>(),
+          gh<_i50.IAuthRepository>(),
+        ));
     gh.lazySingleton<_i34.IChatListRepository>(() => _i849.ChatListRepository(
           gh<_i199.ChatDao>(),
           gh<_i50.IAuthRepository>(),
@@ -473,6 +471,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i922.IMcpRepository>(),
           gh<_i904.IMcpOAuthService>(),
         ));
+    gh.factory<_i1031.ProviderCubit>(
+        () => _i1031.ProviderCubit(gh<_i422.IProviderRepository>()));
     gh.factory<_i710.ElicitationCubit>(
         () => _i710.ElicitationCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i225.PermissionCubit>(
