@@ -40,6 +40,7 @@ class ChatView extends StatefulWidget {
     required this.animatedMessageIds,
     required this.onMessageAnimated,
     required this.onFiles,
+    this.onRunStarted,
   });
 
   final String? chatId;
@@ -64,6 +65,7 @@ class ChatView extends StatefulWidget {
   final Set<String> animatedMessageIds;
   final ValueChanged<String> onMessageAnimated;
   final VoidCallback onFiles;
+  final Future<void> Function(String chatId)? onRunStarted;
 
   @override
   State<ChatView> createState() => _ChatViewState();
@@ -92,6 +94,7 @@ class _ChatViewState extends State<ChatView> {
       return;
     }
     _provideRunCompletionHaptic(oldWidget);
+    _startForegroundActivityIfNeeded(oldWidget);
     if (!widget.requiresProviderReauthentication) _reauthAnnounced = false;
     _announceReauthIfNeeded(oldWidget);
     _announceRunOutcomeIfNeeded(oldWidget);
@@ -108,6 +111,20 @@ class _ChatViewState extends State<ChatView> {
       ag_ui_widgets.RunOutcome.success => HapticFeedback.lightImpact(),
       _ => HapticFeedback.mediumImpact(),
     }));
+  }
+
+  void _startForegroundActivityIfNeeded(ChatView oldWidget) {
+    final chatId = widget.chatId;
+    if (oldWidget.isRunning ||
+        !widget.isRunning ||
+        !widget.monitored ||
+        chatId == null ||
+        chatId.isEmpty ||
+        chatId == 'new') {
+      return;
+    }
+    final start = widget.onRunStarted;
+    if (start != null) unawaited(start(chatId));
   }
 
   void _announceReauthIfNeeded(ChatView oldWidget) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,6 +17,9 @@ import 'package:pocketcoder_flutter/application/chat/chat_monitoring_state.dart'
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
+import 'package:pocketcoder_flutter/domain/live_activities/i_foreground_live_activity_starter.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
+import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
@@ -106,6 +111,7 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                 animatedMessageIds: value.animatedMessageIds,
                 onMessageAnimated: chatCubit.markMessageAnimated,
                 onFiles: () => AppNavigation.toFiles(context),
+                onRunStarted: (id) => _startForegroundActivity(id),
               );
             },
           );
@@ -124,5 +130,26 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
         child: UiFlowListener<ElicitationCubit, ElicitationState>(child: view),
       ),
     );
+  }
+
+  Future<void> _startForegroundActivity(String chatId) async {
+    // This handler is deliberately optional: pocketcoder_flutter is also
+    // used by the FOSS app, which has no proprietary ActivityKit service.
+    if (!GetIt.instance.isRegistered<IForegroundLiveActivityStarter>()) {
+      return;
+    }
+    try {
+      await GetIt.instance<IForegroundLiveActivityStarter>()
+          .startForChat(chatId);
+    } catch (error, stackTrace) {
+      unawaited(pocketCoderDiagnosticCapture.capture(
+        error: error,
+        stackTrace: stackTrace,
+        source: 'ChatAdapter',
+        operation: 'startForegroundLiveActivity',
+      ));
+      AppLogger.error(
+          'Foreground Live Activity start failed', error, stackTrace);
+    }
   }
 }

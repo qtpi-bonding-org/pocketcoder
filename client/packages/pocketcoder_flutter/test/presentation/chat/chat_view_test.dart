@@ -31,6 +31,7 @@ void main() {
     bool monitored = false,
     VoidCallback? onToggleMonitored,
     void Function(String)? onSendPrompt,
+    Future<void> Function(String)? onRunStarted,
   }) =>
       wrap(ChatView(
         chatId: chatId,
@@ -53,6 +54,7 @@ void main() {
         animatedMessageIds: const {},
         onMessageAnimated: (_) {},
         onFiles: () {},
+        onRunStarted: onRunStarted,
       ));
 
   testWidgets('an empty session shows the prompt with no centered title',
@@ -273,6 +275,50 @@ void main() {
     )));
     await tester.pumpAndSettle();
     expect(haptics, hasLength(1));
+  });
+
+  testWidgets('starts the foreground activity when a monitored run begins',
+      (tester) async {
+    final startedChats = <String>[];
+
+    await tester.pumpWidget(buildChatView(
+      conversation: const ag_ui_widgets.Conversation(),
+      isRunning: false,
+      monitored: true,
+      onRunStarted: (chatId) async => startedChats.add(chatId),
+    ));
+    await tester.pump();
+    await tester.pumpWidget(buildChatView(
+      conversation: const ag_ui_widgets.Conversation(),
+      isRunning: true,
+      monitored: true,
+      onRunStarted: (chatId) async => startedChats.add(chatId),
+    ));
+    await tester.pump();
+
+    expect(startedChats, ['chat-1']);
+  });
+
+  testWidgets('does not start the foreground activity for an unmonitored run',
+      (tester) async {
+    final startedChats = <String>[];
+
+    await tester.pumpWidget(buildChatView(
+      conversation: const ag_ui_widgets.Conversation(),
+      isRunning: false,
+      monitored: false,
+      onRunStarted: (chatId) async => startedChats.add(chatId),
+    ));
+    await tester.pump();
+    await tester.pumpWidget(buildChatView(
+      conversation: const ag_ui_widgets.Conversation(),
+      isRunning: true,
+      monitored: false,
+      onRunStarted: (chatId) async => startedChats.add(chatId),
+    ));
+    await tester.pump();
+
+    expect(startedChats, isEmpty);
   });
 
   testWidgets('submitting re-arms follow after the user scrolled back',
