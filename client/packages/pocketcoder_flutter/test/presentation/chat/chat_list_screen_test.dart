@@ -79,7 +79,11 @@ void main() {
       status: UiFlowStatus.success,
       chats: const [
         Chat(
-            id: 'chat-1', title: 'Hello World', user: 'u', preview: 'hi there'),
+            id: 'chat-1',
+            title: 'Hello World',
+            user: 'u',
+            firstMessage: 'Hello World',
+            preview: 'hi there'),
       ],
     ));
 
@@ -96,7 +100,13 @@ void main() {
     final cubit = ChatListCubit(repo);
     cubit.emit(cubit.state.copyWith(
       status: UiFlowStatus.success,
-      chats: const [Chat(id: 'chat-1', title: 'Hello World', user: 'u')],
+      chats: const [
+        Chat(
+            id: 'chat-1',
+            title: 'Hello World',
+            user: 'u',
+            firstMessage: 'Hello World'),
+      ],
     ));
 
     await tester.pumpWidget(_wrap(cubit, providerRepo));
