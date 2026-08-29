@@ -149,7 +149,6 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		p.Cwd = chatFolders[0]
 	}
 
-	// Resolve the agent definition: chat's agent_profile, else the default (§5.2).
 	pocoID := chat.GetString("agent_profile")
 	var poco *core.Record
 	if pocoID != "" {
@@ -439,11 +438,6 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 			}
 		}
 	} else {
-		// No harness_instances row yet for this (harness, launch_key) pair —
-		// kick off provisioning (Task 6) in the background rather than
-		// blocking this request on an image pull, and tell the caller to
-		// retry shortly instead of silently proceeding with an empty
-		// dial target.
 		harnessIDCopy, launchKeyCopy := harnessRec.Id, launchKey
 		go func() {
 			if _, perr := hooks.ProvisionHarnessInstance(context.Background(), app, dockerapi.New(), harnessIDCopy, launchKeyCopy, userID); perr != nil {

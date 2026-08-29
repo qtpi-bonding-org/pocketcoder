@@ -5,27 +5,22 @@ import 'package:flutter_color_palette/flutter_color_palette.dart';
 class AppPalette {
   static final IColorPalette primary = AppColorPalette(
     colors: const {
-      // Green Hierarchy
-      'color1': Color(0xFF050505), // Background (Deep Black)
-      'color2': Color(0xFF00FF41), // Vivid Green (High Intesity)
-      'color3': Color(0xFF00B82A), // Phosphor Green (Standard Reading)
-      'neutral1': Color(0xFF003B00), // Trace Green (Subtle UI)
+      'color1': Color(0xFF050505),
+      'color2': Color(0xFF00FF41),
+      'color3': Color(0xFF00B82A),
+      'neutral1': Color(0xFF003B00),
 
-      // PocketCoder ANSI Accents
       'dangerRed': Color(0xFFFF3333),
       'warningAmber': Color(0xFFFFB100),
 
-      // Interactable color
-      'interactable': Color(0xFF00FF41), // Vivid Green
+      'interactable': Color(0xFF00FF41),
 
-      // Semantic colors
-      'info': Color(0xFF00B82A), // Phosphor Green
-      'success': Color(0xFF00FF41), // Vivid Green
-      'error': Color(0xFFFF3333), // Danger Red
-      'warning': Color(0xFFFFB100), // Warning Amber
+      'info': Color(0xFF00B82A),
+      'success': Color(0xFF00FF41),
+      'error': Color(0xFFFF3333),
+      'warning': Color(0xFFFFB100),
 
-      // Destructive color
-      'destructive': Color(0xFFFF3333), // Danger Red
+      'destructive': Color(0xFFFF3333),
     },
     name: 'PocketCoder Terminal',
   );
@@ -42,33 +37,26 @@ class AppPalette {
 
 /// Extension for semantic color access
 extension AppColors on IColorPalette {
-  // Background & Surface
   Color get backgroundPrimary => getColor('color1') ?? const Color(0xFF050505);
   Color get black => getColor('color1') ?? const Color(0xFF050505);
 
-  // Green Hierarchy
   Color get vividGreen => getColor('color2') ?? const Color(0xFF00FF41);
   Color get phosphorGreen => getColor('color3') ?? const Color(0xFF00B82A);
   Color get traceGreen => getColor('neutral1') ?? const Color(0xFF003B00);
 
-  // Legacy mappings for stability
   Color get textPrimary => vividGreen;
   Color get textSecondary => traceGreen;
   Color get primaryColor => phosphorGreen;
 
-  // ANSI Accents
   Color get dangerRed => getColor('dangerRed') ?? const Color(0xFFFF3333);
   Color get warningAmber => getColor('warningAmber') ?? const Color(0xFFFFB100);
 
-  // Interactable
   Color get interactableColor => getColor('interactable') ?? const Color(0xFF00FF41);
 
-  // Semantic colors
   Color get infoColor => getColor('info') ?? const Color(0xFF00B82A);
   Color get successColor => getColor('success') ?? const Color(0xFF00FF41);
   Color get errorColor => getColor('error') ?? const Color(0xFFFF3333);
   Color get warningColor => getColor('warning') ?? const Color(0xFFFFB100);
 
-  // Destructive color
   Color get destructiveColor => getColor('destructive') ?? const Color(0xFFFF3333);
 }

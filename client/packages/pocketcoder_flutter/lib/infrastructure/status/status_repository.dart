@@ -33,7 +33,6 @@ class StatusRepository implements IStatusRepository {
   Future<List<Healthcheck>> getHealthchecks() async {
     try {
       // Intentional DAO bypass: health status is required before authentication.
-      // Deliberate exception: health status is required before login.
       final records =
           await _pb.collection(Collections.healthchecks).getFullList(
                 sort: 'name',
@@ -54,7 +53,6 @@ class StatusRepository implements IStatusRepository {
   Stream<List<Healthcheck>> watchHealthchecks() async* {
     final controller = StreamController<List<Healthcheck>>();
 
-    // Initial fetch
     final initial = await getHealthchecks();
     controller.add(initial);
 

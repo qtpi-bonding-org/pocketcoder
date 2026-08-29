@@ -1,4 +1,3 @@
-// lib/presentation/errors/error_inbox_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:intl/intl.dart';

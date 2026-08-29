@@ -1,11 +1,3 @@
-// PermissionCubit (plan Task 12): owns the SessionState.permission slice of
-// one chat's reduced Conversation stream and acts on it through the
-// AgentChatRepository. Mirrors ChatCubit's open-pattern: subscribe via
-// repository.watch(chatId), tear down + replace the subscription on a
-// subsequent open(). Action methods (authorize/deny) never mutate the
-// permission map directly — the effect arrives back through the next
-// watch() emission, the same non-mutating-action discipline as
-// ChatCubit.sendPrompt.
 import 'dart:async';
 
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';

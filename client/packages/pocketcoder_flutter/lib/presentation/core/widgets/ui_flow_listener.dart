@@ -80,7 +80,6 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
         loadingService.hide();
       }
     } catch (_) {
-      // Service might not be registered
     }
   }
 

@@ -30,10 +30,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// toolMeta is the per-tool retained state kept while a tool call is open: the
-// last seen title/kind/status (read-modify-write across tool_call_update).
-// Declared here in Task 5 so the openTools map can carry structured values
-// from the start; Task 6 populates it through startTool/updateTool.
 type toolMeta struct {
 	title, kind, status string
 }
@@ -292,13 +288,6 @@ func (b *Bridge) messageChunk(role string, msgID *string, content acpsdk.Content
 	return append(result, events.NewTextMessageContentEvent(id, text))
 }
 
-// PermissionPending represents the one transient c1 state exposed to AG-UI.
-// The detailed choices stay in the authenticated c1 approval endpoint.
-// Routing through b.state.set records the pending permission in the projection
-// (so Snapshot() surfaces it) AND returns the same STATE_DELTA/add/pocketcoder-
-// permission event shape the bare version emitted — TestBridgePermissionState
-// keeps passing on the payload, and Task 8's Snapshot-omits-resolved becomes
-// reachable because the value is now retained.
 func (b *Bridge) PermissionPending(requestID string, options []acpsdk.PermissionOption, toolCallID string, title *string, kind *acpsdk.ToolKind) events.Event {
 	return b.state.set("permission", PermissionPayload(requestID, options, toolCallID, title, kind))
 }

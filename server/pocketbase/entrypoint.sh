@@ -21,22 +21,18 @@
 
 set -euo pipefail
 
-# 0. Check for backup and archive if needed
 echo "🔍 Checking for database backup..."
 /app/restore_from_backup.sh
 
-# 1. Run Migrations
 echo "📦 Running database migrations..."
 /app/pocketbase migrate up
 
-# 2. Provision Superuser (Root)
 if [ -n "$POCKETBASE_SUPERUSER_EMAIL" ] && [ -n "$POCKETBASE_SUPERUSER_PASSWORD" ]; then
     echo "🔍 Checking for superuser: $POCKETBASE_SUPERUSER_EMAIL..."
     /app/pocketbase superuser upsert "$POCKETBASE_SUPERUSER_EMAIL" "$POCKETBASE_SUPERUSER_PASSWORD"
     echo "✅ Superuser configured."
 fi
 
-# 3. Start periodic backup in background (every 5 minutes)
 echo "📦 Starting automatic backup service..."
 (
     # Wait for PocketBase to fully start
@@ -48,6 +44,5 @@ echo "📦 Starting automatic backup service..."
     done
 ) &
 
-# 4. Launch PocketBase
 echo "🚀 Starting PocketCoder Sovereign Backend..."
 exec "$@"

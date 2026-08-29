@@ -1,10 +1,3 @@
-// SessionControlsCubit (plan Task 12): owns the SessionState.modes and
-// SessionState.config slices of one chat's reduced Conversation stream and
-// acts on them through AgentChatRepository.setMode / setConfigOption.
-// Mirrors ChatCubit's open-pattern (subscribe via repository.watch; replace
-// the subscription on a subsequent open). selectMode/setOption never mutate
-// the modes/config maps directly — the next watch() emission carries the
-// updated snapshot.
 import 'dart:async';
 
 import 'package:acp_dart/acp_dart.dart';

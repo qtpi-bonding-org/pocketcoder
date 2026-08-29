@@ -108,10 +108,6 @@ func resolveMode(app core.App, userID, harnessID, providerID string) string {
 	return sel.GetString("mode")
 }
 
-// clearSelectionToNone upserts a credential_selections row with mode=none
-// for (harness, provider), clearing any oauth_account it may have carried
-// (Task 5's OnRecordUpdate hook enforces the clear; this handles the
-// create-a-fresh-"none"-row path where there's nothing to clear yet).
 func clearSelectionToNone(app core.App, userID, harnessID, providerID string) error {
 	sel, err := app.FindFirstRecordByFilter(
 		"credential_selections",

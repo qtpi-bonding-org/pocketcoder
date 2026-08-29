@@ -45,7 +45,6 @@ class TerminalFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    // A single green line to separate footer from content
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(

@@ -43,7 +43,6 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
   final Color scanline;
   final double scanlineOpacity;
 
-  // ANSI Accents
   final Color danger;
   final Color warning;
 
@@ -128,8 +127,8 @@ class AppTheme {
         ),
       ],
       textTheme: AppFonts.textTheme.apply(
-        bodyColor: palette.phosphorGreen, // Standard reading text
-        displayColor: palette.vividGreen, // Headers / Highlights
+        bodyColor: palette.phosphorGreen,
+        displayColor: palette.vividGreen,
         fontFamily: AppFonts.bodyFamily,
         package: 'pocketcoder_flutter',
       ),
@@ -154,7 +153,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: palette.vividGreen,
-          foregroundColor: const Color(0xFF000000), // True Black
+          foregroundColor: const Color(0xFF000000),
           minimumSize: Size.fromHeight(AppSizes.buttonHeight),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.zero,

@@ -9,7 +9,6 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
-// import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart'; // Unused here
 
 import '../app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -90,10 +89,8 @@ class App extends StatelessWidget {
                   ],
                   supportedLocales: const [Locale('en')],
                   builder: (context, child) {
-                    // Initialize UI Scaler
                     UiScaler.instance.init(context);
 
-                    // Update Localization Service
                     final l10n = AppLocalizations.of(context);
                     if (l10n != null) {
                       final service =

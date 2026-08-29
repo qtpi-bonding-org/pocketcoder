@@ -74,7 +74,6 @@ class HealthcheckRepository implements IHealthcheckRepository {
           controller.add(records.items);
         }
       } catch (_) {
-        // Log error but don't crash
       }
     });
 

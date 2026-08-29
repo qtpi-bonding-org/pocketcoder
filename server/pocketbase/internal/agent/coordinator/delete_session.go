@@ -31,13 +31,6 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-// DeleteSession is a system-triggered cleanup (chats delete hook, Task 15):
-// it looks up any agent_sessions mapping for chatID (regardless of which
-// user owns it — a delete hook is not scoped to a request's Auth), deletes
-// the Agent session over a short-lived ACP conn, then removes the mapping
-// row. On failure it returns the error without deleting the row so a future
-// reconcile sweep can retry; it never blocks the chat record's own delete
-// (the caller runs this best-effort, after the delete already succeeded).
 func (c *Coordinator) DeleteSession(ctx context.Context, app core.App, chatID string) error {
 	record, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:chat}", map[string]any{"chat": chatID})
 	if err != nil {

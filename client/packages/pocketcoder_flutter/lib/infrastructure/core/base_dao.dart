@@ -243,18 +243,12 @@ abstract class BaseDao<T> {
     }
   }
 
-  // ===========================================================================
-  // HELPERS
-  // ===========================================================================
-
   List<T> _mapRecords(List<RecordModel> records) {
     return records.map(_mapRecord).toList();
   }
 
   T _mapRecord(RecordModel record) {
     try {
-      // Official SDK Bridge: Leverage record.toJson() as the source of truth.
-      // This includes id, created, updated, and all data fields automatically.
       final json = record.toJson();
 
       // Sanitization: Fix empty date strings that would crash DateTime.parse.

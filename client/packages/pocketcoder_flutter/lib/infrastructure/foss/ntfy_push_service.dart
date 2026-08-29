@@ -16,7 +16,6 @@ class NtfyPushService implements PushService {
 
   @override
   Future<void> initialize() async {
-    // 1. Initialize logic
     await UnifiedPush.initialize(
       onNewEndpoint: _onNewEndpoint,
       onRegistrationFailed: _onRegistrationFailed,
@@ -25,7 +24,6 @@ class NtfyPushService implements PushService {
       onTempUnavailable: _onTempUnavailable,
     );
 
-    // 2. Try to register with current or default distributor
     final success = await UnifiedPush.tryUseCurrentOrDefaultDistributor();
     if (success) {
       await UnifiedPush.register(instance: instance);

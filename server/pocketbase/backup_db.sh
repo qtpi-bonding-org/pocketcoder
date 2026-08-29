@@ -11,7 +11,6 @@ BACKUP_FILE="$BACKUP_DIR/data.db"
 # Ensure backup directory exists
 mkdir -p "$BACKUP_DIR"
 
-# Check if main database exists
 if [ ! -f "$DB_PATH" ]; then
     exit 0
 fi

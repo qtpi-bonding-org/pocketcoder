@@ -145,7 +145,6 @@ func AddLogOperations(registry *operation.Registry, deps LogsDeps) {
 		}
 		defer body.Close()
 
-		// Set HTTP headers for Server-Sent Events (SSE).
 		re.Response.Header().Set("Content-Type", "text/event-stream")
 		re.Response.Header().Set("Cache-Control", "no-cache")
 		re.Response.Header().Set("Connection", "keep-alive")

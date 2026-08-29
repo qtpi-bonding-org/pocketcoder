@@ -75,7 +75,6 @@ class VimToast extends StatelessWidget {
           VimToastType.warning => context.terminalColors.warning,
         };
 
-    // Calculate dashes based on message length (min 40)
     final int dashCount = (message.length + 4).clamp(40, 60);
     final String dashes = '-' * dashCount;
 

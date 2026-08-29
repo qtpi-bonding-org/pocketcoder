@@ -23,10 +23,8 @@ class BootScreen extends StatefulWidget {
 }
 
 class _BootScreenState extends State<BootScreen> {
-  // State Machine
   bool _logsDimmed = false;
   bool _pocoVisible = false;
-  // Data
   final List<String> _logs = [];
   final ScrollController _scrollController = ScrollController();
   Timer? _backgroundLogTimer;
@@ -51,12 +49,10 @@ class _BootScreenState extends State<BootScreen> {
 
     String fileContent = '';
     try {
-      // Try package path first (for monorepo/web consistency)
       fileContent = await rootBundle
           .loadString('packages/pocketcoder_flutter/assets/boot_log.txt');
     } catch (e) {
       try {
-        // Fallback to direct path
         fileContent = await rootBundle.loadString('assets/boot_log.txt');
       } catch (e2) {
         if (!mounted) return;
@@ -181,7 +177,6 @@ class _BootScreenState extends State<BootScreen> {
                   (PocoExpression.awake, 1000),
                 ],
               );
-          // Wait a bit longer to let the user read before moving.
           await Future.delayed(const Duration(seconds: 3));
           if (mounted) context.goNamed(RouteNames.onboarding);
           return;
@@ -227,7 +222,6 @@ class _BootScreenState extends State<BootScreen> {
             (PocoExpression.awake, 1000),
           ],
         );
-        // Wait a bit longer to let the user read before moving
         await Future.delayed(const Duration(seconds: 3));
         if (mounted) context.goNamed(RouteNames.onboarding);
       }

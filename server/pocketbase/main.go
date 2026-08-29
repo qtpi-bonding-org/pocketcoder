@@ -79,12 +79,10 @@ func main() {
 	var coord coordinator.AgentRuntime
 	coordGetter := func() coordinator.AgentRuntime { return coord }
 
-	// 1. Register Migrations
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		Automigrate: true,
 	})
 
-	// 2. Register Global Sovereign Hooks
 	hooks.RegisterGlobalTimestamps(app)
 	hooks.RegisterNotificationHooks(app)
 	hooks.RegisterLiveActivityHooks(app)
@@ -98,7 +96,6 @@ func main() {
 	hooks.RegisterAgentFileHooks(app)
 	hooks.RegisterGitSSHHooks(app)
 
-	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
 		release := os.Getenv("POCKETCODER_RELEASE")
@@ -112,7 +109,6 @@ func main() {
 			}
 		}
 
-		// A. Register the generated PocketCoder API boundary.
 		var err error
 		coord, err = operationapi.Register(app, e, coordGetter)
 		if err != nil {
@@ -149,7 +145,6 @@ func main() {
 		return e.Next()
 	})
 
-	// 5. Launch PocketBase
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}

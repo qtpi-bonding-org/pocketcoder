@@ -53,7 +53,6 @@ class PocketcoderAgUiTransport implements IAgUiTransport {
           _events.add(event);
         }
       }
-      // else: identical to what's already been emitted -- true no-op.
       _seenJson = serialized;
     });
     return _events.stream;

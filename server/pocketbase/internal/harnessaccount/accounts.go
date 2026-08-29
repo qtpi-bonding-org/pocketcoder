@@ -27,12 +27,6 @@ func RegisterHooks(app core.App) {
 		e.Record.Set("last_error", "")
 		return e.Next()
 	})
-	// Spec §4.7: creating an OAuth account for a (harness, provider) pair
-	// that doesn't advertise OAuth support must be rejected here, at the
-	// schema/hook layer -- not only in the bespoke auth endpoint (Task 9),
-	// since harness_oauth_accounts remains directly client-creatable via
-	// the standard PocketBase REST API and its own create rule
-	// (`@request.auth.id != ''`) does not check this on its own.
 	app.OnRecordCreate("harness_oauth_accounts").BindFunc(func(e *core.RecordEvent) error {
 		edge, err := app.FindFirstRecordByFilter(
 			"harness_providers",

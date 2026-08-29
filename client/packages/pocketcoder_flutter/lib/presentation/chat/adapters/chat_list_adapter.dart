@@ -155,10 +155,6 @@ class ChatListScreenAdapter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ChatListCubit is provided app-wide at the root (see App's
-    // MultiBlocProvider), not scoped here any more -- see
-    // ChatListAdapter.buildAdapter's adapter.keep() for where
-    // watchChats()/checkEmptyAndMaybeAutoCreate() now run instead.
     return ChatListAdapter(
       providerRepository: getIt<IProviderRepository>(),
       harnessAuthRepository: getIt<IHarnessAuthRepository>(),

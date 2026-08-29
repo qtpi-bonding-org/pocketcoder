@@ -80,7 +80,6 @@ func (r *Runner) RunDetached(ownerID string) {
 	}
 }
 
-// Run executes a schedule synchronously. A paused schedule is a legitimate no-op.
 func (r *Runner) Run(ctx context.Context, ownerID string) error {
 	row, err := r.App.FindRecordById("schedule_owners", ownerID)
 	if err != nil {

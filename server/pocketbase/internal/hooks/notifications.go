@@ -253,19 +253,16 @@ func SendPushNotification(app core.App, userID, title, message, notifType, chatI
 // type-specific data (e.g. a pending permission's request_id and offered
 // options) merged into the outgoing payload -- see PushProvider.Send.
 func SendPushNotificationWithExtra(app core.App, userID, title, message, notifType, chatID string, extra map[string]string) error {
-	// 1. Notification Rules: check if this type is enabled for the user
 	if !isNotificationTypeEnabled(app, userID, notifType) {
 		log.Printf("🔕 [Push] User %s has disabled '%s' notifications. Skipping.", userID, notifType)
 		return nil
 	}
 
-	// 2. Presence Check: suppress if user is online
 	if IsUserOnline(app, userID) {
 		log.Printf("🔔 [Push] User %s is online. Suppressing '%s' notification.", userID, notifType)
 		return nil
 	}
 
-	// 3. Dispatch to all active devices
 	return dispatchToDevices(app, userID, title, message, notifType, chatID, extra)
 }
 
@@ -287,7 +284,6 @@ func isNotificationTypeEnabled(app core.App, userID, notifType string) bool {
 		return true
 	}
 
-	// Parse the JSON rules map
 	var rules map[string]bool
 	switch v := rulesRaw.(type) {
 	case string:

@@ -1,6 +1,3 @@
-// State for ElicitationCubit (plan Task 12): the current
-// SessionState.elicitation slice surfaced as a cubit state so the UI can
-// render the requestedSchema form and submit the user's response.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';

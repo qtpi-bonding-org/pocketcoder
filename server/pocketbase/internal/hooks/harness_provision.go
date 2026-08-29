@@ -685,13 +685,6 @@ func renderEnv(app core.App, envTemplate map[string]string, secret string, harne
 	return env, nil
 }
 
-// providersForLaunch returns the harness_providers edges relevant to this
-// launch: every edge when the harness is supports_live_config (its model
-// can change mid-chat, so every credentialed provider must be available),
-// or just the one pinned edge matching providerID otherwise (falling back
-// to every edge if providerID is empty, e.g. no model selected yet).
-// providerID, when non-empty, is a pc_providers RECORD id -- models.provider
-// is a relation (Task 1), so no provider_id-string lookup is needed here.
 func providersForLaunch(app core.App, harness *core.Record, providerID string) ([]*core.Record, error) {
 	filter := "harness = {:h}"
 	params := map[string]any{"h": harness.Id}

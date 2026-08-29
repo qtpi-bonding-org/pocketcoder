@@ -214,8 +214,6 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             openedChat = true;
             WidgetsBinding.instance.addPostFrameCallback((_) async {
               Navigator.of(dialogContext).pop();
-              // The caller's shell remains underneath the modal; chat is
-              // entered exactly as the retired login screen did.
               await _openChat(context, harness);
             });
           }
@@ -258,8 +256,6 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                     if (uri != null) unawaited(_openChallenge(context, uri));
                   },
                   onCopyCode: (code) {
-                    // The view handles the clipboard operation; this callback
-                    // remains available for adapter-side analytics/future use.
                   },
                   onSubmitCode: (code) => auth.submitCode(
                       harnessId: harness.id, code: code, provider: provider),
@@ -279,8 +275,6 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                 ),
               ],
             ),
-            // CredentialConnectionView owns the cancel/retry controls and
-            // receives the adapter's side-effect callbacks above.
             actions: const [],
           );
         },

@@ -107,13 +107,11 @@ class ProviderView extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.all(AppSizes.space),
       children: [
-        // ── HARNESS MODELS (read-only) ──
         BiosSection(
           title: context.l10n.providerScreenHarnessModelsSection,
           child: _buildHarnessModelList(context, state),
         ),
 
-        // ── PROVIDER KEYS (CRUD) ──
         BiosSection(
           title: context.l10n.providerScreenApiKeysSection,
           child: _buildProviderKeyList(context, state),
@@ -133,7 +131,6 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-  // ── HARNESS MODELS ──
 
   Widget _buildHarnessModelList(BuildContext context, ProviderState state) {
     if (state.harnessModels.isEmpty) {
@@ -186,7 +183,6 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-  // ── PROVIDER KEYS ──
 
   Widget _buildProviderKeyList(BuildContext context, ProviderState state) {
     if (state.providerAPIKeys.isEmpty) {
@@ -269,7 +265,6 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-  // ── DIALOGS ──
 
   void _openKeyEditor(
     BuildContext context,
@@ -291,7 +286,6 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-  // ── HELPERS ──
 
   /// Shows a short prefix and suffix of the provider API key.
   String _maskKeyPreview(String? apiKey) {

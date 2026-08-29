@@ -25,14 +25,12 @@ abstract class ExternalModule {
   Future<PocketBase> get pocketBase async {
     logInfo('PocketBaseInit: Starting...');
 
-    // Restore persisted server URL, or fall back to default
     const storage = FlutterSecureStorage();
     final savedUrl = await storage.read(key: 'pb_server_url');
     final baseUrl = savedUrl ?? 'http://127.0.0.1:8090';
     logDebug(
         'PocketBaseInit: Using URL: $baseUrl${savedUrl != null ? ' (restored)' : ' (default)'}');
 
-    // Load Schema (for offline capabilities)
     String? schemaJson;
     try {
       logDebug('PocketBaseInit: Loading assets/pb_schema.json...');
@@ -53,7 +51,6 @@ abstract class ExternalModule {
       }
     }
 
-    // Create secure auth store (reuses storage from above)
     final authStoreConfig = _authStoreConfig ??= AuthStoreConfig(storage);
     final authStore = await authStoreConfig.createAuthStore();
     _authHttpState.configureDeployment(
@@ -61,7 +58,6 @@ abstract class ExternalModule {
       tokenProvider: () => authStore.token,
     );
 
-    // Initialize PocketBase Drift Client with persistent auth
     final client = $PocketBase.database(
       baseUrl,
       requestPolicy: RequestPolicy.cacheAndNetwork,

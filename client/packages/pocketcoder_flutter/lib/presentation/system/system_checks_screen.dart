@@ -46,7 +46,6 @@ class SystemChecksView extends StatelessWidget {
           builder: (context) {
             return Column(
               children: [
-                // Inline REFRESH button
                 Padding(
                   padding: EdgeInsets.all(AppSizes.space),
                   child: Align(

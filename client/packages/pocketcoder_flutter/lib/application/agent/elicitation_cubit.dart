@@ -1,10 +1,3 @@
-// ElicitationCubit (plan Task 12): owns the SessionState.elicitation slice
-// of one chat's reduced Conversation stream and forwards the user's
-// ElicitationResponse through AgentChatRepository.respondElicitation.
-// Mirrors ChatCubit's open-pattern (subscribe via repository.watch; replace
-// the subscription on a subsequent open). submit() never mutates the
-// elicitation map directly — the next watch() emission carries the cleared
-// form.
 import 'dart:async';
 
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';

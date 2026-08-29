@@ -1,4 +1,3 @@
-// lib/infrastructure/errors/error_code_mapper.dart
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/chat_list_exception.dart';
 

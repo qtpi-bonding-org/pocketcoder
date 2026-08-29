@@ -72,7 +72,6 @@ func AddProxyOperations(registry *operation.Registry, deps ProxyDeps) {
 func createProxyHandler(target string, prefix string, transport http.RoundTripper) func(re *core.RequestEvent) error {
 	targetUrl, err := url.Parse(target)
 	if err != nil {
-		// Return a handler that always reports the misconfiguration.
 		return func(re *core.RequestEvent) error {
 			return re.BadRequestError(fmt.Sprintf("Proxy target URL is malformed: %v", err), nil)
 		}
@@ -91,7 +90,6 @@ func createProxyHandler(target string, prefix string, transport http.RoundTrippe
 			}
 		}
 
-		// Update headers and target URL for the proxy
 		req.URL.Host = targetUrl.Host
 		req.URL.Scheme = targetUrl.Scheme
 		req.Header.Set("X-Forwarded-Host", req.Host)

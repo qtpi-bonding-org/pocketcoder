@@ -46,16 +46,13 @@ class BiosRow extends StatelessWidget {
   final bool hasBadge;
   final BiosRowVariant variant;
 
-  // toggle
   final bool toggleValue;
   final ValueChanged<bool>? onToggleChanged;
 
-  // input
   final TextEditingController? inputController;
   final ValueChanged<String>? onInputChanged;
   final String? inputHint;
 
-  // expand
   final bool isExpanded;
 
   @override

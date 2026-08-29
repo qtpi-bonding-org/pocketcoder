@@ -29,10 +29,9 @@ class UiScaler {
     _initialized = true;
   }
 
-  /// Scale a generic dimension (padding, margin, radius, etc.)
   double px(double value) {
     if (value == 0) return 0;
-    if (!_initialized) return value; // Fallback before init
+    if (!_initialized) return value;
     return value * _scaleFactor;
   }
 

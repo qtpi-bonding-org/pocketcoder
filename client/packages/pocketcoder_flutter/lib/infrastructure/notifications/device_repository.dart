@@ -24,7 +24,6 @@ class DeviceRepository implements IDeviceRepository {
         final userId = _pb.authStore.record?.id;
         if (userId == null) return;
 
-        // Check if device already exists for this user and token
         final result = await _deviceDao.getFullList(
           filter: 'user = "$userId" && push_token = "$pushToken"',
         );
@@ -38,10 +37,8 @@ class DeviceRepository implements IDeviceRepository {
         };
 
         if (result.isNotEmpty) {
-          // Update existing device record
           await _deviceDao.save(result.first.id, data);
         } else {
-          // Create new device record
           await _deviceDao.save(null, data);
         }
       },
@@ -62,7 +59,6 @@ class DeviceRepository implements IDeviceRepository {
         );
 
         for (final item in result) {
-          // Soft delete: deactivate the device
           await _deviceDao.save(item.id, {'is_active': false});
         }
       },

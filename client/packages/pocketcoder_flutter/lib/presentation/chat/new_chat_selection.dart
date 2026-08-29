@@ -77,7 +77,6 @@ WorkspacePathValidationError? validateWorkspacePath(
     return WorkspacePathValidationError.empty;
   }
 
-  // Normalize the path: resolves . and .., removes trailing slashes.
   final normalized = p.normalize(path);
 
   if (normalized == root) return null;

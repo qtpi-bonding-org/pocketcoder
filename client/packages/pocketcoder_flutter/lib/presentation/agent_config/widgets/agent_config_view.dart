@@ -415,10 +415,6 @@ class _SelectionField extends StatelessWidget {
   }
 }
 
-/// Generic single-select list picker rendered as a [TerminalDialog].
-///
-/// No design-system picker widget exists yet (grep confirmed before writing
-/// this) — implement a simple list-picker inline.
 Future<T?> _showListDialog<T extends Object>(
   BuildContext context, {
   required String title,

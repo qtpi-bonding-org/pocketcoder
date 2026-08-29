@@ -82,11 +82,9 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
     }
     debugPrint('Bootstrap: Dependencies configured');
 
-    // Initialize the push service
     final pushService = getIt<PushService>();
     await pushService.initialize();
 
-    // Initialize the billing service
     final billingService = getIt<BillingService>();
     await billingService.initialize();
 
@@ -103,12 +101,10 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
     }
     getIt<AuthSessionEffects>().start();
 
-    // 2. Register UI flow service (depends on localization/feedback/loading)
     debugPrint('Bootstrap: Registering UI flow service...');
     _registerUiFlowService();
     debugPrint('Bootstrap: UI flow service registered');
 
-    // 3. Configure ErrorPrivserver for privacy-preserving error reporting
     debugPrint('Bootstrap: Configuring ErrorPrivserver...');
     _configureErrorPrivserver();
     await pocketCoderDiagnosticCapture.flush();

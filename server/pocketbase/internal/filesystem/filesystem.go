@@ -184,12 +184,10 @@ func flattenFileTree(node *fileTreeNode) []FileTreeEntry {
 
 func AddFileOperations(registry *operation.Registry) {
 	registry.Add(operation.Route{OperationID: "getWorkspaceFile", Method: http.MethodGet, Path: "/api/pocketcoder/v1/files", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
-		// 1. Auth Gate
 		if re.Auth == nil {
 			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
 		}
 
-		// 2. Resolve Path
 		pathParam := re.Request.URL.Query().Get("path")
 		if pathParam == "" {
 			return re.BadRequestError("Empty path.", nil)
@@ -208,7 +206,6 @@ func AddFileOperations(registry *operation.Registry) {
 		}
 		defer fsys.Close()
 
-		// 4. Stream File
 		r, err := fsys.GetReader(cleanPath)
 		if err != nil {
 			return re.NotFoundError("File not found.", err)
