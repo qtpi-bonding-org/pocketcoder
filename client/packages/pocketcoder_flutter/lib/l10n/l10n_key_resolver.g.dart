@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-29T03:17:11.012273
+// Generated at: 2026-08-29T04:52:26.104450
 
 import 'app_localizations.dart';
 
@@ -543,6 +543,7 @@ class L10nKeyResolver {
       'permission.error' => _l10n.permissionError,
       'permission.fetch.failed' => _l10n.permissionFetchFailed,
       'permission.patterns.label' => _l10n.permissionPatternsLabel,
+      'permission.requested.fallback' => _l10n.permissionRequestedFallback,
       'permission.signoff.title' => _l10n.permissionSignoffTitle,
       'permission.update.failed' => _l10n.permissionUpdateFailed,
       'pocket.coder.progress.active' => _l10n.pocketCoderProgressActive,
@@ -1515,6 +1516,7 @@ class L10nKeyResolver {
     'permission.error',
     'permission.fetch.failed',
     'permission.patterns.label',
+    'permission.requested.fallback',
     'permission.requesting.label',
     'permission.signoff.title',
     'permission.update.failed',
@@ -2435,6 +2437,7 @@ class L10nKeyResolver {
     'permissionError': 'permission.error',
     'permissionFetchFailed': 'permission.fetch.failed',
     'permissionPatternsLabel': 'permission.patterns.label',
+    'permissionRequestedFallback': 'permission.requested.fallback',
     'permissionRequestingLabel': 'permission.requesting.label',
     'permissionSignoffTitle': 'permission.signoff.title',
     'permissionUpdateFailed': 'permission.update.failed',
@@ -3352,6 +3355,7 @@ class L10nKeyResolver {
     'permission.error': 'permissionError',
     'permission.fetch.failed': 'permissionFetchFailed',
     'permission.patterns.label': 'permissionPatternsLabel',
+    'permission.requested.fallback': 'permissionRequestedFallback',
     'permission.requesting.label': 'permissionRequestingLabel',
     'permission.signoff.title': 'permissionSignoffTitle',
     'permission.update.failed': 'permissionUpdateFailed',
@@ -4276,6 +4280,7 @@ abstract class L10nKeys {
   static const permissionError = 'permission.error';
   static const permissionFetchFailed = 'permission.fetch.failed';
   static const permissionPatternsLabel = 'permission.patterns.label';
+  static const permissionRequestedFallback = 'permission.requested.fallback';
   static (String, Map<String, dynamic>) permissionRequestingLabel(String source) => ('permission.requesting.label', {'source': source});
   static const permissionSignoffTitle = 'permission.signoff.title';
   static const permissionUpdateFailed = 'permission.update.failed';
