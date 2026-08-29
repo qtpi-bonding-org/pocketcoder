@@ -188,7 +188,7 @@ abstract class ExternalModule {
   /// injectable's generator can't register UrlLauncherInAppBrowserLauncher's
   /// LaunchUrlDelegate constructor parameter (a bare function type -- "is
   /// not a class element"), so a class-level annotation would either fail
-  /// codegen or force an unregistered gh<LaunchUrlDelegate>() call that
+  /// codegen or force an unregistered `gh<LaunchUrlDelegate>()` call that
   /// throws at runtime. Calling the constructor directly here lets its
   /// real Dart default value (launchUrl) apply untouched.
   @lazySingleton
