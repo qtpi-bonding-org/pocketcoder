@@ -235,7 +235,17 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 	// SetSessionConfigOption below is always a genuine switch, never a
 	// bootstrap. See docs/superpowers/specs/2026-08-28-harness-provider-bootstrap-design.md.
 	if p.SupportsLiveConfig {
-		if p.Provider != "" {
+		// A live-config harness's session/set_config_option support for
+		// configId "provider" is NOT implied by SupportsLiveConfig alone --
+		// opencode is also SupportsLiveConfig but its ACP server only
+		// implements "model"/"effort"/"mode" (confirmed against opencode's
+		// real source, per docs/superpowers/specs/2026-08-28-live-config-provider-credential-design.md);
+		// provider is implicitly fixed by whichever model is selected.
+		// Sending configId "provider" to it fails every time with
+		// {"code":-32602,"data":{"configId":"provider"},"message":"Invalid params: unknown config option: provider"}.
+		// SupportsLiveCredentialRegistration happens to be exactly the flag
+		// that's true only for goose today, so it doubles as this gate.
+		if p.SupportsLiveCredentialRegistration && p.Provider != "" {
 			if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
 				ValueId: &acpsdk.SetSessionConfigOptionValueId{
 					SessionId: acpsdk.SessionId(sessionID),
