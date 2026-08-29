@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-28T18:19:36.568629
+// Generated at: 2026-08-29T03:17:11.012273
 
 import 'app_localizations.dart';
 

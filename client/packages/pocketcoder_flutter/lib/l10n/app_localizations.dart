@@ -4792,6 +4792,12 @@ abstract class AppLocalizations {
   /// **'COMMANDER\'S SIGNOFF'**
   String get permissionSignoffTitle;
 
+  /// No description provided for @permissionRequestedFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission requested'**
+  String get permissionRequestedFallback;
+
   /// No description provided for @permissionRequestingLabel.
   ///
   /// In en, this message translates to:

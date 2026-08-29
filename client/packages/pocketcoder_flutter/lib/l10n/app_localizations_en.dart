@@ -2639,6 +2639,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionSignoffTitle => 'COMMANDER\'S SIGNOFF';
 
   @override
+  String get permissionRequestedFallback => 'Permission requested';
+
+  @override
   String permissionRequestingLabel(String source) {
     return '$source IS REQUESTING PERMISSION:';
   }
