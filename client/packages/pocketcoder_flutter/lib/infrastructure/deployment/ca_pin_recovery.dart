@@ -52,7 +52,8 @@ class CaPinRecovery {
     if (existing == null) return false;
 
     final now = DateTime.now();
-    if (_lastAttempt != null && now.difference(_lastAttempt!) < cooldown) {
+    final lastAttempt = _lastAttempt;
+    if (lastAttempt != null && now.difference(lastAttempt) < cooldown) {
       return false;
     }
     _lastAttempt = now;

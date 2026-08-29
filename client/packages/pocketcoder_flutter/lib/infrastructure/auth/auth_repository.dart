@@ -119,6 +119,13 @@ class AuthRepository implements IAuthRepository {
     _pocketBase.authStore.clear();
     await _authStoreConfig.clear();
     await _storage.delete(key: 'pb_server_url');
+    // Without this, every record pocketbase_drift ever synced (chats
+    // included) stays sitting in its local offline cache -- readable
+    // straight from disk with no auth and no network at all -- so a
+    // "cleared" session could still render an old deployment's chat list.
+    if (_pocketBase is $PocketBase) {
+      await _pocketBase.db.clearAllData();
+    }
   }
 
   @override

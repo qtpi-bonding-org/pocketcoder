@@ -16,6 +16,10 @@ import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.d
 
 class MockPocketBase extends Mock implements PocketBase {}
 
+class MockDollarPocketBase extends Mock implements $PocketBase {}
+
+class MockDataBase extends Mock implements DataBase {}
+
 class MockAuthStore extends Mock implements AuthStore {}
 
 class MockAuthStoreConfig extends Mock implements AuthStoreConfig {}
@@ -68,6 +72,30 @@ void main() {
     verify(() => authStore.clear()).called(1);
     verify(() => authStoreConfig.clear()).called(1);
     verify(() => storage.delete(key: 'pb_server_url')).called(1);
+  });
+
+  test(
+      'clearSession also wipes pocketbase_drift\'s local offline cache -- '
+      'otherwise a previously-synced chat list stays readable straight off '
+      'disk with no auth and no network at all', () async {
+    final dollarPocketBase = MockDollarPocketBase();
+    final db = MockDataBase();
+    when(() => dollarPocketBase.authStore).thenReturn(authStore);
+    when(() => dollarPocketBase.db).thenReturn(db);
+    when(() => db.clearAllData()).thenAnswer((_) async {});
+    when(() => authStoreConfig.clear()).thenAnswer((_) async {});
+    when(() => storage.delete(key: 'pb_server_url')).thenAnswer((_) async {});
+    final repositoryWithDrift = AuthRepository(
+      dollarPocketBase,
+      authStoreConfig,
+      storage,
+      MockPocketCoderApiClient(),
+      authHttpState,
+    );
+
+    await repositoryWithDrift.clearSession();
+
+    verify(() => db.clearAllData()).called(1);
   });
 
   test('updateBaseUrl retargets AuthHttpState.deploymentOrigin to the new host',
