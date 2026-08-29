@@ -189,9 +189,14 @@ abstract class BaseDao<T> {
     try {
       RecordModel record;
       if (id == null || id.isEmpty) {
+        // Freezed-generated toJson() always includes an "id" key -- for a
+        // brand-new record that's an empty string, not absent. PocketBase's
+        // create endpoint rejects that outright (expects either a real
+        // custom id or no "id" key at all), so it must never be forwarded.
+        final createBody = Map<String, dynamic>.from(data)..remove('id');
         record = await service
             .create(
-          body: data,
+          body: createBody,
           requestPolicy: RequestPolicy.networkFirst,
         )
             .timeout(const Duration(seconds: 10), onTimeout: () {

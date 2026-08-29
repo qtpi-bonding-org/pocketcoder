@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/provider_exception.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
@@ -23,6 +24,8 @@ class MockHarnessProviderDao extends Mock implements HarnessProviderDao {}
 
 class MockProviderCatalogDao extends Mock implements ProviderCatalogDao {}
 
+class MockAuthRepository extends Mock implements IAuthRepository {}
+
 class _FakeProviderApiKey extends Fake implements ProviderApiKey {}
 
 void main() {
@@ -33,6 +36,7 @@ void main() {
   late MockProviderAPIKeyDao providerAPIKeyDao;
   late MockHarnessProviderDao harnessProviderDao;
   late MockProviderCatalogDao providerCatalogDao;
+  late MockAuthRepository authRepository;
 
   final testHarnesse = Harnesse(
     id: 'h-1',
@@ -87,6 +91,8 @@ void main() {
     providerAPIKeyDao = MockProviderAPIKeyDao();
     harnessProviderDao = MockHarnessProviderDao();
     providerCatalogDao = MockProviderCatalogDao();
+    authRepository = MockAuthRepository();
+    when(() => authRepository.currentUserId).thenReturn('user-1');
     repo = ProviderRepository(
       harnesseDao,
       modelDao,
@@ -94,6 +100,7 @@ void main() {
       providerAPIKeyDao,
       harnessProviderDao,
       providerCatalogDao,
+      authRepository,
     );
   });
 
@@ -164,6 +171,34 @@ void main() {
       () => repo.saveProviderAPIKey(testProviderAPIKey),
       throwsA(isA<ProviderException>()),
     );
+  });
+
+  // Regression test: a brand-new key always arrives with owner: '' (the
+  // onboarding dialog only ever copies an *existing* record's owner --
+  // there is none for a new key). provider_api_keys.createRule requires
+  // owner = @request.auth.id, and PocketBase evaluates that rule against
+  // the client-submitted data itself, before any server-side hook could
+  // fix it up -- so an unfilled owner made every real create fail outright
+  // ("Failed to create record"), breaking the entire API-key onboarding
+  // path end to end until this was caught and fixed here.
+  test(
+      'saveProviderAPIKey fills owner from the authenticated user for a '
+      'brand-new key', () async {
+    final newKey = ProviderApiKey(
+      id: '',
+      owner: '',
+      provider: 'anthropic',
+      apiKey: 'sk-new',
+    );
+    when(() => providerAPIKeyDao.save(any(), any()))
+        .thenAnswer((_) async => newKey);
+
+    await repo.saveProviderAPIKey(newKey);
+
+    final captured = verify(() => providerAPIKeyDao.save('', captureAny()))
+        .captured
+        .single as Map<String, dynamic>;
+    expect(captured['owner'], 'user-1');
   });
 
   test(
