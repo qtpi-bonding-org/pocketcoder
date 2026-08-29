@@ -13,16 +13,39 @@ services:
     container_name: pocketcoder-goose
     profiles: ["agent-test"]
     environment:
+      # All of GOOSE_PROVIDER/GOOSE_MODEL/ANTHROPIC_HOST/ANTHROPIC_API_KEY/
+      # OPENROUTER_API_KEY are bare (host pass-through) on purpose, not
+      # `KEY: ${KEY:-default}` map interpolation. The map form always sets
+      # the var in the container -- even to an empty string when the host
+      # doesn't have one -- which caused two real problems this fixture
+      # doesn't need:
+      #   1. goose's Config::get_secret() checks the process environment
+      #      BEFORE its secrets store, treating a present-but-empty var as
+      #      an authoritative (empty) credential. That silently shadowed
+      #      any credential registered live via
+      #      _goose/unstable/providers/config/save, producing a real
+      #      outbound 401 ("Missing Authentication header") even though the
+      #      registered credential was valid and correctly saved.
+      #   2. A hardcoded GOOSE_PROVIDER=anthropic default (routed through a
+      #      legacy ANTHROPIC_HOST minimax-proxy override) with no matching
+      #      credential gave the container a half-configured default
+      #      provider that raced with goose's own session-activation code,
+      #      producing flaky "Provider not set" errors unrelated to this
+      #      fixture's actual test intent.
+      # Bare pass-through omits every one of these entirely when unset on
+      # the host, matching how a real production container never gets a
+      # provider baked in unless one was actually resolved for the launch
+      # (hooks.renderEnv) -- no default provider, no empty placeholder.
       GOOSE_SERVER__SECRET_KEY: ${GOOSE_SERVER__SECRET_KEY:?set the Goose ACP secret}
-      GOOSE_PROVIDER: ${GOOSE_PROVIDER:-anthropic}
-      GOOSE_MODEL: ${GOOSE_MODEL:-deepseek/deepseek-v4-flash}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      ANTHROPIC_HOST: ${ANTHROPIC_HOST:-https://api.minimax.io/anthropic}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OLLAMA_HOST: http://ollama:11434
       GOOSE_DISABLE_KEYRING: "1"
       GOOSE_PATH_ROOT: /workspace/.pocketcoder_auth
       GOOSE_TELEMETRY_ENABLED: "false"
+      GOOSE_PROVIDER:
+      GOOSE_MODEL:
+      ANTHROPIC_HOST:
+      ANTHROPIC_API_KEY:
+      OPENROUTER_API_KEY:
     volumes:
       - agent_test_goose_state:/workspace/.pocketcoder_auth
       - agent_test_goose_config:/workspace/.pocketcoder_auth/config

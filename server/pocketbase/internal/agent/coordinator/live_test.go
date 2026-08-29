@@ -57,13 +57,13 @@ func liveProfile() SessionProfile {
 	provider, model := os.Getenv("GOOSE_LIVE_PROVIDER"), os.Getenv("GOOSE_LIVE_MODEL")
 	fieldName, fieldValue := os.Getenv("GOOSE_LIVE_CREDENTIAL_FIELD_NAME"), os.Getenv("GOOSE_LIVE_CREDENTIAL_FIELD_VALUE")
 	return SessionProfile{
-		Target:                              Target{URL: os.Getenv("GOOSE_ACP_URL"), Secret: os.Getenv("GOOSE_SERVER__SECRET_KEY")},
-		Provider:                            provider,
-		Model:                               model,
-		SupportsLiveConfig:                  provider != "" || model != "",
-		SupportsLiveCredentialRegistration:  fieldName != "" && fieldValue != "",
-		CredentialFieldName:                 fieldName,
-		CredentialFieldValue:                fieldValue,
+		Target:                             Target{URL: os.Getenv("GOOSE_ACP_URL"), Secret: os.Getenv("GOOSE_SERVER__SECRET_KEY")},
+		Provider:                           provider,
+		Model:                              model,
+		SupportsLiveConfig:                 provider != "" || model != "",
+		SupportsLiveCredentialRegistration: fieldName != "" && fieldValue != "",
+		CredentialFieldName:                fieldName,
+		CredentialFieldValue:               fieldValue,
 	}
 }
 
@@ -113,6 +113,42 @@ func drainEventTypes(t *testing.T, att Attachment, timeout time.Duration) []even
 }
 func terminal(t events.EventType) bool {
 	return t == events.EventTypeRunFinished || t == events.EventTypeRunError
+}
+
+// drainEventsWithText is drainEventTypes plus the concatenated text of any
+// TextMessageContentEvent deltas seen along the way, so a test can log (or
+// assert on) what the assistant actually said, not just which event types
+// arrived.
+func drainEventsWithText(t *testing.T, att Attachment, timeout time.Duration) (types []events.EventType, text string) {
+	t.Helper()
+	collect := func(e seqEvent) {
+		types = append(types, e.Ev.Type())
+		if content, ok := e.Ev.(*events.TextMessageContentEvent); ok {
+			text += content.Delta
+		}
+	}
+	for _, e := range att.Buffered {
+		collect(e)
+		if terminal(e.Ev.Type()) {
+			return types, text
+		}
+	}
+	deadline := time.After(timeout)
+	for {
+		select {
+		case e, ok := <-att.Live:
+			if !ok {
+				return types, text
+			}
+			collect(e)
+			if terminal(e.Ev.Type()) {
+				return types, text
+			}
+		case <-deadline:
+			t.Fatalf("timed out waiting for a terminal event; got %v", types)
+			return types, text
+		}
+	}
 }
 
 // TestLiveRunNewSession proves an authenticated new-session turn completes and
@@ -177,15 +213,28 @@ func TestLiveRunNewSession(t *testing.T) {
 // in addition to the base live-test env vars, and is meaningful only
 // against a genuinely fresh goose process that never had any provider
 // credential configured -- e.g. docker-compose.agent-test.yml's `goose`
-// service brought up with no ANTHROPIC_API_KEY/OPENROUTER_API_KEY set:
+// service brought up with no ANTHROPIC_API_KEY/OPENROUTER_API_KEY set,
+// but GOOSE_PROVIDER/GOOSE_MODEL set to the SAME provider/model as
+// GOOSE_LIVE_PROVIDER/GOOSE_LIVE_MODEL below (matching how a real
+// production launch always resolves GOOSE_PROVIDER to the user's actually
+// -chosen provider before the container boots -- session/new itself
+// requires GOOSE_PROVIDER to resolve to something, and pointing it at a
+// different, uncredentialed provider races with goose's own session-
+// activation code and produces flaky, unrelated "Provider not set"
+// failures that have nothing to do with this fix):
 //
+//	GOOSE_PROVIDER=openrouter GOOSE_MODEL=openrouter/auto \
 //	docker compose --profile agent-test up -d --force-recreate -V goose
 //	GOOSE_ACP_URL=ws://127.0.0.1:3000/acp \
 //	GOOSE_SERVER__SECRET_KEY=<the GOOSE_SERVER__SECRET_KEY you set> \
-//	GOOSE_LIVE_PROVIDER=openrouter GOOSE_LIVE_MODEL=<any model id> \
+//	GOOSE_LIVE_PROVIDER=openrouter GOOSE_LIVE_MODEL=openrouter/auto \
 //	GOOSE_LIVE_CREDENTIAL_FIELD_NAME=OPENROUTER_API_KEY \
-//	GOOSE_LIVE_CREDENTIAL_FIELD_VALUE=<a real or placeholder key> \
+//	GOOSE_LIVE_CREDENTIAL_FIELD_VALUE=<a real key> \
 //	go test -tags live_acp ./internal/agent/coordinator/ -run TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer -v
+//
+// (tooling/scripts/local_goose_provider_bootstrap_check.sh automates this
+// exact setup, including the --env-file /dev/null isolation from this
+// repo's own dev-convenience .env keys.)
 //
 // Before the fix (ProviderBootstrap running before session/new), this
 // reliably reproduced RUN_ERROR with the harness returning
@@ -218,7 +267,7 @@ func TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer(t *testing.T
 
 	att := c.Attach(chatID, 0)
 	defer att.Unsubscribe()
-	got := drainEventTypes(t, att, liveTimeout())
+	got, reply := drainEventsWithText(t, att, liveTimeout())
 
 	if len(got) == 0 {
 		t.Fatal("expected at least one event")
@@ -226,7 +275,7 @@ func TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer(t *testing.T
 	if last := got[len(got)-1]; last == events.EventTypeRunError {
 		t.Fatalf("run ended in RUN_ERROR -- if this mentions \"Provider not set\", the fix has regressed; events: %v", got)
 	}
-	t.Logf("provider bootstrap on fresh container ok: events=%d, last=%v", len(got), got[len(got)-1])
+	t.Logf("provider bootstrap on fresh container ok: events=%d, last=%v, assistant reply=%q", len(got), got[len(got)-1], reply)
 }
 
 // TestLiveWrongSecretRejected proves the WS endpoint enforces auth: a bad
