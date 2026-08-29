@@ -49,7 +49,44 @@ class CaPinFetcher {
       pinningHttpClient.updatePin(existing.certificatePem);
       return;
     }
+    await _sshFetchAndStore(
+      instanceId: instanceId,
+      host: host,
+      isCurrentAttemptStillLive: isCurrentAttemptStillLive,
+      skipIfAlreadyStored: true,
+    );
+  }
 
+  /// Unlike [fetchAndPin], always re-fetches over SSH regardless of what's
+  /// already stored -- used by CaPinRecovery when a request has just
+  /// failed cert validation against the currently-pinned CA, so the
+  /// existing (now-suspect) pin must never short-circuit the fetch.
+  ///
+  /// Returns whether the freshly-fetched CA actually differs from what was
+  /// stored. A caller retrying a failed request on the strength of this
+  /// recovery should treat `false` as "the pin wasn't the problem" --
+  /// retrying again would just double the latency of a failure that has
+  /// some other cause.
+  Future<bool> forceRefetch({
+    required String instanceId,
+    required String host,
+  }) async {
+    final existing = await pinStore.read(deploymentId: instanceId);
+    final fetched = await _sshFetchAndStore(
+      instanceId: instanceId,
+      host: host,
+      isCurrentAttemptStillLive: () async => true,
+      skipIfAlreadyStored: false,
+    );
+    return fetched != null && fetched.fingerprint != existing?.fingerprint;
+  }
+
+  Future<CaddyCaPin?> _sshFetchAndStore({
+    required String instanceId,
+    required String host,
+    required Future<bool> Function() isCurrentAttemptStillLive,
+    required bool skipIfAlreadyStored,
+  }) async {
     try {
       final result = await sshCommandRunner.run(
         instanceId: instanceId,
@@ -65,20 +102,25 @@ class CaPinFetcher {
         jsonDecode(result.stdout) as Map<String, dynamic>,
       );
 
-      await mutex.synchronized(() async {
-        if (!await isCurrentAttemptStillLive()) return;
-        if (await pinStore.read(deploymentId: instanceId) != null) return;
+      return await mutex.synchronized(() async {
+        if (!await isCurrentAttemptStillLive()) return null;
+        if (skipIfAlreadyStored &&
+            await pinStore.read(deploymentId: instanceId) != null) {
+          return null;
+        }
         await pinStore.write(deploymentId: instanceId, pin: pin);
         pinningHttpClient.updatePin(pin.certificatePem);
+        return pin;
       });
     } on Object catch (error, stackTrace) {
       await pocketCoderDiagnosticCapture.capture(
         error: error,
         stackTrace: stackTrace,
         source: 'CaPinFetcher',
-        operation: 'fetchAndPin',
+        operation: skipIfAlreadyStored ? 'fetchAndPin' : 'forceRefetch',
         errorCode: 'DEPLOY_CADDY_CA_PIN_FAILED',
       );
+      return null;
     }
   }
 }

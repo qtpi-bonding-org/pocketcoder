@@ -6,7 +6,10 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_recovery.dart';
+
 import 'auth_retry_interceptor.dart';
+import 'ca_pin_retry_interceptor.dart';
 import 'caddy_ca_pinning_http_client.dart';
 import 'retry_interceptor.dart';
 
@@ -55,8 +58,10 @@ class PocketCoderApiClient {
     caddyCaPinningHttpClient.onPinChanged.listen((_) => applyCurrentTrust());
 
     final authRetryInterceptor = AuthRetryInterceptor(dio);
+    final caPinRetryInterceptor = CaPinRetryInterceptor(dio);
     dio.interceptors.add(SafeGetRetryInterceptor(dio));
     dio.interceptors.add(authRetryInterceptor);
+    dio.interceptors.add(caPinRetryInterceptor);
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -75,11 +80,13 @@ class PocketCoderApiClient {
     );
     final client = PocketCoderApiClient(dio: dio);
     client._authRetryInterceptor = authRetryInterceptor;
+    client._caPinRetryInterceptor = caPinRetryInterceptor;
     return client;
   }
 
   final Dio _dio;
   AuthRetryInterceptor? _authRetryInterceptor;
+  CaPinRetryInterceptor? _caPinRetryInterceptor;
   final generated.ReleaseApi release;
   final generated.AgentApi agent;
   final generated.FilesApi files;
@@ -97,6 +104,13 @@ class PocketCoderApiClient {
   /// Wires transport recovery after the shared DI graph has been created.
   void setAuthSessionCoordinator(AuthSessionCoordinator coordinator) {
     _authRetryInterceptor?.setRefreshCallback(coordinator.refresh);
+  }
+
+  /// Wires CA-pin recovery after the shared DI graph has been created --
+  /// see CaPinRetryInterceptor.attachRecovery for why this can't happen at
+  /// construction time.
+  void attachCaPinRecovery(CaPinRecovery recovery) {
+    _caPinRetryInterceptor?.attachRecovery(recovery);
   }
 
   static BuiltMap<String, JsonObject> encodeJson(

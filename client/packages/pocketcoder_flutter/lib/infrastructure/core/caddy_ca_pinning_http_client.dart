@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_recovery.dart';
 
 import 'logger.dart';
 
@@ -39,6 +40,14 @@ final class CaddyCaPinningHttpClient extends http.BaseClient {
   SecurityContext? _context;
   http.Client _delegate = http.Client();
   final _pinChanges = StreamController<void>.broadcast();
+  CaPinRecovery? _recovery;
+
+  /// Wired in after the shared DI graph has been created -- CaPinRecovery
+  /// depends on deployment-tracking state that isn't available yet at the
+  /// point this singleton is constructed.
+  void attachRecovery(CaPinRecovery recovery) {
+    _recovery = recovery;
+  }
 
   /// Fires after [updatePin] or [clearPin] changes the trust state.
   /// Non-`package:http` transports (Dio, etc.) that derive their own
@@ -92,11 +101,43 @@ final class CaddyCaPinningHttpClient extends http.BaseClient {
   }
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
     logDebug('CaddyCaPinningHttpClient: send',
         {'method': request.method, 'url': request.url.toString()});
-    return _delegate.send(request);
+    try {
+      return await _delegate.send(request);
+    } on Object catch (error) {
+      final recovery = _recovery;
+      final replay = request is http.Request ? _cloneRequest(request) : null;
+      if (recovery == null || replay == null || !_isCertificateFailure(error)) {
+        rethrow;
+      }
+      final recovered = await recovery.recoverIfStale(requestUrl: request.url);
+      if (!recovered) rethrow;
+      logDebug('CaddyCaPinningHttpClient: retrying after CA-pin recovery',
+          {'url': request.url.toString()});
+      return _delegate.send(replay);
+    }
   }
+
+  /// A request object can only be sent once (`BaseRequest.finalize()`
+  /// throws if called twice) -- retrying after recovery needs a fresh copy
+  /// with the same method/url/headers/body, not the original object.
+  /// Only `http.Request` (a fixed, re-readable byte body) is replayable
+  /// this way; a `StreamedRequest`/`MultipartRequest`'s body is one-shot,
+  /// so those are left to fail and succeed on the caller's own next call.
+  static http.Request? _cloneRequest(http.Request original) {
+    final clone = http.Request(original.method, original.url)
+      ..headers.addAll(original.headers)
+      ..followRedirects = original.followRedirects
+      ..maxRedirects = original.maxRedirects
+      ..persistentConnection = original.persistentConnection
+      ..bodyBytes = original.bodyBytes;
+    return clone;
+  }
+
+  static bool _isCertificateFailure(Object error) =>
+      error is HandshakeException || error is CertificateException;
 
   @override
   void close() {
