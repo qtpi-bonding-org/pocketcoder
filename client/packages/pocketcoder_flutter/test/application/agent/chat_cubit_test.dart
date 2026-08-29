@@ -251,6 +251,44 @@ void main() {
     expect(item.text, 'hello agent');
   });
 
+  test('sendPrompt records the user message as the chat preview, marking '
+      'the very first message as isFirst', () async {
+    cubit.open('chat-1');
+    await pumpEventQueue();
+
+    await cubit.sendPrompt('hello there');
+
+    expect(fakeChatListRepository.lastRecorded('chat-1'),
+        (text: 'hello there', turn: ChatTurn.user, isFirst: true));
+
+    await cubit.sendPrompt('a second message');
+
+    expect(fakeChatListRepository.lastRecorded('chat-1'),
+        (text: 'a second message', turn: ChatTurn.user, isFirst: false));
+  });
+
+  test('a completed Poco reply records the chat preview as assistant turn, '
+      'never as isFirst', () async {
+    cubit.open('chat-1');
+    await pumpEventQueue();
+
+    repo.controllerFor('chat-1').add([
+      const agui.TextMessageStartEvent(
+        messageId: 'poco-1',
+        role: agui.TextMessageRole.assistant,
+      ),
+      const agui.TextMessageContentEvent(
+        messageId: 'poco-1',
+        delta: 'hi yourself',
+      ),
+      const agui.TextMessageEndEvent(messageId: 'poco-1'),
+    ]);
+    await pumpEventQueue();
+
+    expect(fakeChatListRepository.lastRecorded('chat-1'),
+        (text: 'hi yourself', turn: ChatTurn.assistant, isFirst: false));
+  });
+
   test(
       'sendPrompt auto-retries on AgentUnavailableFailure and shows '
       'awaitingHarnessStart until it succeeds, without duplicating the '

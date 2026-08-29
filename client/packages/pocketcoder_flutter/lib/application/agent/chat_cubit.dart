@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:ag_ui/ag_ui.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
+import 'package:collection/collection.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
@@ -16,6 +17,7 @@ import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_trans
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/application/agent/seen_messages_registry.dart';
 import 'chat_state.dart';
 import 'provider_reauthentication_required.dart';
@@ -96,6 +98,18 @@ class ChatCubit extends AppCubit<ChatState> {
         if (event is TextMessageEndEvent) {
           _seenMessages.markSeen(chatId, event.messageId);
           animatedIds = {...animatedIds, event.messageId};
+          final finished = reducer.current.timeline
+              .whereType<TextTimelineItem>()
+              .firstWhereOrNull((item) => item.id == event.messageId);
+          if (finished != null &&
+              finished.kind != ChatMessageKind.reasoning) {
+            unawaited(_chatListRepository.recordMessagePreview(
+              chatId,
+              text: finished.text,
+              turn: ChatTurn.assistant,
+              isFirst: false,
+            ));
+          }
         }
         emit(state.copyWith(
           conversation: reducer.current,
@@ -225,12 +239,21 @@ class ChatCubit extends AppCubit<ChatState> {
     final messageId = const Uuid().v4();
     final reducer = _reducer;
     if (reducer != null) {
+      final isFirst = reducer.current.timeline
+          .whereType<TextTimelineItem>()
+          .every((item) => item.kind == ChatMessageKind.reasoning);
       reducer.addLocalMessage(
         id: messageId,
         role: 'user',
         text: text,
       );
       emit(state.copyWith(conversation: reducer.current));
+      unawaited(_chatListRepository.recordMessagePreview(
+        chatId,
+        text: text,
+        turn: ChatTurn.user,
+        isFirst: isFirst,
+      ));
     }
     await tryOperation(() => _sendWithHarnessRetry(
           text: text,
