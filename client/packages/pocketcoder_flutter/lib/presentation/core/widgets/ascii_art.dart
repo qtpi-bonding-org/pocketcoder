@@ -83,8 +83,6 @@ class AsciiFace extends StatelessWidget {
     this.fontSize,
   });
 
-  // --- Factory Constructors ---
-  // You can now pass 'armor' to any of these if you want to override the default.
 
   factory AsciiFace.sleepy(
           {PocoArmor armor = PocoArmor.standard,
@@ -148,11 +146,9 @@ class AsciiFace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Prefer passed color/size, fallback to design system
     final effectiveColor = color ?? context.colorScheme.onSurface;
     final effectiveSize = fontSize ?? AppSizes.fontStandard;
 
-    // Dynamically build the string based on Armor + Expression
     final fullFaceString = AppAscii.build(expression, armor);
 
     return Text(

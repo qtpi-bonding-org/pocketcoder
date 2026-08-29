@@ -1,221 +1,156 @@
-package harnessaccount
+package harnessaccount_test
 
 import (
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
-func TestDeploymentAccountCanBeSelectedByTwoUsers(t *testing.T) {
-	app := testApp(t)
-	harness := testHarness(t, app, "codex")
-	first := testUser(t, app, "first@example.com")
-	second := testUser(t, app, "second@example.com")
-
-	shared, err := SelectOrCreate(app, first.Id, harness.Id, "", "Family Codex", VisibilityDeployment, ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-	selected, err := SelectOrCreate(app, second.Id, harness.Id, "", "", VisibilityDeployment, ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if selected.Id != shared.Id {
-		t.Fatalf("second user selected account %q, want shared account %q", selected.Id, shared.Id)
-	}
-	for _, user := range []*core.Record{first, second} {
-		resolved, err := Resolve(app, user.Id, harness.Id, "")
-		if err != nil || resolved == nil || resolved.Id != shared.Id {
-			t.Fatalf("Resolve(%s) = %v, %v; want shared account", user.Id, resolved, err)
-		}
-	}
-}
-
-func TestPersonalAccountsStaySeparate(t *testing.T) {
-	app := testApp(t)
-	harness := testHarness(t, app, "claude-code")
-	first := testUser(t, app, "first-personal@example.com")
-	second := testUser(t, app, "second-personal@example.com")
-
-	a, err := SelectOrCreate(app, first.Id, harness.Id, "", "", VisibilityPersonal, ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, err := SelectOrCreate(app, second.Id, harness.Id, "", "", VisibilityPersonal, ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if a.Id == b.Id {
-		t.Fatal("personal harness accounts must not be reused across users")
-	}
-}
-
-func TestSelectionsAreIndependentPerHarness(t *testing.T) {
-	app := testApp(t)
-	user := testUser(t, app, "defaults@example.com")
-	codex := testHarness(t, app, "codex")
-	claude := testHarness(t, app, "claude-code")
-
-	for _, harness := range []*core.Record{codex, claude} {
-		if _, err := EnsureDefaultPersonal(app, user.Id, harness.Id); err != nil {
-			t.Fatal(err)
-		}
-	}
-	selections, err := app.FindRecordsByFilter("harness_account_selections", "user = {:user}", "", 0, 0, map[string]any{"user": user.Id})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(selections) != 2 {
-		t.Fatalf("selections = %d, want one per harness", len(selections))
-	}
-}
-
-func TestPersonalAccountCannotBeSelectedByAnotherUser(t *testing.T) {
-	app := testApp(t)
-	harness := testHarness(t, app, "codex-private")
-	owner := testUser(t, app, "private-owner@example.com")
-	other := testUser(t, app, "private-other@example.com")
-
-	account, err := SelectOrCreate(app, owner.Id, harness.Id, "", "Private Codex", VisibilityPersonal, ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := SelectOrCreate(app, other.Id, harness.Id, account.Id, "", VisibilityPersonal, ModeAccount); err == nil {
-		t.Fatal("expected another user to be denied access to a personal account")
-	}
-}
-
-func TestSelectionReplacesPreviousAccountForHarness(t *testing.T) {
-	app := testApp(t)
-	harness := testHarness(t, app, "codex-selection")
-	user := testUser(t, app, "selection@example.com")
-
-	first, err := SelectOrCreate(app, user.Id, harness.Id, "", "First", VisibilityPersonal, ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-	col, err := app.FindCollectionByNameOrId("harness_accounts")
-	if err != nil {
-		t.Fatal(err)
-	}
-	second := core.NewRecord(col)
-	second.Set("harness", harness.Id)
-	second.Set("owner", user.Id)
-	second.Set("name", "Second")
-	second.Set("visibility", VisibilityPersonal)
-	second.Set("credential_mode", ModeAccount)
-	second.Set("status", StatusDisconnected)
-	if err := app.Save(second); err != nil {
-		t.Fatal(err)
-	}
-	if err := SetSelection(app, user.Id, harness.Id, second); err != nil {
-		t.Fatal(err)
-	}
-
-	resolved, err := Resolve(app, user.Id, harness.Id, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resolved == nil || resolved.Id != second.Id || resolved.Id == first.Id {
-		t.Fatalf("resolved account = %v, want second account %s", resolved, second.Id)
-	}
-	selections, err := app.FindRecordsByFilter("harness_account_selections", "user = {:user} && harness = {:harness}", "", 0, 0, map[string]any{"user": user.Id, "harness": harness.Id})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(selections) != 1 {
-		t.Fatalf("selections = %d, want exactly one", len(selections))
-	}
-}
-
-func TestSelectionHookRejectsMismatchedHarness(t *testing.T) {
-	app := testApp(t)
-	RegisterHooks(app)
-	user := testUser(t, app, "hook-owner@example.com")
-	codex := testHarness(t, app, "hook-codex")
-	claude := testHarness(t, app, "hook-claude")
-	account, err := SelectOrCreate(app, user.Id, codex.Id, "", "Codex", VisibilityPersonal, ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	col, err := app.FindCollectionByNameOrId("harness_account_selections")
-	if err != nil {
-		t.Fatal(err)
-	}
-	selection := core.NewRecord(col)
-	selection.Set("user", user.Id)
-	selection.Set("harness", claude.Id)
-	selection.Set("account", account.Id)
-	if err := app.Save(selection); err == nil {
-		t.Fatal("expected selection hook to reject an account from another harness")
-	}
-}
-
-func TestSelectionHookRejectsPersonalAccountForAnotherUser(t *testing.T) {
-	app := testApp(t)
-	RegisterHooks(app)
-	owner := testUser(t, app, "hook-private-owner@example.com")
-	other := testUser(t, app, "hook-private-other@example.com")
-	harness := testHarness(t, app, "hook-private")
-	account, err := SelectOrCreate(app, owner.Id, harness.Id, "", "Private", VisibilityPersonal, ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	col, err := app.FindCollectionByNameOrId("harness_account_selections")
-	if err != nil {
-		t.Fatal(err)
-	}
-	selection := core.NewRecord(col)
-	selection.Set("user", other.Id)
-	selection.Set("harness", harness.Id)
-	selection.Set("account", account.Id)
-	if err := app.Save(selection); err == nil {
-		t.Fatal("expected selection hook to reject another user's personal account")
-	}
-}
-
-func testApp(t *testing.T) core.App {
-	t.Helper()
+func TestResolveIsScopedByProviderNotJustHarness(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(app.Cleanup)
-	return app
-}
+	defer app.Cleanup()
 
-func testUser(t *testing.T, app core.App, email string) *core.Record {
-	t.Helper()
-	col, err := app.FindCollectionByNameOrId("_pb_users_auth_")
+	users, _ := app.FindCollectionByNameOrId("_pb_users_auth_")
+	user := core.NewRecord(users)
+	user.SetEmail("resolve-scope@example.com")
+	user.SetPassword("password12345")
+	if err := app.Save(user); err != nil {
+		t.Fatal(err)
+	}
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rec := core.NewRecord(col)
-	rec.SetEmail(email)
-	rec.SetPassword("password12345")
-	if err := app.Save(rec); err != nil {
-		t.Fatal(err)
-	}
-	return rec
-}
-
-func testHarness(t *testing.T, app core.App, cliID string) *core.Record {
-	t.Helper()
-	col, err := app.FindCollectionByNameOrId("harnesses")
+	anthropic, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	rec := core.NewRecord(col)
-	rec.Set("name", cliID)
-	rec.Set("cli_id", cliID+"-"+uuid.NewString()[:8])
-	rec.Set("acp_transport", "websocket")
-	if err := app.Save(rec); err != nil {
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
 		t.Fatal(err)
 	}
-	return rec
+
+	anthropicAccount, err := harnessaccount.SelectOrCreate(app, user.Id, goose.Id, anthropic.Id, "", "Anthropic via Goose", harnessaccount.VisibilityPersonal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	openaiAccount, err := harnessaccount.SelectOrCreate(app, user.Id, goose.Id, openai.Id, "", "OpenAI via Goose", harnessaccount.VisibilityPersonal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if anthropicAccount.Id == openaiAccount.Id {
+		t.Fatal("expected two distinct accounts for the same harness under two different providers")
+	}
+
+	resolvedAnthropic, err := harnessaccount.Resolve(app, user.Id, goose.Id, anthropic.Id, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolvedAnthropic == nil || resolvedAnthropic.Id != anthropicAccount.Id {
+		t.Errorf("Resolve for (goose, anthropic) = %v, want %s", resolvedAnthropic, anthropicAccount.Id)
+	}
+	resolvedOpenAI, err := harnessaccount.Resolve(app, user.Id, goose.Id, openai.Id, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolvedOpenAI == nil || resolvedOpenAI.Id != openaiAccount.Id {
+		t.Errorf("Resolve for (goose, openai) = %v, want %s", resolvedOpenAI, openaiAccount.Id)
+	}
+}
+
+func TestHarnessOAuthAccountCreateRejectsUnsupportedProviderPair(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	harnessaccount.RegisterHooks(app) // OnRecordCreate (non-request) hooks fire without going through the API layer
+
+	users, _ := app.FindCollectionByNameOrId("_pb_users_auth_")
+	user := core.NewRecord(users)
+	user.SetEmail("oauth-gate@example.com")
+	user.SetPassword("password12345")
+	if err := app.Save(user); err != nil {
+		t.Fatal(err)
+	}
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil) // provider_fanout harness -- never gets a supports_oauth edge
+	if err != nil {
+		t.Fatal(err)
+	}
+	anthropic, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	coll, err := app.FindCollectionByNameOrId("harness_oauth_accounts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := core.NewRecord(coll)
+	rec.Set("harness", goose.Id)
+	rec.Set("provider", anthropic.Id)
+	rec.Set("owner", user.Id)
+	rec.Set("name", "should be rejected")
+	rec.Set("visibility", harnessaccount.VisibilityPersonal)
+	if err := app.Save(rec); err == nil {
+		t.Fatal("expected Save to fail: goose/anthropic has no supports_oauth harness_providers edge")
+	}
+}
+
+func TestSetSelectionClearsOAuthAccountWhenModeIsNotOAuth(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	harnessaccount.RegisterHooks(app)
+
+	users, _ := app.FindCollectionByNameOrId("_pb_users_auth_")
+	user := core.NewRecord(users)
+	user.SetEmail("clear-oauth@example.com")
+	user.SetPassword("password12345")
+	if err := app.Save(user); err != nil {
+		t.Fatal(err)
+	}
+	codex, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account, err := harnessaccount.SelectOrCreate(app, user.Id, codex.Id, openai.Id, "", "", harnessaccount.VisibilityPersonal)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel, err := app.FindFirstRecordByFilter("credential_selections", "user = {:u} && harness = {:h} && provider = {:p}", map[string]any{"u": user.Id, "h": codex.Id, "p": openai.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sel.GetString("oauth_account") != account.Id {
+		t.Fatalf("expected the selection created by SelectOrCreate to already reference %s, got %q", account.Id, sel.GetString("oauth_account"))
+	}
+	sel.Set("mode", "api_key")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+	reloaded, err := app.FindRecordById(selColl.Id, sel.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := reloaded.GetString("oauth_account"); got != "" {
+		t.Errorf("oauth_account = %q after switching to mode=api_key, want empty", got)
+	}
 }

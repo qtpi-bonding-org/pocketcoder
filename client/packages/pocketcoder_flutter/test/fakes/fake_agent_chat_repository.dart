@@ -30,10 +30,14 @@ class FakeAgentChatRepository implements AgentChatRepository {
   Future<int> ingestOnce(String chatId, {required int cursor}) async => 0;
 
   @override
+  Future<void> cancelStreams() async {}
+
+  @override
   Future<int> cursorFor(String chatId) async => 0;
 
   @override
-  Future<String> sendPrompt(String chatId, String text) async {
+  Future<String> sendPrompt(String chatId, String text,
+      {String? messageId}) async {
     sentPrompts.add((chatId, text));
     return 'run-id';
   }

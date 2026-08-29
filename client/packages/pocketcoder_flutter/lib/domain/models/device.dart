@@ -13,6 +13,10 @@ abstract class Device with _$Device {
     required String pushToken,
     @JsonKey(unknownEnumValue: DevicePushService.unknown) required DevicePushService pushService,
     bool? isActive,
+    DateTime? created,
+    DateTime? updated,
+    @JsonKey(unknownEnumValue: DevicePlatform.unknown) DevicePlatform? platform,
+    String? pushToStartToken,
   }) = _Device;
 
   factory Device.fromRecord(RecordModel record) =>
@@ -27,6 +31,15 @@ enum DevicePushService {
   fcm,
   @JsonValue('unifiedpush')
   unifiedpush,
+  @JsonValue('__unknown__')
+  unknown,
+}
+
+enum DevicePlatform {
+  @JsonValue('ios')
+  ios,
+  @JsonValue('android')
+  android,
   @JsonValue('__unknown__')
   unknown,
 }

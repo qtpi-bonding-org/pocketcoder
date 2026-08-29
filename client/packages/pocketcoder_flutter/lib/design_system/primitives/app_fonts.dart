@@ -18,14 +18,11 @@ class AppFonts {
   static const String headerFamily = 'Share Tech Mono';
   static const String bodyFamily = 'Noto Sans Mono';
 
-  // Weight Classes
-  static const FontWeight heavy = FontWeight.w800; // The Anchor
-  static const FontWeight medium = FontWeight.w400; // The Narrative
-  static const FontWeight light = FontWeight.w200; // The Whisper
+  static const FontWeight heavy = FontWeight.w800;
+  static const FontWeight medium = FontWeight.w400;
+  static const FontWeight light = FontWeight.w200;
 
-  /// Simplified text theme
   static TextTheme get textTheme => TextTheme(
-        // Headers
         displayLarge: TextStyle(
           fontFamilyFallback: headerFontFallbacks,
           fontSize: AppSizes.fontMassive,
@@ -72,7 +69,6 @@ class AppFonts {
           fontWeight: heavy,
         ),
 
-        // Body
         bodyLarge: TextStyle(
           fontFamilyFallback: bodyFontFallbacks,
           fontSize: AppSizes.fontStandard,
@@ -89,7 +85,6 @@ class AppFonts {
           fontWeight: medium,
         ),
 
-        // Labels
         labelLarge: TextStyle(
           fontFamilyFallback: bodyFontFallbacks,
           fontSize: AppSizes.fontStandard,

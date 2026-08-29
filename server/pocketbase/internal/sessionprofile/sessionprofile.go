@@ -33,7 +33,6 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/pocoprompt"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/ollama"
 )
@@ -85,6 +84,43 @@ func validateWorkspacePath(p string) error {
 // system prompt, workspace cwd/additional directories, per-chat MCP servers
 // (stdio only), and mode. It also resolves the harness identity and
 // harness_instances row, and validates workspace paths.
+// resolveDefaultHarnessModel finds a harness_models row to treat as the
+// default when no explicit harness_model_override was given. It prefers a
+// row with is_default = true, but falls back to any row for the harness --
+// no admin/migration/sync writer sets is_default on a real deployment today
+// (confirmed 2026-08-28: neither the seed migration nor modelcatalog's
+// models.dev sync ever writes that field), so treating it as authoritative
+// would make this whole fallback a no-op in production.
+//
+// When providerID is non-empty, only rows whose model belongs to that
+// provider are considered -- needed for a live-config harness (Goose,
+// OpenCode), which can have harness_models rows spanning multiple providers,
+// unlike a single-provider harness where every row already shares the one
+// pinned provider. Returns (nil, nil, nil) if no matching row exists.
+func resolveDefaultHarnessModel(app core.App, harnessID, providerID string) (*core.Record, *core.Record, error) {
+	rows, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "harness_model_id", 0, 0, map[string]any{"h": harnessID})
+	if err != nil {
+		return nil, nil, err
+	}
+	var fallbackHM, fallbackModel *core.Record
+	for _, hm := range rows {
+		model, mErr := app.FindRecordById("models", hm.GetString("model"))
+		if mErr != nil {
+			continue
+		}
+		if providerID != "" && model.GetString("provider") != providerID {
+			continue
+		}
+		if fallbackHM == nil {
+			fallbackHM, fallbackModel = hm, model
+		}
+		if hm.GetBool("is_default") {
+			return hm, model, nil
+		}
+	}
+	return fallbackHM, fallbackModel, nil
+}
+
 func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL string) (coordinator.SessionProfile, error) {
 	p := coordinator.SessionProfile{Instructions: pocoprompt.Default}
 
@@ -113,7 +149,6 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		p.Cwd = chatFolders[0]
 	}
 
-	// Resolve the agent definition: chat's agent_profile, else the default (§5.2).
 	pocoID := chat.GetString("agent_profile")
 	var poco *core.Record
 	if pocoID != "" {
@@ -217,6 +252,7 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	// Resolve harness: chat.harness wins; else the model's harness; else
 	// the seeded default (§5.6.1).
 	var harnessRec *core.Record
+	var providerRec *core.Record
 	if harnessID != "" {
 		if harnessRec, err = app.FindRecordById("harnesses", harnessID); err != nil {
 			return p, err
@@ -227,7 +263,10 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		if err == nil {
 			p.Model = hm.GetString("harness_model_id")
 			if m, err := app.FindRecordById("models", hm.GetString("model")); err == nil {
-				p.Provider = m.GetString("provider")
+				if pr, err := app.FindRecordById("providers", m.GetString("provider")); err == nil {
+					providerRec = pr
+					p.Provider = pr.GetString("provider_id")
+				}
 			}
 			if harnessRec == nil {
 				if hr, err := app.FindRecordById("harnesses", hm.GetString("harness")); err == nil {
@@ -239,6 +278,56 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	if harnessRec == nil {
 		if harnessRec, err = app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil); err != nil {
 			return p, err
+		}
+	}
+	// No explicit model override was given (the common case: a chat created
+	// straight from the onboarding harness picker, per
+	// ChatListCubit.createAndOpen, never sets harness_model_override).
+	// Without this, a single-provider harness (Claude Code, Codex) never
+	// resolves a provider at all -- providerRec stays nil, so the OAuth
+	// account lookup below never runs, and the ACP subprocess gets no
+	// credential and fails with "Authentication required".
+	if ollamaModel == "" && hmID == "" && !harnessRec.GetBool("supports_live_config") {
+		if hm, model, err := resolveDefaultHarnessModel(app, harnessRec.Id, ""); err == nil && hm != nil {
+			p.Model = hm.GetString("harness_model_id")
+			if model != nil {
+				if pr, err := app.FindRecordById("providers", model.GetString("provider")); err == nil {
+					providerRec = pr
+					p.Provider = pr.GetString("provider_id")
+				}
+			}
+			hmID = hm.Id // so the launchKey resolution below scopes the harness instance consistently
+		}
+	}
+	// Multi-provider harnesses (Goose, OpenCode; supports_live_config) have
+	// no single provider to default to the way a single-provider harness
+	// does -- but the onboarding API-key flow (HarnessAuthCubit.startWithNone)
+	// DOES record exactly which provider the user picked, as a
+	// credential_selections row for (user, harness, provider). Use the most
+	// recently updated one as "the provider this chat should actually start
+	// on" and resolve a model for it the same way. This does NOT change what
+	// ProvisionHarnessInstance boots the container with -- it always seeds a
+	// placeholder provider/model for a live-config harness (see
+	// harness_provision.go's renderEnv), by design, since that's resolved
+	// independently of any specific chat. What it DOES feed is
+	// coordinator.PerSessionApplier's live ACP set_config_option call, which
+	// unconditionally corrects a live-config session to p.Provider/p.Model
+	// right after it's established -- reusing the exact mechanism Goose/
+	// OpenCode already have for this, rather than threading a second,
+	// duplicate resolution path through provisioning (see the "one place
+	// decides this" precedent in renderEnv's own mode-handling comment).
+	// Without p.Provider/p.Model populated here, that correction never
+	// fires and the session is silently left on the boot placeholder.
+	if ollamaModel == "" && hmID == "" && harnessRec.GetBool("supports_live_config") {
+		sels, selErr := app.FindRecordsByFilter("credential_selections", "user = {:u} && harness = {:h}", "-updated", 1, 0, map[string]any{"u": userID, "h": harnessRec.Id})
+		if selErr == nil && len(sels) > 0 {
+			if pr, err := app.FindRecordById("providers", sels[0].GetString("provider")); err == nil {
+				if hm, _, err := resolveDefaultHarnessModel(app, harnessRec.Id, pr.Id); err == nil && hm != nil {
+					p.Model = hm.GetString("harness_model_id")
+					providerRec = pr
+					p.Provider = pr.GetString("provider_id")
+				}
+			}
 		}
 	}
 	if ollamaModel != "" {
@@ -257,11 +346,40 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		}
 		p.Provider = "ollama"
 		p.Model = ollamaModel
+		providerRec = nil
 	}
 
 	p.SupportsLiveConfig = harnessRec.GetBool("supports_live_config")
+	p.SupportsLiveCredentialRegistration = harnessRec.GetBool("supports_live_credential_registration")
 	p.SupportsSessionDelete = harnessRec.GetBool("supports_session_delete")
 	p.SupportsAdditionalDirectories = harnessRec.GetBool("supports_additional_directories")
+
+	if harnessRec.GetBool("supports_live_config") && providerRec != nil {
+		edge, edgeErr := app.FindFirstRecordByFilter(
+			"harness_providers",
+			"harness = {:h} && provider = {:p}",
+			map[string]any{"h": harnessRec.Id, "p": providerRec.Id},
+		)
+		if edgeErr != nil && !errors.Is(edgeErr, sql.ErrNoRows) {
+			return p, fmt.Errorf("resolve harness_providers edge for provider %s: %w", providerRec.Id, edgeErr)
+		}
+		if edge != nil {
+			key, keyErr := app.FindFirstRecordByFilter(
+				"provider_api_keys",
+				"owner = {:u} && provider = {:p}",
+				map[string]any{"u": userID, "p": providerRec.Id},
+			)
+			if keyErr != nil && !errors.Is(keyErr, sql.ErrNoRows) {
+				return p, fmt.Errorf("resolve API key for provider %s: %w", providerRec.Id, keyErr)
+			}
+			if key != nil {
+				if names := hooks.EnvVarNamesForCredential(edge, providerRec); len(names) > 0 {
+					p.CredentialFieldName = names[0]
+					p.CredentialFieldValue = key.GetString("api_key")
+				}
+			}
+		}
+	}
 
 	// All harnesses receive PocketBase-owned MCP services through the standard
 	// ACP session/new request. This keeps the harness boundary identical and
@@ -279,22 +397,32 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 	if !p.SupportsLiveConfig && hmID != "" && ollamaModel == "" {
 		launchKey = hmID
 	}
-	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harnessRec.Id)
-	if err != nil {
-		return p, fmt.Errorf("resolve harness account: %w", err)
+	oauthAccountID := ""
+	p.HarnessName = harnessRec.GetString("name")
+	if providerRec != nil {
+		account, err := hooks.ResolveOAuthAccountForLaunch(app, userID, harnessRec.Id, providerRec.Id)
+		if err != nil {
+			return p, err
+		}
+		if account != nil {
+			p.AccountLogin = true
+			oauthAccountID = account.Id
+		}
 	}
 
 	// Shared with hooks.ProvisionHarnessInstance's own lookup — see
 	// hooks.FindHarnessInstance's doc comment for why this can't be a
 	// single `harness = {:h} && launch_key = {:k}` filter.
-	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey, userID, account.Id)
+	instance, err := hooks.FindHarnessInstance(app, harnessRec.Id, launchKey, userID, oauthAccountID)
 	if err != nil {
 		return p, err
 	}
 	if instance != nil {
 		if instance.GetBool("managed") {
 			instance.Set("last_used", time.Now().UTC().Format(time.RFC3339))
-			_ = app.Save(instance)
+			if err := app.Save(instance); err != nil {
+				log.Printf("[Profile] save last_used: %v", err)
+			}
 		}
 		p.ResolvedInstanceID = instance.Id
 		p.Target = coordinator.Target{URL: instance.GetString("acp_endpoint"), Secret: instance.GetString("secret")}
@@ -304,12 +432,12 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		case "error":
 			return p, fmt.Errorf("%w: %s", ErrHarnessFailed, instance.GetString("last_error"))
 		}
+		if p.CredentialFieldValue != "" {
+			if err := selectCredentialSyncer(harnessRec).Sync(ctx, app, instance, providerRec, p.CredentialFieldValue); err != nil {
+				return p, fmt.Errorf("sync harness credential: %w", err)
+			}
+		}
 	} else {
-		// No harness_instances row yet for this (harness, launch_key) pair —
-		// kick off provisioning (Task 6) in the background rather than
-		// blocking this request on an image pull, and tell the caller to
-		// retry shortly instead of silently proceeding with an empty
-		// dial target.
 		harnessIDCopy, launchKeyCopy := harnessRec.Id, launchKey
 		go func() {
 			if _, perr := hooks.ProvisionHarnessInstance(context.Background(), app, dockerapi.New(), harnessIDCopy, launchKeyCopy, userID); perr != nil {

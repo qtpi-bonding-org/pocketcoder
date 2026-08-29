@@ -16,18 +16,19 @@ func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 		"unknown",
 		"ssh-ed25519",
 		"MD5:00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff",
+		1, 1,
 		nil,
 	)
 	reporter.SetSourceCommit("0123456789abcdef")
 	reporter.Report("loading_images", "required.core")
 
 	value := readDocument(t, path)
-	if value.RunID != "run-1" || value.Phase != "loading_images" ||
+	if value.Schema != 3 || value.RunID != "run-1" || value.Operation != "loading_images" ||
 		value.Detail != "required.core" || value.SourceCommit != "0123456789abcdef" {
 		t.Fatalf("unexpected status document: %#v", value)
 	}
-	if value.Error != "" {
-		t.Fatalf("unexpected error: %q", value.Error)
+	if value.ErrorCode != "" {
+		t.Fatalf("unexpected error: %q", value.ErrorCode)
 	}
 	if value.SSHHostKey == nil || value.SSHHostKey.Type != "ssh-ed25519" {
 		t.Fatalf("SSH host identity was not retained: %#v", value.SSHHostKey)
@@ -35,34 +36,78 @@ func TestReporterPreservesRunAndAdvancesPhase(t *testing.T) {
 
 	reporter.Fail("release_install_failed")
 	value = readDocument(t, path)
-	if value.Phase != "loading_images" || value.Error != "release_install_failed" {
+	if value.Operation != "loading_images" || value.ErrorCode != "release_install_failed" {
 		t.Fatalf("unexpected failure document: %#v", value)
 	}
 }
 
 func TestReporterHeartbeatRefreshesStatus(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "status.json")
-	reporter := New(path, "run-2", "commit", "", "", nil)
+	reporter := New(path, "run-2", "commit", "", "", 1, 1, nil)
 	reporter.Report("compose_up", "starting")
 	first := readDocument(t, path).UpdatedAt
 
 	stop := reporter.StartHeartbeat(10 * time.Millisecond)
 	t.Cleanup(stop)
-	time.Sleep(1100 * time.Millisecond)
-	second := readDocument(t, path).UpdatedAt
-	if first == second {
-		t.Fatalf("heartbeat did not refresh updatedAt: %q", first)
+
+	// updatedAt has whole-second resolution (RFC3339), so a single fixed
+	// sleep can land in the same second as `first` under a slow/throttled
+	// CI scheduler even though the heartbeat itself is firing correctly.
+	// Poll instead of sleeping once, so the test only fails if the
+	// heartbeat genuinely never refreshes the timestamp within a generous
+	// deadline.
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		second := readDocument(t, path).UpdatedAt
+		if second != first {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("heartbeat did not refresh updatedAt within 3s: %q", first)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func TestReporterWritesAttemptAndMaxAttempts(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "status.json")
+	reporter := New(path, "run-4", "commit", "", "", 2, 3, nil)
+	reporter.Report("loading_images", "required.core")
+
+	value := readDocument(t, path)
+	if value.Attempt != 2 || value.MaxAttempts != 3 {
+		t.Fatalf("unexpected attempt tracking: %#v", value)
+	}
+
+	reporter.Fail("release_install_failed")
+	value = readDocument(t, path)
+	if value.Attempt != 2 || value.MaxAttempts != 3 {
+		t.Fatalf("attempt tracking not preserved on failure: %#v", value)
+	}
+}
+
+func TestReporterDefaultsAttemptToOneOfOne(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "status.json")
+	reporter := New(path, "run-5", "commit", "", "", 0, 0, nil)
+	reporter.Report("fetching_release", "")
+
+	value := readDocument(t, path)
+	if value.Attempt != 1 || value.MaxAttempts != 1 {
+		t.Fatalf("expected default 1/1, got attempt=%d maxAttempts=%d", value.Attempt, value.MaxAttempts)
 	}
 }
 
 type testDocument struct {
 	Schema       int         `json:"schema"`
 	RunID        string      `json:"runId"`
-	Phase        string      `json:"phase"`
+	Operation    string      `json:"operation"`
 	Detail       string      `json:"detail"`
+	Attempt      int         `json:"attempt"`
+	MaxAttempts  int         `json:"maxAttempts"`
 	SourceCommit string      `json:"sourceCommit"`
 	UpdatedAt    string      `json:"updatedAt"`
-	Error        string      `json:"error"`
+	ErrorCode    string      `json:"errorCode"`
+	ErrorMessage string      `json:"errorMessage"`
 	SSHHostKey   *sshHostKey `json:"sshHostKey"`
 }
 
@@ -84,7 +129,7 @@ func TestReporterPreservesUnknownFields(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`{"schema":2,"tls":{"state":"ready"},"future":true}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	reporter := New(path, "run-3", "commit", "", "", nil)
+	reporter := New(path, "run-3", "commit", "", "", 1, 1, nil)
 	reporter.Report("compose_up", "starting")
 	var value map[string]json.RawMessage
 	data, err := os.ReadFile(path)

@@ -5,7 +5,8 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 
@@ -15,17 +16,22 @@ void main() {
       name: 'Goose',
       cliId: 'goose',
       acpTransport: HarnesseAcpTransport.websocket);
-  const model1 = Model(id: 'model-1', name: 'Claude', provider: 'anthropic');
+  const model1 = Model(id: 'model-1', name: 'Claude', provider: 'p-anthropic');
   const hm1 = HarnessModel(
       id: 'hm-1', harness: 'h1', model: 'model-1', harnessModelId: 'claude-3');
-  const key1 = ProviderKey(id: 'k1', user: 'u', provider: 'anthropic');
+  const key1 = ProviderApiKey(
+      id: 'k1', owner: 'u', provider: 'p-anthropic', apiKey: 'key');
   const ollamaModel1 = OllamaModel(name: 'qwen2.5:0.5b', size: 1);
 
   NewChatDialog dialog() => const NewChatDialog(
         harnesses: [harness1],
         models: [model1],
         harnessModels: [hm1],
-        providerKeys: [key1],
+        harnessProviders: [
+          const HarnessProvider(
+              id: 'hp1', harness: 'h1', provider: 'p-anthropic')
+        ],
+        providerAPIKeys: [key1],
         ollamaModels: [ollamaModel1],
       );
 
@@ -65,7 +71,7 @@ void main() {
     // The harness field itself only shows the "select harness" placeholder
     // until tapped — tap it to open the nested picker dialog, then the
     // harness name should be visible as an option.
-    await tester.tap(find.byIcon(Icons.arrow_drop_down).first);
+    await tester.tap(find.text('SELECT HARNESS'));
     await tester.pumpAndSettle();
     expect(find.text('Goose'), findsOneWidget);
   });
@@ -93,14 +99,14 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    // Open the harness picker (first arrow_drop_down icon) and select it.
-    await tester.tap(find.byIcon(Icons.arrow_drop_down).first);
+    // Open the harness picker and select it.
+    await tester.tap(find.text('SELECT HARNESS'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Goose'));
     await tester.pumpAndSettle();
 
     // Open the model picker (now populated) and select it.
-    await tester.tap(find.byIcon(Icons.arrow_drop_down).at(1));
+    await tester.tap(find.text('SELECT MODEL'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Claude'));
     await tester.pumpAndSettle();
@@ -134,11 +140,11 @@ void main() {
     ));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.arrow_drop_down).first);
+    await tester.tap(find.text('SELECT HARNESS'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Goose'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.arrow_drop_down).at(1));
+    await tester.tap(find.text('SELECT MODEL'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('qwen2.5:0.5b (LOCAL)'));
     await tester.pumpAndSettle();

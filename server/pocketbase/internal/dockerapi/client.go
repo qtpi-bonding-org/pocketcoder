@@ -120,7 +120,7 @@ func (c *Client) Logs(ctx context.Context, containerName string, tail int) (stri
 		"stdout":     []string{"1"},
 		"stderr":     []string{"1"},
 		"follow":     []string{"0"},
-		"timestamps": []string{"0"},
+		"timestamps": []string{"1"},
 	}
 	if tail > 0 {
 		q.Set("tail", strconv.Itoa(tail))
@@ -157,11 +157,27 @@ func (c *Client) Logs(ctx context.Context, containerName string, tail int) (stri
 	return decoded, nil
 }
 
+// CaptureExitDiagnostics captures a stopped container's exit code and log tail before removal.
+func (c *Client) CaptureExitDiagnostics(ctx context.Context, containerID string) (int, string, error) {
+	insp, err := c.Inspect(ctx, containerID)
+	if err != nil {
+		return 0, "", err
+	}
+	logs, err := c.Logs(ctx, containerID, 200)
+	if err != nil {
+		return insp.State.ExitCode, "", err
+	}
+	if len(logs) > 64*1024 {
+		logs = logs[len(logs)-64*1024:]
+	}
+	return insp.State.ExitCode, logs, nil
+}
+
 // StreamLogs opens a live Docker log stream without buffering it. The normal
 // client timeout is unsuitable for follow=1; cancellation is controlled by
 // the caller's context instead.
 func (c *Client) StreamLogs(ctx context.Context, containerName string, tail int) (io.ReadCloser, error) {
-	q := url.Values{"stdout": {"1"}, "stderr": {"1"}, "follow": {"1"}, "timestamps": {"0"}}
+	q := url.Values{"stdout": {"1"}, "stderr": {"1"}, "follow": {"1"}, "timestamps": {"1"}}
 	if tail > 0 {
 		q.Set("tail", strconv.Itoa(tail))
 	} else {
@@ -350,6 +366,7 @@ func (c *Client) Create(ctx context.Context, name string, spec CreateSpec) (stri
 	hostConfig := map[string]any{
 		"Binds":         binds,
 		"RestartPolicy": map[string]any{"Name": restartPolicy},
+		"LogConfig":     map[string]any{"Type": "json-file", "Config": map[string]string{"max-size": "10m", "max-file": "3"}},
 	}
 	payload := map[string]any{
 		"Image":      spec.Image,
@@ -491,6 +508,7 @@ func (c *Client) Events(ctx context.Context) (<-chan Event, error) {
 				}
 			}
 			if err := json.Unmarshal(scanner.Bytes(), &raw); err != nil {
+				log.Printf("dockerapi: failed to unmarshal event: %v", err)
 				continue
 			}
 			select {
@@ -507,11 +525,14 @@ func (c *Client) Events(ctx context.Context) (<-chan Event, error) {
 }
 
 type ContainerSummary struct {
-	Names []string
-	State string
+	ID     string   `json:"Id"`
+	Names  []string `json:"Names"`
+	Image  string   `json:"Image"`
+	State  string   `json:"State"`
+	Status string   `json:"Status"`
 }
 
-func (c *Client) ListAll(ctx context.Context) ([]ContainerSummary, error) {
+func (c *Client) ListContainers(ctx context.Context) ([]ContainerSummary, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/containers/json?all=1", nil)
 	if err != nil {
 		return nil, err
@@ -521,11 +542,21 @@ func (c *Client) ListAll(ctx context.Context) ([]ContainerSummary, error) {
 		return nil, fmt.Errorf("list containers: %w", err)
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("list containers: docker API returned %s: %s", resp.Status, string(body))
+	}
 	var out []ContainerSummary
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("decode list response: %w", err)
 	}
 	return out, nil
+}
+
+// ListAll is retained for callers that use the older name for the same
+// Docker API operation.
+func (c *Client) ListAll(ctx context.Context) ([]ContainerSummary, error) {
+	return c.ListContainers(ctx)
 }
 
 // Remove deletes a managed container after it has stopped. The socket proxy

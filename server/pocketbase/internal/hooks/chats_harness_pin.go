@@ -22,6 +22,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -74,7 +75,9 @@ const workspaceRoot = "/workspace" // duplicated from internal/api/profile.go's 
 
 func validateWorkspaceOverride(rec *core.Record) error {
 	var folders []string
-	_ = rec.UnmarshalJSONField("workspace_override", &folders)
+	if err := rec.UnmarshalJSONField("workspace_override", &folders); err != nil {
+		log.Printf("⚠️ [Chats] Failed to parse workspace_override: %v", err)
+	}
 	for _, f := range folders {
 		clean := filepath.Clean(f)
 		if clean != workspaceRoot && !strings.HasPrefix(clean, workspaceRoot+"/") {

@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.lightTheme,
@@ -48,6 +49,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('AGENT CONFIGURATION'), findsWidgets);
     expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(BiosRow), findsWidgets);
   });
 
   testWidgets('existing config prefills the editor', (tester) async {

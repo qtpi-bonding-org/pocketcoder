@@ -57,20 +57,12 @@ class AppLocalizationService implements cubit_ui_flow.ILocalizationService {
       return key; // Fallback to key if not initialized
     }
 
-    // Use the generated resolver - handles all keys automatically
     return _resolver?.resolve(key, args: args) ?? key;
   }
 
   /// Checks if a key is known to the resolver.
   bool hasKey(String key) {
     if (!isInitialized) return false;
-    // The resolver maps "foo.bar" -> "fooBar" (camelCase)
-    // We rely on the resolver's internal map for this check if exposed,
-    // or typically the resolver has a way to check.
-    // Ensure L10nKeyResolver has static hasKey or instance method.
-    // Based on original code, it seems to have a static hasKey or similar.
-    // If the generated code doesn't have it, valid patterns are:
-    // return _resolver!.resolve(key) != null;
     return L10nKeyResolver.hasKey(key);
   }
 }

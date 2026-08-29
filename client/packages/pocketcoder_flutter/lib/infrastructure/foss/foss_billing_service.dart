@@ -4,17 +4,14 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 class FossBillingService implements BillingService {
   @override
   Future<void> initialize() async {
-    // No-op for FOSS
   }
 
   @override
   Future<void> identify(String userId) async {
-    // No-op for FOSS: no billing backend to link.
   }
 
   @override
   Future<void> reset() async {
-    // No-op for FOSS: no billing backend to link.
   }
 
   @override

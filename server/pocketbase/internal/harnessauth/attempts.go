@@ -19,12 +19,25 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package harnessauth
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
+)
+
+// Sentinel errors ResolveAccountAndAttempt returns for the two genuinely
+// "not found" cases, so callers can return a real 404 instead of blanket-
+// converting every error from this function into a 400. Live-confirmed
+// 2026-08-27: internal/api/harness_auth.go's poll/submit/cancel/authRequest
+// all did `return re.BadRequestError(err.Error(), nil)` unconditionally,
+// so a caller with no account at all got a 400 "account not found" instead
+// of the 404 that both the wording and REST convention call for.
+var (
+	ErrAccountNotFound = errors.New("account not found")
+	ErrAttemptNotFound = errors.New("attempt not found")
 )
 
 const (
@@ -38,40 +51,20 @@ const (
 	StatusNeedsAPIKey  = "needs_api_key"
 )
 
-func BindProviderKey(app core.App, account *core.Record, providerKeyID, actorUserID string) error {
-	pk, err := app.FindRecordById("provider_keys", providerKeyID)
-	if err != nil {
-		return fmt.Errorf("providerKey not found")
-	}
-	if pk.GetString("user") != actorUserID {
-		return fmt.Errorf("providerKey does not belong to the authenticated user")
-	}
-	harness, err := app.FindRecordById("harnesses", account.GetString("harness"))
-	if err != nil {
-		return fmt.Errorf("harness not found")
-	}
-	if harness.GetString("provider_scope") != "any" && pk.GetString("provider") != harness.GetString("cli_id") {
-		return fmt.Errorf("providerKey does not match this harness")
-	}
-	account.Set("provider_key", providerKeyID)
-	return nil
-}
-
-func CreateAttempt(app core.App, accountID, provider string) (*core.Record, error) {
-	col, err := app.FindCollectionByNameOrId("harness_auth_attempts")
+func CreateAttempt(app core.App, accountID string) (*core.Record, error) {
+	col, err := app.FindCollectionByNameOrId("harness_oauth_attempts")
 	if err != nil {
 		return nil, err
 	}
 	rec := core.NewRecord(col)
 	rec.Set("account", accountID)
-	rec.Set("provider", provider)
 	rec.Set("status", AttemptStatusStarting)
 	rec.Set("expires_at", time.Now().UTC().Add(15*time.Minute))
 	return rec, app.Save(rec)
 }
 
 func LatestAttempt(app core.App, accountID string) (*core.Record, error) {
-	recs, err := app.FindRecordsByFilter("harness_auth_attempts", "account = {:account}", "-created", 1, 0, map[string]any{"account": accountID})
+	recs, err := app.FindRecordsByFilter("harness_oauth_attempts", "account = {:account}", "-created", 1, 0, map[string]any{"account": accountID})
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +76,7 @@ func LatestAttempt(app core.App, accountID string) (*core.Record, error) {
 
 func ActiveAttempt(app core.App, accountID string) (*core.Record, error) {
 	recs, err := app.FindRecordsByFilter(
-		"harness_auth_attempts",
+		"harness_oauth_attempts",
 		"account = {:account} && (status = 'starting' || status = 'awaiting_input')",
 		"-created",
 		1,
@@ -99,22 +92,25 @@ func ActiveAttempt(app core.App, accountID string) (*core.Record, error) {
 	return recs[0], nil
 }
 
-func ResolveAccountAndAttempt(app core.App, userID, harness, accountID, attemptID string) (*core.Record, *core.Record, error) {
+func ResolveAccountAndAttempt(app core.App, userID, harness, provider, accountID, attemptID string) (*core.Record, *core.Record, error) {
 	if harness == "" {
 		return nil, nil, fmt.Errorf("harness is required")
 	}
-	account, err := harnessaccount.Resolve(app, userID, harness, accountID)
+	if provider == "" {
+		return nil, nil, fmt.Errorf("provider is required")
+	}
+	account, err := harnessaccount.Resolve(app, userID, harness, provider, accountID)
 	if err != nil {
 		return nil, nil, err
 	}
 	if account == nil {
-		return nil, nil, fmt.Errorf("account not found")
+		return nil, nil, ErrAccountNotFound
 	}
 	var attempt *core.Record
 	if attemptID != "" {
-		attempt, err = app.FindRecordById("harness_auth_attempts", attemptID)
+		attempt, err = app.FindRecordById("harness_oauth_attempts", attemptID)
 		if err != nil {
-			return account, nil, fmt.Errorf("attempt not found")
+			return account, nil, ErrAttemptNotFound
 		}
 		if attempt.GetString("account") != account.Id {
 			return account, nil, fmt.Errorf("attempt does not belong to this account")
@@ -133,7 +129,7 @@ func BuildAttemptContext(app core.App, attempt *core.Record, userID string) (Att
 	if accountID == "" {
 		return AttemptContext{}, fmt.Errorf("attempt is missing harness account")
 	}
-	account, err := app.FindRecordById("harness_accounts", accountID)
+	account, err := app.FindRecordById("harness_oauth_accounts", accountID)
 	if err != nil {
 		return AttemptContext{}, fmt.Errorf("resolve harness account %s: %w", accountID, err)
 	}
@@ -153,6 +149,25 @@ func BuildAttemptContext(app core.App, attempt *core.Record, userID string) (Att
 		HarnessCLI:   harness.GetString("cli_id"),
 		HarnessImage: image,
 	}, nil
+}
+
+func ResolveAuthenticatorKey(app core.App, account *core.Record) (string, error) {
+	edge, err := app.FindFirstRecordByFilter(
+		"harness_providers",
+		"harness = {:h} && provider = {:p}",
+		map[string]any{"h": account.GetString("harness"), "p": account.GetString("provider")},
+	)
+	if err != nil {
+		return "", fmt.Errorf("no harness_providers edge for this account's (harness, provider): %w", err)
+	}
+	if !edge.GetBool("supports_oauth") {
+		return "", fmt.Errorf("this harness/provider pair does not support OAuth login")
+	}
+	key := edge.GetString("oauth_authenticator")
+	if key == "" {
+		return "", fmt.Errorf("harness_providers edge has supports_oauth=true but no oauth_authenticator set")
+	}
+	return key, nil
 }
 
 func UpdateAttempt(app core.App, attempt *core.Record, status, errorText string) error {

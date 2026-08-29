@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_flutter/application/agent/provider_reauthentication_required.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/chat_list_exception.dart';
 
@@ -18,6 +19,20 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
       PermissionException() => _mapPermissionException(exception),
       AiException() => _mapAiException(exception),
       ToolPermissionsException() => _mapToolPermissionsException(exception),
+      ProviderReauthenticationRequired() =>
+        const MessageKey.error('provider.reauthentication.required'),
+      // Domain exceptions with no dedicated copy yet -- fall back to the
+      // generic error key rather than null, which used to leak
+      // DomainException's raw '$runtimeType: $message' toString() (e.g.
+      // "ObservabilityException: failed to fetch traces") straight to the
+      // user via UiFlowListener's own fallback.
+      RepositoryException() ||
+      McpException() ||
+      ObservabilityException() ||
+      SkillsException() ||
+      SchedulerException() ||
+      FilesException() =>
+        MessageKey.genericError,
       _ => null,
     };
   }

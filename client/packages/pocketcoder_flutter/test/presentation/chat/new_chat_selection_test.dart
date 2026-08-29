@@ -1,12 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_selection.dart';
 
 void main() {
-  const modelA = Model(id: 'model-a', name: 'a', provider: 'anthropic');
-  const modelB = Model(id: 'model-b', name: 'b', provider: 'openai');
+  const modelA = Model(id: 'model-a', name: 'a', provider: 'p-anthropic');
+  const modelB = Model(id: 'model-b', name: 'b', provider: 'p-openai');
   const hmA = HarnessModel(
       id: 'hm-a', harness: 'h1', model: 'model-a', harnessModelId: 'claude-3');
   const hmB = HarnessModel(
@@ -20,22 +21,33 @@ void main() {
         harnessId: 'h1',
         harnessModels: [hmA, hmB, hmOtherHarness],
         models: [modelA, modelB],
-        providerKeys: [
-          const ProviderKey(id: 'k1', user: 'u', provider: 'anthropic'),
-          const ProviderKey(id: 'k2', user: 'u', provider: 'openai'),
+        harnessProviders: const [
+          HarnessProvider(id: 'hp-a', harness: 'h1', provider: 'p-anthropic'),
+          HarnessProvider(id: 'hp-b', harness: 'h1', provider: 'p-openai'),
+        ],
+        providerAPIKeys: [
+          const ProviderApiKey(
+              id: 'k1', owner: 'u', provider: 'p-anthropic', apiKey: 'a'),
+          const ProviderApiKey(
+              id: 'k2', owner: 'u', provider: 'p-openai', apiKey: 'b'),
         ],
       );
       expect(result.map((h) => h.id), containsAll(['hm-a', 'hm-b']));
       expect(result.map((h) => h.id), isNot(contains('hm-c')));
     });
 
-    test('excludes a model whose provider has no provider_keys row', () {
+    test('excludes a model whose provider has no usable credential', () {
       final result = selectableModels(
         harnessId: 'h1',
         harnessModels: [hmA, hmB],
         models: [modelA, modelB],
-        providerKeys: [
-          const ProviderKey(id: 'k1', user: 'u', provider: 'anthropic'),
+        harnessProviders: const [
+          HarnessProvider(id: 'hp-a', harness: 'h1', provider: 'p-anthropic'),
+          HarnessProvider(id: 'hp-b', harness: 'h1', provider: 'p-openai'),
+        ],
+        providerAPIKeys: [
+          const ProviderApiKey(
+              id: 'k1', owner: 'u', provider: 'p-anthropic', apiKey: 'a'),
         ],
       );
       expect(result.map((h) => h.id), ['hm-a']);
@@ -48,21 +60,51 @@ void main() {
         harnessId: 'h1',
         harnessModels: [hmA],
         models: const [], // modelA missing entirely
-        providerKeys: [
-          const ProviderKey(id: 'k1', user: 'u', provider: 'anthropic'),
+        harnessProviders: const [
+          HarnessProvider(id: 'hp-a', harness: 'h1', provider: 'p-anthropic'),
+          HarnessProvider(id: 'hp-b', harness: 'h1', provider: 'p-openai'),
+        ],
+        providerAPIKeys: [
+          const ProviderApiKey(
+              id: 'k1', owner: 'u', provider: 'p-anthropic', apiKey: 'a'),
         ],
       );
       expect(result, isEmpty);
     });
 
-    test('returns an empty list when no provider_keys exist at all', () {
+    test('returns an empty list when no credentials exist at all', () {
       final result = selectableModels(
         harnessId: 'h1',
         harnessModels: [hmA, hmB],
         models: [modelA, modelB],
-        providerKeys: const [],
+        harnessProviders: const [],
+        providerAPIKeys: const [],
       );
       expect(result, isEmpty);
+    });
+    test('Codex openai key selects model through harness provider edge', () {
+      final result = selectableModels(
+        harnessId: 'codex',
+        harnessModels: const [
+          HarnessModel(
+              id: 'hm', harness: 'codex', model: 'm', harnessModelId: 'gpt-4')
+        ],
+        models: const [
+          Model(id: 'm', name: 'GPT-4', provider: 'openai-record')
+        ],
+        harnessProviders: const [
+          HarnessProvider(
+              id: 'edge', harness: 'codex', provider: 'openai-record')
+        ],
+        providerAPIKeys: const [
+          ProviderApiKey(
+              id: 'key',
+              owner: 'u',
+              provider: 'openai-record',
+              apiKey: 'secret')
+        ],
+      );
+      expect(result.map((model) => model.id), ['hm']);
     });
   });
 

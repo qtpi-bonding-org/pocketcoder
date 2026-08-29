@@ -52,6 +52,22 @@ void main() {
       expect(block['type'], 'text');
       expect(block['text'], 'hi');
     });
+
+    test('POSTs messageId when provided', () async {
+      nextResponseBody = {'runId': 'run-123'};
+      await api.prompt('chat-1', 'hi', messageId: 'abc-123');
+
+      final body = adapter.lastJsonBody;
+      expect(body['messageId'], 'abc-123');
+    });
+
+    test('omits messageId when not provided', () async {
+      nextResponseBody = {'runId': 'run-123'};
+      await api.prompt('chat-1', 'hi');
+
+      final body = adapter.lastJsonBody;
+      expect(body.containsKey('messageId'), isFalse);
+    });
   });
 
   group('cancel', () {
@@ -193,6 +209,25 @@ void main() {
         api.cancel('chat-1'),
         throwsA(isA<AgentUnavailableFailure>()),
       );
+    });
+
+    test(
+        'an unmapped status -> UnknownAgentActionFailure whose toString() '
+        'is the real message, not the default Object.toString() -- '
+        "confirmed live: without this, an unmapped AgentActionFailure "
+        'reaching the UI (no IExceptionKeyMapper entry for this type) '
+        'rendered as literally "Instance of \'UnknownAgentActionFailure\'"',
+        () async {
+      nextStatusCode = 500;
+      nextResponseBody = {'message': 'goose backend exploded'};
+      try {
+        await api.cancel('chat-1');
+        fail('expected AgentActionFailure');
+      } on AgentActionFailure catch (e) {
+        expect(e, isA<UnknownAgentActionFailure>());
+        expect(e.toString(), 'goose backend exploded');
+        expect(e.toString(), isNot(contains('Instance of')));
+      }
     });
   });
 }

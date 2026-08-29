@@ -11,6 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  collection: ^1.18.0
   meta: ^1.0.0
   flutter_localizations:
     sdk: flutter
@@ -19,8 +20,8 @@ dependencies:
   # Architecture & State Management
   flutter_bloc: ^8.1.3
   equatable: ^2.0.5
-  get_it: ^7.6.4
-  injectable: ^2.3.2
+  get_it: ^8.3.0
+  injectable: ^2.7.0
 
   # Custom Libraries
   cubit_ui_flow:
@@ -38,7 +39,7 @@ dependencies:
   l10n_key_resolver:
     git:
       url: https://github.com/qtpi-bonding-org/dart_l10n_key_resolver.git
-      ref: d7a30dfc7922a9903c07dcb0ae15e8a6d606ea6b
+      ref: 52e2dbca293de29f140a3be76ec95a24d07ee50f
 
   # Navigation
   go_router: ^14.0.0
@@ -57,16 +58,18 @@ dependencies:
   intl: ^0.20.2
   flutter_web_auth_2: ^5.0.3
   crypto: ^3.0.3
-  pocketbase_drift: ^0.3.13
-  drift: ^2.31.0
-  sqlite3_flutter_libs: ^0.5.41
+  pocketbase_drift:
+    git:
+      url: https://github.com/qtpi-bonding-org/pocketbase_drift.git
+      ref: 8659fa68f88f30f99266df0a45fe067a4b7797db
+  drift: ^2.33.0
+  sqlite3_flutter_libs: ^0.6.0+eol
   path_provider: ^2.1.5
   path: ^1.9.1
-  pocketbase: ^0.23.2
+  pocketbase: ^0.24.0
   dartssh2: ^2.22.5
   cryptography: ^2.7.0
   openssh_ed25519: ^1.1.0
-  flutter_client_sse: ^2.0.3
   connectivity_plus: ^7.0.0
   connectivity_plus_platform_interface: ^2.0.1
   device_info_plus: ^11.3.0
@@ -77,14 +80,18 @@ dependencies:
   acp_dart: 0.4.0
   pocketcoder_api:
     path: ../pocketcoder_api
-  drift_flutter: 0.2.8
+  drift_flutter: 0.3.1
   flutter_chat_core: ^2.9.0
   flutter_chat_ui: ^2.11.1
   flyer_chat_text_stream_message: ^2.3.0
   ag_ui_widgets_flutter:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
-      ref: 21c2a311762aba68fd78960f4df2e4567bfb6cb0
+      ref: 0e818c83834b9a61987518189f02e357f8f4b534
+  flutter_aeroform:
+    git:
+      url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
+      ref: 75704b1e8d94e295322feba0c1e2972d13dc2cd6
 
 dependency_overrides:
   # Keep the UnifiedPush crypto dependency on the portable hosted 0.6.0
@@ -96,15 +103,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  webview_flutter_platform_interface: ^2.10.0
 
   # Code Generation
   build_runner: ^2.4.7
   freezed: ^3.0.0
   json_serializable: ^6.7.1
-  injectable_generator: ^2.4.1
+  injectable_generator: ^2.7.0
   widgetbook_generator: ^3.11.0
   mocktail: ^1.0.0
-  drift_dev: ^2.31.0
+  drift_dev: ^2.32.0
 
 
 flutter:

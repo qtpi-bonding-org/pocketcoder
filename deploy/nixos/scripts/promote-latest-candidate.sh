@@ -1,10 +1,24 @@
 #!/bin/sh
 # Dispatches the promotion workflow for the latest successful NixOS candidate.
 # GH_TOKEN is injected by secrets-daemon; this script never reads it from disk.
+#
+# Usage: promote-latest-candidate.sh <channel> [commit]
+#
+# The optional [commit] argument overrides which commit to look up a
+# successful candidate run for. Without it, the script resolves the
+# CURRENT remote tip of the checked-out branch via `git fetch` -- not the
+# local checkout's own possibly-stale HEAD. This matters because whatever
+# persistent checkout this script runs from (wherever the daemon points
+# it) is not guaranteed to have been `git pull`-ed since the last push:
+# confirmed live 2026-08-26, where the local checkout's HEAD sat one merge
+# commit behind origin/staging, causing this script to look up a candidate
+# run for a commit that was never independently built, instead of the one
+# that had actually just succeeded in CI.
 set -eu
 
 channel=${1:?channel is required}
 case "$channel" in stable | beta | nightly) ;; *) echo "invalid channel" >&2; exit 1 ;; esac
+commit_override=${2:-}
 
 api='https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions'
 auth="Authorization: Bearer $GH_TOKEN"
@@ -28,7 +42,18 @@ case "$ref" in
     exit 64
     ;;
 esac
-source_commit=$(git rev-parse HEAD)
+
+if [ -n "$commit_override" ]; then
+  source_commit=$commit_override
+else
+  # Fetch the branch's real, current remote tip rather than trusting
+  # whatever the local checkout's own HEAD happens to be pointed at --
+  # see the usage comment above for why that's not safe to assume.
+  git fetch -q origin "$ref"
+  source_commit=$(git rev-parse "origin/$ref")
+fi
+case "$source_commit" in *[!0-9a-f]* | '') echo "invalid commit: $source_commit" >&2; exit 1 ;; esac
+test "${#source_commit}" -eq 40 || { echo "invalid commit: $source_commit" >&2; exit 1; }
 run=$(curl -sf -H "$auth" "$api/workflows/nixos-image.yml/runs?branch=$ref&status=completed&per_page=20" |
   jq -r --arg source_commit "$source_commit" \
     '.workflow_runs[] | select(.conclusion == "success" and .head_sha == $source_commit) | .id' |

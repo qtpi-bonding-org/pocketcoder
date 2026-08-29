@@ -49,7 +49,9 @@ do
 done
 for retired in \
   ./deploy/scripts/activate-release.sh \
+  ./deploy/scripts/install-release-images.sh \
   ./deploy/scripts/manage-update-snapshot.sh \
+  ./deploy/scripts/status-merge.sh \
   ./deploy/scripts/update-release.sh
 do
   ! grep -Fqx "$retired" "$tmp_dir/files.txt" ||

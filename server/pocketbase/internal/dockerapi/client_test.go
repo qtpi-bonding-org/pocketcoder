@@ -275,3 +275,31 @@ func TestEventsStopsOnContextCancel(t *testing.T) {
 		t.Error("expected channel to close after context cancellation")
 	}
 }
+
+func TestListContainersReturnsContainerSummaries(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/containers/json" {
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+		if r.URL.Query().Get("all") != "1" {
+			t.Fatalf("all = %q, want 1", r.URL.Query().Get("all"))
+		}
+		json.NewEncoder(w).Encode([]map[string]any{
+			{"Id": "abc123", "Names": []string{"/pocketcoder-harness"}, "Image": "harness:latest", "State": "running", "Status": "Up 2 minutes"},
+		})
+	}))
+	defer srv.Close()
+
+	c := &Client{baseURL: srv.URL, http: srv.Client()}
+	containers, err := c.ListContainers(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(containers) != 1 {
+		t.Fatalf("got %d containers, want 1", len(containers))
+	}
+	got := containers[0]
+	if got.ID != "abc123" || len(got.Names) != 1 || got.Names[0] != "/pocketcoder-harness" || got.Image != "harness:latest" || got.State != "running" || got.Status != "Up 2 minutes" {
+		t.Errorf("summary = %+v", got)
+	}
+}

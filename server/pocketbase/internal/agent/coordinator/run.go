@@ -47,11 +47,63 @@ type Config struct {
 	ElicitationTimeout time.Duration
 	MaxRunEvents       int
 	LiveBuffer         int
+	// OnPermissionPending fires whenever a permission request actually goes
+	// pending (i.e. session-profile rules didn't auto-resolve it) -- the
+	// hook point for dispatching a push notification. payload is exactly
+	// what agui.PermissionPayload builds -- the same AG-UI STATE_DELTA shape
+	// (requestId/status/options[].optionId,name,kind/toolCallId/title/kind)
+	// the Flutter client already parses from the live SSE stream, not a
+	// second ACP-shaped schema it's never had to speak. Called from a
+	// goroutine by the caller; must not block or delay the permission wait.
+	OnPermissionPending func(ctx context.Context, chatID string, payload map[string]any)
+	// OnElicitationPending mirrors OnPermissionPending for elicitation
+	// (spec N5's separate id-space): payload is agui.ElicitationPayload's
+	// shape (elicitationId/message/mode/requestedSchema/url).
+	OnElicitationPending func(ctx context.Context, chatID string, payload map[string]any)
 }
 type Emit func(events.Event) error
 type ResolveSession func(context.Context) (string, error)
 type OnSessionCreated func(context.Context, string) error
 type OnRunFinished func(context.Context, acpsdk.StopReason) error
+type RunOutcome string
+
+const (
+	RunCompleted RunOutcome = "completed"
+	RunFailed    RunOutcome = "failed"
+	RunCancelled RunOutcome = "cancelled"
+)
+
+type RunOption func(*runOptions)
+type runOptions struct {
+	onRunEnded    func(context.Context, string, RunOutcome)
+	userMessageID string
+}
+
+func WithOnRunEnded(fn func(context.Context, string, RunOutcome)) RunOption {
+	return func(o *runOptions) { o.onRunEnded = fn }
+}
+
+// WithUserMessageID carries the client-generated id from PromptRequest.MessageId
+// (acp-go-sdk) through to runLoop, which echoes it back into the hub as a
+// user-role TEXT_MESSAGE_START/CONTENT/END sequence — see runLoop's use of
+// this value for why: the client already renders this id optimistically, and
+// the client's ConversationReducer dedupes by exact id, so echoing the same
+// id here (rather than minting a new one) is what makes the optimistic
+// insert get superseded instead of duplicated once this arrives.
+func WithUserMessageID(id string) RunOption {
+	return func(o *runOptions) { o.userMessageID = id }
+}
+
+// WithUserMessageIDOpt is WithUserMessageID for a caller holding the
+// acp-go-sdk *string shape directly (PromptRequest.MessageId) — a no-op
+// RunOption when nil or empty, so call sites don't need their own branch.
+func WithUserMessageIDOpt(id *string) RunOption {
+	if id == nil || *id == "" {
+		return func(*runOptions) {}
+	}
+	return WithUserMessageID(*id)
+}
+
 type DialFunc func(context.Context, acpsdk.Client, Target) (acp.Conn, error)
 
 type runHandle struct {
@@ -422,7 +474,9 @@ func (s *sessionClient) SessionUpdate(_ context.Context, n acpsdk.SessionNotific
 	updates, err := s.bridge.Update(n.Update)
 	// Soft-miss: the bridge already emitted redacted RAW for unmapped shapes;
 	// a returned error is non-fatal, so publish what we have and keep going.
-	_ = err
+	if err != nil {
+		log.Printf("coordinator: session update bridge failed: %v", err)
+	}
 	for _, e := range updates {
 		if emitErr := s.emit(e); emitErr != nil {
 			return emitErr
@@ -476,6 +530,10 @@ func (s *sessionClient) RequestPermission(ctx context.Context, req acpsdk.Reques
 	s.emitMu.Lock()
 	_ = s.emit(s.bridge.PermissionPending(id, req.Options, string(req.ToolCall.ToolCallId), req.ToolCall.Title, req.ToolCall.Kind))
 	s.emitMu.Unlock()
+	if s.c.config.OnPermissionPending != nil {
+		payload := agui.PermissionPayload(id, req.Options, string(req.ToolCall.ToolCallId), req.ToolCall.Title, req.ToolCall.Kind)
+		go s.c.config.OnPermissionPending(ctx, s.chatID, payload)
+	}
 	select {
 	case d := <-p.decision:
 		s.emitMu.Lock()
@@ -607,6 +665,10 @@ func (s *sessionClient) UnstableCreateElicitation(ctx context.Context, req acpsd
 	s.emitMu.Lock()
 	_ = s.emit(s.bridge.ElicitationPending(id, message, mode, schema, url))
 	s.emitMu.Unlock()
+	if s.c.config.OnElicitationPending != nil {
+		payload := agui.ElicitationPayload(id, message, mode, schema, url)
+		go s.c.config.OnElicitationPending(ctx, s.chatID, payload)
+	}
 	select {
 	case d := <-p.decision:
 		s.emitMu.Lock()
@@ -675,6 +737,11 @@ func (c *Coordinator) establishSession(
 		return nil, "", nil, nil, nil, false, fmt.Errorf("initialize harness: %w", err)
 	}
 	initResp = &initRespVal
+
+	if err := selectProviderBootstrap(profile).Bootstrap(ctx, dialedConn, profile); err != nil {
+		dialedConn.Close()
+		return nil, "", nil, nil, nil, false, fmt.Errorf("bootstrap provider: %w", err)
+	}
 
 	cwd := profile.Cwd
 	if cwd == "" {
@@ -854,7 +921,11 @@ func (c *Coordinator) Shutdown(ctx context.Context) {
 // spec N1), and returns the run id immediately. The run survives the caller
 // returning: teardown fires on Prompt return / cancel / panic, last in the
 // gate is always the release of Reserve so a second StartPrompt can take over.
-func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) (string, error) {
+func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished, opts ...RunOption) (string, error) {
+	options := &runOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
 	if err := c.Reserve(chatID); err != nil {
 		return "", err
 	}
@@ -863,7 +934,7 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 	accepting := &atomic.Bool{}
 	h := &runHandle{runID: runID, cancel: cancel, accepting: accepting}
 	c.registerRun(chatID, h)
-	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created, finished)
+	go c.runLoop(runCtx, chatID, runID, prompt, h, resolve, profileFn, created, finished, options.onRunEnded, options.userMessageID)
 	return runID, nil
 }
 
@@ -871,8 +942,22 @@ func (c *Coordinator) StartPrompt(chatID, prompt string, resolve ResolveSession,
 // a single panic recover that publishes RUN_ERROR, and the publish-through-
 // hub `emit` so RequestPermission (which also calls s.emit) remains safe on
 // the detached path with no client lifetime dependency.
-func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) {
+func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt string, h *runHandle, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished, onRunEnded func(context.Context, string, RunOutcome), userMessageID string) {
 	hub := c.hubFor(chatID)
+	outcome := RunFailed
+	defer func() {
+		// outcome is set inline in the function body (RunCompleted/
+		// RunCancelled right before the pre-existing `finished` call, at
+		// the true end of the happy path). Do NOT re-derive it from
+		// runCtx.Err() here: teardown() (deferred below, so it runs
+		// BEFORE this defer per LIFO order) unconditionally calls
+		// h.cancel(), so runCtx is always already cancelled by the time
+		// this fires -- re-checking it here would misclassify every
+		// completed and every failed run as "cancelled".
+		if onRunEnded != nil {
+			onRunEnded(runCtx, chatID, outcome)
+		}
+	}()
 	var once sync.Once
 	teardown := func() {
 		once.Do(func() {
@@ -893,22 +978,32 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	defer teardown()
 	defer func() {
 		if r := recover(); r != nil {
+			log.Printf("coordinator: run %s panicked: %v", runID, r)
 			hub.Publish(events.NewRunErrorEvent("internal error", events.WithErrorCode("protocol_error")))
 		}
 	}()
 
+	bridge := agui.NewBridge(chatID, runID)
+	hub.StartRun(runID, bridge.Snapshot)
+
+	if userMessageID != "" {
+		hub.Publish(events.NewTextMessageStartEvent(userMessageID, events.WithRole("user")))
+		hub.Publish(events.NewTextMessageContentEvent(userMessageID, prompt))
+		hub.Publish(events.NewTextMessageEndEvent(userMessageID))
+	}
+
 	sessionID, err := resolve(runCtx)
 	if err != nil {
+		log.Printf("coordinator: session mapping failed for chat %s run %s: %v", chatID, runID, err)
 		hub.Publish(events.NewRunErrorEvent("session mapping", events.WithErrorCode("goose_unavailable")))
 		return
 	}
 	profile, err := profileFn(runCtx)
 	if err != nil {
+		log.Printf("coordinator: profile resolution failed for chat %s run %s: %v", chatID, runID, err)
 		hub.Publish(events.NewRunErrorEvent("profile resolution", events.WithErrorCode("goose_unavailable")))
 		return
 	}
-	bridge := agui.NewBridge(chatID, runID)
-	hub.StartRun(runID, bridge.Snapshot)
 
 	// Detached path routes ALL client callbacks (SessionUpdate AND
 	// RequestPermission — both call s.emit) through the hub, so emit is never
@@ -919,7 +1014,8 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 
 	conn, sessionID, modes, configOptions, _, wasNew, err := c.establishSession(runCtx, sc, profile, sessionID, func() {})
 	if err != nil {
-		hub.Publish(providerRunError(profile.Provider, "session init", err))
+		log.Printf("coordinator: establishSession failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
+		hub.Publish(providerRunError(profile.AccountLogin, profile.HarnessName, "session init", err))
 		return
 	}
 	h.conn = conn
@@ -932,6 +1028,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 			if _, dErr := conn.UnstableDeleteSession(runCtx, acpsdk.UnstableDeleteSessionRequest{SessionId: acpsdk.SessionId(sessionID)}); dErr != nil {
 				log.Printf("coordinator: orphan session delete failed: %v", dErr)
 			}
+			log.Printf("coordinator: created() failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
 			hub.Publish(events.NewRunErrorEvent("session init", events.WithErrorCode("goose_unavailable")))
 			return
 		}
@@ -942,7 +1039,8 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	}
 	applier := selectApplier(profile)
 	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
-		hub.Publish(providerRunError(profile.Provider, "session init", err))
+		log.Printf("coordinator: applier.Apply failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
+		hub.Publish(providerRunError(profile.AccountLogin, profile.HarnessName, "session init", err))
 		return
 	}
 	h.accepting.Store(true)
@@ -951,40 +1049,77 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 	maxTimer := c.clock.AfterFunc(c.maxRun, func() { h.cancel() })
 	c.trackTimer(chatID, runID, maxTimer)
 
-	resp, err := conn.Prompt(runCtx, acpsdk.PromptRequest{
+	promptReq := acpsdk.PromptRequest{
 		SessionId: acpsdk.SessionId(sessionID),
 		Prompt:    []acpsdk.ContentBlock{{Text: &acpsdk.ContentBlockText{Type: "text", Text: prompt}}},
-	})
+	}
+	if userMessageID != "" {
+		promptReq.MessageId = &userMessageID
+	}
+	resp, err := conn.Prompt(runCtx, promptReq)
 	if err != nil {
 		code := "goose_unavailable"
 		message := "goose turn failed"
-		if providerAuthFailure(profile.Provider, err) {
+		switch {
+		case providerAuthFailure(profile.AccountLogin, err):
 			code = providerAuthRequiredCode
-			message = "Claude Code reauthentication required. Your saved login was kept."
+			message = reauthRequiredMessage(profile.HarnessName)
+		case providerApiKeyFailure(profile.AccountLogin, err):
+			code = providerApiKeyInvalidCode
+			message = apiKeyInvalidMessage(profile.HarnessName)
 		}
 		switch {
 		case runCtx.Err() != nil:
 			code = "run_timeout"
+			// conn.Prompt erroring because runCtx was cancelled is exactly
+			// what happens on both an explicit user Cancel and the
+			// max-run timeout firing -- either way this is a cancelled
+			// run, not a failed one, for onRunEnded's purposes.
+			outcome = RunCancelled
 		case isConnDone(conn):
 			code = "connection_interrupted"
 		}
+		log.Printf("coordinator: conn.Prompt failed for chat %s run %s (provider %s, code %s): %v", chatID, runID, profile.Provider, code, err)
 		hub.Publish(events.NewRunErrorEvent(message, events.WithErrorCode(code)))
 		return
 	}
 	for _, e := range bridge.Finished(resp.StopReason) {
 		hub.Publish(e)
 	}
+	if resp.StopReason == acpsdk.StopReasonCancelled || runCtx.Err() != nil {
+		outcome = RunCancelled
+	} else {
+		outcome = RunCompleted
+	}
 	if finished != nil && resp.StopReason != acpsdk.StopReasonCancelled && runCtx.Err() == nil {
 		_ = finished(runCtx, resp.StopReason)
 	}
 }
 
-func providerRunError(provider, fallback string, err error) events.Event {
-	if providerAuthFailure(provider, err) {
+func providerRunError(accountLogin bool, harnessName, fallback string, err error) events.Event {
+	switch {
+	case providerAuthFailure(accountLogin, err):
 		return events.NewRunErrorEvent(
-			"Claude Code reauthentication required. Your saved login was kept.",
+			reauthRequiredMessage(harnessName),
 			events.WithErrorCode(providerAuthRequiredCode),
+		)
+	case providerApiKeyFailure(accountLogin, err):
+		return events.NewRunErrorEvent(
+			apiKeyInvalidMessage(harnessName),
+			events.WithErrorCode(providerApiKeyInvalidCode),
 		)
 	}
 	return events.NewRunErrorEvent(fallback, events.WithErrorCode("goose_unavailable"))
+}
+
+// reauthRequiredMessage builds the reauth-required copy for whichever
+// account-login harness actually failed, rather than a name hardcoded for
+// one harness -- the client only keys off the event's error code today (see
+// chat_cubit.dart), but this message is still surfaced through logs and any
+// future client that reads it, so it should name the right harness.
+func reauthRequiredMessage(harnessName string) string {
+	if harnessName == "" {
+		harnessName = "Your provider"
+	}
+	return harnessName + " reauthentication required. Your saved login was kept."
 }

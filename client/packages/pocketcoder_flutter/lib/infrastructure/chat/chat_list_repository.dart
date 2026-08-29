@@ -11,6 +11,7 @@ import 'chat_dao.dart';
 class ChatListRepository implements IChatListRepository {
   final ChatDao _dao;
   final IAuthRepository _auth;
+  final Map<String, Future<void>> _previewWriteQueue = {};
 
   ChatListRepository(this._dao, this._auth);
 
@@ -85,5 +86,47 @@ class ChatListRepository implements IChatListRepository {
       ChatListException.new,
       'deleteChat',
     );
+  }
+
+  @override
+  Stream<Chat?> watchChat(String id) {
+    return _dao
+        .watch(filter: 'id = "$id"')
+        .map((chats) => chats.isEmpty ? null : chats.first);
+  }
+
+  @override
+  Future<void> setMonitored(String id, bool monitored) {
+    return tryMethod(
+      () async {
+        await _dao.save(id, {'monitored': monitored});
+      },
+      ChatListException.new,
+      'setMonitored',
+    );
+  }
+
+  @override
+  Future<void> recordMessagePreview(
+    String chatId, {
+    required String text,
+    required ChatTurn turn,
+    required bool isFirst,
+  }) {
+    final previous = _previewWriteQueue[chatId] ?? Future<void>.value();
+    final next = previous.then((_) => tryMethod(
+          () async {
+            final data = <String, dynamic>{
+              'preview': text,
+              'turn': turn.name,
+            };
+            if (isFirst) data['first_message'] = text;
+            await _dao.save(chatId, data);
+          },
+          ChatListException.new,
+          'recordMessagePreview',
+        ));
+    _previewWriteQueue[chatId] = next;
+    return next;
   }
 }

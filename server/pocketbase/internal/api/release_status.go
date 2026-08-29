@@ -4,6 +4,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -21,6 +22,28 @@ type releasePointerResponse struct {
 	DataVersion               int             `json:"dataVersion"`
 	DeploymentContractVersion int             `json:"deploymentContractVersion"`
 	Compatibility             json.RawMessage `json:"compatibility"`
+	SelectedHarnesses         []string        `json:"selectedHarnesses"`
+}
+
+type ReleaseStatusDocument struct {
+	ReleaseDigest             string   `json:"releaseDigest"`
+	SourceCommit              string   `json:"sourceCommit"`
+	ServerVersion             string   `json:"serverVersion"`
+	DataVersion               int      `json:"dataVersion"`
+	DeploymentContractVersion int      `json:"deploymentContractVersion"`
+	SelectedHarnesses         []string `json:"selectedHarnesses"`
+}
+
+func ReleaseStatus() (ReleaseStatusDocument, map[string]any, error) {
+	var pointer releasePointerResponse
+	if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return ReleaseStatusDocument{}, nil, err
+	}
+	var metadata map[string]any
+	if err := readJSON(filepath.Join(releaseStateDir(), "metadata-status.json"), &metadata); err != nil {
+		metadata = map[string]any{"schemaVersion": 1, "status": "unknown"}
+	}
+	return ReleaseStatusDocument{pointer.ReleaseDigest, pointer.SourceCommit, pointer.ServerVersion, pointer.DataVersion, pointer.DeploymentContractVersion, pointer.SelectedHarnesses}, metadata, nil
 }
 
 var developmentCompatibility = map[string]any{
@@ -62,17 +85,25 @@ func readJSON(path string, target any) error {
 	return json.Unmarshal(data, target)
 }
 
+// ReleaseCompatibility computes the current release-compatibility
+// document. Exported so operationapi.server.GetReleaseCompatibility can
+// call it directly and build a typed response.
+func ReleaseCompatibility() (dataVersion int, compatibility any) {
+	dataVersion = 1
+	compatibility = any(developmentCompatibility)
+	var pointer releasePointerResponse
+	if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err == nil {
+		dataVersion = pointer.DataVersion
+		if len(pointer.Compatibility) != 0 {
+			compatibility = pointer.Compatibility
+		}
+	}
+	return dataVersion, compatibility
+}
+
 func AddReleaseStatusOperations(registry *operation.Registry) {
 	registry.Add(operation.Route{OperationID: "getReleaseCompatibility", Method: http.MethodGet, Path: "/api/pocketcoder/v1/compatibility", Action: func(re *core.RequestEvent) error {
-		dataVersion := 1
-		compatibility := any(developmentCompatibility)
-		var pointer releasePointerResponse
-		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err == nil {
-			dataVersion = pointer.DataVersion
-			if len(pointer.Compatibility) != 0 {
-				compatibility = pointer.Compatibility
-			}
-		}
+		dataVersion, compatibility := ReleaseCompatibility()
 		return re.JSON(http.StatusOK, map[string]any{
 			"schemaVersion": 1,
 			"dataVersion":   dataVersion,
@@ -81,14 +112,10 @@ func AddReleaseStatusOperations(registry *operation.Registry) {
 	}})
 
 	registry.Add(operation.Route{OperationID: "getReleaseStatus", Method: http.MethodGet, Path: "/api/pocketcoder/v1/release/status", Auth: true, Action: func(re *core.RequestEvent) error {
-		var pointer releasePointerResponse
-		if err := readJSON(filepath.Join(releaseStateDir(), "current.json"), &pointer); err != nil &&
-			!errors.Is(err, os.ErrNotExist) {
-			return pocketCoderError(re, 500, "release state unavailable")
-		}
-		var metadataStatus map[string]any
-		if err := readJSON(filepath.Join(releaseStateDir(), "metadata-status.json"), &metadataStatus); err != nil {
-			metadataStatus = map[string]any{"schemaVersion": 1, "status": "unknown"}
+		pointer, metadataStatus, err := ReleaseStatus()
+		if err != nil {
+			log.Printf("[ReleaseStatus] read release state failed: %v", err)
+			return re.InternalServerError("release state unavailable", nil)
 		}
 		return re.JSON(http.StatusOK, map[string]any{
 			"schemaVersion":  1,

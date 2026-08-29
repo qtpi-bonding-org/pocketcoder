@@ -30,7 +30,7 @@ pub fn decode_identity(headers: &HeaderMap) -> Result<AgentIdentity> {
         .get(&MEMORY_CONTEXT_HEADER)
         .ok_or_else(|| MemoryError::InvalidIdentity("header is missing".to_owned()))?
         .to_str()
-        .map_err(|_| MemoryError::InvalidIdentity("header is not ASCII".to_owned()))?;
+        .map_err(|error| MemoryError::InvalidIdentity(format!("header is not ASCII: {error}")))?;
     if encoded.len() > MAX_CONTEXT_HEADER_BYTES {
         return Err(MemoryError::InvalidIdentity(
             "header is too large".to_owned(),
@@ -38,9 +38,9 @@ pub fn decode_identity(headers: &HeaderMap) -> Result<AgentIdentity> {
     }
     let decoded = URL_SAFE_NO_PAD
         .decode(encoded)
-        .map_err(|_| MemoryError::InvalidIdentity("header is not base64url".to_owned()))?;
+        .map_err(|error| MemoryError::InvalidIdentity(format!("header is not base64url: {error}")))?;
     let wire: WireIdentity = serde_json::from_slice(&decoded)
-        .map_err(|_| MemoryError::InvalidIdentity("header is not valid JSON".to_owned()))?;
+        .map_err(|error| MemoryError::InvalidIdentity(format!("header is not valid JSON: {error}")))?;
     if wire.version != 1 {
         return Err(MemoryError::InvalidIdentity(format!(
             "unsupported version {}",

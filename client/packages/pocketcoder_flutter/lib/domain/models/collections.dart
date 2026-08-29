@@ -3,23 +3,26 @@ class Collections {
   static const String pocoConfigs = 'agent_profiles';
   static const String agentSessions = 'agent_sessions';
   static const String chats = 'chats';
+  static const String credentialSelections = 'credential_selections';
   static const String devices = 'devices';
   static const String gitRepositoryAccess = 'git_repository_access';
   static const String gitSshCredentials = 'git_ssh_credentials';
-  static const String harnessAccountSelections = 'harness_account_selections';
-  static const String harnessAccounts = 'harness_accounts';
-  static const String harnessAuthAttempts = 'harness_auth_attempts';
   static const String harnessInstances = 'harness_instances';
   static const String harnessModels = 'harness_models';
+  static const String harnessOauthAccounts = 'harness_oauth_accounts';
+  static const String harnessOauthAttempts = 'harness_oauth_attempts';
+  static const String harnessProviders = 'harness_providers';
   static const String harnesses = 'harnesses';
   static const String healthchecks = 'healthchecks';
+  static const String liveActivities = 'live_activities';
   static const String mcpServers = 'mcp_servers';
   static const String models = 'models';
   static const String notificationRules = 'notification_rules';
   static const String toolPermissions = 'permission_mode_tools';
   static const String permissionModes = 'permission_modes';
   static const String prompts = 'prompts';
-  static const String providerKeys = 'provider_keys';
+  static const String providerApiKeys = 'provider_api_keys';
+  static const String providers = 'providers';
   static const String sandboxAgents = 'sandbox_agents';
   static const String scheduleOwners = 'schedule_owners';
   static const String skills = 'skills';
@@ -29,23 +32,26 @@ class Collections {
     pocoConfigs,
     agentSessions,
     chats,
+    credentialSelections,
     devices,
     gitRepositoryAccess,
     gitSshCredentials,
-    harnessAccountSelections,
-    harnessAccounts,
-    harnessAuthAttempts,
     harnessInstances,
     harnessModels,
+    harnessOauthAccounts,
+    harnessOauthAttempts,
+    harnessProviders,
     harnesses,
     healthchecks,
+    liveActivities,
     mcpServers,
     models,
     notificationRules,
     toolPermissions,
     permissionModes,
     prompts,
-    providerKeys,
+    providerApiKeys,
+    providers,
     sandboxAgents,
     scheduleOwners,
     skills,

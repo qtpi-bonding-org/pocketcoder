@@ -21,7 +21,7 @@ class ObservabilityApi {
   const ObservabilityApi(this._dio, this._serializers);
 
   /// proxyObservability
-  ///
+  /// Authenticated users may access exactly &#x60;memory.sql&#x60;, the read-only memory dashboard. Every other SQLPage sub-path under this wildcard is restricted to administrators.
   ///
   /// Parameters:
   /// * [path]

@@ -13,13 +13,90 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 const (
 	PocketbaseTokenScopes pocketbaseTokenContextKey = "pocketbaseToken.Scopes"
 )
+
+// Defines values for HarnessAuthChallengeCodeDestination.
+const (
+	HarnessAuthChallengeCodeDestinationApp     HarnessAuthChallengeCodeDestination = "app"
+	HarnessAuthChallengeCodeDestinationBrowser HarnessAuthChallengeCodeDestination = "browser"
+	HarnessAuthChallengeCodeDestinationNone    HarnessAuthChallengeCodeDestination = "none"
+)
+
+// Valid indicates whether the value is a known member of the HarnessAuthChallengeCodeDestination enum.
+func (e HarnessAuthChallengeCodeDestination) Valid() bool {
+	switch e {
+	case HarnessAuthChallengeCodeDestinationApp:
+		return true
+	case HarnessAuthChallengeCodeDestinationBrowser:
+		return true
+	case HarnessAuthChallengeCodeDestinationNone:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for HarnessAuthChallengeKind.
+const (
+	BrowserCode HarnessAuthChallengeKind = "browser_code"
+	DeviceCode  HarnessAuthChallengeKind = "device_code"
+)
+
+// Valid indicates whether the value is a known member of the HarnessAuthChallengeKind enum.
+func (e HarnessAuthChallengeKind) Valid() bool {
+	switch e {
+	case BrowserCode:
+		return true
+	case DeviceCode:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for HarnessAuthStatusMode.
+const (
+	HarnessAuthStatusModeNone  HarnessAuthStatusMode = "none"
+	HarnessAuthStatusModeOauth HarnessAuthStatusMode = "oauth"
+)
+
+// Valid indicates whether the value is a known member of the HarnessAuthStatusMode enum.
+func (e HarnessAuthStatusMode) Valid() bool {
+	switch e {
+	case HarnessAuthStatusModeNone:
+		return true
+	case HarnessAuthStatusModeOauth:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for HarnessRequestMode.
+const (
+	None  HarnessRequestMode = "none"
+	Oauth HarnessRequestMode = "oauth"
+)
+
+// Valid indicates whether the value is a known member of the HarnessRequestMode enum.
+func (e HarnessRequestMode) Valid() bool {
+	switch e {
+	case None:
+		return true
+	case Oauth:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for ScheduleRunAcceptedResponseStatus.
 const (
@@ -50,6 +127,18 @@ type ConfigOptionRequest struct {
 	Value    string `json:"value"`
 }
 
+// ContainerListResponse defines model for ContainerListResponse.
+type ContainerListResponse struct {
+	Containers []ContainerSummary `json:"containers"`
+}
+
+// ContainerSummary defines model for ContainerSummary.
+type ContainerSummary struct {
+	Name   string `json:"name"`
+	State  string `json:"state"`
+	Status string `json:"status"`
+}
+
 // ContentBlock defines model for ContentBlock.
 type ContentBlock struct {
 	Text                 *string                `json:"text,omitempty"`
@@ -62,36 +151,112 @@ type DecisionRequest map[string]interface{}
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
-	Code    int                    `json:"code"`
 	Data    map[string]interface{} `json:"data"`
 	Message string                 `json:"message"`
+	Status  int                    `json:"status"`
 }
 
-// FileEntry defines model for FileEntry.
-type FileEntry struct {
-	IsDir   bool   `json:"isDir"`
-	ModTime string `json:"modTime"`
-	Name    string `json:"name"`
-	Size    int64  `json:"size"`
+// ExecuteMcpRequestResponse defines model for ExecuteMcpRequestResponse.
+type ExecuteMcpRequestResponse struct {
+	Id     string `json:"id"`
+	Status string `json:"status"`
+	Synced *bool  `json:"synced,omitempty"`
 }
 
-// FileListResponse defines model for FileListResponse.
-type FileListResponse struct {
-	Entries []FileEntry `json:"entries"`
-	Path    string      `json:"path"`
+// FileTreeEntry defines model for FileTreeEntry.
+type FileTreeEntry struct {
+	Children *[]FileTreeEntry `json:"children,omitempty"`
+	IsDir    bool             `json:"isDir"`
+	ModTime  *string          `json:"modTime,omitempty"`
+	Name     string           `json:"name"`
+	Size     *int64           `json:"size,omitempty"`
+}
+
+// FileTreeResponse defines model for FileTreeResponse.
+type FileTreeResponse struct {
+	Entries []FileTreeEntry `json:"entries"`
+	Path    string          `json:"path"`
+}
+
+// HarnessAuthAttempt defines model for HarnessAuthAttempt.
+type HarnessAuthAttempt struct {
+	Id        string  `json:"id"`
+	LastError *string `json:"lastError,omitempty"`
+	Status    string  `json:"status"`
+}
+
+// HarnessAuthChallenge defines model for HarnessAuthChallenge.
+type HarnessAuthChallenge struct {
+	CodeDestination *HarnessAuthChallengeCodeDestination `json:"codeDestination,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Details             *string                   `json:"details,omitempty"`
+	ExpiresAt           *time.Time                `json:"expiresAt,omitempty"`
+	Kind                *HarnessAuthChallengeKind `json:"kind,omitempty"`
+	PollIntervalSeconds *int                      `json:"pollIntervalSeconds,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Target *string `json:"target,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Text            *string `json:"text,omitempty"`
+	Type            string  `json:"type"`
+	UserCode        *string `json:"userCode,omitempty"`
+	VerificationUri *string `json:"verificationUri,omitempty"`
+}
+
+// HarnessAuthChallengeCodeDestination defines model for HarnessAuthChallenge.CodeDestination.
+type HarnessAuthChallengeCodeDestination string
+
+// HarnessAuthChallengeKind defines model for HarnessAuthChallenge.Kind.
+type HarnessAuthChallengeKind string
+
+// HarnessAuthStatus defines model for HarnessAuthStatus.
+type HarnessAuthStatus struct {
+	AccountId   *string               `json:"accountId,omitempty"`
+	AccountName *string               `json:"accountName,omitempty"`
+	Attempt     *HarnessAuthAttempt   `json:"attempt,omitempty"`
+	Challenge   *HarnessAuthChallenge `json:"challenge,omitempty"`
+	Harness     string                `json:"harness"`
+	LastError   *string               `json:"lastError,omitempty"`
+	Mode        HarnessAuthStatusMode `json:"mode"`
+	Provider    string                `json:"provider"`
+	Status      string                `json:"status"`
+	Visibility  *string               `json:"visibility,omitempty"`
+}
+
+// HarnessAuthStatusMode defines model for HarnessAuthStatus.Mode.
+type HarnessAuthStatusMode string
+
+// HarnessInstanceLogResponse defines model for HarnessInstanceLogResponse.
+type HarnessInstanceLogResponse struct {
+	Lines     []string `json:"lines"`
+	Truncated bool     `json:"truncated"`
 }
 
 // HarnessRequest defines model for HarnessRequest.
-type HarnessRequest map[string]interface{}
+type HarnessRequest struct {
+	AccountId   *string             `json:"accountId,omitempty"`
+	AccountName *string             `json:"accountName,omitempty"`
+	AttemptId   *string             `json:"attemptId,omitempty"`
+	Code        *string             `json:"code,omitempty"`
+	Harness     string              `json:"harness"`
+	Mode        *HarnessRequestMode `json:"mode,omitempty"`
 
-// JsonObject defines model for JsonObject.
-type JsonObject map[string]interface{}
+	// Provider PocketBase providers record id
+	Provider   string  `json:"provider"`
+	Visibility *string `json:"visibility,omitempty"`
+}
+
+// HarnessRequestMode defines model for HarnessRequest.Mode.
+type HarnessRequestMode string
 
 // LogEvent defines model for LogEvent.
 type LogEvent map[string]interface{}
 
 // McpOAuthRequest defines model for McpOAuthRequest.
-type McpOAuthRequest map[string]interface{}
+type McpOAuthRequest struct {
+	AccessToken  string  `json:"access_token"`
+	RefreshToken *string `json:"refresh_token,omitempty"`
+	ServerName   string  `json:"server_name"`
+}
 
 // McpRequest defines model for McpRequest.
 type McpRequest map[string]interface{}
@@ -106,16 +271,57 @@ type ModelRequest struct {
 	Model string `json:"model"`
 }
 
+// OkResponse defines model for OkResponse.
+type OkResponse struct {
+	Ok bool `json:"ok"`
+}
+
+// OllamaModelsResponse defines model for OllamaModelsResponse.
+type OllamaModelsResponse struct {
+	Enabled bool                     `json:"enabled"`
+	Models  []map[string]interface{} `json:"models"`
+}
+
 // OllamaProgress defines model for OllamaProgress.
 type OllamaProgress map[string]interface{}
 
 // PromptRequest defines model for PromptRequest.
 type PromptRequest struct {
-	Prompt []ContentBlock `json:"prompt"`
+	// MessageId Client-generated unique identifier for this user message, echoed back into the AG-UI event stream so it survives reconnect/cache-replay. Optional for backward compatibility with older clients.
+	MessageId *openapi_types.UUID `json:"messageId,omitempty"`
+	Prompt    []ContentBlock      `json:"prompt"`
 }
 
 // PushRequest defines model for PushRequest.
-type PushRequest map[string]interface{}
+type PushRequest struct {
+	Chat    *string `json:"chat,omitempty"`
+	Message *string `json:"message,omitempty"`
+	Title   *string `json:"title,omitempty"`
+	Type    string  `json:"type"`
+	UserId  string  `json:"user_id"`
+}
+
+// ReleaseCompatibilityResponse defines model for ReleaseCompatibilityResponse.
+type ReleaseCompatibilityResponse struct {
+	Compatibility map[string]interface{} `json:"compatibility"`
+	DataVersion   int                    `json:"dataVersion"`
+	SchemaVersion int                    `json:"schemaVersion"`
+}
+
+// ReleaseStatusResponse defines model for ReleaseStatusResponse.
+type ReleaseStatusResponse struct {
+	Current struct {
+		Compatibility             *map[string]interface{} `json:"compatibility,omitempty"`
+		DataVersion               *int                    `json:"dataVersion,omitempty"`
+		DeploymentContractVersion *int                    `json:"deploymentContractVersion,omitempty"`
+		ReleaseDigest             *string                 `json:"releaseDigest,omitempty"`
+		SelectedHarnesses         *[]string               `json:"selectedHarnesses,omitempty"`
+		ServerVersion             *string                 `json:"serverVersion,omitempty"`
+		SourceCommit              *string                 `json:"sourceCommit,omitempty"`
+	} `json:"current"`
+	MetadataStatus map[string]interface{} `json:"metadataStatus"`
+	SchemaVersion  int                    `json:"schemaVersion"`
+}
 
 // ScheduleRunAcceptedResponse defines model for ScheduleRunAcceptedResponse.
 type ScheduleRunAcceptedResponse struct {
@@ -124,6 +330,16 @@ type ScheduleRunAcceptedResponse struct {
 
 // ScheduleRunAcceptedResponseStatus defines model for ScheduleRunAcceptedResponse.Status.
 type ScheduleRunAcceptedResponseStatus string
+
+// SetLiveActivityTokenRequest defines model for SetLiveActivityTokenRequest.
+type SetLiveActivityTokenRequest struct {
+	ActivityPushToken string `json:"activity_push_token"`
+}
+
+// StoreMcpOAuthTokenResponse defines model for StoreMcpOAuthTokenResponse.
+type StoreMcpOAuthTokenResponse struct {
+	Stored bool `json:"stored"`
+}
 
 // ChatId defines model for ChatId.
 type ChatId = string
@@ -155,9 +371,6 @@ type Forbidden = ErrorResponse
 // InternalError defines model for InternalError.
 type InternalError = ErrorResponse
 
-// JsonSuccess defines model for JsonSuccess.
-type JsonSuccess = JsonObject
-
 // NotFound defines model for NotFound.
 type NotFound = ErrorResponse
 
@@ -183,8 +396,8 @@ type GetWorkspaceFileParams struct {
 	Path FilePath `form:"path" json:"path"`
 }
 
-// ListWorkspaceFilesParams defines parameters for ListWorkspaceFiles.
-type ListWorkspaceFilesParams struct {
+// ListWorkspaceFileTreeParams defines parameters for ListWorkspaceFileTree.
+type ListWorkspaceFileTreeParams struct {
 	Path *DirectoryPath `form:"path,omitempty" json:"path,omitempty"`
 }
 
@@ -220,6 +433,9 @@ type GetHarnessAuthStatusJSONRequestBody = HarnessRequest
 
 // SubmitHarnessAuthJSONRequestBody defines body for SubmitHarnessAuth for application/json ContentType.
 type SubmitHarnessAuthJSONRequestBody = HarnessRequest
+
+// SetLiveActivityTokenJSONRequestBody defines body for SetLiveActivityToken for application/json ContentType.
+type SetLiveActivityTokenJSONRequestBody = SetLiveActivityTokenRequest
 
 // StoreMcpOAuthTokenJSONRequestBody defines body for StoreMcpOAuthToken for application/json ContentType.
 type StoreMcpOAuthTokenJSONRequestBody = McpOAuthRequest
@@ -341,11 +557,14 @@ type ServerInterface interface {
 	// (GET /api/pocketcoder/v1/compatibility)
 	GetReleaseCompatibility(w http.ResponseWriter, r *http.Request)
 
+	// (GET /api/pocketcoder/v1/containers)
+	ListContainers(w http.ResponseWriter, r *http.Request)
+
 	// (GET /api/pocketcoder/v1/files)
 	GetWorkspaceFile(w http.ResponseWriter, r *http.Request, params GetWorkspaceFileParams)
 
-	// (GET /api/pocketcoder/v1/files-list)
-	ListWorkspaceFiles(w http.ResponseWriter, r *http.Request, params ListWorkspaceFilesParams)
+	// (GET /api/pocketcoder/v1/files-tree)
+	ListWorkspaceFileTree(w http.ResponseWriter, r *http.Request, params ListWorkspaceFileTreeParams)
 
 	// (POST /api/pocketcoder/v1/harness-auth/cancel)
 	CancelHarnessAuth(w http.ResponseWriter, r *http.Request)
@@ -364,6 +583,15 @@ type ServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/harness-auth/submit)
 	SubmitHarnessAuth(w http.ResponseWriter, r *http.Request)
+
+	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
+	EndLiveActivity(w http.ResponseWriter, r *http.Request, id RequestId)
+
+	// (POST /api/pocketcoder/v1/live-activities/{id}/token)
+	SetLiveActivityToken(w http.ResponseWriter, r *http.Request, id RequestId)
+
+	// (GET /api/pocketcoder/v1/logs/instance/{id})
+	GetHarnessInstanceLogs(w http.ResponseWriter, r *http.Request, id string)
 
 	// (GET /api/pocketcoder/v1/logs/{containerName})
 	StreamContainerLogs(w http.ResponseWriter, r *http.Request, containerName ContainerName)
@@ -674,6 +902,26 @@ func (siw *ServerInterfaceWrapper) GetReleaseCompatibility(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ListContainers operation middleware
+func (siw *ServerInterfaceWrapper) ListContainers(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListContainers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetWorkspaceFile operation middleware
 func (siw *ServerInterfaceWrapper) GetWorkspaceFile(w http.ResponseWriter, r *http.Request) {
 
@@ -713,8 +961,8 @@ func (siw *ServerInterfaceWrapper) GetWorkspaceFile(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
-// ListWorkspaceFiles operation middleware
-func (siw *ServerInterfaceWrapper) ListWorkspaceFiles(w http.ResponseWriter, r *http.Request) {
+// ListWorkspaceFileTree operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkspaceFileTree(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	_ = err
@@ -726,7 +974,7 @@ func (siw *ServerInterfaceWrapper) ListWorkspaceFiles(w http.ResponseWriter, r *
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params ListWorkspaceFilesParams
+	var params ListWorkspaceFileTreeParams
 
 	// ------------- Optional query parameter "path" -------------
 
@@ -742,7 +990,7 @@ func (siw *ServerInterfaceWrapper) ListWorkspaceFiles(w http.ResponseWriter, r *
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListWorkspaceFiles(w, r, params)
+		siw.Handler.ListWorkspaceFileTree(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -863,6 +1111,102 @@ func (siw *ServerInterfaceWrapper) SubmitHarnessAuth(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SubmitHarnessAuth(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EndLiveActivity operation middleware
+func (siw *ServerInterfaceWrapper) EndLiveActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RequestId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EndLiveActivity(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetLiveActivityToken operation middleware
+func (siw *ServerInterfaceWrapper) SetLiveActivityToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RequestId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetLiveActivityToken(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetHarnessInstanceLogs operation middleware
+func (siw *ServerInterfaceWrapper) GetHarnessInstanceLogs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHarnessInstanceLogs(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1216,14 +1560,18 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/session/set-mode", wrapper.SetChatMode)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/chats/{chatId}/stream", wrapper.StreamChatEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/compatibility", wrapper.GetReleaseCompatibility)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/containers", wrapper.ListContainers)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files", wrapper.GetWorkspaceFile)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files-list", wrapper.ListWorkspaceFiles)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/files-tree", wrapper.ListWorkspaceFileTree)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/cancel", wrapper.CancelHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/disconnect", wrapper.DisconnectHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/poll", wrapper.PollHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/start", wrapper.StartHarnessAuth)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/status", wrapper.GetHarnessAuthStatus)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/harness-auth/submit", wrapper.SubmitHarnessAuth)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/live-activities/{id}/end", wrapper.EndLiveActivity)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/live-activities/{id}/token", wrapper.SetLiveActivityToken)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/logs/instance/{id}", wrapper.GetHarnessInstanceLogs)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/logs/{containerName}", wrapper.StreamContainerLogs)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/oauth/store", wrapper.StoreMcpOAuthToken)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/request", wrapper.ExecuteMcpRequest)
@@ -1244,8 +1592,6 @@ type BadRequestJSONResponse ErrorResponse
 type ForbiddenJSONResponse ErrorResponse
 
 type InternalErrorJSONResponse ErrorResponse
-
-type JsonSuccessJSONResponse JsonObject
 
 type NotFoundJSONResponse ErrorResponse
 
@@ -1815,7 +2161,7 @@ type GetReleaseCompatibilityResponseObject interface {
 	VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error
 }
 
-type GetReleaseCompatibility200JSONResponse struct{ JsonSuccessJSONResponse }
+type GetReleaseCompatibility200JSONResponse ReleaseCompatibilityResponse
 
 func (response GetReleaseCompatibility200JSONResponse) VisitGetReleaseCompatibilityResponse(w http.ResponseWriter) error {
 
@@ -1885,6 +2231,55 @@ func (response GetReleaseCompatibility500JSONResponse) VisitGetReleaseCompatibil
 	return err
 }
 
+type ListContainersRequestObject struct {
+}
+
+type ListContainersResponseObject interface {
+	VisitListContainersResponse(w http.ResponseWriter) error
+}
+
+type ListContainers200JSONResponse ContainerListResponse
+
+func (response ListContainers200JSONResponse) VisitListContainersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContainers401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListContainers401JSONResponse) VisitListContainersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListContainers403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListContainers403JSONResponse) VisitListContainersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetWorkspaceFileRequestObject struct {
 	Params GetWorkspaceFileParams
 }
@@ -1941,17 +2336,17 @@ func (response GetWorkspaceFile404JSONResponse) VisitGetWorkspaceFileResponse(w 
 	return err
 }
 
-type ListWorkspaceFilesRequestObject struct {
-	Params ListWorkspaceFilesParams
+type ListWorkspaceFileTreeRequestObject struct {
+	Params ListWorkspaceFileTreeParams
 }
 
-type ListWorkspaceFilesResponseObject interface {
-	VisitListWorkspaceFilesResponse(w http.ResponseWriter) error
+type ListWorkspaceFileTreeResponseObject interface {
+	VisitListWorkspaceFileTreeResponse(w http.ResponseWriter) error
 }
 
-type ListWorkspaceFiles200JSONResponse FileListResponse
+type ListWorkspaceFileTree200JSONResponse FileTreeResponse
 
-func (response ListWorkspaceFiles200JSONResponse) VisitListWorkspaceFilesResponse(w http.ResponseWriter) error {
+func (response ListWorkspaceFileTree200JSONResponse) VisitListWorkspaceFileTreeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -1963,9 +2358,9 @@ func (response ListWorkspaceFiles200JSONResponse) VisitListWorkspaceFilesRespons
 	return err
 }
 
-type ListWorkspaceFiles401JSONResponse struct{ UnauthorizedJSONResponse }
+type ListWorkspaceFileTree401JSONResponse struct{ UnauthorizedJSONResponse }
 
-func (response ListWorkspaceFiles401JSONResponse) VisitListWorkspaceFilesResponse(w http.ResponseWriter) error {
+func (response ListWorkspaceFileTree401JSONResponse) VisitListWorkspaceFileTreeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -1977,9 +2372,9 @@ func (response ListWorkspaceFiles401JSONResponse) VisitListWorkspaceFilesRespons
 	return err
 }
 
-type ListWorkspaceFiles404JSONResponse struct{ NotFoundJSONResponse }
+type ListWorkspaceFileTree404JSONResponse struct{ NotFoundJSONResponse }
 
-func (response ListWorkspaceFiles404JSONResponse) VisitListWorkspaceFilesResponse(w http.ResponseWriter) error {
+func (response ListWorkspaceFileTree404JSONResponse) VisitListWorkspaceFileTreeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -1999,7 +2394,7 @@ type CancelHarnessAuthResponseObject interface {
 	VisitCancelHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type CancelHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type CancelHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response CancelHarnessAuth200JSONResponse) VisitCancelHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2077,7 +2472,7 @@ type DisconnectHarnessAuthResponseObject interface {
 	VisitDisconnectHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type DisconnectHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type DisconnectHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response DisconnectHarnessAuth200JSONResponse) VisitDisconnectHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2155,7 +2550,7 @@ type PollHarnessAuthResponseObject interface {
 	VisitPollHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type PollHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type PollHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response PollHarnessAuth200JSONResponse) VisitPollHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2233,7 +2628,7 @@ type StartHarnessAuthResponseObject interface {
 	VisitStartHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type StartHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type StartHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response StartHarnessAuth200JSONResponse) VisitStartHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2311,7 +2706,7 @@ type GetHarnessAuthStatusResponseObject interface {
 	VisitGetHarnessAuthStatusResponse(w http.ResponseWriter) error
 }
 
-type GetHarnessAuthStatus200JSONResponse struct{ JsonSuccessJSONResponse }
+type GetHarnessAuthStatus200JSONResponse HarnessAuthStatus
 
 func (response GetHarnessAuthStatus200JSONResponse) VisitGetHarnessAuthStatusResponse(w http.ResponseWriter) error {
 
@@ -2389,7 +2784,7 @@ type SubmitHarnessAuthResponseObject interface {
 	VisitSubmitHarnessAuthResponse(w http.ResponseWriter) error
 }
 
-type SubmitHarnessAuth200JSONResponse struct{ JsonSuccessJSONResponse }
+type SubmitHarnessAuth200JSONResponse HarnessAuthStatus
 
 func (response SubmitHarnessAuth200JSONResponse) VisitSubmitHarnessAuthResponse(w http.ResponseWriter) error {
 
@@ -2455,6 +2850,201 @@ func (response SubmitHarnessAuth500JSONResponse) VisitSubmitHarnessAuthResponse(
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(500)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivityRequestObject struct {
+	Id RequestId `json:"id"`
+}
+
+type EndLiveActivityResponseObject interface {
+	VisitEndLiveActivityResponse(w http.ResponseWriter) error
+}
+
+type EndLiveActivity200JSONResponse OkResponse
+
+func (response EndLiveActivity200JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivity400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response EndLiveActivity400JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivity401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response EndLiveActivity401JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivity404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response EndLiveActivity404JSONResponse) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndLiveActivity409Response struct {
+}
+
+func (response EndLiveActivity409Response) VisitEndLiveActivityResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type SetLiveActivityTokenRequestObject struct {
+	Id   RequestId `json:"id"`
+	Body *SetLiveActivityTokenJSONRequestBody
+}
+
+type SetLiveActivityTokenResponseObject interface {
+	VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error
+}
+
+type SetLiveActivityToken200JSONResponse OkResponse
+
+func (response SetLiveActivityToken200JSONResponse) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetLiveActivityToken400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response SetLiveActivityToken400JSONResponse) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetLiveActivityToken401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response SetLiveActivityToken401JSONResponse) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetLiveActivityToken404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response SetLiveActivityToken404JSONResponse) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetLiveActivityToken409Response struct {
+}
+
+func (response SetLiveActivityToken409Response) VisitSetLiveActivityTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(409)
+	return nil
+}
+
+type GetHarnessInstanceLogsRequestObject struct {
+	Id string `json:"id"`
+}
+
+type GetHarnessInstanceLogsResponseObject interface {
+	VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error
+}
+
+type GetHarnessInstanceLogs200JSONResponse HarnessInstanceLogResponse
+
+func (response GetHarnessInstanceLogs200JSONResponse) VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetHarnessInstanceLogs401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetHarnessInstanceLogs401JSONResponse) VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetHarnessInstanceLogs404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetHarnessInstanceLogs404JSONResponse) VisitGetHarnessInstanceLogsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -2546,7 +3136,7 @@ type StoreMcpOAuthTokenResponseObject interface {
 	VisitStoreMcpOAuthTokenResponse(w http.ResponseWriter) error
 }
 
-type StoreMcpOAuthToken200JSONResponse struct{ JsonSuccessJSONResponse }
+type StoreMcpOAuthToken200JSONResponse StoreMcpOAuthTokenResponse
 
 func (response StoreMcpOAuthToken200JSONResponse) VisitStoreMcpOAuthTokenResponse(w http.ResponseWriter) error {
 
@@ -2624,7 +3214,7 @@ type ExecuteMcpRequestResponseObject interface {
 	VisitExecuteMcpRequestResponse(w http.ResponseWriter) error
 }
 
-type ExecuteMcpRequest200JSONResponse struct{ JsonSuccessJSONResponse }
+type ExecuteMcpRequest200JSONResponse ExecuteMcpRequestResponse
 
 func (response ExecuteMcpRequest200JSONResponse) VisitExecuteMcpRequestResponse(w http.ResponseWriter) error {
 
@@ -2729,7 +3319,7 @@ type ListOllamaModelsResponseObject interface {
 	VisitListOllamaModelsResponse(w http.ResponseWriter) error
 }
 
-type ListOllamaModels200JSONResponse struct{ JsonSuccessJSONResponse }
+type ListOllamaModels200JSONResponse OllamaModelsResponse
 
 func (response ListOllamaModels200JSONResponse) VisitListOllamaModelsResponse(w http.ResponseWriter) error {
 
@@ -2767,6 +3357,20 @@ func (response ListOllamaModels401JSONResponse) VisitListOllamaModelsResponse(w 
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOllamaModels403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListOllamaModels403JSONResponse) VisitListOllamaModelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -2985,7 +3589,7 @@ type SendPushNotificationResponseObject interface {
 	VisitSendPushNotificationResponse(w http.ResponseWriter) error
 }
 
-type SendPushNotification200JSONResponse struct{ JsonSuccessJSONResponse }
+type SendPushNotification200JSONResponse OkResponse
 
 func (response SendPushNotification200JSONResponse) VisitSendPushNotificationResponse(w http.ResponseWriter) error {
 
@@ -3056,7 +3660,7 @@ type GetReleaseStatusResponseObject interface {
 	VisitGetReleaseStatusResponse(w http.ResponseWriter) error
 }
 
-type GetReleaseStatus200JSONResponse struct{ JsonSuccessJSONResponse }
+type GetReleaseStatus200JSONResponse ReleaseStatusResponse
 
 func (response GetReleaseStatus200JSONResponse) VisitGetReleaseStatusResponse(w http.ResponseWriter) error {
 
@@ -3217,11 +3821,14 @@ type StrictServerInterface interface {
 	// (GET /api/pocketcoder/v1/compatibility)
 	GetReleaseCompatibility(ctx context.Context, request GetReleaseCompatibilityRequestObject) (GetReleaseCompatibilityResponseObject, error)
 
+	// (GET /api/pocketcoder/v1/containers)
+	ListContainers(ctx context.Context, request ListContainersRequestObject) (ListContainersResponseObject, error)
+
 	// (GET /api/pocketcoder/v1/files)
 	GetWorkspaceFile(ctx context.Context, request GetWorkspaceFileRequestObject) (GetWorkspaceFileResponseObject, error)
 
-	// (GET /api/pocketcoder/v1/files-list)
-	ListWorkspaceFiles(ctx context.Context, request ListWorkspaceFilesRequestObject) (ListWorkspaceFilesResponseObject, error)
+	// (GET /api/pocketcoder/v1/files-tree)
+	ListWorkspaceFileTree(ctx context.Context, request ListWorkspaceFileTreeRequestObject) (ListWorkspaceFileTreeResponseObject, error)
 
 	// (POST /api/pocketcoder/v1/harness-auth/cancel)
 	CancelHarnessAuth(ctx context.Context, request CancelHarnessAuthRequestObject) (CancelHarnessAuthResponseObject, error)
@@ -3240,6 +3847,15 @@ type StrictServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/harness-auth/submit)
 	SubmitHarnessAuth(ctx context.Context, request SubmitHarnessAuthRequestObject) (SubmitHarnessAuthResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/live-activities/{id}/end)
+	EndLiveActivity(ctx context.Context, request EndLiveActivityRequestObject) (EndLiveActivityResponseObject, error)
+
+	// (POST /api/pocketcoder/v1/live-activities/{id}/token)
+	SetLiveActivityToken(ctx context.Context, request SetLiveActivityTokenRequestObject) (SetLiveActivityTokenResponseObject, error)
+
+	// (GET /api/pocketcoder/v1/logs/instance/{id})
+	GetHarnessInstanceLogs(ctx context.Context, request GetHarnessInstanceLogsRequestObject) (GetHarnessInstanceLogsResponseObject, error)
 
 	// (GET /api/pocketcoder/v1/logs/{containerName})
 	StreamContainerLogs(ctx context.Context, request StreamContainerLogsRequestObject) (StreamContainerLogsResponseObject, error)
@@ -3542,6 +4158,30 @@ func (sh *strictHandler) GetReleaseCompatibility(w http.ResponseWriter, r *http.
 	}
 }
 
+// ListContainers operation middleware
+func (sh *strictHandler) ListContainers(w http.ResponseWriter, r *http.Request) {
+	var request ListContainersRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListContainers(ctx, request.(ListContainersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListContainers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListContainersResponseObject); ok {
+		if err := validResponse.VisitListContainersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetWorkspaceFile operation middleware
 func (sh *strictHandler) GetWorkspaceFile(w http.ResponseWriter, r *http.Request, params GetWorkspaceFileParams) {
 	var request GetWorkspaceFileRequestObject
@@ -3568,25 +4208,25 @@ func (sh *strictHandler) GetWorkspaceFile(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// ListWorkspaceFiles operation middleware
-func (sh *strictHandler) ListWorkspaceFiles(w http.ResponseWriter, r *http.Request, params ListWorkspaceFilesParams) {
-	var request ListWorkspaceFilesRequestObject
+// ListWorkspaceFileTree operation middleware
+func (sh *strictHandler) ListWorkspaceFileTree(w http.ResponseWriter, r *http.Request, params ListWorkspaceFileTreeParams) {
+	var request ListWorkspaceFileTreeRequestObject
 
 	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ListWorkspaceFiles(ctx, request.(ListWorkspaceFilesRequestObject))
+		return sh.ssi.ListWorkspaceFileTree(ctx, request.(ListWorkspaceFileTreeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "ListWorkspaceFiles")
+		handler = middleware(handler, "ListWorkspaceFileTree")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ListWorkspaceFilesResponseObject); ok {
-		if err := validResponse.VisitListWorkspaceFilesResponse(w); err != nil {
+	} else if validResponse, ok := response.(ListWorkspaceFileTreeResponseObject); ok {
+		if err := validResponse.VisitListWorkspaceFileTreeResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -3773,6 +4413,91 @@ func (sh *strictHandler) SubmitHarnessAuth(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SubmitHarnessAuthResponseObject); ok {
 		if err := validResponse.VisitSubmitHarnessAuthResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EndLiveActivity operation middleware
+func (sh *strictHandler) EndLiveActivity(w http.ResponseWriter, r *http.Request, id RequestId) {
+	var request EndLiveActivityRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EndLiveActivity(ctx, request.(EndLiveActivityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EndLiveActivity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EndLiveActivityResponseObject); ok {
+		if err := validResponse.VisitEndLiveActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetLiveActivityToken operation middleware
+func (sh *strictHandler) SetLiveActivityToken(w http.ResponseWriter, r *http.Request, id RequestId) {
+	var request SetLiveActivityTokenRequestObject
+
+	request.Id = id
+
+	var body SetLiveActivityTokenJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetLiveActivityToken(ctx, request.(SetLiveActivityTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetLiveActivityToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetLiveActivityTokenResponseObject); ok {
+		if err := validResponse.VisitSetLiveActivityTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetHarnessInstanceLogs operation middleware
+func (sh *strictHandler) GetHarnessInstanceLogs(w http.ResponseWriter, r *http.Request, id string) {
+	var request GetHarnessInstanceLogsRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetHarnessInstanceLogs(ctx, request.(GetHarnessInstanceLogsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetHarnessInstanceLogs")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetHarnessInstanceLogsResponseObject); ok {
+		if err := validResponse.VisitGetHarnessInstanceLogsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

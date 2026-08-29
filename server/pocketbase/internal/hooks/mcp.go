@@ -65,7 +65,7 @@ func RegisterMcpHooks(app core.App) {
 				log.Printf("❌ [MCP] Failed to render config: %v", err)
 				return e.Next()
 			}
-			if err := restartContainer(GatewayContainer, 30*time.Second); err != nil {
+			if err := RestartContainer(GatewayContainer, 30*time.Second); err != nil {
 				log.Printf("❌ [MCP] Failed to restart gateway: %v", err)
 			}
 		case "denied":
@@ -174,7 +174,9 @@ func renderMcpConfig(app core.App) error {
 		catalog.WriteString(fmt.Sprintf("      - name: DOCKER_HOST\n        value: %s\n", mcpDockerHost))
 
 		configMap := make(map[string]any)
-		if err := record.UnmarshalJSONField("config", &configMap); err == nil && len(configMap) > 0 {
+		if err := record.UnmarshalJSONField("config", &configMap); err != nil {
+			log.Printf("⚠️ [MCP] Failed to parse config for server '%s': %v", name, err)
+		} else if len(configMap) > 0 {
 			catalog.WriteString("    secrets:\n")
 			for k, v := range configMap {
 				secrets.WriteString(fmt.Sprintf("%s=%v\n", k, v))

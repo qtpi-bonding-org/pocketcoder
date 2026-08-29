@@ -33,8 +33,8 @@ import (
 
 const defaultDockerHost = "tcp://docker-socket-proxy-write:2375"
 
-// restartContainer sends a restart command to the named container via the Docker Socket Proxy.
-func restartContainer(containerName string, timeout time.Duration) error {
+// RestartContainer sends a restart command to the named container via the Docker Socket Proxy.
+func RestartContainer(containerName string, timeout time.Duration) error {
 	log.Printf("🔄 [Docker] Restarting container '%s'...", containerName)
 
 	host := os.Getenv("DOCKER_HOST")
@@ -69,7 +69,10 @@ func restartContainer(containerName string, timeout time.Duration) error {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
+		body, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			log.Printf("❌ [Docker] Failed to read error response body: %v", readErr)
+		}
 		return fmt.Errorf("Docker API returned error %s: %s", resp.Status, string(body))
 	}
 

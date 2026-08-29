@@ -13,6 +13,334 @@ part of 'i_observability_repository.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
+mixin _$ContainerInfo {
+  String get name;
+  String get state;
+  String get status;
+
+  /// Create a copy of ContainerInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $ContainerInfoCopyWith<ContainerInfo> get copyWith =>
+      _$ContainerInfoCopyWithImpl<ContainerInfo>(
+          this as ContainerInfo, _$identity);
+
+  /// Serializes this ContainerInfo to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is ContainerInfo &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.state, state) || other.state == state) &&
+            (identical(other.status, status) || other.status == status));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, name, state, status);
+
+  @override
+  String toString() {
+    return 'ContainerInfo(name: $name, state: $state, status: $status)';
+  }
+}
+
+/// @nodoc
+abstract mixin class $ContainerInfoCopyWith<$Res> {
+  factory $ContainerInfoCopyWith(
+          ContainerInfo value, $Res Function(ContainerInfo) _then) =
+      _$ContainerInfoCopyWithImpl;
+  @useResult
+  $Res call({String name, String state, String status});
+}
+
+/// @nodoc
+class _$ContainerInfoCopyWithImpl<$Res>
+    implements $ContainerInfoCopyWith<$Res> {
+  _$ContainerInfoCopyWithImpl(this._self, this._then);
+
+  final ContainerInfo _self;
+  final $Res Function(ContainerInfo) _then;
+
+  /// Create a copy of ContainerInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? name = null,
+    Object? state = null,
+    Object? status = null,
+  }) {
+    return _then(_self.copyWith(
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      state: null == state
+          ? _self.state
+          : state // ignore: cast_nullable_to_non_nullable
+              as String,
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [ContainerInfo].
+extension ContainerInfoPatterns on ContainerInfo {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_ContainerInfo value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ContainerInfo() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_ContainerInfo value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ContainerInfo():
+        return $default(_that);
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_ContainerInfo value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ContainerInfo() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(String name, String state, String status)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _ContainerInfo() when $default != null:
+        return $default(_that.name, _that.state, _that.status);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(String name, String state, String status) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ContainerInfo():
+        return $default(_that.name, _that.state, _that.status);
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(String name, String state, String status)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _ContainerInfo() when $default != null:
+        return $default(_that.name, _that.state, _that.status);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _ContainerInfo implements ContainerInfo {
+  const _ContainerInfo(
+      {required this.name, required this.state, required this.status});
+  factory _ContainerInfo.fromJson(Map<String, dynamic> json) =>
+      _$ContainerInfoFromJson(json);
+
+  @override
+  final String name;
+  @override
+  final String state;
+  @override
+  final String status;
+
+  /// Create a copy of ContainerInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ContainerInfoCopyWith<_ContainerInfo> get copyWith =>
+      __$ContainerInfoCopyWithImpl<_ContainerInfo>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$ContainerInfoToJson(
+      this,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _ContainerInfo &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.state, state) || other.state == state) &&
+            (identical(other.status, status) || other.status == status));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode => Object.hash(runtimeType, name, state, status);
+
+  @override
+  String toString() {
+    return 'ContainerInfo(name: $name, state: $state, status: $status)';
+  }
+}
+
+/// @nodoc
+abstract mixin class _$ContainerInfoCopyWith<$Res>
+    implements $ContainerInfoCopyWith<$Res> {
+  factory _$ContainerInfoCopyWith(
+          _ContainerInfo value, $Res Function(_ContainerInfo) _then) =
+      __$ContainerInfoCopyWithImpl;
+  @override
+  @useResult
+  $Res call({String name, String state, String status});
+}
+
+/// @nodoc
+class __$ContainerInfoCopyWithImpl<$Res>
+    implements _$ContainerInfoCopyWith<$Res> {
+  __$ContainerInfoCopyWithImpl(this._self, this._then);
+
+  final _ContainerInfo _self;
+  final $Res Function(_ContainerInfo) _then;
+
+  /// Create a copy of ContainerInfo
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? name = null,
+    Object? state = null,
+    Object? status = null,
+  }) {
+    return _then(_ContainerInfo(
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      state: null == state
+          ? _self.state
+          : state // ignore: cast_nullable_to_non_nullable
+              as String,
+      status: null == status
+          ? _self.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
 mixin _$SystemStats {
   int get totalMessages;
   String get cumulativeCost;

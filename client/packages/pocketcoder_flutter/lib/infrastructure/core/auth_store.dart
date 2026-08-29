@@ -12,12 +12,15 @@ class AuthStoreConfig {
   AuthStoreConfig(this._storage);
 
   /// Creates a SecureAuthStore that persists auth state securely.
-  SecureAuthStore createAuthStore() {
+  Future<SecureAuthStore> createAuthStore() async {
+    // AsyncAuthStore loads initial synchronously, so read the encoded value
+    // before constructing it.
+    final initial = await _storage.read(key: _authKey);
     return SecureAuthStore(
       save: (String data) async {
         await _storage.write(key: _authKey, value: data);
       },
-      initial: null,
+      initial: initial,
       clear: () async {
         await _storage.delete(key: _authKey);
       },

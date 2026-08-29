@@ -1,8 +1,12 @@
 abstract class IAuthRepository {
   Stream<bool> get connectionStatus;
 
+  /// Notifications from the underlying auth store.
+  Stream<void> get authChanges;
+
   Future<bool> login(String email, String password);
   Future<void> logout();
+  Future<void> clearSession();
   Future<AuthRefreshResult> refreshToken();
 
   /// Rejects a server whose public contract cannot be spoken by this app.
@@ -13,8 +17,19 @@ abstract class IAuthRepository {
   String? get currentUserId;
   String? get currentUserEmail;
   String? get currentUserRole;
+  String? get currentBaseUrl;
 
+  /// Sets the active base URL for subsequent calls (e.g.
+  /// verifyServerCompatibility/login), in memory only -- not persisted.
+  /// Callers must call [persistBaseUrl] once the URL is confirmed good.
   Future<void> updateBaseUrl(String url);
+
+  /// Durably saves [url] as the server URL to restore on next launch.
+  /// Only call this once [url] has actually been verified/used
+  /// successfully -- persisting an unverified URL can strand the user
+  /// with no path back to their real, working deployment.
+  Future<void> persistBaseUrl(String url);
+
   Future<String?> getSavedBaseUrl();
 }
 

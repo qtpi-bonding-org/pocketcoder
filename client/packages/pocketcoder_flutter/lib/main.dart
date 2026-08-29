@@ -8,8 +8,8 @@ import 'app/bootstrap.dart';
 import 'app/app_dependency_module.dart';
 import 'domain/notifications/push_service.dart';
 import 'domain/billing/billing_service.dart';
-import 'domain/deployment/i_deploy_option_service.dart';
-import 'infrastructure/foss/foss_deploy_option_service.dart';
+import 'domain/deployment/i_provider_option_service.dart';
+import 'infrastructure/foss/foss_provider_option_service.dart';
 import 'presentation/onboarding/onboarding_setup_flow.dart';
 
 class LocalPushService implements PushService {
@@ -64,7 +64,7 @@ class LocalAppModule implements AppDependencyModule {
   void register(GetIt getIt) {
     getIt.registerSingleton<PushService>(LocalPushService());
     getIt.registerSingleton<BillingService>(LocalBillingService());
-    getIt.registerSingleton<IDeployOptionService>(FossDeployOptionService());
+    getIt.registerSingleton<IProviderOptionService>(FossProviderOptionService());
     getIt.registerSingleton<OnboardingSetupFlow>(
       const SelfHostedOnboardingSetupFlow(),
     );

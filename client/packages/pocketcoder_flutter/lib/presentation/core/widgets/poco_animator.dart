@@ -14,11 +14,11 @@ class PocoAnimator extends StatefulWidget {
     this.color,
     this.sequence = const [
       (PocoExpression.awake, 2000),
-      (PocoExpression.sleepy, 150), // Blink
+      (PocoExpression.sleepy, 150),
       (PocoExpression.thinking, 3000),
       (PocoExpression.happy, 2000),
       (PocoExpression.awake, 2500),
-      (PocoExpression.sleepy, 150), // Blink
+      (PocoExpression.sleepy, 150),
     ],
   });
 

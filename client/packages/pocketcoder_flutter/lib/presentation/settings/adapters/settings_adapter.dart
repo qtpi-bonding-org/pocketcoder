@@ -44,6 +44,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
             hasPendingMcp: _hasPendingMcp(snapshot.data ?? mcpCubit.state),
             onNavigate: (routeKey) => _navigateTo(context, routeKey),
             onLogout: () => _confirmLogout(context, authCubit),
+            onFactoryReset: () => _confirmFactoryReset(context, authCubit),
           ),
         ),
       ),
@@ -73,6 +74,29 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     );
   }
 
+  void _confirmFactoryReset(BuildContext context, AuthCubit cubit) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => TerminalDialog(
+        title: context.l10n.settingsFactoryResetConfirmTitle,
+        content: Text(context.l10n.settingsFactoryResetConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.l10n.settingsFactoryResetCancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              cubit.factoryReset();
+            },
+            child: Text(context.l10n.settingsFactoryResetConfirm),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _navigateTo(BuildContext context, String routeKey) {
     final route = switch (routeKey) {
       'configureAi' => AppRoutes.configureAi,
@@ -82,7 +106,6 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
       'configureSystemChecks' => AppRoutes.configureSystemChecks,
       'configurePaywall' => AppRoutes.configurePaywall,
       'serverControls' => AppRoutes.serverControls,
-      'configureObservability' => AppRoutes.configureObservability,
       'configureMemory' => AppRoutes.configureMemory,
       'configureLlm' => AppRoutes.configureLlm,
       'configureHarnessAuth' => AppRoutes.configureHarnessAuth,

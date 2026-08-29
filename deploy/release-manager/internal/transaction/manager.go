@@ -3,6 +3,7 @@ package transaction
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -41,7 +42,11 @@ func (manager Manager) Update(previous, candidate Candidate) error {
 	if err != nil {
 		return err
 	}
-	defer lock.Close()
+	defer func() {
+		if err := lock.Close(); err != nil {
+			log.Printf("[Transaction] failed to close release lock: %v", err)
+		}
+	}()
 	return manager.UpdateLocked(previous, candidate)
 }
 
@@ -122,7 +127,11 @@ func (manager Manager) Recover() error {
 	if err != nil {
 		return err
 	}
-	defer lock.Close()
+	defer func() {
+		if err := lock.Close(); err != nil {
+			log.Printf("[Transaction] failed to close release lock: %v", err)
+		}
+	}()
 	return manager.RecoverLocked()
 }
 

@@ -4,6 +4,7 @@ package operation
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -28,18 +29,29 @@ func NewRegistry() *Registry {
 	return &Registry{routes: map[string]Route{}}
 }
 
+// Registry keys are case-insensitive (normalized via strings.ToLower).
+// Live-confirmed 2026-08-27: oapi-codegen's generated strict-server wrapper
+// calls StrictMiddlewareFunc with the operation's exported Go method name
+// (PascalCase, e.g. "GetReleaseCompatibility"), while every registry.Add
+// call site here uses the raw OpenAPI operationId (camelCase, lowercase
+// first letter, e.g. "getReleaseCompatibility") -- an exact-match lookup
+// between the two conventions failed for every single strict-server
+// operation, with no exceptions, silently breaking the entire migrated API
+// surface. Case-insensitive keys make the two conventions interchangeable
+// without touching either convention's ~30 call sites.
 func (r *Registry) Add(route Route) {
 	if route.OperationID == "" || route.Method == "" || route.Path == "" || route.Action == nil {
 		panic("operation route is incomplete")
 	}
-	if _, exists := r.routes[route.OperationID]; exists {
+	key := strings.ToLower(route.OperationID)
+	if _, exists := r.routes[key]; exists {
 		panic(fmt.Sprintf("operation %q registered twice", route.OperationID))
 	}
-	r.routes[route.OperationID] = route
+	r.routes[key] = route
 }
 
 func (r *Registry) Get(operationID string) (Route, bool) {
-	route, ok := r.routes[operationID]
+	route, ok := r.routes[strings.ToLower(operationID)]
 	return route, ok
 }
 

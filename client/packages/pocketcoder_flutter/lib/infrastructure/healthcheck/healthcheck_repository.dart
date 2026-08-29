@@ -17,6 +17,9 @@ class HealthcheckRepository implements IHealthcheckRepository {
   Future<List<Healthcheck>> getHealthchecks() async {
     return tryMethod(
       () async {
+        // Intentional DAO bypass: pre-login probes must work without authentication.
+        // Deliberate exception: this pre-login deployment probe must work
+        // without an authenticated session.
         final records = await _pb.collection(Collections.healthchecks).getList(
               sort: 'name',
             );
@@ -37,9 +40,11 @@ class HealthcheckRepository implements IHealthcheckRepository {
   Future<Healthcheck?> getServiceStatus(String serviceName) async {
     return tryMethod(
       () async {
-        final record = await _pb.collection(Collections.healthchecks).getFirstListItem(
-              'name = "$serviceName"',
-            );
+        // Deliberate exception: status is queried before login.
+        final record =
+            await _pb.collection(Collections.healthchecks).getFirstListItem(
+                  'name = "$serviceName"',
+                );
 
         return Healthcheck.fromJson({
           ...record.toJson(),
@@ -55,14 +60,20 @@ class HealthcheckRepository implements IHealthcheckRepository {
   Stream<List<RecordModel>> watchHealthchecks() async* {
     final controller = StreamController<List<RecordModel>>();
 
-    final unsubscribe = await _pb.collection(Collections.healthchecks).subscribe('*', (e) async {
+    // Deliberate exception: this pre-login connectivity stream must work
+    // without an authenticated session.
+    final unsubscribe = await _pb
+        .collection(Collections.healthchecks)
+        .subscribe('*', (e) async {
       try {
-        final records = await _pb.collection(Collections.healthchecks).getList();
+        // Deliberate exception: this follow-up health probe is part of the
+        // same unauthenticated pre-login connectivity stream.
+        final records =
+            await _pb.collection(Collections.healthchecks).getList();
         if (!controller.isClosed) {
           controller.add(records.items);
         }
       } catch (_) {
-        // Log error but don't crash
       }
     });
 

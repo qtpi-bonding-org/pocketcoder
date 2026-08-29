@@ -1,0 +1,74 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+
+void main() {
+  testWidgets('an active action renders inverted: filled bg, dark text',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: TerminalFooter(
+            actions: [
+              TerminalAction(label: 'chat', onTap: () {}, isActive: true),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final text = tester.widget<Text>(find.text('CHAT'));
+    expect(text.style?.color, Colors.black);
+  });
+
+  testWidgets('an inactive action renders its own color on a transparent bg',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: TerminalFooter(
+            actions: [
+              TerminalAction(label: 'chat', onTap: () {}),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final text = tester.widget<Text>(find.text('CHAT'));
+    expect(text.style?.color, isNot(Colors.black));
+  });
+
+  testWidgets(
+      'an explicit outlined action renders a border in its own color, no fill, even when not active',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: TerminalFooter(
+            actions: [
+              TerminalAction(
+                  label: 'connect', onTap: () {}, emphasis: Emphasis.outlined),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final text = tester.widget<Text>(find.text('CONNECT'));
+    expect(text.style?.color, isNot(Colors.black));
+
+    final container = tester.widget<Container>(
+      find
+          .descendant(of: find.byType(InkWell), matching: find.byType(Container))
+          .first,
+    );
+    final decoration = container.decoration as BoxDecoration;
+    expect(decoration.color, anyOf(isNull, Colors.transparent));
+    expect(decoration.border, isNotNull);
+  });
+}

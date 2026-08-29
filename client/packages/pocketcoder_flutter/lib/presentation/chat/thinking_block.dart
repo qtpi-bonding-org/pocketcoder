@@ -36,7 +36,6 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -52,7 +51,7 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
                 Text(
                   '[ THOUGHTS ]',
                   style: TextStyle(
-                    color: terminalColors.warning,
+                    color: colors.primary,
                     fontFamily: AppFonts.bodyFamily,
                     fontSize: AppSizes.fontSmall,
                     fontWeight: AppFonts.heavy,

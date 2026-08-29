@@ -30,6 +30,33 @@ const MaxLogFrameSize = 1 << 20
 
 // DecodeLogFrame reads one Docker multiplexed log frame.
 func DecodeLogFrame(r *bufio.Reader) (stream byte, payload []byte, err error) {
+	peek, peekErr := r.Peek(8)
+	if peekErr != nil {
+		if len(peek) == 0 && (peekErr == io.EOF || peekErr == io.ErrUnexpectedEOF) {
+			// Nothing left at all: a clean end of stream.
+			return 0, nil, io.EOF
+		}
+		// Fewer than 8 bytes remain before end-of-stream. This is
+		// indistinguishable from a truncated/corrupted multiplexed frame,
+		// so preserve the original (pre-TTY-support) behavior of erroring
+		// rather than guessing it's a raw stream's short final chunk.
+		return 0, nil, peekErr
+	}
+	// TTY containers return raw bytes rather than Docker's multiplexed
+	// frames. Only take this branch when the leading byte isn't a valid
+	// stream-type marker -- a valid-looking header with a bogus/oversized
+	// size field is a genuinely malformed multiplexed frame, not raw mode,
+	// and must still hit the "exceeds maximum" error below. Read one line
+	// at a time here, not io.ReadAll: this function is also used by the
+	// live SSE follow loop, and ReadAll would block until the whole
+	// connection closes before yielding anything.
+	if peek[0] != 0 && peek[0] != 1 && peek[0] != 2 {
+		payload, _ = r.ReadBytes('\n')
+		if len(payload) == 0 {
+			return 0, nil, io.EOF
+		}
+		return 0, payload, nil
+	}
 	var header [8]byte
 	if _, err := io.ReadFull(r, header[:]); err != nil {
 		return 0, nil, err

@@ -11,7 +11,6 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessvolume"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
@@ -47,6 +46,15 @@ func TestResolveWorkspaceVolumeAndNetworkMatchesByDestinationAndSuffix(t *testin
 	if net != "proj_pocketcoder-agent" {
 		t.Errorf("network = %q, want proj_pocketcoder-agent", net)
 	}
+}
+
+func TestEnvVarNamesForRequiresNonNilEdge(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("expected EnvVarNamesForCredential(nil, ...) to panic -- if this now succeeds, the contract changed; update this test")
+		}
+	}()
+	EnvVarNamesForCredential(nil, &core.Record{})
 }
 
 func TestResolveWorkspaceVolumeAndNetworkErrorsWhenNoMatch(t *testing.T) {
@@ -108,25 +116,17 @@ func testUser(t *testing.T, app core.App, email string) *core.Record {
 	return user
 }
 
-// createTestProviderKey inserts a provider_keys row (with a fresh owning
-// user, since `user` is required) with sane defaults, overridden by
-// whatever fields the caller supplies.
-func createTestProviderKey(t *testing.T, app core.App, overrides map[string]any, userID string) *core.Record {
+// createProviderAPIKey inserts a provider_api_keys row for a user and provider.
+func createProviderAPIKey(t *testing.T, app core.App, userID, providerRecordID, key string) *core.Record {
 	t.Helper()
-	if userID == "" {
-		userID = testUser(t, app, fmt.Sprintf("test-provider-key-%s@example.com", uuid.NewString()[:8])).Id
-	}
-
-	coll, err := app.FindCollectionByNameOrId("provider_keys")
+	coll, err := app.FindCollectionByNameOrId("provider_api_keys")
 	if err != nil {
 		t.Fatal(err)
 	}
 	rec := core.NewRecord(coll)
-	rec.Set("user", userID)
-	rec.Set("provider", "anthropic")
-	for k, v := range overrides {
-		rec.Set(k, v)
-	}
+	rec.Set("owner", userID)
+	rec.Set("provider", providerRecordID)
+	rec.Set("api_key", key)
 	if err := app.Save(rec); err != nil {
 		t.Fatal(err)
 	}
@@ -135,12 +135,178 @@ func createTestProviderKey(t *testing.T, app core.App, overrides map[string]any,
 
 // fakeDockerClient is a dockerProvisioner test double that records
 // PullImage/Create/Start calls instead of talking to a real Docker socket.
+func TestRenderEnvSelfScopedHarnessOnlyInjectsItsPinnedProvider(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "self-scoped-"+uuid.NewString()[:8]+"@example.com").Id
+
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	anthropic, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createProviderAPIKey(t, app, userID, openai.Id, "sk-openai-key")
+	createProviderAPIKey(t, app, userID, anthropic.Id, "sk-anthropic-key")
+
+	codex, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if codex.GetBool("supports_live_config") {
+		t.Fatal("test assumption broken: codex must be supports_live_config = false")
+	}
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, codex.Id, "", userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := rec.GetString("status"); status == "error" {
+		t.Fatalf("codex provisioning failed: %s", rec.GetString("last_error"))
+	}
+	if !containsString(fake.lastCreateSpec.Env, "OPENAI_API_KEY=sk-openai-key") {
+		t.Errorf("codex env = %v, want OPENAI_API_KEY=sk-openai-key", fake.lastCreateSpec.Env)
+	}
+	if containsString(fake.lastCreateSpec.Env, "sk-anthropic-key") {
+		t.Errorf("codex env = %v, anthropic key must not appear -- codex is pinned to openai only", fake.lastCreateSpec.Env)
+	}
+}
+
+func TestRenderEnvLiveConfigHarnessInjectsEveryCredentialedProviderRegardlessOfProviderFanout(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "live-config-"+uuid.NewString()[:8]+"@example.com").Id
+
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	anthropic, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createProviderAPIKey(t, app, userID, openai.Id, "sk-openai-key")
+	createProviderAPIKey(t, app, userID, anthropic.Id, "sk-anthropic-key")
+
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !goose.GetBool("supports_live_config") {
+		t.Fatal("test assumption broken: goose must be supports_live_config = true")
+	}
+	// Deliberately DIVERGE provider_fanout from supports_live_config: seeded
+	// Goose has both true, which would let an implementation that still
+	// (incorrectly) branches on provider_fanout pass this test by accident.
+	// Forcing provider_fanout=false here, while supports_live_config stays
+	// true, means only a correct supports_live_config-based implementation
+	// injects both keys.
+	goose.Set("provider_fanout", false)
+	if err := app.Save(goose); err != nil {
+		t.Fatal(err)
+	}
+	// Seed harness_providers edges directly rather than running
+	// modelcatalog.Sync -- Sync's own edge-creation branches on
+	// provider_fanout too (Task 4), and this test just set it false to
+	// isolate renderEnv's branching from modelcatalog's. This test only
+	// needs the edges to exist, not real synced models.
+	harnessProvidersColl, err := app.FindCollectionByNameOrId("harness_providers")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []*core.Record{openai, anthropic} {
+		edge := core.NewRecord(harnessProvidersColl)
+		edge.Set("harness", goose.Id)
+		edge.Set("provider", p.Id)
+		if err := app.Save(edge); err != nil {
+			t.Fatal(err)
+		}
+	}
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, goose.Id, "", userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := rec.GetString("status"); status == "error" {
+		t.Fatalf("goose provisioning failed: %s", rec.GetString("last_error"))
+	}
+	if !containsString(fake.lastCreateSpec.Env, "OPENAI_API_KEY=sk-openai-key") {
+		t.Errorf("goose env = %v, want OPENAI_API_KEY=sk-openai-key", fake.lastCreateSpec.Env)
+	}
+	if !containsString(fake.lastCreateSpec.Env, "ANTHROPIC_API_KEY=sk-anthropic-key") {
+		t.Errorf("goose env = %v, want ANTHROPIC_API_KEY=sk-anthropic-key -- a live-config/fan-out harness must inject every credentialed provider, not just one", fake.lastCreateSpec.Env)
+	}
+}
+
+// TestRenderEnvInjectsApiKeyWhenCredentialSelectionModeIsNone is a
+// regression test for a bug found by an audit 2026-08-28: renderEnv's mode
+// switch only handled "api_key" and "oauth" -- an explicit mode="none"
+// credential_selections row (exactly what harness_auth.go's
+// clearSelectionToNone / the Flutter onboarding API-key path records)
+// skipped the mode=="" auto-detect branch (which DOES find and inject a
+// saved provider_api_keys row) and matched no case at all, so the key was
+// silently never injected. ResolveOAuthAccountForLaunch already treated
+// "api_key" and "none" identically (case "api_key", "none": return nil,
+// nil) -- renderEnv's switch just never got the matching case. This bug was
+// dormant until tonight's onboarding fix made the client actually call
+// startWithNone for a multi-provider harness, which is the only thing that
+// ever creates a real mode="none" row.
+func TestRenderEnvInjectsApiKeyWhenCredentialSelectionModeIsNone(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "none-mode-"+uuid.NewString()[:8]+"@example.com").Id
+
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createProviderAPIKey(t, app, userID, openai.Id, "sk-openai-key")
+
+	codex, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Reproduces exactly what clearSelectionToNone (harness_auth.go) records
+	// for the API-key onboarding path: an EXPLICIT credential_selections row
+	// with mode="none", not just the absence of one.
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", codex.Id)
+	sel.Set("provider", openai.Id)
+	sel.Set("mode", "none")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+
+	fake := newFakeDockerClient()
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, codex.Id, "", userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status := rec.GetString("status"); status == "error" {
+		t.Fatalf("codex provisioning failed: %s", rec.GetString("last_error"))
+	}
+	if !containsString(fake.lastCreateSpec.Env, "OPENAI_API_KEY=sk-openai-key") {
+		t.Errorf("codex env = %v, want OPENAI_API_KEY=sk-openai-key -- an explicit mode=none selection must still inject the saved API key, not silently omit it", fake.lastCreateSpec.Env)
+	}
+}
+
 type fakeDockerClient struct {
 	imageExists bool
 	inspectErr  error
 	pullErr     error
 	createErr   error
 	startErr    error
+
+	// ollamaMissing simulates the default (no local-models) deployment: no
+	// "pocketcoder-ollama" container exists. Defaults to false (Ollama
+	// "running") so every pre-existing test that doesn't care about this
+	// keeps seeing ModelNetwork in its network list, unchanged.
+	ollamaMissing bool
 
 	pulledImages      []string
 	createdContainers []string
@@ -154,6 +320,9 @@ func newFakeDockerClient() *fakeDockerClient {
 }
 
 func (f *fakeDockerClient) Inspect(ctx context.Context, containerName string) (dockerapi.ContainerInspect, error) {
+	if containerName == ollamaContainerName && f.ollamaMissing {
+		return dockerapi.ContainerInspect{}, dockerapi.ErrContainerNotFound
+	}
 	insp := dockerapi.ContainerInspect{
 		Mounts: []dockerapi.Mount{{Destination: "/workspace", Name: "test_workspace"}},
 	}
@@ -244,6 +413,55 @@ func TestProvisionHarnessInstanceCreatesAndStartsContainer(t *testing.T) {
 	}
 }
 
+// TestProvisionHarnessInstanceJoinsModelNetworkOnlyWhenOllamaIsRunning is
+// the regression test for a real incident: harness creation unconditionally
+// requested ModelNetwork ("pocketcoder-model"), but Docker Compose only
+// creates that network when the `ollama` service (profile-gated behind
+// `local-models`, off by default) is actually started -- so every default
+// deployment failed 100% of harness creations with "failed to set up
+// container networking: network pocketcoder-model not found", leaving the
+// container stuck at Created, never started. Confirmed live via SSH before
+// this fix.
+func TestProvisionHarnessInstanceJoinsModelNetworkOnlyWhenOllamaIsRunning(t *testing.T) {
+	app := testApp(t)
+	harness := createTestHarness(t, app, map[string]any{
+		"container_image": "example.com/harness:1.0",
+		"launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000},
+	})
+
+	t.Run("Ollama running: joins ModelNetwork", func(t *testing.T) {
+		userID := testUser(t, app, "model-net-on-"+uuid.NewString()[:8]+"@example.com").Id
+		fake := newFakeDockerClient()
+		if _, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID); err != nil {
+			t.Fatal(err)
+		}
+		if !containsString(fake.lastCreateSpec.NetworkNames, ModelNetwork) {
+			t.Fatalf("networks = %v, want ModelNetwork included", fake.lastCreateSpec.NetworkNames)
+		}
+	})
+
+	t.Run("Ollama not running (default deployment): omits ModelNetwork, still succeeds", func(t *testing.T) {
+		userID := testUser(t, app, "model-net-off-"+uuid.NewString()[:8]+"@example.com").Id
+		fake := newFakeDockerClient()
+		fake.ollamaMissing = true
+		rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rec.GetString("status") != "running" {
+			t.Fatalf("status = %q, want running", rec.GetString("status"))
+		}
+		if containsString(fake.lastCreateSpec.NetworkNames, ModelNetwork) {
+			t.Fatalf("networks = %v, want ModelNetwork omitted when Ollama isn't running",
+				fake.lastCreateSpec.NetworkNames)
+		}
+		if !containsString(fake.lastCreateSpec.NetworkNames, HarnessEgressNetwork) {
+			t.Fatalf("networks = %v, want the other networks still present",
+				fake.lastCreateSpec.NetworkNames)
+		}
+	})
+}
+
 func TestProvisionHarnessInstanceReusesLocalImageWithoutPulling(t *testing.T) {
 	app := testApp(t)
 	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
@@ -311,9 +529,18 @@ func TestProvisionGooseUsesTheCommonHarnessStorageAndNetworkShape(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Goose's env_template has no per-key entry at all (renderEnv derives
+	// the right <PROVIDER>_API_KEY name at runtime instead -- see
+	// TestProvisionGooseAcceptsTheGenericAPIKeyTheClientActuallyWrites), so
+	// no provider_api_keys row is even required for provisioning to succeed;
+	// this test only exercises volume/network shape, not credentials.
 	fake := newFakeDockerClient()
-	if _, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID); err != nil {
+	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
+	if err != nil {
 		t.Fatal(err)
+	}
+	if status := rec.GetString("status"); status == "error" {
+		t.Fatalf("provisioning recorded status=error, last_error=%s", rec.GetString("last_error"))
 	}
 	foundAuthHome := false
 	for _, bind := range fake.lastCreateSpec.VolumeBinds {
@@ -334,45 +561,6 @@ func TestProvisionGooseUsesTheCommonHarnessStorageAndNetworkShape(t *testing.T) 
 		if strings.Contains(network, "goose-egress") {
 			t.Fatalf("Goose has a legacy-only egress network: %v", fake.lastCreateSpec.NetworkNames)
 		}
-	}
-}
-
-func TestDefaultGooseAndPeerHarnessHaveEqualRuntimeTopology(t *testing.T) {
-	app := testApp(t)
-	userID := testUser(t, app, "topology-user-"+uuid.NewString()[:8]+"@example.com").Id
-	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	peer := createTestHarness(t, app, map[string]any{
-		"cli_id":          "peer-topology-" + uuid.NewString()[:8],
-		"container_image": "peer-topology-image",
-		"launch_template": map[string]any{"port": 3000},
-	})
-
-	gooseDocker, peerDocker := newFakeDockerClient(), newFakeDockerClient()
-	if _, err := ProvisionHarnessInstance(context.Background(), app, gooseDocker, goose.Id, "", userID); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ProvisionHarnessInstance(context.Background(), app, peerDocker, peer.Id, "", userID); err != nil {
-		t.Fatal(err)
-	}
-	if fmt.Sprint(gooseDocker.lastCreateSpec.NetworkNames) != fmt.Sprint(peerDocker.lastCreateSpec.NetworkNames) {
-		t.Fatalf("network topology differs: Goose=%v peer=%v", gooseDocker.lastCreateSpec.NetworkNames, peerDocker.lastCreateSpec.NetworkNames)
-	}
-	mountDestinations := func(binds []string) []string {
-		result := make([]string, 0, len(binds))
-		for _, bind := range binds {
-			if split := strings.LastIndexByte(bind, ':'); split >= 0 {
-				result = append(result, bind[split+1:])
-			}
-		}
-		return result
-	}
-	gooseMounts := mountDestinations(gooseDocker.lastCreateSpec.VolumeBinds)
-	peerMounts := mountDestinations(peerDocker.lastCreateSpec.VolumeBinds)
-	if fmt.Sprint(gooseMounts) != fmt.Sprint(peerMounts) {
-		t.Fatalf("storage topology differs: Goose=%v peer=%v", gooseMounts, peerMounts)
 	}
 }
 
@@ -399,47 +587,6 @@ func TestProvisionHarnessInstanceIsIdempotent(t *testing.T) {
 	}
 	if fake.createCallCount != 1 {
 		t.Errorf("expected exactly one Create call across both invocations, got %d", fake.createCallCount)
-	}
-}
-
-func TestProvisionHarnessInstanceRecreatesStoppedReleaseContainer(t *testing.T) {
-	app := testApp(t)
-	userID := testUser(t, app, "test-stopped-harness-"+uuid.NewString()[:8]+"@example.com").Id
-	harness := createTestHarness(t, app, map[string]any{
-		"container_image": "example.com/harness:2.0",
-		"launch_template": map[string]any{"cmd": []string{"/adapter"}, "port": 3000},
-	})
-	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harness.Id)
-	if err != nil {
-		t.Fatal(err)
-	}
-	instances, err := app.FindCollectionByNameOrId("harness_instances")
-	if err != nil {
-		t.Fatal(err)
-	}
-	stale := core.NewRecord(instances)
-	stale.Set("harness", harness.Id)
-	stale.Set("user", userID)
-	stale.Set("harness_account", account.Id)
-	stale.Set("launch_key", "")
-	stale.Set("container_name", "old-release-container")
-	stale.Set("secret", "old-secret")
-	stale.Set("status", "stopped")
-	stale.Set("managed", true)
-	if err := app.Save(stale); err != nil {
-		t.Fatal(err)
-	}
-
-	fake := newFakeDockerClient()
-	replacement, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if replacement.Id == stale.Id || replacement.GetString("container_name") == "old-release-container" {
-		t.Fatal("stopped release container row was reused instead of recreated")
-	}
-	if replacement.GetString("status") != "running" || fake.createCallCount != 1 {
-		t.Fatalf("replacement status/create calls = %q/%d", replacement.GetString("status"), fake.createCallCount)
 	}
 }
 
@@ -475,82 +622,6 @@ func TestProvisionHarnessInstanceErrorsOnMissingPort(t *testing.T) {
 	}
 }
 
-func TestProvisionHarnessInstanceRendersProviderKeysAndMintsSecret(t *testing.T) {
-	app := testApp(t)
-	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
-	createTestProviderKey(t, app, map[string]any{"provider": harnessProviderForTest, "env_vars": map[string]any{"API_KEY": "sk-test-123"}}, userID)
-	harness := createTestHarness(t, app, map[string]any{
-		"cli_id":          harnessProviderForTest,
-		"container_image": "example.com/harness:1.0",
-		"launch_template": map[string]any{
-			"cmd":  []string{"/adapter"},
-			"port": 3000,
-			"env_template": map[string]any{
-				"ANTHROPIC_API_KEY": "{{.API_KEY}}",
-				"ADAPTER_SECRET":    "{{.__adapter_secret}}",
-			},
-		},
-	})
-	fake := newFakeDockerClient()
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if rec.GetString("secret") == "" {
-		t.Error("expected a minted, non-empty secret on the harness_instances row")
-	}
-	env := fake.lastCreateSpec.Env
-	found := map[string]bool{}
-	for _, kv := range env {
-		if kv == "ANTHROPIC_API_KEY=sk-test-123" {
-			found["key"] = true
-		}
-		if kv == "ADAPTER_SECRET="+rec.GetString("secret") {
-			found["secret"] = true
-		}
-	}
-	if !found["key"] {
-		t.Errorf("env = %v, want ANTHROPIC_API_KEY=sk-test-123 rendered from provider_keys", env)
-	}
-	if !found["secret"] {
-		t.Errorf("env = %v, want ADAPTER_SECRET matching the row's minted secret", env)
-	}
-}
-
-func TestProvisionHarnessInstanceAccountLoginDoesNotRequireAPIKey(t *testing.T) {
-	app := testApp(t)
-	user := testUser(t, app, "account-login-"+uuid.NewString()[:8]+"@example.com")
-	harness := createTestHarness(t, app, map[string]any{
-		"cli_id":          "codex-account-login-test",
-		"container_image": "local-codex",
-		"launch_template": map[string]any{
-			"cmd":          []string{"codex-acp"},
-			"port":         3000,
-			"env_template": map[string]any{"OPENAI_API_KEY": "{{.API_KEY}}"},
-		},
-	})
-	account, err := harnessaccount.SelectOrCreate(app, user.Id, harness.Id, "", "Personal Codex", harnessaccount.VisibilityPersonal, harnessaccount.ModeAccount)
-	if err != nil {
-		t.Fatal(err)
-	}
-	account.Set("credential_mode", harnessaccount.ModeAccount)
-	if err := app.Save(account); err != nil {
-		t.Fatal(err)
-	}
-	fake := newFakeDockerClient()
-	fake.imageExists = true
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", user.Id)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if rec.GetString("status") != "running" {
-		t.Fatalf("status = %q, want running", rec.GetString("status"))
-	}
-	if !containsString(fake.lastCreateSpec.Env, "OPENAI_API_KEY=") {
-		t.Fatalf("env = %v, want empty API key for account-volume login", fake.lastCreateSpec.Env)
-	}
-}
-
 func containsString(values []string, want string) bool {
 	for _, value := range values {
 		if value == want {
@@ -560,126 +631,11 @@ func containsString(values []string, want string) bool {
 	return false
 }
 
-const harnessProviderForTest = "claude-code-test"
-
-func TestProvisionHarnessInstanceScopesGenericAPIKeyToSelectedHarness(t *testing.T) {
-	app := testApp(t)
-	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
-	createTestProviderKey(t, app, map[string]any{"provider": "claude-code-scope-test", "env_vars": map[string]any{"API_KEY": "claude-key"}}, userID)
-	createTestProviderKey(t, app, map[string]any{"provider": "codex-scope-test", "env_vars": map[string]any{"API_KEY": "codex-key"}}, userID)
-	harness := createTestHarness(t, app, map[string]any{
-		"cli_id":          "codex-scope-test",
-		"container_image": "pocketcoder-harness-codex:1.1.9",
-		"launch_template": map[string]any{
-			"cmd":          []string{"--cmd", "codex-acp", "--port", "3000"},
-			"port":         3000,
-			"env_template": map[string]any{"OPENAI_API_KEY": "{{.API_KEY}}"},
-		},
-	})
-	fake := newFakeDockerClient()
-	_, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	got := fake.lastCreateSpec.Env
-	want := map[string]bool{
-		"OPENAI_API_KEY=codex-key":                                false,
-		"HOME=/workspace/.pocketcoder_auth":                       false,
-		"XDG_CONFIG_HOME=/workspace/.pocketcoder_auth/.config":    false,
-		"XDG_DATA_HOME=/workspace/.pocketcoder_auth/.local/share": false,
-	}
-	for _, entry := range got {
-		if _, ok := want[entry]; ok {
-			want[entry] = true
-		}
-	}
-	for entry, found := range want {
-		if !found {
-			t.Errorf("Env = %v, missing %s", got, entry)
-		}
-	}
-}
-
-func TestProvisionHarnessInstanceUsesPerHarnessPersistentAuthVolume(t *testing.T) {
-	app := testApp(t)
-	harness := createTestHarness(t, app, map[string]any{
-		"cli_id":          "codex-volume-test",
-		"container_image": "local-codex",
-		"launch_template": map[string]any{"cmd": []string{"codex-acp"}, "port": 3000},
-	})
-
-	firstUser := testUser(t, app, "first-auth-volume@example.com")
-	secondUser := testUser(t, app, "second-auth-volume@example.com")
-	firstDocker := newFakeDockerClient()
-	secondDocker := newFakeDockerClient()
-	firstDocker.imageExists = true
-	secondDocker.imageExists = true
-	if _, err := harnessaccount.SelectOrCreate(app, firstUser.Id, harness.Id, "", "Family Codex", harnessaccount.VisibilityDeployment, harnessaccount.ModeAccount); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := harnessaccount.SelectOrCreate(app, secondUser.Id, harness.Id, "", "", harnessaccount.VisibilityDeployment, harnessaccount.ModeAccount); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ProvisionHarnessInstance(context.Background(), app, firstDocker, harness.Id, "", firstUser.Id); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ProvisionHarnessInstance(context.Background(), app, secondDocker, harness.Id, "", secondUser.Id); err != nil {
-		t.Fatal(err)
-	}
-
-	findMount := func(binds []string, destination string) string {
-		for _, bind := range binds {
-			if strings.HasSuffix(bind, ":"+destination) {
-				return strings.TrimSuffix(bind, ":"+destination)
-			}
-		}
-		return ""
-	}
-	firstAuth := findMount(firstDocker.lastCreateSpec.VolumeBinds, "/workspace/.pocketcoder_auth")
-	secondAuth := findMount(secondDocker.lastCreateSpec.VolumeBinds, "/workspace/.pocketcoder_auth")
-	if firstAuth == "" || firstAuth != secondAuth {
-		t.Fatalf("auth mounts = %q and %q, want one persistent shared-account Codex volume", firstAuth, secondAuth)
-	}
-	firstWorkspace := findMount(firstDocker.lastCreateSpec.VolumeBinds, "/workspace")
-	secondWorkspace := findMount(secondDocker.lastCreateSpec.VolumeBinds, "/workspace")
-	if firstWorkspace == "" || firstWorkspace == secondWorkspace {
-		t.Fatalf("workspace mounts = %q and %q, want separate per-user volumes", firstWorkspace, secondWorkspace)
-	}
-}
-
-func TestProvisionHarnessInstanceFailsClearlyWhenSelectedHarnessHasNoAPIKey(t *testing.T) {
-	app := testApp(t)
-	userID := testUser(t, app, "test-harness-user-"+uuid.NewString()[:8]+"@example.com").Id
-	harness := createTestHarness(t, app, map[string]any{
-		"cli_id":          "codex-without-key",
-		"container_image": "pocketcoder-harness-codex:1.1.9",
-		"launch_template": map[string]any{
-			"cmd":          []string{"--cmd", "codex-acp", "--port", "3000"},
-			"port":         3000,
-			"env_template": map[string]any{"OPENAI_API_KEY": "{{.API_KEY}}"},
-		},
-	})
-	fake := newFakeDockerClient()
-	rec, err := ProvisionHarnessInstance(context.Background(), app, fake, harness.Id, "", userID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if rec.GetString("status") != "error" {
-		t.Fatalf("status = %q, want error", rec.GetString("status"))
-	}
-	if got := rec.GetString("last_error"); !strings.Contains(got, "API_KEY") {
-		t.Errorf("last_error = %q, want a clear missing API_KEY error", got)
-	}
-	if fake.createCallCount != 0 {
-		t.Error("must not create a container with a placeholder or missing credential")
-	}
-}
-
 // TestProvisionHarnessInstanceReturnsWinnerRowOnConcurrentSaveRace exercises
 // the race two concurrent ProvisionHarnessInstance callers can hit for the
 // same (harness, launch_key): both pass the initial FindHarnessInstance
 // check before either row exists, so the loser's own Save fails on the
-// (user, harness, harness_account, launch_key) unique index
+// (user, harness, oauth_account, launch_key) unique index
 // (idx_harness_instances_pair). Real
 // goroutine scheduling can't reliably land both calls in that exact window
 // on demand, so this uses a test-only seam (raceHookForTests) to

@@ -117,6 +117,11 @@ class SchedulerException extends DomainException {
   SchedulerException(super.message, [super.cause]);
 }
 
+/// Live-activity-related exceptions.
+class LiveActivityException extends DomainException {
+  LiveActivityException(super.message, [super.cause]);
+}
+
 /// Files-related exceptions.
 class FilesException extends DomainException {
   FilesException(super.message, [super.cause]);

@@ -41,17 +41,16 @@ let
   caddyModule = persisted "caddy.nix" ./caddy.nix;
   bootstrapModule = persisted "bootstrap.nix" ./bootstrap.nix;
   releaseManagerModule = persisted "release-manager.nix" ./release-manager.nix;
-  releaseCommitModule = persisted "release-commit.nix" ./release-commit.nix;
   releaseBranchModule = persisted "release-branch.nix" ./release-branch.nix;
   nixosVersionModule = persisted "nixos-version.nix" ./nixos-version.nix;
   bootstrapScript = persisted "bootstrap.sh" ./bootstrap.sh;
   statusScript = persisted "status.sh" ./status.sh;
+  pcRetryScript = persisted "pc_retry.sh" ./pc_retry.sh;
   caddyTemplate = persisted "Caddyfile.template"
     ../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
   tlsStatusScript = persisted "tls-status.sh" ../scripts/tls-status.sh;
   releaseManagerSrc = persisted "release-manager-src" ../release-manager;
 
-  sourceCommit = import releaseCommitModule;
   releaseBranch = import releaseBranchModule;
   releaseManager = import releaseManagerModule { inherit pkgs releaseManagerSrc; };
 
@@ -63,7 +62,8 @@ in
     "${modulesPath}/profiles/qemu-guest.nix"
     (import caddyModule { inherit config pkgs caddyTemplate tlsStatusScript; })
     (import bootstrapModule {
-      inherit config pkgs sourceCommit releaseBranch releaseManager bootstrapScript statusScript;
+      inherit config pkgs releaseBranch releaseManager bootstrapScript statusScript
+        pcRetryScript;
     })
   ];
 
@@ -79,11 +79,11 @@ in
   environment.etc."nixos/caddy.nix".source = caddyModule;
   environment.etc."nixos/bootstrap.nix".source = bootstrapModule;
   environment.etc."nixos/release-manager.nix".source = releaseManagerModule;
-  environment.etc."nixos/release-commit.nix".source = releaseCommitModule;
   environment.etc."nixos/release-branch.nix".source = releaseBranchModule;
   environment.etc."nixos/nixos-version.nix".source = nixosVersionModule;
   environment.etc."nixos/bootstrap.sh".source = bootstrapScript;
   environment.etc."nixos/status.sh".source = statusScript;
+  environment.etc."nixos/pc_retry.sh".source = pcRetryScript;
   environment.etc."nixos/Caddyfile.template".source = caddyTemplate;
   environment.etc."nixos/tls-status.sh".source = tlsStatusScript;
   environment.etc."nixos/release-manager-src".source = releaseManagerSrc;
@@ -208,6 +208,9 @@ in
   # POCO:BEGIN vps-key-only-ssh
   services.openssh = {
     enable = true;
+    # The phone supplies the host key in the boot-env. Prevent the NixOS
+    # sshd-keygen service from generating a different key before bootstrap.
+    hostKeys = [];
     settings = {
       PermitRootLogin = "prohibit-password";
       PasswordAuthentication = false;

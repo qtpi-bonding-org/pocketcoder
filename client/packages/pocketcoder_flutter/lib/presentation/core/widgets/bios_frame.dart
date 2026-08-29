@@ -25,7 +25,6 @@ class BiosFrame extends StatelessWidget {
               maxWidth: constraints.maxWidth - AppSizes.space * 4),
           child: Stack(
             children: [
-              // Main Box
               Container(
                 margin: EdgeInsets.only(
                     top: AppSizes.space * 1.25), // Space for title
@@ -44,7 +43,6 @@ class BiosFrame extends StatelessWidget {
                 ),
                 child: child,
               ),
-              // Title Overlay
               if (title != null)
                 Positioned(
                   top: 0,

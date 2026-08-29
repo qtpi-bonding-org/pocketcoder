@@ -241,9 +241,9 @@ func (c *commandAuthenticator) ensureRunningHelper(ctx context.Context, attempt 
 		VolumeBinds:   []string{authVolume + ":" + helperMountPath},
 		RestartPolicy: "no",
 		Labels: map[string]string{
-			"pc_helper":             "true",
-			"pc_helper_for":         attempt.AttemptID,
-			"pc_harness_account_id": attempt.AccountID,
+			"pc_helper":           "true",
+			"pc_helper_for":       attempt.AttemptID,
+			"pc_oauth_account_id": attempt.AccountID,
 		},
 	})
 	if err != nil {
@@ -300,10 +300,15 @@ func parseCodexChallenge(logs string) *Challenge {
 		text = "Enter this code: " + code
 	}
 	return &Challenge{
-		Type:    "device-code",
-		Text:    text,
-		Target:  url,
-		Details: firstMatch(expiryRegex, logs),
+		Type:                "device-code",
+		Text:                text,
+		Target:              url,
+		Details:             firstMatch(expiryRegex, logs),
+		Kind:                "device_code",
+		VerificationURI:     url,
+		UserCode:            code,
+		CodeDestination:     "browser",
+		PollIntervalSeconds: 4,
 	}
 }
 
@@ -314,10 +319,14 @@ func parseClaudeChallenge(logs string) *Challenge {
 	}
 	url := firstURL(logs)
 	return &Challenge{
-		Type:    "browser-code",
-		Text:    "Open the authorization URL and submit the one-time code in the browser flow.",
-		Target:  url,
-		Details: firstMatch(expiryRegex, logs),
+		Type:                "browser-code",
+		Text:                "Open the authorization URL and submit the one-time code in the browser flow.",
+		Target:              url,
+		Details:             firstMatch(expiryRegex, logs),
+		Kind:                "browser_code",
+		VerificationURI:     url,
+		CodeDestination:     "app",
+		PollIntervalSeconds: 4,
 	}
 }
 

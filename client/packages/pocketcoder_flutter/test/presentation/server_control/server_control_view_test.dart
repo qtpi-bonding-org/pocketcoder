@@ -4,12 +4,14 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
+import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/server_control_view.dart';
 
 const _digest =
@@ -50,11 +52,25 @@ class _FakeService implements IServerControlService {
   }
 }
 
-Widget _app(ServerControlCubit cubit) => MaterialApp(
+Widget _app(ServerControlCubit cubit) => MaterialApp.router(
       theme: AppTheme.lightTheme,
-      home: BlocProvider.value(
-        value: cubit,
-        child: const ServerControlView(instanceId: 'instance-1'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: GoRouter(
+        initialLocation: '/server-control',
+        routes: [
+          GoRoute(
+            path: '/server-control',
+            builder: (_, __) => BlocProvider.value(
+              value: cubit,
+              child: const ServerControlView(instanceId: 'instance-1'),
+            ),
+          ),
+          GoRoute(
+            path: '/from',
+            builder: (_, __) => const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
 
@@ -89,20 +105,55 @@ void main() {
     await tester.pumpWidget(_app(cubit));
 
     expect(find.text('RELEASE STATUS: CHECKING'), findsOneWidget);
-    for (final operation in ServerControlOperation.values) {
-      expect(
-          find.text(operation.name
-              .replaceAllMapped(
-                RegExp(r'([A-Z])'),
-                (match) => ' ${match.group(1)}',
-              )
-              .toUpperCase()),
-          findsOneWidget);
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    final operationLabels = [
+      l10n.serverControlOperationRestartPocketCoder,
+      l10n.serverControlOperationUpdatePocketCoder,
+      l10n.serverControlOperationRestartNixOs,
+      l10n.serverControlOperationUpdateNixOs,
+      l10n.serverControlOperationSaveBackup,
+    ];
+    expect(operationLabels.length, ServerControlOperation.values.length,
+        reason:
+            'a new ServerControlOperation needs its label added here too');
+    for (final label in operationLabels) {
+      // TerminalButton uppercases its label before rendering.
+      expect(find.text(label.toUpperCase()), findsOneWidget);
     }
     await cubit.inspectRelease();
     await tester.pump();
     expect(find.textContaining('RELEASE STATUS: CURRENT'), findsOneWidget);
     expect(find.textContaining('CURRENT: 2.0.0'), findsOneWidget);
+    await cubit.close();
+  });
+
+  testWidgets('BACK uses the shared shell action, not a hand-rolled one',
+      (tester) async {
+    final service = _FakeService()..release = _release();
+    final cubit = ServerControlCubit(service);
+    final router = GoRouter(
+      initialLocation: '/server-control',
+      routes: [
+        GoRoute(
+          path: '/server-control',
+          builder: (_, __) => BlocProvider.value(
+            value: cubit,
+            child: const ServerControlView(instanceId: 'instance-1'),
+          ),
+        ),
+        GoRoute(
+          path: '/from',
+          builder: (_, __) => const SizedBox.shrink(),
+        ),
+      ],
+    );
+    await tester.pumpWidget(MaterialApp.router(
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: router,
+    ));
+    expect(find.text('BACK'), findsOneWidget);
     await cubit.close();
   });
 

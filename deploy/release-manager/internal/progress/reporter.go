@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -35,10 +36,12 @@ type Reporter struct {
 	phase        string
 	detail       string
 	sourceCommit string
+	attempt      int
+	maxAttempts  int
 	sshHostKey   *sshHostKey
 }
 
-func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, errorWriter io.Writer) *Reporter {
+func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, attempt, maxAttempts int, errorWriter io.Writer) *Reporter {
 	if errorWriter == nil {
 		errorWriter = io.Discard
 	}
@@ -48,6 +51,12 @@ func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, erro
 	if sourceCommit == "" {
 		sourceCommit = "unknown"
 	}
+	if attempt < 1 {
+		attempt = 1
+	}
+	if maxAttempts < 1 {
+		maxAttempts = 1
+	}
 	var hostKey *sshHostKey
 	if hostKeyType != "" && hostKeyFingerprint != "" {
 		hostKey = &sshHostKey{Type: hostKeyType, Fingerprint: hostKeyFingerprint}
@@ -55,6 +64,7 @@ func New(path, runID, sourceCommit, hostKeyType, hostKeyFingerprint string, erro
 	return &Reporter{
 		path: path, runID: runID, sourceCommit: sourceCommit,
 		errorWriter: errorWriter, phase: "fetching_release", sshHostKey: hostKey,
+		attempt: attempt, maxAttempts: maxAttempts,
 	}
 }
 
@@ -129,11 +139,19 @@ func (reporter *Reporter) writeLocked(errorCode string) {
 	lockPath := filepath.Join(filepath.Dir(reporter.path), ".status.lock")
 	lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o600)
 	if err == nil {
-		defer lockFile.Close()
+		defer func() {
+			if err := lockFile.Close(); err != nil {
+				log.Printf("[Progress] failed to close lock file: %v", err)
+			}
+		}()
 		err = syscall.Flock(int(lockFile.Fd()), syscall.LOCK_EX)
 	}
 	if err == nil {
-		defer syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN)
+		defer func() {
+			if err := syscall.Flock(int(lockFile.Fd()), syscall.LOCK_UN); err != nil {
+				log.Printf("[Progress] failed to release lock file: %v", err)
+			}
+		}()
 		value := map[string]json.RawMessage{}
 		if data, readErr := os.ReadFile(reporter.path); readErr == nil && len(data) != 0 {
 			if readErr = json.Unmarshal(data, &value); readErr != nil {
@@ -151,21 +169,24 @@ func (reporter *Reporter) writeLocked(errorCode string) {
 				}
 				value[key] = data
 			}
-			set("schema", 2)
+			set("schema", 3)
 			set("runId", reporter.runID)
-			set("phase", reporter.phase)
+			set("operation", reporter.phase)
 			if reporter.detail == "" {
 				set("detail", nil)
 			} else {
 				set("detail", reporter.detail)
 			}
+			set("attempt", reporter.attempt)
+			set("maxAttempts", reporter.maxAttempts)
 			set("sourceCommit", reporter.sourceCommit)
 			set("updatedAt", time.Now().UTC().Format(time.RFC3339))
 			if errorCode == "" {
-				set("error", nil)
+				set("errorCode", nil)
 			} else {
-				set("error", errorCode)
+				set("errorCode", errorCode)
 			}
+			set("errorMessage", nil)
 			if reporter.sshHostKey != nil {
 				set("sshHostKey", reporter.sshHostKey)
 			}

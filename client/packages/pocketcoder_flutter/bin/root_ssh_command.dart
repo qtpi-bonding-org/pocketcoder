@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_credentials_provider.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
@@ -20,11 +19,12 @@ final class _CliCredentialsProvider implements IRootSshCredentialsProvider {
   @override
   Future<RootSshCredentials> readRootSshCredentials({
     required String instanceId,
-  }) async => RootSshCredentials(
-    privateKeyPem: privateKeyPem,
-    hostKeyType: hostKeyType,
-    hostKeyFingerprint: hostKeyFingerprint,
-  );
+  }) async =>
+      RootSshCredentials(
+        privateKeyPem: privateKeyPem,
+        hostKeyType: hostKeyType,
+        hostKeyFingerprint: hostKeyFingerprint,
+      );
 }
 
 Future<void> main(List<String> arguments) async {
@@ -56,17 +56,6 @@ Future<void> main(List<String> arguments) async {
     return;
   }
 
-  Uint8List? stdinBytes;
-  if (command == RootSshCommand.restoreCaddyCertificate) {
-    final input = BytesBuilder();
-    while (true) {
-      final byte = stdin.readByteSync();
-      if (byte == -1) break;
-      input.addByte(byte);
-    }
-    stdinBytes = input.takeBytes();
-  }
-
   final runner = SshRootCommandRunner(
     credentialsProvider: _CliCredentialsProvider(
       privateKeyPem: File(keyPath).readAsStringSync(),
@@ -78,7 +67,6 @@ Future<void> main(List<String> arguments) async {
     instanceId: 'cli',
     host: host,
     command: command,
-    stdin: stdinBytes,
     shellEnvPrefix: shellEnvPrefix,
   );
   stdout.write(result.stdout);

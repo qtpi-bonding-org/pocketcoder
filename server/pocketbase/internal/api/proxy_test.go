@@ -62,8 +62,14 @@ func TestObservabilityProxyForwardsPathHeadersAndQuery(t *testing.T) {
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	if gotPath != "/some/path" || gotQuery != "x=1&y=two" {
-		t.Fatalf("backend path/query = %q?%s", gotPath, gotQuery)
+	// The prefix must reach the backend intact -- SQLPage's own site_prefix
+	// config expects to see it in the request path and handles routing
+	// internally; stripping it here (as this proxy used to) causes SQLPage
+	// to 308-redirect back to the prefixed path, which loops forever
+	// through this same proxy. See the comment in createProxyHandler.
+	wantPath := "/api/pocketcoder/v1/proxy/observability/some/path"
+	if gotPath != wantPath || gotQuery != "x=1&y=two" {
+		t.Fatalf("backend path/query = %q?%s, want %q", gotPath, gotQuery, wantPath)
 	}
 	if gotHost != "public.example" || gotPrefix != "/api/pocketcoder/v1/proxy/observability" {
 		t.Fatalf("forwarded headers host=%q prefix=%q", gotHost, gotPrefix)
@@ -120,7 +126,7 @@ func TestObservabilityProxyUsesInjectedTransport(t *testing.T) {
 	}
 }
 
-func TestMemoryDashboardIsAvailableToAuthenticatedUser(t *testing.T) {
+func TestAuthorizationBoundaryMemoryDashboardIsAvailableToAuthenticatedUser(t *testing.T) {
 	var gotPath string
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
@@ -157,8 +163,46 @@ func TestMemoryDashboardIsAvailableToAuthenticatedUser(t *testing.T) {
 	}
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
-	if rec.Code != http.StatusOK || gotPath != "/memory.sql" {
-		t.Fatalf("status=%d path=%q", rec.Code, gotPath)
+	wantPath := "/api/pocketcoder/v1/proxy/observability/memory.sql"
+	if rec.Code != http.StatusOK || gotPath != wantPath {
+		t.Fatalf("status=%d path=%q, want %q", rec.Code, gotPath, wantPath)
+	}
+}
+
+func TestAuthorizationBoundaryMemoryDashboardCarveoutRejectsSiblingSQLPage(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	user := testUser(t, app, "proxy-memory-sibling-"+randomSuffix()+"@example.com")
+	token, err := user.NewAuthToken()
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := operation.NewRegistry()
+	AddProxyOperations(reg, ProxyDeps{TargetURL: backend.URL})
+	router, err := apis.NewRouter(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e := &core.ServeEvent{App: app, Router: router}
+	operation.MountForTests(e, reg.Routes())
+	req := httptest.NewRequest(http.MethodGet, "/api/pocketcoder/v1/proxy/observability/other.sql", nil)
+	req.Header.Set("Authorization", token)
+	mux, err := e.Router.BuildMux()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("sibling SQLPage path status=%d, want 403", rec.Code)
 	}
 }
 

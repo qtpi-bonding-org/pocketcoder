@@ -11,8 +11,7 @@ SELECT 'json' AS component;
 SELECT
     0 AS total_messages,
     '$0.0000' AS cumulative_cost,
-    0 AS cumulative_tokens,
-    (SELECT status FROM healthchecks WHERE name = 'backend' LIMIT 1) AS backend_status;
+    0 AS cumulative_tokens;
 
 -- Harness-neutral aggregate usage needs a common metrics contract. Until one
 -- exists, return an honest empty series rather than reading Goose-only state.

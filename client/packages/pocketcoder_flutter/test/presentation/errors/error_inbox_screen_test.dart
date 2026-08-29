@@ -8,6 +8,8 @@ import 'package:pocketcoder_flutter/application/errors/error_inbox_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/errors/adapters/error_inbox_adapter.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 
 class MockErrorBoxStorage extends Mock implements ErrorBoxStorage {}
 
@@ -38,42 +40,57 @@ void main() {
 
   setUp(() {
     storage = MockErrorBoxStorage();
-    ErrorPrivserver.configure(ErrorPrivserverConfig(
-      storage: storage,
-      reporter: (_) async => false,
-      errorCodeMapper: (_) => 'ERR_TEST',
-      exceptionMapper: (_) => null,
-    ));
+    ErrorPrivserver.configure(
+      ErrorPrivserverConfig(
+        storage: storage,
+        reporter: (_) async => false,
+        errorCodeMapper: (_) => 'ERR_TEST',
+        exceptionMapper: (_) => null,
+      ),
+    );
   });
 
   testWidgets('renders a captured entry', (tester) async {
     when(() => storage.getUnsentErrors()).thenAnswer((_) async => [_entry]);
 
-    await tester.pumpWidget(_wrap(
-      MultiBlocProvider(
-        providers: [
-          BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
-        ],
-        child: const ErrorInboxAdapter(),
+    await tester.pumpWidget(
+      _wrap(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
+          ],
+          child: const ErrorInboxAdapter(),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('ChatCubit'), findsOneWidget);
+    // BiosRow renders BIOS labels in its standard uppercase treatment.
+    expect(find.text('CHATCUBIT'), findsOneWidget);
     expect(find.textContaining('CHAT_001'), findsOneWidget);
+    expect(find.byType(BiosCard), findsOneWidget);
+    expect(find.byType(BiosRow), findsWidgets);
+    expect(find.text('#0 fake stack'), findsNothing);
+
+    await tester.tap(find.byType(BiosRow).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('#0 fake stack'), findsOneWidget);
   });
 
   testWidgets('shows empty state with no entries', (tester) async {
     when(() => storage.getUnsentErrors()).thenAnswer((_) async => []);
 
-    await tester.pumpWidget(_wrap(
-      MultiBlocProvider(
-        providers: [
-          BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
-        ],
-        child: const ErrorInboxAdapter(),
+    await tester.pumpWidget(
+      _wrap(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
+          ],
+          child: const ErrorInboxAdapter(),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('NO ERRORS CAPTURED'), findsOneWidget);
@@ -83,17 +100,19 @@ void main() {
     when(() => storage.getUnsentErrors()).thenAnswer((_) async => [_entry]);
     when(() => storage.deleteError('e1')).thenAnswer((_) async {});
 
-    await tester.pumpWidget(_wrap(
-      MultiBlocProvider(
-        providers: [
-          BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
-        ],
-        child: const ErrorInboxAdapter(),
+    await tester.pumpWidget(
+      _wrap(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => ErrorInboxCubit()..loadErrors()),
+          ],
+          child: const ErrorInboxAdapter(),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.tap(find.text('DELETE'));
     await tester.pumpAndSettle();
 
     verify(() => storage.deleteError('e1')).called(1);

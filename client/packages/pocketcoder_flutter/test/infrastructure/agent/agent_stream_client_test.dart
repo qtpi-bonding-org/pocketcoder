@@ -239,5 +239,29 @@ void main() {
         ),
       );
     });
+
+    test('cancelling the returned stream before HTTP connect completes '
+        'cancels the response body', () async {
+      var bodyCancelled = false;
+      final body = StreamController<List<int>>(
+        onCancel: () {
+          bodyCancelled = true;
+        },
+      );
+      final client = AgentStreamClient(
+        pocketBase: _fakePb(),
+        httpClient: _FakeClient(body: body.stream),
+      );
+
+      final subscription = client.connect('chat-1', cursor: 0).listen((_) {});
+      // Cancel before the async connect body has had a chance to install its
+      // response listener. This is the window in which the old implementation
+      // lost cancellation permanently.
+      await subscription.cancel();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(bodyCancelled, isTrue);
+      await body.close();
+    });
   });
 }

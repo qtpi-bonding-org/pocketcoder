@@ -39,6 +39,9 @@ func TestComposeUpDoesNotHidePluginFailureWithLegacyFallback(t *testing.T) {
 	dockerPath := filepath.Join(directory, "docker")
 	script := `#!/bin/sh
 set -eu
+if [ "${1:-}" = network ]; then
+  exit 0
+fi
 if [ "${1:-}" = compose ] && [ "${2:-}" = version ]; then
   exit 0
 fi

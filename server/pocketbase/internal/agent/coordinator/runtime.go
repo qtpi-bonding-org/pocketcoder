@@ -31,7 +31,7 @@ import (
 
 // AgentRuntime is the execution surface shared by agent and schedule routes.
 type AgentRuntime interface {
-	StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished) (string, error)
+	StartPrompt(chatID, prompt string, resolve ResolveSession, profileFn ProfileFunc, created OnSessionCreated, finished OnRunFinished, opts ...RunOption) (string, error)
 	Attach(chatID string, cursor int) Attachment
 	NextSeq(chatID string) int
 	StreamColdReplay(ctx context.Context, chatID, sessionID string, profileFn ProfileFunc, emit func(seq int, ev events.Event) error) error

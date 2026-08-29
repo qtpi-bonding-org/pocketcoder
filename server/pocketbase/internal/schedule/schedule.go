@@ -33,6 +33,9 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/sessionprofile"
 )
 
+var notifyRunStarted = hooks.NotifyRunStarted
+var notifyRunFinished = hooks.NotifyRunFinished
+
 func JobID(id string) string { return "pocketcoder-schedule-" + id }
 
 type Runner struct {
@@ -77,7 +80,6 @@ func (r *Runner) RunDetached(ownerID string) {
 	}
 }
 
-// Run executes a schedule synchronously. A paused schedule is a legitimate no-op.
 func (r *Runner) Run(ctx context.Context, ownerID string) error {
 	row, err := r.App.FindRecordById("schedule_owners", ownerID)
 	if err != nil {
@@ -119,9 +121,20 @@ func (r *Runner) Run(ctx context.Context, ownerID string) error {
 			}
 		}()
 		return nil
-	}); err != nil {
+	}, coordinator.WithOnRunEnded(func(_ context.Context, chatID string, outcome coordinator.RunOutcome) {
+		go func() {
+			if err := notifyRunFinished(r.App, chatID, string(outcome)); err != nil {
+				log.Printf("[Push] schedule notify-finished: %v", err)
+			}
+		}()
+	})); err != nil {
 		return fmt.Errorf("start prompt: %w", err)
 	}
+	go func() {
+		if err := notifyRunStarted(r.App, chatID); err != nil {
+			log.Printf("[Push] schedule notify-started: %v", err)
+		}
+	}()
 	row.Set("last_run", r.now().UTC().Format(time.RFC3339))
 	if err := r.App.Save(row); err != nil {
 		return fmt.Errorf("update last_run: %w", err)

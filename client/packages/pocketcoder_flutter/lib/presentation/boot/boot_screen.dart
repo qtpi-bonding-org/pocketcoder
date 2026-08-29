@@ -8,6 +8,8 @@ import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_active_deployment_gate.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
 import 'boot_view.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import '../../app_router.dart';
@@ -21,12 +23,11 @@ class BootScreen extends StatefulWidget {
 }
 
 class _BootScreenState extends State<BootScreen> {
-  // State Machine
   bool _logsDimmed = false;
   bool _pocoVisible = false;
-  // Data
   final List<String> _logs = [];
   final ScrollController _scrollController = ScrollController();
+  Timer? _backgroundLogTimer;
 
   @override
   void initState() {
@@ -36,6 +37,7 @@ class _BootScreenState extends State<BootScreen> {
 
   @override
   void dispose() {
+    _backgroundLogTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -47,12 +49,10 @@ class _BootScreenState extends State<BootScreen> {
 
     String fileContent = '';
     try {
-      // Try package path first (for monorepo/web consistency)
       fileContent = await rootBundle
           .loadString('packages/pocketcoder_flutter/assets/boot_log.txt');
     } catch (e) {
       try {
-        // Fallback to direct path
         fileContent = await rootBundle.loadString('assets/boot_log.txt');
       } catch (e2) {
         if (!mounted) return;
@@ -107,7 +107,7 @@ class _BootScreenState extends State<BootScreen> {
     }
   }
 
-  void _startBackgroundLogs() async {
+  void _startBackgroundLogs() {
     final noise = [
       '[sys] heartbeat: ok',
       '[net] keepalive sent',
@@ -116,20 +116,38 @@ class _BootScreenState extends State<BootScreen> {
       '[agent] reasoning_engine: idle',
     ];
 
-    int i = 0;
-    while (mounted) {
-      await Future.delayed(const Duration(seconds: 2));
+    var i = 0;
+    _backgroundLogTimer?.cancel();
+    _backgroundLogTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted) {
         setState(() {
           _logs.add(noise[i % noise.length]);
         });
         i++;
       }
-    }
+    });
   }
 
   Future<void> _checkConnection() async {
     OnboardingLogger.event('boot connection check started');
+
+    // A managed deployment engine (pocketcoder_pro) resumes and reconciles
+    // its own route independently of this boot check, racing it -- if it
+    // already won that race and a deployment is ready, this check's own
+    // goNamed() calls below must not clobber that route with the
+    // onboarding/login flow (see the incident this guards: BootScreen used
+    // to check PocketBase health against a stale/default `pb_server_url`
+    // left over from local dev testing, fail, and reset the whole nav
+    // stack back to onboarding a few seconds after the user had already
+    // reached the deployment details screen).
+    if (getIt.isRegistered<IActiveDeploymentGate>() &&
+        getIt<IActiveDeploymentGate>().hasActiveDeployment) {
+      OnboardingLogger.event(
+        'boot connection check skipped -- active managed deployment present',
+      );
+      return;
+    }
+
     if (mounted) {
       context
           .read<PocoCubit>()
@@ -142,6 +160,28 @@ class _BootScreenState extends State<BootScreen> {
       final hasLocalSession = sessionState != AuthSessionState.signedOut;
 
       if (hasLocalSession) {
+        var staleSessionResolved = false;
+        if (sessionState == AuthSessionState.temporarilyUnavailable &&
+            getIt.isRegistered<IInstanceExistenceResolver>()) {
+          staleSessionResolved = await getIt<IInstanceExistenceResolver>()
+              .resolveStaleSessionIfInstanceGone();
+          if (!mounted) return;
+        }
+
+        if (staleSessionResolved) {
+          context.read<PocoCubit>().updateMessage(
+                context.l10n.bootConnectionFailed,
+                sequence: [
+                  (PocoExpression.nervous, 500),
+                  (PocoExpression.lookRight, 1000),
+                  (PocoExpression.awake, 1000),
+                ],
+              );
+          await Future.delayed(const Duration(seconds: 3));
+          if (mounted) context.goNamed(RouteNames.onboarding);
+          return;
+        }
+
         OnboardingLogger.event(
           sessionState == AuthSessionState.signedIn
               ? 'PocketBase session restored'
@@ -182,7 +222,6 @@ class _BootScreenState extends State<BootScreen> {
             (PocoExpression.awake, 1000),
           ],
         );
-        // Wait a bit longer to let the user read before moving
         await Future.delayed(const Duration(seconds: 3));
         if (mounted) context.goNamed(RouteNames.onboarding);
       }

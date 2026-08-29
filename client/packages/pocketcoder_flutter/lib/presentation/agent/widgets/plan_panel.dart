@@ -25,7 +25,6 @@ class PlanPanel extends StatelessWidget {
     List<Map<String, dynamic>> entries,
   ) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
 
     return Container(
       margin: EdgeInsets.all(AppSizes.space),
@@ -33,7 +32,7 @@ class PlanPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border.all(
-          color: terminalColors.attention.withValues(alpha: 0.3),
+          color: colors.primary.withValues(alpha: 0.3),
           width: AppSizes.borderWidth,
         ),
       ),
@@ -46,7 +45,7 @@ class PlanPanel extends StatelessWidget {
               Text(
                 '[PLAN]',
                 style: TextStyle(
-                  color: terminalColors.attention,
+                  color: colors.primary,
                   fontSize: AppSizes.fontTiny,
                   fontWeight: AppFonts.heavy,
                 ),
@@ -56,7 +55,7 @@ class PlanPanel extends StatelessWidget {
                 child: Text(
                   'PLAN',
                   style: TextStyle(
-                    color: terminalColors.attention,
+                    color: colors.primary,
                     fontSize: AppSizes.fontTiny,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
@@ -87,7 +86,7 @@ class PlanPanel extends StatelessWidget {
     final isInProgress = status == 'in_progress' || status == 'in-progress';
 
     final accent = isDone
-        ? terminalColors.attention.withValues(alpha: 0.5)
+        ? colors.primary.withValues(alpha: 0.5)
         : isInProgress
             ? terminalColors.warning
             : colors.onSurface.withValues(alpha: 0.6);

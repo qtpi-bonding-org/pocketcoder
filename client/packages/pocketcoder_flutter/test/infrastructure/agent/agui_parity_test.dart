@@ -11,8 +11,21 @@ import 'package:ag_ui/ag_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agui_decode.dart';
 
+// Resolves regardless of invocation style: `flutter test` run from within
+// this package (CWD = package root, relative path works directly) or run
+// as `flutter test packages/pocketcoder_flutter` from the client/ workspace
+// root (tests/run-integration-suite.sh's own invocation) -- CWD stays at
+// client/ in that mode, so the bare relative path silently resolves to a
+// nonexistent file instead of the real fixture.
+File _resolveFixtureFile() {
+  const relative = 'test/fixtures/agui_frames.jsonl';
+  final direct = File(relative);
+  if (direct.existsSync()) return direct;
+  return File('packages/pocketcoder_flutter/$relative');
+}
+
 void main() {
-  final fixtureFile = File('test/fixtures/agui_frames.jsonl');
+  final fixtureFile = _resolveFixtureFile();
 
   test('fixture file exists and is non-empty', () {
     expect(fixtureFile.existsSync(), isTrue,

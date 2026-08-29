@@ -19,6 +19,12 @@ mixin _$ChatState {
   UiFlowStatus get status;
   Object? get error;
   AgentChatOperation? get lastOperation;
+  Set<String>
+      get animatedMessageIds; // True while ChatCubit is auto-retrying a prompt after the harness
+// container reported not-ready-yet (a real, expected cold-start window
+// -- observed up to ~150s -- not an error). The view uses this to show
+// "starting the harness..." instead of a generic spinner/error toast.
+  bool get awaitingHarnessStart;
 
   /// Create a copy of ChatState
   /// with the given fields replaced by the non-null parameter values.
@@ -38,16 +44,27 @@ mixin _$ChatState {
             (identical(other.status, status) || other.status == status) &&
             const DeepCollectionEquality().equals(other.error, error) &&
             (identical(other.lastOperation, lastOperation) ||
-                other.lastOperation == lastOperation));
+                other.lastOperation == lastOperation) &&
+            const DeepCollectionEquality()
+                .equals(other.animatedMessageIds, animatedMessageIds) &&
+            (identical(other.awaitingHarnessStart, awaitingHarnessStart) ||
+                other.awaitingHarnessStart == awaitingHarnessStart));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, chatId, conversation, status,
-      const DeepCollectionEquality().hash(error), lastOperation);
+  int get hashCode => Object.hash(
+      runtimeType,
+      chatId,
+      conversation,
+      status,
+      const DeepCollectionEquality().hash(error),
+      lastOperation,
+      const DeepCollectionEquality().hash(animatedMessageIds),
+      awaitingHarnessStart);
 
   @override
   String toString() {
-    return 'ChatState(chatId: $chatId, conversation: $conversation, status: $status, error: $error, lastOperation: $lastOperation)';
+    return 'ChatState(chatId: $chatId, conversation: $conversation, status: $status, error: $error, lastOperation: $lastOperation, animatedMessageIds: $animatedMessageIds, awaitingHarnessStart: $awaitingHarnessStart)';
   }
 }
 
@@ -61,7 +78,9 @@ abstract mixin class $ChatStateCopyWith<$Res> {
       Conversation conversation,
       UiFlowStatus status,
       Object? error,
-      AgentChatOperation? lastOperation});
+      AgentChatOperation? lastOperation,
+      Set<String> animatedMessageIds,
+      bool awaitingHarnessStart});
 
   $ConversationCopyWith<$Res> get conversation;
 }
@@ -83,6 +102,8 @@ class _$ChatStateCopyWithImpl<$Res> implements $ChatStateCopyWith<$Res> {
     Object? status = null,
     Object? error = freezed,
     Object? lastOperation = freezed,
+    Object? animatedMessageIds = null,
+    Object? awaitingHarnessStart = null,
   }) {
     return _then(_self.copyWith(
       chatId: freezed == chatId
@@ -102,6 +123,14 @@ class _$ChatStateCopyWithImpl<$Res> implements $ChatStateCopyWith<$Res> {
           ? _self.lastOperation
           : lastOperation // ignore: cast_nullable_to_non_nullable
               as AgentChatOperation?,
+      animatedMessageIds: null == animatedMessageIds
+          ? _self.animatedMessageIds
+          : animatedMessageIds // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
+      awaitingHarnessStart: null == awaitingHarnessStart
+          ? _self.awaitingHarnessStart
+          : awaitingHarnessStart // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 
@@ -212,15 +241,23 @@ extension ChatStatePatterns on ChatState {
             Conversation conversation,
             UiFlowStatus status,
             Object? error,
-            AgentChatOperation? lastOperation)?
+            AgentChatOperation? lastOperation,
+            Set<String> animatedMessageIds,
+            bool awaitingHarnessStart)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _ChatState() when $default != null:
-        return $default(_that.chatId, _that.conversation, _that.status,
-            _that.error, _that.lastOperation);
+        return $default(
+            _that.chatId,
+            _that.conversation,
+            _that.status,
+            _that.error,
+            _that.lastOperation,
+            _that.animatedMessageIds,
+            _that.awaitingHarnessStart);
       case _:
         return orElse();
     }
@@ -246,14 +283,22 @@ extension ChatStatePatterns on ChatState {
             Conversation conversation,
             UiFlowStatus status,
             Object? error,
-            AgentChatOperation? lastOperation)
+            AgentChatOperation? lastOperation,
+            Set<String> animatedMessageIds,
+            bool awaitingHarnessStart)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ChatState():
-        return $default(_that.chatId, _that.conversation, _that.status,
-            _that.error, _that.lastOperation);
+        return $default(
+            _that.chatId,
+            _that.conversation,
+            _that.status,
+            _that.error,
+            _that.lastOperation,
+            _that.animatedMessageIds,
+            _that.awaitingHarnessStart);
     }
   }
 
@@ -276,14 +321,22 @@ extension ChatStatePatterns on ChatState {
             Conversation conversation,
             UiFlowStatus status,
             Object? error,
-            AgentChatOperation? lastOperation)?
+            AgentChatOperation? lastOperation,
+            Set<String> animatedMessageIds,
+            bool awaitingHarnessStart)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ChatState() when $default != null:
-        return $default(_that.chatId, _that.conversation, _that.status,
-            _that.error, _that.lastOperation);
+        return $default(
+            _that.chatId,
+            _that.conversation,
+            _that.status,
+            _that.error,
+            _that.lastOperation,
+            _that.animatedMessageIds,
+            _that.awaitingHarnessStart);
       case _:
         return null;
     }
@@ -298,8 +351,11 @@ class _ChatState extends ChatState {
       this.conversation = Conversation.empty,
       this.status = UiFlowStatus.idle,
       this.error,
-      this.lastOperation})
-      : super._();
+      this.lastOperation,
+      final Set<String> animatedMessageIds = const <String>{},
+      this.awaitingHarnessStart = false})
+      : _animatedMessageIds = animatedMessageIds,
+        super._();
 
   @override
   final String? chatId;
@@ -313,6 +369,23 @@ class _ChatState extends ChatState {
   final Object? error;
   @override
   final AgentChatOperation? lastOperation;
+  final Set<String> _animatedMessageIds;
+  @override
+  @JsonKey()
+  Set<String> get animatedMessageIds {
+    if (_animatedMessageIds is EqualUnmodifiableSetView)
+      return _animatedMessageIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableSetView(_animatedMessageIds);
+  }
+
+// True while ChatCubit is auto-retrying a prompt after the harness
+// container reported not-ready-yet (a real, expected cold-start window
+// -- observed up to ~150s -- not an error). The view uses this to show
+// "starting the harness..." instead of a generic spinner/error toast.
+  @override
+  @JsonKey()
+  final bool awaitingHarnessStart;
 
   /// Create a copy of ChatState
   /// with the given fields replaced by the non-null parameter values.
@@ -333,16 +406,27 @@ class _ChatState extends ChatState {
             (identical(other.status, status) || other.status == status) &&
             const DeepCollectionEquality().equals(other.error, error) &&
             (identical(other.lastOperation, lastOperation) ||
-                other.lastOperation == lastOperation));
+                other.lastOperation == lastOperation) &&
+            const DeepCollectionEquality()
+                .equals(other._animatedMessageIds, _animatedMessageIds) &&
+            (identical(other.awaitingHarnessStart, awaitingHarnessStart) ||
+                other.awaitingHarnessStart == awaitingHarnessStart));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, chatId, conversation, status,
-      const DeepCollectionEquality().hash(error), lastOperation);
+  int get hashCode => Object.hash(
+      runtimeType,
+      chatId,
+      conversation,
+      status,
+      const DeepCollectionEquality().hash(error),
+      lastOperation,
+      const DeepCollectionEquality().hash(_animatedMessageIds),
+      awaitingHarnessStart);
 
   @override
   String toString() {
-    return 'ChatState(chatId: $chatId, conversation: $conversation, status: $status, error: $error, lastOperation: $lastOperation)';
+    return 'ChatState(chatId: $chatId, conversation: $conversation, status: $status, error: $error, lastOperation: $lastOperation, animatedMessageIds: $animatedMessageIds, awaitingHarnessStart: $awaitingHarnessStart)';
   }
 }
 
@@ -359,7 +443,9 @@ abstract mixin class _$ChatStateCopyWith<$Res>
       Conversation conversation,
       UiFlowStatus status,
       Object? error,
-      AgentChatOperation? lastOperation});
+      AgentChatOperation? lastOperation,
+      Set<String> animatedMessageIds,
+      bool awaitingHarnessStart});
 
   @override
   $ConversationCopyWith<$Res> get conversation;
@@ -382,6 +468,8 @@ class __$ChatStateCopyWithImpl<$Res> implements _$ChatStateCopyWith<$Res> {
     Object? status = null,
     Object? error = freezed,
     Object? lastOperation = freezed,
+    Object? animatedMessageIds = null,
+    Object? awaitingHarnessStart = null,
   }) {
     return _then(_ChatState(
       chatId: freezed == chatId
@@ -401,6 +489,14 @@ class __$ChatStateCopyWithImpl<$Res> implements _$ChatStateCopyWith<$Res> {
           ? _self.lastOperation
           : lastOperation // ignore: cast_nullable_to_non_nullable
               as AgentChatOperation?,
+      animatedMessageIds: null == animatedMessageIds
+          ? _self._animatedMessageIds
+          : animatedMessageIds // ignore: cast_nullable_to_non_nullable
+              as Set<String>,
+      awaitingHarnessStart: null == awaitingHarnessStart
+          ? _self.awaitingHarnessStart
+          : awaitingHarnessStart // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 

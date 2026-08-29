@@ -12,6 +12,7 @@ abstract class Chat with _$Chat {
     required String user,
     DateTime? lastActive,
     String? preview,
+    String? firstMessage,
     @JsonKey(unknownEnumValue: ChatTurn.unknown) ChatTurn? turn,
     String? description,
     bool? archived,
@@ -23,6 +24,7 @@ abstract class Chat with _$Chat {
     String? ollamaModelOverride,
     String? harness,
     dynamic workspaceOverride,
+    bool? monitored,
   }) = _Chat;
 
   factory Chat.fromRecord(RecordModel record) =>

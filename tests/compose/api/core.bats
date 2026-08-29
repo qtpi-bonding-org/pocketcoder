@@ -39,10 +39,26 @@ setup_file() {
     [ -n "$agent_token" ]
   fi
 
+  local admin_token=''
+  # POCKETBASE_ADMIN_EMAIL/PASSWORD is the seeded "admin"-role user -- needed
+  # for endpoints that are deliberately admin-only regardless of Pro/FOSS
+  # deployment shape (e.g. ollama/models, per internal/api/ollama.go's own
+  # comment: "keep this admin-only ... this deliberate restriction also
+  # applies to FOSS users seeded with the user role").
+  if [ -n "${POCKETBASE_ADMIN_EMAIL:-}" ] && [ -n "${POCKETBASE_ADMIN_PASSWORD:-}" ]; then
+    local admin_auth
+    admin_auth=$(curl -fsS -X POST "$PB_URL/api/collections/$PB_AUTH_COLLECTION/auth-with-password" \
+      -H 'Content-Type: application/json' \
+      -d "{\"identity\":\"$POCKETBASE_ADMIN_EMAIL\",\"password\":\"$POCKETBASE_ADMIN_PASSWORD\"}")
+    admin_token=$(jq -r '.token // empty' <<<"$admin_auth")
+    [ -n "$admin_token" ]
+  fi
+
   cat >"$AUTH_CACHE" <<EOF
 USER_TOKEN=$user_token
 USER_ID=$user_id
 AGENT_TOKEN=$agent_token
+ADMIN_TOKEN=$admin_token
 EOF
 }
 
@@ -73,6 +89,21 @@ teardown() {
       -H "Authorization: $USER_TOKEN" >/dev/null || true
   fi
   docker exec "$POCKETBASE_CONTAINER" rm -f "/workspace/$FLOW_FILE" >/dev/null 2>&1 || true
+}
+
+# harness-auth's start/status/poll/submit/cancel operations all require a
+# provider record id (not just a harness id) as of internal/api/harness_auth.go's
+# "harness and provider are required" validation -- resolve one via the
+# harness_providers join collection (harness_providers.harness -> harnesses.id,
+# .provider -> providers.id), same relation the Flutter client reads.
+provider_for_harness() {
+  local harness_id="$1"
+  local edges
+  edges=$(curl -fsS -G "$PB_URL/api/collections/harness_providers/records" \
+    -H "Authorization: $USER_TOKEN" \
+    --data-urlencode "filter=harness='$harness_id'" \
+    --data-urlencode "perPage=1")
+  jq -r '.items[0].provider // empty' <<<"$edges"
 }
 
 new_chat() {
@@ -113,16 +144,26 @@ assert_unauthenticated() {
 }
 
 @test "compatibility is public and release status requires a user token" {
+  # run.sh seeds a real current.json before this stack starts -- these
+  # assertions specifically target fields the hardcoded developmentCompatibility
+  # fallback does NOT have (os.nixosVersion, sourceCommit), so this test can
+  # only pass if the real json.RawMessage-decode path off disk actually ran,
+  # not just the fallback. Live-confirmed 2026-08-27: a real production bug
+  # in that exact decode path shipped with zero coverage anywhere because
+  # every existing test (Go and bats alike) only ever exercised the fallback.
   local compatibility
   compatibility=$(curl -fsS "$PB_URL/api/pocketcoder/v1/compatibility")
   [ "$(jq -r '.schemaVersion' <<<"$compatibility")" = 1 ]
   [ "$(jq -r '.compatibility.server.apiVersion' <<<"$compatibility")" = 1 ]
+  [ "$(jq -r '.compatibility.os.nixosVersion' <<<"$compatibility")" = "26.05" ]
 
   local release_status
   release_status=$(curl -fsS "$PB_URL/api/pocketcoder/v1/release/status" \
     -H "Authorization: $USER_TOKEN")
   [ "$(jq -r '.schemaVersion' <<<"$release_status")" = 1 ]
   [ "$(jq -r '.metadataStatus.schemaVersion' <<<"$release_status")" = 1 ]
+  [ "$(jq -r '.current.sourceCommit' <<<"$release_status")" = "0000000000000000000000000000000000000000" ]
+  [ "$(jq -r '.current.selectedHarnesses[0]' <<<"$release_status")" = goose ]
   assert_unauthenticated GET /api/pocketcoder/v1/release/status
 }
 
@@ -161,20 +202,24 @@ assert_unauthenticated() {
   [ "$file_response" = "$content" ]
 
   local listing
-  listing=$(curl -fsS -G "$PB_URL/api/pocketcoder/v1/files-list" \
+  listing=$(curl -fsS -G "$PB_URL/api/pocketcoder/v1/files-tree" \
     -H "Authorization: $USER_TOKEN" \
     --data-urlencode 'path=')
   jq -e --arg name "$FLOW_FILE" '.entries[] | select(.name == $name and .isDir == false)' \
     >/dev/null <<<"$listing"
 
   assert_unauthenticated GET "/api/pocketcoder/v1/files?path=$FLOW_FILE"
-  assert_unauthenticated GET /api/pocketcoder/v1/files-list
+  assert_unauthenticated GET /api/pocketcoder/v1/files-tree
 }
 
 @test "authenticated control endpoints return stable JSON shapes" {
+  # listOllamaModels is deliberately admin-only regardless of Pro/FOSS
+  # deployment shape (internal/api/ollama.go's own comment) -- USER_TOKEN
+  # correctly gets 403 here, so this needs ADMIN_TOKEN, not USER_TOKEN.
+  [ -n "${ADMIN_TOKEN:-}" ]
   local ollama
   ollama=$(curl -fsS "$PB_URL/api/pocketcoder/v1/ollama/models" \
-    -H "Authorization: $USER_TOKEN")
+    -H "Authorization: $ADMIN_TOKEN")
   jq -e '.models | type == "array"' >/dev/null <<<"$ollama"
   jq -e '.enabled | type == "boolean"' >/dev/null <<<"$ollama"
 
@@ -184,11 +229,14 @@ assert_unauthenticated() {
   local harness_id
   harness_id=$(jq -r '.items[0].id // empty' <<<"$harnesses")
   if [ -n "$harness_id" ]; then
+    local provider_id
+    provider_id=$(provider_for_harness "$harness_id")
+    [ -n "$provider_id" ]
     local auth_status
     auth_status=$(curl -fsS -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/status" \
       -H "Authorization: $USER_TOKEN" \
       -H 'Content-Type: application/json' \
-      -d "{\"harness\":\"$harness_id\"}")
+      -d "{\"harness\":\"$harness_id\",\"provider\":\"$provider_id\"}")
     [ "$(jq -r '.harness' <<<"$auth_status")" = "$harness_id" ]
     [ -n "$(jq -r '.status' <<<"$auth_status")" ]
   fi
@@ -219,50 +267,40 @@ assert_unauthenticated() {
 # auth-helper subprocess/container, which this no-model, no-live-harness
 # suite does not have available.
 
-@test "harness auth start/status round-trips none and api_key credential modes" {
-  local harnesses harness_id harness_cli_id
+@test "harness auth start/status round-trips the none credential mode" {
+  # credentialMode "api_key"/providerKey is gone (internal/api/harness_auth.go's
+  # own comment: "\"api_key\" is gone; keys are plain provider_api_keys CRUD
+  # (Task 13)") -- provider_keys never existed under that name either (the
+  # real collection is provider_api_keys, with owner/provider/api_key fields,
+  # not user/provider/env_vars). Only "oauth"/"none" are valid modes now, and
+  # this suite has no live harness/OAuth helper to exercise "oauth" against,
+  # so this test covers only what's real: the "none" round-trip.
+  local harnesses harness_id provider_id
   harnesses=$(curl -fsS "$PB_URL/api/collections/harnesses/records?perPage=1" \
     -H "Authorization: $USER_TOKEN")
   harness_id=$(jq -r '.items[0].id // empty' <<<"$harnesses")
-  harness_cli_id=$(jq -r '.items[0].cli_id // empty' <<<"$harnesses")
   [ -n "$harness_id" ]
+  provider_id=$(provider_for_harness "$harness_id")
+  [ -n "$provider_id" ]
 
-  # credentialMode "api_key" takes a provider_keys record id (not a raw
-  # secret) in the "providerKey" field, per BindProviderKey in
-  # internal/harnessauth/attempts.go.
-  local provider_key
-  provider_key=$(curl -fsS -X POST "$PB_URL/api/collections/provider_keys/records" \
-    -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"user\":\"$USER_ID\",\"provider\":\"$harness_cli_id\",\"env_vars\":{\"API_KEY\":\"api-flow-test-key\"}}")
-  local provider_key_id
-  provider_key_id=$(jq -r '.id // empty' <<<"$provider_key")
-  [ -n "$provider_key_id" ]
-
+  # mode "none" deliberately clears the selection rather than resolving an
+  # account (see StartHarnessAuth's `if mode == "none"` branch) -- its
+  # response has no accountId at all (harnessAuthStatusResp.AccountID is
+  # `json:"accountId,omitempty"` and simply never gets set on this path), so
+  # there is nothing to round-trip into the follow-up status call here.
   local started
   started=$(curl -fsS -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/start" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"harness\":\"$harness_id\",\"credentialMode\":\"none\"}")
+    -d "{\"harness\":\"$harness_id\",\"provider\":\"$provider_id\",\"mode\":\"none\"}")
   [ "$(jq -r '.status' <<<"$started")" = disconnected ]
-  [ "$(jq -r '.credentialMode' <<<"$started")" = none ]
-  ACCOUNT_ID=$(jq -r '.accountId // empty' <<<"$started")
-  [ -n "$ACCOUNT_ID" ]
+  [ "$(jq -r '.mode' <<<"$started")" = none ]
+  [ "$(jq -r 'has("accountId")' <<<"$started")" = false ]
 
   local status
   status=$(curl -fsS -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/status" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"harness\":\"$harness_id\",\"accountId\":\"$ACCOUNT_ID\"}")
-  [ "$(jq -r '.accountId' <<<"$status")" = "$ACCOUNT_ID" ]
+    -d "{\"harness\":\"$harness_id\",\"provider\":\"$provider_id\"}")
   [ "$(jq -r '.status' <<<"$status")" = disconnected ]
-
-  local connected
-  connected=$(curl -fsS -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/start" \
-    -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"harness\":\"$harness_id\",\"accountId\":\"$ACCOUNT_ID\",\"credentialMode\":\"api_key\",\"providerKey\":\"$provider_key_id\"}")
-  [ "$(jq -r '.credentialMode' <<<"$connected")" = api_key ]
-  [ "$(jq -r '.status' <<<"$connected")" = connected ]
-
-  curl -sS -X DELETE "$PB_URL/api/collections/provider_keys/records/$provider_key_id" \
-    -H "Authorization: $USER_TOKEN" >/dev/null || true
 }
 
 @test "harness auth start and status validate input and reject unknown harnesses" {
@@ -272,51 +310,59 @@ assert_unauthenticated() {
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' -d '{}')
   [ "$start_missing_harness" = 400 ]
 
-  local start_unknown_harness
-  start_unknown_harness=$(curl -sS -o /dev/null -w '%{http_code}' \
-    -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/start" \
-    -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d '{"harness":"api-flow-missing-harness"}')
-  [ "$start_unknown_harness" = 404 ]
-
-  local harnesses harness_id
+  local harnesses harness_id provider_id
   harnesses=$(curl -fsS "$PB_URL/api/collections/harnesses/records?perPage=1" \
     -H "Authorization: $USER_TOKEN")
   harness_id=$(jq -r '.items[0].id // empty' <<<"$harnesses")
   [ -n "$harness_id" ]
+  provider_id=$(provider_for_harness "$harness_id")
+  [ -n "$provider_id" ]
+
+  local start_unknown_harness
+  start_unknown_harness=$(curl -sS -o /dev/null -w '%{http_code}' \
+    -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/start" \
+    -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
+    -d "{\"harness\":\"api-flow-missing-harness\",\"provider\":\"$provider_id\"}")
+  [ "$start_unknown_harness" = 404 ]
 
   local bad_mode
   bad_mode=$(curl -sS -o /dev/null -w '%{http_code}' \
     -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/start" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"harness\":\"$harness_id\",\"credentialMode\":\"bogus\"}")
+    -d "{\"harness\":\"$harness_id\",\"provider\":\"$provider_id\",\"mode\":\"bogus\"}")
   [ "$bad_mode" = 400 ]
 
   local status_unknown_harness
   status_unknown_harness=$(curl -sS -o /dev/null -w '%{http_code}' \
     -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/status" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d '{"harness":"api-flow-missing-harness"}')
+    -d "{\"harness\":\"api-flow-missing-harness\",\"provider\":\"$provider_id\"}")
   [ "$status_unknown_harness" = 404 ]
 
-  assert_unauthenticated POST /api/pocketcoder/v1/harness-auth/start "{\"harness\":\"$harness_id\"}"
+  assert_unauthenticated POST /api/pocketcoder/v1/harness-auth/start "{\"harness\":\"$harness_id\",\"provider\":\"$provider_id\"}"
 }
 
-@test "harness auth poll, submit, and cancel report 404 without an active attempt" {
-  local harnesses harness_id
+@test "harness auth poll, submit, and cancel report 404 without an existing account" {
+  # mode "none" never creates an account (see the previous test's comment),
+  # so there is no way in this suite to reach the "account exists, no active
+  # attempt" case -- this covers the "no account at all" case instead, which
+  # is what's actually reachable here.
+  #
+  # Live-confirmed 2026-08-27: internal/api/harness_auth.go's poll/submit/
+  # cancel/authRequest all blanket-converted ResolveAccountAndAttempt's error
+  # into a 400 regardless of cause, so this exact scenario used to
+  # (incorrectly) return 400 "account not found" instead of 404. Fixed via
+  # harnessauth.ErrAccountNotFound/ErrAttemptNotFound sentinel errors +
+  # resolveAccountAndAttemptError's classification.
+  local harnesses harness_id provider_id
   harnesses=$(curl -fsS "$PB_URL/api/collections/harnesses/records?perPage=1" \
     -H "Authorization: $USER_TOKEN")
   harness_id=$(jq -r '.items[0].id // empty' <<<"$harnesses")
   [ -n "$harness_id" ]
+  provider_id=$(provider_for_harness "$harness_id")
+  [ -n "$provider_id" ]
 
-  local started
-  started=$(curl -fsS -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/start" \
-    -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"harness\":\"$harness_id\",\"credentialMode\":\"none\"}")
-  ACCOUNT_ID=$(jq -r '.accountId // empty' <<<"$started")
-  [ -n "$ACCOUNT_ID" ]
-
-  local body="{\"harness\":\"$harness_id\",\"accountId\":\"$ACCOUNT_ID\"}"
+  local body="{\"harness\":\"$harness_id\",\"provider\":\"$provider_id\"}"
 
   local poll_status
   poll_status=$(curl -sS -o /dev/null -w '%{http_code}' \
@@ -328,7 +374,7 @@ assert_unauthenticated() {
   submit_status=$(curl -sS -o /dev/null -w '%{http_code}' \
     -X POST "$PB_URL/api/pocketcoder/v1/harness-auth/submit" \
     -H "Authorization: $USER_TOKEN" -H 'Content-Type: application/json' \
-    -d "{\"harness\":\"$harness_id\",\"accountId\":\"$ACCOUNT_ID\",\"code\":\"123456\"}")
+    -d "{\"harness\":\"$harness_id\",\"provider\":\"$provider_id\",\"code\":\"123456\"}")
   [ "$submit_status" = 404 ]
 
   local cancel_status

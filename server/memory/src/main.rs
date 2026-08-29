@@ -49,7 +49,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     cancellation.cancel();
     if let Some(reconciliation) = reconciliation {
-        let _ = reconciliation.await;
+        if let Err(join_error) = reconciliation.await {
+            tracing::warn!(error = %join_error, "reconciliation task join failed");
+        }
     }
     repository.close().await?;
     Ok(())

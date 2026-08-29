@@ -23,6 +23,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"sync/atomic"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
@@ -30,13 +31,6 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-// DeleteSession is a system-triggered cleanup (chats delete hook, Task 15):
-// it looks up any agent_sessions mapping for chatID (regardless of which
-// user owns it — a delete hook is not scoped to a request's Auth), deletes
-// the Agent session over a short-lived ACP conn, then removes the mapping
-// row. On failure it returns the error without deleting the row so a future
-// reconcile sweep can retry; it never blocks the chat record's own delete
-// (the caller runs this best-effort, after the delete already succeeded).
 func (c *Coordinator) DeleteSession(ctx context.Context, app core.App, chatID string) error {
 	record, err := app.FindFirstRecordByFilter("agent_sessions", "chat = {:chat}", map[string]any{"chat": chatID})
 	if err != nil {
@@ -63,7 +57,11 @@ func (c *Coordinator) DeleteSession(ctx context.Context, app core.App, chatID st
 				if harness.GetString("cli_id") != "opencode" && !harness.GetBool("supports_session_delete") {
 					supportsDelete = true
 				}
+			} else {
+				log.Printf("[Coordinator] look up harness %q: %v", inst.GetString("harness"), err)
 			}
+		} else {
+			log.Printf("[Coordinator] look up harness instance %q: %v", instID, err)
 		}
 	}
 	if !supportsDelete {
@@ -75,7 +73,11 @@ func (c *Coordinator) DeleteSession(ctx context.Context, app core.App, chatID st
 	if err != nil {
 		return fmt.Errorf("dial agent for session delete: %w", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Printf("[Coordinator] close agent connection: %v", err)
+		}
+	}()
 	if _, err := conn.Initialize(ctx, initializeRequest()); err != nil {
 		return fmt.Errorf("initialize agent for session delete: %w", err)
 	}

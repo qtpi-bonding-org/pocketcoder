@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_login_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_deploy_credentials_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_welcome_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_self_host_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/get_started_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/self_host_login_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/create_account_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/welcome_screen.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/self_host_setup_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
-import 'package:pocketcoder_flutter/presentation/observability/agent_observability_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/memory_dashboard_screen.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
@@ -19,14 +18,13 @@ import 'package:pocketcoder_flutter/presentation/notifications/notification_sett
 import 'package:pocketcoder_flutter/presentation/skills/skills_screen.dart';
 import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
 import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
-import 'package:pocketcoder_flutter/presentation/billing/pro_paywall_screen.dart';
+import 'package:pocketcoder_flutter/presentation/billing/paywall_screen.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 import 'package:pocketcoder_flutter/presentation/provider/provider_screen.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/harness_auth_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/harness_choice_screen.dart';
-import 'package:pocketcoder_flutter/presentation/onboarding/harness_authorization_screen.dart';
-import 'package:pocketcoder_flutter/presentation/deployment/deploy_picker_screen.dart';
-import 'package:pocketcoder_flutter/presentation/deployment/deploy_credentials.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/agent_auth_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/choose_provider_screen.dart';
+import 'package:pocketcoder_flutter/presentation/deployment/server_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_box_page_builder.dart';
@@ -36,7 +34,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_deploy_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 
 /// App routing configuration.
@@ -48,10 +46,19 @@ class AppRouter {
 
   /// Additional routes injected by the proprietary package (e.g. Linode flow).
   static List<RouteBase> _additionalRoutes = const [];
+  static DeployProviderSelectionHandler? _deployProviderSelectionHandler;
 
   /// Call before accessing [router] to inject proprietary routes.
   static void setAdditionalRoutes(List<RouteBase> routes) {
     _additionalRoutes = routes;
+  }
+
+  /// Lets a distribution launch provider authorization directly from the
+  /// provider picker without adding another onboarding page.
+  static void setDeployProviderSelectionHandler(
+    DeployProviderSelectionHandler handler,
+  ) {
+    _deployProviderSelectionHandler = handler;
   }
 
   static final GoRouter _router = GoRouter(
@@ -66,7 +73,6 @@ class AppRouter {
       if (loc == '/mcp') return AppRoutes.configureMcp;
       if (loc == '/system-checks') return AppRoutes.configureSystemChecks;
       if (loc == '/paywall') return AppRoutes.configurePaywall;
-      if (loc == '/observability') return AppRoutes.configureObservability;
       return null;
     },
     routes: [
@@ -85,7 +91,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: OnboardingScreen(
+          child: GetStartedScreen(
             prefill: state.extra is OnboardingPrefill
                 ? state.extra as OnboardingPrefill
                 : null,
@@ -98,7 +104,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: OnboardingLoginScreen(
+          child: SelfHostLoginScreen(
             prefill: state.extra is OnboardingPrefill
                 ? state.extra as OnboardingPrefill
                 : null,
@@ -111,7 +117,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const OnboardingWelcomeScreen(),
+          child: const WelcomeScreen(),
         ),
       ),
       GoRoute(
@@ -120,7 +126,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const OnboardingSelfHostScreen(),
+          child: const SelfHostSetupScreen(),
         ),
       ),
       GoRoute(
@@ -129,9 +135,9 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: OnboardingDeployCredentialsScreen(
-            provider: state.extra is DeployOption
-                ? state.extra as DeployOption
+          child: CreateAccountScreen(
+            provider: state.extra is ProviderOption
+                ? state.extra as ProviderOption
                 : null,
           ),
         ),
@@ -142,31 +148,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const HarnessChoiceScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.onboardingClaudeAuth,
-        name: RouteNames.onboardingClaudeAuth,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: HarnessAuthorizationScreen(
-            harnessId: state.extra?.toString() ?? '',
-            provider: 'claude-code',
-          ),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.onboardingCodexAuth,
-        name: RouteNames.onboardingCodexAuth,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: HarnessAuthorizationScreen(
-            harnessId: state.extra?.toString() ?? '',
-            provider: 'codex',
-          ),
+          child: const AgentAuthScreen(),
         ),
       ),
       // ── CHATS pillar ──
@@ -284,7 +266,7 @@ class AppRouter {
           return TerminalTransition.buildPage(
             context: context,
             state: state,
-            child: ProPaywallScreen(
+            child: PaywallScreen(
               returnOnUnlock: arguments.returnOnUnlock,
             ),
           );
@@ -297,15 +279,6 @@ class AppRouter {
           context: context,
           state: state,
           child: const ProviderScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.configureObservability,
-        name: RouteNames.configureObservability,
-        pageBuilder: (context, state) => TerminalTransition.buildPage(
-          context: context,
-          state: state,
-          child: const AgentObservabilityScreen(),
         ),
       ),
       GoRoute(
@@ -342,12 +315,13 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: DeployPickerScreen(
-            credentials: state.extra is DeployCredentials
-                ? state.extra as DeployCredentials
+          child: ChooseProviderScreen(
+            credentials: state.extra is ServerCredentials
+                ? state.extra as ServerCredentials
                 : null,
-            deployOptionService: getIt<IDeployOptionService>(),
+            deployOptionService: getIt<IProviderOptionService>(),
             onHasProAccess: getIt<BillingService>().hasProAccess,
+            onProviderSelected: _deployProviderSelectionHandler,
           ),
         ),
       ),
@@ -408,8 +382,6 @@ class AppRoutes {
   static const String onboardingSelfHost = '/onboarding/self-host';
   static const String onboardingDeploy = '/onboarding/deploy';
   static const String onboardingHarnessAuth = '/onboarding/harness-auth';
-  static const String onboardingClaudeAuth = '/onboarding/harness-auth/claude';
-  static const String onboardingCodexAuth = '/onboarding/harness-auth/codex';
   static const String boot = '/boot';
   static const String files = '/files';
   static const String serverControls = '/server-controls';
@@ -423,7 +395,6 @@ class AppRoutes {
   static const String configureMcp = '/configure/mcp';
   static const String configureSystemChecks = '/configure/system-checks';
   static const String configurePaywall = '/configure/paywall';
-  static const String configureObservability = '/configure/observability';
   static const String configureMemory = '/configure/memory';
   static const String configureLlm = '/configure/llm';
   static const String configureErrors = '/configure/errors';
@@ -432,7 +403,6 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String aiRegistry = '/settings/ai';
   static const String toolPermissions = '/settings/whitelist';
-  static const String agentObservability = '/observability';
   static const String mcpManagement = '/mcp';
   static const String systemChecks = '/system-checks';
   static const String paywall = '/paywall';
@@ -460,8 +430,6 @@ class RouteNames {
   static const String onboardingSelfHost = 'onboardingSelfHost';
   static const String onboardingDeploy = 'onboardingDeploy';
   static const String onboardingHarnessAuth = 'onboardingHarnessAuth';
-  static const String onboardingClaudeAuth = 'onboardingClaudeAuth';
-  static const String onboardingCodexAuth = 'onboardingCodexAuth';
   static const String boot = 'boot';
   static const String files = 'files';
   static const String serverControls = 'serverControls';
@@ -475,7 +443,6 @@ class RouteNames {
   static const String configureMcp = 'configureMcp';
   static const String configureSystemChecks = 'configureSystemChecks';
   static const String configurePaywall = 'configurePaywall';
-  static const String configureObservability = 'configureObservability';
   static const String configureMemory = 'configureMemory';
   static const String configureLlm = 'configureLlm';
   static const String configureErrors = 'configureErrors';
@@ -483,7 +450,6 @@ class RouteNames {
   // Legacy aliases
   static const String aiRegistry = 'configureAi';
   static const String toolPermissions = 'configureToolPermissions';
-  static const String agentObservability = 'configureObservability';
   static const String mcpManagement = 'configureMcp';
   static const String systemChecks = 'configureSystemChecks';
   static const String paywall = 'configurePaywall';
@@ -540,3 +506,9 @@ class AppNavigation {
     }
   }
 }
+
+typedef DeployProviderSelectionHandler = Future<void> Function(
+  BuildContext context,
+  ProviderOption option,
+  ServerCredentials? credentials,
+);

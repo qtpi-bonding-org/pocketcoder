@@ -4,15 +4,15 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 
@@ -33,27 +33,24 @@ class ProviderAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
         valueListenable: state,
         builder: (context, value, _) => ProviderView(
           state: value,
-          onDelete: cubit.deleteProviderKey,
-          onSave: cubit.saveProviderKey,
+          onDelete: cubit.deleteProviderAPIKey,
+          onSave: cubit.saveProviderAPIKey,
         ),
       ),
     );
   }
 }
 
-/// Read-only listing of [HarnessModel]s plus CRUD for [ProviderKey]s.
+/// Read-only listing of [HarnessModel]s plus CRUD for [ProviderApiKey]s.
 ///
 /// Two `BiosSection`s: the first lists the supported `harness_models` (read-
 /// only — they're catalog data seeded by migrations, not user-creatable), the
-/// second lists the user's `provider_keys` with add/edit/delete.
+/// second lists the user's `provider_api_keys` with add/edit/delete.
 ///
-/// Intentional differences from the legacy `llm_management_screen.dart`:
-/// - no "global default" model picker (there's no `chats.model` default in
-///   the new schema — see Task 12 description),
-/// - provider picker is by `Harnesse.cliId` (matches `ProviderKey.provider`,
-///   confirmed a free-text column in `provider_keys`),
-/// - a generic single `API_KEY` env var field per `ProviderKey` is offered
-///   (no schema-driven env var forms — `Harnesse` doesn't have one).
+/// Every credential is provider-scoped, not harness-scoped: a
+/// `ProviderApiKey.provider` is always a `providers` collection record id
+/// (never a harness cliId or a models.dev provider_id string), so one key
+/// can serve every harness with a `harness_providers` edge to that provider.
 class ProviderView extends StatelessWidget {
   const ProviderView({
     super.key,
@@ -64,7 +61,7 @@ class ProviderView extends StatelessWidget {
 
   final ProviderState state;
   final Future<void> Function(String id) onDelete;
-  final Future<void> Function(ProviderKey key) onSave;
+  final Future<void> Function(ProviderApiKey key) onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -77,12 +74,10 @@ class ProviderView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, ProviderState state) {
-    final colors = context.colorScheme;
-
     if (state.isLoading &&
         state.harnessModels.isEmpty &&
         state.harnesses.isEmpty &&
-        state.providerKeys.isEmpty) {
+        state.providerAPIKeys.isEmpty) {
       return Center(
         child: TerminalLoadingIndicator(
           label: context.l10n.providerScreenLoading,
@@ -93,13 +88,13 @@ class ProviderView extends StatelessWidget {
     if (state.isFailure &&
         state.harnessModels.isEmpty &&
         state.harnesses.isEmpty &&
-        state.providerKeys.isEmpty) {
+        state.providerAPIKeys.isEmpty) {
       return Center(
         child: TerminalText(
           context.l10n.providerScreenErrorPrefix(
             state.error?.toString() ?? context.l10n.errorGeneric,
           ),
-          color: colors.error,
+          color: context.terminalColors.warning,
           textAlign: TextAlign.center,
         ),
       );
@@ -107,18 +102,16 @@ class ProviderView extends StatelessWidget {
 
     final showEmptyHint = state.harnessModels.isEmpty &&
         state.harnesses.isEmpty &&
-        state.providerKeys.isEmpty;
+        state.providerAPIKeys.isEmpty;
 
     return ListView(
       padding: EdgeInsets.all(AppSizes.space),
       children: [
-        // ── HARNESS MODELS (read-only) ──
         BiosSection(
           title: context.l10n.providerScreenHarnessModelsSection,
           child: _buildHarnessModelList(context, state),
         ),
 
-        // ── PROVIDER KEYS (CRUD) ──
         BiosSection(
           title: context.l10n.providerScreenApiKeysSection,
           child: _buildProviderKeyList(context, state),
@@ -138,7 +131,6 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-  // ── HARNESS MODELS ──
 
   Widget _buildHarnessModelList(BuildContext context, ProviderState state) {
     if (state.harnessModels.isEmpty) {
@@ -165,8 +157,6 @@ class ProviderView extends StatelessWidget {
     ProviderState state,
     HarnessModel hm,
   ) {
-    final colors = context.colorScheme;
-
     String harnessName = hm.harness;
     for (final h in state.harnesses) {
       if (h.id == hm.harness) {
@@ -186,40 +176,16 @@ class ProviderView extends StatelessWidget {
 
     final isDefault = hm.isDefault ?? false;
 
-    return TerminalCard(
-      isActive: isDefault,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TerminalText(
-                  harnessName.toUpperCase(),
-                  weight: TerminalTextWeight.heavy,
-                ),
-                TerminalText.mini(
-                  modelName.toUpperCase(),
-                  alpha: 0.7,
-                ),
-              ],
-            ),
-          ),
-          if (isDefault)
-            TerminalText.label(
-              context.l10n.providerScreenDefaultBadge,
-              color: colors.primary,
-            ),
-        ],
-      ),
+    return BiosRow(
+      label: harnessName,
+      value: modelName,
+      hasBadge: isDefault,
     );
   }
 
-  // ── PROVIDER KEYS ──
 
   Widget _buildProviderKeyList(BuildContext context, ProviderState state) {
-    if (state.providerKeys.isEmpty) {
+    if (state.providerAPIKeys.isEmpty) {
       return Padding(
         padding: EdgeInsets.all(AppSizes.space * 2),
         child: Column(
@@ -239,7 +205,7 @@ class ProviderView extends StatelessWidget {
 
     return Column(
       children: [
-        for (final key in state.providerKeys)
+        for (final key in state.providerAPIKeys)
           _buildProviderKeyTile(context, state, key),
         VSpace.x2,
         _buildAddKeyButton(context, state),
@@ -250,7 +216,7 @@ class ProviderView extends StatelessWidget {
   Widget _buildAddKeyButton(BuildContext context, ProviderState state) {
     return TerminalButton(
       label: context.l10n.providerScreenAddKey,
-      onTap: state.harnesses.isEmpty
+      onTap: state.providerCatalog.isEmpty
           ? () {}
           : () => _openKeyEditor(context, state, null),
     );
@@ -259,15 +225,12 @@ class ProviderView extends StatelessWidget {
   Widget _buildProviderKeyTile(
     BuildContext context,
     ProviderState state,
-    ProviderKey key,
+    ProviderApiKey key,
   ) {
     final colors = context.colorScheme;
 
-    final harness = state.harnesses.firstWhere(
-      (h) => h.cliId == key.provider,
-      orElse: () => _emptyHarnesse,
-    );
-    final providerLabel = harness.id.isEmpty ? key.provider : harness.name;
+    final providerLabel =
+        state.providerCatalog.firstWhere((p) => p.id == key.provider).name;
 
     return TerminalCard(
       child: Row(
@@ -281,7 +244,7 @@ class ProviderView extends StatelessWidget {
                   weight: TerminalTextWeight.heavy,
                 ),
                 TerminalText.mini(
-                  _maskKeyPreview(key.envVars),
+                  _maskKeyPreview(key.apiKey),
                   alpha: 0.5,
                 ),
               ],
@@ -302,18 +265,17 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-  // ── DIALOGS ──
 
   void _openKeyEditor(
     BuildContext context,
     ProviderState state,
-    ProviderKey? existing,
+    ProviderApiKey? existing,
   ) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return ProviderKeyEditorDialog(
-          harnesses: state.harnesses,
+          providerCatalog: state.providerCatalog,
           existing: existing,
           onSave: (key) {
             onSave(key);
@@ -324,32 +286,13 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-  // ── HELPERS ──
 
-  /// Same shape as `_maskKeyPreview` in the legacy `llm_management_screen.dart`
-  /// — show a short prefix and suffix of the first env var value, or a fixed
-  /// placeholder when no value is present.
-  String _maskKeyPreview(dynamic envVars) {
-    if (envVars == null) return '***';
-    if (envVars is Map && envVars.isNotEmpty) {
-      final firstValue = envVars.values.first.toString();
-      if (firstValue.length > 8) {
-        final head = firstValue.substring(0, 4);
-        final tail = firstValue.substring(firstValue.length - 4);
-        return '$head..$tail';
-      }
-      return '****';
+  /// Shows a short prefix and suffix of the provider API key.
+  String _maskKeyPreview(String? apiKey) {
+    if (apiKey == null || apiKey.isEmpty) return '***';
+    if (apiKey.length > 8) {
+      return '${apiKey.substring(0, 4)}..${apiKey.substring(apiKey.length - 4)}';
     }
-    return '***';
+    return '****';
   }
-
-  /// Sentinel `Harnesse` used by `firstWhere`/`orElse` to keep the
-  /// `providerLabel` lookup total without a nullable local. Empty `id`
-  /// signals "not found".
-  static const Harnesse _emptyHarnesse = Harnesse(
-    id: '',
-    name: '',
-    cliId: '',
-    acpTransport: HarnesseAcpTransport.unknown,
-  );
 }

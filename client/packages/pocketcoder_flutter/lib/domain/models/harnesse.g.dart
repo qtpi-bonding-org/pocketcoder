@@ -18,9 +18,9 @@ _Harnesse _$HarnesseFromJson(Map<String, dynamic> json) => _Harnesse(
       containerImage: json['container_image'] as String?,
       launchTemplate: json['launch_template'],
       supportsLiveConfig: json['supports_live_config'] as bool?,
-      providerScope: $enumDecodeNullable(
-          _$HarnesseProviderScopeEnumMap, json['provider_scope'],
-          unknownValue: HarnesseProviderScope.unknown),
+      supportsLiveCredentialRegistration:
+          json['supports_live_credential_registration'] as bool?,
+      providerFanout: json['provider_fanout'] as bool?,
       supportsOllama: json['supports_ollama'] as bool?,
       supportsSessionDelete: json['supports_session_delete'] as bool?,
       supportsAdditionalDirectories:
@@ -37,7 +37,9 @@ Map<String, dynamic> _$HarnesseToJson(_Harnesse instance) => <String, dynamic>{
       'container_image': instance.containerImage,
       'launch_template': instance.launchTemplate,
       'supports_live_config': instance.supportsLiveConfig,
-      'provider_scope': _$HarnesseProviderScopeEnumMap[instance.providerScope],
+      'supports_live_credential_registration':
+          instance.supportsLiveCredentialRegistration,
+      'provider_fanout': instance.providerFanout,
       'supports_ollama': instance.supportsOllama,
       'supports_session_delete': instance.supportsSessionDelete,
       'supports_additional_directories': instance.supportsAdditionalDirectories,
@@ -48,10 +50,4 @@ const _$HarnesseAcpTransportEnumMap = {
   HarnesseAcpTransport.stdio: 'stdio',
   HarnesseAcpTransport.http: 'http',
   HarnesseAcpTransport.unknown: '__unknown__',
-};
-
-const _$HarnesseProviderScopeEnumMap = {
-  HarnesseProviderScope.any: 'any',
-  HarnesseProviderScope.self: 'self',
-  HarnesseProviderScope.unknown: '__unknown__',
 };

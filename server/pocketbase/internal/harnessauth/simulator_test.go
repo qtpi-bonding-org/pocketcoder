@@ -16,3 +16,17 @@ func TestParseCodexChallengeStripsANSISequences(t *testing.T) {
 		t.Fatalf("challenge.Text = %q", challenge.Text)
 	}
 }
+
+func TestParseCodexChallengeReturnsBrowserDeviceCode(t *testing.T) {
+	got := parseCodexChallenge("https://auth.openai.com/codex/device\nEnter this one-time code 9OCA-MITN8")
+	if got.Kind != "device_code" || got.UserCode != "9OCA-MITN8" || got.CodeDestination != "browser" {
+		t.Fatalf("unexpected Codex challenge: %+v", got)
+	}
+}
+
+func TestParseClaudeChallengeReturnsAppCodeDestination(t *testing.T) {
+	got := parseClaudeChallenge("https://example.test/authorize")
+	if got.Kind != "browser_code" || got.CodeDestination != "app" {
+		t.Fatalf("unexpected Claude challenge: %+v", got)
+	}
+}

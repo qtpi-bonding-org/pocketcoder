@@ -15,6 +15,7 @@ import 'package:pocketcoder_flutter/presentation/chat/thinking_block.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 class ChatView extends StatefulWidget {
   const ChatView({
@@ -23,32 +24,39 @@ class ChatView extends StatefulWidget {
     required this.conversation,
     required this.title,
     required this.isLoading,
+    this.awaitingHarnessStart = false,
     required this.isRunning,
     required this.requiresProviderReauthentication,
     required this.modes,
     required this.config,
+    required this.monitored,
+    required this.onToggleMonitored,
     required this.onOpen,
     required this.onSendPrompt,
-    required this.onRetry,
     required this.onCancel,
     required this.onSelectMode,
     required this.onSetOption,
     required this.onPermissionOptionSelected,
     required this.onElicitationRespond,
+    required this.animatedMessageIds,
+    required this.onMessageAnimated,
     required this.onFiles,
+    this.onRunStarted,
   });
 
   final String? chatId;
   final ag_ui_widgets.Conversation conversation;
   final String title;
   final bool isLoading;
+  final bool awaitingHarnessStart;
   final bool isRunning;
   final bool requiresProviderReauthentication;
   final Map<String, dynamic>? modes;
   final Map<String, dynamic>? config;
+  final bool monitored;
+  final VoidCallback onToggleMonitored;
   final ValueChanged<String> onOpen;
   final ValueChanged<String> onSendPrompt;
-  final VoidCallback onRetry;
   final VoidCallback onCancel;
   final ValueChanged<String> onSelectMode;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
@@ -56,7 +64,10 @@ class ChatView extends StatefulWidget {
       onPermissionOptionSelected;
   final void Function(String requestId, Map<String, dynamic> response)
       onElicitationRespond;
+  final Set<String> animatedMessageIds;
+  final ValueChanged<String> onMessageAnimated;
   final VoidCallback onFiles;
+  final Future<void> Function(String chatId)? onRunStarted;
 
   @override
   State<ChatView> createState() => _ChatViewState();
@@ -67,7 +78,7 @@ class _ChatViewState extends State<ChatView> {
   final _inputFocusNode = FocusNode();
   final _transcriptKey = GlobalKey<ag_ui_widgets.AgUiTranscriptState>();
   bool _opened = false;
-  bool _sessionPanelExpanded = false;
+  bool _reauthAnnounced = false;
 
   @override
   void initState() {
@@ -84,6 +95,10 @@ class _ChatViewState extends State<ChatView> {
       return;
     }
     _provideRunCompletionHaptic(oldWidget);
+    _startForegroundActivityIfNeeded(oldWidget);
+    if (!widget.requiresProviderReauthentication) _reauthAnnounced = false;
+    _announceReauthIfNeeded(oldWidget);
+    _announceRunOutcomeIfNeeded(oldWidget);
   }
 
   void _provideRunCompletionHaptic(ChatView oldWidget) {
@@ -97,6 +112,62 @@ class _ChatViewState extends State<ChatView> {
       ag_ui_widgets.RunOutcome.success => HapticFeedback.lightImpact(),
       _ => HapticFeedback.mediumImpact(),
     }));
+  }
+
+  void _startForegroundActivityIfNeeded(ChatView oldWidget) {
+    final chatId = widget.chatId;
+    if (oldWidget.isRunning ||
+        !widget.isRunning ||
+        !widget.monitored ||
+        chatId == null ||
+        chatId.isEmpty ||
+        chatId == 'new') {
+      return;
+    }
+    final start = widget.onRunStarted;
+    if (start != null) unawaited(start(chatId));
+  }
+
+  void _announceReauthIfNeeded(ChatView oldWidget) {
+    if (oldWidget.requiresProviderReauthentication ||
+        !widget.requiresProviderReauthentication ||
+        _reauthAnnounced) {
+      return;
+    }
+    _reauthAnnounced = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      VimToast.show(
+        context,
+        context.l10n.providerReauthenticationRequired,
+        color: context.terminalColors.warning,
+      );
+    });
+  }
+
+  void _announceRunOutcomeIfNeeded(ChatView oldWidget) {
+    final outcome = widget.conversation.sessionState.runOutcome;
+    if (outcome == null || outcome == ag_ui_widgets.RunOutcome.success) return;
+    if (oldWidget.conversation.sessionState.runOutcome == outcome) return;
+
+    final (title, body) = switch (outcome) {
+      ag_ui_widgets.RunOutcome.interrupted => (
+          context.l10n.chatRunOutcomeInterruptedTitle,
+          context.l10n.chatRunOutcomeInterruptedBody,
+        ),
+      ag_ui_widgets.RunOutcome.cancelled => (
+          context.l10n.chatRunOutcomeCancelledTitle,
+          context.l10n.chatRunOutcomeCancelledBody,
+        ),
+      ag_ui_widgets.RunOutcome.failed => (
+          context.l10n.chatRunOutcomeFailedTitle,
+          context.l10n.chatRunOutcomeFailedBody,
+        ),
+      ag_ui_widgets.RunOutcome.success => ('', ''),
+    };
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) VimToast.show(context, '$title: $body');
+    });
   }
 
   void _openIfNeeded() {
@@ -140,74 +211,27 @@ class _ChatViewState extends State<ChatView> {
     _inputController.clear();
   }
 
-  Widget? _runOutcomeBanner(BuildContext context) {
-    final outcome = widget.conversation.sessionState.runOutcome;
-    final banner = switch (outcome) {
-      ag_ui_widgets.RunOutcome.interrupted => (
-          context.l10n.chatRunOutcomeInterruptedTitle,
-          context.l10n.chatRunOutcomeInterruptedBody,
-          true,
-        ),
-      ag_ui_widgets.RunOutcome.cancelled => (
-          context.l10n.chatRunOutcomeCancelledTitle,
-          context.l10n.chatRunOutcomeCancelledBody,
-          false,
-        ),
-      ag_ui_widgets.RunOutcome.failed => (
-          context.l10n.chatRunOutcomeFailedTitle,
-          context.l10n.chatRunOutcomeFailedBody,
-          false,
-        ),
-      null || ag_ui_widgets.RunOutcome.success => null,
-    };
-    if (banner == null) return null;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: context.colorScheme.surfaceContainerHighest,
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(banner.$1,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(banner.$2),
-              ],
-            ),
-          ),
-          if (banner.$3)
-            TextButton(
-              onPressed: widget.onRetry,
-              child: Text(context.l10n.chatRunOutcomeInterruptedRetry),
-            ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final outcomeBanner = _runOutcomeBanner(context);
     final builders = pocketcoderChatBuilders(
       context,
       latestReasoningId: _latestReasoningId(widget.conversation.timeline),
       onPermissionOptionSelected: widget.onPermissionOptionSelected,
       onElicitationRespond: widget.onElicitationRespond,
+      animatedMessageIds: widget.animatedMessageIds,
+      onMessageAnimated: widget.onMessageAnimated,
     );
     return PocketCoderShell(
       title: widget.title,
       activePillar: NavPillar.chats,
       showBack: true,
-      extraHeaderActions: [
+      actions: [
         TerminalAction(
             label: context.l10n.chatFilesAction, onTap: widget.onFiles),
         TerminalAction(
-          label: context.l10n.chatSessionAction,
-          isActive: _sessionPanelExpanded,
-          onTap: () =>
-              setState(() => _sessionPanelExpanded = !_sessionPanelExpanded),
+          label: context.l10n.chatMonitorAction,
+          isActive: widget.monitored,
+          onTap: widget.onToggleMonitored,
         ),
         if (widget.isRunning)
           TerminalAction(
@@ -216,32 +240,20 @@ class _ChatViewState extends State<ChatView> {
       padding: EdgeInsets.zero,
       body: Column(
         children: [
-          if (widget.requiresProviderReauthentication)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: context.colorScheme.errorContainer,
-              child: Text(
-                context.l10n.providerReauthenticationRequired,
-                style: TextStyle(color: context.colorScheme.onErrorContainer),
-              ),
-            ),
-          if (_sessionPanelExpanded) ...[
-            PlanPanel(plan: widget.conversation.sessionState.plan),
-            ModeSwitcher(
-                modes: widget.modes, onSelectMode: widget.onSelectMode),
-            ConfigPicker(
-                config: widget.config, onSetOption: widget.onSetOption),
-          ],
+          PlanPanel(plan: widget.conversation.sessionState.plan),
+          ModeSwitcher(modes: widget.modes, onSelectMode: widget.onSelectMode),
+          ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
           Expanded(
             child: Column(
               children: [
-                if (outcomeBanner != null) outcomeBanner,
                 if (widget.isLoading &&
                     _latestReasoningId(widget.conversation.timeline) == null)
-                  const Center(
+                  Center(
                     child: ThinkingBlock(
-                      text: 'Working through the request.',
+                      text: widget.awaitingHarnessStart
+                          ? 'Starting the harness -- this can take a '
+                              'minute or two on a fresh container.'
+                          : 'Working through the request.',
                       isLatest: true,
                       isStreaming: true,
                     ),
@@ -263,8 +275,7 @@ class _ChatViewState extends State<ChatView> {
                     theme: ag_ui_widgets.ChatTheme.fromThemeData(
                         Theme.of(context)),
                     textMessageBuilder: builders.textMessageBuilder,
-                    textStreamMessageBuilder:
-                        builders.textStreamMessageBuilder,
+                    textStreamMessageBuilder: builders.textStreamMessageBuilder,
                     toolCallBuilder: builders.toolCallBuilder,
                     permissionBuilder: builders.permissionBuilder,
                     elicitationBuilder: builders.elicitationBuilder,

@@ -1,67 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
+import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/provider/adapters/provider_adapter.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-  theme: AppTheme.lightTheme,
-  localizationsDelegates: const [AppLocalizations.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
-  supportedLocales: const [Locale('en')],
-  home: Scaffold(body: child),
-);
+Widget _app(Widget child) => MaterialApp(
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: child,
+    );
 
 void main() {
-  final harness = Harnesse(id: 'h-1', name: 'Goose', cliId: 'goose', acpTransport: HarnesseAcpTransport.websocket);
-  final model = Model(id: 'm-1', name: 'sonnet', displayName: 'Claude Sonnet', provider: 'anthropic');
-  final harnessModel = HarnessModel(id: 'hm-1', harness: 'h-1', model: 'm-1', harnessModelId: 'goose::sonnet', isDefault: true);
-  final key = ProviderKey(id: 'pk-1', user: 'u-1', provider: 'goose', envVars: <String, dynamic>{'API_KEY': 'sk-supersecret'});
+  testWidgets('renders harness model tiles as BiosRows', (tester) async {
+    await tester.pumpWidget(_app(ProviderView(
+      state: ProviderState(
+        harnesses: [
+          const Harnesse(
+            id: 'h1',
+            name: 'Claude',
+            cliId: 'claude',
+            acpTransport: HarnesseAcpTransport.http,
+          ),
+        ],
+        models: [
+          const Model(
+            id: 'm1',
+            name: 'sonnet',
+            displayName: 'Sonnet',
+            provider: 'anthropic',
+          ),
+        ],
+        harnessModels: [
+          const HarnessModel(
+            id: 'hm1',
+            harness: 'h1',
+            model: 'm1',
+            harnessModelId: 'hm-1',
+            isDefault: true,
+          ),
+        ],
+      ),
+      onDelete: (_) async {},
+      onSave: (_) async {},
+    )));
 
-  Future<void> pumpView(WidgetTester tester, {ProviderState state = const ProviderState(), Future<void> Function(ProviderKey)? onSave, Future<void> Function(String)? onDelete}) async {
-    await tester.pumpWidget(_wrap(ProviderView(state: state, onSave: onSave ?? (_) async {}, onDelete: onDelete ?? (_) async {})));
-    await tester.pumpAndSettle();
-  }
-
-  testWidgets('renders sections and empty states', (tester) async {
-    await pumpView(tester);
-    expect(find.text('HARNESS MODELS'), findsOneWidget);
-    expect(find.text('API KEYS'), findsOneWidget);
-    expect(find.text('NO HARNESS MODELS LISTED'), findsOneWidget);
-    expect(find.text('NO API KEYS CONFIGURED'), findsOneWidget);
+    expect(find.byType(BiosRow), findsOneWidget);
+    expect(find.text('CLAUDE'), findsOneWidget);
+    expect(find.text('SONNET'), findsOneWidget);
   });
 
-  testWidgets('lists joined harness/model names', (tester) async {
-    await pumpView(tester, state: ProviderState(harnesses: [harness], models: [model], harnessModels: [harnessModel]));
-    expect(find.text('GOOSE'), findsOneWidget);
-    expect(find.text('CLAUDE SONNET'), findsOneWidget);
-    expect(find.text('[ DEFAULT ]'), findsOneWidget);
-  });
+  testWidgets(
+      'a multi-provider-harness key shows its catalog display name, not the raw provider id',
+      (tester) async {
+    // ProviderApiKey.provider is always a pc_providers RECORD id (never a
+    // provider_id string) -- 'p1' here matches providerCatalog[0].id, not
+    // its providerId. Its catalog display name deliberately differs from
+    // both so this test actually distinguishes "shows the catalog name"
+    // from "shows the id/providerId uppercased" -- before the fix, this
+    // rendered "OPENAI-COMPAT-XYZ".
+    await tester.pumpWidget(_app(ProviderView(
+      state: ProviderState(
+        providerAPIKeys: const [
+          ProviderApiKey(
+            id: 'pk1',
+            owner: 'u1',
+            provider: 'p1',
+            apiKey: 'secret',
+          ),
+        ],
+        providerCatalog: const [
+          domain.Provider(
+            id: 'p1',
+            providerId: 'openai-compat-xyz',
+            name: 'Totally Different Display Name',
+            apiKeyEnv: 'SOME_API_KEY',
+          ),
+        ],
+      ),
+      onDelete: (_) async {},
+      onSave: (_) async {},
+    )));
 
-  testWidgets('lists provider keys with masked preview', (tester) async {
-    await pumpView(tester, state: ProviderState(harnesses: [harness], providerKeys: [key]));
-    expect(find.text('sk-s..cret'), findsOneWidget);
-  });
-
-  testWidgets('shows loading state', (tester) async {
-    await pumpView(tester, state: const ProviderState(status: UiFlowStatus.loading));
-    expect(find.text('[ LOADING PROVIDERS ]'), findsOneWidget);
-  });
-
-  testWidgets('ADD KEY opens editor', (tester) async {
-    await pumpView(tester, state: ProviderState(harnesses: [harness]));
-    await tester.tap(find.text('ADD KEY'));
-    await tester.pumpAndSettle();
-    expect(find.text('SELECT PROVIDER'), findsOneWidget);
-    await tester.tap(find.text('SELECT PROVIDER'));
-    await tester.pumpAndSettle();
-    expect(find.text('GOOSE'), findsWidgets);
-    expect(find.text('goose'), findsWidgets);
+    expect(find.text('TOTALLY DIFFERENT DISPLAY NAME'), findsOneWidget);
+    expect(find.text('OPENAI-COMPAT-XYZ'), findsNothing);
   });
 }
