@@ -1,78 +1,80 @@
 -- Live, read-only visibility into Pocket Memory's canonical tables.
--- Vector and embedding-state tables are deliberately absent from this page.
+-- JSON mode: the client renders this natively (MemoryDashboardScreen),
+-- not via an embedded webview -- a webview would use the OS's own
+-- networking stack, which never learns to trust a deployment's
+-- self-signed Caddy CA, unlike this app's own pinned HTTP client. Vector
+-- and embedding-state tables are deliberately absent from this page.
 
-SELECT 'title' AS component, 'Agent Memory' AS contents;
+SELECT 'json' AS component;
 
-SELECT 'card' AS component, 3 AS columns;
-SELECT 'Observations' AS title, count(*) AS description
-FROM memory.observations;
-SELECT 'Interpretations' AS title, count(*) AS description
-FROM memory.interpretations;
-SELECT 'Links' AS title, count(*) AS description
-FROM memory.interpretation_observations;
-
-SELECT 'table' AS component, 'Memory by Account and Author' AS title;
 SELECT
-  account_id,
-  agent_profile_id,
-  agent_name,
-  sum(observations) AS observations,
-  sum(interpretations) AS interpretations
-FROM (
-  SELECT account_id, agent_profile_id, agent_name,
-         count(*) AS observations, 0 AS interpretations
-  FROM memory.observations
-  GROUP BY account_id, agent_profile_id, agent_name
-  UNION ALL
-  SELECT account_id, agent_profile_id, agent_name,
-         0 AS observations, count(*) AS interpretations
-  FROM memory.interpretations
-  GROUP BY account_id, agent_profile_id, agent_name
-)
-GROUP BY account_id, agent_profile_id, agent_name
-ORDER BY account_id, agent_name, agent_profile_id;
-
-SELECT 'table' AS component, 'Recent Observations' AS title;
-SELECT
-  id,
-  account_id,
-  agent_name AS author,
-  body,
-  datetime(created_at / 1000, 'unixepoch') AS created_at,
-  datetime(updated_at / 1000, 'unixepoch') AS updated_at,
-  datetime(retrieved_at / 1000, 'unixepoch') AS retrieved_at
-FROM memory.observations
-ORDER BY created_at DESC, id
-LIMIT 50;
-
-SELECT 'table' AS component, 'Recent Interpretations' AS title;
-SELECT
-  interpretation.id,
-  interpretation.account_id,
-  interpretation.agent_name AS author,
-  interpretation.body,
-  count(link.observation_id) AS linked_observations,
-  datetime(interpretation.created_at / 1000, 'unixepoch') AS created_at,
-  datetime(interpretation.updated_at / 1000, 'unixepoch') AS updated_at,
-  datetime(interpretation.retrieved_at / 1000, 'unixepoch') AS retrieved_at
-FROM memory.interpretations AS interpretation
-LEFT JOIN memory.interpretation_observations AS link
-  ON link.interpretation_id = interpretation.id
-GROUP BY interpretation.id
-ORDER BY interpretation.created_at DESC, interpretation.id
-LIMIT 50;
-
-SELECT 'table' AS component, 'Interpretation Details' AS title;
-SELECT
-  interpretation.id AS interpretation_id,
-  interpretation.agent_name AS author,
-  interpretation.body AS interpretation,
-  COALESCE(group_concat(observation.body, ' | '), '') AS linked_observations
-FROM memory.interpretations AS interpretation
-LEFT JOIN memory.interpretation_observations AS link
-  ON link.interpretation_id = interpretation.id
-LEFT JOIN memory.observations AS observation
-  ON observation.id = link.observation_id
-GROUP BY interpretation.id
-ORDER BY interpretation.updated_at DESC, interpretation.id
-LIMIT 50;
+  json(json_object(
+    'observations', (SELECT count(*) FROM memory.observations),
+    'interpretations', (SELECT count(*) FROM memory.interpretations),
+    'links', (SELECT count(*) FROM memory.interpretation_observations)
+  )) AS counts,
+  json((
+    SELECT coalesce(json_group_array(json_object(
+      'accountId', account_id,
+      'agentProfileId', agent_profile_id,
+      'agentName', agent_name,
+      'observations', observations,
+      'interpretations', interpretations
+    )), '[]')
+    FROM (
+      SELECT account_id, agent_profile_id, agent_name,
+             sum(observations) AS observations,
+             sum(interpretations) AS interpretations
+      FROM (
+        SELECT account_id, agent_profile_id, agent_name,
+               count(*) AS observations, 0 AS interpretations
+        FROM memory.observations
+        GROUP BY account_id, agent_profile_id, agent_name
+        UNION ALL
+        SELECT account_id, agent_profile_id, agent_name,
+               0 AS observations, count(*) AS interpretations
+        FROM memory.interpretations
+        GROUP BY account_id, agent_profile_id, agent_name
+      )
+      GROUP BY account_id, agent_profile_id, agent_name
+    )
+  )) AS by_account,
+  json((
+    SELECT coalesce(json_group_array(json_object(
+      'id', id,
+      'accountId', account_id,
+      'author', agent_name,
+      'body', body,
+      'createdAt', datetime(created_at / 1000, 'unixepoch'),
+      'updatedAt', datetime(updated_at / 1000, 'unixepoch'),
+      'retrievedAt', datetime(retrieved_at / 1000, 'unixepoch')
+    )), '[]')
+    FROM (
+      SELECT * FROM memory.observations
+      ORDER BY created_at DESC, id
+      LIMIT 50
+    )
+  )) AS recent_observations,
+  json((
+    SELECT coalesce(json_group_array(json_object(
+      'id', interpretation.id,
+      'accountId', interpretation.account_id,
+      'author', interpretation.agent_name,
+      'body', interpretation.body,
+      'createdAt', datetime(interpretation.created_at / 1000, 'unixepoch'),
+      'updatedAt', datetime(interpretation.updated_at / 1000, 'unixepoch'),
+      'retrievedAt', datetime(interpretation.retrieved_at / 1000, 'unixepoch'),
+      'linkedObservations', json((
+        SELECT coalesce(json_group_array(observation.body), '[]')
+        FROM memory.interpretation_observations AS link
+        JOIN memory.observations AS observation
+          ON observation.id = link.observation_id
+        WHERE link.interpretation_id = interpretation.id
+      ))
+    )), '[]')
+    FROM (
+      SELECT * FROM memory.interpretations
+      ORDER BY created_at DESC, id
+      LIMIT 50
+    ) AS interpretation
+  )) AS recent_interpretations;

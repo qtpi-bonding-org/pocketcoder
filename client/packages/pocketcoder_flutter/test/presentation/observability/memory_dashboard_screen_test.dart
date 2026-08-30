@@ -1,87 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketcoder_flutter/application/memory/memory_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/memory/i_memory_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/observability/memory_dashboard_screen.dart';
-import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 
-class _FakeWebViewController extends PlatformWebViewController {
-  _FakeWebViewController(super.params) : super.implementation();
+class _FakeMemoryRepository implements IMemoryRepository {
+  _FakeMemoryRepository({this.stats, this.error});
 
-  @override
-  Future<void> setJavaScriptMode(JavaScriptMode javaScriptMode) async {}
-
-  @override
-  Future<void> setPlatformNavigationDelegate(
-    PlatformNavigationDelegate handler,
-  ) async {}
+  final MemoryStats? stats;
+  final Object? error;
 
   @override
-  Future<void> loadRequest(LoadRequestParams params) async {}
+  Future<MemoryStats> fetchStats() async {
+    if (error != null) throw error!;
+    return stats ?? const MemoryStats();
+  }
 }
 
-class _FakeNavigationDelegate extends PlatformNavigationDelegate {
-  _FakeNavigationDelegate(super.params) : super.implementation();
-
-  @override
-  Future<void> setOnPageStarted(PageEventCallback onPageStarted) async {}
-
-  @override
-  Future<void> setOnPageFinished(PageEventCallback onPageFinished) async {}
-
-  @override
-  Future<void> setOnWebResourceError(
-    WebResourceErrorCallback onWebResourceError,
-  ) async {}
-}
-
-class _FakeWebViewWidget extends PlatformWebViewWidget {
-  _FakeWebViewWidget(super.params) : super.implementation();
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
-
-class _FakeWebViewPlatform extends WebViewPlatform {
-  @override
-  PlatformWebViewController createPlatformWebViewController(
-    PlatformWebViewControllerCreationParams params,
-  ) =>
-      _FakeWebViewController(params);
-
-  @override
-  PlatformNavigationDelegate createPlatformNavigationDelegate(
-    PlatformNavigationDelegateCreationParams params,
-  ) =>
-      _FakeNavigationDelegate(params);
-
-  @override
-  PlatformWebViewWidget createPlatformWebViewWidget(
-    PlatformWebViewWidgetCreationParams params,
-  ) =>
-      _FakeWebViewWidget(params);
-}
-
-void main() {
-  setUpAll(() {
-    WebViewPlatform.instance = _FakeWebViewPlatform();
-  });
-
-  testWidgets('the loading overlay uses the themed surface token, not raw black',
-      (tester) async {
-    await tester.pumpWidget(MaterialApp(
+Widget _app(MemoryCubit cubit) => MaterialApp(
       theme: AppTheme.darkTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: MemoryDashboardScreen(pocketBase: PocketBase('http://localhost')),
-    ));
-    await tester.pump();
+      home: BlocProvider.value(
+        value: cubit,
+        child: const MemoryDashboardScreen(),
+      ),
+    );
 
-    final coloredBox = tester.widget<ColoredBox>(find.descendant(
-      of: find.byType(Positioned),
-      matching: find.byType(ColoredBox),
+void main() {
+  testWidgets('renders counts and recent entries once loaded',
+      (tester) async {
+    final cubit = MemoryCubit(_FakeMemoryRepository(
+      stats: const MemoryStats(
+        observations: 3,
+        interpretations: 1,
+        links: 2,
+        byAccount: [
+          MemoryAccountSummary(
+            accountId: 'acc-1',
+            agentProfileId: 'profile-1',
+            agentName: 'Goose',
+            observations: 3,
+            interpretations: 1,
+          ),
+        ],
+        recentObservations: [
+          MemoryObservation(
+            id: 'obs-1',
+            accountId: 'acc-1',
+            author: 'Goose',
+            body: 'The user prefers dark mode.',
+            createdAt: '2026-08-30 00:00:00',
+            updatedAt: '2026-08-30 00:00:00',
+            retrievedAt: '2026-08-30 00:00:00',
+          ),
+        ],
+        recentInterpretations: [],
+      ),
     ));
-    expect(coloredBox.color, isNot(Colors.black));
+    await tester.pumpWidget(_app(cubit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('Goose'), findsWidgets);
+    expect(find.text('The user prefers dark mode.'), findsOneWidget);
+    await cubit.close();
+  });
+
+  testWidgets('shows an unavailable message when the fetch fails',
+      (tester) async {
+    final cubit = MemoryCubit(
+      _FakeMemoryRepository(error: Exception('proxy unreachable')),
+    );
+    await tester.pumpWidget(_app(cubit));
+    await tester.pumpAndSettle();
+
+    expect(find.text('MEMORY UNAVAILABLE'), findsOneWidget);
+    await cubit.close();
   });
 }

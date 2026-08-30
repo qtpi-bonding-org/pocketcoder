@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/agent_config_screen.dart';
 import 'package:pocketcoder_flutter/presentation/boot/boot_screen.dart';
 import 'package:pocketcoder_flutter/presentation/observability/memory_dashboard_screen.dart';
+import 'package:pocketcoder_flutter/application/memory/memory_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
@@ -290,7 +291,10 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: MemoryDashboardScreen(pocketBase: getIt()),
+          child: BlocProvider(
+            create: (_) => getIt<MemoryCubit>(),
+            child: const MemoryDashboardScreen(),
+          ),
         ),
       ),
       GoRoute(

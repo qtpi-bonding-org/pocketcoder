@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-30T03:53:41.706257
+// Generated at: 2026-08-30T06:26:40.739734
 
 import 'app_localizations.dart';
 
@@ -693,6 +693,10 @@ class L10nKeyResolver {
       'scheduler.running.badge' => _l10n.schedulerRunningBadge,
       'scheduler.save.button' => _l10n.schedulerSaveButton,
       'scheduler.title' => _l10n.schedulerTitle,
+      'server.control.action.restart' => _l10n.serverControlActionRestart,
+      'server.control.action.restore' => _l10n.serverControlActionRestore,
+      'server.control.action.save' => _l10n.serverControlActionSave,
+      'server.control.action.update' => _l10n.serverControlActionUpdate,
       'server.control.admin.identity' => _l10n.serverControlAdminIdentity,
       'server.control.admin.password' => _l10n.serverControlAdminPassword,
       'server.control.confirm.cancel' => _l10n.serverControlConfirmCancel,
@@ -1700,6 +1704,10 @@ class L10nKeyResolver {
     'scheduler.running.badge',
     'scheduler.save.button',
     'scheduler.title',
+    'server.control.action.restart',
+    'server.control.action.restore',
+    'server.control.action.save',
+    'server.control.action.update',
     'server.control.admin.identity',
     'server.control.admin.password',
     'server.control.confirm.body',
@@ -2637,6 +2645,10 @@ class L10nKeyResolver {
     'schedulerRunningBadge': 'scheduler.running.badge',
     'schedulerSaveButton': 'scheduler.save.button',
     'schedulerTitle': 'scheduler.title',
+    'serverControlActionRestart': 'server.control.action.restart',
+    'serverControlActionRestore': 'server.control.action.restore',
+    'serverControlActionSave': 'server.control.action.save',
+    'serverControlActionUpdate': 'server.control.action.update',
     'serverControlAdminIdentity': 'server.control.admin.identity',
     'serverControlAdminPassword': 'server.control.admin.password',
     'serverControlConfirmBody': 'server.control.confirm.body',
@@ -3571,6 +3583,10 @@ class L10nKeyResolver {
     'scheduler.running.badge': 'schedulerRunningBadge',
     'scheduler.save.button': 'schedulerSaveButton',
     'scheduler.title': 'schedulerTitle',
+    'server.control.action.restart': 'serverControlActionRestart',
+    'server.control.action.restore': 'serverControlActionRestore',
+    'server.control.action.save': 'serverControlActionSave',
+    'server.control.action.update': 'serverControlActionUpdate',
     'server.control.admin.identity': 'serverControlAdminIdentity',
     'server.control.admin.password': 'serverControlAdminPassword',
     'server.control.confirm.body': 'serverControlConfirmBody',
@@ -4512,6 +4528,10 @@ abstract class L10nKeys {
   static const schedulerRunningBadge = 'scheduler.running.badge';
   static const schedulerSaveButton = 'scheduler.save.button';
   static const schedulerTitle = 'scheduler.title';
+  static const serverControlActionRestart = 'server.control.action.restart';
+  static const serverControlActionRestore = 'server.control.action.restore';
+  static const serverControlActionSave = 'server.control.action.save';
+  static const serverControlActionUpdate = 'server.control.action.update';
   static const serverControlAdminIdentity = 'server.control.admin.identity';
   static const serverControlAdminPassword = 'server.control.admin.password';
   static (String, Map<String, dynamic>) serverControlConfirmBody(String operation) => ('server.control.confirm.body', {'operation': operation});

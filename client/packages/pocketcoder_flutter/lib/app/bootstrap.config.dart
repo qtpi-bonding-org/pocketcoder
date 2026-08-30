@@ -43,6 +43,8 @@ import 'package:pocketcoder_flutter/application/files/file_viewer_cubit.dart'
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart'
     as _i681;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
+import 'package:pocketcoder_flutter/application/memory/memory_cubit.dart'
+    as _i268;
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart'
     as _i921;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
@@ -89,6 +91,8 @@ import 'package:pocketcoder_flutter/domain/live_activities/i_live_activity_repos
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart'
     as _i904;
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
+import 'package:pocketcoder_flutter/domain/memory/i_memory_repository.dart'
+    as _i716;
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart'
     as _i148;
 import 'package:pocketcoder_flutter/domain/notifications/i_notification_rule_repository.dart'
@@ -183,6 +187,8 @@ import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_oauth_service.dart'
     as _i732;
 import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_repository.dart'
     as _i662;
+import 'package:pocketcoder_flutter/infrastructure/memory/memory_repository.dart'
+    as _i102;
 import 'package:pocketcoder_flutter/infrastructure/notifications/device_daos.dart'
     as _i849;
 import 'package:pocketcoder_flutter/infrastructure/notifications/device_repository.dart'
@@ -317,6 +323,8 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i824.PocketBase>(),
               gh<_i7.CaddyCaPinningHttpClient>(),
             ));
+    gh.lazySingleton<_i716.IMemoryRepository>(
+        () => _i102.MemoryRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i653.IExceptionKeyMapper>(
         () => _i976.AppExceptionKeyMapper());
     gh.lazySingleton<_i821.INotificationRuleRepository>(
@@ -354,6 +362,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.releaseBaseUrl,
       instanceName: 'releaseBaseUrl',
     );
+    gh.factory<_i268.MemoryCubit>(
+        () => _i268.MemoryCubit(gh<_i716.IMemoryRepository>()));
     gh.lazySingleton<_i653.ILocalizationService>(
         () => _i1000.AppLocalizationService());
     gh.lazySingleton<_i184.ISandboxAgentRepository>(
