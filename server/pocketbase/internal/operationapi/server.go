@@ -331,10 +331,10 @@ func (s *server) SetChatMode(ctx context.Context, request openapi.SetChatModeReq
 	return openapi.SetChatMode202Response{}, nil
 }
 func (s *server) StreamChatEvents(ctx context.Context, _ openapi.StreamChatEventsRequestObject) (openapi.StreamChatEventsResponseObject, error) {
-	return nil, errors.New("stream operation is mounted directly")
+	return nil, errorutil.Internal("stream chat events", errors.New("stream operation is mounted directly"))
 }
 func (s *server) GetWorkspaceFile(ctx context.Context, _ openapi.GetWorkspaceFileRequestObject) (openapi.GetWorkspaceFileResponseObject, error) {
-	return nil, errors.New("direct operation is mounted separately")
+	return nil, errorutil.Internal("get workspace file", errors.New("direct operation is mounted separately"))
 }
 func (s *server) ListWorkspaceFileTree(ctx context.Context, _ openapi.ListWorkspaceFileTreeRequestObject) (openapi.ListWorkspaceFileTreeResponseObject, error) {
 	re, err := requestEventFromContext(ctx)
@@ -467,13 +467,13 @@ func (s *server) SubmitHarnessAuth(ctx context.Context, _ openapi.SubmitHarnessA
 	return openapi.SubmitHarnessAuth200JSONResponse(harnessStatusResponse(status)), nil
 }
 func (s *server) StreamContainerLogs(ctx context.Context, _ openapi.StreamContainerLogsRequestObject) (openapi.StreamContainerLogsResponseObject, error) {
-	return nil, errors.New("stream operation is mounted directly")
+	return nil, errorutil.Internal("stream container logs", errors.New("stream operation is mounted directly"))
 }
 func (s *server) ListContainers(ctx context.Context, _ openapi.ListContainersRequestObject) (openapi.ListContainersResponseObject, error) {
-	return nil, errors.New("direct operation is mounted separately")
+	return nil, errorutil.Internal("list containers", errors.New("direct operation is mounted separately"))
 }
 func (s *server) GetHarnessInstanceLogs(ctx context.Context, request openapi.GetHarnessInstanceLogsRequestObject) (openapi.GetHarnessInstanceLogsResponseObject, error) {
-	return nil, errors.New("direct operation is mounted separately")
+	return nil, errorutil.Internal("get harness instance logs", errors.New("direct operation is mounted separately"))
 }
 func (s *server) StoreMcpOAuthToken(ctx context.Context, _ openapi.StoreMcpOAuthTokenRequestObject) (openapi.StoreMcpOAuthTokenResponseObject, error) {
 	re, err := requestEventFromContext(ctx)
@@ -517,10 +517,10 @@ func (s *server) ListOllamaModels(ctx context.Context, _ openapi.ListOllamaModel
 	return openapi.ListOllamaModels200JSONResponse{Enabled: enabled, Models: items}, nil
 }
 func (s *server) PullOllamaModel(ctx context.Context, _ openapi.PullOllamaModelRequestObject) (openapi.PullOllamaModelResponseObject, error) {
-	return nil, errors.New("direct operation is mounted separately")
+	return nil, errorutil.Internal("pull ollama model", errors.New("direct operation is mounted separately"))
 }
 func (s *server) ProxyObservability(ctx context.Context, _ openapi.ProxyObservabilityRequestObject) (openapi.ProxyObservabilityResponseObject, error) {
-	return nil, errors.New("direct operation is mounted separately")
+	return nil, errorutil.Internal("proxy observability", errors.New("direct operation is mounted separately"))
 }
 func (s *server) SendPushNotification(ctx context.Context, _ openapi.SendPushNotificationRequestObject) (openapi.SendPushNotificationResponseObject, error) {
 	re, err := requestEventFromContext(ctx)
