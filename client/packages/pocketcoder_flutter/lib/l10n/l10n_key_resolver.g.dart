@@ -296,6 +296,13 @@ class L10nKeyResolver {
       'files.empty' => _l10n.filesEmpty,
       'files.title' => _l10n.filesTitle,
       'files.too.large.to.preview' => _l10n.filesTooLargeToPreview,
+      'foss.server.setup.connected' => _l10n.fossServerSetupConnected,
+      'foss.server.setup.generate.key' => _l10n.fossServerSetupGenerateKey,
+      'foss.server.setup.host.label' => _l10n.fossServerSetupHostLabel,
+      'foss.server.setup.intro' => _l10n.fossServerSetupIntro,
+      'foss.server.setup.public.key.label' => _l10n.fossServerSetupPublicKeyLabel,
+      'foss.server.setup.test.and.save' => _l10n.fossServerSetupTestAndSave,
+      'foss.server.setup.title' => _l10n.fossServerSetupTitle,
       'harness.auth.account.login' => _l10n.harnessAuthAccountLogin,
       'harness.auth.api.key' => _l10n.harnessAuthApiKey,
       'harness.auth.cancel' => _l10n.harnessAuthCancel,
@@ -1244,6 +1251,13 @@ class L10nKeyResolver {
     'files.empty',
     'files.title',
     'files.too.large.to.preview',
+    'foss.server.setup.connected',
+    'foss.server.setup.generate.key',
+    'foss.server.setup.host.label',
+    'foss.server.setup.intro',
+    'foss.server.setup.public.key.label',
+    'foss.server.setup.test.and.save',
+    'foss.server.setup.title',
     'harness.auth.account',
     'harness.auth.account.login',
     'harness.auth.api.key',
@@ -2173,6 +2187,13 @@ class L10nKeyResolver {
     'filesEmpty': 'files.empty',
     'filesTitle': 'files.title',
     'filesTooLargeToPreview': 'files.too.large.to.preview',
+    'fossServerSetupConnected': 'foss.server.setup.connected',
+    'fossServerSetupGenerateKey': 'foss.server.setup.generate.key',
+    'fossServerSetupHostLabel': 'foss.server.setup.host.label',
+    'fossServerSetupIntro': 'foss.server.setup.intro',
+    'fossServerSetupPublicKeyLabel': 'foss.server.setup.public.key.label',
+    'fossServerSetupTestAndSave': 'foss.server.setup.test.and.save',
+    'fossServerSetupTitle': 'foss.server.setup.title',
     'harnessAuthAccount': 'harness.auth.account',
     'harnessAuthAccountLogin': 'harness.auth.account.login',
     'harnessAuthApiKey': 'harness.auth.api.key',
@@ -3099,6 +3120,13 @@ class L10nKeyResolver {
     'files.empty': 'filesEmpty',
     'files.title': 'filesTitle',
     'files.too.large.to.preview': 'filesTooLargeToPreview',
+    'foss.server.setup.connected': 'fossServerSetupConnected',
+    'foss.server.setup.generate.key': 'fossServerSetupGenerateKey',
+    'foss.server.setup.host.label': 'fossServerSetupHostLabel',
+    'foss.server.setup.intro': 'fossServerSetupIntro',
+    'foss.server.setup.public.key.label': 'fossServerSetupPublicKeyLabel',
+    'foss.server.setup.test.and.save': 'fossServerSetupTestAndSave',
+    'foss.server.setup.title': 'fossServerSetupTitle',
     'harness.auth.account': 'harnessAuthAccount',
     'harness.auth.account.login': 'harnessAuthAccountLogin',
     'harness.auth.api.key': 'harnessAuthApiKey',
@@ -4032,6 +4060,13 @@ abstract class L10nKeys {
   static const filesEmpty = 'files.empty';
   static const filesTitle = 'files.title';
   static const filesTooLargeToPreview = 'files.too.large.to.preview';
+  static const fossServerSetupConnected = 'foss.server.setup.connected';
+  static const fossServerSetupGenerateKey = 'foss.server.setup.generate.key';
+  static const fossServerSetupHostLabel = 'foss.server.setup.host.label';
+  static const fossServerSetupIntro = 'foss.server.setup.intro';
+  static const fossServerSetupPublicKeyLabel = 'foss.server.setup.public.key.label';
+  static const fossServerSetupTestAndSave = 'foss.server.setup.test.and.save';
+  static const fossServerSetupTitle = 'foss.server.setup.title';
   static (String, Map<String, dynamic>) harnessAuthAccount(String account, String visibility) => ('harness.auth.account', {'account': account, 'visibility': visibility});
   static const harnessAuthAccountLogin = 'harness.auth.account.login';
   static const harnessAuthApiKey = 'harness.auth.api.key';

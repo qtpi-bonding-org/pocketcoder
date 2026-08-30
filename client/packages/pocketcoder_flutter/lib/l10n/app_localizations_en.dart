@@ -3112,6 +3112,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlPublicKeyLabel => 'SSH PUBLIC KEY ON FILE';
 
   @override
+  String get fossServerSetupTitle => 'CONNECT YOUR SERVER';
+
+  @override
+  String get fossServerSetupIntro =>
+      'Generate a key, add it to your VPS, then verify the connection.';
+
+  @override
+  String get fossServerSetupGenerateKey => 'GENERATE KEY';
+
+  @override
+  String get fossServerSetupPublicKeyLabel =>
+      'PUBLIC KEY -- add this to /root/.ssh/authorized_keys on your VPS';
+
+  @override
+  String get fossServerSetupHostLabel => 'This will connect to:';
+
+  @override
+  String get fossServerSetupTestAndSave => 'TEST CONNECTION & SAVE';
+
+  @override
+  String get fossServerSetupConnected =>
+      'CONNECTED -- YOUR SERVER IS NOW MANAGED';
+
+  @override
   String get initializationInstanceId => 'INSTANCE ID';
 
   @override

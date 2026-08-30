@@ -5615,6 +5615,48 @@ abstract class AppLocalizations {
   /// **'SSH PUBLIC KEY ON FILE'**
   String get serverControlPublicKeyLabel;
 
+  /// No description provided for @fossServerSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECT YOUR SERVER'**
+  String get fossServerSetupTitle;
+
+  /// No description provided for @fossServerSetupIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate a key, add it to your VPS, then verify the connection.'**
+  String get fossServerSetupIntro;
+
+  /// No description provided for @fossServerSetupGenerateKey.
+  ///
+  /// In en, this message translates to:
+  /// **'GENERATE KEY'**
+  String get fossServerSetupGenerateKey;
+
+  /// No description provided for @fossServerSetupPublicKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PUBLIC KEY -- add this to /root/.ssh/authorized_keys on your VPS'**
+  String get fossServerSetupPublicKeyLabel;
+
+  /// No description provided for @fossServerSetupHostLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'This will connect to:'**
+  String get fossServerSetupHostLabel;
+
+  /// No description provided for @fossServerSetupTestAndSave.
+  ///
+  /// In en, this message translates to:
+  /// **'TEST CONNECTION & SAVE'**
+  String get fossServerSetupTestAndSave;
+
+  /// No description provided for @fossServerSetupConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECTED -- YOUR SERVER IS NOW MANAGED'**
+  String get fossServerSetupConnected;
+
   /// No description provided for @initializationInstanceId.
   ///
   /// In en, this message translates to:

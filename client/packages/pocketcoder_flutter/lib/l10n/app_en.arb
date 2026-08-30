@@ -1275,6 +1275,13 @@
   "serverControlOperationSaveBackup": "Save backup",
   "serverControlOpenChat": "OPEN CHAT",
   "serverControlPublicKeyLabel": "SSH PUBLIC KEY ON FILE",
+  "fossServerSetupTitle": "CONNECT YOUR SERVER",
+  "fossServerSetupIntro": "Generate a key, add it to your VPS, then verify the connection.",
+  "fossServerSetupGenerateKey": "GENERATE KEY",
+  "fossServerSetupPublicKeyLabel": "PUBLIC KEY -- add this to /root/.ssh/authorized_keys on your VPS",
+  "fossServerSetupHostLabel": "This will connect to:",
+  "fossServerSetupTestAndSave": "TEST CONNECTION & SAVE",
+  "fossServerSetupConnected": "CONNECTED -- YOUR SERVER IS NOW MANAGED",
   "initializationInstanceId": "INSTANCE ID",
   "initializationRetryAttempt": "RETRY ATTEMPT",
   "@deploymentCleanupNotNeeded": { "description": "Cleanup outcome shown when no cloud server needed cleanup" }
