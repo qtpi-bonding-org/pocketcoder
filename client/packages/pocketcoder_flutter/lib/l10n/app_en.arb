@@ -870,8 +870,8 @@
 
   "onboardingNoServerLookingPoco": "Looking for a PocketCoder server...",
   "onboardingNoServerPoco": "Are you already part of the PocketCoder Initiative?",
-  "onboardingNoServerChipExisting": "YES — CONNECT ME",
-  "onboardingNoServerChipNew": "NO — I’D LIKE TO JOIN",
+  "onboardingNoServerChipExisting": "I HAVE A SERVER — LOG IN",
+  "onboardingNoServerChipNew": "I’M NEW — JOIN",
   "onboardingWelcomeTitle": "WELCOME",
   "onboardingWelcomePoco": "Welcome to the PocketCoder Initiative.\n\nI’ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.",
   "onboardingWelcomeActionGuided": "HELP ME WITH SETUP",
