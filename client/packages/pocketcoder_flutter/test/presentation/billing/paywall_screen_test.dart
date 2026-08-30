@@ -52,11 +52,12 @@ void main() {
     expect(find.text(l10n.proStartTrial(7)), findsOneWidget);
     expect(find.text(l10n.proRestore), findsOneWidget);
     expect(find.text(l10n.proSelfHostedPushTitle), findsOneWidget);
-    // The terms/price line only renders once there's no trial to offer -- a
-    // trial-eligible package must not show it.
+    // Apple requires the auto-renewal disclosure visible for a trial offer
+    // too, not just a plain subscription -- the trial-specific wording,
+    // not the no-trial one.
     expect(
-      find.text(l10n.proTerms(l10n.proPricePerMonth(r'$9.99'))),
-      findsNothing,
+      find.text(l10n.proTrialTerms(7, l10n.proPricePerMonth(r'$9.99'))),
+      findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });

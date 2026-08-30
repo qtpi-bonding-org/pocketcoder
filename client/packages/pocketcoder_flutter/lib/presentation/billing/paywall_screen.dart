@@ -165,13 +165,14 @@ class _ProOffer extends StatelessWidget {
             child: Text(context.l10n.proRestore),
           ),
         ),
-        if (trialDays == null)
-          TerminalText.tiny(
-            context.l10n.proTerms(recurringPrice),
-            alpha: 0.65,
-            textAlign: TextAlign.center,
-            height: 1.4,
-          ),
+        TerminalText.tiny(
+          trialDays == null
+              ? context.l10n.proTerms(recurringPrice)
+              : context.l10n.proTrialTerms(trialDays, recurringPrice),
+          alpha: 0.65,
+          textAlign: TextAlign.center,
+          height: 1.4,
+        ),
         if (showSelfHostedOption) ...[
           VSpace.x3,
           _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
