@@ -7,11 +7,10 @@ import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
-import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
-import 'package:pocketcoder_flutter/domain/deployment/i_active_deployment_gate.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
 import 'boot_view.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import '../../app_router.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
@@ -128,25 +127,11 @@ class _BootScreenState extends State<BootScreen> {
     });
   }
 
+  /// True only if nothing has navigated away from /boot yet.
+  bool _stillOnBoot() => GoRouter.of(context).state.name == RouteNames.boot;
+
   Future<void> _checkConnection() async {
     OnboardingLogger.event('boot connection check started');
-
-    // A managed deployment engine (pocketcoder_pro) resumes and reconciles
-    // its own route independently of this boot check, racing it -- if it
-    // already won that race and a deployment is ready, this check's own
-    // goNamed() calls below must not clobber that route with the
-    // onboarding/login flow (see the incident this guards: BootScreen used
-    // to check PocketBase health against a stale/default `pb_server_url`
-    // left over from local dev testing, fail, and reset the whole nav
-    // stack back to onboarding a few seconds after the user had already
-    // reached the deployment details screen).
-    if (getIt.isRegistered<IActiveDeploymentGate>() &&
-        getIt<IActiveDeploymentGate>().hasActiveDeployment) {
-      OnboardingLogger.event(
-        'boot connection check skipped -- active managed deployment present',
-      );
-      return;
-    }
 
     if (mounted) {
       context
@@ -154,83 +139,72 @@ class _BootScreenState extends State<BootScreen> {
           .updateMessage(context.l10n.bootCheckingConnection);
     }
 
-    if (mounted) {
-      final sessionState = await getIt<AuthSessionCoordinator>().restore();
-      if (!mounted) return;
-      final hasLocalSession = sessionState != AuthSessionState.signedOut;
+    if (!mounted) return;
 
-      if (hasLocalSession) {
-        var staleSessionResolved = false;
-        if (sessionState == AuthSessionState.temporarilyUnavailable &&
-            getIt.isRegistered<IInstanceExistenceResolver>()) {
-          staleSessionResolved = await getIt<IInstanceExistenceResolver>()
-              .resolveStaleSessionIfInstanceGone();
-          if (!mounted) return;
-        }
+    final savedBaseUrl = await getIt<IAuthRepository>().getSavedBaseUrl();
+    if (!mounted) return;
 
-        if (staleSessionResolved) {
-          context.read<PocoCubit>().updateMessage(
-                context.l10n.bootConnectionFailed,
-                sequence: [
-                  (PocoExpression.nervous, 500),
-                  (PocoExpression.lookRight, 1000),
-                  (PocoExpression.awake, 1000),
-                ],
-              );
-          await Future.delayed(const Duration(seconds: 3));
-          if (mounted) context.goNamed(RouteNames.onboarding);
-          return;
-        }
-
-        OnboardingLogger.event(
-          sessionState == AuthSessionState.signedIn
-              ? 'PocketBase session restored'
-              : 'PocketBase unavailable; preserving local session',
-        );
-        context.read<PocoCubit>().updateMessage(
-              sessionState == AuthSessionState.signedIn
-                  ? context.l10n.bootWelcomeBack
-                  : context.l10n.bootConnectionFailed,
-              sequence: PocoExpressions.happy,
-            );
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) {
-          context.goNamed(RouteNames.home);
-        }
-      } else {
-        final pocketbaseAlive = await getIt<IStatusRepository>()
-            .checkPocketBaseHealth()
-            .timeout(const Duration(seconds: 8), onTimeout: () => false);
-
-        if (!mounted) return;
-        if (pocketbaseAlive) {
-          // Never skip straight to login: onboarding_adapter.dart's own
-          // "login" choice already covers that, without conflating a
-          // reachable-but-unconfigured default server with a known one.
-          OnboardingLogger.event(
-            'PocketBase reachable; routing to onboarding',
+    if (savedBaseUrl == null) {
+      OnboardingLogger.event('no saved instance data; routing to onboarding');
+      context.read<PocoCubit>().updateMessage(
+            context.l10n.bootSystemsNominal,
+            sequence: PocoExpressions.happy,
           );
-          context.read<PocoCubit>().updateMessage(
-                context.l10n.bootSystemsNominal,
-                sequence: PocoExpressions.happy,
-              );
-          await Future.delayed(const Duration(seconds: 2));
-          if (mounted) context.goNamed(RouteNames.onboarding);
-          return;
-        }
-
-        context.read<PocoCubit>().updateMessage(
-          context.l10n.bootConnectionFailed,
-          sequence: [
-            (PocoExpression.nervous, 500),
-            (PocoExpression.lookRight, 1000),
-            (PocoExpression.awake, 1000),
-          ],
-        );
-        await Future.delayed(const Duration(seconds: 3));
-        if (mounted) context.goNamed(RouteNames.onboarding);
-      }
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted && _stillOnBoot()) context.goNamed(RouteNames.onboarding);
+      return;
     }
+
+    final sessionState = await getIt<AuthSessionCoordinator>().restore();
+    if (!mounted) return;
+
+    var staleSessionResolved = false;
+    if (sessionState == AuthSessionState.temporarilyUnavailable &&
+        getIt.isRegistered<IInstanceExistenceResolver>()) {
+      staleSessionResolved = await getIt<IInstanceExistenceResolver>()
+          .resolveStaleSessionIfInstanceGone();
+      if (!mounted) return;
+    }
+
+    if (staleSessionResolved) {
+      context.read<PocoCubit>().updateMessage(
+            context.l10n.bootConnectionFailed,
+            sequence: [
+              (PocoExpression.nervous, 500),
+              (PocoExpression.lookRight, 1000),
+              (PocoExpression.awake, 1000),
+            ],
+          );
+      await Future.delayed(const Duration(seconds: 3));
+      if (mounted && _stillOnBoot()) context.goNamed(RouteNames.onboarding);
+      return;
+    }
+
+    final hasValidSession = sessionState != AuthSessionState.signedOut;
+    if (hasValidSession) {
+      OnboardingLogger.event(
+        sessionState == AuthSessionState.signedIn
+            ? 'PocketBase session restored'
+            : 'PocketBase unavailable; preserving local session',
+      );
+      context.read<PocoCubit>().updateMessage(
+            sessionState == AuthSessionState.signedIn
+                ? context.l10n.bootWelcomeBack
+                : context.l10n.bootConnectionFailed,
+            sequence: PocoExpressions.happy,
+          );
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted && _stillOnBoot()) context.goNamed(RouteNames.home);
+      return;
+    }
+
+    OnboardingLogger.event('instance data present, no session; routing to login');
+    context.read<PocoCubit>().updateMessage(
+          context.l10n.bootSystemsNominal,
+          sequence: PocoExpressions.happy,
+        );
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted && _stillOnBoot()) context.goNamed(RouteNames.onboardingLogin);
   }
 
   @override

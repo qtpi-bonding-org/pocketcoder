@@ -28,20 +28,25 @@ void main() {
     await getIt.reset();
   });
 
-  Future<GoRouter> pumpBootScreen(
+  Future<(GoRouter, _MockAuthRepository)> pumpBootScreen(
     WidgetTester tester, {
+    String? savedBaseUrl,
+    AuthRefreshResult refreshResult = AuthRefreshResult.temporarilyUnavailable,
+    bool isAuthenticated = true,
     IInstanceExistenceResolver? resolver,
   }) async {
     final authRepository = _MockAuthRepository();
     when(() => authRepository.authChanges)
         .thenAnswer((_) => const Stream<void>.empty());
-    when(() => authRepository.isAuthenticated).thenReturn(true);
+    when(() => authRepository.isAuthenticated).thenReturn(isAuthenticated);
     when(() => authRepository.currentUserId).thenReturn('user-1');
     when(() => authRepository.currentBaseUrl).thenReturn('https://example.test');
-    when(() => authRepository.refreshToken()).thenAnswer(
-      (_) async => AuthRefreshResult.temporarilyUnavailable,
-    );
+    when(() => authRepository.getSavedBaseUrl())
+        .thenAnswer((_) async => savedBaseUrl);
+    when(() => authRepository.refreshToken())
+        .thenAnswer((_) async => refreshResult);
 
+    getIt.registerSingleton<IAuthRepository>(authRepository);
     getIt.registerSingleton(
       AuthSessionCoordinator(authRepository, refreshTimeout: Duration.zero),
     );
@@ -54,6 +59,7 @@ void main() {
       routes: [
         GoRoute(
           path: '/boot',
+          name: RouteNames.boot,
           builder: (context, state) => BlocProvider(
             create: (_) => PocoCubit(),
             child: const BootScreen(),
@@ -68,6 +74,11 @@ void main() {
           path: '/onboarding',
           name: RouteNames.onboarding,
           builder: (context, state) => const Text('ONBOARDING ROUTE'),
+        ),
+        GoRoute(
+          path: '/onboarding/login',
+          name: RouteNames.onboardingLogin,
+          builder: (context, state) => const Text('LOGIN ROUTE'),
         ),
       ],
     );
@@ -85,7 +96,7 @@ void main() {
         routerConfig: router,
       ),
     );
-    return router;
+    return (router, authRepository);
   }
 
   Future<void> advancePastBootDelays(WidgetTester tester) async {
@@ -99,6 +110,57 @@ void main() {
     await tester.pump();
   }
 
+  testWidgets('no instance data routes to onboarding', (tester) async {
+    final (router, authRepository) = await pumpBootScreen(
+      tester,
+      savedBaseUrl: null,
+      isAuthenticated: false,
+      refreshResult: AuthRefreshResult.invalidSession,
+    );
+    await advancePastBootDelays(tester);
+
+    expect(router.routeInformationProvider.value.uri.path, '/onboarding');
+    expect(find.text('ONBOARDING ROUTE'), findsOneWidget);
+    verify(() => authRepository.getSavedBaseUrl()).called(1);
+    // No instance data means the session must never even be consulted.
+    verifyNever(() => authRepository.refreshToken());
+  });
+
+  testWidgets(
+      'instance data present with a valid session routes straight to chats',
+      (tester) async {
+    final (router, authRepository) = await pumpBootScreen(
+      tester,
+      savedBaseUrl: 'https://example.test',
+      isAuthenticated: true,
+      refreshResult: AuthRefreshResult.refreshed,
+    );
+    await advancePastBootDelays(tester);
+
+    expect(router.routeInformationProvider.value.uri.path, AppRoutes.chats);
+    expect(find.text('HOME ROUTE'), findsOneWidget);
+    verify(() => authRepository.getSavedBaseUrl()).called(1);
+  });
+
+  testWidgets(
+      'instance data present but session cannot be restored routes to login',
+      (tester) async {
+    final (router, authRepository) = await pumpBootScreen(
+      tester,
+      savedBaseUrl: 'https://example.test',
+      isAuthenticated: false,
+      refreshResult: AuthRefreshResult.invalidSession,
+    );
+    await advancePastBootDelays(tester);
+
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      AppRoutes.onboardingLogin,
+    );
+    expect(find.text('LOGIN ROUTE'), findsOneWidget);
+    verify(() => authRepository.getSavedBaseUrl()).called(1);
+  });
+
   testWidgets(
       'routes to onboarding when a temporarily unavailable session is stale',
       (tester) async {
@@ -106,7 +168,12 @@ void main() {
     when(() => resolver.resolveStaleSessionIfInstanceGone())
         .thenAnswer((_) async => true);
 
-    final router = await pumpBootScreen(tester, resolver: resolver);
+    final (router, _) = await pumpBootScreen(
+      tester,
+      savedBaseUrl: 'https://example.test',
+      isAuthenticated: true,
+      resolver: resolver,
+    );
     await advancePastBootDelays(tester);
     await tester.pump(const Duration(seconds: 3));
 
@@ -122,7 +189,12 @@ void main() {
     when(() => resolver.resolveStaleSessionIfInstanceGone())
         .thenAnswer((_) async => false);
 
-    final router = await pumpBootScreen(tester, resolver: resolver);
+    final (router, _) = await pumpBootScreen(
+      tester,
+      savedBaseUrl: 'https://example.test',
+      isAuthenticated: true,
+      resolver: resolver,
+    );
     await advancePastBootDelays(tester);
     await tester.pump(const Duration(seconds: 3));
 
