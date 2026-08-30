@@ -3115,6 +3115,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlPrivateKeyLabel => 'SSH PRIVATE KEY';
 
   @override
+  String get serverControlProviderConsole => 'PROVIDER CONSOLE';
+
+  @override
+  String get serverControlProviderConsoleUnavailable =>
+      'No active provider-managed instance found.';
+
+  @override
   String get fossServerSetupTitle => 'CONNECT YOUR SERVER';
 
   @override

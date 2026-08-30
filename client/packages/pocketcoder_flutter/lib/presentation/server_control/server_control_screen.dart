@@ -4,9 +4,11 @@ import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_provider_console_link.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_setup_gate.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/server_control_view.dart';
 
 class ServerControlScreen extends StatefulWidget {
@@ -73,7 +75,13 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
             )
               ..inspectRelease()
               ..loadPublicKey(widget.instanceId),
-            child: ServerControlView(instanceId: widget.instanceId),
+            child: ServerControlView(
+              instanceId: widget.instanceId,
+              inAppBrowserLauncher: getIt<InAppBrowserLauncher>(),
+              providerConsoleLink: getIt.isRegistered<IProviderConsoleLink>()
+                  ? getIt<IProviderConsoleLink>()
+                  : null,
+            ),
           );
         },
       );

@@ -10,10 +10,12 @@ import 'package:pocketcoder_flutter/application/server_control/server_control_st
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_provider_console_link.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/server_control_view.dart';
 
 const _digest =
@@ -92,7 +94,31 @@ class _FakeLocalAuthGate implements ILocalAuthGate {
   Future<bool> authenticate({required String reason}) async => approve;
 }
 
-Widget _app(ServerControlCubit cubit) => MaterialApp.router(
+class _FakeProviderConsoleLink implements IProviderConsoleLink {
+  _FakeProviderConsoleLink({this.uri});
+
+  final Uri? uri;
+
+  @override
+  Future<Uri?> resolve() async => uri;
+}
+
+class _FakeInAppBrowserLauncher implements InAppBrowserLauncher {
+  Uri? opened;
+
+  @override
+  Future<bool> open(Uri uri) async {
+    opened = uri;
+    return true;
+  }
+}
+
+Widget _app(
+  ServerControlCubit cubit, {
+  IProviderConsoleLink? providerConsoleLink,
+  InAppBrowserLauncher? inAppBrowserLauncher,
+}) =>
+    MaterialApp.router(
       theme: AppTheme.lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -103,7 +129,12 @@ Widget _app(ServerControlCubit cubit) => MaterialApp.router(
             path: '/server-control',
             builder: (_, __) => BlocProvider.value(
               value: cubit,
-              child: const ServerControlView(instanceId: 'instance-1'),
+              child: ServerControlView(
+                instanceId: 'instance-1',
+                inAppBrowserLauncher:
+                    inAppBrowserLauncher ?? _FakeInAppBrowserLauncher(),
+                providerConsoleLink: providerConsoleLink,
+              ),
             ),
           ),
           GoRoute(
@@ -232,7 +263,10 @@ void main() {
           path: '/server-control',
           builder: (_, __) => BlocProvider.value(
             value: cubit,
-            child: const ServerControlView(instanceId: 'instance-1'),
+            child: ServerControlView(
+              instanceId: 'instance-1',
+              inAppBrowserLauncher: _FakeInAppBrowserLauncher(),
+            ),
           ),
         ),
         GoRoute(
@@ -381,5 +415,58 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('PRIVATE-KEY-PEM'), findsOneWidget);
     await cubit.close();
+  });
+
+  group('provider console button', () {
+    testWidgets('is absent when no providerConsoleLink is supplied',
+        (tester) async {
+      final service = _FakeService()..release = _release();
+      final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+      await tester.pumpWidget(_app(cubit));
+
+      expect(find.text('PROVIDER CONSOLE'), findsNothing);
+      await cubit.close();
+    });
+
+    testWidgets('opens the resolved URL in the in-app browser when tapped',
+        (tester) async {
+      final service = _FakeService()..release = _release();
+      final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+      final launcher = _FakeInAppBrowserLauncher();
+      await tester.pumpWidget(_app(
+        cubit,
+        providerConsoleLink: _FakeProviderConsoleLink(
+          uri: Uri.parse('https://cloud.linode.com/linodes/42'),
+        ),
+        inAppBrowserLauncher: launcher,
+      ));
+
+      expect(find.text('PROVIDER CONSOLE'), findsOneWidget);
+      await tester.tap(find.text('PROVIDER CONSOLE'));
+      await tester.pumpAndSettle();
+
+      expect(launcher.opened, Uri.parse('https://cloud.linode.com/linodes/42'));
+      await cubit.close();
+    });
+
+    testWidgets('shows a snackbar instead of opening a browser when there '
+        'is no active instance', (tester) async {
+      final service = _FakeService()..release = _release();
+      final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+      final launcher = _FakeInAppBrowserLauncher();
+      await tester.pumpWidget(_app(
+        cubit,
+        providerConsoleLink: _FakeProviderConsoleLink(uri: null),
+        inAppBrowserLauncher: launcher,
+      ));
+
+      await tester.tap(find.text('PROVIDER CONSOLE'));
+      await tester.pumpAndSettle();
+
+      expect(launcher.opened, isNull);
+      expect(find.textContaining('No active provider-managed instance'),
+          findsOneWidget);
+      await cubit.close();
+    });
   });
 }

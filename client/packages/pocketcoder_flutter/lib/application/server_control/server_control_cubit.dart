@@ -29,6 +29,8 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
     }, emitLoading: true);
   }
 
+  static const _releaseRefreshRetryDelay = Duration(seconds: 1);
+
   Future<void> run({
     required ServerControlOperation operation,
     required String instanceId,
@@ -53,6 +55,30 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
         clearError: true,
       );
     }, emitLoading: true);
+    if (state.status == UiFlowStatus.success &&
+        operation != ServerControlOperation.saveBackup) {
+      await _refreshReleaseAfterOperation();
+    }
+  }
+
+  /// A restart/update op's own health check (server-side, per the release
+  /// manager) already confirms the new release before it reports success --
+  /// this just re-reads that confirmed state. One retry covers the app's own
+  /// HTTP connection, separate from that health check, resetting while
+  /// PocketBase bounces. A failure here (including the retry) leaves the
+  /// last-known [ServerControlState.release] in place rather than surfacing
+  /// an error banner for an operation that already succeeded.
+  Future<void> _refreshReleaseAfterOperation() async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await Future<void>.delayed(_releaseRefreshRetryDelay);
+      try {
+        final release = await _service.inspectRelease();
+        emit(state.copyWith(release: release));
+        return;
+      } on Object {
+        // Best-effort; fall through to the retry, or give up silently.
+      }
+    }
   }
 
   Future<void> loadPublicKey(String instanceId) async {

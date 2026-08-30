@@ -29,10 +29,12 @@ class _FakeService implements IServerControlService {
   final pending = <String, Completer<ServerControlResult>>{};
   ServerReleaseStatusSnapshot? release;
   Object? error;
+  void Function()? onInspect;
 
   @override
   Future<ServerReleaseStatusSnapshot> inspectRelease() async {
     calls.add('inspectRelease');
+    onInspect?.call();
     if (error case final error?) throw error;
     return release!;
   }
@@ -100,7 +102,7 @@ ServerControlResult _result(RootSshCommand command) => ServerControlResult(
 
 void main() {
   test('delegates all five operations with the instance id', () async {
-    final service = _FakeService();
+    final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
 
     for (final operation in ServerControlOperation.values) {
@@ -119,9 +121,13 @@ void main() {
 
     expect(service.calls, [
       'restartPocketCoder:server-1',
+      'inspectRelease',
       'updatePocketCoder:server-1',
+      'inspectRelease',
       'restartNixOs:server-1',
+      'inspectRelease',
       'updateNixOs:server-1',
+      'inspectRelease',
       'saveBackup:server-1',
     ]);
     await cubit.close();
@@ -198,4 +204,99 @@ void main() {
     expect(gate.reasons, ['why']);
     await cubit.close();
   });
+
+  test('a successful restart/update op refreshes release status', () async {
+    final service = _FakeService()..release = _release();
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+    final future = cubit.run(
+      operation: ServerControlOperation.updatePocketCoder,
+      instanceId: 'server-1',
+    );
+    service.pending['updatePocketCoder']!.complete(
+      _result(RootSshCommand.updatePocketCoder),
+    );
+    await future;
+
+    expect(cubit.state.release, service.release);
+    expect(service.calls, contains('inspectRelease'));
+    await cubit.close();
+  });
+
+  test('saveBackup does not refresh release status', () async {
+    final service = _FakeService()..release = _release();
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+    final future = cubit.run(
+      operation: ServerControlOperation.saveBackup,
+      instanceId: 'server-1',
+    );
+    service.pending['saveBackup']!.complete(_result(RootSshCommand.saveBackup));
+    await future;
+
+    expect(service.calls, isNot(contains('inspectRelease')));
+    await cubit.close();
+  });
+
+  test('a failed operation does not refresh release status', () async {
+    final service = _FakeService();
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+    final future = cubit.run(
+      operation: ServerControlOperation.updatePocketCoder,
+      instanceId: 'server-1',
+    );
+    service.pending['updatePocketCoder']!.completeError(
+      const ServerControlException('update failed'),
+    );
+    await future;
+
+    expect(service.calls, isNot(contains('inspectRelease')));
+    await cubit.close();
+  });
+
+  test(
+      'a refresh that fails on the first attempt retries once and keeps '
+      'the last-known release without surfacing an error', () async {
+    final service = _FakeService()..release = _release();
+    var inspectCalls = 0;
+    service.onInspect = () {
+      inspectCalls++;
+      if (inspectCalls == 1) throw StateError('connection reset');
+    };
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+    final future = cubit.run(
+      operation: ServerControlOperation.updatePocketCoder,
+      instanceId: 'server-1',
+    );
+    service.pending['updatePocketCoder']!.complete(
+      _result(RootSshCommand.updatePocketCoder),
+    );
+    await future;
+
+    expect(inspectCalls, 2);
+    expect(cubit.state.release, service.release);
+    expect(cubit.state.status, UiFlowStatus.success,
+        reason: 'the update itself succeeded; a refresh retry must not '
+            'surface an error for it');
+    await cubit.close();
+  }, timeout: const Timeout(Duration(seconds: 10)));
+
+  test(
+      'a refresh that fails on both attempts keeps the last-known release '
+      'without surfacing an error', () async {
+    final service = _FakeService()
+      ..release = _release()
+      ..error = StateError('still unreachable');
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+    final future = cubit.run(
+      operation: ServerControlOperation.updatePocketCoder,
+      instanceId: 'server-1',
+    );
+    service.pending['updatePocketCoder']!.complete(
+      _result(RootSshCommand.updatePocketCoder),
+    );
+    await future;
+
+    expect(cubit.state.release, isNull);
+    expect(cubit.state.status, UiFlowStatus.success);
+    await cubit.close();
+  }, timeout: const Timeout(Duration(seconds: 10)));
 }

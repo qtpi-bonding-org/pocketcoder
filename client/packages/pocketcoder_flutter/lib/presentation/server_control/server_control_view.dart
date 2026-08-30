@@ -4,9 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_provider_console_link.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
@@ -32,9 +34,16 @@ class ServerControlView extends StatelessWidget {
   const ServerControlView({
     super.key,
     required this.instanceId,
+    required this.inAppBrowserLauncher,
+    this.providerConsoleLink,
   });
 
   final String instanceId;
+  final InAppBrowserLauncher inAppBrowserLauncher;
+
+  /// Null in FOSS, which has no provider integration to link to -- the
+  /// button below only renders when this is non-null.
+  final IProviderConsoleLink? providerConsoleLink;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +62,10 @@ class ServerControlView extends StatelessWidget {
             ],
             _ReleaseLine(state: state),
             VSpace.x2,
+            if (providerConsoleLink case final link?) ...[
+              _ProviderConsoleButton(link: link, launcher: inAppBrowserLauncher),
+              VSpace.x2,
+            ],
             if (state.publicKey case final publicKey?) ...[
               Text(context.l10n.serverControlPublicKeyLabel),
               VSpace.x1,
@@ -310,6 +323,33 @@ class _CopyButton extends StatelessWidget {
               SnackBar(content: Text(context.l10n.serverControlCopied)),
             );
           }
+        },
+      );
+}
+
+class _ProviderConsoleButton extends StatelessWidget {
+  const _ProviderConsoleButton({required this.link, required this.launcher});
+
+  final IProviderConsoleLink link;
+  final InAppBrowserLauncher launcher;
+
+  @override
+  Widget build(BuildContext context) => TerminalButton(
+        label: context.l10n.serverControlProviderConsole,
+        isPrimary: false,
+        onTap: () async {
+          final uri = await link.resolve();
+          if (!context.mounted) return;
+          if (uri == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    Text(context.l10n.serverControlProviderConsoleUnavailable),
+              ),
+            );
+            return;
+          }
+          await launcher.open(uri);
         },
       );
 }

@@ -5610,6 +5610,18 @@ abstract class AppLocalizations {
   /// **'SSH PRIVATE KEY'**
   String get serverControlPrivateKeyLabel;
 
+  /// No description provided for @serverControlProviderConsole.
+  ///
+  /// In en, this message translates to:
+  /// **'PROVIDER CONSOLE'**
+  String get serverControlProviderConsole;
+
+  /// No description provided for @serverControlProviderConsoleUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No active provider-managed instance found.'**
+  String get serverControlProviderConsoleUnavailable;
+
   /// No description provided for @fossServerSetupTitle.
   ///
   /// In en, this message translates to:

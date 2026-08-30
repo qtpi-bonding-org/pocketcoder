@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-30T00:09:04.230340
+// Generated at: 2026-08-30T00:25:03.590865
 
 import 'app_localizations.dart';
 
@@ -717,6 +717,8 @@ class L10nKeyResolver {
       'server.control.operation.update.nix.os' => _l10n.serverControlOperationUpdateNixOs,
       'server.control.operation.update.pocket.coder' => _l10n.serverControlOperationUpdatePocketCoder,
       'server.control.private.key.label' => _l10n.serverControlPrivateKeyLabel,
+      'server.control.provider.console' => _l10n.serverControlProviderConsole,
+      'server.control.provider.console.unavailable' => _l10n.serverControlProviderConsoleUnavailable,
       'server.control.public.key.label' => _l10n.serverControlPublicKeyLabel,
       'server.control.release.checking' => _l10n.serverControlReleaseChecking,
       'server.control.show' => _l10n.serverControlShow,
@@ -946,6 +948,8 @@ class L10nKeyResolver {
       'provider.screen.harness.model.count' => _l10n.providerScreenHarnessModelCount(args?['count'] as int? ?? 0),
       'scheduler.edit.dialog.title' => _l10n.schedulerEditDialogTitle(args?['name'] as String? ?? ''),
       'server.control.confirm.body' => _l10n.serverControlConfirmBody(args?['operation'] as String? ?? ''),
+      'server.control.release.available' => _l10n.serverControlReleaseAvailable(args?['version'] as String? ?? ''),
+      'server.control.release.contracts' => _l10n.serverControlReleaseContracts(args?['app'] as String? ?? '', args?['server'] as String? ?? '', args?['deployment'] as String? ?? ''),
       'server.control.release.current' => _l10n.serverControlReleaseCurrent(args?['version'] as String? ?? ''),
       'server.control.release.status' => _l10n.serverControlReleaseStatus(args?['status'] as String? ?? ''),
       'skills.edit.dialog.title' => _l10n.skillsEditDialogTitle(args?['name'] as String? ?? ''),
@@ -1721,8 +1725,12 @@ class L10nKeyResolver {
     'server.control.operation.update.nix.os',
     'server.control.operation.update.pocket.coder',
     'server.control.private.key.label',
+    'server.control.provider.console',
+    'server.control.provider.console.unavailable',
     'server.control.public.key.label',
+    'server.control.release.available',
     'server.control.release.checking',
+    'server.control.release.contracts',
     'server.control.release.current',
     'server.control.release.status',
     'server.control.show',
@@ -2654,8 +2662,12 @@ class L10nKeyResolver {
     'serverControlOperationUpdateNixOs': 'server.control.operation.update.nix.os',
     'serverControlOperationUpdatePocketCoder': 'server.control.operation.update.pocket.coder',
     'serverControlPrivateKeyLabel': 'server.control.private.key.label',
+    'serverControlProviderConsole': 'server.control.provider.console',
+    'serverControlProviderConsoleUnavailable': 'server.control.provider.console.unavailable',
     'serverControlPublicKeyLabel': 'server.control.public.key.label',
+    'serverControlReleaseAvailable': 'server.control.release.available',
     'serverControlReleaseChecking': 'server.control.release.checking',
+    'serverControlReleaseContracts': 'server.control.release.contracts',
     'serverControlReleaseCurrent': 'server.control.release.current',
     'serverControlReleaseStatus': 'server.control.release.status',
     'serverControlShow': 'server.control.show',
@@ -3584,8 +3596,12 @@ class L10nKeyResolver {
     'server.control.operation.update.nix.os': 'serverControlOperationUpdateNixOs',
     'server.control.operation.update.pocket.coder': 'serverControlOperationUpdatePocketCoder',
     'server.control.private.key.label': 'serverControlPrivateKeyLabel',
+    'server.control.provider.console': 'serverControlProviderConsole',
+    'server.control.provider.console.unavailable': 'serverControlProviderConsoleUnavailable',
     'server.control.public.key.label': 'serverControlPublicKeyLabel',
+    'server.control.release.available': 'serverControlReleaseAvailable',
     'server.control.release.checking': 'serverControlReleaseChecking',
+    'server.control.release.contracts': 'serverControlReleaseContracts',
     'server.control.release.current': 'serverControlReleaseCurrent',
     'server.control.release.status': 'serverControlReleaseStatus',
     'server.control.show': 'serverControlShow',
@@ -4521,8 +4537,12 @@ abstract class L10nKeys {
   static const serverControlOperationUpdateNixOs = 'server.control.operation.update.nix.os';
   static const serverControlOperationUpdatePocketCoder = 'server.control.operation.update.pocket.coder';
   static const serverControlPrivateKeyLabel = 'server.control.private.key.label';
+  static const serverControlProviderConsole = 'server.control.provider.console';
+  static const serverControlProviderConsoleUnavailable = 'server.control.provider.console.unavailable';
   static const serverControlPublicKeyLabel = 'server.control.public.key.label';
+  static (String, Map<String, dynamic>) serverControlReleaseAvailable(String version) => ('server.control.release.available', {'version': version});
   static const serverControlReleaseChecking = 'server.control.release.checking';
+  static (String, Map<String, dynamic>) serverControlReleaseContracts(String app, String server, String deployment) => ('server.control.release.contracts', {'app': app, 'server': server, 'deployment': deployment});
   static (String, Map<String, dynamic>) serverControlReleaseCurrent(String version) => ('server.control.release.current', {'version': version});
   static (String, Map<String, dynamic>) serverControlReleaseStatus(String status) => ('server.control.release.status', {'status': status});
   static const serverControlShow = 'server.control.show';
