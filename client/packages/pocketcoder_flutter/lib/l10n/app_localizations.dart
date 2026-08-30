@@ -5555,6 +5555,19 @@ abstract class AppLocalizations {
   /// **'CURRENT: {version}'**
   String serverControlReleaseCurrent(String version);
 
+  /// No description provided for @serverControlReleaseAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'AVAILABLE: {version}'**
+  String serverControlReleaseAvailable(String version);
+
+  /// No description provided for @serverControlReleaseContracts.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTRACTS: APP v{app} · SERVER v{server} · DEPLOYMENT v{deployment}'**
+  String serverControlReleaseContracts(
+      String app, String server, String deployment);
+
   /// No description provided for @serverControlOperationRestartPocketCoder.
   ///
   /// In en, this message translates to:
@@ -5584,12 +5597,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save backup'**
   String get serverControlOperationSaveBackup;
-
-  /// No description provided for @serverControlOpenChat.
-  ///
-  /// In en, this message translates to:
-  /// **'OPEN CHAT'**
-  String get serverControlOpenChat;
 
   /// No description provided for @serverControlPublicKeyLabel.
   ///

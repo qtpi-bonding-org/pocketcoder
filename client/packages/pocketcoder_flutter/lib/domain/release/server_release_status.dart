@@ -21,6 +21,9 @@ class ServerReleaseStatusSnapshot {
     this.normalRollbackAvailableAfterSuccess,
     this.reasonCode,
     this.summary,
+    this.deploymentContractVersion,
+    this.appContractVersion,
+    this.serverApiVersion,
   });
 
   final ServerReleaseStatus status;
@@ -38,6 +41,17 @@ class ServerReleaseStatusSnapshot {
   final String? reasonCode;
   final String? summary;
 
+  /// The NixOS/backend deployment contract version this release requires --
+  /// distinct from [currentDataVersion] (PocketBase schema/data shape) and
+  /// from the app/server contract versions below.
+  final int? deploymentContractVersion;
+
+  /// The Flutter client's own contract version this release expects.
+  final int? appContractVersion;
+
+  /// The `/api/pocketcoder/*` operation contract version this release serves.
+  final int? serverApiVersion;
+
   bool get crossesDataVersion =>
       availableDataVersion != null &&
       availableDataVersion != currentDataVersion;
@@ -51,6 +65,9 @@ class ServerReleaseStatusSnapshot {
   ) {
     final release = _map(value['current']);
     final metadata = _map(value['metadataStatus']);
+    final compatibility = _map(release['compatibility']);
+    final appCompatibility = _map(compatibility['app']);
+    final serverCompatibility = _map(compatibility['server']);
     return ServerReleaseStatusSnapshot(
       status: _status(metadata['status']),
       currentVersion: _string(
@@ -77,6 +94,10 @@ class ServerReleaseStatusSnapshot {
           metadata['normalRollbackAvailableAfterSuccess'] as bool?,
       reasonCode: _nullableString(metadata['reasonCode']),
       summary: _nullableString(metadata['summary']),
+      deploymentContractVersion:
+          _nullableInteger(release['deploymentContractVersion']),
+      appContractVersion: _nullableInteger(appCompatibility['contractVersion']),
+      serverApiVersion: _nullableInteger(serverCompatibility['apiVersion']),
     );
   }
 

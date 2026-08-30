@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-29T23:38:08.535305
+// Generated at: 2026-08-30T00:09:04.230340
 
 import 'app_localizations.dart';
 
@@ -711,7 +711,6 @@ class L10nKeyResolver {
       'server.control.https.endpoint' => _l10n.serverControlHttpsEndpoint,
       'server.control.ip.address' => _l10n.serverControlIpAddress,
       'server.control.local.auth.reason' => _l10n.serverControlLocalAuthReason,
-      'server.control.open.chat' => _l10n.serverControlOpenChat,
       'server.control.operation.restart.nix.os' => _l10n.serverControlOperationRestartNixOs,
       'server.control.operation.restart.pocket.coder' => _l10n.serverControlOperationRestartPocketCoder,
       'server.control.operation.save.backup' => _l10n.serverControlOperationSaveBackup,
@@ -1716,7 +1715,6 @@ class L10nKeyResolver {
     'server.control.https.endpoint',
     'server.control.ip.address',
     'server.control.local.auth.reason',
-    'server.control.open.chat',
     'server.control.operation.restart.nix.os',
     'server.control.operation.restart.pocket.coder',
     'server.control.operation.save.backup',
@@ -2650,7 +2648,6 @@ class L10nKeyResolver {
     'serverControlHttpsEndpoint': 'server.control.https.endpoint',
     'serverControlIpAddress': 'server.control.ip.address',
     'serverControlLocalAuthReason': 'server.control.local.auth.reason',
-    'serverControlOpenChat': 'server.control.open.chat',
     'serverControlOperationRestartNixOs': 'server.control.operation.restart.nix.os',
     'serverControlOperationRestartPocketCoder': 'server.control.operation.restart.pocket.coder',
     'serverControlOperationSaveBackup': 'server.control.operation.save.backup',
@@ -3581,7 +3578,6 @@ class L10nKeyResolver {
     'server.control.https.endpoint': 'serverControlHttpsEndpoint',
     'server.control.ip.address': 'serverControlIpAddress',
     'server.control.local.auth.reason': 'serverControlLocalAuthReason',
-    'server.control.open.chat': 'serverControlOpenChat',
     'server.control.operation.restart.nix.os': 'serverControlOperationRestartNixOs',
     'server.control.operation.restart.pocket.coder': 'serverControlOperationRestartPocketCoder',
     'server.control.operation.save.backup': 'serverControlOperationSaveBackup',
@@ -4519,7 +4515,6 @@ abstract class L10nKeys {
   static const serverControlHttpsEndpoint = 'server.control.https.endpoint';
   static const serverControlIpAddress = 'server.control.ip.address';
   static const serverControlLocalAuthReason = 'server.control.local.auth.reason';
-  static const serverControlOpenChat = 'server.control.open.chat';
   static const serverControlOperationRestartNixOs = 'server.control.operation.restart.nix.os';
   static const serverControlOperationRestartPocketCoder = 'server.control.operation.restart.pocket.coder';
   static const serverControlOperationSaveBackup = 'server.control.operation.save.backup';

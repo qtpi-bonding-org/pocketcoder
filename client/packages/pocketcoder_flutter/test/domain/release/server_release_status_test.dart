@@ -52,4 +52,40 @@ void main() {
     expect(snapshot.reasonCode, 'health-regression');
     expect(snapshot.summary, 'This release can lose task output.');
   });
+
+  test('parses deployment/app/server contract versions from compatibility',
+      () {
+    final snapshot = ServerReleaseStatusSnapshot.fromStatus({
+      'current': {
+        'releaseDigest': _digestA,
+        'serverVersion': '1.0.0',
+        'dataVersion': 1,
+        'deploymentContractVersion': 3,
+        'compatibility': {
+          'app': {'contractVersion': 2},
+          'server': {'apiVersion': 1},
+        },
+      },
+      'metadataStatus': {'status': 'current'},
+    });
+
+    expect(snapshot.deploymentContractVersion, 3);
+    expect(snapshot.appContractVersion, 2);
+    expect(snapshot.serverApiVersion, 1);
+  });
+
+  test('leaves contract versions null when compatibility is absent', () {
+    final snapshot = ServerReleaseStatusSnapshot.fromStatus({
+      'current': {
+        'releaseDigest': _digestA,
+        'serverVersion': '1.0.0',
+        'dataVersion': 1,
+      },
+      'metadataStatus': {'status': 'current'},
+    });
+
+    expect(snapshot.deploymentContractVersion, isNull);
+    expect(snapshot.appContractVersion, isNull);
+    expect(snapshot.serverApiVersion, isNull);
+  });
 }

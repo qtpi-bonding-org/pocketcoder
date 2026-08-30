@@ -3083,6 +3083,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String serverControlReleaseAvailable(String version) {
+    return 'AVAILABLE: $version';
+  }
+
+  @override
+  String serverControlReleaseContracts(
+      String app, String server, String deployment) {
+    return 'CONTRACTS: APP v$app · SERVER v$server · DEPLOYMENT v$deployment';
+  }
+
+  @override
   String get serverControlOperationRestartPocketCoder => 'Restart PocketCoder';
 
   @override
@@ -3096,9 +3107,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverControlOperationSaveBackup => 'Save backup';
-
-  @override
-  String get serverControlOpenChat => 'OPEN CHAT';
 
   @override
   String get serverControlPublicKeyLabel => 'SSH PUBLIC KEY ON FILE';

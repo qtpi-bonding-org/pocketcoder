@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
-import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
+import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
@@ -51,12 +51,6 @@ class ServerControlView extends StatelessWidget {
               _ConnectionDetails(details: details),
               VSpace.x2,
             ],
-            TerminalButton(
-              label: context.l10n.serverControlOpenChat,
-              isPrimary: true,
-              onTap: () => AppNavigation.toHome(context),
-            ),
-            VSpace.x2,
             _ReleaseLine(state: state),
             VSpace.x2,
             if (state.publicKey case final publicKey?) ...[
@@ -329,16 +323,31 @@ class _ReleaseLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final release = state.release;
     return Text(
-      release == null
-          ? context.l10n.serverControlReleaseChecking
-          : '${context.l10n.serverControlReleaseStatus(release.status.name.toUpperCase())}\n'
-              '${context.l10n.serverControlReleaseCurrent(release.currentVersion)}',
+      release == null ? context.l10n.serverControlReleaseChecking : _lines(context, release),
       style: TextStyle(
         color: context.colorScheme.primary,
         fontFamily: AppFonts.bodyFamily,
         fontSize: AppSizes.fontSmall,
       ),
     );
+  }
+
+  String _lines(BuildContext context, ServerReleaseStatusSnapshot release) {
+    final lines = [
+      context.l10n.serverControlReleaseStatus(release.status.name.toUpperCase()),
+      context.l10n.serverControlReleaseCurrent(release.currentVersion),
+      if (release.availableVersion case final available?)
+        context.l10n.serverControlReleaseAvailable(available),
+      if (release.appContractVersion case final app?)
+        if (release.serverApiVersion case final server?)
+          if (release.deploymentContractVersion case final deployment?)
+            context.l10n.serverControlReleaseContracts(
+              app.toString(),
+              server.toString(),
+              deployment.toString(),
+            ),
+    ];
+    return lines.join('\n');
   }
 }
 

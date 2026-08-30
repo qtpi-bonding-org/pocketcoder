@@ -167,6 +167,45 @@ void main() {
     await cubit.close();
   });
 
+  testWidgets('renders available version and contract versions when present',
+      (tester) async {
+    final service = _FakeService()
+      ..release = ServerReleaseStatusSnapshot(
+        status: ServerReleaseStatus.updateAvailable,
+        currentVersion: '2.0.0',
+        currentDataVersion: 1,
+        currentReleaseDigest: _digest,
+        checkedAt: DateTime.utc(2026, 8, 14),
+        availableVersion: '2.1.0',
+        appContractVersion: 2,
+        serverApiVersion: 1,
+        deploymentContractVersion: 3,
+      );
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+    await tester.pumpWidget(_app(cubit));
+    await cubit.inspectRelease();
+    await tester.pump();
+
+    expect(find.textContaining('AVAILABLE: 2.1.0'), findsOneWidget);
+    expect(
+      find.textContaining('CONTRACTS: APP v2 · SERVER v1 · DEPLOYMENT v3'),
+      findsOneWidget,
+    );
+    await cubit.close();
+  });
+
+  testWidgets('omits available/contract lines when absent', (tester) async {
+    final service = _FakeService()..release = _release();
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+    await tester.pumpWidget(_app(cubit));
+    await cubit.inspectRelease();
+    await tester.pump();
+
+    expect(find.textContaining('AVAILABLE:'), findsNothing);
+    expect(find.textContaining('CONTRACTS:'), findsNothing);
+    await cubit.close();
+  });
+
   testWidgets('shows the SSH public key with copy when present, nothing '
       'when absent', (tester) async {
     final service = _FakeService()..release = _release();
