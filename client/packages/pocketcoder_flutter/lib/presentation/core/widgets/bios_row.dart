@@ -16,6 +16,7 @@ class BiosRow extends StatelessWidget {
     this.onTap,
     this.isSelected = false,
     this.isDestructive = false,
+    this.isWarning = false,
     this.hasBadge = false,
     this.variant = BiosRowVariant.row,
     this.toggleValue = false,
@@ -30,9 +31,7 @@ class BiosRow extends StatelessWidget {
   final String label;
   final String? value;
 
-  /// Overrides the label's font size. Defaults to [AppSizes.fontStandard]
-  /// when null -- set explicitly for rows packed more densely than usual
-  /// (e.g. the Monitor registry list), where the default size truncates.
+  /// Also sizes the `expand` variant's value text -- they share one row.
   final double? labelFontSize;
 
   /// Nullable -- a `row`-variant instance with no `onTap` renders as a
@@ -41,7 +40,14 @@ class BiosRow extends StatelessWidget {
   /// which display data but never navigate/act on tap.
   final VoidCallback? onTap;
   final bool isSelected;
+
+  /// Unrecoverable action (deletes local state/keys) -- red.
   final bool isDestructive;
+
+  /// Recoverable but attention-worthy action (e.g. a session sign-out that
+  /// doesn't delete anything) -- amber, distinct from [isDestructive]'s red.
+  final bool isWarning;
+
   final bool hasBadge;
   final BiosRowVariant variant;
 
@@ -61,8 +67,17 @@ class BiosRow extends StatelessWidget {
 
     final textColor = isSelected
         ? colors.surface
-        : (isDestructive ? terminalColors.danger : colors.onSurface);
+        : (isDestructive
+            ? terminalColors.danger
+            : (isWarning ? terminalColors.warning : colors.onSurface));
     final bgColor = isSelected ? colors.onSurface : Colors.transparent;
+
+    // Only variable-width trailing content (a value string, a TextField)
+    // needs a flex share; fixed-size content (a chevron, a Switch) doesn't.
+    final trailingNeedsFlex = variant == BiosRowVariant.input ||
+        ((variant == BiosRowVariant.row || variant == BiosRowVariant.expand) &&
+            value != null);
+    final trailing = _trailing(context, textColor);
 
     final row = Container(
       color: bgColor,
@@ -106,7 +121,7 @@ class BiosRow extends StatelessWidget {
             ),
           ),
           HSpace.x2,
-          Flexible(child: _trailing(context, textColor)),
+          trailingNeedsFlex ? Flexible(child: trailing) : trailing,
         ],
       ),
     );
@@ -146,8 +161,7 @@ class BiosRow extends StatelessWidget {
         );
       case BiosRowVariant.expand:
         return Row(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
           children: [
             if (value case final resolvedValue?) ...[
               Expanded(
@@ -158,7 +172,7 @@ class BiosRow extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: AppFonts.bodyFamily,
                     color: textColor,
-                    fontSize: AppSizes.fontStandard,
+                    fontSize: labelFontSize ?? AppSizes.fontStandard,
                     fontWeight: AppFonts.heavy,
                     package: 'pocketcoder_flutter',
                   ),
