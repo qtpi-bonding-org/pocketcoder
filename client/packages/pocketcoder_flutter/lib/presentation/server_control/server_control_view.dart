@@ -88,18 +88,7 @@ class ServerControlView extends StatelessWidget {
               Row(
                 children: [
                   Expanded(child: SelectableText(publicKey)),
-                  IconButton(
-                    tooltip: context.l10n.serverControlCopy,
-                    icon: const Icon(Icons.copy),
-                    onPressed: () async {
-                      await Clipboard.setData(ClipboardData(text: publicKey));
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(context.l10n.serverControlCopied)),
-                        );
-                      }
-                    },
-                  ),
+                  _CopyButton(value: publicKey),
                 ],
               ),
               VSpace.x2,
@@ -332,17 +321,19 @@ class _CopyButton extends StatelessWidget {
   final String value;
 
   @override
-  Widget build(BuildContext context) => IconButton(
-        tooltip: context.l10n.serverControlCopy,
-        icon: const Icon(Icons.copy),
-        onPressed: () async {
-          await Clipboard.setData(ClipboardData(text: value));
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.l10n.serverControlCopied)),
-            );
-          }
-        },
+  Widget build(BuildContext context) => BiosActionButton(
+        action: BiosActionStripItem(
+          label: context.l10n.serverControlCopy,
+          emphasis: Emphasis.outlined,
+          onTap: () async {
+            await Clipboard.setData(ClipboardData(text: value));
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(context.l10n.serverControlCopied)),
+              );
+            }
+          },
+        ),
       );
 }
 
