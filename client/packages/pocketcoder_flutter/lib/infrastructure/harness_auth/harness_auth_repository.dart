@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
@@ -30,6 +31,13 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
         'harness oauth account dao',
         HarnessAuthException.new,
       ).watch();
+
+  @override
+  Future<List<HarnessOauthAccount>> fetchOAuthAccounts() => requireNonNull(
+        _oauthAccountDao,
+        'harness oauth account dao',
+        HarnessAuthException.new,
+      ).getFullList(requestPolicy: RequestPolicy.networkOnly);
 
   @override
   Stream<List<CredentialSelection>> watchCredentialSelections() =>
