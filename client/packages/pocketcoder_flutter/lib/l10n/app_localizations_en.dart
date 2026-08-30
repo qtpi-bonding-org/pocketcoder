@@ -2874,9 +2874,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pocketCoderUpdateCheckAgain => 'CHECK AGAIN';
 
   @override
-  String get pocketCoderUpdateTitle => 'POCKETCODER UPDATE';
-
-  @override
   String get pocketCoderUpdateNoDeployment =>
       'NO DEPLOYMENT FOUND ON THIS DEVICE.';
 

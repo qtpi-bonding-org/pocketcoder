@@ -5194,12 +5194,6 @@ abstract class AppLocalizations {
   /// **'CHECK AGAIN'**
   String get pocketCoderUpdateCheckAgain;
 
-  /// No description provided for @pocketCoderUpdateTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'POCKETCODER UPDATE'**
-  String get pocketCoderUpdateTitle;
-
   /// No description provided for @pocketCoderUpdateNoDeployment.
   ///
   /// In en, this message translates to:

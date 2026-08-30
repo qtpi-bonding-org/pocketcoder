@@ -44,7 +44,6 @@ class SettingsView extends StatelessWidget {
         [
           ('SYSTEM CHECKS', 'configureSystemChecks'),
           if (isPro) (context.l10n.proSettingsLabel, 'configurePaywall'),
-          (context.l10n.pocketCoderUpdateTitle, 'serverControls'),
           (context.l10n.errorsTitle, 'configureErrors'),
         ]
       ),

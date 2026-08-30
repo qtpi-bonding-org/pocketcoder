@@ -1160,7 +1160,6 @@
   "agentConfigLabel": "CONFIG",
   "pocketCoderUpdateChecking": "$ CHECKING VERIFIED RELEASE STATUS...",
   "pocketCoderUpdateCheckAgain": "CHECK AGAIN",
-  "pocketCoderUpdateTitle": "POCKETCODER UPDATE",
   "pocketCoderUpdateNoDeployment": "NO DEPLOYMENT FOUND ON THIS DEVICE.",
   "actionDismiss": "DISMISS",
   "pocketCoderUpdateWorking": "UPGRADING...",

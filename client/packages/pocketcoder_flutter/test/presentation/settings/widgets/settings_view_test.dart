@@ -31,6 +31,10 @@ void main() {
     expect(find.text('[CONFIGURE]'), findsNothing);
     expect(find.text('[MANAGE]'), findsNothing);
     expect(find.textContaining('TOOL PERMISSIONS'), findsOneWidget);
+    expect(find.textContaining('POCKETCODER UPDATE'), findsNothing,
+        reason: 'promoted to the MANAGE footer button; the Configure row '
+            'was a dead link before that (no instanceId reached the '
+            'screen) and is redundant now');
   });
 
   testWidgets('Pro Settings row is hidden when isPro is false',

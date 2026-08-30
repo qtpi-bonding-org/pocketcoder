@@ -1,6 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-29T21:23:12.444190
 
 import 'app_localizations.dart';
 
@@ -576,7 +575,6 @@ class L10nKeyResolver {
       'pocket.coder.update.rollback.warning' => _l10n.pocketCoderUpdateRollbackWarning,
       'pocket.coder.update.stderr' => _l10n.pocketCoderUpdateStderr,
       'pocket.coder.update.succeeded' => _l10n.pocketCoderUpdateSucceeded,
-      'pocket.coder.update.title' => _l10n.pocketCoderUpdateTitle,
       'pocket.coder.update.unknown.status' => _l10n.pocketCoderUpdateUnknownStatus,
       'pocket.coder.update.upgrade' => _l10n.pocketCoderUpdateUpgrade,
       'pocket.coder.update.working' => _l10n.pocketCoderUpdateWorking,
@@ -1560,7 +1558,6 @@ class L10nKeyResolver {
     'pocket.coder.update.rollback.warning',
     'pocket.coder.update.stderr',
     'pocket.coder.update.succeeded',
-    'pocket.coder.update.title',
     'pocket.coder.update.unknown.status',
     'pocket.coder.update.upgrade',
     'pocket.coder.update.working',
@@ -2489,7 +2486,6 @@ class L10nKeyResolver {
     'pocketCoderUpdateRollbackWarning': 'pocket.coder.update.rollback.warning',
     'pocketCoderUpdateStderr': 'pocket.coder.update.stderr',
     'pocketCoderUpdateSucceeded': 'pocket.coder.update.succeeded',
-    'pocketCoderUpdateTitle': 'pocket.coder.update.title',
     'pocketCoderUpdateUnknownStatus': 'pocket.coder.update.unknown.status',
     'pocketCoderUpdateUpgrade': 'pocket.coder.update.upgrade',
     'pocketCoderUpdateWorking': 'pocket.coder.update.working',
@@ -3415,7 +3411,6 @@ class L10nKeyResolver {
     'pocket.coder.update.rollback.warning': 'pocketCoderUpdateRollbackWarning',
     'pocket.coder.update.stderr': 'pocketCoderUpdateStderr',
     'pocket.coder.update.succeeded': 'pocketCoderUpdateSucceeded',
-    'pocket.coder.update.title': 'pocketCoderUpdateTitle',
     'pocket.coder.update.unknown.status': 'pocketCoderUpdateUnknownStatus',
     'pocket.coder.update.upgrade': 'pocketCoderUpdateUpgrade',
     'pocket.coder.update.working': 'pocketCoderUpdateWorking',
@@ -4348,7 +4343,6 @@ abstract class L10nKeys {
   static const pocketCoderUpdateRollbackWarning = 'pocket.coder.update.rollback.warning';
   static const pocketCoderUpdateStderr = 'pocket.coder.update.stderr';
   static const pocketCoderUpdateSucceeded = 'pocket.coder.update.succeeded';
-  static const pocketCoderUpdateTitle = 'pocket.coder.update.title';
   static const pocketCoderUpdateUnknownStatus = 'pocket.coder.update.unknown.status';
   static const pocketCoderUpdateUpgrade = 'pocket.coder.update.upgrade';
   static const pocketCoderUpdateWorking = 'pocket.coder.update.working';
