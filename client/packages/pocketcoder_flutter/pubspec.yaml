@@ -91,7 +91,7 @@ dependencies:
   flutter_aeroform:
     git:
       url: git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git
-      ref: 75704b1e8d94e295322feba0c1e2972d13dc2cd6
+      ref: 6df491dfa7c8a6356255fe1e1ad2cc7b38489cb3
 
 dependency_overrides:
   # Keep the UnifiedPush crypto dependency on the portable hosted 0.6.0
