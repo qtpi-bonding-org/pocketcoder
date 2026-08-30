@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -21,6 +22,7 @@ class SelfHostSetupView extends StatelessWidget {
         title: context.l10n.onboardingSelfHostTitle,
         activePillar: NavPillar.configure,
         showBack: true,
+        backFallbackRoute: AppRoutes.onboarding,
         actions: [
           TerminalAction(
             label: context.l10n.onboardingSelfHostActionGuide,

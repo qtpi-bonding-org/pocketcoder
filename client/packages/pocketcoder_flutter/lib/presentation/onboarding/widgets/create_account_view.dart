@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -52,6 +53,7 @@ class _CreateAccountViewState extends State<CreateAccountView> {
         title: context.l10n.onboardingServerCredentialsTitle,
         activePillar: NavPillar.configure,
         showBack: true,
+        backFallbackRoute: AppRoutes.onboarding,
         actions: [
           TerminalAction(
               label: context.l10n.actionContinue,

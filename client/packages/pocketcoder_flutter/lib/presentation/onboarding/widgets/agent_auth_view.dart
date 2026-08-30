@@ -1,5 +1,6 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -46,6 +47,7 @@ class AgentAuthView extends StatelessWidget {
       title: context.l10n.onboardingChooseHarnessTitle,
       activePillar: NavPillar.configure,
       showBack: true,
+      backFallbackRoute: AppRoutes.onboarding,
       body: _buildBody(context, supported),
     );
   }

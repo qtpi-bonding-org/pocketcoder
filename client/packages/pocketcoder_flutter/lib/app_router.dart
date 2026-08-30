@@ -498,13 +498,13 @@ class AppNavigation {
         queryParameters: {'instanceId': instanceId},
       );
 
-  static void back(BuildContext context) {
+  /// [fallback] applies only when there's nothing to pop. Pre-auth screens
+  /// must override this to AppRoutes.onboarding -- the default assumes auth.
+  static void back(BuildContext context, {String fallback = AppRoutes.chats}) {
     if (context.canPop()) {
       context.pop();
     } else {
-      // Not toHome(): a stack-replaced screen (e.g. login, reached before
-      // any session exists) has nothing to pop, and /chats assumes auth.
-      context.go(AppRoutes.onboarding);
+      context.go(fallback);
     }
   }
 }

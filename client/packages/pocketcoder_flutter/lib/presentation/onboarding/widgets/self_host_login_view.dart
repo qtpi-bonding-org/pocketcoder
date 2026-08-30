@@ -1,5 +1,6 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -64,6 +65,7 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
       title: context.l10n.onboardingServerLoginTitle,
       activePillar: NavPillar.configure,
       showBack: true,
+      backFallbackRoute: AppRoutes.onboarding,
       actions: [
         TerminalAction(
           label: loading

@@ -21,6 +21,10 @@ class PocketCoderShell extends StatelessWidget {
   final bool showBack;
   final String? backLabel;
 
+  /// Passed to AppNavigation.back's `fallback` -- must be set on a
+  /// pre-auth screen, whose default (authenticated home) would be wrong.
+  final String? backFallbackRoute;
+
   /// Null defers to [showBack]: a screen reached via Back is a sub-screen
   /// of whichever pillar it lives under, so the pillar row would just be
   /// redundant chrome next to Back -- and pushes the footer past the
@@ -38,6 +42,7 @@ class PocketCoderShell extends StatelessWidget {
     required this.body,
     this.showBack = false,
     this.backLabel,
+    this.backFallbackRoute,
     this.showNavigation,
     this.configureBadge = false,
     this.padding,
@@ -54,7 +59,9 @@ class PocketCoderShell extends StatelessWidget {
       if (showBack)
         TerminalAction(
           label: backLabel ?? context.l10n.actionBack,
-          onTap: () => AppNavigation.back(context),
+          onTap: () => backFallbackRoute == null
+              ? AppNavigation.back(context)
+              : AppNavigation.back(context, fallback: backFallbackRoute!),
         ),
       ...?actions,
     ];

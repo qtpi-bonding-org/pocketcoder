@@ -204,13 +204,18 @@ class _BootScreenState extends State<BootScreen> {
 
         if (!mounted) return;
         if (pocketbaseAlive) {
-          OnboardingLogger.event('PocketBase reachable; requesting login');
+          // Never skip straight to login: onboarding_adapter.dart's own
+          // "login" choice already covers that, without conflating a
+          // reachable-but-unconfigured default server with a known one.
+          OnboardingLogger.event(
+            'PocketBase reachable; routing to onboarding',
+          );
           context.read<PocoCubit>().updateMessage(
                 context.l10n.bootSystemsNominal,
                 sequence: PocoExpressions.happy,
               );
           await Future.delayed(const Duration(seconds: 2));
-          if (mounted) context.goNamed(RouteNames.onboardingLogin);
+          if (mounted) context.goNamed(RouteNames.onboarding);
           return;
         }
 
