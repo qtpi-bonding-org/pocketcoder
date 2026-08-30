@@ -1687,38 +1687,14 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAiAgentsSection.
   ///
   /// In en, this message translates to:
-  /// **'AI & AGENTS'**
+  /// **'AGENTS & ACCESS'**
   String get settingsAiAgentsSection;
-
-  /// No description provided for @settingsSecuritySection.
-  ///
-  /// In en, this message translates to:
-  /// **'SECURITY'**
-  String get settingsSecuritySection;
-
-  /// No description provided for @settingsGovernanceSection.
-  ///
-  /// In en, this message translates to:
-  /// **'GOVERNANCE'**
-  String get settingsGovernanceSection;
 
   /// No description provided for @settingsSystemSection.
   ///
   /// In en, this message translates to:
   /// **'SYSTEM'**
   String get settingsSystemSection;
-
-  /// No description provided for @settingsObservabilitySection.
-  ///
-  /// In en, this message translates to:
-  /// **'OBSERVABILITY'**
-  String get settingsObservabilitySection;
-
-  /// No description provided for @settingsAutomationSection.
-  ///
-  /// In en, this message translates to:
-  /// **'AUTOMATION'**
-  String get settingsAutomationSection;
 
   /// No description provided for @settingsAccountSection.
   ///

@@ -28,41 +28,26 @@ class SettingsView extends StatelessWidget {
         [
           ('LLM MANAGEMENT', 'configureLlm'),
           ('AGENT REGISTRY', 'configureAi'),
-        ]
-      ),
-      (
-        context.l10n.settingsSecuritySection,
-        [
-          ('TOOL PERMISSIONS', 'configureToolPermissions'),
-          ('HARNESS CONNECTIONS', 'configureHarnessAuth'),
           ('MCP MANAGEMENT', 'configureMcp'),
           ('SKILLS', 'configureSkills'),
+          ('TOOL PERMISSIONS', 'configureToolPermissions'),
+          ('HARNESS CONNECTIONS', 'configureHarnessAuth'),
         ]
       ),
       (
         context.l10n.settingsSystemSection,
         [
           ('SYSTEM CHECKS', 'configureSystemChecks'),
-          if (isPro) (context.l10n.proSettingsLabel, 'configurePaywall'),
-          (context.l10n.errorsTitle, 'configureErrors'),
-        ]
-      ),
-      (
-        context.l10n.settingsObservabilitySection,
-        [
           ('POCKET MEMORY', 'configureMemory'),
-        ]
-      ),
-      (
-        context.l10n.settingsAutomationSection,
-        [
           ('SCHEDULER', 'configureScheduler'),
+          (context.l10n.errorsTitle, 'configureErrors'),
         ]
       ),
       (
         context.l10n.settingsAccountSection,
         [
           ('NOTIFICATIONS', 'configureNotifications'),
+          if (isPro) (context.l10n.proSettingsLabel, 'configurePaywall'),
           ('LOGOUT', 'logout'),
           ('RESET', 'factoryReset'),
         ]

@@ -721,18 +721,14 @@ class L10nKeyResolver {
       'server.control.title' => _l10n.serverControlTitle,
       'settings.account.section' => _l10n.settingsAccountSection,
       'settings.ai.agents.section' => _l10n.settingsAiAgentsSection,
-      'settings.automation.section' => _l10n.settingsAutomationSection,
       'settings.factory.reset.cancel' => _l10n.settingsFactoryResetCancel,
       'settings.factory.reset.confirm' => _l10n.settingsFactoryResetConfirm,
       'settings.factory.reset.confirm.body' => _l10n.settingsFactoryResetConfirmBody,
       'settings.factory.reset.confirm.title' => _l10n.settingsFactoryResetConfirmTitle,
-      'settings.governance.section' => _l10n.settingsGovernanceSection,
       'settings.logout.cancel' => _l10n.settingsLogoutCancel,
       'settings.logout.confirm' => _l10n.settingsLogoutConfirm,
       'settings.logout.confirm.body' => _l10n.settingsLogoutConfirmBody,
       'settings.logout.confirm.title' => _l10n.settingsLogoutConfirmTitle,
-      'settings.observability.section' => _l10n.settingsObservabilitySection,
-      'settings.security.section' => _l10n.settingsSecuritySection,
       'settings.system.section' => _l10n.settingsSystemSection,
       'settings.title' => _l10n.settingsTitle,
       'skills.add.button' => _l10n.skillsAddButton,
@@ -1730,18 +1726,14 @@ class L10nKeyResolver {
     'server.control.title',
     'settings.account.section',
     'settings.ai.agents.section',
-    'settings.automation.section',
     'settings.factory.reset.cancel',
     'settings.factory.reset.confirm',
     'settings.factory.reset.confirm.body',
     'settings.factory.reset.confirm.title',
-    'settings.governance.section',
     'settings.logout.cancel',
     'settings.logout.confirm',
     'settings.logout.confirm.body',
     'settings.logout.confirm.title',
-    'settings.observability.section',
-    'settings.security.section',
     'settings.system.section',
     'settings.title',
     'skills.add.button',
@@ -2666,18 +2658,14 @@ class L10nKeyResolver {
     'serverControlTitle': 'server.control.title',
     'settingsAccountSection': 'settings.account.section',
     'settingsAiAgentsSection': 'settings.ai.agents.section',
-    'settingsAutomationSection': 'settings.automation.section',
     'settingsFactoryResetCancel': 'settings.factory.reset.cancel',
     'settingsFactoryResetConfirm': 'settings.factory.reset.confirm',
     'settingsFactoryResetConfirmBody': 'settings.factory.reset.confirm.body',
     'settingsFactoryResetConfirmTitle': 'settings.factory.reset.confirm.title',
-    'settingsGovernanceSection': 'settings.governance.section',
     'settingsLogoutCancel': 'settings.logout.cancel',
     'settingsLogoutConfirm': 'settings.logout.confirm',
     'settingsLogoutConfirmBody': 'settings.logout.confirm.body',
     'settingsLogoutConfirmTitle': 'settings.logout.confirm.title',
-    'settingsObservabilitySection': 'settings.observability.section',
-    'settingsSecuritySection': 'settings.security.section',
     'settingsSystemSection': 'settings.system.section',
     'settingsTitle': 'settings.title',
     'skillsAddButton': 'skills.add.button',
@@ -3599,18 +3587,14 @@ class L10nKeyResolver {
     'server.control.title': 'serverControlTitle',
     'settings.account.section': 'settingsAccountSection',
     'settings.ai.agents.section': 'settingsAiAgentsSection',
-    'settings.automation.section': 'settingsAutomationSection',
     'settings.factory.reset.cancel': 'settingsFactoryResetCancel',
     'settings.factory.reset.confirm': 'settingsFactoryResetConfirm',
     'settings.factory.reset.confirm.body': 'settingsFactoryResetConfirmBody',
     'settings.factory.reset.confirm.title': 'settingsFactoryResetConfirmTitle',
-    'settings.governance.section': 'settingsGovernanceSection',
     'settings.logout.cancel': 'settingsLogoutCancel',
     'settings.logout.confirm': 'settingsLogoutConfirm',
     'settings.logout.confirm.body': 'settingsLogoutConfirmBody',
     'settings.logout.confirm.title': 'settingsLogoutConfirmTitle',
-    'settings.observability.section': 'settingsObservabilitySection',
-    'settings.security.section': 'settingsSecuritySection',
     'settings.system.section': 'settingsSystemSection',
     'settings.title': 'settingsTitle',
     'skills.add.button': 'skillsAddButton',
@@ -4539,18 +4523,14 @@ abstract class L10nKeys {
   static const serverControlTitle = 'server.control.title';
   static const settingsAccountSection = 'settings.account.section';
   static const settingsAiAgentsSection = 'settings.ai.agents.section';
-  static const settingsAutomationSection = 'settings.automation.section';
   static const settingsFactoryResetCancel = 'settings.factory.reset.cancel';
   static const settingsFactoryResetConfirm = 'settings.factory.reset.confirm';
   static const settingsFactoryResetConfirmBody = 'settings.factory.reset.confirm.body';
   static const settingsFactoryResetConfirmTitle = 'settings.factory.reset.confirm.title';
-  static const settingsGovernanceSection = 'settings.governance.section';
   static const settingsLogoutCancel = 'settings.logout.cancel';
   static const settingsLogoutConfirm = 'settings.logout.confirm';
   static const settingsLogoutConfirmBody = 'settings.logout.confirm.body';
   static const settingsLogoutConfirmTitle = 'settings.logout.confirm.title';
-  static const settingsObservabilitySection = 'settings.observability.section';
-  static const settingsSecuritySection = 'settings.security.section';
   static const settingsSystemSection = 'settings.system.section';
   static const settingsTitle = 'settings.title';
   static const skillsAddButton = 'skills.add.button';

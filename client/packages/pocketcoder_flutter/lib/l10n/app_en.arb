@@ -377,12 +377,8 @@
   "schedulerRunningBadge": "RUNNING",
 
   "settingsTitle": "CONFIGURE",
-  "settingsAiAgentsSection": "AI & AGENTS",
-  "settingsSecuritySection": "SECURITY",
-  "settingsGovernanceSection": "GOVERNANCE",
+  "settingsAiAgentsSection": "AGENTS & ACCESS",
   "settingsSystemSection": "SYSTEM",
-  "settingsObservabilitySection": "OBSERVABILITY",
-  "settingsAutomationSection": "AUTOMATION",
   "settingsAccountSection": "ACCOUNT",
   "settingsLogoutConfirmTitle": "SIGN OUT",
   "settingsLogoutConfirmBody": "This will end your current session. You will need to log in again to continue.",

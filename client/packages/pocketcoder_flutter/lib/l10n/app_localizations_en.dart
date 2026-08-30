@@ -862,22 +862,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'CONFIGURE';
 
   @override
-  String get settingsAiAgentsSection => 'AI & AGENTS';
-
-  @override
-  String get settingsSecuritySection => 'SECURITY';
-
-  @override
-  String get settingsGovernanceSection => 'GOVERNANCE';
+  String get settingsAiAgentsSection => 'AGENTS & ACCESS';
 
   @override
   String get settingsSystemSection => 'SYSTEM';
-
-  @override
-  String get settingsObservabilitySection => 'OBSERVABILITY';
-
-  @override
-  String get settingsAutomationSection => 'AUTOMATION';
 
   @override
   String get settingsAccountSection => 'ACCOUNT';
