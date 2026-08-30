@@ -4,8 +4,7 @@
 # metadata") into one tracked, hashable file -- so a single hashFiles() on
 # this script (plus write-artifact-metadata.sh, which it calls) fully
 # describes everything that determines the cached artifact/metadata pair's
-# shape. See docs/superpowers/specs/2026-08-26-nixos-image-actions-cache.md
-# section 3.2 step 6.
+# shape.
 set -eu
 
 image=${1:?path to the built nixos.img is required}

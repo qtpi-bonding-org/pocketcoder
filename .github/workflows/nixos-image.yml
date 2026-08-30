@@ -28,10 +28,9 @@ on:
           even if a cache entry for this exact drv hash already exists.
           Use this if the cache is suspected stale/corrupt. Note: this
           still writes a fresh cache entry afterward, but does not delete
-          any existing bad entry at the same key (see docs/superpowers/
-          specs/2026-08-26-nixos-image-actions-cache.md section 3.5) --
-          that requires a separate `gh cache delete` if the old entry is
-          actually corrupt rather than merely suspected stale.
+          any existing bad entry at the same key. Removing an old entry
+          requires a separate `gh cache delete` if it is actually corrupt
+          rather than merely suspected stale.
         required: false
         default: false
         type: boolean
@@ -72,8 +71,7 @@ jobs:
           # default) rather than leaving Nix version implicit -- an
           # unpinned default that changes on a future action-SHA bump would
           # silently shift the drv-hash cache key's behavior with no signal
-          # other than a sudden drop in hit rate. See docs/superpowers/
-          # specs/2026-08-26-nixos-image-actions-cache.md section 3.2 step 2.
+          # other than a sudden drop in hit rate.
           install_url: https://releases.nixos.org/nix/nix-2.24.9/install
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -116,10 +114,9 @@ jobs:
           fi
 
       - name: Validate the drv-hash cache key's dependency tracking
-        # Standing, fail-closed/warn-only two-direction gate -- see
-        # docs/superpowers/specs/2026-08-26-nixos-image-actions-cache.md
-        # section 4. Runs against a scratch copy so it never touches the
-        # real checkout the rest of this job uses.
+        # Standing, fail-closed/warn-only two-direction gate. Runs against a
+        # scratch copy so it never touches the real checkout the rest of this
+        # job uses.
         working-directory: deploy/nixos
         run: |
           set -euo pipefail

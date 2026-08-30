@@ -20,8 +20,7 @@ export type VerifiedCredential = {
 	isSelfIssued: boolean;
 };
 
-// Implements docs/superpowers/specs/2026-08-24-image-relay-auth-protocol.md's
-// "Credential verification" 7-step checklist verbatim, in order.
+// Implements the credential-verification checklist in seven ordered steps.
 export async function verifyCredential(compactJws: string): Promise<VerifiedCredential> {
 	const { header, claims, signingInput, signatureB64url } = parseCompactJws(compactJws);
 

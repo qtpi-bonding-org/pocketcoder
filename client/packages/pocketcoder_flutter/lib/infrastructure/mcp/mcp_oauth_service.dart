@@ -22,8 +22,7 @@ typedef WebAuthLauncher = Future<String> Function({
 
 /// Cloudflare-Worker-backed OAuth client for locally-run MCP catalog
 /// servers that need a real user identity (GitHub today) rather than a
-/// static API key. See i_mcp_oauth_service.dart's doc comment and
-/// docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md.
+/// static API key. See i_mcp_oauth_service.dart's doc comment.
 ///
 /// `provider` is a per-call argument, not a constructor argument — this
 /// class is a DI singleton (registered once via @LazySingleton below,

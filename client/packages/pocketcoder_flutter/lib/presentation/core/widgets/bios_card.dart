@@ -7,8 +7,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart
 /// custom body slot, and an optional BiosActionStrip footer -- the
 /// composition that lets richer settings/status screens fold in without
 /// forcing their unique parts into a single BiosRow shape that doesn't fit
-/// them. See docs/superpowers/specs/2026-08-23-bios-widget-generalization.md
-/// section 2.3.
+/// them.
 ///
 /// Reuses TerminalCard for its border/isActive chrome rather than
 /// reimplementing it -- BiosCard is purely a header+body+footer layout on

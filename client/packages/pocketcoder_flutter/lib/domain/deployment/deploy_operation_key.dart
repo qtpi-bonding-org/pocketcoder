@@ -1,8 +1,7 @@
 /// The ordered set of user-meaningful steps the deployed server passes
 /// through during first-boot install. Declaration order below is the
 /// canonical sequence -- there is no separate order list to keep in sync;
-/// `DeployOperationKey.values` IS the contract. See
-/// docs/superpowers/specs/2026-08-19-instance-initialization-state-design.md.
+/// `DeployOperationKey.values` IS the contract.
 ///
 /// `waitingForConnection` and `ready` never appear on the wire: the former
 /// is the state before any status document has been successfully parsed,

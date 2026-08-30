@@ -2,9 +2,7 @@
 # Verifies that Linode's metadata service actually DELIVERS
 # metadata.user_data at boot (not just accepts it at instance-create
 # time) -- the single highest-value unverified assumption in the
-# boot-time-pull design (see docs/superpowers/specs/
-# 2026-07-29-linode-boot-time-image-provisioning-design.md,
-# "Pre-implementation verification"). LinodeBootTimeInstaller's whole
+# boot-time-pull design. LinodeBootTimeInstaller's whole
 # approach depends on this: the installer StackScript reads its
 # IMAGE_URL/IMAGE_SHA256/IMAGE_UNCOMPRESSED_BYTES from UDFs (StackScript
 # data), not from metadata.user_data -- but the *final* NixOS boot

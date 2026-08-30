@@ -3,21 +3,16 @@ import { validateRecord } from '../../../contracts/generated/validators.js';
 /**
  * PocketCoder MCP OAuth Relay
  *
- * Central-broker-with-HTTPS-callback shape informed by reading
- * docker/mcp-gateway (MIT, Copyright (c) 2025 Docker, Inc.) — see
- * docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md, "Precedent
- * this design follows directly" / "Attribution & licensing". No code from
- * that project is copied or adapted here.
+ * Central-broker-with-HTTPS-callback shape informed by docker/mcp-gateway
+ * (MIT, Copyright (c) 2025 Docker, Inc.). No code from that project is
+ * copied or adapted here.
  *
  * One centrally-registered OAuth App's client_secret lives here (via
  * `wrangler secret put`), never in the app or any self-hosted deployment.
  * Every Aeroform-provisioned PocketCoder instance shares this one Worker.
  *
- * Flow (see
- * docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md,
- * which supersedes the base spec's "app builds the authorize URL itself"
- * step — this Worker now builds it, so the Flutter client never hardcodes
- * a provider's authorize URL, scope, or client_id):
+ * Flow: this Worker builds the authorize URL, so the Flutter client never hardcodes
+ * a provider's authorize URL, scope, or client_id:
  *   1. App calls GET /authorize?provider=github&code_challenge=... (opened
  *      in a browser sheet via FlutterWebAuth2, not fetched directly). This
  *      Worker looks provider up in PROVIDERS, builds `state` itself
@@ -37,14 +32,12 @@ import { validateRecord } from '../../../contracts/generated/validators.js';
  *
  * GET /providers lists which providers currently have both a PROVIDERS
  * entry and live secrets configured — {id, displayName} only, nothing
- * else (see the provider-discovery spec's security review: this response
- * shape is a stated invariant, not an accident).
+ * else. This response shape is a deliberate security invariant.
  *
  * `state` carries {p, cc} in plaintext (code_challenge is not secret —
  * RFC 7636 §4.2), built server-side at /authorize time now (previously
- * client-side — see the provider-discovery spec's security review for why
- * that's still safe, and why the Flutter client independently re-verifies
- * the `cc`/`p` it gets back before calling /claim, as defense in depth).
+ * client-side. The Flutter client independently re-verifies the `cc`/`p` it
+ * gets back before calling /claim as defense in depth.
  */
 
 const PROVIDERS = {

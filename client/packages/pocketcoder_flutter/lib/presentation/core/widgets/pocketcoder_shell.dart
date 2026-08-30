@@ -24,8 +24,7 @@ class PocketCoderShell extends StatelessWidget {
   /// Null defers to [showBack]: a screen reached via Back is a sub-screen
   /// of whichever pillar it lives under, so the pillar row would just be
   /// redundant chrome next to Back -- and pushes the footer past the
-  /// 4-button budget (see docs/superpowers/specs footer-normalization
-  /// notes). Pass this explicitly only for the rare screen that is both
+  /// 4-button budget. Pass this explicitly only for the rare screen that is both
   /// a back-target and wants the pillar row anyway.
   final bool? showNavigation;
   final bool configureBadge;
@@ -86,8 +85,7 @@ class PocketCoderShell extends StatelessWidget {
       actions: footerActions.isNotEmpty ? footerActions : null,
       body: Column(
         children: [
-          // This is the banner slot from the page-scaffold spec (see
-          // docs/superpowers/specs/2026-08-23-page-scaffold.md §2, §3):
+          // This is the banner slot:
           // persistent, app-level, dismissible notices only. It is
           // deliberately NOT exposed as a per-screen constructor parameter
           // -- ReleaseStatusBanner is the only thing that has ever earned

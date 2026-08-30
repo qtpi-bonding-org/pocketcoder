@@ -1,6 +1,5 @@
 #!/bin/sh
-# Local, real-credential verification of the ProviderBootstrap fix
-# (docs/superpowers/specs/2026-08-28-harness-provider-bootstrap-design.md):
+# Local, real-credential verification of the ProviderBootstrap fix:
 # brings up a genuinely fresh goose fixture (docker-compose.agent-test.yml,
 # no baked-in provider), runs the checked-in live_acp regression test
 # (server/pocketbase/internal/agent/coordinator/live_test.go's

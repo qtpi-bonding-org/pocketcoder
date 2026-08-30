@@ -1,8 +1,8 @@
 # Standard Linux self-hosting (manual, unsupported)
 
 **This path is not provisioned or deployed by the PocketCoder app.** The
-app's own onboarding (`NixosInitializationFacade`) supports NixOS only —
-see `docs/superpowers/plans/2026-08-22-remove-standard-linux-support.md`.
+app's own onboarding (`NixosInitializationFacade`) supports NixOS only.
+
 These two scripts are a DIY reference for anyone who wants to run PocketCoder
 on a plain Ubuntu/Debian VPS by hand instead. There is no app integration,
 no automated provisioning, and no support commitment: you run these scripts

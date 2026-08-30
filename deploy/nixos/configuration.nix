@@ -4,9 +4,8 @@ let
   # The image is built from a flake, so /etc/nixos is empty at runtime and
   # the shipped owner-control command (`nixos-rebuild switch --upgrade`, no
   # `--flake`) cannot resolve a configuration unless every module this
-  # system needs is inlined here and persisted to /etc/nixos below. See
-  # docs/superpowers/specs/2026-08-15-vps-script-test-suite-hardening-design.md,
-  # "NixOS configuration fix".
+  # system needs is inlined here and persisted to /etc/nixos below. This
+  # keeps the owner-control command usable on a box without a repo checkout.
   #
   # caddy.nix and release-manager.nix each read one file from outside
   # deploy/nixos/ via a relative path that only resolves against a full repo
@@ -118,9 +117,7 @@ in
   # required for boot-time-pull provisioning: dd-ing this image onto a
   # bigger raw disk does not grow the filesystem on its own -- without
   # this, every deployment is capped at the image's original ~4.7GB
-  # regardless of the real disk size (docs/superpowers/specs/
-  # 2026-07-29-linode-boot-time-image-provisioning-design.md, "NixOS
-  # image change required").
+  # regardless of the real disk size.
   fileSystems."/" = {
     device = "/dev/sda";
     fsType = "ext4";

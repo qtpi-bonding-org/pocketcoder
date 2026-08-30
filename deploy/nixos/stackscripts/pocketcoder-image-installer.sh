@@ -66,8 +66,7 @@ until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
   sha256sum < /tmp/sumpipe > /tmp/sum &
   SUMPID=$!
 
-  # Sign the DPoP-style proof by hand -- see docs/superpowers/specs/
-  # 2026-08-24-image-relay-auth-protocol.md for the exact claim shape.
+  # Sign the DPoP-style proof by hand for the exact claim shape.
   # This is the box's OWN key (not the root) -- BOX_PRIVATE_KEY_PKCS8.
   printf '%s' "$BOX_PRIVATE_KEY_PKCS8" | base64 -d > /tmp/box_key.der
   openssl pkey -inform DER -in /tmp/box_key.der -pubout -outform DER -out /tmp/box_pub.der 2>/dev/null

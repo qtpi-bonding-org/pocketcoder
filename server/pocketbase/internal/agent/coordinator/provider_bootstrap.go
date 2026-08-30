@@ -33,9 +33,7 @@ import (
 // establishment -- including a resume/load against a connection whose
 // underlying container may have just restarted. It must run after the
 // harness connection is initialized and before any of session/new,
-// session/resume, or session/load. See
-// docs/superpowers/specs/2026-08-28-harness-provider-bootstrap-design.md
-// for why: a harness's own provider-switch operation (e.g. goose's
+// session/resume, or session/load. For why: a harness's own provider-switch operation (e.g. goose's
 // SetSessionConfigOption) may require an already-live provider to switch
 // from, which a session created before any credential existed never has.
 type ProviderBootstrap interface {

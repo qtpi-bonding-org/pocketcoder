@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.da
 
 /// The app's very first screen -- deliberately outside PocketCoderShell's/
 /// TerminalScaffold's vocabulary, not an oversight. See the page-scaffold
-/// plan (docs/superpowers/plans/2026-08-23-page-scaffold.md, Task 9) for the
+/// plan (Task 9) for the
 /// full reasoning: this runs before there is a session, a route to go
 /// "back" to, or any NavPillar destination to show, and its full-bleed
 /// animated-log-plus-overlay layout doesn't fit TerminalScaffold's

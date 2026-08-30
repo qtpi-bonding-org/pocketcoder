@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # The single entrypoint for the VPS script test suite.
-# See docs/superpowers/specs/2026-08-15-vps-script-test-suite-hardening-design.md
 set -uo pipefail
 
 vps_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)

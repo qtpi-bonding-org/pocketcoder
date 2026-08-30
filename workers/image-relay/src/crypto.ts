@@ -1,6 +1,5 @@
-// Native Web Crypto only -- no JOSE/JWT library. See
-// docs/superpowers/specs/2026-08-24-image-relay-auth-protocol.md for the
-// exact byte-level rules this implements.
+// Native Web Crypto only -- no JOSE/JWT library. These functions enforce the
+// protocol's exact byte-level encoding and verification rules.
 
 export function base64urlEncode(bytes: Uint8Array): string {
 	let binary = '';

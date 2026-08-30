@@ -176,7 +176,7 @@ abstract class ExternalModule {
       const String.fromEnvironment('RELEASE_CHANNEL', defaultValue: 'stable');
 
   /// Local-only storage for the on-device error inbox. Never synced or
-  /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.
+  /// transmitted.
   @lazySingleton
   ErrorBoxStorage get errorBoxStorage => SharedPrefsErrorBoxStorage();
 

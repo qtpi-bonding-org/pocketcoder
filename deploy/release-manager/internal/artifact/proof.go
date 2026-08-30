@@ -16,11 +16,9 @@ import (
 )
 
 // ProofSigner signs the DPoP-style per-request proof (Artifact 2) and
-// carries the credential (Artifact 1) to attach alongside it. See
-// docs/superpowers/specs/2026-08-24-image-relay-auth-protocol.md for
-// the exact claim shapes this must match byte-for-byte with the
+// carries the credential (Artifact 1) to attach alongside it. The exact claim shapes must match byte-for-byte with the
 // Worker's verifier -- go-jose/similar libraries are deliberately not
-// used here; this uses only the standard library, per that spec.
+// used here; this uses only the standard library.
 type ProofSigner struct {
 	PrivateKey *ecdsa.PrivateKey
 	Credential string // compact JWS, delivered via runtime.env, unmodified
