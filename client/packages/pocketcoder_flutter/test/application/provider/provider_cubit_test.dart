@@ -95,12 +95,11 @@ void main() {
 
   group('ProviderCubit.watchAll', () {
     test(
-      'subscribe yields loading then loaded with all five collections',
+      'subscribe yields loading then loaded with all five streamed '
+      'collections plus the one-shot harness models fetch',
       () async {
         final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
         final modelsCtrl = StreamController<List<Model>>.broadcast();
-        final harnessModelsCtrl =
-            StreamController<List<HarnessModel>>.broadcast();
         final harnessProvidersCtrl =
             StreamController<List<HarnessProvider>>.broadcast();
         final providerAPIKeysCtrl =
@@ -110,7 +109,6 @@ void main() {
         addTearDown(() async {
           await harnessesCtrl.close();
           await modelsCtrl.close();
-          await harnessModelsCtrl.close();
           await harnessProvidersCtrl.close();
           await providerAPIKeysCtrl.close();
           await providerCatalogCtrl.close();
@@ -119,8 +117,8 @@ void main() {
         when(() => repo.watchHarnesses())
             .thenAnswer((_) => harnessesCtrl.stream);
         when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
-        when(() => repo.watchHarnessModels())
-            .thenAnswer((_) => harnessModelsCtrl.stream);
+        when(() => repo.fetchHarnessModels())
+            .thenAnswer((_) async => [testHarnessModel]);
         when(() => repo.watchHarnessProviders())
             .thenAnswer((_) => harnessProvidersCtrl.stream);
         when(() => repo.watchProviderAPIKeys())
@@ -130,18 +128,13 @@ void main() {
 
         final cubit = buildCubit();
         cubit.watchAll();
-
-        // loading emitted synchronously on the initial emit in watchAll()
         expect(cubit.state.status, UiFlowStatus.loading);
 
         harnessesCtrl.add([testHarnesse]);
         modelsCtrl.add([testModel]);
-        harnessModelsCtrl.add([testHarnessModel]);
         harnessProvidersCtrl.add(const []);
         providerAPIKeysCtrl.add([testProviderApiKey]);
         providerCatalogCtrl.add([testProviderCatalogEntry]);
-
-        // Let the microtasks drain so listen() callbacks fire.
         await Future<void>.delayed(Duration.zero);
 
         expect(cubit.state.status, UiFlowStatus.success);
@@ -153,7 +146,7 @@ void main() {
         expect(cubit.state.isSuccess, isTrue);
         verify(() => repo.watchHarnesses()).called(1);
         verify(() => repo.watchModels()).called(1);
-        verify(() => repo.watchHarnessModels()).called(1);
+        verify(() => repo.fetchHarnessModels()).called(1);
         verify(() => repo.watchHarnessProviders()).called(1);
         verify(() => repo.watchProviderAPIKeys()).called(1);
         verify(() => repo.watchProviderCatalog()).called(1);
@@ -165,8 +158,6 @@ void main() {
       () async {
         final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
         final modelsCtrl = StreamController<List<Model>>.broadcast();
-        final harnessModelsCtrl =
-            StreamController<List<HarnessModel>>.broadcast();
         final harnessProvidersCtrl =
             StreamController<List<HarnessProvider>>.broadcast();
         final providerAPIKeysCtrl =
@@ -176,34 +167,116 @@ void main() {
         addTearDown(() async {
           await harnessesCtrl.close();
           await modelsCtrl.close();
-          await harnessModelsCtrl.close();
           await harnessProvidersCtrl.close();
           await providerAPIKeysCtrl.close();
           await providerCatalogCtrl.close();
         });
-
         when(() => repo.watchHarnesses())
             .thenAnswer((_) => harnessesCtrl.stream);
         when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
-        when(() => repo.watchHarnessModels())
-            .thenAnswer((_) => harnessModelsCtrl.stream);
+        when(() => repo.fetchHarnessModels()).thenAnswer((_) async => const []);
         when(() => repo.watchHarnessProviders())
             .thenAnswer((_) => harnessProvidersCtrl.stream);
         when(() => repo.watchProviderAPIKeys())
             .thenAnswer((_) => providerAPIKeysCtrl.stream);
         when(() => repo.watchProviderCatalog())
             .thenAnswer((_) => providerCatalogCtrl.stream);
-
         final cubit = buildCubit();
         cubit.watchAll();
-
         harnessesCtrl.addError(Exception('boom'));
-
         await Future<void>.delayed(Duration.zero);
-
         expect(cubit.state.status, UiFlowStatus.failure);
         expect(cubit.state.isFailure, isTrue);
         expect(cubit.state.error, isA<Exception>());
+      },
+    );
+
+    test(
+      'fetchHarnessModels failure surfaces as failure with the error in state, same as any other collection',
+      () async {
+        final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
+        final modelsCtrl = StreamController<List<Model>>.broadcast();
+        final harnessProvidersCtrl =
+            StreamController<List<HarnessProvider>>.broadcast();
+        final providerAPIKeysCtrl =
+            StreamController<List<ProviderApiKey>>.broadcast();
+        final providerCatalogCtrl =
+            StreamController<List<domain.Provider>>.broadcast();
+        addTearDown(() async {
+          await harnessesCtrl.close();
+          await modelsCtrl.close();
+          await harnessProvidersCtrl.close();
+          await providerAPIKeysCtrl.close();
+          await providerCatalogCtrl.close();
+        });
+        when(() => repo.watchHarnesses())
+            .thenAnswer((_) => harnessesCtrl.stream);
+        when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
+        when(() => repo.fetchHarnessModels())
+            .thenThrow(Exception('network unreachable'));
+        when(() => repo.watchHarnessProviders())
+            .thenAnswer((_) => harnessProvidersCtrl.stream);
+        when(() => repo.watchProviderAPIKeys())
+            .thenAnswer((_) => providerAPIKeysCtrl.stream);
+        when(() => repo.watchProviderCatalog())
+            .thenAnswer((_) => providerCatalogCtrl.stream);
+        final cubit = buildCubit();
+        cubit.watchAll();
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.status, UiFlowStatus.failure);
+        expect(cubit.state.isFailure, isTrue);
+        expect(cubit.state.error, isA<Exception>());
+      },
+    );
+
+    test(
+      'a stale fetchHarnessModels result from an earlier watchAll() call never overwrites a newer one',
+      () async {
+        final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
+        final modelsCtrl = StreamController<List<Model>>.broadcast();
+        final harnessProvidersCtrl =
+            StreamController<List<HarnessProvider>>.broadcast();
+        final providerAPIKeysCtrl =
+            StreamController<List<ProviderApiKey>>.broadcast();
+        final providerCatalogCtrl =
+            StreamController<List<domain.Provider>>.broadcast();
+        addTearDown(() async {
+          await harnessesCtrl.close();
+          await modelsCtrl.close();
+          await harnessProvidersCtrl.close();
+          await providerAPIKeysCtrl.close();
+          await providerCatalogCtrl.close();
+        });
+        when(() => repo.watchHarnesses())
+            .thenAnswer((_) => harnessesCtrl.stream);
+        when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
+        when(() => repo.watchHarnessProviders())
+            .thenAnswer((_) => harnessProvidersCtrl.stream);
+        when(() => repo.watchProviderAPIKeys())
+            .thenAnswer((_) => providerAPIKeysCtrl.stream);
+        when(() => repo.watchProviderCatalog())
+            .thenAnswer((_) => providerCatalogCtrl.stream);
+        final staleModel = testHarnessModel;
+        final freshModel = HarnessModel(
+            id: 'hm-2',
+            harness: 'h-1',
+            model: 'm-1',
+            harnessModelId: 'h-1::m-1-fresh');
+        final staleCompleter = Completer<List<HarnessModel>>();
+        final freshCompleter = Completer<List<HarnessModel>>();
+        var call = 0;
+        when(() => repo.fetchHarnessModels()).thenAnswer((_) {
+          call++;
+          return call == 1 ? staleCompleter.future : freshCompleter.future;
+        });
+        final cubit = buildCubit();
+        cubit.watchAll();
+        cubit.watchAll();
+        freshCompleter.complete([freshModel]);
+        await Future<void>.delayed(Duration.zero);
+        staleCompleter.complete([staleModel]);
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.harnessModels, [freshModel]);
       },
     );
   });

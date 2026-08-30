@@ -15,16 +15,15 @@ class ProviderCubit extends AppCubit<ProviderState> {
 
   StreamSubscription? _harnessesSub;
   StreamSubscription? _modelsSub;
-  StreamSubscription? _harnessModelsSub;
   StreamSubscription? _harnessProvidersSub;
   StreamSubscription? _providerAPIKeysSub;
   StreamSubscription? _providerCatalogSub;
+  int _harnessModelsRequestId = 0;
 
   @override
   Future<void> close() {
     _harnessesSub?.cancel();
     _modelsSub?.cancel();
-    _harnessModelsSub?.cancel();
     _harnessProvidersSub?.cancel();
     _providerAPIKeysSub?.cancel();
     _providerCatalogSub?.cancel();
@@ -45,12 +44,7 @@ class ProviderCubit extends AppCubit<ProviderState> {
             emit(state.copyWith(models: items, status: UiFlowStatus.success)),
         onError: (Object e) =>
             emit(state.copyWith(error: e, status: UiFlowStatus.failure)));
-    _harnessModelsSub?.cancel();
-    _harnessModelsSub = _repo.watchHarnessModels().listen(
-        (items) => emit(
-            state.copyWith(harnessModels: items, status: UiFlowStatus.success)),
-        onError: (Object e) =>
-            emit(state.copyWith(error: e, status: UiFlowStatus.failure)));
+    unawaited(_loadHarnessModels());
     _harnessProvidersSub?.cancel();
     _harnessProvidersSub = _repo.watchHarnessProviders().listen(
         (items) => emit(state.copyWith(
@@ -69,6 +63,29 @@ class ProviderCubit extends AppCubit<ProviderState> {
             providerCatalog: items, status: UiFlowStatus.success)),
         onError: (Object e) =>
             emit(state.copyWith(error: e, status: UiFlowStatus.failure)));
+  }
+
+  /// Unlike the other five collections above, harness_models is a one-shot
+  /// fetch, not a live stream -- see IProviderRepository.fetchHarnessModels
+  /// for why. Matches the same manual status/error handling watchAll()
+  /// already uses for its stream subscriptions, rather than switching this
+  /// one call to tryOperation and having two different failure-handling
+  /// idioms in the same method.
+  ///
+  /// A detached Future has no single-flight guarantee when watchAll() is
+  /// called repeatedly, so the request id prevents an older result from
+  /// overwriting newer state. The isClosed check prevents a late result from
+  /// emitting after the cubit has been closed.
+  Future<void> _loadHarnessModels() async {
+    final requestId = ++_harnessModelsRequestId;
+    try {
+      final items = await _repo.fetchHarnessModels();
+      if (isClosed || requestId != _harnessModelsRequestId) return;
+      emit(state.copyWith(harnessModels: items, status: UiFlowStatus.success));
+    } catch (e) {
+      if (isClosed || requestId != _harnessModelsRequestId) return;
+      emit(state.copyWith(error: e, status: UiFlowStatus.failure));
+    }
   }
 
   Future<void> saveProviderAPIKey(ProviderApiKey key) => tryOperation(() async {
