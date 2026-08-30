@@ -74,8 +74,8 @@ class SettingsView extends StatelessWidget {
                     BiosRow(
                       label: item.$1,
                       hasBadge: item.$2 == 'configureMcp' && hasPendingMcp,
-                      isDestructive:
-                          item.$2 == 'logout' || item.$2 == 'factoryReset',
+                      isDestructive: item.$2 == 'factoryReset',
+                      isWarning: item.$2 == 'logout',
                       onTap: () => switch (item.$2) {
                         'logout' => onLogout(),
                         'factoryReset' => onFactoryReset(),

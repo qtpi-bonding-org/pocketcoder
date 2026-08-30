@@ -66,6 +66,9 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
             child: Text(context.l10n.settingsLogoutCancel),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: context.terminalColors.warning,
+            ),
             onPressed: () {
               Navigator.of(dialogContext).pop();
               cubit.logout();
@@ -89,6 +92,9 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
             child: Text(context.l10n.settingsFactoryResetCancel),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: context.terminalColors.danger,
+            ),
             onPressed: () {
               Navigator.of(dialogContext).pop();
               cubit.factoryReset();
