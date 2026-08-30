@@ -60,8 +60,8 @@ void main() {
         .thenAnswer((_) => Stream.value(const []));
     when(() => providerRepo.watchModels())
         .thenAnswer((_) => Stream.value(const []));
-    when(() => providerRepo.watchHarnessModels())
-        .thenAnswer((_) => Stream.value(const []));
+    when(() => providerRepo.fetchHarnessModels())
+        .thenAnswer((_) async => const []);
     when(() => providerRepo.watchProviderAPIKeys())
         .thenAnswer((_) => Stream.value(const []));
     when(() => providerRepo.watchHarnessProviders())

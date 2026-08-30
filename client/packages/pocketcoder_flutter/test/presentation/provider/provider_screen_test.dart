@@ -8,7 +8,6 @@ import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/provider/adapters/provider_adapter.dart';
 
 Widget _app(Widget child) => MaterialApp(
