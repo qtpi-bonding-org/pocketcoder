@@ -87,3 +87,22 @@ func TestGetReleaseCompatibilityBuildsATypedResponseWithoutDispatch(t *testing.T
 		t.Fatal("compatibility is nil")
 	}
 }
+
+func TestDeleteProDataReturns502ThroughTheStrictHandlerWhenThePurgeFails(t *testing.T) {
+	t.Setenv("PN_URL", "http://127.0.0.1:1") // nothing listens here -- connection refused
+	s := &server{registry: operation.NewRegistry()}
+	re, _ := dispatchEvent()
+	re.Auth = &core.Record{}
+
+	_, err := s.DeleteProData(dispatchContext(re), openapi.DeleteProDataRequestObject{})
+	if err == nil {
+		t.Fatal("expected an error when the relay purge fails")
+	}
+	apiErr, ok := err.(*router.ApiError)
+	if !ok {
+		t.Fatalf("error type = %T, want *router.ApiError", err)
+	}
+	if apiErr.Status != http.StatusBadGateway {
+		t.Fatalf("status = %d, want %d (the OpenAPI contract's documented failure status)", apiErr.Status, http.StatusBadGateway)
+	}
+}

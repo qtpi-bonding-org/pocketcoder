@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-30T06:26:40.739734
+// Generated at: 2026-08-30T09:31:30.916133
 
 import 'app_localizations.dart';
 
@@ -729,6 +729,11 @@ class L10nKeyResolver {
       'server.control.title' => _l10n.serverControlTitle,
       'settings.account.section' => _l10n.settingsAccountSection,
       'settings.ai.agents.section' => _l10n.settingsAiAgentsSection,
+      'settings.delete.pro.data.cancel' => _l10n.settingsDeleteProDataCancel,
+      'settings.delete.pro.data.confirm' => _l10n.settingsDeleteProDataConfirm,
+      'settings.delete.pro.data.confirm.body' => _l10n.settingsDeleteProDataConfirmBody,
+      'settings.delete.pro.data.confirm.title' => _l10n.settingsDeleteProDataConfirmTitle,
+      'settings.delete.pro.data.label' => _l10n.settingsDeleteProDataLabel,
       'settings.factory.reset.cancel' => _l10n.settingsFactoryResetCancel,
       'settings.factory.reset.confirm' => _l10n.settingsFactoryResetConfirm,
       'settings.factory.reset.confirm.body' => _l10n.settingsFactoryResetConfirmBody,
@@ -1745,6 +1750,11 @@ class L10nKeyResolver {
     'server.control.title',
     'settings.account.section',
     'settings.ai.agents.section',
+    'settings.delete.pro.data.cancel',
+    'settings.delete.pro.data.confirm',
+    'settings.delete.pro.data.confirm.body',
+    'settings.delete.pro.data.confirm.title',
+    'settings.delete.pro.data.label',
     'settings.factory.reset.cancel',
     'settings.factory.reset.confirm',
     'settings.factory.reset.confirm.body',
@@ -2686,6 +2696,11 @@ class L10nKeyResolver {
     'serverControlTitle': 'server.control.title',
     'settingsAccountSection': 'settings.account.section',
     'settingsAiAgentsSection': 'settings.ai.agents.section',
+    'settingsDeleteProDataCancel': 'settings.delete.pro.data.cancel',
+    'settingsDeleteProDataConfirm': 'settings.delete.pro.data.confirm',
+    'settingsDeleteProDataConfirmBody': 'settings.delete.pro.data.confirm.body',
+    'settingsDeleteProDataConfirmTitle': 'settings.delete.pro.data.confirm.title',
+    'settingsDeleteProDataLabel': 'settings.delete.pro.data.label',
     'settingsFactoryResetCancel': 'settings.factory.reset.cancel',
     'settingsFactoryResetConfirm': 'settings.factory.reset.confirm',
     'settingsFactoryResetConfirmBody': 'settings.factory.reset.confirm.body',
@@ -3624,6 +3639,11 @@ class L10nKeyResolver {
     'server.control.title': 'serverControlTitle',
     'settings.account.section': 'settingsAccountSection',
     'settings.ai.agents.section': 'settingsAiAgentsSection',
+    'settings.delete.pro.data.cancel': 'settingsDeleteProDataCancel',
+    'settings.delete.pro.data.confirm': 'settingsDeleteProDataConfirm',
+    'settings.delete.pro.data.confirm.body': 'settingsDeleteProDataConfirmBody',
+    'settings.delete.pro.data.confirm.title': 'settingsDeleteProDataConfirmTitle',
+    'settings.delete.pro.data.label': 'settingsDeleteProDataLabel',
     'settings.factory.reset.cancel': 'settingsFactoryResetCancel',
     'settings.factory.reset.confirm': 'settingsFactoryResetConfirm',
     'settings.factory.reset.confirm.body': 'settingsFactoryResetConfirmBody',
@@ -4569,6 +4589,11 @@ abstract class L10nKeys {
   static const serverControlTitle = 'server.control.title';
   static const settingsAccountSection = 'settings.account.section';
   static const settingsAiAgentsSection = 'settings.ai.agents.section';
+  static const settingsDeleteProDataCancel = 'settings.delete.pro.data.cancel';
+  static const settingsDeleteProDataConfirm = 'settings.delete.pro.data.confirm';
+  static const settingsDeleteProDataConfirmBody = 'settings.delete.pro.data.confirm.body';
+  static const settingsDeleteProDataConfirmTitle = 'settings.delete.pro.data.confirm.title';
+  static const settingsDeleteProDataLabel = 'settings.delete.pro.data.label';
   static const settingsFactoryResetCancel = 'settings.factory.reset.cancel';
   static const settingsFactoryResetConfirm = 'settings.factory.reset.confirm';
   static const settingsFactoryResetConfirmBody = 'settings.factory.reset.confirm.body';

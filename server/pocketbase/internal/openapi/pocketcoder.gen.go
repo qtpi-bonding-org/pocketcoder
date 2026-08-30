@@ -608,6 +608,9 @@ type ServerInterface interface {
 	// (POST /api/pocketcoder/v1/ollama/pull)
 	PullOllamaModel(w http.ResponseWriter, r *http.Request)
 
+	// (DELETE /api/pocketcoder/v1/pro-data)
+	DeleteProData(w http.ResponseWriter, r *http.Request)
+
 	// (GET /api/pocketcoder/v1/proxy/observability/{path})
 	ProxyObservability(w http.ResponseWriter, r *http.Request, path string)
 
@@ -1328,6 +1331,26 @@ func (siw *ServerInterfaceWrapper) PullOllamaModel(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteProData operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProData(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, PocketbaseTokenScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteProData(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ProxyObservability operation middleware
 func (siw *ServerInterfaceWrapper) ProxyObservability(w http.ResponseWriter, r *http.Request) {
 
@@ -1577,6 +1600,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/mcp/request", wrapper.ExecuteMcpRequest)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/ollama/models", wrapper.ListOllamaModels)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/ollama/pull", wrapper.PullOllamaModel)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/pocketcoder/v1/pro-data", wrapper.DeleteProData)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/proxy/observability/{path}", wrapper.ProxyObservability)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/pocketcoder/v1/push", wrapper.SendPushNotification)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/pocketcoder/v1/release/status", wrapper.GetReleaseStatus)
@@ -3524,6 +3548,49 @@ func (response PullOllamaModel503JSONResponse) VisitPullOllamaModelResponse(w ht
 	return err
 }
 
+type DeleteProDataRequestObject struct {
+}
+
+type DeleteProDataResponseObject interface {
+	VisitDeleteProDataResponse(w http.ResponseWriter) error
+}
+
+type DeleteProData204Response struct {
+}
+
+func (response DeleteProData204Response) VisitDeleteProDataResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteProData401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteProData401JSONResponse) VisitDeleteProDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteProData502JSONResponse struct{ BadGatewayJSONResponse }
+
+func (response DeleteProData502JSONResponse) VisitDeleteProDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ProxyObservabilityRequestObject struct {
 	Path string `json:"path"`
 }
@@ -3871,6 +3938,9 @@ type StrictServerInterface interface {
 
 	// (POST /api/pocketcoder/v1/ollama/pull)
 	PullOllamaModel(ctx context.Context, request PullOllamaModelRequestObject) (PullOllamaModelResponseObject, error)
+
+	// (DELETE /api/pocketcoder/v1/pro-data)
+	DeleteProData(ctx context.Context, request DeleteProDataRequestObject) (DeleteProDataResponseObject, error)
 
 	// (GET /api/pocketcoder/v1/proxy/observability/{path})
 	ProxyObservability(ctx context.Context, request ProxyObservabilityRequestObject) (ProxyObservabilityResponseObject, error)
@@ -4641,6 +4711,30 @@ func (sh *strictHandler) PullOllamaModel(w http.ResponseWriter, r *http.Request)
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PullOllamaModelResponseObject); ok {
 		if err := validResponse.VisitPullOllamaModelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteProData operation middleware
+func (sh *strictHandler) DeleteProData(w http.ResponseWriter, r *http.Request) {
+	var request DeleteProDataRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteProData(ctx, request.(DeleteProDataRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteProData")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteProDataResponseObject); ok {
+		if err := validResponse.VisitDeleteProDataResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

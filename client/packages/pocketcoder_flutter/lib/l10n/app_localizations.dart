@@ -1750,6 +1750,36 @@ abstract class AppLocalizations {
   /// **'RESET'**
   String get settingsFactoryResetConfirm;
 
+  /// No description provided for @settingsDeleteProDataLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE POCKETCODER PRO DATA'**
+  String get settingsDeleteProDataLabel;
+
+  /// No description provided for @settingsDeleteProDataConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE PRO DATA'**
+  String get settingsDeleteProDataConfirmTitle;
+
+  /// No description provided for @settingsDeleteProDataConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes your subscription and notification records from PocketCoder Pro\'s systems. Your server and everything on it are unaffected -- use your own SSH access if you want to wipe that too.'**
+  String get settingsDeleteProDataConfirmBody;
+
+  /// No description provided for @settingsDeleteProDataCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get settingsDeleteProDataCancel;
+
+  /// No description provided for @settingsDeleteProDataConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get settingsDeleteProDataConfirm;
+
   /// No description provided for @agentTitle.
   ///
   /// In en, this message translates to:

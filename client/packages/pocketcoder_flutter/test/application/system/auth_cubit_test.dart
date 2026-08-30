@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 
 class MockAuthRepository extends Mock implements IAuthRepository {}
@@ -16,10 +17,13 @@ class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class MockFactoryResetHook extends Mock implements FactoryResetHook {}
 
+class MockProDataDeletionHook extends Mock implements ProDataDeletionHook {}
+
 void main() {
   late MockAuthRepository repo;
   late MockFlutterSecureStorage secureStorage;
   late MockFactoryResetHook factoryResetHook;
+  late MockProDataDeletionHook proDataDeletionHook;
   AuthCubit? lastCubit;
 
   AuthCubit buildCubit() {
@@ -27,6 +31,7 @@ void main() {
       repo,
       CaddyCaPinStore(secureStorage),
       factoryResetHook,
+      proDataDeletionHook,
     );
     lastCubit = cubit;
     return cubit;
@@ -36,6 +41,7 @@ void main() {
     repo = MockAuthRepository();
     secureStorage = MockFlutterSecureStorage();
     factoryResetHook = MockFactoryResetHook();
+    proDataDeletionHook = MockProDataDeletionHook();
     when(() => secureStorage.readAll(
           aOptions: any(named: 'aOptions'),
           iOptions: any(named: 'iOptions'),
@@ -207,6 +213,35 @@ void main() {
           ));
       verify(() => factoryResetHook.resetForFactoryReset()).called(1);
       expect(cubit.state.status, UiFlowStatus.success);
+    });
+  });
+
+  group('AuthCubit.deleteProData', () {
+    test('calls the hook and emits success, without touching the session',
+        () async {
+      when(() => proDataDeletionHook.deleteProData())
+          .thenAnswer((_) async {});
+      final cubit = buildCubit();
+
+      await cubit.deleteProData();
+
+      verify(() => proDataDeletionHook.deleteProData()).called(1);
+      verifyNever(() => repo.clearSession());
+      verifyNever(() => repo.logout());
+      expect(cubit.state.status, UiFlowStatus.success);
+      expect(cubit.state.skipOnboardingNavigation, isTrue,
+          reason: 'unlike logout/factoryReset, this must not send the '
+              'user to onboarding -- the session is untouched');
+    });
+
+    test('emits failure when the hook throws', () async {
+      when(() => proDataDeletionHook.deleteProData())
+          .thenThrow(Exception('relay unreachable'));
+      final cubit = buildCubit();
+
+      await cubit.deleteProData();
+
+      expect(cubit.state.status, UiFlowStatus.failure);
     });
   });
 }

@@ -12,6 +12,7 @@ class SettingsView extends StatelessWidget {
     required this.onNavigate,
     required this.onLogout,
     required this.onFactoryReset,
+    required this.onDeleteProData,
   });
 
   final bool hasPendingMcp;
@@ -19,6 +20,7 @@ class SettingsView extends StatelessWidget {
   final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
   final VoidCallback onFactoryReset;
+  final VoidCallback onDeleteProData;
 
   List<(String, List<(String, String)>)> _sections(
       BuildContext context) {
@@ -51,6 +53,8 @@ class SettingsView extends StatelessWidget {
           if (isPro) (context.l10n.proSettingsLabel, 'configurePaywall'),
           ('LOGOUT', 'logout'),
           ('RESET', 'factoryReset'),
+          if (isPro)
+            (context.l10n.settingsDeleteProDataLabel, 'deleteProData'),
         ]
       ),
     ];
@@ -74,11 +78,13 @@ class SettingsView extends StatelessWidget {
                     BiosRow(
                       label: item.$1,
                       hasBadge: item.$2 == 'configureMcp' && hasPendingMcp,
-                      isDestructive: item.$2 == 'factoryReset',
+                      isDestructive: item.$2 == 'factoryReset' ||
+                          item.$2 == 'deleteProData',
                       isWarning: item.$2 == 'logout',
                       onTap: () => switch (item.$2) {
                         'logout' => onLogout(),
                         'factoryReset' => onFactoryReset(),
+                        'deleteProData' => onDeleteProData(),
                         _ => onNavigate(item.$2),
                       },
                     ),

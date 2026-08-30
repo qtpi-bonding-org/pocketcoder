@@ -33,7 +33,9 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     final mcpCubit = context.read<McpCubit>();
     return UiFlowListener<AuthCubit, AuthState>(
       listener: (context, state) {
-        if (state.isSuccess && context.mounted) {
+        if (state.isSuccess &&
+            !state.skipOnboardingNavigation &&
+            context.mounted) {
           context.goNamed(RouteNames.onboarding);
         }
       },
@@ -48,6 +50,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
             onNavigate: (routeKey) => _navigateTo(context, routeKey),
             onLogout: () => _confirmLogout(context, authCubit),
             onFactoryReset: () => _confirmFactoryReset(context, authCubit),
+            onDeleteProData: () => _confirmDeleteProData(context, authCubit),
           ),
         ),
       ),
@@ -100,6 +103,32 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
               cubit.factoryReset();
             },
             child: Text(context.l10n.settingsFactoryResetConfirm),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteProData(BuildContext context, AuthCubit cubit) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => TerminalDialog(
+        title: context.l10n.settingsDeleteProDataConfirmTitle,
+        content: Text(context.l10n.settingsDeleteProDataConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(context.l10n.settingsDeleteProDataCancel),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: context.terminalColors.danger,
+            ),
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              cubit.deleteProData();
+            },
+            child: Text(context.l10n.settingsDeleteProDataConfirm),
           ),
         ],
       ),

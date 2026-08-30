@@ -16,7 +16,12 @@ T _$identity<T>(T value) => value;
 mixin _$AuthState {
   UiFlowStatus get status;
   Object? get error;
-  String? get savedUrl;
+  String?
+      get savedUrl; // Distinguishes deleteProData's success from every other success this
+// cubit emits (login/logout/factoryReset) -- those all end the local
+// session and should navigate to onboarding; deleteProData
+// deliberately leaves the session untouched and must not.
+  bool get skipOnboardingNavigation;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -33,16 +38,23 @@ mixin _$AuthState {
             (identical(other.status, status) || other.status == status) &&
             const DeepCollectionEquality().equals(other.error, error) &&
             (identical(other.savedUrl, savedUrl) ||
-                other.savedUrl == savedUrl));
+                other.savedUrl == savedUrl) &&
+            (identical(
+                    other.skipOnboardingNavigation, skipOnboardingNavigation) ||
+                other.skipOnboardingNavigation == skipOnboardingNavigation));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, status,
-      const DeepCollectionEquality().hash(error), savedUrl);
+  int get hashCode => Object.hash(
+      runtimeType,
+      status,
+      const DeepCollectionEquality().hash(error),
+      savedUrl,
+      skipOnboardingNavigation);
 
   @override
   String toString() {
-    return 'AuthState(status: $status, error: $error, savedUrl: $savedUrl)';
+    return 'AuthState(status: $status, error: $error, savedUrl: $savedUrl, skipOnboardingNavigation: $skipOnboardingNavigation)';
   }
 }
 
@@ -51,7 +63,11 @@ abstract mixin class $AuthStateCopyWith<$Res> {
   factory $AuthStateCopyWith(AuthState value, $Res Function(AuthState) _then) =
       _$AuthStateCopyWithImpl;
   @useResult
-  $Res call({UiFlowStatus status, Object? error, String? savedUrl});
+  $Res call(
+      {UiFlowStatus status,
+      Object? error,
+      String? savedUrl,
+      bool skipOnboardingNavigation});
 }
 
 /// @nodoc
@@ -69,6 +85,7 @@ class _$AuthStateCopyWithImpl<$Res> implements $AuthStateCopyWith<$Res> {
     Object? status = null,
     Object? error = freezed,
     Object? savedUrl = freezed,
+    Object? skipOnboardingNavigation = null,
   }) {
     return _then(_self.copyWith(
       status: null == status
@@ -80,6 +97,10 @@ class _$AuthStateCopyWithImpl<$Res> implements $AuthStateCopyWith<$Res> {
           ? _self.savedUrl
           : savedUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      skipOnboardingNavigation: null == skipOnboardingNavigation
+          ? _self.skipOnboardingNavigation
+          : skipOnboardingNavigation // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -175,14 +196,16 @@ extension AuthStatePatterns on AuthState {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(UiFlowStatus status, Object? error, String? savedUrl)?
+    TResult Function(UiFlowStatus status, Object? error, String? savedUrl,
+            bool skipOnboardingNavigation)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _AuthState() when $default != null:
-        return $default(_that.status, _that.error, _that.savedUrl);
+        return $default(_that.status, _that.error, _that.savedUrl,
+            _that.skipOnboardingNavigation);
       case _:
         return orElse();
     }
@@ -203,13 +226,15 @@ extension AuthStatePatterns on AuthState {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(UiFlowStatus status, Object? error, String? savedUrl)
+    TResult Function(UiFlowStatus status, Object? error, String? savedUrl,
+            bool skipOnboardingNavigation)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AuthState():
-        return $default(_that.status, _that.error, _that.savedUrl);
+        return $default(_that.status, _that.error, _that.savedUrl,
+            _that.skipOnboardingNavigation);
     }
   }
 
@@ -227,13 +252,15 @@ extension AuthStatePatterns on AuthState {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(UiFlowStatus status, Object? error, String? savedUrl)?
+    TResult? Function(UiFlowStatus status, Object? error, String? savedUrl,
+            bool skipOnboardingNavigation)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AuthState() when $default != null:
-        return $default(_that.status, _that.error, _that.savedUrl);
+        return $default(_that.status, _that.error, _that.savedUrl,
+            _that.skipOnboardingNavigation);
       case _:
         return null;
     }
@@ -243,7 +270,11 @@ extension AuthStatePatterns on AuthState {
 /// @nodoc
 
 class _AuthState extends AuthState {
-  const _AuthState({this.status = UiFlowStatus.idle, this.error, this.savedUrl})
+  const _AuthState(
+      {this.status = UiFlowStatus.idle,
+      this.error,
+      this.savedUrl,
+      this.skipOnboardingNavigation = false})
       : super._();
 
   @override
@@ -253,6 +284,13 @@ class _AuthState extends AuthState {
   final Object? error;
   @override
   final String? savedUrl;
+// Distinguishes deleteProData's success from every other success this
+// cubit emits (login/logout/factoryReset) -- those all end the local
+// session and should navigate to onboarding; deleteProData
+// deliberately leaves the session untouched and must not.
+  @override
+  @JsonKey()
+  final bool skipOnboardingNavigation;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -270,16 +308,23 @@ class _AuthState extends AuthState {
             (identical(other.status, status) || other.status == status) &&
             const DeepCollectionEquality().equals(other.error, error) &&
             (identical(other.savedUrl, savedUrl) ||
-                other.savedUrl == savedUrl));
+                other.savedUrl == savedUrl) &&
+            (identical(
+                    other.skipOnboardingNavigation, skipOnboardingNavigation) ||
+                other.skipOnboardingNavigation == skipOnboardingNavigation));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, status,
-      const DeepCollectionEquality().hash(error), savedUrl);
+  int get hashCode => Object.hash(
+      runtimeType,
+      status,
+      const DeepCollectionEquality().hash(error),
+      savedUrl,
+      skipOnboardingNavigation);
 
   @override
   String toString() {
-    return 'AuthState(status: $status, error: $error, savedUrl: $savedUrl)';
+    return 'AuthState(status: $status, error: $error, savedUrl: $savedUrl, skipOnboardingNavigation: $skipOnboardingNavigation)';
   }
 }
 
@@ -291,7 +336,11 @@ abstract mixin class _$AuthStateCopyWith<$Res>
       __$AuthStateCopyWithImpl;
   @override
   @useResult
-  $Res call({UiFlowStatus status, Object? error, String? savedUrl});
+  $Res call(
+      {UiFlowStatus status,
+      Object? error,
+      String? savedUrl,
+      bool skipOnboardingNavigation});
 }
 
 /// @nodoc
@@ -309,6 +358,7 @@ class __$AuthStateCopyWithImpl<$Res> implements _$AuthStateCopyWith<$Res> {
     Object? status = null,
     Object? error = freezed,
     Object? savedUrl = freezed,
+    Object? skipOnboardingNavigation = null,
   }) {
     return _then(_AuthState(
       status: null == status
@@ -320,6 +370,10 @@ class __$AuthStateCopyWithImpl<$Res> implements _$AuthStateCopyWith<$Res> {
           ? _self.savedUrl
           : savedUrl // ignore: cast_nullable_to_non_nullable
               as String?,
+      skipOnboardingNavigation: null == skipOnboardingNavigation
+          ? _self.skipOnboardingNavigation
+          : skipOnboardingNavigation // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }

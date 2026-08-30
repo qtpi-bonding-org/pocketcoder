@@ -24,6 +24,7 @@ void main() {
         onNavigate: (_) {},
         onLogout: () {},
         onFactoryReset: () {},
+        onDeleteProData: () {},
       ),
     ));
 
@@ -54,6 +55,7 @@ void main() {
         onNavigate: (_) {},
         onLogout: () {},
         onFactoryReset: () {},
+        onDeleteProData: () {},
       ),
     ));
 

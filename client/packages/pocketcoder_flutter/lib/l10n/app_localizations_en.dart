@@ -897,6 +897,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsFactoryResetConfirm => 'RESET';
 
   @override
+  String get settingsDeleteProDataLabel => 'DELETE POCKETCODER PRO DATA';
+
+  @override
+  String get settingsDeleteProDataConfirmTitle => 'DELETE PRO DATA';
+
+  @override
+  String get settingsDeleteProDataConfirmBody =>
+      'This removes your subscription and notification records from PocketCoder Pro\'s systems. Your server and everything on it are unaffected -- use your own SSH access if you want to wipe that too.';
+
+  @override
+  String get settingsDeleteProDataCancel => 'CANCEL';
+
+  @override
+  String get settingsDeleteProDataConfirm => 'DELETE';
+
+  @override
   String get agentTitle => 'AGENT REGISTRY';
 
   @override

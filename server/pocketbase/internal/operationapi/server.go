@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -173,6 +174,7 @@ func Register(app core.App, e *core.ServeEvent, coord func() coordinator.AgentRu
 	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, api.AgentDeps{})
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
+	hooks.AddProDataOperations(app, registry)
 	api.AddLiveActivityOperations(app, registry)
 	harnessRuntime := api.AddHarnessAuthOperations(app, registry, api.HarnessAuthDeps{})
 	scheduleRunner := api.AddScheduleOperations(app, registry, coord)
@@ -531,6 +533,17 @@ func (s *server) SendPushNotification(ctx context.Context, _ openapi.SendPushNot
 		return nil, errorutil.Internal("send push notification", err)
 	}
 	return openapi.SendPushNotification200JSONResponse{Ok: true}, nil
+}
+func (s *server) DeleteProData(ctx context.Context, _ openapi.DeleteProDataRequestObject) (openapi.DeleteProDataResponseObject, error) {
+	re, err := requestEventFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := hooks.DeleteProDataOperation(re.Auth.Id); err != nil {
+		log.Printf("[pocketcoder] delete pro data: %v", err)
+		return nil, apis.NewApiError(http.StatusBadGateway, "Unable to purge PocketCoder Pro data", nil)
+	}
+	return openapi.DeleteProData204Response{}, nil
 }
 func (s *server) EndLiveActivity(ctx context.Context, request openapi.EndLiveActivityRequestObject) (openapi.EndLiveActivityResponseObject, error) {
 	re, err := requestEventFromContext(ctx)

@@ -388,6 +388,11 @@
   "settingsFactoryResetConfirmBody": "This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.",
   "settingsFactoryResetCancel": "CANCEL",
   "settingsFactoryResetConfirm": "RESET",
+  "settingsDeleteProDataLabel": "DELETE POCKETCODER PRO DATA",
+  "settingsDeleteProDataConfirmTitle": "DELETE PRO DATA",
+  "settingsDeleteProDataConfirmBody": "This removes your subscription and notification records from PocketCoder Pro's systems. Your server and everything on it are unaffected -- use your own SSH access if you want to wipe that too.",
+  "settingsDeleteProDataCancel": "CANCEL",
+  "settingsDeleteProDataConfirm": "DELETE",
 
   "agentTitle": "AGENT REGISTRY",
   "agentModelsPersonas": "MODELS & PERSONAS",

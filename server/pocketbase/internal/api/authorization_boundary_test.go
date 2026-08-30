@@ -63,6 +63,10 @@ var authorizationBoundaryTable = []authorizationBoundaryCase{
 	// memory.sql; its exact-path boundary is covered separately.
 	{operationID: "proxyObservability", skipRoleGateCheck: true},
 	{operationID: "sendPushNotification", agentOrAdmin: true},
+	// deleteProData has no path parameter and no target-resource id at
+	// all -- it always operates on the caller's own auth id, so there is
+	// no ownership boundary to test, just plain authenticated access.
+	{operationID: "deleteProData"},
 	{operationID: "endLiveActivity", owned: true},
 	{operationID: "setLiveActivityToken", owned: true},
 }

@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_app_edition.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
@@ -24,15 +25,25 @@ class MockMcpCubit extends Mock implements McpCubit {}
 
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
+class MockProDataDeletionHook extends Mock implements ProDataDeletionHook {}
+
+class _FakeProEdition implements IAppEdition {
+  const _FakeProEdition();
+  @override
+  bool get isPro => true;
+}
+
 void main() {
   late MockAuthRepository authRepo;
   late MockMcpCubit mcpCubit;
   late MockFlutterSecureStorage secureStorage;
+  late MockProDataDeletionHook proDataDeletionHook;
 
   setUp(() {
     authRepo = MockAuthRepository();
     mcpCubit = MockMcpCubit();
     secureStorage = MockFlutterSecureStorage();
+    proDataDeletionHook = MockProDataDeletionHook();
     when(() => mcpCubit.state).thenReturn(const McpState());
     when(() => mcpCubit.stream)
         .thenAnswer((_) => const Stream<McpState>.empty());
@@ -49,6 +60,7 @@ void main() {
           authRepo,
           CaddyCaPinStore(secureStorage),
           const NoopFactoryResetHook(),
+          proDataDeletionHook,
         ));
     getIt.registerSingleton<IAppEdition>(const FossAppEdition());
   });
@@ -129,6 +141,60 @@ void main() {
     await tester.pumpAndSettle();
 
     verifyNever(() => authRepo.logout());
+  });
+
+  testWidgets(
+      'tapping DELETE POCKETCODER PRO DATA opens a confirm dialog; '
+      'confirming calls deleteProData', (tester) async {
+    getIt.unregister<IAppEdition>();
+    getIt.registerSingleton<IAppEdition>(const _FakeProEdition());
+    when(() => proDataDeletionHook.deleteProData()).thenAnswer((_) async {});
+
+    await tester.pumpWidget(buildTestable());
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('DELETE POCKETCODER PRO DATA'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DELETE POCKETCODER PRO DATA'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('DELETE'), findsWidgets);
+
+    await tester.tap(find.text('DELETE').last);
+    await tester.pumpAndSettle();
+
+    verify(() => proDataDeletionHook.deleteProData()).called(1);
+    // Unlike LOGOUT/RESET, a successful deleteProData must not navigate
+    // away from Settings -- it never touches the local session.
+    expect(find.text('DELETE POCKETCODER PRO DATA'), findsOneWidget);
+  });
+
+  testWidgets(
+      'tapping CANCEL on the delete-pro-data dialog does not call '
+      'deleteProData', (tester) async {
+    getIt.unregister<IAppEdition>();
+    getIt.registerSingleton<IAppEdition>(const _FakeProEdition());
+
+    await tester.pumpWidget(buildTestable());
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('DELETE POCKETCODER PRO DATA'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DELETE POCKETCODER PRO DATA'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('CANCEL'));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => proDataDeletionHook.deleteProData());
   });
 
   testWidgets('tapping ERROR REPORTS navigates to /configure/errors',

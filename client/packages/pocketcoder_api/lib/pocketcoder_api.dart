@@ -18,6 +18,7 @@ export 'package:pocketcoder_api/src/api/logs_api.dart';
 export 'package:pocketcoder_api/src/api/mcp_api.dart';
 export 'package:pocketcoder_api/src/api/observability_api.dart';
 export 'package:pocketcoder_api/src/api/ollama_api.dart';
+export 'package:pocketcoder_api/src/api/pro_data_api.dart';
 export 'package:pocketcoder_api/src/api/push_api.dart';
 export 'package:pocketcoder_api/src/api/release_api.dart';
 export 'package:pocketcoder_api/src/api/schedules_api.dart';

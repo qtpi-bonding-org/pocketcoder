@@ -210,6 +210,18 @@ paths:
       security: [{pocketbaseToken: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/PushRequest'}}}}
       responses: {'204': {description: Operation completed}, '200': {description: Push notification sent, content: {application/json: {schema: {$ref: '#/components/schemas/OkResponse'}}}}, '400': {$ref: '#/components/responses/BadRequest'}, '401': {$ref: '#/components/responses/Unauthorized'}, '404': {$ref: '#/components/responses/NotFound'} }
+  /api/pocketcoder/v1/pro-data:
+    delete:
+      operationId: deleteProData
+      tags: [pro-data]
+      description: >-
+        Purges this user's PocketCoder-Pro-hosted data (push-relay's
+        Supabase rows and the RevenueCat customer record). Pure
+        pass-through to push-relay -- never touches this deployment's own
+        local PocketBase data, which the user already owns and controls
+        on their own server.
+      security: [{pocketbaseToken: []}]
+      responses: {'204': {description: Pro data deleted}, '401': {$ref: '#/components/responses/Unauthorized'}, '502': {$ref: '#/components/responses/BadGateway'} }
   /api/pocketcoder/v1/live-activities/{id}/end:
     post:
       operationId: endLiveActivity

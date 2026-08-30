@@ -33,6 +33,7 @@ class PocketCoderApiClient {
             generated.ObservabilityApi(dio, generated.standardSerializers),
         ollama = generated.OllamaApi(dio, generated.standardSerializers),
         push = generated.PushApi(dio, generated.standardSerializers),
+        proData = generated.ProDataApi(dio, generated.standardSerializers),
         schedules = generated.SchedulesApi(dio, generated.standardSerializers);
 
   /// [caddyCaPinningHttpClient] is this app's single source of truth for
@@ -97,6 +98,7 @@ class PocketCoderApiClient {
   final generated.ObservabilityApi observability;
   final generated.OllamaApi ollama;
   final generated.PushApi push;
+  final generated.ProDataApi proData;
   final generated.SchedulesApi schedules;
 
   Dio get dio => _dio;

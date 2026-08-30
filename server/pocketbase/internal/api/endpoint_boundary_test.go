@@ -32,6 +32,7 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 	AddReleaseStatusOperations(registry)
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
+	hooks.AddProDataOperations(app, registry)
 	AddHarnessAuthOperations(app, registry, HarnessAuthDeps{})
 	AddScheduleOperations(app, registry, func() coordinator.AgentRuntime { return nil })
 	AddLiveActivityOperations(app, registry)
@@ -94,6 +95,7 @@ var testsByEndpoint = []struct {
 	{"getHarnessInstanceLogs", http.MethodGet, "/api/pocketcoder/v1/logs/instance/test-instance", ""},
 	{"proxyObservability", http.MethodGet, "/api/pocketcoder/v1/proxy/observability/", ""},
 	{"sendPushNotification", http.MethodPost, "/api/pocketcoder/v1/push", `{"user_id":"test-user","type":"test"}`},
+	{"deleteProData", http.MethodDelete, "/api/pocketcoder/v1/pro-data", ""},
 	{"endLiveActivity", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/end", ""},
 	{"setLiveActivityToken", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/token", `{"activity_push_token":"tok"}`},
 }

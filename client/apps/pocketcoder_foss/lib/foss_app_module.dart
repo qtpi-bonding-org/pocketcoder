@@ -16,6 +16,7 @@ import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_de
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_setup_gate.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_app_edition.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_billing_service.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_provider_option_service.dart';
@@ -44,6 +45,11 @@ class FossAppModule implements AppDependencyModule {
     // FOSS has no extra deployment-tracking stores beyond what AuthCubit
     // already clears directly (auth session, CA pin store).
     getIt.registerSingleton<FactoryResetHook>(const NoopFactoryResetHook());
+    // FOSS has no PocketCoder-Pro-hosted data (no push-relay, no
+    // RevenueCat) -- nothing for this hook to purge.
+    getIt.registerSingleton<ProDataDeletionHook>(
+      const NoopProDataDeletionHook(),
+    );
     getIt.registerLazySingleton<FossRootSshCredentialsStore>(
       () => FossRootSshCredentialsStore(getIt<FlutterSecureStorage>()),
     );

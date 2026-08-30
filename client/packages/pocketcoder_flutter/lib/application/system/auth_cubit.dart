@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import "package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart";
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
@@ -18,6 +19,11 @@ sealed class AuthState with _$AuthState, UiFlowStateMixin {
     @Default(UiFlowStatus.idle) UiFlowStatus status,
     Object? error,
     String? savedUrl,
+    // Distinguishes deleteProData's success from every other success this
+    // cubit emits (login/logout/factoryReset) -- those all end the local
+    // session and should navigate to onboarding; deleteProData
+    // deliberately leaves the session untouched and must not.
+    @Default(false) bool skipOnboardingNavigation,
   }) = _AuthState;
 
   factory AuthState.initial() => const AuthState();
@@ -28,8 +34,10 @@ class AuthCubit extends AppCubit<AuthState> {
   final IAuthRepository _authRepository;
   final CaddyCaPinStore _caddyCaPinStore;
   final FactoryResetHook _factoryResetHook;
+  final ProDataDeletionHook _proDataDeletionHook;
 
-  AuthCubit(this._authRepository, this._caddyCaPinStore, this._factoryResetHook)
+  AuthCubit(this._authRepository, this._caddyCaPinStore,
+      this._factoryResetHook, this._proDataDeletionHook)
       : super(AuthState.initial());
 
   Future<void> restoreSavedUrl() async {
@@ -105,6 +113,14 @@ class AuthCubit extends AppCubit<AuthState> {
       await _caddyCaPinStore.clearAll();
       await _factoryResetHook.resetForFactoryReset();
       return createSuccessState();
+    });
+  }
+
+  /// Unlike [factoryReset], never touches the local session.
+  Future<void> deleteProData() async {
+    return tryOperation(() async {
+      await _proDataDeletionHook.deleteProData();
+      return createSuccessState().copyWith(skipOnboardingNavigation: true);
     });
   }
 }

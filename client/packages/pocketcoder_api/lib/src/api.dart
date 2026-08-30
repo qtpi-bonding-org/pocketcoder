@@ -17,6 +17,7 @@ import 'package:pocketcoder_api/src/api/logs_api.dart';
 import 'package:pocketcoder_api/src/api/mcp_api.dart';
 import 'package:pocketcoder_api/src/api/observability_api.dart';
 import 'package:pocketcoder_api/src/api/ollama_api.dart';
+import 'package:pocketcoder_api/src/api/pro_data_api.dart';
 import 'package:pocketcoder_api/src/api/push_api.dart';
 import 'package:pocketcoder_api/src/api/release_api.dart';
 import 'package:pocketcoder_api/src/api/schedules_api.dart';
@@ -161,6 +162,12 @@ class PocketcoderApi {
   /// by doing that all interceptors will not be executed
   OllamaApi getOllamaApi() {
     return OllamaApi(dio, serializers);
+  }
+
+  /// Get ProDataApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  ProDataApi getProDataApi() {
+    return ProDataApi(dio, serializers);
   }
 
   /// Get PushApi instance, base route and serializer can be overridden by a given but be careful,

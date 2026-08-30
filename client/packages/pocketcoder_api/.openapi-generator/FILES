@@ -28,6 +28,7 @@ doc/ObservabilityApi.md
 doc/OkResponse.md
 doc/OllamaApi.md
 doc/OllamaModelsResponse.md
+doc/ProDataApi.md
 doc/PromptRequest.md
 doc/PushApi.md
 doc/PushRequest.md
@@ -49,6 +50,7 @@ lib/src/api/logs_api.dart
 lib/src/api/mcp_api.dart
 lib/src/api/observability_api.dart
 lib/src/api/ollama_api.dart
+lib/src/api/pro_data_api.dart
 lib/src/api/push_api.dart
 lib/src/api/release_api.dart
 lib/src/api/schedules_api.dart
