@@ -46,10 +46,7 @@ class ServerReleaseStatusSnapshot {
   /// from the app/server contract versions below.
   final int? deploymentContractVersion;
 
-  /// The Flutter client's own contract version this release expects.
   final int? appContractVersion;
-
-  /// The `/api/pocketcoder/*` operation contract version this release serves.
   final int? serverApiVersion;
 
   bool get crossesDataVersion =>
