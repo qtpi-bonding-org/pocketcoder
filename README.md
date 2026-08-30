@@ -31,7 +31,7 @@ Two patterns have emerged for working with autonomous agents, and PocketCoder ai
 - **Mission-control on the go.** Tools like Google Antigravity showed that a lot of agent work is *reviewing plans and approving executions*, not typing syntax. That subset fits a phone perfectly — assign tasks, review plans, approve deployments while away from your keyboard.
 - **A safer alternative to chat-bridge agents.** Chat is convenient, but it is a poor permission and interruption interface for an agent with terminal, filesystem, and network access. PocketCoder puts the interaction inside an authenticated app and exposes the harness's permission requests as explicit, human-inspectable approve/deny choices. The default is human-in-the-loop; configured “always allow” rules and the security limitations of the current c2 runtime are documented in [`SECURITY.md`](SECURITY.md).
 
-**Core principles:** scoped for mobile (orchestration, review, and control rather than 500-line diffs on a phone) · least privilege and human-in-the-loop by default · Docker as the hard runtime boundary · open protocols instead of bespoke glue · local-first when desired, provider-independent when useful.
+**Core principles:** scoped for mobile (orchestration, review, and control rather than 500-line diffs on a phone) · least privilege and human-in-the-loop by default · Docker as the primary runtime boundary · open protocols instead of bespoke glue · local-first when desired, provider-independent when useful.
 
 ## Mobile-first provisioning
 
