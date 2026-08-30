@@ -107,7 +107,7 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
     final futures = await Future.wait<Object>([
       providerRepository.watchHarnesses().first,
       providerRepository.watchModels().first,
-      providerRepository.watchHarnessModels().first,
+      providerRepository.fetchHarnessModels(),
       providerRepository.watchProviderAPIKeys().first,
       providerRepository.watchHarnessProviders().first,
       if (harnessAuthRepository != null)
