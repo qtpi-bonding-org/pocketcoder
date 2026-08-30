@@ -57,10 +57,10 @@ Pending approvals are process-local and expire after a configurable timeout (fiv
 
 ## 3. Network Isolation
 
-- The harness container publishes no host port and joins only a shared private network with PocketBase.
+- The harness container publishes no host port. The statically-declared default (Goose) joins a private network shared only with PocketBase; a dynamically provisioned harness joins more — the same network plus a shared harness-egress network, the MCP-gateway network, the memory network, and the model network when Ollama is configured. It's scoped away from the host and from PocketBase's Docker-control path, not from every other service.
 - The PocketBase↔harness channel is an authenticated ACP-over-WebSocket connection. The harness refuses to serve without its server secret key; PocketBase is the only component holding that secret, and it is not exposed to the Flutter client.
-- The harness does not hold PocketBase credentials — there is no harness-to-PocketBase call path that carries authority.
-- The shared network is bidirectional, so this is an identity- and scope-based boundary, not an air gap: a compromised harness could reach PocketBase, but it holds no credentials and is bounded by PocketBase's collection access rules.
+- The harness holds no PocketBase credentials — there is no harness-to-PocketBase call path that carries authority. It can hold *provider* credentials, though: a harness's persistent auth-home volume may contain an API key or OAuth token for whichever model provider it's configured against.
+- The shared network is bidirectional, so this is an identity- and scope-based boundary, not an air gap: a compromised harness could reach PocketBase, but it holds no PocketBase credentials and is bounded by PocketBase's collection access rules.
 
 ## 4. Where Isolation Is Deliberately Simplified Today
 
@@ -69,8 +69,9 @@ Be clear-eyed about the current runtime:
 - **The harness executes its own built-in shell and filesystem tools inside its own container.** There is no separate hardened execution sandbox in the request path today — PocketBase advertises no ACP filesystem/terminal callbacks and has no network route to a sandbox. The approval gate above is what stands between the model and execution, not a second container.
 - **A Rust sandbox proxy and ACP adapter exist in the repository but are dormant** — future security-hardening work, not part of the PocketBase↔harness path today. See [`dormant/`](https://github.com/qtpi-bonding-org/pocketcoder/blob/main/dormant/) in the repository.
 - **MCP tool attachment through the selected harness build is still maturing**, so external MCP tools — and the assumption that their calls also pass through the approval gate — shouldn't be taken for granted until that work is further along.
+- **Phone approval is the default, not an unconditional guarantee.** A session profile can carry configured tool-permission rules (allow / ask / deny, matched by tool name or pattern). A rule set to allow or deny resolves automatically, without a round trip to your phone; only tools that fall through to "ask" — the default when nothing matches — surface the prompt described in §2.
 
-The upshot: today's security story is "every action requires human approval, over an authenticated channel, from a container that holds no credentials" — a solid gate, but not yet the multi-container reasoning/execution isolation that the dormant sandbox components are intended to eventually provide.
+The upshot: the harness holds no PocketBase authority, and every tool call is still gated through its ACP permission flow — but that gate checks configured rules first, with phone approval as the default outcome rather than an unconditional one, and it is not yet the multi-container reasoning/execution isolation that the dormant sandbox components are intended to eventually provide.
 
 ## 5. Immutable & Recoverable Infrastructure
 
@@ -83,10 +84,10 @@ The upshot: today's security story is "every action requires human approval, ove
 
 | Layer | Control |
 | :--- | :--- |
-| **Execution** | Tool calls require an explicit, offered-option approval relayed to your phone. |
+| **Execution** | Tool calls are gated through the harness's ACP permission flow; phone approval is the default outcome, but configured allow/deny rules can resolve a call automatically. |
 | **Channel** | PocketBase↔harness is an authenticated WebSocket; only PocketBase holds the shared secret. |
-| **Network** | The harness publishes no host port, sits on a private network, and holds no PocketBase credentials. |
-| **Blast radius** | The harness container is treated as untrusted and holds no durable secrets; restart recovers cleanly. |
+| **Network** | The harness publishes no host port and holds no PocketBase credentials, but a dynamically provisioned harness joins several service networks, not just PocketBase's. |
+| **Blast radius** | The harness container is treated as untrusted and holds no PocketBase credentials, but its auth-home volume can hold persistent provider credentials; restart recovers cleanly from thrashing, not from a leaked provider key. |
 | **Honest caveat** | Tools currently execute inside the harness container itself; the hardened sandbox is dormant future work. |
 
 **You hold the approvals. The agent only acts within what you've approved.**
