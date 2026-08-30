@@ -60,6 +60,10 @@ class _FakeService implements IServerControlService {
   Future<ServerControlResult> saveBackup({required String instanceId}) =>
       _run('saveBackup', RootSshCommand.saveBackup, instanceId);
 
+  @override
+  Future<ServerControlResult> restoreBackup({required String instanceId}) =>
+      _run('restoreBackup', RootSshCommand.restoreBackup, instanceId);
+
   Future<ServerControlResult> _run(
     String name,
     RootSshCommand command,
@@ -101,7 +105,7 @@ ServerControlResult _result(RootSshCommand command) => ServerControlResult(
     );
 
 void main() {
-  test('delegates all five operations with the instance id', () async {
+  test('delegates all six operations with the instance id', () async {
     final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
 
@@ -129,6 +133,7 @@ void main() {
       'updateNixOs:server-1',
       'inspectRelease',
       'saveBackup:server-1',
+      'restoreBackup:server-1',
     ]);
     await cubit.close();
   });
@@ -230,6 +235,21 @@ void main() {
       instanceId: 'server-1',
     );
     service.pending['saveBackup']!.complete(_result(RootSshCommand.saveBackup));
+    await future;
+
+    expect(service.calls, isNot(contains('inspectRelease')));
+    await cubit.close();
+  });
+
+  test('restoreBackup does not refresh release status', () async {
+    final service = _FakeService()..release = _release();
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
+    final future = cubit.run(
+      operation: ServerControlOperation.restoreBackup,
+      instanceId: 'server-1',
+    );
+    service.pending['restoreBackup']!
+        .complete(_result(RootSshCommand.restoreBackup));
     await future;
 
     expect(service.calls, isNot(contains('inspectRelease')));

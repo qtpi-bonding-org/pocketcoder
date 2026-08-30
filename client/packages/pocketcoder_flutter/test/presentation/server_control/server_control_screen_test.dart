@@ -16,6 +16,7 @@ import 'package:pocketcoder_flutter/domain/server_control/i_server_control_servi
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/infrastructure/server_control/ssh_server_control_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/server_control_screen.dart';
 
 class _FakeRunner implements IRootSshCommandRunner {
@@ -58,6 +59,11 @@ class _FakeCredentialsProvider implements IRootSshCredentialsProvider {
 class _FakeLocalAuthGate implements ILocalAuthGate {
   @override
   Future<bool> authenticate({required String reason}) async => true;
+}
+
+class _FakeInAppBrowserLauncher implements InAppBrowserLauncher {
+  @override
+  Future<bool> open(Uri uri) async => true;
 }
 
 class _BlockingGate implements IServerControlSetupGate {
@@ -114,6 +120,9 @@ void main() {
     );
     GetIt.instance.registerLazySingleton<ILocalAuthGate>(
       () => _FakeLocalAuthGate(),
+    );
+    GetIt.instance.registerLazySingleton<InAppBrowserLauncher>(
+      () => _FakeInAppBrowserLauncher(),
     );
   });
 

@@ -27,4 +27,8 @@ abstract interface class IServerControlService {
   Future<ServerControlResult> saveBackup({
     required String instanceId,
   });
+
+  Future<ServerControlResult> restoreBackup({
+    required String instanceId,
+  });
 }

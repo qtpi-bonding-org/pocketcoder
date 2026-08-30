@@ -10,7 +10,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 String _localizedOperationLabel(
@@ -28,6 +27,8 @@ String _localizedOperationLabel(
         context.l10n.serverControlOperationUpdateNixOs,
       ServerControlOperation.saveBackup =>
         context.l10n.serverControlOperationSaveBackup,
+      ServerControlOperation.restoreBackup =>
+        context.l10n.serverControlOperationRestoreBackup,
     };
 
 class ServerControlView extends StatelessWidget {
@@ -90,22 +91,14 @@ class ServerControlView extends StatelessWidget {
               _PrivateKeySection(instanceId: instanceId, state: state),
               VSpace.x2,
             ],
-            for (final operation in ServerControlOperation.values)
-              Padding(
-                padding: EdgeInsets.only(bottom: AppSizes.space),
-                child: _ControlButton(
-                  operation: operation,
-                  disabled: state.isBusy,
-                  onPressed: () => _confirm(
-                    context,
-                    operation,
-                    () => cubit.run(
-                      operation: operation,
-                      instanceId: instanceId,
-                    ),
-                  ),
-                ),
+            _ControlGrid(
+              state: state,
+              onRun: (operation) => _confirm(
+                context,
+                operation,
+                () => cubit.run(operation: operation, instanceId: instanceId),
               ),
+            ),
             if (state.error case final error?)
               Text(
                 'ERROR: $error',
@@ -133,14 +126,21 @@ class ServerControlView extends StatelessWidget {
     ServerControlOperation operation,
     VoidCallback onConfirm,
   ) async {
+    final isRestore = operation == ServerControlOperation.restoreBackup;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.l10n.serverControlConfirmTitle),
+        title: Text(
+          isRestore
+              ? context.l10n.serverControlConfirmRestoreTitle
+              : context.l10n.serverControlConfirmTitle,
+        ),
         content: Text(
-          context.l10n.serverControlConfirmBody(
-            _localizedOperationLabel(context, operation),
-          ),
+          isRestore
+              ? context.l10n.serverControlConfirmRestoreBody
+              : context.l10n.serverControlConfirmBody(
+                  _localizedOperationLabel(context, operation),
+                ),
         ),
         actions: [
           TextButton(
@@ -212,12 +212,11 @@ class _ConnectionDetailsState extends State<_ConnectionDetails> {
             action: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TerminalButton(
+                _OutlinedTextButton(
                   label: _showPassword
                       ? context.l10n.serverControlHide
                       : context.l10n.serverControlShow,
-                  isPrimary: false,
-                  onTap: () => _toggleShowPassword(context),
+                  onPressed: () => _toggleShowPassword(context),
                 ),
                 HSpace.x1,
                 _CopyButton(value: value),
@@ -275,12 +274,11 @@ class _PrivateKeySectionState extends State<_PrivateKeySection> {
         else
           const SizedBox.shrink(),
         VSpace.x1,
-        TerminalButton(
+        _OutlinedTextButton(
           label: _revealed
               ? context.l10n.serverControlHide
               : context.l10n.serverControlShow,
-          isPrimary: false,
-          onTap: () => _toggleReveal(context),
+          onPressed: () => _toggleReveal(context),
         ),
       ],
     );
@@ -334,10 +332,9 @@ class _ProviderConsoleButton extends StatelessWidget {
   final InAppBrowserLauncher launcher;
 
   @override
-  Widget build(BuildContext context) => TerminalButton(
+  Widget build(BuildContext context) => _OutlinedTextButton(
         label: context.l10n.serverControlProviderConsole,
-        isPrimary: false,
-        onTap: () async {
+        onPressed: () async {
           final uri = await link.resolve();
           if (!context.mounted) return;
           if (uri == null) {
@@ -391,25 +388,111 @@ class _ReleaseLine extends StatelessWidget {
   }
 }
 
-class _ControlButton extends StatelessWidget {
-  const _ControlButton({
-    required this.operation,
-    required this.disabled,
+class _OutlinedTextButton extends StatelessWidget {
+  const _OutlinedTextButton({
+    required this.label,
     required this.onPressed,
+    this.disabled = false,
   });
 
-  final ServerControlOperation operation;
-  final bool disabled;
+  final String label;
   final VoidCallback onPressed;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) => OutlinedButton(
         onPressed: disabled ? null : onPressed,
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            _localizedOperationLabel(context, operation).toUpperCase(),
+        child: Text(label.toUpperCase()),
+      );
+}
+
+class _ControlGrid extends StatelessWidget {
+  const _ControlGrid({required this.state, required this.onRun});
+
+  final ServerControlState state;
+  final void Function(ServerControlOperation operation) onRun;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ControlGroupRow(
+            groupLabel: context.l10n.serverControlGroupPocketCoder,
+            left: ServerControlOperation.restartPocketCoder,
+            right: ServerControlOperation.updatePocketCoder,
+            disabled: state.isBusy,
+            onRun: onRun,
           ),
+          VSpace.x1,
+          _ControlGroupRow(
+            groupLabel: context.l10n.serverControlGroupNixOs,
+            left: ServerControlOperation.restartNixOs,
+            right: ServerControlOperation.updateNixOs,
+            disabled: state.isBusy,
+            onRun: onRun,
+          ),
+          VSpace.x1,
+          _ControlGroupRow(
+            groupLabel: context.l10n.serverControlGroupData,
+            left: ServerControlOperation.saveBackup,
+            right: ServerControlOperation.restoreBackup,
+            disabled: state.isBusy,
+            onRun: onRun,
+          ),
+        ],
+      );
+}
+
+class _ControlGroupRow extends StatelessWidget {
+  const _ControlGroupRow({
+    required this.groupLabel,
+    required this.left,
+    required this.right,
+    required this.disabled,
+    required this.onRun,
+  });
+
+  final String groupLabel;
+  final ServerControlOperation left;
+  final ServerControlOperation right;
+  final bool disabled;
+  final void Function(ServerControlOperation operation) onRun;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: AppSizes.space),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              groupLabel,
+              style: TextStyle(
+                color: context.colorScheme.primary,
+                fontFamily: AppFonts.bodyFamily,
+                fontSize: AppSizes.fontSmall,
+              ),
+            ),
+            VSpace.x1,
+            Row(
+              children: [
+                Expanded(
+                  child: _OutlinedTextButton(
+                    label: _localizedOperationLabel(context, left),
+                    disabled: disabled,
+                    onPressed: () => onRun(left),
+                  ),
+                ),
+                HSpace.x1,
+                Expanded(
+                  child: _OutlinedTextButton(
+                    label: _localizedOperationLabel(context, right),
+                    disabled: disabled,
+                    onPressed: () => onRun(right),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       );
 }

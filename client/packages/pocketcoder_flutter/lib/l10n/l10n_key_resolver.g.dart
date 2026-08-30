@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-30T00:25:03.590865
+// Generated at: 2026-08-30T02:58:57.440480
 
 import 'app_localizations.dart';
 
@@ -703,16 +703,22 @@ class L10nKeyResolver {
       'server.control.admin.password' => _l10n.serverControlAdminPassword,
       'server.control.confirm.cancel' => _l10n.serverControlConfirmCancel,
       'server.control.confirm.confirm' => _l10n.serverControlConfirmConfirm,
+      'server.control.confirm.restore.body' => _l10n.serverControlConfirmRestoreBody,
+      'server.control.confirm.restore.title' => _l10n.serverControlConfirmRestoreTitle,
       'server.control.confirm.title' => _l10n.serverControlConfirmTitle,
       'server.control.connection.details' => _l10n.serverControlConnectionDetails,
       'server.control.copied' => _l10n.serverControlCopied,
       'server.control.copy' => _l10n.serverControlCopy,
+      'server.control.group.data' => _l10n.serverControlGroupData,
+      'server.control.group.nix.os' => _l10n.serverControlGroupNixOs,
+      'server.control.group.pocket.coder' => _l10n.serverControlGroupPocketCoder,
       'server.control.hide' => _l10n.serverControlHide,
       'server.control.https.endpoint' => _l10n.serverControlHttpsEndpoint,
       'server.control.ip.address' => _l10n.serverControlIpAddress,
       'server.control.local.auth.reason' => _l10n.serverControlLocalAuthReason,
       'server.control.operation.restart.nix.os' => _l10n.serverControlOperationRestartNixOs,
       'server.control.operation.restart.pocket.coder' => _l10n.serverControlOperationRestartPocketCoder,
+      'server.control.operation.restore.backup' => _l10n.serverControlOperationRestoreBackup,
       'server.control.operation.save.backup' => _l10n.serverControlOperationSaveBackup,
       'server.control.operation.update.nix.os' => _l10n.serverControlOperationUpdateNixOs,
       'server.control.operation.update.pocket.coder' => _l10n.serverControlOperationUpdatePocketCoder,
@@ -1711,16 +1717,22 @@ class L10nKeyResolver {
     'server.control.confirm.body',
     'server.control.confirm.cancel',
     'server.control.confirm.confirm',
+    'server.control.confirm.restore.body',
+    'server.control.confirm.restore.title',
     'server.control.confirm.title',
     'server.control.connection.details',
     'server.control.copied',
     'server.control.copy',
+    'server.control.group.data',
+    'server.control.group.nix.os',
+    'server.control.group.pocket.coder',
     'server.control.hide',
     'server.control.https.endpoint',
     'server.control.ip.address',
     'server.control.local.auth.reason',
     'server.control.operation.restart.nix.os',
     'server.control.operation.restart.pocket.coder',
+    'server.control.operation.restore.backup',
     'server.control.operation.save.backup',
     'server.control.operation.update.nix.os',
     'server.control.operation.update.pocket.coder',
@@ -2648,16 +2660,22 @@ class L10nKeyResolver {
     'serverControlConfirmBody': 'server.control.confirm.body',
     'serverControlConfirmCancel': 'server.control.confirm.cancel',
     'serverControlConfirmConfirm': 'server.control.confirm.confirm',
+    'serverControlConfirmRestoreBody': 'server.control.confirm.restore.body',
+    'serverControlConfirmRestoreTitle': 'server.control.confirm.restore.title',
     'serverControlConfirmTitle': 'server.control.confirm.title',
     'serverControlConnectionDetails': 'server.control.connection.details',
     'serverControlCopied': 'server.control.copied',
     'serverControlCopy': 'server.control.copy',
+    'serverControlGroupData': 'server.control.group.data',
+    'serverControlGroupNixOs': 'server.control.group.nix.os',
+    'serverControlGroupPocketCoder': 'server.control.group.pocket.coder',
     'serverControlHide': 'server.control.hide',
     'serverControlHttpsEndpoint': 'server.control.https.endpoint',
     'serverControlIpAddress': 'server.control.ip.address',
     'serverControlLocalAuthReason': 'server.control.local.auth.reason',
     'serverControlOperationRestartNixOs': 'server.control.operation.restart.nix.os',
     'serverControlOperationRestartPocketCoder': 'server.control.operation.restart.pocket.coder',
+    'serverControlOperationRestoreBackup': 'server.control.operation.restore.backup',
     'serverControlOperationSaveBackup': 'server.control.operation.save.backup',
     'serverControlOperationUpdateNixOs': 'server.control.operation.update.nix.os',
     'serverControlOperationUpdatePocketCoder': 'server.control.operation.update.pocket.coder',
@@ -3582,16 +3600,22 @@ class L10nKeyResolver {
     'server.control.confirm.body': 'serverControlConfirmBody',
     'server.control.confirm.cancel': 'serverControlConfirmCancel',
     'server.control.confirm.confirm': 'serverControlConfirmConfirm',
+    'server.control.confirm.restore.body': 'serverControlConfirmRestoreBody',
+    'server.control.confirm.restore.title': 'serverControlConfirmRestoreTitle',
     'server.control.confirm.title': 'serverControlConfirmTitle',
     'server.control.connection.details': 'serverControlConnectionDetails',
     'server.control.copied': 'serverControlCopied',
     'server.control.copy': 'serverControlCopy',
+    'server.control.group.data': 'serverControlGroupData',
+    'server.control.group.nix.os': 'serverControlGroupNixOs',
+    'server.control.group.pocket.coder': 'serverControlGroupPocketCoder',
     'server.control.hide': 'serverControlHide',
     'server.control.https.endpoint': 'serverControlHttpsEndpoint',
     'server.control.ip.address': 'serverControlIpAddress',
     'server.control.local.auth.reason': 'serverControlLocalAuthReason',
     'server.control.operation.restart.nix.os': 'serverControlOperationRestartNixOs',
     'server.control.operation.restart.pocket.coder': 'serverControlOperationRestartPocketCoder',
+    'server.control.operation.restore.backup': 'serverControlOperationRestoreBackup',
     'server.control.operation.save.backup': 'serverControlOperationSaveBackup',
     'server.control.operation.update.nix.os': 'serverControlOperationUpdateNixOs',
     'server.control.operation.update.pocket.coder': 'serverControlOperationUpdatePocketCoder',
@@ -4523,16 +4547,22 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) serverControlConfirmBody(String operation) => ('server.control.confirm.body', {'operation': operation});
   static const serverControlConfirmCancel = 'server.control.confirm.cancel';
   static const serverControlConfirmConfirm = 'server.control.confirm.confirm';
+  static const serverControlConfirmRestoreBody = 'server.control.confirm.restore.body';
+  static const serverControlConfirmRestoreTitle = 'server.control.confirm.restore.title';
   static const serverControlConfirmTitle = 'server.control.confirm.title';
   static const serverControlConnectionDetails = 'server.control.connection.details';
   static const serverControlCopied = 'server.control.copied';
   static const serverControlCopy = 'server.control.copy';
+  static const serverControlGroupData = 'server.control.group.data';
+  static const serverControlGroupNixOs = 'server.control.group.nix.os';
+  static const serverControlGroupPocketCoder = 'server.control.group.pocket.coder';
   static const serverControlHide = 'server.control.hide';
   static const serverControlHttpsEndpoint = 'server.control.https.endpoint';
   static const serverControlIpAddress = 'server.control.ip.address';
   static const serverControlLocalAuthReason = 'server.control.local.auth.reason';
   static const serverControlOperationRestartNixOs = 'server.control.operation.restart.nix.os';
   static const serverControlOperationRestartPocketCoder = 'server.control.operation.restart.pocket.coder';
+  static const serverControlOperationRestoreBackup = 'server.control.operation.restore.backup';
   static const serverControlOperationSaveBackup = 'server.control.operation.save.backup';
   static const serverControlOperationUpdateNixOs = 'server.control.operation.update.nix.os';
   static const serverControlOperationUpdatePocketCoder = 'server.control.operation.update.pocket.coder';

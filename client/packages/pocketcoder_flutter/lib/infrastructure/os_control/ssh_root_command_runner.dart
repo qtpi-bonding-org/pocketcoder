@@ -31,6 +31,10 @@ const _saveBackupCommand =
     'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
     'then /opt/pocketcoder/current/bin/pocketcoder-release backup-data; '
     'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
+const _restoreBackupCommand =
+    'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release restore-data; '
+    'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
 const _exportCaddyCaFingerprintCommand =
     'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
     'then /opt/pocketcoder/current/bin/pocketcoder-release export-ca-fingerprint; '
@@ -145,6 +149,7 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
         RootSshCommand.restartNixOs => _restartNixOsCommand,
         RootSshCommand.updateNixOs => _updateNixOsCommand,
         RootSshCommand.saveBackup => _saveBackupCommand,
+        RootSshCommand.restoreBackup => _restoreBackupCommand,
         RootSshCommand.exportCaddyCaFingerprint =>
           _exportCaddyCaFingerprintCommand,
         RootSshCommand.rollback => _rollbackCommand,

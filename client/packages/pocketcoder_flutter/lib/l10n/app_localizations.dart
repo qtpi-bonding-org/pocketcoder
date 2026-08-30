@@ -5537,6 +5537,18 @@ abstract class AppLocalizations {
   /// **'CONFIRM'**
   String get serverControlConfirmConfirm;
 
+  /// No description provided for @serverControlConfirmRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'RESTORE BACKUP?'**
+  String get serverControlConfirmRestoreTitle;
+
+  /// No description provided for @serverControlConfirmRestoreBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This overwrites all current data on your server with the last saved backup. This cannot be undone.'**
+  String get serverControlConfirmRestoreBody;
+
   /// No description provided for @serverControlReleaseChecking.
   ///
   /// In en, this message translates to:
@@ -5597,6 +5609,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save backup'**
   String get serverControlOperationSaveBackup;
+
+  /// No description provided for @serverControlOperationRestoreBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get serverControlOperationRestoreBackup;
+
+  /// No description provided for @serverControlGroupPocketCoder.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETCODER'**
+  String get serverControlGroupPocketCoder;
+
+  /// No description provided for @serverControlGroupNixOs.
+  ///
+  /// In en, this message translates to:
+  /// **'NIXOS'**
+  String get serverControlGroupNixOs;
+
+  /// No description provided for @serverControlGroupData.
+  ///
+  /// In en, this message translates to:
+  /// **'DATA'**
+  String get serverControlGroupData;
 
   /// No description provided for @serverControlPublicKeyLabel.
   ///

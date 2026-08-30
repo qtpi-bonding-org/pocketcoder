@@ -78,6 +78,12 @@ final class SshServerControlService implements IServerControlService {
   }) =>
       _run(instanceId, RootSshCommand.saveBackup);
 
+  @override
+  Future<ServerControlResult> restoreBackup({
+    required String instanceId,
+  }) =>
+      _run(instanceId, RootSshCommand.restoreBackup);
+
   Future<ServerControlResult> _run(
     String instanceId,
     RootSshCommand command,

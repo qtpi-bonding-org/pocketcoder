@@ -48,6 +48,8 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
           await _service.updateNixOs(instanceId: instanceId),
         ServerControlOperation.saveBackup =>
           await _service.saveBackup(instanceId: instanceId),
+        ServerControlOperation.restoreBackup =>
+          await _service.restoreBackup(instanceId: instanceId),
       };
       return state.copyWith(
         status: UiFlowStatus.success,
@@ -56,11 +58,18 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
         clearError: true,
       );
     }, emitLoading: true);
-    if (state.status == UiFlowStatus.success &&
-        operation != ServerControlOperation.saveBackup) {
+    if (state.status == UiFlowStatus.success && _refreshesRelease(operation)) {
       await _refreshReleaseAfterOperation();
     }
   }
+
+  static bool _refreshesRelease(ServerControlOperation operation) => switch (
+      operation) {
+    ServerControlOperation.saveBackup ||
+    ServerControlOperation.restoreBackup =>
+      false,
+    _ => true,
+  };
 
   /// Deliberately does not use [tryOperation] -- a failure here must not
   /// surface an error banner or clear [ServerControlState.release] for an
@@ -122,5 +131,6 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
         ServerControlOperation.restartNixOs => RootSshCommand.restartNixOs,
         ServerControlOperation.updateNixOs => RootSshCommand.updateNixOs,
         ServerControlOperation.saveBackup => RootSshCommand.saveBackup,
+        ServerControlOperation.restoreBackup => RootSshCommand.restoreBackup,
       };
 }

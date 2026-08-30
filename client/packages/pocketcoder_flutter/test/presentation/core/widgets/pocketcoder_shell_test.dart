@@ -43,6 +43,10 @@ class _FakeServerControlService implements IServerControlService {
   @override
   Future<ServerControlResult> saveBackup({required String instanceId}) =>
       throw UnimplementedError();
+
+  @override
+  Future<ServerControlResult> restoreBackup({required String instanceId}) =>
+      throw UnimplementedError();
 }
 
 void main() {

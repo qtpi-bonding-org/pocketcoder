@@ -9,6 +9,7 @@ enum ServerControlOperation {
   restartNixOs,
   updateNixOs,
   saveBackup,
+  restoreBackup,
 }
 
 class ServerControlState with UiFlowStateMixin {

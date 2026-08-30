@@ -3070,6 +3070,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlConfirmConfirm => 'CONFIRM';
 
   @override
+  String get serverControlConfirmRestoreTitle => 'RESTORE BACKUP?';
+
+  @override
+  String get serverControlConfirmRestoreBody =>
+      'This overwrites all current data on your server with the last saved backup. This cannot be undone.';
+
+  @override
   String get serverControlReleaseChecking => 'RELEASE STATUS: CHECKING';
 
   @override
@@ -3107,6 +3114,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverControlOperationSaveBackup => 'Save backup';
+
+  @override
+  String get serverControlOperationRestoreBackup => 'Restore backup';
+
+  @override
+  String get serverControlGroupPocketCoder => 'POCKETCODER';
+
+  @override
+  String get serverControlGroupNixOs => 'NIXOS';
+
+  @override
+  String get serverControlGroupData => 'DATA';
 
   @override
   String get serverControlPublicKeyLabel => 'SSH PUBLIC KEY ON FILE';

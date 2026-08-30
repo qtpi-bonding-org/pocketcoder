@@ -60,6 +60,10 @@ class _FakeService implements IServerControlService {
   Future<ServerControlResult> saveBackup({required String instanceId}) =>
       _call(ServerControlOperation.saveBackup);
 
+  @override
+  Future<ServerControlResult> restoreBackup({required String instanceId}) =>
+      _call(ServerControlOperation.restoreBackup);
+
   Future<ServerControlResult> _call(ServerControlOperation operation) {
     calls.add(operation);
     return pending[operation]!;
@@ -170,7 +174,7 @@ ServerControlResult _failure(ServerControlOperation operation) =>
     );
 
 void main() {
-  testWidgets('renders all five controls and release status', (tester) async {
+  testWidgets('renders all six controls and release status', (tester) async {
     final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     await tester.pumpWidget(_app(cubit));
@@ -183,12 +187,12 @@ void main() {
       l10n.serverControlOperationRestartNixOs,
       l10n.serverControlOperationUpdateNixOs,
       l10n.serverControlOperationSaveBackup,
+      l10n.serverControlOperationRestoreBackup,
     ];
     expect(operationLabels.length, ServerControlOperation.values.length,
         reason:
             'a new ServerControlOperation needs its label added here too');
     for (final label in operationLabels) {
-      // TerminalButton uppercases its label before rendering.
       expect(find.text(label.toUpperCase()), findsOneWidget);
     }
     await cubit.inspectRelease();
