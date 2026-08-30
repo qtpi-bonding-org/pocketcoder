@@ -597,6 +597,8 @@
       "price": {"type": "String"}
     }
   },
+  "proTermsOfServiceLink": "TERMS OF SERVICE",
+  "proPrivacyPolicyLink": "PRIVACY POLICY",
   "proActive": "> ENTITLEMENT: ACTIVE",
   "proActiveBody": "POCKETCODER PRO IS ACTIVE. DEPLOYMENT AND HOSTED NOTIFICATIONS ARE UNLOCKED.",
   "proUnavailable": "> OFFERING: UNAVAILABLE",

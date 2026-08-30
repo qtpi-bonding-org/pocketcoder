@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/billing/adapters/paywall_adapter.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -15,6 +16,11 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+
+// Apple requires these linked directly on the purchase screen itself, not
+// just reachable from elsewhere in the app.
+final Uri _termsOfServiceUri = Uri.parse('https://pocketcoder.org/terms');
+final Uri _privacyPolicyUri = Uri.parse('https://pocketcoder.org/privacy');
 
 class ProPaywallRouteArguments {
   const ProPaywallRouteArguments({this.returnOnUnlock = false});
@@ -29,11 +35,14 @@ class PaywallScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final launcher = getIt<InAppBrowserLauncher>();
     return BlocProvider(
       create: (_) => getIt<BillingCubit>()..loadOffering(),
       child: ProPaywallAdapter(
         returnOnUnlock: returnOnUnlock,
         onConfigureSelfHostedPush: getIt<PushService>().configure,
+        onOpenTermsOfService: () => launcher.open(_termsOfServiceUri),
+        onOpenPrivacyPolicy: () => launcher.open(_privacyPolicyUri),
       ),
     );
   }
@@ -46,6 +55,8 @@ class PaywallView extends StatelessWidget {
     required this.onPurchase,
     required this.onRestore,
     required this.onConfigureSelfHostedPush,
+    required this.onOpenTermsOfService,
+    required this.onOpenPrivacyPolicy,
     this.isOnboarding = false,
   });
 
@@ -53,6 +64,8 @@ class PaywallView extends StatelessWidget {
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
   final VoidCallback onConfigureSelfHostedPush;
+  final VoidCallback onOpenTermsOfService;
+  final VoidCallback onOpenPrivacyPolicy;
   final bool isOnboarding;
 
   @override
@@ -97,6 +110,8 @@ class PaywallView extends StatelessWidget {
       onPurchase: onPurchase,
       onRestore: onRestore,
       onConfigureSelfHostedPush: onConfigureSelfHostedPush,
+      onOpenTermsOfService: onOpenTermsOfService,
+      onOpenPrivacyPolicy: onOpenPrivacyPolicy,
       showSelfHostedOption: !isOnboarding,
     );
   }
@@ -108,6 +123,8 @@ class _ProOffer extends StatelessWidget {
     required this.onPurchase,
     required this.onRestore,
     required this.onConfigureSelfHostedPush,
+    required this.onOpenTermsOfService,
+    required this.onOpenPrivacyPolicy,
     required this.showSelfHostedOption,
   });
 
@@ -115,6 +132,8 @@ class _ProOffer extends StatelessWidget {
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
   final VoidCallback onConfigureSelfHostedPush;
+  final VoidCallback onOpenTermsOfService;
+  final VoidCallback onOpenPrivacyPolicy;
   final bool showSelfHostedOption;
 
   @override
@@ -172,6 +191,19 @@ class _ProOffer extends StatelessWidget {
           alpha: 0.65,
           textAlign: TextAlign.center,
           height: 1.4,
+        ),
+        Wrap(
+          alignment: WrapAlignment.center,
+          children: [
+            TextButton(
+              onPressed: onOpenTermsOfService,
+              child: Text(context.l10n.proTermsOfServiceLink),
+            ),
+            TextButton(
+              onPressed: onOpenPrivacyPolicy,
+              child: Text(context.l10n.proPrivacyPolicyLink),
+            ),
+          ],
         ),
         if (showSelfHostedOption) ...[
           VSpace.x3,

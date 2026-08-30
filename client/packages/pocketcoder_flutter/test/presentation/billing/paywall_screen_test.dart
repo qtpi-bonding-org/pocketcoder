@@ -22,6 +22,8 @@ void main() {
     VoidCallback? onPurchase,
     VoidCallback? onRestore,
     VoidCallback? onConfigure,
+    VoidCallback? onOpenTermsOfService,
+    VoidCallback? onOpenPrivacyPolicy,
     bool isOnboarding = false,
   }) {
     return MaterialApp(
@@ -33,6 +35,8 @@ void main() {
         onPurchase: onPurchase ?? () {},
         onRestore: onRestore ?? () {},
         onConfigureSelfHostedPush: onConfigure ?? () {},
+        onOpenTermsOfService: onOpenTermsOfService ?? () {},
+        onOpenPrivacyPolicy: onOpenPrivacyPolicy ?? () {},
         isOnboarding: isOnboarding,
       ),
     );
@@ -60,6 +64,25 @@ void main() {
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'shows Terms of Service and Privacy Policy links on the purchase '
+      'screen, and taps invoke their callbacks', (tester) async {
+    var termsOpened = 0;
+    var privacyOpened = 0;
+    await tester.pumpWidget(subject(
+      onOpenTermsOfService: () => termsOpened += 1,
+      onOpenPrivacyPolicy: () => privacyOpened += 1,
+    ));
+    await tester.pumpAndSettle();
+
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    await tester.tap(find.text(l10n.proTermsOfServiceLink));
+    await tester.tap(find.text(l10n.proPrivacyPolicyLink));
+
+    expect(termsOpened, 1);
+    expect(privacyOpened, 1);
   });
 
   testWidgets('invokes purchase, restore, and self-hosted callbacks',

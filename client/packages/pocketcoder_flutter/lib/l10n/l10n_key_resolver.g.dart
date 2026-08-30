@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-30T09:31:30.916133
+// Generated at: 2026-08-30T15:20:17.580171
 
 import 'app_localizations.dart';
 
@@ -645,6 +645,7 @@ class L10nKeyResolver {
       'pro.feature.ready' => _l10n.proFeatureReady,
       'pro.not.now' => _l10n.proNotNow,
       'pro.plan.title' => _l10n.proPlanTitle,
+      'pro.privacy.policy.link' => _l10n.proPrivacyPolicyLink,
       'pro.restore' => _l10n.proRestore,
       'pro.self.hosted.push.body' => _l10n.proSelfHostedPushBody,
       'pro.self.hosted.push.title' => _l10n.proSelfHostedPushTitle,
@@ -652,6 +653,7 @@ class L10nKeyResolver {
       'pro.settings.status' => _l10n.proSettingsStatus,
       'pro.subscribe' => _l10n.proSubscribe,
       'pro.summary' => _l10n.proSummary,
+      'pro.terms.of.service.link' => _l10n.proTermsOfServiceLink,
       'pro.title' => _l10n.proTitle,
       'pro.trial.lapse.explainer' => _l10n.proTrialLapseExplainer,
       'pro.trial.no.payment.info' => _l10n.proTrialNoPaymentInfo,
@@ -1651,6 +1653,7 @@ class L10nKeyResolver {
     'pro.price.per.month',
     'pro.price.per.week',
     'pro.price.per.year',
+    'pro.privacy.policy.link',
     'pro.restore',
     'pro.self.hosted.push.body',
     'pro.self.hosted.push.title',
@@ -1660,6 +1663,7 @@ class L10nKeyResolver {
     'pro.subscribe',
     'pro.summary',
     'pro.terms',
+    'pro.terms.of.service.link',
     'pro.title',
     'pro.trial.duration',
     'pro.trial.lapse.explainer',
@@ -2597,6 +2601,7 @@ class L10nKeyResolver {
     'proPricePerMonth': 'pro.price.per.month',
     'proPricePerWeek': 'pro.price.per.week',
     'proPricePerYear': 'pro.price.per.year',
+    'proPrivacyPolicyLink': 'pro.privacy.policy.link',
     'proRestore': 'pro.restore',
     'proSelfHostedPushBody': 'pro.self.hosted.push.body',
     'proSelfHostedPushTitle': 'pro.self.hosted.push.title',
@@ -2606,6 +2611,7 @@ class L10nKeyResolver {
     'proSubscribe': 'pro.subscribe',
     'proSummary': 'pro.summary',
     'proTerms': 'pro.terms',
+    'proTermsOfServiceLink': 'pro.terms.of.service.link',
     'proTitle': 'pro.title',
     'proTrialDuration': 'pro.trial.duration',
     'proTrialLapseExplainer': 'pro.trial.lapse.explainer',
@@ -3540,6 +3546,7 @@ class L10nKeyResolver {
     'pro.price.per.month': 'proPricePerMonth',
     'pro.price.per.week': 'proPricePerWeek',
     'pro.price.per.year': 'proPricePerYear',
+    'pro.privacy.policy.link': 'proPrivacyPolicyLink',
     'pro.restore': 'proRestore',
     'pro.self.hosted.push.body': 'proSelfHostedPushBody',
     'pro.self.hosted.push.title': 'proSelfHostedPushTitle',
@@ -3549,6 +3556,7 @@ class L10nKeyResolver {
     'pro.subscribe': 'proSubscribe',
     'pro.summary': 'proSummary',
     'pro.terms': 'proTerms',
+    'pro.terms.of.service.link': 'proTermsOfServiceLink',
     'pro.title': 'proTitle',
     'pro.trial.duration': 'proTrialDuration',
     'pro.trial.lapse.explainer': 'proTrialLapseExplainer',
@@ -4490,6 +4498,7 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) proPricePerMonth(String price) => ('pro.price.per.month', {'price': price});
   static (String, Map<String, dynamic>) proPricePerWeek(String price) => ('pro.price.per.week', {'price': price});
   static (String, Map<String, dynamic>) proPricePerYear(String price) => ('pro.price.per.year', {'price': price});
+  static const proPrivacyPolicyLink = 'pro.privacy.policy.link';
   static const proRestore = 'pro.restore';
   static const proSelfHostedPushBody = 'pro.self.hosted.push.body';
   static const proSelfHostedPushTitle = 'pro.self.hosted.push.title';
@@ -4499,6 +4508,7 @@ abstract class L10nKeys {
   static const proSubscribe = 'pro.subscribe';
   static const proSummary = 'pro.summary';
   static (String, Map<String, dynamic>) proTerms(String price) => ('pro.terms', {'price': price});
+  static const proTermsOfServiceLink = 'pro.terms.of.service.link';
   static const proTitle = 'pro.title';
   static (String, Map<String, dynamic>) proTrialDuration(int days) => ('pro.trial.duration', {'days': days});
   static const proTrialLapseExplainer = 'pro.trial.lapse.explainer';

@@ -1294,6 +1294,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get proTermsOfServiceLink => 'TERMS OF SERVICE';
+
+  @override
+  String get proPrivacyPolicyLink => 'PRIVACY POLICY';
+
+  @override
   String get proActive => '> ENTITLEMENT: ACTIVE';
 
   @override

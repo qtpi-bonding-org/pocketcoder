@@ -2458,6 +2458,18 @@ abstract class AppLocalizations {
   /// **'FREE FOR {days} DAYS, THEN {price} UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.'**
   String proTrialTerms(int days, String price);
 
+  /// No description provided for @proTermsOfServiceLink.
+  ///
+  /// In en, this message translates to:
+  /// **'TERMS OF SERVICE'**
+  String get proTermsOfServiceLink;
+
+  /// No description provided for @proPrivacyPolicyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'PRIVACY POLICY'**
+  String get proPrivacyPolicyLink;
+
   /// No description provided for @proActive.
   ///
   /// In en, this message translates to:
