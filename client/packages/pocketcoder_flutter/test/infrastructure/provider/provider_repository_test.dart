@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/provider_exception.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
@@ -120,12 +121,21 @@ void main() {
     verify(() => modelDao.watch()).called(1);
   });
 
-  test('watchHarnessModels forwards harnessModelDao.watch()', () {
-    final stream = Stream<List<HarnessModel>>.value([testHarnessModel]);
-    when(() => harnessModelDao.watch()).thenAnswer((_) => stream);
+  test(
+      'fetchHarnessModels calls harnessModelDao.getFullList with '
+      'RequestPolicy.networkOnly -- harness_models is a 16k+ row read-only '
+      'catalog that must never be written into the local drift cache',
+      () async {
+    when(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) async => [testHarnessModel]);
 
-    expect(repo.watchHarnessModels(), emits([testHarnessModel]));
-    verify(() => harnessModelDao.watch()).called(1);
+    final result = await repo.fetchHarnessModels();
+
+    expect(result, [testHarnessModel]);
+    verify(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(1);
   });
 
   test('watchProviderAPIKeys forwards providerAPIKeyDao.watch()', () {

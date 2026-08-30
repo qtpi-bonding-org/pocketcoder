@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/provider_exception.dart';
@@ -38,7 +39,8 @@ class ProviderRepository implements IProviderRepository {
   Stream<List<Model>> watchModels() => _modelDao.watch();
 
   @override
-  Stream<List<HarnessModel>> watchHarnessModels() => _harnessModelDao.watch();
+  Future<List<HarnessModel>> fetchHarnessModels() =>
+      _harnessModelDao.getFullList(requestPolicy: RequestPolicy.networkOnly);
 
   @override
   Stream<List<HarnessProvider>> watchHarnessProviders() =>
