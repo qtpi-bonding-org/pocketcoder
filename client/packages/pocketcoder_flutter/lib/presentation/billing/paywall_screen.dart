@@ -46,7 +46,6 @@ class PaywallView extends StatelessWidget {
     required this.onPurchase,
     required this.onRestore,
     required this.onConfigureSelfHostedPush,
-    this.showNavigation = true,
     this.isOnboarding = false,
   });
 
@@ -54,7 +53,6 @@ class PaywallView extends StatelessWidget {
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
   final VoidCallback onConfigureSelfHostedPush;
-  final bool showNavigation;
   final bool isOnboarding;
 
   @override
@@ -64,7 +62,6 @@ class PaywallView extends StatelessWidget {
       activePillar: NavPillar.configure,
       showBack: true,
       backLabel: isOnboarding ? context.l10n.proNotNow : null,
-      showNavigation: showNavigation,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),

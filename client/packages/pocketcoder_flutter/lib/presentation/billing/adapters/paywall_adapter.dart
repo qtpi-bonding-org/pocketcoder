@@ -32,7 +32,6 @@ class ProPaywallAdapter extends CubitAdapter<BillingCubit, BillingState> {
         builder: (context, value, _) => PaywallView(
           state: value,
           isOnboarding: returnOnUnlock,
-          showNavigation: !returnOnUnlock,
           onPurchase: () => _purchase(context, cubit, value),
           onRestore: () => _restore(context, cubit),
           onConfigureSelfHostedPush: onConfigureSelfHostedPush,

@@ -22,7 +22,6 @@ void main() {
     VoidCallback? onPurchase,
     VoidCallback? onRestore,
     VoidCallback? onConfigure,
-    bool showNavigation = true,
     bool isOnboarding = false,
   }) {
     return MaterialApp(
@@ -34,7 +33,6 @@ void main() {
         onPurchase: onPurchase ?? () {},
         onRestore: onRestore ?? () {},
         onConfigureSelfHostedPush: onConfigure ?? () {},
-        showNavigation: showNavigation,
         isOnboarding: isOnboarding,
       ),
     );
@@ -89,10 +87,7 @@ void main() {
 
   testWidgets('keeps only the back action inside the deployment flow',
       (tester) async {
-    await tester.pumpWidget(subject(
-      showNavigation: false,
-      isOnboarding: true,
-    ));
+    await tester.pumpWidget(subject(isOnboarding: true));
     await tester.pumpAndSettle();
 
     expect(find.byType(TerminalFooter), findsOneWidget);
@@ -101,5 +96,17 @@ void main() {
     expect(find.text('MONITOR'), findsNothing);
     expect(find.text('CONFIGURE'), findsNothing);
     expect(find.text('CONFIGURE SELF-HOSTED PUSH'), findsNothing);
+  });
+
+  testWidgets(
+      'keeps only the back action when reached standalone from Configure, '
+      'not just during onboarding', (tester) async {
+    await tester.pumpWidget(subject());
+    await tester.pumpAndSettle();
+
+    expect(find.text('CHATS'), findsNothing);
+    expect(find.text('MONITOR'), findsNothing);
+    expect(find.text('CONFIGURE'), findsNothing);
+    expect(find.text('MANAGE'), findsNothing);
   });
 }
