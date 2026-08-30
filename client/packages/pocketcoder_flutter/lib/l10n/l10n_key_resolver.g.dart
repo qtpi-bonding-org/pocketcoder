@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-29T18:12:57.780017
+// Generated at: 2026-08-29T18:24:26.827003
 
 import 'app_localizations.dart';
 
@@ -934,7 +934,9 @@ class L10nKeyResolver {
       'pro.trial.terms' => _l10n.proTrialTerms(args?['days'] as int? ?? 0, args?['price'] as String? ?? ''),
       'provider.screen.add.key.body' => _l10n.providerScreenAddKeyBody(args?['provider'] as String? ?? ''),
       'provider.screen.add.key.title' => _l10n.providerScreenAddKeyTitle(args?['provider'] as String? ?? ''),
+      'provider.screen.browse.all.models' => _l10n.providerScreenBrowseAllModels(args?['count'] as int? ?? 0),
       'provider.screen.error.prefix' => _l10n.providerScreenErrorPrefix(args?['error'] as String? ?? ''),
+      'provider.screen.harness.model.count' => _l10n.providerScreenHarnessModelCount(args?['count'] as int? ?? 0),
       'scheduler.edit.dialog.title' => _l10n.schedulerEditDialogTitle(args?['name'] as String? ?? ''),
       'server.control.confirm.body' => _l10n.serverControlConfirmBody(args?['operation'] as String? ?? ''),
       'server.control.release.current' => _l10n.serverControlReleaseCurrent(args?['version'] as String? ?? ''),
@@ -1648,9 +1650,11 @@ class L10nKeyResolver {
     'provider.screen.add.key.body',
     'provider.screen.add.key.title',
     'provider.screen.api.keys.section',
+    'provider.screen.browse.all.models',
     'provider.screen.default.badge',
     'provider.screen.empty.hint',
     'provider.screen.error.prefix',
+    'provider.screen.harness.model.count',
     'provider.screen.harness.models.section',
     'provider.screen.loading',
     'provider.screen.no.api.keys',
@@ -2572,9 +2576,11 @@ class L10nKeyResolver {
     'providerScreenAddKeyBody': 'provider.screen.add.key.body',
     'providerScreenAddKeyTitle': 'provider.screen.add.key.title',
     'providerScreenApiKeysSection': 'provider.screen.api.keys.section',
+    'providerScreenBrowseAllModels': 'provider.screen.browse.all.models',
     'providerScreenDefaultBadge': 'provider.screen.default.badge',
     'providerScreenEmptyHint': 'provider.screen.empty.hint',
     'providerScreenErrorPrefix': 'provider.screen.error.prefix',
+    'providerScreenHarnessModelCount': 'provider.screen.harness.model.count',
     'providerScreenHarnessModelsSection': 'provider.screen.harness.models.section',
     'providerScreenLoading': 'provider.screen.loading',
     'providerScreenNoApiKeys': 'provider.screen.no.api.keys',
@@ -3493,9 +3499,11 @@ class L10nKeyResolver {
     'provider.screen.add.key.body': 'providerScreenAddKeyBody',
     'provider.screen.add.key.title': 'providerScreenAddKeyTitle',
     'provider.screen.api.keys.section': 'providerScreenApiKeysSection',
+    'provider.screen.browse.all.models': 'providerScreenBrowseAllModels',
     'provider.screen.default.badge': 'providerScreenDefaultBadge',
     'provider.screen.empty.hint': 'providerScreenEmptyHint',
     'provider.screen.error.prefix': 'providerScreenErrorPrefix',
+    'provider.screen.harness.model.count': 'providerScreenHarnessModelCount',
     'provider.screen.harness.models.section': 'providerScreenHarnessModelsSection',
     'provider.screen.loading': 'providerScreenLoading',
     'provider.screen.no.api.keys': 'providerScreenNoApiKeys',
@@ -4421,9 +4429,11 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) providerScreenAddKeyBody(String provider) => ('provider.screen.add.key.body', {'provider': provider});
   static (String, Map<String, dynamic>) providerScreenAddKeyTitle(String provider) => ('provider.screen.add.key.title', {'provider': provider});
   static const providerScreenApiKeysSection = 'provider.screen.api.keys.section';
+  static (String, Map<String, dynamic>) providerScreenBrowseAllModels(int count) => ('provider.screen.browse.all.models', {'count': count});
   static const providerScreenDefaultBadge = 'provider.screen.default.badge';
   static const providerScreenEmptyHint = 'provider.screen.empty.hint';
   static (String, Map<String, dynamic>) providerScreenErrorPrefix(String error) => ('provider.screen.error.prefix', {'error': error});
+  static (String, Map<String, dynamic>) providerScreenHarnessModelCount(int count) => ('provider.screen.harness.model.count', {'count': count});
   static const providerScreenHarnessModelsSection = 'provider.screen.harness.models.section';
   static const providerScreenLoading = 'provider.screen.loading';
   static const providerScreenNoApiKeys = 'provider.screen.no.api.keys';

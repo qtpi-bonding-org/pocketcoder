@@ -1033,6 +1033,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get providerScreenNoHarnessModels => 'NO HARNESS MODELS LISTED';
 
   @override
+  String providerScreenHarnessModelCount(int count) {
+    return '$count MODELS';
+  }
+
+  @override
+  String providerScreenBrowseAllModels(int count) {
+    return 'BROWSE ALL $count MODELS';
+  }
+
+  @override
   String get providerScreenNoApiKeys => 'NO API KEYS CONFIGURED';
 
   @override

@@ -453,6 +453,18 @@
   "providerScreenHarnessModelsSection": "HARNESS MODELS",
   "providerScreenApiKeysSection": "API KEYS",
   "providerScreenNoHarnessModels": "NO HARNESS MODELS LISTED",
+  "providerScreenHarnessModelCount": "{count} MODELS",
+  "@providerScreenHarnessModelCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "providerScreenBrowseAllModels": "BROWSE ALL {count} MODELS",
+  "@providerScreenBrowseAllModels": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "providerScreenNoApiKeys": "NO API KEYS CONFIGURED",
   "providerScreenEmptyHint": "NO HARNESS MODELS OR API KEYS YET",
   "providerScreenAddKey": "ADD KEY",

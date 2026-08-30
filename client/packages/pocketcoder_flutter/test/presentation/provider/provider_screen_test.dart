@@ -19,7 +19,10 @@ Widget _app(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('renders harness model tiles as BiosRows', (tester) async {
+  testWidgets(
+      'harness model catalog is grouped into a collapsed-by-default '
+      'section per harness -- model tiles only appear once expanded',
+      (tester) async {
     await tester.pumpWidget(_app(ProviderView(
       state: ProviderState(
         harnesses: [
@@ -52,9 +55,59 @@ void main() {
       onSave: (_) async {},
     )));
 
-    expect(find.byType(BiosRow), findsOneWidget);
+    // Collapsed by default: the harness section header is visible, but its
+    // model tile is not built yet.
     expect(find.text('CLAUDE'), findsOneWidget);
+    expect(find.text('SONNET'), findsNothing);
+
+    await tester.tap(find.text('CLAUDE'));
+    await tester.pumpAndSettle();
+
     expect(find.text('SONNET'), findsOneWidget);
+  });
+
+  testWidgets(
+      'a harness with more than 50 models shows a "browse all" button '
+      'instead of building every tile inline -- proves the section is '
+      'genuinely lazy for a large catalog, not just visually collapsed',
+      (tester) async {
+    final manyModels = List.generate(
+      51,
+      (i) => HarnessModel(
+        id: 'hm-$i',
+        harness: 'h1',
+        model: 'm1',
+        harnessModelId: 'model-$i',
+      ),
+    );
+
+    await tester.pumpWidget(_app(ProviderView(
+      state: ProviderState(
+        harnesses: [
+          const Harnesse(
+            id: 'h1',
+            name: 'Claude',
+            cliId: 'claude',
+            acpTransport: HarnesseAcpTransport.http,
+          ),
+        ],
+        harnessModels: manyModels,
+      ),
+      onDelete: (_) async {},
+      onSave: (_) async {},
+    )));
+
+    await tester.tap(find.text('CLAUDE'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('MODEL-0'), findsNothing);
+    expect(find.text('MODEL-50'), findsNothing);
+    expect(find.text('BROWSE ALL 51 MODELS'), findsOneWidget);
+
+    await tester.tap(find.text('BROWSE ALL 51 MODELS'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('MODEL-0'), findsOneWidget);
   });
 
   testWidgets(

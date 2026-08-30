@@ -2008,6 +2008,18 @@ abstract class AppLocalizations {
   /// **'NO HARNESS MODELS LISTED'**
   String get providerScreenNoHarnessModels;
 
+  /// No description provided for @providerScreenHarnessModelCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} MODELS'**
+  String providerScreenHarnessModelCount(int count);
+
+  /// No description provided for @providerScreenBrowseAllModels.
+  ///
+  /// In en, this message translates to:
+  /// **'BROWSE ALL {count} MODELS'**
+  String providerScreenBrowseAllModels(int count);
+
   /// No description provided for @providerScreenNoApiKeys.
   ///
   /// In en, this message translates to:

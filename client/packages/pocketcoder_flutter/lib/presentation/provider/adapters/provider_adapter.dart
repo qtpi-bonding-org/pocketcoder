@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -111,12 +112,10 @@ class ProviderView extends StatelessWidget {
           title: context.l10n.providerScreenHarnessModelsSection,
           child: _buildHarnessModelList(context, state),
         ),
-
         BiosSection(
           title: context.l10n.providerScreenApiKeysSection,
           child: _buildProviderKeyList(context, state),
         ),
-
         if (showEmptyHint)
           Center(
             child: Padding(
@@ -131,7 +130,6 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-
   Widget _buildHarnessModelList(BuildContext context, ProviderState state) {
     if (state.harnessModels.isEmpty) {
       return Padding(
@@ -145,44 +143,46 @@ class ProviderView extends StatelessWidget {
       );
     }
 
+    final byHarness = <String, List<HarnessModel>>{};
+    for (final hm in state.harnessModels) {
+      (byHarness[hm.harness] ??= []).add(hm);
+    }
+    final harnessIds = byHarness.keys.toList()
+      ..sort((a, b) => _harnessNameFor(state, a).compareTo(
+            _harnessNameFor(state, b),
+          ));
+
     return Column(
-      children: state.harnessModels
-          .map((hm) => _buildHarnessModelTile(context, state, hm))
-          .toList(),
+      children: [
+        for (final harnessId in harnessIds)
+          _HarnessGroupSection(
+            harnessName: _harnessNameFor(state, harnessId),
+            models: byHarness[harnessId]!,
+            modelNameFor: (hm) => _modelNameFor(state, hm),
+          ),
+      ],
     );
   }
 
-  Widget _buildHarnessModelTile(
-    BuildContext context,
-    ProviderState state,
-    HarnessModel hm,
-  ) {
-    String harnessName = hm.harness;
+  String _harnessNameFor(ProviderState state, String harnessId) {
     for (final h in state.harnesses) {
-      if (h.id == hm.harness) {
-        harnessName = h.name;
-        break;
-      }
+      if (h.id == harnessId) return h.name;
     }
+    return harnessId;
+  }
 
-    String modelName = hm.model;
+  String _modelNameFor(ProviderState state, HarnessModel hm) {
     for (final m in state.models) {
       if (m.id == hm.model) {
         final dn = m.displayName;
-        modelName = dn != null && dn.isNotEmpty ? dn : m.name;
-        break;
+        return dn != null && dn.isNotEmpty ? dn : m.name;
       }
     }
-
-    final isDefault = hm.isDefault ?? false;
-
-    return BiosRow(
-      label: harnessName,
-      value: modelName,
-      hasBadge: isDefault,
-    );
+    // A catalog row can arrive before its referenced model record. In that
+    // case the harness-specific id is the useful display value (and is also
+    // what the picker exposes), rather than the opaque model foreign key.
+    return hm.harnessModelId;
   }
-
 
   Widget _buildProviderKeyList(BuildContext context, ProviderState state) {
     if (state.providerAPIKeys.isEmpty) {
@@ -265,7 +265,6 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-
   void _openKeyEditor(
     BuildContext context,
     ProviderState state,
@@ -286,7 +285,6 @@ class ProviderView extends StatelessWidget {
     );
   }
 
-
   /// Shows a short prefix and suffix of the provider API key.
   String _maskKeyPreview(String? apiKey) {
     if (apiKey == null || apiKey.isEmpty) return '***';
@@ -294,5 +292,80 @@ class ProviderView extends StatelessWidget {
       return '${apiKey.substring(0, 4)}..${apiKey.substring(apiKey.length - 4)}';
     }
     return '****';
+  }
+}
+
+class _HarnessGroupSection extends StatefulWidget {
+  const _HarnessGroupSection({
+    required this.harnessName,
+    required this.models,
+    required this.modelNameFor,
+  });
+
+  final String harnessName;
+  final List<HarnessModel> models;
+  final String Function(HarnessModel) modelNameFor;
+
+  static const _inlineTileLimit = 50;
+
+  @override
+  State<_HarnessGroupSection> createState() => _HarnessGroupSectionState();
+}
+
+class _HarnessGroupSectionState extends State<_HarnessGroupSection> {
+  bool _expanded = false;
+
+  Widget _tile(HarnessModel hm) => BiosRow(
+        label: widget.modelNameFor(hm),
+        hasBadge: hm.isDefault ?? false,
+      );
+
+  Future<void> _browseAll(BuildContext context) async {
+    await showDialog<HarnessModel>(
+      context: context,
+      builder: (dialogContext) => SearchablePickerDialog<HarnessModel>(
+        title: widget.harnessName,
+        items: widget.models,
+        itemLabel: widget.modelNameFor,
+        itemBuilder: (context, hm, {required isSelected, required onTap}) =>
+            _tile(hm),
+        searchLabel: dialogContext.l10n.providerScreenSearchLabel,
+        searchHint: dialogContext.l10n.providerScreenSearchHint,
+        emptyLabel: dialogContext.l10n.providerScreenNoHarnessModels,
+        noMatchesLabel: dialogContext.l10n.providerScreenSearchNoMatches,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final overLimit =
+        widget.models.length > _HarnessGroupSection._inlineTileLimit;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        BiosRow(
+          label: widget.harnessName,
+          value: context.l10n.providerScreenHarnessModelCount(
+            widget.models.length,
+          ),
+          variant: BiosRowVariant.expand,
+          isExpanded: _expanded,
+          onTap: () => setState(() => _expanded = !_expanded),
+        ),
+        if (_expanded && !overLimit)
+          for (final hm in widget.models) _tile(hm),
+        if (_expanded && overLimit)
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSizes.space),
+            child: TerminalButton(
+              label: context.l10n.providerScreenBrowseAllModels(
+                widget.models.length,
+              ),
+              onTap: () => _browseAll(context),
+            ),
+          ),
+      ],
+    );
   }
 }
