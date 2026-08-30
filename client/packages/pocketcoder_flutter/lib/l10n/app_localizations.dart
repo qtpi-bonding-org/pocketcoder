@@ -1900,6 +1900,24 @@ abstract class AppLocalizations {
   /// **'NO HARNESS MODELS AVAILABLE'**
   String get agentConfigNoHarnessModels;
 
+  /// No description provided for @agentConfigHarnessModelSearchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SEARCH'**
+  String get agentConfigHarnessModelSearchLabel;
+
+  /// No description provided for @agentConfigHarnessModelSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter harness models'**
+  String get agentConfigHarnessModelSearchHint;
+
+  /// No description provided for @agentConfigNoMatchingHarnessModels.
+  ///
+  /// In en, this message translates to:
+  /// **'NO MATCHING HARNESS MODELS'**
+  String get agentConfigNoMatchingHarnessModels;
+
   /// No description provided for @agentConfigNoPrompts.
   ///
   /// In en, this message translates to:

@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.
 import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
+import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
@@ -79,11 +80,29 @@ void main() {
     expect(find.text('SECOND PROMPT'), findsOneWidget);
   });
 
-  testWidgets('harness model picker lists models', (tester) async {
-    await pumpView(tester, providerState: ProviderState(harnessModels: [model]));
-    await tester.tap(find.text('ADD NEW')); await tester.pumpAndSettle();
-    await tester.tap(find.text('HARNESS MODEL')); await tester.pumpAndSettle();
+  testWidgets(
+      'harness model picker lists models grouped by harness display name',
+      (tester) async {
+    await pumpView(
+      tester,
+      providerState: ProviderState(
+        harnesses: [
+          Harnesse(
+            id: 'h-1',
+            name: 'Goose',
+            cliId: 'goose',
+            acpTransport: HarnesseAcpTransport.websocket,
+          ),
+        ],
+        harnessModels: [model],
+      ),
+    );
+    await tester.tap(find.text('ADD NEW'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('HARNESS MODEL'));
+    await tester.pumpAndSettle();
     expect(find.text('SELECT HARNESS MODEL'), findsOneWidget);
+    expect(find.text('GOOSE'), findsOneWidget);
     expect(find.text('HARNESS::MODEL'), findsOneWidget);
   });
 

@@ -975,6 +975,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentConfigNoHarnessModels => 'NO HARNESS MODELS AVAILABLE';
 
   @override
+  String get agentConfigHarnessModelSearchLabel => 'SEARCH';
+
+  @override
+  String get agentConfigHarnessModelSearchHint => 'Filter harness models';
+
+  @override
+  String get agentConfigNoMatchingHarnessModels => 'NO MATCHING HARNESS MODELS';
+
+  @override
   String get agentConfigNoPrompts => 'NO PROMPTS AVAILABLE';
 
   @override

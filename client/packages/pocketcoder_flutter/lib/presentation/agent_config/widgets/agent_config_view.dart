@@ -3,11 +3,13 @@ import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.
 import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
+import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -98,6 +100,7 @@ class AgentConfigView extends StatelessWidget {
             existing: existing,
             prompts: state.prompts,
             models: providerState.harnessModels,
+            harnesses: providerState.harnesses,
             onSave: (updated) {
               onSave(updated);
               Navigator.of(dialogContext).pop();
@@ -162,6 +165,7 @@ class _AgentConfigEditorDialog extends StatefulWidget {
     required this.existing,
     required this.prompts,
     required this.models,
+    required this.harnesses,
     required this.onSave,
     this.onDelete,
   });
@@ -169,6 +173,7 @@ class _AgentConfigEditorDialog extends StatefulWidget {
   final PocoConfig? existing;
   final List<Prompt> prompts;
   final List<HarnessModel> models;
+  final List<Harnesse> harnesses;
   final void Function(PocoConfig updated) onSave;
   final VoidCallback? onDelete;
 
@@ -245,6 +250,7 @@ class _AgentConfigEditorDialogState extends State<_AgentConfigEditorDialog> {
               VSpace.x2,
               _HarnessModelPicker(
                 models: widget.models,
+                harnesses: widget.harnesses,
                 selectedHarnessModelId: _harnessModelId,
                 onSelected: (id) => setState(() => _harnessModelId = id),
               ),
@@ -326,13 +332,39 @@ class _PromptPicker extends StatelessWidget {
 }
 
 class _HarnessModelPicker extends StatelessWidget {
-  const _HarnessModelPicker({required this.models, required this.selectedHarnessModelId, required this.onSelected});
-  final List<HarnessModel> models; final String? selectedHarnessModelId; final ValueChanged<String?> onSelected;
+  const _HarnessModelPicker({required this.models, required this.harnesses, required this.selectedHarnessModelId, required this.onSelected});
+  final List<HarnessModel> models; final List<Harnesse> harnesses; final String? selectedHarnessModelId; final ValueChanged<String?> onSelected;
+
+  String _harnessNameFor(String harnessId) => harnesses
+          .where((h) => h.id == harnessId)
+          .firstOrNull
+          ?.name ??
+      harnessId;
+
   @override Widget build(BuildContext context) {
     final selected = models.where((m) => m.id == selectedHarnessModelId).firstOrNull;
     return _SelectionField(label: context.l10n.agentConfigHarnessModelLabel, currentValue: selected?.harnessModelId.toUpperCase() ?? context.l10n.agentConfigSelectHarnessModel.toUpperCase(), onTap: () async {
-      final picked = await _showListDialog<String>(context, title: context.l10n.agentConfigSelectHarnessModel, emptyLabel: context.l10n.agentConfigNoHarnessModels, items: models.map((m)=>(id:m.id,label:m.harnessModelId.toUpperCase())).toList(), initialValue:selectedHarnessModelId);
-      if (picked != null) onSelected(picked);
+      final picked = await showDialog<HarnessModel>(
+        context: context,
+        builder: (dialogContext) => SearchablePickerDialog<HarnessModel>(
+          title: dialogContext.l10n.agentConfigSelectHarnessModel,
+          items: models,
+          itemLabel: (m) => m.harnessModelId,
+          groupLabel: (m) => _harnessNameFor(m.harness),
+          itemBuilder: (context, m, {required isSelected, required onTap}) =>
+              BiosRow(
+            label: m.harnessModelId.toUpperCase(),
+            isSelected: isSelected,
+            onTap: onTap,
+          ),
+          selectedItem: selected,
+          searchLabel: dialogContext.l10n.agentConfigHarnessModelSearchLabel,
+          searchHint: dialogContext.l10n.agentConfigHarnessModelSearchHint,
+          emptyLabel: dialogContext.l10n.agentConfigNoHarnessModels,
+          noMatchesLabel: dialogContext.l10n.agentConfigNoMatchingHarnessModels,
+        ),
+      );
+      if (picked != null) onSelected(picked.id);
     });
   }
 }
