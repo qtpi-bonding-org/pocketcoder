@@ -42,8 +42,13 @@ class ChatListView extends StatelessWidget {
           Expanded(
             child: state.status == UiFlowStatus.loading
                 ? const Center(child: TerminalLoadingIndicator())
-                : ListView.builder(
+                : ListView.separated(
                     itemCount: state.chats.length,
+                    separatorBuilder: (context, index) => Divider(
+                      color: context.colorScheme.primary.withValues(alpha: 0.3),
+                      thickness: AppSizes.borderWidth,
+                      height: AppSizes.borderWidth,
+                    ),
                     itemBuilder: (context, index) {
                       final chat = state.chats[index];
                       return ChatListTile(

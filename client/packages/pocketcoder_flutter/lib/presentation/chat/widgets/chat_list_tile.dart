@@ -47,8 +47,18 @@ class ChatListTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TerminalText.label(headline),
-              if (previewLine != null) TerminalText.mini(previewLine, alpha: 0.6),
+              TerminalText.label(
+                headline,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (previewLine != null)
+                TerminalText.mini(
+                  previewLine,
+                  alpha: 0.6,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               if (chat.lastActive != null)
                 TerminalText.mini(
                   _formatRelativeTime(context, chat.lastActive),
