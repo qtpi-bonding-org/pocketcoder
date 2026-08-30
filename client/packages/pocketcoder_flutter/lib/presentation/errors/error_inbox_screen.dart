@@ -53,21 +53,41 @@ class ErrorInboxScreen extends StatelessWidget {
                     alignment: WrapAlignment.end,
                     spacing: AppSizes.space,
                     children: [
-                      TerminalButton(
-                        label: context.l10n.errorsCopyAll,
-                        isPrimary: true,
-                        onTap: onCopyAll,
+                      BiosActionButton(
+                        action: BiosActionStripItem(
+                          label: context.l10n.errorsCopyAll,
+                          color: context.colorScheme.primary,
+                          emphasis: Emphasis.outlined,
+                          onTap: onCopyAll,
+                        ),
                       ),
-                      TerminalButton(
-                        label: context.l10n.errorsClearAll,
-                        isPrimary: false,
-                        onTap: onClearAll,
+                      BiosActionButton(
+                        action: BiosActionStripItem(
+                          label: context.l10n.errorsClearAll,
+                          color: context.terminalColors.danger,
+                          emphasis: Emphasis.outlined,
+                          onTap: onClearAll,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                for (final entry in errors)
-                  _ErrorTile(entry: entry, onCopy: onCopy, onDelete: onDelete),
+                // A plain Column here overflows once the tiles' combined
+                // height (an expanded tile's full stack trace especially)
+                // exceeds the frame's bounded height -- this list needs to
+                // scroll on its own rather than push past the frame.
+                Expanded(
+                  child: ListView(
+                    children: [
+                      for (final entry in errors)
+                        _ErrorTile(
+                          entry: entry,
+                          onCopy: onCopy,
+                          onDelete: onDelete,
+                        ),
+                    ],
+                  ),
+                ),
               ],
             );
           },
@@ -107,6 +127,7 @@ class _ErrorTileState extends State<_ErrorTile> {
               '${context.l10n.errorsOccurred(entry.occurrenceCount)}',
           variant: BiosRowVariant.expand,
           isExpanded: _isExpanded,
+          labelFontSize: AppSizes.fontSmall,
           onTap: () => setState(() => _isExpanded = !_isExpanded),
         ),
       ],
@@ -138,6 +159,7 @@ class _ErrorTileState extends State<_ErrorTile> {
         actions: [
           BiosActionStripItem(
             label: 'DELETE',
+            color: context.terminalColors.danger,
             onTap: () => widget.onDelete(entry.id),
           ),
         ],
