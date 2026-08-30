@@ -22,7 +22,8 @@ class ServerControlScreen extends StatelessWidget {
               ? getIt<IServerConnectionDetailsProvider>()
               : null,
         )
-          ..inspectRelease(),
+          ..inspectRelease()
+          ..loadPublicKey(instanceId),
         child: ServerControlView(instanceId: instanceId),
       );
 }

@@ -50,6 +50,16 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
     }, emitLoading: true);
   }
 
+  Future<void> loadPublicKey(String instanceId) async {
+    try {
+      final publicKey = await _service.readPublicKey(instanceId: instanceId);
+      emit(state.copyWith(publicKey: publicKey));
+    } on Object {
+      // A failed key read shouldn't block the control buttons -- and this
+      // is fire-and-forget, so an uncaught error here becomes unhandled.
+    }
+  }
+
   static RootSshCommand commandFor(ServerControlOperation operation) =>
       switch (operation) {
         ServerControlOperation.restartPocketCoder =>

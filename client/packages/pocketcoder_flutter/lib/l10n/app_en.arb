@@ -1274,6 +1274,7 @@
   "serverControlOperationUpdateNixOs": "Update NixOS",
   "serverControlOperationSaveBackup": "Save backup",
   "serverControlOpenChat": "OPEN CHAT",
+  "serverControlPublicKeyLabel": "SSH PUBLIC KEY ON FILE",
   "initializationInstanceId": "INSTANCE ID",
   "initializationRetryAttempt": "RETRY ATTEMPT",
   "@deploymentCleanupNotNeeded": { "description": "Cleanup outcome shown when no cloud server needed cleanup" }

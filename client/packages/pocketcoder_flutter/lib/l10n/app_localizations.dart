@@ -5609,6 +5609,12 @@ abstract class AppLocalizations {
   /// **'OPEN CHAT'**
   String get serverControlOpenChat;
 
+  /// No description provided for @serverControlPublicKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH PUBLIC KEY ON FILE'**
+  String get serverControlPublicKeyLabel;
+
   /// No description provided for @initializationInstanceId.
   ///
   /// In en, this message translates to:

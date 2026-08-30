@@ -708,6 +708,7 @@ class L10nKeyResolver {
       'server.control.operation.save.backup' => _l10n.serverControlOperationSaveBackup,
       'server.control.operation.update.nix.os' => _l10n.serverControlOperationUpdateNixOs,
       'server.control.operation.update.pocket.coder' => _l10n.serverControlOperationUpdatePocketCoder,
+      'server.control.public.key.label' => _l10n.serverControlPublicKeyLabel,
       'server.control.release.checking' => _l10n.serverControlReleaseChecking,
       'server.control.reveal.password' => _l10n.serverControlRevealPassword,
       'server.control.title' => _l10n.serverControlTitle,
@@ -1707,6 +1708,7 @@ class L10nKeyResolver {
     'server.control.operation.save.backup',
     'server.control.operation.update.nix.os',
     'server.control.operation.update.pocket.coder',
+    'server.control.public.key.label',
     'server.control.release.checking',
     'server.control.release.current',
     'server.control.release.status',
@@ -2635,6 +2637,7 @@ class L10nKeyResolver {
     'serverControlOperationSaveBackup': 'server.control.operation.save.backup',
     'serverControlOperationUpdateNixOs': 'server.control.operation.update.nix.os',
     'serverControlOperationUpdatePocketCoder': 'server.control.operation.update.pocket.coder',
+    'serverControlPublicKeyLabel': 'server.control.public.key.label',
     'serverControlReleaseChecking': 'server.control.release.checking',
     'serverControlReleaseCurrent': 'server.control.release.current',
     'serverControlReleaseStatus': 'server.control.release.status',
@@ -3560,6 +3563,7 @@ class L10nKeyResolver {
     'server.control.operation.save.backup': 'serverControlOperationSaveBackup',
     'server.control.operation.update.nix.os': 'serverControlOperationUpdateNixOs',
     'server.control.operation.update.pocket.coder': 'serverControlOperationUpdatePocketCoder',
+    'server.control.public.key.label': 'serverControlPublicKeyLabel',
     'server.control.release.checking': 'serverControlReleaseChecking',
     'server.control.release.current': 'serverControlReleaseCurrent',
     'server.control.release.status': 'serverControlReleaseStatus',
@@ -4492,6 +4496,7 @@ abstract class L10nKeys {
   static const serverControlOperationSaveBackup = 'server.control.operation.save.backup';
   static const serverControlOperationUpdateNixOs = 'server.control.operation.update.nix.os';
   static const serverControlOperationUpdatePocketCoder = 'server.control.operation.update.pocket.coder';
+  static const serverControlPublicKeyLabel = 'server.control.public.key.label';
   static const serverControlReleaseChecking = 'server.control.release.checking';
   static (String, Map<String, dynamic>) serverControlReleaseCurrent(String version) => ('server.control.release.current', {'version': version});
   static (String, Map<String, dynamic>) serverControlReleaseStatus(String status) => ('server.control.release.status', {'status': status});

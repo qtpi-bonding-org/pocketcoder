@@ -3109,6 +3109,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlOpenChat => 'OPEN CHAT';
 
   @override
+  String get serverControlPublicKeyLabel => 'SSH PUBLIC KEY ON FILE';
+
+  @override
   String get initializationInstanceId => 'INSTANCE ID';
 
   @override

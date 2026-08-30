@@ -131,6 +131,21 @@ void main() {
     await cubit.close();
   });
 
+  testWidgets('shows the SSH public key with copy when present, nothing '
+      'when absent', (tester) async {
+    final service = _FakeService()..release = _release();
+    final cubit = ServerControlCubit(service);
+    await tester.pumpWidget(_app(cubit));
+
+    expect(find.byType(SelectableText), findsNothing);
+
+    cubit.emit(cubit.state.copyWith(publicKey: 'ssh-ed25519 AAAA test'));
+    await tester.pump();
+
+    expect(find.textContaining('ssh-ed25519 AAAA test'), findsOneWidget);
+    await cubit.close();
+  });
+
   testWidgets('server control is a footer destination without BACK',
       (tester) async {
     final service = _FakeService()..release = _release();

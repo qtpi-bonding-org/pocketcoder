@@ -59,6 +59,28 @@ class ServerControlView extends StatelessWidget {
             VSpace.x2,
             _ReleaseLine(state: state),
             VSpace.x2,
+            if (state.publicKey case final publicKey?) ...[
+              Text(context.l10n.serverControlPublicKeyLabel),
+              VSpace.x1,
+              Row(
+                children: [
+                  Expanded(child: SelectableText(publicKey)),
+                  IconButton(
+                    tooltip: context.l10n.serverControlCopy,
+                    icon: const Icon(Icons.copy),
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: publicKey));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(context.l10n.serverControlCopied)),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+              VSpace.x2,
+            ],
             for (final operation in ServerControlOperation.values)
               Padding(
                 padding: EdgeInsets.only(bottom: AppSizes.space),
