@@ -80,6 +80,8 @@ class ServerControlView extends StatelessWidget {
                 ],
               ),
               VSpace.x2,
+              _PrivateKeySection(instanceId: instanceId, state: state),
+              VSpace.x2,
             ],
             for (final operation in ServerControlOperation.values)
               Padding(
@@ -164,6 +166,17 @@ class _ConnectionDetails extends StatefulWidget {
 class _ConnectionDetailsState extends State<_ConnectionDetails> {
   bool _showPassword = false;
 
+  Future<void> _toggleShowPassword(BuildContext context) async {
+    if (_showPassword) {
+      setState(() => _showPassword = false);
+      return;
+    }
+    final approved = await context.read<ServerControlCubit>().confirmLocalAuth(
+          reason: context.l10n.serverControlLocalAuthReason,
+        );
+    if (approved && mounted) setState(() => _showPassword = true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final details = widget.details;
@@ -192,20 +205,76 @@ class _ConnectionDetailsState extends State<_ConnectionDetails> {
             action: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  tooltip: _showPassword
-                      ? context.l10n.serverControlHidePassword
-                      : context.l10n.serverControlRevealPassword,
-                  icon: Icon(
-                    _showPassword ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  onPressed: () =>
-                      setState(() => _showPassword = !_showPassword),
+                TerminalButton(
+                  label: _showPassword
+                      ? context.l10n.serverControlHide
+                      : context.l10n.serverControlShow,
+                  isPrimary: false,
+                  onTap: () => _toggleShowPassword(context),
                 ),
+                HSpace.x1,
                 _CopyButton(value: value),
               ],
             ),
           ),
+      ],
+    );
+  }
+}
+
+class _PrivateKeySection extends StatefulWidget {
+  const _PrivateKeySection({required this.instanceId, required this.state});
+
+  final String instanceId;
+  final ServerControlState state;
+
+  @override
+  State<_PrivateKeySection> createState() => _PrivateKeySectionState();
+}
+
+class _PrivateKeySectionState extends State<_PrivateKeySection> {
+  bool _revealed = false;
+
+  Future<void> _toggleReveal(BuildContext context) async {
+    if (_revealed) {
+      setState(() => _revealed = false);
+      return;
+    }
+    final cubit = context.read<ServerControlCubit>();
+    await cubit.revealPrivateKey(
+      instanceId: widget.instanceId,
+      authReason: context.l10n.serverControlLocalAuthReason,
+    );
+    if (mounted && cubit.state.privateKey != null) {
+      setState(() => _revealed = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final privateKey = widget.state.privateKey;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(context.l10n.serverControlPrivateKeyLabel),
+        VSpace.x1,
+        if (_revealed && privateKey != null)
+          Row(
+            children: [
+              Expanded(child: SelectableText(privateKey)),
+              _CopyButton(value: privateKey),
+            ],
+          )
+        else
+          const SizedBox.shrink(),
+        VSpace.x1,
+        TerminalButton(
+          label: _revealed
+              ? context.l10n.serverControlHide
+              : context.l10n.serverControlShow,
+          isPrimary: false,
+          onTap: () => _toggleReveal(context),
+        ),
       ],
     );
   }

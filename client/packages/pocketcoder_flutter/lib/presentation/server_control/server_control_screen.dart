@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
+import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_setup_gate.dart';
@@ -65,6 +66,7 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
           return BlocProvider(
             create: (_) => ServerControlCubit(
               getIt<IServerControlService>(),
+              getIt<ILocalAuthGate>(),
               getIt.isRegistered<IServerConnectionDetailsProvider>()
                   ? getIt<IServerConnectionDetailsProvider>()
                   : null,

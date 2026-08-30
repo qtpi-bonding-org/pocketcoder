@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/application/server_control/server_control_cu
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
+import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_exception.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
@@ -17,6 +18,12 @@ class _FakeService implements IServerControlService {
   @override
   Future<String?> readPublicKey({required String instanceId}) =>
       throw UnimplementedError();
+
+  String? privateKey;
+
+  @override
+  Future<String?> readPrivateKey({required String instanceId}) async =>
+      privateKey;
 
   final calls = <String>[];
   final pending = <String, Completer<ServerControlResult>>{};
@@ -63,6 +70,19 @@ class _FakeService implements IServerControlService {
   }
 }
 
+class _FakeLocalAuthGate implements ILocalAuthGate {
+  _FakeLocalAuthGate({this.approve = true});
+
+  bool approve;
+  final reasons = <String>[];
+
+  @override
+  Future<bool> authenticate({required String reason}) async {
+    reasons.add(reason);
+    return approve;
+  }
+}
+
 ServerReleaseStatusSnapshot _release() => ServerReleaseStatusSnapshot(
       status: ServerReleaseStatus.current,
       currentVersion: '1.2.3',
@@ -81,7 +101,7 @@ ServerControlResult _result(RootSshCommand command) => ServerControlResult(
 void main() {
   test('delegates all five operations with the instance id', () async {
     final service = _FakeService();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
 
     for (final operation in ServerControlOperation.values) {
       final future = cubit.run(operation: operation, instanceId: 'server-1');
@@ -109,7 +129,7 @@ void main() {
 
   test('emits failure when an operation throws', () async {
     final service = _FakeService();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final future = cubit.run(
       operation: ServerControlOperation.saveBackup,
       instanceId: 'server-1',
@@ -126,7 +146,7 @@ void main() {
 
   test('inspects release with loading and success states', () async {
     final service = _FakeService()..release = _release();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final future = cubit.inspectRelease();
     expect(cubit.state.status, UiFlowStatus.loading);
     await future;
@@ -138,11 +158,44 @@ void main() {
 
   test('reports release inspection failure', () async {
     final service = _FakeService()..error = StateError('unavailable');
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     await cubit.inspectRelease();
 
     expect(cubit.state.status, UiFlowStatus.failure);
     expect(cubit.state.error, isA<StateError>());
+    await cubit.close();
+  });
+
+  test('revealPrivateKey fetches the key once local auth succeeds', () async {
+    final service = _FakeService()..privateKey = 'PRIVATE-KEY-PEM';
+    final gate = _FakeLocalAuthGate(approve: true);
+    final cubit = ServerControlCubit(service, gate);
+
+    await cubit.revealPrivateKey(instanceId: 'server-1', authReason: 'why');
+
+    expect(cubit.state.privateKey, 'PRIVATE-KEY-PEM');
+    expect(gate.reasons, ['why']);
+    await cubit.close();
+  });
+
+  test('revealPrivateKey never fetches the key when local auth is denied',
+      () async {
+    final service = _FakeService()..privateKey = 'PRIVATE-KEY-PEM';
+    final gate = _FakeLocalAuthGate(approve: false);
+    final cubit = ServerControlCubit(service, gate);
+
+    await cubit.revealPrivateKey(instanceId: 'server-1', authReason: 'why');
+
+    expect(cubit.state.privateKey, isNull);
+    await cubit.close();
+  });
+
+  test('confirmLocalAuth delegates to the gate', () async {
+    final gate = _FakeLocalAuthGate(approve: true);
+    final cubit = ServerControlCubit(_FakeService(), gate);
+
+    expect(await cubit.confirmLocalAuth(reason: 'why'), isTrue);
+    expect(gate.reasons, ['why']);
     await cubit.close();
   });
 }

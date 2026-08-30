@@ -3040,10 +3040,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlAdminPassword => 'ADMIN PASSWORD';
 
   @override
-  String get serverControlRevealPassword => 'REVEAL PASSWORD';
+  String get serverControlShow => 'SHOW';
 
   @override
-  String get serverControlHidePassword => 'HIDE PASSWORD';
+  String get serverControlHide => 'HIDE';
+
+  @override
+  String get serverControlLocalAuthReason =>
+      'Authenticate to reveal this credential';
 
   @override
   String get serverControlCopy => 'COPY';
@@ -3098,6 +3102,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverControlPublicKeyLabel => 'SSH PUBLIC KEY ON FILE';
+
+  @override
+  String get serverControlPrivateKeyLabel => 'SSH PRIVATE KEY';
 
   @override
   String get fossServerSetupTitle => 'CONNECT YOUR SERVER';

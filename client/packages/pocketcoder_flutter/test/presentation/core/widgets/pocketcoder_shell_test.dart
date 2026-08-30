@@ -17,6 +17,10 @@ class _FakeServerControlService implements IServerControlService {
       throw UnimplementedError();
 
   @override
+  Future<String?> readPrivateKey({required String instanceId}) =>
+      throw UnimplementedError();
+
+  @override
   Future<ServerReleaseStatusSnapshot> inspectRelease() =>
       throw UnimplementedError();
 

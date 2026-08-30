@@ -20,6 +20,7 @@ class ServerControlState with UiFlowStateMixin {
     this.result,
     this.connectionDetails,
     this.publicKey,
+    this.privateKey,
   });
 
   @override
@@ -31,6 +32,7 @@ class ServerControlState with UiFlowStateMixin {
   final ServerControlResult? result;
   final IServerConnectionDetailsProvider? connectionDetails;
   final String? publicKey;
+  final String? privateKey;
 
   bool get isBusy => status == UiFlowStatus.loading;
 
@@ -44,6 +46,7 @@ class ServerControlState with UiFlowStateMixin {
     bool clearResult = false,
     IServerConnectionDetailsProvider? connectionDetails,
     String? publicKey,
+    String? privateKey,
   }) =>
       ServerControlState(
         status: status ?? this.status,
@@ -53,5 +56,6 @@ class ServerControlState with UiFlowStateMixin {
         result: clearResult ? null : result ?? this.result,
         connectionDetails: connectionDetails ?? this.connectionDetails,
         publicKey: publicKey ?? this.publicKey,
+        privateKey: privateKey ?? this.privateKey,
       );
 }

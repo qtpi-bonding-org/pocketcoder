@@ -9,6 +9,8 @@ import 'package:pocketcoder_flutter/application/server_control/server_control_cu
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
+import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
@@ -25,6 +27,12 @@ class _FakeService implements IServerControlService {
   @override
   Future<String?> readPublicKey({required String instanceId}) =>
       throw UnimplementedError();
+
+  String? privateKey;
+
+  @override
+  Future<String?> readPrivateKey({required String instanceId}) async =>
+      privateKey;
 
   @override
   Future<ServerReleaseStatusSnapshot> inspectRelease() async => release!;
@@ -54,6 +62,34 @@ class _FakeService implements IServerControlService {
     calls.add(operation);
     return pending[operation]!;
   }
+}
+
+class _FakeConnectionDetails implements IServerConnectionDetailsProvider {
+  const _FakeConnectionDetails({this.adminPassword});
+
+  @override
+  final String? adminPassword;
+
+  @override
+  bool get isAvailable => true;
+
+  @override
+  String? get ipAddress => null;
+
+  @override
+  String? get httpsEndpoint => null;
+
+  @override
+  String? get adminIdentity => null;
+}
+
+class _FakeLocalAuthGate implements ILocalAuthGate {
+  _FakeLocalAuthGate({this.approve = true});
+
+  bool approve;
+
+  @override
+  Future<bool> authenticate({required String reason}) async => approve;
 }
 
 Widget _app(ServerControlCubit cubit) => MaterialApp.router(
@@ -105,7 +141,7 @@ ServerControlResult _failure(ServerControlOperation operation) =>
 void main() {
   testWidgets('renders all five controls and release status', (tester) async {
     final service = _FakeService()..release = _release();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     await tester.pumpWidget(_app(cubit));
 
     expect(find.text('RELEASE STATUS: CHECKING'), findsOneWidget);
@@ -134,7 +170,7 @@ void main() {
   testWidgets('shows the SSH public key with copy when present, nothing '
       'when absent', (tester) async {
     final service = _FakeService()..release = _release();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     await tester.pumpWidget(_app(cubit));
 
     expect(find.byType(SelectableText), findsNothing);
@@ -149,7 +185,7 @@ void main() {
   testWidgets('server control is a footer destination without BACK',
       (tester) async {
     final service = _FakeService()..release = _release();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final router = GoRouter(
       initialLocation: '/server-control',
       routes: [
@@ -179,7 +215,7 @@ void main() {
   testWidgets('requires confirmation before delegating an operation',
       (tester) async {
     final service = _FakeService();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final future = Future.value(_success(ServerControlOperation.saveBackup));
     service.pending[ServerControlOperation.saveBackup] = future;
     await tester.pumpWidget(_app(cubit));
@@ -202,7 +238,7 @@ void main() {
 
   testWidgets('disables controls while busy', (tester) async {
     final service = _FakeService();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final pending = Completer<ServerControlResult>();
     service.pending[ServerControlOperation.restartNixOs] = pending.future;
     await tester.pumpWidget(_app(cubit));
@@ -224,7 +260,7 @@ void main() {
 
   testWidgets('renders command output and errors', (tester) async {
     final service = _FakeService();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final result = _success(ServerControlOperation.saveBackup);
     service.pending[ServerControlOperation.saveBackup] = Future.value(result);
     await tester.pumpWidget(_app(cubit));
@@ -243,7 +279,7 @@ void main() {
 
   testWidgets('renders failed command output', (tester) async {
     final service = _FakeService();
-    final cubit = ServerControlCubit(service);
+    final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     service.pending[ServerControlOperation.updateNixOs] =
         Future.value(_failure(ServerControlOperation.updateNixOs));
     await tester.pumpWidget(_app(cubit));
@@ -257,6 +293,54 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('permission denied'), findsOneWidget);
+    await cubit.close();
+  });
+
+  testWidgets('reveals the admin password only after local auth succeeds',
+      (tester) async {
+    final service = _FakeService();
+    final gate = _FakeLocalAuthGate(approve: false);
+    final cubit = ServerControlCubit(
+      service,
+      gate,
+      const _FakeConnectionDetails(adminPassword: 'secret-pw'),
+    );
+    await tester.pumpWidget(_app(cubit));
+
+    expect(find.textContaining('•' * 'secret-pw'.length), findsOneWidget);
+    await tester.tap(find.text('SHOW'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('secret-pw'), findsNothing);
+
+    gate.approve = true;
+    await tester.tap(find.text('SHOW'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('secret-pw'), findsOneWidget);
+
+    await tester.tap(find.text('HIDE'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('secret-pw'), findsNothing);
+    await cubit.close();
+  });
+
+  testWidgets('reveals the private key only after local auth succeeds',
+      (tester) async {
+    final service = _FakeService()..privateKey = 'PRIVATE-KEY-PEM';
+    final gate = _FakeLocalAuthGate(approve: false);
+    final cubit = ServerControlCubit(service, gate);
+    await tester.pumpWidget(_app(cubit));
+    cubit.emit(cubit.state.copyWith(publicKey: 'ssh-ed25519 AAAA test'));
+    await tester.pump();
+
+    expect(find.textContaining('PRIVATE-KEY-PEM'), findsNothing);
+    await tester.tap(find.text('SHOW').last);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('PRIVATE-KEY-PEM'), findsNothing);
+
+    gate.approve = true;
+    await tester.tap(find.text('SHOW').last);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('PRIVATE-KEY-PEM'), findsOneWidget);
     await cubit.close();
   });
 }

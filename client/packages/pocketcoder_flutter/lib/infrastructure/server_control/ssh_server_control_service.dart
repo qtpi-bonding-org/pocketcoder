@@ -34,6 +34,14 @@ final class SshServerControlService implements IServerControlService {
   }
 
   @override
+  Future<String?> readPrivateKey({required String instanceId}) async {
+    final credentials = await _credentialsProvider.readRootSshCredentials(
+      instanceId: instanceId,
+    );
+    return credentials?.privateKeyPem;
+  }
+
+  @override
   Future<ServerReleaseStatusSnapshot> inspectRelease() => tryMethod(
         _releaseStatusService.inspect,
         ServerControlException.new,

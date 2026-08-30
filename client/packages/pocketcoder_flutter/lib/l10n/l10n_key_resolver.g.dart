@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-08-29T23:38:08.535305
 
 import 'app_localizations.dart';
 
@@ -706,18 +707,20 @@ class L10nKeyResolver {
       'server.control.connection.details' => _l10n.serverControlConnectionDetails,
       'server.control.copied' => _l10n.serverControlCopied,
       'server.control.copy' => _l10n.serverControlCopy,
-      'server.control.hide.password' => _l10n.serverControlHidePassword,
+      'server.control.hide' => _l10n.serverControlHide,
       'server.control.https.endpoint' => _l10n.serverControlHttpsEndpoint,
       'server.control.ip.address' => _l10n.serverControlIpAddress,
+      'server.control.local.auth.reason' => _l10n.serverControlLocalAuthReason,
       'server.control.open.chat' => _l10n.serverControlOpenChat,
       'server.control.operation.restart.nix.os' => _l10n.serverControlOperationRestartNixOs,
       'server.control.operation.restart.pocket.coder' => _l10n.serverControlOperationRestartPocketCoder,
       'server.control.operation.save.backup' => _l10n.serverControlOperationSaveBackup,
       'server.control.operation.update.nix.os' => _l10n.serverControlOperationUpdateNixOs,
       'server.control.operation.update.pocket.coder' => _l10n.serverControlOperationUpdatePocketCoder,
+      'server.control.private.key.label' => _l10n.serverControlPrivateKeyLabel,
       'server.control.public.key.label' => _l10n.serverControlPublicKeyLabel,
       'server.control.release.checking' => _l10n.serverControlReleaseChecking,
-      'server.control.reveal.password' => _l10n.serverControlRevealPassword,
+      'server.control.show' => _l10n.serverControlShow,
       'server.control.title' => _l10n.serverControlTitle,
       'settings.account.section' => _l10n.settingsAccountSection,
       'settings.ai.agents.section' => _l10n.settingsAiAgentsSection,
@@ -1709,20 +1712,22 @@ class L10nKeyResolver {
     'server.control.connection.details',
     'server.control.copied',
     'server.control.copy',
-    'server.control.hide.password',
+    'server.control.hide',
     'server.control.https.endpoint',
     'server.control.ip.address',
+    'server.control.local.auth.reason',
     'server.control.open.chat',
     'server.control.operation.restart.nix.os',
     'server.control.operation.restart.pocket.coder',
     'server.control.operation.save.backup',
     'server.control.operation.update.nix.os',
     'server.control.operation.update.pocket.coder',
+    'server.control.private.key.label',
     'server.control.public.key.label',
     'server.control.release.checking',
     'server.control.release.current',
     'server.control.release.status',
-    'server.control.reveal.password',
+    'server.control.show',
     'server.control.title',
     'settings.account.section',
     'settings.ai.agents.section',
@@ -2641,20 +2646,22 @@ class L10nKeyResolver {
     'serverControlConnectionDetails': 'server.control.connection.details',
     'serverControlCopied': 'server.control.copied',
     'serverControlCopy': 'server.control.copy',
-    'serverControlHidePassword': 'server.control.hide.password',
+    'serverControlHide': 'server.control.hide',
     'serverControlHttpsEndpoint': 'server.control.https.endpoint',
     'serverControlIpAddress': 'server.control.ip.address',
+    'serverControlLocalAuthReason': 'server.control.local.auth.reason',
     'serverControlOpenChat': 'server.control.open.chat',
     'serverControlOperationRestartNixOs': 'server.control.operation.restart.nix.os',
     'serverControlOperationRestartPocketCoder': 'server.control.operation.restart.pocket.coder',
     'serverControlOperationSaveBackup': 'server.control.operation.save.backup',
     'serverControlOperationUpdateNixOs': 'server.control.operation.update.nix.os',
     'serverControlOperationUpdatePocketCoder': 'server.control.operation.update.pocket.coder',
+    'serverControlPrivateKeyLabel': 'server.control.private.key.label',
     'serverControlPublicKeyLabel': 'server.control.public.key.label',
     'serverControlReleaseChecking': 'server.control.release.checking',
     'serverControlReleaseCurrent': 'server.control.release.current',
     'serverControlReleaseStatus': 'server.control.release.status',
-    'serverControlRevealPassword': 'server.control.reveal.password',
+    'serverControlShow': 'server.control.show',
     'serverControlTitle': 'server.control.title',
     'settingsAccountSection': 'settings.account.section',
     'settingsAiAgentsSection': 'settings.ai.agents.section',
@@ -3570,20 +3577,22 @@ class L10nKeyResolver {
     'server.control.connection.details': 'serverControlConnectionDetails',
     'server.control.copied': 'serverControlCopied',
     'server.control.copy': 'serverControlCopy',
-    'server.control.hide.password': 'serverControlHidePassword',
+    'server.control.hide': 'serverControlHide',
     'server.control.https.endpoint': 'serverControlHttpsEndpoint',
     'server.control.ip.address': 'serverControlIpAddress',
+    'server.control.local.auth.reason': 'serverControlLocalAuthReason',
     'server.control.open.chat': 'serverControlOpenChat',
     'server.control.operation.restart.nix.os': 'serverControlOperationRestartNixOs',
     'server.control.operation.restart.pocket.coder': 'serverControlOperationRestartPocketCoder',
     'server.control.operation.save.backup': 'serverControlOperationSaveBackup',
     'server.control.operation.update.nix.os': 'serverControlOperationUpdateNixOs',
     'server.control.operation.update.pocket.coder': 'serverControlOperationUpdatePocketCoder',
+    'server.control.private.key.label': 'serverControlPrivateKeyLabel',
     'server.control.public.key.label': 'serverControlPublicKeyLabel',
     'server.control.release.checking': 'serverControlReleaseChecking',
     'server.control.release.current': 'serverControlReleaseCurrent',
     'server.control.release.status': 'serverControlReleaseStatus',
-    'server.control.reveal.password': 'serverControlRevealPassword',
+    'server.control.show': 'serverControlShow',
     'server.control.title': 'serverControlTitle',
     'settings.account.section': 'settingsAccountSection',
     'settings.ai.agents.section': 'settingsAiAgentsSection',
@@ -4506,20 +4515,22 @@ abstract class L10nKeys {
   static const serverControlConnectionDetails = 'server.control.connection.details';
   static const serverControlCopied = 'server.control.copied';
   static const serverControlCopy = 'server.control.copy';
-  static const serverControlHidePassword = 'server.control.hide.password';
+  static const serverControlHide = 'server.control.hide';
   static const serverControlHttpsEndpoint = 'server.control.https.endpoint';
   static const serverControlIpAddress = 'server.control.ip.address';
+  static const serverControlLocalAuthReason = 'server.control.local.auth.reason';
   static const serverControlOpenChat = 'server.control.open.chat';
   static const serverControlOperationRestartNixOs = 'server.control.operation.restart.nix.os';
   static const serverControlOperationRestartPocketCoder = 'server.control.operation.restart.pocket.coder';
   static const serverControlOperationSaveBackup = 'server.control.operation.save.backup';
   static const serverControlOperationUpdateNixOs = 'server.control.operation.update.nix.os';
   static const serverControlOperationUpdatePocketCoder = 'server.control.operation.update.pocket.coder';
+  static const serverControlPrivateKeyLabel = 'server.control.private.key.label';
   static const serverControlPublicKeyLabel = 'server.control.public.key.label';
   static const serverControlReleaseChecking = 'server.control.release.checking';
   static (String, Map<String, dynamic>) serverControlReleaseCurrent(String version) => ('server.control.release.current', {'version': version});
   static (String, Map<String, dynamic>) serverControlReleaseStatus(String status) => ('server.control.release.status', {'status': status});
-  static const serverControlRevealPassword = 'server.control.reveal.password';
+  static const serverControlShow = 'server.control.show';
   static const serverControlTitle = 'server.control.title';
   static const settingsAccountSection = 'settings.account.section';
   static const settingsAiAgentsSection = 'settings.ai.agents.section';

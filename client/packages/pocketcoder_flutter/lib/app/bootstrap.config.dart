@@ -107,6 +107,8 @@ import 'package:pocketcoder_flutter/domain/sandbox_agent/i_sandbox_agent_reposit
     as _i184;
 import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart'
     as _i470;
+import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart'
+    as _i870;
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart'
     as _i990;
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart'
@@ -207,6 +209,8 @@ import 'package:pocketcoder_flutter/infrastructure/scheduler/schedule_owner_dao.
     as _i479;
 import 'package:pocketcoder_flutter/infrastructure/scheduler/scheduler_repository.dart'
     as _i715;
+import 'package:pocketcoder_flutter/infrastructure/security/local_auth_gate.dart'
+    as _i492;
 import 'package:pocketcoder_flutter/infrastructure/skills/skill_dao.dart'
     as _i9;
 import 'package:pocketcoder_flutter/infrastructure/skills/skills_repository.dart'
@@ -320,6 +324,7 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i800.IHealthRepository>(
         () => _i700.HealthRepository(gh<_i1065.HealthcheckDao>()));
+    gh.lazySingleton<_i870.ILocalAuthGate>(() => _i492.LocalAuthGate());
     gh.lazySingleton<_i611.IObservabilityRepository>(
         () => _i310.ObservabilityRepository(
               gh<_i169.PocketBase>(),
@@ -379,10 +384,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i935.PocketCoderApiClient>(),
               gh<_i169.PocketBase>(),
             ));
-    gh.factory<_i898.ServerControlCubit>(() => _i898.ServerControlCubit(
-          gh<_i789.IServerControlService>(),
-          gh<_i990.IServerConnectionDetailsProvider>(),
-        ));
     gh.lazySingleton<_i470.ISchedulerRepository>(
         () => _i715.SchedulerRepository(
               gh<_i935.PocketCoderApiClient>(),
@@ -423,6 +424,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i67.SkillsCubit>(() => _i67.SkillsCubit(
           gh<_i165.ISkillsRepository>(),
           gh<_i630.IAgentConfigRepository>(),
+        ));
+    gh.factory<_i898.ServerControlCubit>(() => _i898.ServerControlCubit(
+          gh<_i789.IServerControlService>(),
+          gh<_i870.ILocalAuthGate>(),
+          gh<_i990.IServerConnectionDetailsProvider>(),
         ));
     gh.factory<_i723.AgentConfigCubit>(
         () => _i723.AgentConfigCubit(gh<_i630.IAgentConfigRepository>()));

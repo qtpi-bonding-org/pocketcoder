@@ -73,6 +73,7 @@ dependencies:
   connectivity_plus: ^7.0.0
   connectivity_plus_platform_interface: ^2.0.1
   device_info_plus: ^11.3.0
+  local_auth: ^2.3.0
   unifiedpush: ^6.2.0
   url_launcher: ^6.2.0
   webview_flutter: ^4.10.0

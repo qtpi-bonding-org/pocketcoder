@@ -5483,17 +5483,23 @@ abstract class AppLocalizations {
   /// **'ADMIN PASSWORD'**
   String get serverControlAdminPassword;
 
-  /// No description provided for @serverControlRevealPassword.
+  /// No description provided for @serverControlShow.
   ///
   /// In en, this message translates to:
-  /// **'REVEAL PASSWORD'**
-  String get serverControlRevealPassword;
+  /// **'SHOW'**
+  String get serverControlShow;
 
-  /// No description provided for @serverControlHidePassword.
+  /// No description provided for @serverControlHide.
   ///
   /// In en, this message translates to:
-  /// **'HIDE PASSWORD'**
-  String get serverControlHidePassword;
+  /// **'HIDE'**
+  String get serverControlHide;
+
+  /// No description provided for @serverControlLocalAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticate to reveal this credential'**
+  String get serverControlLocalAuthReason;
 
   /// No description provided for @serverControlCopy.
   ///
@@ -5590,6 +5596,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SSH PUBLIC KEY ON FILE'**
   String get serverControlPublicKeyLabel;
+
+  /// No description provided for @serverControlPrivateKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH PRIVATE KEY'**
+  String get serverControlPrivateKeyLabel;
 
   /// No description provided for @fossServerSetupTitle.
   ///

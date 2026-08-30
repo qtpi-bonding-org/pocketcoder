@@ -10,6 +10,7 @@ import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command_result.da
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_credentials.dart';
 import 'package:pocketcoder_flutter/domain/release/i_server_release_status_service.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
+import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_setup_gate.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -52,6 +53,11 @@ class _FakeCredentialsProvider implements IRootSshCredentialsProvider {
   Future<RootSshCredentials?> readRootSshCredentials({
     required String instanceId,
   }) async => null;
+}
+
+class _FakeLocalAuthGate implements ILocalAuthGate {
+  @override
+  Future<bool> authenticate({required String reason}) async => true;
 }
 
 class _BlockingGate implements IServerControlSetupGate {
@@ -105,6 +111,9 @@ void main() {
         releaseStatusService: _FakeReleaseStatusService(),
         credentialsProvider: _FakeCredentialsProvider(),
       ),
+    );
+    GetIt.instance.registerLazySingleton<ILocalAuthGate>(
+      () => _FakeLocalAuthGate(),
     );
   });
 

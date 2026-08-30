@@ -4,6 +4,8 @@ import 'package:pocketcoder_flutter/domain/server_control/server_control_result.
 abstract interface class IServerControlService {
   Future<String?> readPublicKey({required String instanceId});
 
+  Future<String?> readPrivateKey({required String instanceId});
+
   Future<ServerReleaseStatusSnapshot> inspectRelease();
 
   Future<ServerControlResult> restartPocketCoder({
