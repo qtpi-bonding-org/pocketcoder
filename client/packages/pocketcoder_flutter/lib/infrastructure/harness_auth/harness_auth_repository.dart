@@ -25,11 +25,19 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
 
   @override
   Stream<List<HarnessOauthAccount>> watchHarnessOAuthAccounts() =>
-      _oauthAccountDao!.watch();
+      requireNonNull(
+        _oauthAccountDao,
+        'harness oauth account dao',
+        HarnessAuthException.new,
+      ).watch();
 
   @override
   Stream<List<CredentialSelection>> watchCredentialSelections() =>
-      _credentialSelectionDao!.watch();
+      requireNonNull(
+        _credentialSelectionDao,
+        'credential selection dao',
+        HarnessAuthException.new,
+      ).watch();
 
   @override
   Future<HarnessAuthStatus> status({

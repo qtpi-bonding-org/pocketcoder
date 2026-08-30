@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 /// The trailing affordance a BiosRow renders. One row shape, four trailing
-/// behaviors -- see docs/superpowers/specs/2026-08-23-bios-widget-generalization.md
-/// section 2.1. `expand` covers two different reveal mechanics (opens a picker
+/// behaviors. `expand` covers two different reveal mechanics (opens a picker
 /// dialog, or expands an inline accordion body) that share the same glyph;
 /// BiosRow only renders `[v]`/`[^]` off the caller-owned `isExpanded` flag,
 /// it never flips it itself -- the caller decides what "expand" means.
@@ -150,10 +149,10 @@ class BiosRow extends StatelessWidget {
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            if (value != null) ...[
+            if (value case final resolvedValue?) ...[
               Expanded(
                 child: Text(
-                  value!.toUpperCase(),
+                  resolvedValue.toUpperCase(),
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
                   style: TextStyle(
@@ -175,9 +174,9 @@ class BiosRow extends StatelessWidget {
           ],
         );
       case BiosRowVariant.row:
-        if (value != null) {
+        if (value case final resolvedValue?) {
           return Text(
-            value!.toUpperCase(),
+            resolvedValue.toUpperCase(),
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
             style: TextStyle(

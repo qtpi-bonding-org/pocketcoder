@@ -348,11 +348,8 @@ genuine gaps and stale claims found, not already covered above.
       `workers/oauth-relay/` implements the PKCE exchange, but nothing
       exercises the full loop (relay → token stored in
       `mcp_servers.config` → MCP server authenticates with it). Also:
-      `mcp_oauth.go` references
-      `docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md`, which
-      does not exist in this repo — confirm whether that spec was meant to
-      ship here or only lives in a different location, and fix or drop the
-      reference.
+      `mcp_oauth.go` once referenced a design document that was not present in
+      this repo; that dangling reference has since been removed.
 - [ ] **Memory `search`/`unlink` MCP tools are implemented but untested.**
       `server/memory/src/mcp/tools.rs` (`memory_search`, `memory_unlink`)
       have no bats coverage; `tests/compose/memory/memory.bats` only

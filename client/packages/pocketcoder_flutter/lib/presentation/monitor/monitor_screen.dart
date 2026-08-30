@@ -79,12 +79,13 @@ class MonitorView extends StatelessWidget {
             .toList(),
       ),
     );
+    final currentContainer = state.currentContainer;
     final logs = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TerminalText.label(
-          state.currentContainer != null
-              ? _displayName(state.currentContainer!)
+          currentContainer != null
+              ? _displayName(currentContainer)
               : context.l10n.observabilityLogTerminal,
         ),
         VSpace.x1,

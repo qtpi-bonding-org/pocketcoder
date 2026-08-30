@@ -46,8 +46,9 @@ class ServerControlView extends StatelessWidget {
         showBack: true,
         body: ListView(
           children: [
-            if (state.connectionDetails?.isAvailable ?? false) ...[
-              _ConnectionDetails(details: state.connectionDetails!),
+            if (state.connectionDetails case final details?
+                when details.isAvailable) ...[
+              _ConnectionDetails(details: details),
               VSpace.x2,
             ],
             TerminalButton(

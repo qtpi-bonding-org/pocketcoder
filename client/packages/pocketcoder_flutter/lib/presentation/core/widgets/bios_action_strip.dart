@@ -85,9 +85,11 @@ class BiosActionButton extends StatelessWidget {
               horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
           decoration: BoxDecoration(
             color: bgColor,
-            border: resolved.border != null
-                ? Border.all(color: resolved.border!, width: AppSizes.borderWidth)
-                : null,
+            border: switch (resolved.border) {
+              final borderColor? =>
+                Border.all(color: borderColor, width: AppSizes.borderWidth),
+              null => null,
+            },
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

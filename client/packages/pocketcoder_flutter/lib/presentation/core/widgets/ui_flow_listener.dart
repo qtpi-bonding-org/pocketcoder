@@ -44,11 +44,12 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
     // its own previous-state tracking and its own (optionally
     // caller-supplied) listenWhen, entirely decoupled from when the
     // built-in handlers fire.
-    if (listener != null) {
+    final resolvedListener = listener;
+    if (resolvedListener != null) {
       content = BlocListener<B, S>(
         bloc: bloc,
         listenWhen: listenWhen ?? _defaultListenWhen,
-        listener: (context, state) => listener!(context, state),
+        listener: (context, state) => resolvedListener(context, state),
         child: content,
       );
     }

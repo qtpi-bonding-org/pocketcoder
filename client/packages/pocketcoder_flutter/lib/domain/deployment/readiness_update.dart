@@ -27,6 +27,7 @@ class ReadinessUpdate {
   /// still polling and a consumer must not treat it as a failure yet.
   bool get isTerminalError {
     final doc = statusDocument;
-    return doc?.errorCode != null && doc!.attempt >= doc.maxAttempts;
+    if (doc == null) return false;
+    return doc.errorCode != null && doc.attempt >= doc.maxAttempts;
   }
 }

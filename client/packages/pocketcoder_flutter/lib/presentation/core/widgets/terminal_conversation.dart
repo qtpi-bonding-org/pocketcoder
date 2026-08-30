@@ -96,10 +96,10 @@ class TerminalConversationFrame extends StatelessWidget {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (roleLabel != null)
+        if (roleLabel case final resolvedRoleLabel?)
           Padding(
             padding: EdgeInsets.only(bottom: AppSizes.space),
-            child: TerminalRoleLabel(label: roleLabel!, color: accent),
+            child: TerminalRoleLabel(label: resolvedRoleLabel, color: accent),
           ),
         child,
       ],
@@ -203,7 +203,10 @@ class TerminalPromptSuggestion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final resolved = emphasis == null ? null : emphasize(colors.primary, emphasis!);
+    final resolvedEmphasis = emphasis;
+    final resolved = resolvedEmphasis == null
+        ? null
+        : emphasize(colors.primary, resolvedEmphasis);
     final borderColor = resolved?.border ?? colors.primary.withValues(alpha: 0.3);
     final textColor = resolved?.text ?? colors.primary;
     return SizedBox(

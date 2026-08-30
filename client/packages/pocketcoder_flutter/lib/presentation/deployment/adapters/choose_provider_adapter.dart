@@ -79,10 +79,11 @@ class ChooseProviderAdapter
         // handler.
         final routePath = option.routePath;
         final currentCredentials = credentials;
+        final selectedHandler = onProviderSelected;
         if (currentCredentials == null) {
           context.pushNamed(RouteNames.onboardingDeploy, extra: option);
-        } else if (onProviderSelected != null) {
-          await onProviderSelected!(context, option, currentCredentials);
+        } else if (selectedHandler != null) {
+          await selectedHandler(context, option, currentCredentials);
         } else if (routePath != null) {
           context.push(routePath, extra: currentCredentials);
         }

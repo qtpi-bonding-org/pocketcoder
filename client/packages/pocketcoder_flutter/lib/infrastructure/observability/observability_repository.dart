@@ -44,8 +44,10 @@ class ObservabilityRepository implements IObservabilityRepository {
       for (final line in frame.data.split('\n')) {
         if (line.isEmpty) continue;
         final match = RegExp(r'^(\S+)\s(.*)$').firstMatch(line);
+        final timestampToken = match?.group(1);
         controller.add(LogEntry(
-          timestamp: match == null ? null : DateTime.tryParse(match.group(1)!),
+          timestamp:
+              timestampToken == null ? null : DateTime.tryParse(timestampToken),
           message: match?.group(2) ?? line,
         ));
       }
