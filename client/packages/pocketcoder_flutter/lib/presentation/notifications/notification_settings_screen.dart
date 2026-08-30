@@ -11,6 +11,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart'
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'adapters/notification_settings_adapter.dart';
 
@@ -22,6 +24,7 @@ class NotificationSettingsScreen extends StatelessWidget {
         create: (_) => getIt<NotificationRuleCubit>()..watchRules(),
         child: NotificationSettingsAdapter(
           onEnableDevice: getIt<PushService>().requestPermissions,
+          onConfigureSelfHostedPush: getIt<PushService>().configure,
         ),
       );
 }
@@ -32,6 +35,7 @@ class NotificationSettingsView extends StatelessWidget {
     required this.state,
     required this.onChanged,
     required this.onEnableDevice,
+    required this.onConfigureSelfHostedPush,
   });
 
   static const List<(String, String)> types = [
@@ -44,6 +48,7 @@ class NotificationSettingsView extends StatelessWidget {
   final NotificationRuleState state;
   final Future<void> Function(String type, bool enabled) onChanged;
   final Future<bool> Function() onEnableDevice;
+  final VoidCallback onConfigureSelfHostedPush;
 
   String _labelFor(BuildContext context, String key) => switch (key) {
         'chatReply' => context.l10n.notificationSettingsChatReplyLabel,
@@ -91,10 +96,42 @@ class NotificationSettingsView extends StatelessWidget {
                     ],
                   ),
                 ),
+                VSpace.x3,
+                _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
               ],
             ),
           UiFlowStatus.idle => const SizedBox.shrink(),
         },
+      ),
+    );
+  }
+}
+
+class _SelfHostedPushOption extends StatelessWidget {
+  const _SelfHostedPushOption({required this.onConfigure});
+
+  final VoidCallback onConfigure;
+
+  @override
+  Widget build(BuildContext context) {
+    return TerminalCard(
+      padding: EdgeInsets.all(AppSizes.space * 1.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TerminalText.label(context.l10n.proSelfHostedPushTitle),
+          VSpace.x1,
+          TerminalText.mini(
+            context.l10n.proSelfHostedPushBody,
+            alpha: 0.75,
+          ),
+          VSpace.x2,
+          TerminalButton(
+            label: context.l10n.proConfigureSelfHostedPush,
+            onTap: onConfigure,
+            isPrimary: false,
+          ),
+        ],
       ),
     );
   }

@@ -29,6 +29,7 @@ Widget notificationSettingsLoaded(BuildContext context) => _localized(
         }),
         onChanged: (_, __) async {},
         onEnableDevice: () async => true,
+        onConfigureSelfHostedPush: () {},
       ),
     );
 

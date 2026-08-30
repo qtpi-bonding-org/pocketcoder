@@ -24,7 +24,6 @@ Widget _paywall(BillingState state) => MaterialApp(
         state: state,
         onPurchase: () {},
         onRestore: () {},
-        onConfigureSelfHostedPush: () {},
         onOpenTermsOfService: () {},
         onOpenPrivacyPolicy: () {},
       ),

@@ -25,8 +25,12 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 class MockNotificationRuleCubit extends Mock implements NotificationRuleCubit {}
 
 class FakePushService implements PushService {
+  int configureCalls = 0;
+
   @override
-  Future<void> configure() async {}
+  Future<void> configure() async {
+    configureCalls += 1;
+  }
 
   @override
   Future<PushNotificationPayload?> getInitialNotification() async => null;
@@ -67,9 +71,11 @@ Widget _wrap() {
 
 void main() {
   late MockNotificationRuleCubit cubit;
+  late FakePushService pushService;
 
   setUp(() {
     cubit = MockNotificationRuleCubit();
+    pushService = FakePushService();
     when(() => cubit.watchRules()).thenReturn(null);
     when(() => cubit.setTypeEnabled(any(), any())).thenAnswer((_) async {});
     when(() => cubit.state)
@@ -85,7 +91,7 @@ void main() {
     // the mock into getIt instead of wrapping the screen in an external
     // BlocProvider.value, which would conflict with the screen's own.
     getIt.registerFactory<NotificationRuleCubit>(() => cubit);
-    getIt.registerSingleton<PushService>(FakePushService());
+    getIt.registerSingleton<PushService>(pushService);
   });
 
   tearDown(() {
@@ -162,5 +168,25 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(PocoBubble), findsNothing);
+  });
+
+  testWidgets(
+      'shows the self-hosted push option, reachable regardless of edition, '
+      'and tapping configure calls PushService.configure()', (tester) async {
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
+
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    expect(find.text(l10n.proSelfHostedPushTitle), findsOneWidget);
+
+    await tester.ensureVisible(find.text(l10n.proConfigureSelfHostedPush));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.proConfigureSelfHostedPush));
+    await tester.pumpAndSettle();
+
+    expect(pushService.configureCalls, 1);
   });
 }

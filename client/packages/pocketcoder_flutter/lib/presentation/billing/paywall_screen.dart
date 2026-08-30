@@ -5,7 +5,6 @@ import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart';
 import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
-import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/billing/adapters/paywall_adapter.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
@@ -40,7 +39,6 @@ class PaywallScreen extends StatelessWidget {
       create: (_) => getIt<BillingCubit>()..loadOffering(),
       child: ProPaywallAdapter(
         returnOnUnlock: returnOnUnlock,
-        onConfigureSelfHostedPush: getIt<PushService>().configure,
         onOpenTermsOfService: () => launcher.open(_termsOfServiceUri),
         onOpenPrivacyPolicy: () => launcher.open(_privacyPolicyUri),
       ),
@@ -54,7 +52,6 @@ class PaywallView extends StatelessWidget {
     required this.state,
     required this.onPurchase,
     required this.onRestore,
-    required this.onConfigureSelfHostedPush,
     required this.onOpenTermsOfService,
     required this.onOpenPrivacyPolicy,
     this.isOnboarding = false,
@@ -63,7 +60,6 @@ class PaywallView extends StatelessWidget {
   final BillingState state;
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
-  final VoidCallback onConfigureSelfHostedPush;
   final VoidCallback onOpenTermsOfService;
   final VoidCallback onOpenPrivacyPolicy;
   final bool isOnboarding;
@@ -98,21 +94,15 @@ class PaywallView extends StatelessWidget {
 
     final package = state.package;
     if (package == null) {
-      return _UnavailableProOffer(
-        onRestore: onRestore,
-        onConfigureSelfHostedPush: onConfigureSelfHostedPush,
-        showSelfHostedOption: !isOnboarding,
-      );
+      return _UnavailableProOffer(onRestore: onRestore);
     }
 
     return _ProOffer(
       package: package,
       onPurchase: onPurchase,
       onRestore: onRestore,
-      onConfigureSelfHostedPush: onConfigureSelfHostedPush,
       onOpenTermsOfService: onOpenTermsOfService,
       onOpenPrivacyPolicy: onOpenPrivacyPolicy,
-      showSelfHostedOption: !isOnboarding,
     );
   }
 }
@@ -122,19 +112,15 @@ class _ProOffer extends StatelessWidget {
     required this.package,
     required this.onPurchase,
     required this.onRestore,
-    required this.onConfigureSelfHostedPush,
     required this.onOpenTermsOfService,
     required this.onOpenPrivacyPolicy,
-    required this.showSelfHostedOption,
   });
 
   final BillingPackage package;
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
-  final VoidCallback onConfigureSelfHostedPush;
   final VoidCallback onOpenTermsOfService;
   final VoidCallback onOpenPrivacyPolicy;
-  final bool showSelfHostedOption;
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +136,8 @@ class _ProOffer extends StatelessWidget {
           fontSize: AppSizes.fontTiny,
           alignment: Alignment.center,
         ),
+        VSpace.x3,
+        const _ProBenefitsList(),
         VSpace.x3,
         if (trialDays != null) ...[
           TerminalText(
@@ -205,10 +193,6 @@ class _ProOffer extends StatelessWidget {
             ),
           ],
         ),
-        if (showSelfHostedOption) ...[
-          VSpace.x3,
-          _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
-        ],
       ],
     );
   }
@@ -253,15 +237,9 @@ class _ActiveProStatus extends StatelessWidget {
 }
 
 class _UnavailableProOffer extends StatelessWidget {
-  const _UnavailableProOffer({
-    required this.onRestore,
-    required this.onConfigureSelfHostedPush,
-    required this.showSelfHostedOption,
-  });
+  const _UnavailableProOffer({required this.onRestore});
 
   final VoidCallback onRestore;
-  final VoidCallback onConfigureSelfHostedPush;
-  final bool showSelfHostedOption;
 
   @override
   Widget build(BuildContext context) {
@@ -280,39 +258,31 @@ class _UnavailableProOffer extends StatelessWidget {
           onTap: onRestore,
           isPrimary: false,
         ),
-        if (showSelfHostedOption) ...[
-          VSpace.x3,
-          _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
-        ],
       ],
     );
   }
 }
 
-class _SelfHostedPushOption extends StatelessWidget {
-  const _SelfHostedPushOption({required this.onConfigure});
-
-  final VoidCallback onConfigure;
+class _ProBenefitsList extends StatelessWidget {
+  const _ProBenefitsList();
 
   @override
   Widget build(BuildContext context) {
+    final benefits = [
+      context.l10n.proBenefitServerSetup,
+      context.l10n.proBenefitPushNotifications,
+      context.l10n.proBenefitLiveMonitoring,
+    ];
     return TerminalCard(
       padding: EdgeInsets.all(AppSizes.space * 1.5),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TerminalText.label(context.l10n.proSelfHostedPushTitle),
-          VSpace.x1,
-          TerminalText.mini(
-            context.l10n.proSelfHostedPushBody,
-            alpha: 0.75,
-          ),
-          VSpace.x2,
-          TerminalButton(
-            label: context.l10n.proConfigureSelfHostedPush,
-            onTap: onConfigure,
-            isPrimary: false,
-          ),
+          for (final benefit in benefits)
+            Padding(
+              padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
+              child: TerminalText.mini('> $benefit'),
+            ),
         ],
       ),
     );

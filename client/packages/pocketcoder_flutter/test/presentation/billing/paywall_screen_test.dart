@@ -21,7 +21,6 @@ void main() {
     BillingState state = const BillingState(package: package),
     VoidCallback? onPurchase,
     VoidCallback? onRestore,
-    VoidCallback? onConfigure,
     VoidCallback? onOpenTermsOfService,
     VoidCallback? onOpenPrivacyPolicy,
     bool isOnboarding = false,
@@ -34,7 +33,6 @@ void main() {
         state: state,
         onPurchase: onPurchase ?? () {},
         onRestore: onRestore ?? () {},
-        onConfigureSelfHostedPush: onConfigure ?? () {},
         onOpenTermsOfService: onOpenTermsOfService ?? () {},
         onOpenPrivacyPolicy: onOpenPrivacyPolicy ?? () {},
         isOnboarding: isOnboarding,
@@ -55,7 +53,6 @@ void main() {
     expect(find.text(l10n.proTrialLapseExplainer), findsOneWidget);
     expect(find.text(l10n.proStartTrial(7)), findsOneWidget);
     expect(find.text(l10n.proRestore), findsOneWidget);
-    expect(find.text(l10n.proSelfHostedPushTitle), findsOneWidget);
     // Apple requires the auto-renewal disclosure visible for a trial offer
     // too, not just a plain subscription -- the trial-specific wording,
     // not the no-trial one.
@@ -78,22 +75,21 @@ void main() {
     await tester.pumpAndSettle();
 
     final l10n = lookupAppLocalizations(const Locale('en'));
+    await tester.ensureVisible(find.text(l10n.proTermsOfServiceLink));
     await tester.tap(find.text(l10n.proTermsOfServiceLink));
+    await tester.ensureVisible(find.text(l10n.proPrivacyPolicyLink));
     await tester.tap(find.text(l10n.proPrivacyPolicyLink));
 
     expect(termsOpened, 1);
     expect(privacyOpened, 1);
   });
 
-  testWidgets('invokes purchase, restore, and self-hosted callbacks',
-      (tester) async {
+  testWidgets('invokes purchase and restore callbacks', (tester) async {
     var purchases = 0;
     var restores = 0;
-    var configures = 0;
     await tester.pumpWidget(subject(
       onPurchase: () => purchases += 1,
       onRestore: () => restores += 1,
-      onConfigure: () => configures += 1,
     ));
     await tester.pumpAndSettle();
 
@@ -101,12 +97,9 @@ void main() {
     await tester.tap(find.text('START 7-DAY FREE TRIAL'));
     await tester.ensureVisible(find.text('RESTORE PURCHASES'));
     await tester.tap(find.text('RESTORE PURCHASES'));
-    await tester.ensureVisible(find.text('CONFIGURE SELF-HOSTED PUSH'));
-    await tester.tap(find.text('CONFIGURE SELF-HOSTED PUSH'));
 
     expect(purchases, 1);
     expect(restores, 1);
-    expect(configures, 1);
   });
 
   testWidgets('keeps only the back action inside the deployment flow',
@@ -119,7 +112,6 @@ void main() {
     expect(find.text('CHATS'), findsNothing);
     expect(find.text('MONITOR'), findsNothing);
     expect(find.text('CONFIGURE'), findsNothing);
-    expect(find.text('CONFIGURE SELF-HOSTED PUSH'), findsNothing);
   });
 
   testWidgets(

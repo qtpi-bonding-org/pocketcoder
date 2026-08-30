@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-30T15:20:17.580171
+// Generated at: 2026-08-30T15:36:08.166711
 
 import 'app_localizations.dart';
 
@@ -637,6 +637,9 @@ class L10nKeyResolver {
       'poco.provisioning.waiting.for.source' => _l10n.pocoProvisioningWaitingForSource,
       'pro.active' => _l10n.proActive,
       'pro.active.body' => _l10n.proActiveBody,
+      'pro.benefit.live.monitoring' => _l10n.proBenefitLiveMonitoring,
+      'pro.benefit.push.notifications' => _l10n.proBenefitPushNotifications,
+      'pro.benefit.server.setup' => _l10n.proBenefitServerSetup,
       'pro.checking.status' => _l10n.proCheckingStatus,
       'pro.configure.self.hosted.push' => _l10n.proConfigureSelfHostedPush,
       'pro.feature.console' => _l10n.proFeatureConsole,
@@ -1640,6 +1643,9 @@ class L10nKeyResolver {
     'poco.provisioning.waiting.for.source',
     'pro.active',
     'pro.active.body',
+    'pro.benefit.live.monitoring',
+    'pro.benefit.push.notifications',
+    'pro.benefit.server.setup',
     'pro.checking.status',
     'pro.configure.self.hosted.push',
     'pro.feature.console',
@@ -2588,6 +2594,9 @@ class L10nKeyResolver {
     'pocoProvisioningWaitingForSource': 'poco.provisioning.waiting.for.source',
     'proActive': 'pro.active',
     'proActiveBody': 'pro.active.body',
+    'proBenefitLiveMonitoring': 'pro.benefit.live.monitoring',
+    'proBenefitPushNotifications': 'pro.benefit.push.notifications',
+    'proBenefitServerSetup': 'pro.benefit.server.setup',
     'proCheckingStatus': 'pro.checking.status',
     'proConfigureSelfHostedPush': 'pro.configure.self.hosted.push',
     'proFeatureConsole': 'pro.feature.console',
@@ -3533,6 +3542,9 @@ class L10nKeyResolver {
     'poco.provisioning.waiting.for.source': 'pocoProvisioningWaitingForSource',
     'pro.active': 'proActive',
     'pro.active.body': 'proActiveBody',
+    'pro.benefit.live.monitoring': 'proBenefitLiveMonitoring',
+    'pro.benefit.push.notifications': 'proBenefitPushNotifications',
+    'pro.benefit.server.setup': 'proBenefitServerSetup',
     'pro.checking.status': 'proCheckingStatus',
     'pro.configure.self.hosted.push': 'proConfigureSelfHostedPush',
     'pro.feature.console': 'proFeatureConsole',
@@ -4485,6 +4497,9 @@ abstract class L10nKeys {
   static const pocoProvisioningWaitingForSource = 'poco.provisioning.waiting.for.source';
   static const proActive = 'pro.active';
   static const proActiveBody = 'pro.active.body';
+  static const proBenefitLiveMonitoring = 'pro.benefit.live.monitoring';
+  static const proBenefitPushNotifications = 'pro.benefit.push.notifications';
+  static const proBenefitServerSetup = 'pro.benefit.server.setup';
   static const proCheckingStatus = 'pro.checking.status';
   static const proConfigureSelfHostedPush = 'pro.configure.self.hosted.push';
   static const proFeatureConsole = 'pro.feature.console';

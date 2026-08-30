@@ -1300,6 +1300,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proPrivacyPolicyLink => 'PRIVACY POLICY';
 
   @override
+  String get proBenefitServerSetup =>
+      'ONE-TAP SERVER SETUP -- NO MANUAL VPS CONFIGURATION';
+
+  @override
+  String get proBenefitPushNotifications =>
+      'PUSH NOTIFICATIONS FOR AGENT ACTIVITY -- APPROVALS, TASK COMPLETION';
+
+  @override
+  String get proBenefitLiveMonitoring => 'LIVE AGENT MONITORING';
+
+  @override
   String get proActive => '> ENTITLEMENT: ACTIVE';
 
   @override

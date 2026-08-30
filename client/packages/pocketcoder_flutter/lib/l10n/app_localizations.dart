@@ -2470,6 +2470,24 @@ abstract class AppLocalizations {
   /// **'PRIVACY POLICY'**
   String get proPrivacyPolicyLink;
 
+  /// No description provided for @proBenefitServerSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'ONE-TAP SERVER SETUP -- NO MANUAL VPS CONFIGURATION'**
+  String get proBenefitServerSetup;
+
+  /// No description provided for @proBenefitPushNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'PUSH NOTIFICATIONS FOR AGENT ACTIVITY -- APPROVALS, TASK COMPLETION'**
+  String get proBenefitPushNotifications;
+
+  /// No description provided for @proBenefitLiveMonitoring.
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE AGENT MONITORING'**
+  String get proBenefitLiveMonitoring;
+
   /// No description provided for @proActive.
   ///
   /// In en, this message translates to:

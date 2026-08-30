@@ -11,13 +11,11 @@ class ProPaywallAdapter extends CubitAdapter<BillingCubit, BillingState> {
   const ProPaywallAdapter({
     super.key,
     required this.returnOnUnlock,
-    required this.onConfigureSelfHostedPush,
     required this.onOpenTermsOfService,
     required this.onOpenPrivacyPolicy,
   });
 
   final bool returnOnUnlock;
-  final VoidCallback onConfigureSelfHostedPush;
   final VoidCallback onOpenTermsOfService;
   final VoidCallback onOpenPrivacyPolicy;
 
@@ -38,7 +36,6 @@ class ProPaywallAdapter extends CubitAdapter<BillingCubit, BillingState> {
           isOnboarding: returnOnUnlock,
           onPurchase: () => _purchase(context, cubit, value),
           onRestore: () => _restore(context, cubit),
-          onConfigureSelfHostedPush: onConfigureSelfHostedPush,
           onOpenTermsOfService: onOpenTermsOfService,
           onOpenPrivacyPolicy: onOpenPrivacyPolicy,
         ),
