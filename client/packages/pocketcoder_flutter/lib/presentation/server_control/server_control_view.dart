@@ -9,9 +9,11 @@ import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_de
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
+/// Confirm-dialog body text only; buttons use [_buttonLabel] instead.
 String _localizedOperationLabel(
   BuildContext context,
   ServerControlOperation operation,
@@ -29,6 +31,19 @@ String _localizedOperationLabel(
         context.l10n.serverControlOperationSaveBackup,
       ServerControlOperation.restoreBackup =>
         context.l10n.serverControlOperationRestoreBackup,
+    };
+
+String _buttonLabel(BuildContext context, ServerControlOperation operation) =>
+    switch (operation) {
+      ServerControlOperation.restartPocketCoder ||
+      ServerControlOperation.restartNixOs =>
+        context.l10n.serverControlActionRestart,
+      ServerControlOperation.updatePocketCoder ||
+      ServerControlOperation.updateNixOs =>
+        context.l10n.serverControlActionUpdate,
+      ServerControlOperation.saveBackup => context.l10n.serverControlActionSave,
+      ServerControlOperation.restoreBackup =>
+        context.l10n.serverControlActionRestore,
     };
 
 class ServerControlView extends StatelessWidget {
@@ -212,11 +227,14 @@ class _ConnectionDetailsState extends State<_ConnectionDetails> {
             action: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _OutlinedTextButton(
-                  label: _showPassword
-                      ? context.l10n.serverControlHide
-                      : context.l10n.serverControlShow,
-                  onPressed: () => _toggleShowPassword(context),
+                BiosActionButton(
+                  action: BiosActionStripItem(
+                    label: _showPassword
+                        ? context.l10n.serverControlHide
+                        : context.l10n.serverControlShow,
+                    emphasis: Emphasis.outlined,
+                    onTap: () => _toggleShowPassword(context),
+                  ),
                 ),
                 HSpace.x1,
                 _CopyButton(value: value),
@@ -274,11 +292,14 @@ class _PrivateKeySectionState extends State<_PrivateKeySection> {
         else
           const SizedBox.shrink(),
         VSpace.x1,
-        _OutlinedTextButton(
-          label: _revealed
-              ? context.l10n.serverControlHide
-              : context.l10n.serverControlShow,
-          onPressed: () => _toggleReveal(context),
+        BiosActionButton(
+          action: BiosActionStripItem(
+            label: _revealed
+                ? context.l10n.serverControlHide
+                : context.l10n.serverControlShow,
+            emphasis: Emphasis.outlined,
+            onTap: () => _toggleReveal(context),
+          ),
         ),
       ],
     );
@@ -332,22 +353,27 @@ class _ProviderConsoleButton extends StatelessWidget {
   final InAppBrowserLauncher launcher;
 
   @override
-  Widget build(BuildContext context) => _OutlinedTextButton(
-        label: context.l10n.serverControlProviderConsole,
-        onPressed: () async {
-          final uri = await link.resolve();
-          if (!context.mounted) return;
-          if (uri == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content:
-                    Text(context.l10n.serverControlProviderConsoleUnavailable),
-              ),
-            );
-            return;
-          }
-          await launcher.open(uri);
-        },
+  Widget build(BuildContext context) => BiosActionStrip(
+        actions: [
+          BiosActionStripItem(
+            label: context.l10n.serverControlProviderConsole,
+            emphasis: Emphasis.outlined,
+            onTap: () async {
+              final uri = await link.resolve();
+              if (!context.mounted) return;
+              if (uri == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        context.l10n.serverControlProviderConsoleUnavailable),
+                  ),
+                );
+                return;
+              }
+              await launcher.open(uri);
+            },
+          ),
+        ],
       );
 }
 
@@ -386,24 +412,6 @@ class _ReleaseLine extends StatelessWidget {
     ];
     return lines.join('\n');
   }
-}
-
-class _OutlinedTextButton extends StatelessWidget {
-  const _OutlinedTextButton({
-    required this.label,
-    required this.onPressed,
-    this.disabled = false,
-  });
-
-  final String label;
-  final VoidCallback onPressed;
-  final bool disabled;
-
-  @override
-  Widget build(BuildContext context) => OutlinedButton(
-        onPressed: disabled ? null : onPressed,
-        child: Text(label.toUpperCase()),
-      );
 }
 
 class _ControlGrid extends StatelessWidget {
@@ -473,24 +481,25 @@ class _ControlGroupRow extends StatelessWidget {
               ),
             ),
             VSpace.x1,
-            Row(
-              children: [
-                Expanded(
-                  child: _OutlinedTextButton(
-                    label: _localizedOperationLabel(context, left),
-                    disabled: disabled,
-                    onPressed: () => onRun(left),
-                  ),
+            IgnorePointer(
+              ignoring: disabled,
+              child: Opacity(
+                opacity: disabled ? 0.4 : 1,
+                child: BiosActionStrip(
+                  actions: [
+                    BiosActionStripItem(
+                      label: _buttonLabel(context, left),
+                      emphasis: Emphasis.outlined,
+                      onTap: () => onRun(left),
+                    ),
+                    BiosActionStripItem(
+                      label: _buttonLabel(context, right),
+                      emphasis: Emphasis.outlined,
+                      onTap: () => onRun(right),
+                    ),
+                  ],
                 ),
-                HSpace.x1,
-                Expanded(
-                  child: _OutlinedTextButton(
-                    label: _localizedOperationLabel(context, right),
-                    disabled: disabled,
-                    onPressed: () => onRun(right),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),

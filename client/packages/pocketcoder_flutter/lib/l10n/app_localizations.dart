@@ -5580,6 +5580,30 @@ abstract class AppLocalizations {
   /// **'Restore backup'**
   String get serverControlOperationRestoreBackup;
 
+  /// No description provided for @serverControlActionRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'RESTART'**
+  String get serverControlActionRestart;
+
+  /// No description provided for @serverControlActionUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'UPDATE'**
+  String get serverControlActionUpdate;
+
+  /// No description provided for @serverControlActionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get serverControlActionSave;
+
+  /// No description provided for @serverControlActionRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'RESTORE'**
+  String get serverControlActionRestore;
+
   /// No description provided for @serverControlGroupPocketCoder.
   ///
   /// In en, this message translates to:

@@ -181,20 +181,13 @@ void main() {
 
     expect(find.text('RELEASE STATUS: CHECKING'), findsOneWidget);
     final l10n = lookupAppLocalizations(const Locale('en'));
-    final operationLabels = [
-      l10n.serverControlOperationRestartPocketCoder,
-      l10n.serverControlOperationUpdatePocketCoder,
-      l10n.serverControlOperationRestartNixOs,
-      l10n.serverControlOperationUpdateNixOs,
-      l10n.serverControlOperationSaveBackup,
-      l10n.serverControlOperationRestoreBackup,
-    ];
-    expect(operationLabels.length, ServerControlOperation.values.length,
-        reason:
-            'a new ServerControlOperation needs its label added here too');
-    for (final label in operationLabels) {
-      expect(find.text(label.toUpperCase()), findsOneWidget);
-    }
+    expect(find.text(l10n.serverControlGroupPocketCoder), findsOneWidget);
+    expect(find.text(l10n.serverControlGroupNixOs), findsOneWidget);
+    expect(find.text(l10n.serverControlGroupData), findsOneWidget);
+    expect(find.text(l10n.serverControlActionRestart), findsNWidgets(2));
+    expect(find.text(l10n.serverControlActionUpdate), findsNWidgets(2));
+    expect(find.text(l10n.serverControlActionSave), findsOneWidget);
+    expect(find.text(l10n.serverControlActionRestore), findsOneWidget);
     await cubit.inspectRelease();
     await tester.pump();
     expect(find.textContaining('RELEASE STATUS: CURRENT'), findsOneWidget);
@@ -297,7 +290,7 @@ void main() {
     service.pending[ServerControlOperation.saveBackup] = future;
     await tester.pumpWidget(_app(cubit));
 
-    await tester.tap(find.text('SAVE BACKUP'));
+    await tester.tap(find.text('SAVE'));
     await tester.pumpAndSettle();
     expect(find.text('CONFIRM SERVER CONTROL'), findsOneWidget);
     expect(service.calls, isEmpty);
@@ -305,7 +298,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(service.calls, isEmpty);
 
-    await tester.tap(find.text('SAVE BACKUP'));
+    await tester.tap(find.text('SAVE'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('CONFIRM'));
     await tester.pump();
@@ -326,10 +319,11 @@ void main() {
     await tester.pump();
     expect(cubit.state.status, UiFlowStatus.loading);
     expect(
-        tester
-            .widget<OutlinedButton>(find.byType(OutlinedButton).first)
-            .onPressed,
-        isNull);
+      tester
+          .widgetList<IgnorePointer>(find.byType(IgnorePointer))
+          .every((widget) => widget.ignoring),
+      isTrue,
+    );
     pending.complete(_success(ServerControlOperation.restartNixOs));
     await run;
     await cubit.close();

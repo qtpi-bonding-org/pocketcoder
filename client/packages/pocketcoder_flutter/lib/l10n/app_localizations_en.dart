@@ -3101,6 +3101,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlOperationRestoreBackup => 'Restore backup';
 
   @override
+  String get serverControlActionRestart => 'RESTART';
+
+  @override
+  String get serverControlActionUpdate => 'UPDATE';
+
+  @override
+  String get serverControlActionSave => 'SAVE';
+
+  @override
+  String get serverControlActionRestore => 'RESTORE';
+
+  @override
   String get serverControlGroupPocketCoder => 'POCKETCODER';
 
   @override
