@@ -1,6 +1,7 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
+import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
@@ -61,23 +62,24 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
     }
   }
 
-  /// A restart/update op's own health check (server-side, per the release
-  /// manager) already confirms the new release before it reports success --
-  /// this just re-reads that confirmed state. One retry covers the app's own
-  /// HTTP connection, separate from that health check, resetting while
-  /// PocketBase bounces. A failure here (including the retry) leaves the
-  /// last-known [ServerControlState.release] in place rather than surfacing
-  /// an error banner for an operation that already succeeded.
+  /// Deliberately does not use [tryOperation] -- a failure here must not
+  /// surface an error banner or clear [ServerControlState.release] for an
+  /// operation that already succeeded.
   Future<void> _refreshReleaseAfterOperation() async {
     for (var attempt = 0; attempt < 2; attempt++) {
       if (attempt > 0) await Future<void>.delayed(_releaseRefreshRetryDelay);
-      try {
-        final release = await _service.inspectRelease();
+      if (await _tryInspectRelease() case final release?) {
         emit(state.copyWith(release: release));
         return;
-      } on Object {
-        // Best-effort; fall through to the retry, or give up silently.
       }
+    }
+  }
+
+  Future<ServerReleaseStatusSnapshot?> _tryInspectRelease() async {
+    try {
+      return await _service.inspectRelease();
+    } on Object {
+      return null;
     }
   }
 
