@@ -3,6 +3,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -49,12 +50,13 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
     final typed = _controller.text.trim();
     final existing = widget.existing;
     if (existing == null && typed.isEmpty) return;
-    if (_selectedProvider == null) return;
+    final selectedProvider = _selectedProvider;
+    if (selectedProvider == null) return;
     widget.onSave(
       ProviderApiKey(
         id: existing?.id ?? '',
         owner: existing?.owner ?? '',
-        provider: _selectedProvider!.id,
+        provider: selectedProvider.id,
         apiKey: typed.isEmpty ? (existing?.apiKey ?? '') : typed,
       ),
     );
@@ -130,90 +132,35 @@ class ProviderTargetPicker extends StatelessWidget {
         variant: BiosRowVariant.expand,
         onTap: () async {
           final picked = await showDialog<domain.Provider>(
-              context: context,
-              builder: (_) => _ProviderTargetSearchDialog(
-                  targets: targets, selectedProvider: selectedProvider));
+            context: context,
+            builder: (dialogContext) =>
+                SearchablePickerDialog<domain.Provider>(
+              title: dialogContext.l10n.providerScreenSelectProvider,
+              items: targets,
+              itemLabel: (p) => p.name,
+              matches: (p, query) {
+                final q = query.toLowerCase();
+                return p.name.toLowerCase().contains(q) ||
+                    p.providerId.toLowerCase().contains(q);
+              },
+              itemBuilder: (context, p,
+                      {required isSelected, required onTap}) =>
+                  ProviderTargetOption(
+                provider: p,
+                isSelected: isSelected,
+                onTap: onTap,
+              ),
+              selectedItem: selectedProvider,
+              searchLabel: dialogContext.l10n.providerScreenSearchLabel,
+              searchHint: dialogContext.l10n.providerScreenSearchHint,
+              emptyLabel: dialogContext.l10n.providerScreenNoProviders,
+              noMatchesLabel:
+                  dialogContext.l10n.providerScreenSearchNoMatches,
+            ),
+          );
           if (picked != null) onSelected(picked);
         },
       );
-}
-
-class _ProviderTargetSearchDialog extends StatefulWidget {
-  const _ProviderTargetSearchDialog(
-      {required this.targets, required this.selectedProvider});
-  final List<domain.Provider> targets;
-  final domain.Provider? selectedProvider;
-  @override
-  State<_ProviderTargetSearchDialog> createState() =>
-      _ProviderTargetSearchDialogState();
-}
-
-class _ProviderTargetSearchDialogState
-    extends State<_ProviderTargetSearchDialog> {
-  final _searchController = TextEditingController();
-  String _query = '';
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  List<domain.Provider> get _filtered {
-    if (_query.isEmpty) return widget.targets;
-    final q = _query.toLowerCase();
-    return widget.targets
-        .where((p) =>
-            p.name.toLowerCase().contains(q) ||
-            p.providerId.toLowerCase().contains(q))
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final filtered = _filtered;
-    return TerminalDialog(
-      title: context.l10n.providerScreenSelectProvider,
-      content: SizedBox(
-          width: double.maxFinite,
-          height: 360,
-          child: widget.targets.isEmpty
-              ? Center(
-                  child: TerminalText(context.l10n.providerScreenNoProviders,
-                      alpha: 0.5))
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                      TerminalTextField(
-                          controller: _searchController,
-                          label: context.l10n.providerScreenSearchLabel,
-                          hint: context.l10n.providerScreenSearchHint,
-                          onChanged: (v) => setState(() => _query = v)),
-                      VSpace.x2,
-                      Expanded(
-                          child: filtered.isEmpty
-                              ? Center(
-                                  child: TerminalText(
-                                      context
-                                          .l10n.providerScreenSearchNoMatches,
-                                      alpha: 0.5))
-                              : ListView(children: [
-                                  for (final p in filtered)
-                                    ProviderTargetOption(
-                                        provider: p,
-                                        isSelected:
-                                            widget.selectedProvider?.id == p.id,
-                                        onTap: () =>
-                                            Navigator.of(context).pop(p))
-                                ])),
-                    ])),
-      actions: [
-        TerminalButton(
-            label: context.l10n.actionCancel,
-            isPrimary: false,
-            onTap: () => Navigator.of(context).pop())
-      ],
-    );
-  }
 }
 
 class ProviderTargetOption extends StatelessWidget {
