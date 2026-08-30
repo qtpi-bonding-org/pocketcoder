@@ -66,6 +66,7 @@
   "navChats": "CHATS",
   "navMonitor": "MONITOR",
   "navConfigure": "CONFIGURE",
+  "navManage": "MANAGE",
 
   "bootLoadError": "SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS\n[!] CHECK_ASSET_MANIFEST",
   "bootPocoIntro": "Hi! I'm Poco, your Private Operations Coding Officer representing the PocketCoder Initiative.",

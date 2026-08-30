@@ -1,11 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
+import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+
+class _FakeServerControlService implements IServerControlService {
+  @override
+  Future<ServerReleaseStatusSnapshot> inspectRelease() =>
+      throw UnimplementedError();
+
+  @override
+  Future<ServerControlResult> restartPocketCoder({required String instanceId}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<ServerControlResult> updatePocketCoder({required String instanceId}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<ServerControlResult> restartNixOs({required String instanceId}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<ServerControlResult> updateNixOs({required String instanceId}) =>
+      throw UnimplementedError();
+
+  @override
+  Future<ServerControlResult> saveBackup({required String instanceId}) =>
+      throw UnimplementedError();
+}
 
 void main() {
   Widget wrap(Widget child) => MaterialApp(
@@ -107,5 +137,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ONBOARDING SCREEN'), findsOneWidget);
+  });
+
+  testWidgets('MANAGE appears in the footer when IServerControlService is '
+      'registered, and is absent otherwise', (tester) async {
+    final getIt = GetIt.instance;
+    addTearDown(getIt.reset);
+
+    await tester.pumpWidget(wrap(PocketCoderShell(
+      title: 'CONFIGURE',
+      activePillar: NavPillar.configure,
+      body: const SizedBox.shrink(),
+    )));
+    expect(find.text('MANAGE'), findsNothing);
+
+    getIt.registerLazySingleton<IServerControlService>(
+      () => _FakeServerControlService(),
+    );
+    await tester.pumpWidget(wrap(PocketCoderShell(
+      title: 'CONFIGURE',
+      activePillar: NavPillar.configure,
+      body: const SizedBox.shrink(),
+    )));
+    expect(find.text('MANAGE'), findsOneWidget);
   });
 }

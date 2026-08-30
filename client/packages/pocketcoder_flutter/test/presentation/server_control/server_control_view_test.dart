@@ -127,7 +127,7 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('BACK uses the shared shell action, not a hand-rolled one',
+  testWidgets('server control is a footer destination without BACK',
       (tester) async {
     final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service);
@@ -153,7 +153,7 @@ void main() {
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
     ));
-    expect(find.text('BACK'), findsOneWidget);
+    expect(find.text('BACK'), findsNothing);
     await cubit.close();
   });
 

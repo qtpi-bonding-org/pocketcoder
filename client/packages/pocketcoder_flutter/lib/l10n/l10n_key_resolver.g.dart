@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-29T19:16:05.264721
+// Generated at: 2026-08-29T21:23:12.444190
 
 import 'app_localizations.dart';
 
@@ -406,6 +406,7 @@ class L10nKeyResolver {
       'monitor.title' => _l10n.monitorTitle,
       'nav.chats' => _l10n.navChats,
       'nav.configure' => _l10n.navConfigure,
+      'nav.manage' => _l10n.navManage,
       'nav.monitor' => _l10n.navMonitor,
       'new.chat.cancel' => _l10n.newChatCancel,
       'new.chat.create' => _l10n.newChatCreate,
@@ -1377,6 +1378,7 @@ class L10nKeyResolver {
     'monitor.title',
     'nav.chats',
     'nav.configure',
+    'nav.manage',
     'nav.monitor',
     'new.chat.cancel',
     'new.chat.create',
@@ -2305,6 +2307,7 @@ class L10nKeyResolver {
     'monitorTitle': 'monitor.title',
     'navChats': 'nav.chats',
     'navConfigure': 'nav.configure',
+    'navManage': 'nav.manage',
     'navMonitor': 'nav.monitor',
     'newChatCancel': 'new.chat.cancel',
     'newChatCreate': 'new.chat.create',
@@ -3230,6 +3233,7 @@ class L10nKeyResolver {
     'monitor.title': 'monitorTitle',
     'nav.chats': 'navChats',
     'nav.configure': 'navConfigure',
+    'nav.manage': 'navManage',
     'nav.monitor': 'navMonitor',
     'new.chat.cancel': 'newChatCancel',
     'new.chat.create': 'newChatCreate',
@@ -4162,6 +4166,7 @@ abstract class L10nKeys {
   static const monitorTitle = 'monitor.title';
   static const navChats = 'nav.chats';
   static const navConfigure = 'nav.configure';
+  static const navManage = 'nav.manage';
   static const navMonitor = 'nav.monitor';
   static const newChatCancel = 'new.chat.cancel';
   static const newChatCreate = 'new.chat.create';

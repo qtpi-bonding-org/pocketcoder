@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -6,9 +7,10 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 
 /// The three navigation pillars of PocketCoder.
-enum NavPillar { chats, monitor, configure }
+enum NavPillar { chats, monitor, configure, manage }
 
 /// Reusable layout shell that wraps every screen.
 ///
@@ -142,6 +144,16 @@ class PocketCoderShell extends StatelessWidget {
           }
         },
       ),
+      if (GetIt.instance.isRegistered<IServerControlService>())
+        TerminalAction(
+          label: context.l10n.navManage,
+          isActive: activePillar == NavPillar.manage,
+          onTap: () {
+            if (activePillar != NavPillar.manage) {
+              context.go(AppRoutes.serverControls);
+            }
+          },
+        ),
     ];
   }
 }

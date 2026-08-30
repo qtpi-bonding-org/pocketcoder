@@ -400,6 +400,12 @@ abstract class AppLocalizations {
   /// **'CONFIGURE'**
   String get navConfigure;
 
+  /// No description provided for @navManage.
+  ///
+  /// In en, this message translates to:
+  /// **'MANAGE'**
+  String get navManage;
+
   /// No description provided for @bootLoadError.
   ///
   /// In en, this message translates to:

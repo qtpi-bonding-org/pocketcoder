@@ -42,8 +42,8 @@ class ServerControlView extends StatelessWidget {
     return BlocBuilder<ServerControlCubit, ServerControlState>(
       builder: (context, state) => PocketCoderShell(
         title: context.l10n.serverControlTitle,
-        activePillar: NavPillar.configure,
-        showBack: true,
+        activePillar: NavPillar.manage,
+        showBack: false,
         body: ListView(
           children: [
             if (state.connectionDetails case final details?

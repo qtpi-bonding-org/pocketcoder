@@ -167,6 +167,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navConfigure => 'CONFIGURE';
 
   @override
+  String get navManage => 'MANAGE';
+
+  @override
   String get bootLoadError =>
       'SYSTEM_ERROR: UNABLE_TO_LOAD_BOOT_LOGS\n[!] CHECK_ASSET_MANIFEST';
 
