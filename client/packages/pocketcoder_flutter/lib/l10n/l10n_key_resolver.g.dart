@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-29T18:24:26.827003
+// Generated at: 2026-08-29T19:16:05.264721
 
 import 'app_localizations.dart';
 
@@ -85,6 +85,8 @@ class L10nKeyResolver {
       'auth.login.failed' => _l10n.authLoginFailed,
       'auth.not.authenticated' => _l10n.authNotAuthenticated,
       'auth.token.expired' => _l10n.authTokenExpired,
+      'billing.error' => _l10n.billingError,
+      'billing.restore.failed' => _l10n.billingRestoreFailed,
       'boot.checking.connection' => _l10n.bootCheckingConnection,
       'boot.connection.failed' => _l10n.bootConnectionFailed,
       'boot.load.error' => _l10n.bootLoadError,
@@ -1017,6 +1019,8 @@ class L10nKeyResolver {
     'auth.login.failed',
     'auth.not.authenticated',
     'auth.token.expired',
+    'billing.error',
+    'billing.restore.failed',
     'boot.checking.connection',
     'boot.connection.failed',
     'boot.load.error',
@@ -1943,6 +1947,8 @@ class L10nKeyResolver {
     'authLoginFailed': 'auth.login.failed',
     'authNotAuthenticated': 'auth.not.authenticated',
     'authTokenExpired': 'auth.token.expired',
+    'billingError': 'billing.error',
+    'billingRestoreFailed': 'billing.restore.failed',
     'bootCheckingConnection': 'boot.checking.connection',
     'bootConnectionFailed': 'boot.connection.failed',
     'bootLoadError': 'boot.load.error',
@@ -2866,6 +2872,8 @@ class L10nKeyResolver {
     'auth.login.failed': 'authLoginFailed',
     'auth.not.authenticated': 'authNotAuthenticated',
     'auth.token.expired': 'authTokenExpired',
+    'billing.error': 'billingError',
+    'billing.restore.failed': 'billingRestoreFailed',
     'boot.checking.connection': 'bootCheckingConnection',
     'boot.connection.failed': 'bootConnectionFailed',
     'boot.load.error': 'bootLoadError',
@@ -3796,6 +3804,8 @@ abstract class L10nKeys {
   static const authLoginFailed = 'auth.login.failed';
   static const authNotAuthenticated = 'auth.not.authenticated';
   static const authTokenExpired = 'auth.token.expired';
+  static const billingError = 'billing.error';
+  static const billingRestoreFailed = 'billing.restore.failed';
   static const bootCheckingConnection = 'boot.checking.connection';
   static const bootConnectionFailed = 'boot.connection.failed';
   static const bootLoadError = 'boot.load.error';

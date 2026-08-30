@@ -20,6 +20,7 @@ void main() {
       supportedLocales: const [Locale('en')],
       home: SettingsView(
         hasPendingMcp: false,
+        isPro: true,
         onNavigate: (_) {},
         onLogout: () {},
         onFactoryReset: () {},
@@ -30,6 +31,29 @@ void main() {
     expect(find.text('[CONFIGURE]'), findsNothing);
     expect(find.text('[MANAGE]'), findsNothing);
     expect(find.textContaining('TOOL PERMISSIONS'), findsOneWidget);
+  });
+
+  testWidgets('Pro Settings row is hidden when isPro is false',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.darkTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en')],
+      home: SettingsView(
+        hasPendingMcp: false,
+        isPro: false,
+        onNavigate: (_) {},
+        onLogout: () {},
+        onFactoryReset: () {},
+      ),
+    ));
+
+    expect(find.textContaining('PRO'), findsNothing);
   });
 
   testWidgets('BiosSection centers its title with a divider on both sides '

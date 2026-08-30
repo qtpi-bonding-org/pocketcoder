@@ -38,6 +38,9 @@
   "toolPermissionsUpdateFailed": "Failed to update tool permissions",
   "toolPermissionsError": "Tool permissions error",
 
+  "billingRestoreFailed": "Couldn't restore your purchases. Check your connection and try again.",
+  "billingError": "Billing error",
+
   "actionCancel": "CANCEL",
   "actionSave": "SAVE",
   "actionClose": "CLOSE",

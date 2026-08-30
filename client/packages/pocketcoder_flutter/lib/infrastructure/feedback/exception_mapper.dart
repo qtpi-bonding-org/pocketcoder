@@ -19,6 +19,7 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
       PermissionException() => _mapPermissionException(exception),
       AiException() => _mapAiException(exception),
       ToolPermissionsException() => _mapToolPermissionsException(exception),
+      BillingException() => _mapBillingException(exception),
       ProviderReauthenticationRequired() =>
         const MessageKey.error('provider.reauthentication.required'),
       // Domain exceptions with no dedicated copy yet -- fall back to the
@@ -39,47 +40,55 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
 
   MessageKey? _mapAuthException(AuthException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('Login') => const MessageKey.error('auth.loginFailed'),
-      String msg when msg.contains('not authenticated') => const MessageKey.error('auth.notAuthenticated'),
-      String msg when msg.contains('token') => const MessageKey.error('auth.tokenExpired'),
+      String msg when msg.contains('Login') => const MessageKey.error('auth.login.failed'),
+      String msg when msg.contains('not authenticated') => const MessageKey.error('auth.not.authenticated'),
+      String msg when msg.contains('token') => const MessageKey.error('auth.token.expired'),
       _ => const MessageKey.error('auth.error'),
     };
   }
 
   MessageKey? _mapChatException(ChatException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('chat.fetchFailed'),
-      String msg when msg.contains('send') => const MessageKey.error('chat.sendFailed'),
-      String msg when msg.contains('not found') => const MessageKey.error('chat.notFound'),
+      String msg when msg.contains('fetch') => const MessageKey.error('chat.fetch.failed'),
+      String msg when msg.contains('send') => const MessageKey.error('chat.send.failed'),
+      String msg when msg.contains('not found') => const MessageKey.error('chat.not.found'),
       _ => const MessageKey.error('chat.error'),
     };
   }
 
   MessageKey? _mapChatListException(ChatListException exception) {
-    return const MessageKey.error('chatList.error');
+    return const MessageKey.error('chat.list.error');
   }
 
   MessageKey? _mapPermissionException(PermissionException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('permission.fetchFailed'),
-      String msg when msg.contains('update') => const MessageKey.error('permission.updateFailed'),
+      String msg when msg.contains('fetch') => const MessageKey.error('permission.fetch.failed'),
+      String msg when msg.contains('update') => const MessageKey.error('permission.update.failed'),
       _ => const MessageKey.error('permission.error'),
     };
   }
 
   MessageKey? _mapAiException(AiException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('ai.fetchFailed'),
-      String msg when msg.contains('save') => const MessageKey.error('ai.saveFailed'),
+      String msg when msg.contains('fetch') => const MessageKey.error('ai.fetch.failed'),
+      String msg when msg.contains('save') => const MessageKey.error('ai.save.failed'),
       _ => const MessageKey.error('ai.error'),
     };
   }
 
   MessageKey? _mapToolPermissionsException(ToolPermissionsException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('toolPermissions.fetchFailed'),
-      String msg when msg.contains('update') => const MessageKey.error('toolPermissions.updateFailed'),
-      _ => const MessageKey.error('toolPermissions.error'),
+      String msg when msg.contains('fetch') => const MessageKey.error('tool.permissions.fetch.failed'),
+      String msg when msg.contains('update') => const MessageKey.error('tool.permissions.update.failed'),
+      _ => const MessageKey.error('tool.permissions.error'),
+    };
+  }
+
+  MessageKey? _mapBillingException(BillingException exception) {
+    return switch (exception.message) {
+      String msg when msg.contains('restore') =>
+        const MessageKey.error('billing.restore.failed'),
+      _ => const MessageKey.error('billing.error'),
     };
   }
 }

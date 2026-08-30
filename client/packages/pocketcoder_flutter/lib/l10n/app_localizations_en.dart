@@ -95,6 +95,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolPermissionsError => 'Tool permissions error';
 
   @override
+  String get billingRestoreFailed =>
+      'Couldn\'t restore your purchases. Check your connection and try again.';
+
+  @override
+  String get billingError => 'Billing error';
+
+  @override
   String get actionCancel => 'CANCEL';
 
   @override

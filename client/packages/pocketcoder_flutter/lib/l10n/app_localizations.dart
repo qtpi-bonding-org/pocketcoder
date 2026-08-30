@@ -262,6 +262,18 @@ abstract class AppLocalizations {
   /// **'Tool permissions error'**
   String get toolPermissionsError;
 
+  /// No description provided for @billingRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t restore your purchases. Check your connection and try again.'**
+  String get billingRestoreFailed;
+
+  /// No description provided for @billingError.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing error'**
+  String get billingError;
+
   /// No description provided for @actionCancel.
   ///
   /// In en, this message translates to:

@@ -28,6 +28,7 @@ void main() {
     String? chatId = 'chat-1',
     bool isLoading = false,
     bool isRunning = false,
+    bool showMonitorAction = true,
     bool monitored = false,
     VoidCallback? onToggleMonitored,
     void Function(String)? onSendPrompt,
@@ -42,6 +43,7 @@ void main() {
         requiresProviderReauthentication: false,
         modes: null,
         config: null,
+        showMonitorAction: showMonitorAction,
         monitored: monitored,
         onToggleMonitored: onToggleMonitored ?? () {},
         onOpen: (_) {},
@@ -80,6 +82,17 @@ void main() {
     await tester.pump();
 
     expect(toggled, isTrue);
+  });
+
+  testWidgets('WATCH action is hidden when showMonitorAction is false',
+      (tester) async {
+    await tester.pumpWidget(buildChatView(
+      conversation: const ag_ui_widgets.Conversation(),
+      showMonitorAction: false,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('WATCH'), findsNothing);
   });
 
   testWidgets('exactly one composer is rendered', (tester) async {
@@ -124,6 +137,7 @@ void main() {
           requiresProviderReauthentication: false,
           modes: null,
           config: null,
+          showMonitorAction: true,
           monitored: false,
           onToggleMonitored: () {},
           onOpen: (_) {},
@@ -152,6 +166,7 @@ void main() {
       requiresProviderReauthentication: false,
       modes: null,
       config: null,
+      showMonitorAction: true,
       monitored: false,
       onToggleMonitored: () {},
       onOpen: (_) {},
@@ -187,6 +202,7 @@ void main() {
           requiresProviderReauthentication: requiresReauth,
           modes: null,
           config: null,
+          showMonitorAction: true,
           monitored: false,
           onToggleMonitored: () {},
           onOpen: (_) {},
@@ -233,6 +249,7 @@ void main() {
           requiresProviderReauthentication: false,
           modes: null,
           config: null,
+          showMonitorAction: true,
           monitored: false,
           onToggleMonitored: () {},
           onOpen: (_) {},

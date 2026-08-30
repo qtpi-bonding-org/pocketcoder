@@ -11,7 +11,9 @@ import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/infrastructure/foss/foss_app_edition.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
@@ -48,6 +50,7 @@ void main() {
           CaddyCaPinStore(secureStorage),
           const NoopFactoryResetHook(),
         ));
+    getIt.registerSingleton<IAppEdition>(const FossAppEdition());
   });
 
   tearDown(() {

@@ -29,6 +29,7 @@ class ChatView extends StatefulWidget {
     required this.requiresProviderReauthentication,
     required this.modes,
     required this.config,
+    required this.showMonitorAction,
     required this.monitored,
     required this.onToggleMonitored,
     required this.onOpen,
@@ -53,6 +54,7 @@ class ChatView extends StatefulWidget {
   final bool requiresProviderReauthentication;
   final Map<String, dynamic>? modes;
   final Map<String, dynamic>? config;
+  final bool showMonitorAction;
   final bool monitored;
   final VoidCallback onToggleMonitored;
   final ValueChanged<String> onOpen;
@@ -228,11 +230,12 @@ class _ChatViewState extends State<ChatView> {
       actions: [
         TerminalAction(
             label: context.l10n.chatFilesAction, onTap: widget.onFiles),
-        TerminalAction(
-          label: context.l10n.chatMonitorAction,
-          isActive: widget.monitored,
-          onTap: widget.onToggleMonitored,
-        ),
+        if (widget.showMonitorAction)
+          TerminalAction(
+            label: context.l10n.chatMonitorAction,
+            isActive: widget.monitored,
+            onTap: widget.onToggleMonitored,
+          ),
         if (widget.isRunning)
           TerminalAction(
               label: context.l10n.actionCancel, onTap: widget.onCancel),

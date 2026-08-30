@@ -17,6 +17,7 @@ import 'package:pocketcoder_flutter/application/chat/chat_monitoring_state.dart'
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
+import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/live_activities/i_foreground_live_activity_starter.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
@@ -51,6 +52,7 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
     final chatCubit = context.read<ChatCubit>();
     final controls = context.read<SessionControlsCubit>();
     final monitoring = context.read<ChatMonitoringCubit>();
+    final showMonitorAction = GetIt.instance<IAppEdition>().isPro;
     final view = ValueListenableBuilder<ChatState>(
       valueListenable: state,
       builder: (context, value, _) => StreamBuilder<SessionControlsState>(
@@ -75,6 +77,7 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                     value.error is ProviderReauthenticationRequired,
                 modes: c.modes,
                 config: c.config,
+                showMonitorAction: showMonitorAction,
                 monitored: m.monitored,
                 onOpen: (id) {
                   chatCubit.open(id);

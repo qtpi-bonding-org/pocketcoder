@@ -8,12 +8,14 @@ class SettingsView extends StatelessWidget {
   const SettingsView({
     super.key,
     required this.hasPendingMcp,
+    required this.isPro,
     required this.onNavigate,
     required this.onLogout,
     required this.onFactoryReset,
   });
 
   final bool hasPendingMcp;
+  final bool isPro;
   final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
   final VoidCallback onFactoryReset;
@@ -41,7 +43,7 @@ class SettingsView extends StatelessWidget {
         context.l10n.settingsSystemSection,
         [
           ('SYSTEM CHECKS', 'configureSystemChecks'),
-          (context.l10n.proSettingsLabel, 'configurePaywall'),
+          if (isPro) (context.l10n.proSettingsLabel, 'configurePaywall'),
           (context.l10n.pocketCoderUpdateTitle, 'serverControls'),
           (context.l10n.errorsTitle, 'configureErrors'),
         ]

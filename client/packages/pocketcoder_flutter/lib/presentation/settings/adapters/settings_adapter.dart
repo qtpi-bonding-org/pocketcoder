@@ -1,12 +1,14 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
@@ -42,6 +44,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
           stream: mcpCubit.stream,
           builder: (context, snapshot) => SettingsView(
             hasPendingMcp: _hasPendingMcp(snapshot.data ?? mcpCubit.state),
+            isPro: GetIt.instance<IAppEdition>().isPro,
             onNavigate: (routeKey) => _navigateTo(context, routeKey),
             onLogout: () => _confirmLogout(context, authCubit),
             onFactoryReset: () => _confirmFactoryReset(context, authCubit),
