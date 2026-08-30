@@ -43,8 +43,9 @@ void main() {
     expect(find.byType(InkWell), findsNothing);
   });
 
-  testWidgets('toggle variant renders a Switch and forwards changes',
-      (tester) async {
+  testWidgets(
+      'toggle variant renders a terminal-style [ ]/[X] glyph and forwards '
+      'changes', (tester) async {
     bool? changedTo;
     await tester.pumpWidget(_app(BiosRow(
       label: 'enabled',
@@ -53,9 +54,22 @@ void main() {
       onToggleChanged: (v) => changedTo = v,
     )));
 
-    expect(find.byType(Switch), findsOneWidget);
-    await tester.tap(find.byType(Switch));
+    expect(find.byType(Switch), findsNothing);
+    expect(find.text('[ ]'), findsOneWidget);
+    await tester.tap(find.text('[ ]'));
     expect(changedTo, isTrue);
+  });
+
+  testWidgets('toggle variant shows [X] when toggleValue is true',
+      (tester) async {
+    await tester.pumpWidget(_app(const BiosRow(
+      label: 'enabled',
+      variant: BiosRowVariant.toggle,
+      toggleValue: true,
+    )));
+
+    expect(find.text('[X]'), findsOneWidget);
+    expect(find.text('[ ]'), findsNothing);
   });
 
   testWidgets('input variant renders a text field and forwards changes',

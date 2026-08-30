@@ -112,12 +112,10 @@ void main() {
     expect(find.text('TASK COMPLETE'), findsOneWidget);
     expect(find.text('TASK ERRORS'), findsOneWidget);
 
-    final switches = find.byType(Switch);
-    expect(switches, findsNWidgets(4));
-    for (var i = 0; i < 4; i++) {
-      expect(tester.widget<Switch>(switches.at(i)).value, isTrue);
-    }
-    expect(find.byType(BiosRow), findsNWidgets(4));
+    final rows = tester.widgetList<BiosRow>(find.byType(BiosRow)).toList();
+    expect(rows, hasLength(4));
+    expect(rows.every((row) => row.toggleValue), isTrue);
+    expect(find.byType(Switch), findsNothing);
   });
 
   testWidgets('honors a non-default value from the loaded rules map',
@@ -135,16 +133,15 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    final switches = find.byType(Switch);
-    expect(switches, findsNWidgets(4));
-    expect(tester.widget<Switch>(switches.at(0)).value, isFalse); // chat_reply
-    expect(tester.widget<Switch>(switches.at(1)).value, isTrue); // schedule
-    expect(
-        tester.widget<Switch>(switches.at(2)).value, isTrue); // task_complete
-    expect(tester.widget<Switch>(switches.at(3)).value, isFalse); // task_error
+    final rows = tester.widgetList<BiosRow>(find.byType(BiosRow)).toList();
+    expect(rows, hasLength(4));
+    expect(rows[0].toggleValue, isFalse); // chat_reply
+    expect(rows[1].toggleValue, isTrue); // schedule
+    expect(rows[2].toggleValue, isTrue); // task_complete
+    expect(rows[3].toggleValue, isFalse); // task_error
   });
 
-  testWidgets('tapping a switch calls cubit.setTypeEnabled with the right args',
+  testWidgets('tapping a toggle calls cubit.setTypeEnabled with the right args',
       (tester) async {
     when(() => cubit.state)
         .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
@@ -152,8 +149,8 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    // Tap the first switch (chat_reply) — flips it off.
-    await tester.tap(find.byType(Switch).first);
+    // Tap the first toggle (chat_reply) — flips it off.
+    await tester.tap(find.text('[X]').first);
     await tester.pumpAndSettle();
 
     verify(() => cubit.setTypeEnabled('chat_reply', false)).called(1);

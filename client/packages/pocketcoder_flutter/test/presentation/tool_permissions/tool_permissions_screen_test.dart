@@ -42,9 +42,12 @@ void main() {
     expect(find.byType(BiosRow), findsWidgets);
     expect(find.byType(BiosActionStrip), findsOneWidget);
 
-    final toggle = tester.widget<Switch>(find.byType(Switch));
-    expect(toggle.value, isTrue);
-    await tester.tap(find.byType(Switch));
+    final toggleRow = tester
+        .widgetList<BiosRow>(find.byType(BiosRow))
+        .firstWhere((row) => row.variant == BiosRowVariant.toggle);
+    expect(toggleRow.toggleValue, isTrue);
+    expect(find.byType(Switch), findsNothing);
+    await tester.tap(find.text('[X]'));
     expect(setActiveCalled, isTrue);
   });
 }

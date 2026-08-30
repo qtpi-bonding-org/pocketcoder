@@ -138,9 +138,23 @@ class BiosRow extends StatelessWidget {
   Widget _trailing(BuildContext context, Color textColor) {
     switch (variant) {
       case BiosRowVariant.toggle:
-        return Align(
-          alignment: Alignment.centerRight,
-          child: Switch(value: toggleValue, onChanged: onToggleChanged),
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onToggleChanged == null
+              ? null
+              : () => onToggleChanged!(!toggleValue),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSizes.space),
+            child: Text(
+              toggleValue ? '[X]' : '[ ]',
+              style: TextStyle(
+                fontFamily: AppFonts.bodyFamily,
+                color: textColor,
+                fontSize: AppSizes.fontStandard,
+                fontWeight: AppFonts.heavy,
+              ),
+            ),
+          ),
         );
       case BiosRowVariant.input:
         return TextField(
