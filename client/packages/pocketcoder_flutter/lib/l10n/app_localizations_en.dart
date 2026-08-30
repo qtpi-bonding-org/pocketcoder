@@ -2708,6 +2708,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorsCopy => 'COPY REPORT';
 
   @override
+  String get errorsReportOnGithub => 'REPORT ON GITHUB';
+
+  @override
   String get errorsCopyAll => 'COPY ALL';
 
   @override
@@ -3113,6 +3116,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String serverControlReleaseContracts(
       String app, String server, String deployment) {
     return 'CONTRACTS: APP v$app · SERVER v$server · DEPLOYMENT v$deployment';
+  }
+
+  @override
+  String serverControlReleaseNixos(String version) {
+    return 'NIXOS: $version';
   }
 
   @override

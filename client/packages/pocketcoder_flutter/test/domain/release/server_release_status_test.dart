@@ -64,6 +64,7 @@ void main() {
         'compatibility': {
           'app': {'contractVersion': 2},
           'server': {'apiVersion': 1},
+          'os': {'nixosVersion': '26.05'},
         },
       },
       'metadataStatus': {'status': 'current'},
@@ -72,6 +73,7 @@ void main() {
     expect(snapshot.deploymentContractVersion, 3);
     expect(snapshot.appContractVersion, 2);
     expect(snapshot.serverApiVersion, 1);
+    expect(snapshot.nixosVersion, '26.05');
   });
 
   test('leaves contract versions null when compatibility is absent', () {
@@ -87,5 +89,6 @@ void main() {
     expect(snapshot.deploymentContractVersion, isNull);
     expect(snapshot.appContractVersion, isNull);
     expect(snapshot.serverApiVersion, isNull);
+    expect(snapshot.nixosVersion, isNull);
   });
 }

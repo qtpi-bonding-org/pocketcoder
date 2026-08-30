@@ -208,6 +208,7 @@ void main() {
         appContractVersion: 2,
         serverApiVersion: 1,
         deploymentContractVersion: 3,
+        nixosVersion: '26.05',
       );
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     await tester.pumpWidget(_app(cubit));
@@ -219,6 +220,7 @@ void main() {
       find.textContaining('CONTRACTS: APP v2 · SERVER v1 · DEPLOYMENT v3'),
       findsOneWidget,
     );
+    expect(find.textContaining('NIXOS: 26.05'), findsOneWidget);
     await cubit.close();
   });
 
@@ -231,6 +233,7 @@ void main() {
 
     expect(find.textContaining('AVAILABLE:'), findsNothing);
     expect(find.textContaining('CONTRACTS:'), findsNothing);
+    expect(find.textContaining('NIXOS:'), findsNothing);
     await cubit.close();
   });
 

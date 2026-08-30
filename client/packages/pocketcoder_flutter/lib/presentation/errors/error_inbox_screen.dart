@@ -17,6 +17,7 @@ class ErrorInboxScreen extends StatelessWidget {
     required this.onCopyAll,
     required this.onClearAll,
     required this.onCopy,
+    required this.onReportOnGithub,
     required this.onDelete,
   });
 
@@ -24,6 +25,7 @@ class ErrorInboxScreen extends StatelessWidget {
   final VoidCallback onCopyAll;
   final VoidCallback onClearAll;
   final Future<void> Function(ErrorEntry) onCopy;
+  final Future<void> Function(ErrorEntry) onReportOnGithub;
   final Future<void> Function(String id) onDelete;
 
   @override
@@ -83,6 +85,7 @@ class ErrorInboxScreen extends StatelessWidget {
                         _ErrorTile(
                           entry: entry,
                           onCopy: onCopy,
+                          onReportOnGithub: onReportOnGithub,
                           onDelete: onDelete,
                         ),
                     ],
@@ -100,11 +103,13 @@ class ErrorInboxScreen extends StatelessWidget {
 class _ErrorTile extends StatefulWidget {
   final ErrorBoxEntry entry;
   final Future<void> Function(ErrorEntry) onCopy;
+  final Future<void> Function(ErrorEntry) onReportOnGithub;
   final Future<void> Function(String id) onDelete;
 
   const _ErrorTile({
     required this.entry,
     required this.onCopy,
+    required this.onReportOnGithub,
     required this.onDelete,
   });
 
@@ -136,13 +141,21 @@ class _ErrorTileState extends State<_ErrorTile> {
               children: [
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TerminalButton(
-                      label: context.l10n.errorsCopy,
-                      isPrimary: true,
-                      onTap: () => widget.onCopy(entry.errorData),
-                    ),
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: AppSizes.space,
+                    children: [
+                      TerminalButton(
+                        label: context.l10n.errorsReportOnGithub,
+                        isPrimary: false,
+                        onTap: () => widget.onReportOnGithub(entry.errorData),
+                      ),
+                      TerminalButton(
+                        label: context.l10n.errorsCopy,
+                        isPrimary: true,
+                        onTap: () => widget.onCopy(entry.errorData),
+                      ),
+                    ],
                   ),
                 ),
                 Padding(

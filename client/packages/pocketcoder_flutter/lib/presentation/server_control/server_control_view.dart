@@ -400,6 +400,8 @@ class _ReleaseLine extends StatelessWidget {
               server.toString(),
               deployment.toString(),
             ),
+      if (release.nixosVersion case final nixos?)
+        context.l10n.serverControlReleaseNixos(nixos),
     ];
     return lines.join('\n');
   }

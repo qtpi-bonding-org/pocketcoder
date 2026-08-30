@@ -24,6 +24,7 @@ class ServerReleaseStatusSnapshot {
     this.deploymentContractVersion,
     this.appContractVersion,
     this.serverApiVersion,
+    this.nixosVersion,
   });
 
   final ServerReleaseStatus status;
@@ -49,6 +50,11 @@ class ServerReleaseStatusSnapshot {
   final int? appContractVersion;
   final int? serverApiVersion;
 
+  /// The NixOS release line this deployment is currently running, e.g.
+  /// "26.05" -- from compatibility.os.nixosVersion, always present once a
+  /// release has actually installed (not a mismatch-only signal).
+  final String? nixosVersion;
+
   bool get crossesDataVersion =>
       availableDataVersion != null &&
       availableDataVersion != currentDataVersion;
@@ -65,6 +71,7 @@ class ServerReleaseStatusSnapshot {
     final compatibility = _map(release['compatibility']);
     final appCompatibility = _map(compatibility['app']);
     final serverCompatibility = _map(compatibility['server']);
+    final osCompatibility = _map(compatibility['os']);
     return ServerReleaseStatusSnapshot(
       status: _status(metadata['status']),
       currentVersion: _string(
@@ -95,6 +102,7 @@ class ServerReleaseStatusSnapshot {
           _nullableInteger(release['deploymentContractVersion']),
       appContractVersion: _nullableInteger(appCompatibility['contractVersion']),
       serverApiVersion: _nullableInteger(serverCompatibility['apiVersion']),
+      nixosVersion: _nullableString(osCompatibility['nixosVersion']),
     );
   }
 

@@ -4906,6 +4906,12 @@ abstract class AppLocalizations {
   /// **'COPY REPORT'**
   String get errorsCopy;
 
+  /// No description provided for @errorsReportOnGithub.
+  ///
+  /// In en, this message translates to:
+  /// **'REPORT ON GITHUB'**
+  String get errorsReportOnGithub;
+
   /// No description provided for @errorsCopyAll.
   ///
   /// In en, this message translates to:
@@ -5603,6 +5609,12 @@ abstract class AppLocalizations {
   /// **'CONTRACTS: APP v{app} · SERVER v{server} · DEPLOYMENT v{deployment}'**
   String serverControlReleaseContracts(
       String app, String server, String deployment);
+
+  /// No description provided for @serverControlReleaseNixos.
+  ///
+  /// In en, this message translates to:
+  /// **'NIXOS: {version}'**
+  String serverControlReleaseNixos(String version);
 
   /// No description provided for @serverControlOperationRestartPocketCoder.
   ///
