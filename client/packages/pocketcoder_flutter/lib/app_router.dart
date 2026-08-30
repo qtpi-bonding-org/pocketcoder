@@ -502,7 +502,9 @@ class AppNavigation {
     if (context.canPop()) {
       context.pop();
     } else {
-      toHome(context);
+      // Not toHome(): a stack-replaced screen (e.g. login, reached before
+      // any session exists) has nothing to pop, and /chats assumes auth.
+      context.go(AppRoutes.onboarding);
     }
   }
 }

@@ -267,8 +267,10 @@ void main() {
   });
 
   testWidgets(
-      'BACK does not throw when login screen is the router root '
-      '(reachable server, not authenticated boots straight here)',
+      'BACK falls back to the onboarding (ascii-art home) screen, not '
+      'chats, when login screen is the router root (reachable server, '
+      'not authenticated boots straight here) -- landing in chats with '
+      'no session at all was a confirmed live auth-bypass',
       (tester) async {
     // Boot reaches this screen via context.goNamed (a stack replace), so
     // there is no previous route to pop back to.
@@ -303,5 +305,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    expect(find.text('SERVER CHOICE'), findsOneWidget);
   });
 }
