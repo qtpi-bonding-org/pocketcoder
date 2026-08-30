@@ -280,8 +280,8 @@ services:
 
   # POCO:BEGIN compose-pocketbase-docker-access
   # 🔒 DOCKER SOCKET PROXY - WRITE (Security Layer for PocketBase)
-  # Currently shared by both PocketBase (restart) and Dozzle (logs)
-  # For production: uncomment docker-socket-proxy-read below and update Dozzle config
+  # Shared by PocketBase's restart/provisioning capability and its native
+  # container-list/log-streaming API (the Monitor screen).
   docker-socket-proxy-write:
     image: tecnativa/docker-socket-proxy@sha256:9e4b9e7517a6b660f2cc903a19b257b1852d5b3344794e3ea334ff00ae677ac2
     container_name: pocketcoder-docker-proxy-write
@@ -301,8 +301,8 @@ services:
       # above was true only in intent, not in what was actually enabled.
       - ALLOW_START=1         # Required for container start (harness provisioning)
       - ALLOW_RESTARTS=1      # Required for container restart (existing restart capability)
-      - EVENTS=1              # Allow streaming events (for Dozzle)
-      - INFO=1                # Required for Dozzle to detect Docker version
+      - EVENTS=1              # Allow streaming events (for Monitor's log streaming)
+      - INFO=1                # Required for Monitor's container-list API to detect Docker version
       - IMAGES=1              # Allow image operations (for harness provisioning)
       - NETWORKS=0            # Disable network operations
       - VOLUMES=0             # Disable volume operations
@@ -345,13 +345,7 @@ services:
     volumes:
       - pb_data:/database/pocketbase           # PocketBase DB (operational)
       - ./server/sqlpage/dashboard:/var/www:ro                  # SQLPage queries/dashboards
-      # Config actually lives under dashboard/config/ (sqlpage.json,
-      # config/on_connect.sql) — ./server/sqlpage/config doesn't exist on
-      # disk at all. This mismatch predates this branch (confirmed on main)
-      # and silently no-ops both sqlpage.json's database_url (SQLPage falls
-      # back to a throwaway in-memory DB every restart) and on_connect.sql's
-      # ATTACH statements (the old dashboards errored with "no such table").
-      - ./server/sqlpage/dashboard/config:/etc/sqlpage:ro       # Configuration (sqlpage.json, on_connect.sql)
+      - ./server/sqlpage/dashboard/config:/etc/sqlpage:ro       # sqlpage.json + on_connect.sql (ATTACHes memory_data below)
       - memory_data:/memory_data:ro
     networks:
       - pocketcoder-dashboard
