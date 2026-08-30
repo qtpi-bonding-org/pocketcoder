@@ -49,6 +49,8 @@ import 'package:pocketcoder_flutter/application/notifications/notification_rule_
     as _i921;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
     as _i273;
+import 'package:pocketcoder_flutter/application/pocketbase_inspector/pocketbase_inspector_cubit.dart'
+    as _i939;
 import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart'
     as _i1031;
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart'
@@ -99,6 +101,8 @@ import 'package:pocketcoder_flutter/domain/notifications/i_notification_rule_rep
     as _i821;
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart'
     as _i611;
+import 'package:pocketcoder_flutter/domain/pocketbase_inspector/i_pocketbase_inspector_repository.dart'
+    as _i398;
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
     as _i422;
 import 'package:pocketcoder_flutter/domain/release/i_image_relay_proof_provider.dart'
@@ -201,6 +205,8 @@ import 'package:pocketcoder_flutter/infrastructure/observability/observability_r
     as _i310;
 import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart'
     as _i810;
+import 'package:pocketcoder_flutter/infrastructure/pocketbase_inspector/pocketbase_inspector_repository.dart'
+    as _i212;
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart'
     as _i294;
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_repository.dart'
@@ -350,6 +356,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.oauthRelayBaseUrl,
       instanceName: 'oauthRelayBaseUrl',
     );
+    gh.lazySingleton<_i398.IPocketbaseInspectorRepository>(
+        () => _i212.PocketbaseInspectorRepository(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i165.ISkillsRepository>(
         () => _i675.SkillsRepository(gh<_i9.SkillDao>()));
     gh.lazySingleton<_i653.ILoadingService>(() => _i976.AppLoadingService());
@@ -417,6 +425,9 @@ extension GetItInjectableX on _i174.GetIt {
           pocketBase: gh<_i169.PocketBase>(),
           httpClient: gh<_i519.Client>(),
         ));
+    gh.factory<_i939.PocketbaseInspectorCubit>(() =>
+        _i939.PocketbaseInspectorCubit(
+            gh<_i398.IPocketbaseInspectorRepository>()));
     gh.factory<_i655.SandboxAgentCubit>(
         () => _i655.SandboxAgentCubit(gh<_i184.ISandboxAgentRepository>()));
     gh.factory<_i921.NotificationRuleCubit>(() =>

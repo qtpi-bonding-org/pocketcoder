@@ -109,6 +109,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
       'configureSystemChecks' => AppRoutes.configureSystemChecks,
       'configurePaywall' => AppRoutes.configurePaywall,
       'configureMemory' => AppRoutes.configureMemory,
+      'configurePocketbase' => AppRoutes.configurePocketbase,
       'configureLlm' => AppRoutes.configureLlm,
       'configureHarnessAuth' => AppRoutes.configureHarnessAuth,
       'configureScheduler' => AppRoutes.configureScheduler,

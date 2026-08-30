@@ -39,6 +39,7 @@ class SettingsView extends StatelessWidget {
         [
           ('SYSTEM CHECKS', 'configureSystemChecks'),
           ('POCKET MEMORY', 'configureMemory'),
+          ('POCKETBASE', 'configurePocketbase'),
           ('SCHEDULER', 'configureScheduler'),
           (context.l10n.errorsTitle, 'configureErrors'),
         ]

@@ -11,4 +11,5 @@ abstract final class StreamingEndpoints {
   static String logs(String containerName) => '$_root/logs/$containerName';
   static const String observability = '$_root/proxy/observability/';
   static const String memory = '$_root/proxy/observability/memory.sql';
+  static const String pocketbase = '$_root/proxy/observability/pocketbase.sql';
 }
