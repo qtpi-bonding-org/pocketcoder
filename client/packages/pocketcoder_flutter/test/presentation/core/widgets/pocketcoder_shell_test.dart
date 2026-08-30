@@ -13,6 +13,10 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.da
 
 class _FakeServerControlService implements IServerControlService {
   @override
+  Future<String?> readPublicKey({required String instanceId}) =>
+      throw UnimplementedError();
+
+  @override
   Future<ServerReleaseStatusSnapshot> inspectRelease() =>
       throw UnimplementedError();
 

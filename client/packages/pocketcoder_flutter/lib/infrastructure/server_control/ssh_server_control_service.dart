@@ -1,6 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_command_runner.dart';
+import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_credentials_provider.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
 import 'package:pocketcoder_flutter/domain/release/i_server_release_status_service.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
@@ -13,13 +14,24 @@ final class SshServerControlService implements IServerControlService {
     required IRootSshCommandRunner rootSshCommandRunner,
     required PocketBase pocketBase,
     required IServerReleaseStatusService releaseStatusService,
+    required IRootSshCredentialsProvider credentialsProvider,
   })  : _rootSshCommandRunner = rootSshCommandRunner,
         _pocketBase = pocketBase,
-        _releaseStatusService = releaseStatusService;
+        _releaseStatusService = releaseStatusService,
+        _credentialsProvider = credentialsProvider;
 
   final IRootSshCommandRunner _rootSshCommandRunner;
   final PocketBase _pocketBase;
   final IServerReleaseStatusService _releaseStatusService;
+  final IRootSshCredentialsProvider _credentialsProvider;
+
+  @override
+  Future<String?> readPublicKey({required String instanceId}) async {
+    final credentials = await _credentialsProvider.readRootSshCredentials(
+      instanceId: instanceId,
+    );
+    return credentials?.publicKeyOpenSsh;
+  }
 
   @override
   Future<ServerReleaseStatusSnapshot> inspectRelease() => tryMethod(

@@ -14,6 +14,10 @@ const _digest =
     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
 class _FakeService implements IServerControlService {
+  @override
+  Future<String?> readPublicKey({required String instanceId}) =>
+      throw UnimplementedError();
+
   final calls = <String>[];
   final pending = <String, Completer<ServerControlResult>>{};
   ServerReleaseStatusSnapshot? release;

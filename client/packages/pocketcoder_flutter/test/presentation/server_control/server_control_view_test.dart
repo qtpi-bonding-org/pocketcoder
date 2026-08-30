@@ -23,6 +23,10 @@ class _FakeService implements IServerControlService {
   ServerReleaseStatusSnapshot? release;
 
   @override
+  Future<String?> readPublicKey({required String instanceId}) =>
+      throw UnimplementedError();
+
+  @override
   Future<ServerReleaseStatusSnapshot> inspectRelease() async => release!;
 
   @override
