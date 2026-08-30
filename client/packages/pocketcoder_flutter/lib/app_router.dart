@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/get_started_screen.dart';
@@ -28,6 +29,7 @@ import 'package:pocketcoder_flutter/presentation/deployment/server_credentials.d
 import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
 import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_box_page_builder.dart';
+import 'package:pocketcoder_flutter/presentation/server_control/server_control_screen.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -36,6 +38,7 @@ import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 
 /// App routing configuration.
 class AppRouter {
@@ -307,6 +310,26 @@ class AppRouter {
           state: state,
           child: const PocketCoderErrorBoxPageBuilder(),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.serverControls,
+        name: RouteNames.serverControls,
+        // Without a concrete IServerControlService, ServerControlScreen's
+        // getIt<IServerControlService>() lookup throws.
+        redirect: (context, state) =>
+            GetIt.instance.isRegistered<IServerControlService>()
+                ? null
+                : AppRoutes.configure,
+        pageBuilder: (context, state) {
+          // Query param absent -- the credentials provider resolves the
+          // active instance itself.
+          final instanceId = state.uri.queryParameters['instanceId'];
+          return TerminalTransition.buildPage(
+            context: context,
+            state: state,
+            child: ServerControlScreen(instanceId: instanceId ?? ''),
+          );
+        },
       ),
       // ── DEPLOY pillar ──
       GoRoute(
