@@ -375,11 +375,11 @@ See [`docs/agent-testing-strategy.md`](docs/agent-testing-strategy.md).
 
 | Language | LoC | Component |
 | :--- | ---: | :--- |
-| Go | 10056 | c1: PocketBase + ACP client + AG-UI server |
-| Dart | 54822 | Flutter client (non-generated) |
-| **Core code** | **~64878** | Go + Dart — product code |
-| Tests | 23684 | not code — Go 7036 · Dart 8600 · Bash 8048 |
-| Tooling | 6534 | not code — Bash scripts / infra |
+| Go | 18,801 | c1: PocketBase + ACP client + AG-UI server |
+| Dart | 89,831 | Flutter client (non-generated) |
+| **Core code** | **~108,632** | Go + Dart — product code |
+| Tests | 37,129 | not code — Go 14,765 · Dart 20,681 · Bash 1,683 |
+| Tooling | 6,812 | not code — Bash scripts / infra |
 
 The backend is deliberately tiny: PocketBase supplies auth, the database, REST, and realtime *as a library*, so c1 is just the ACP client, the AG-UI bridge, and a handful of hooks. Lean glue over battle-tested building blocks is the whole thesis.
 
