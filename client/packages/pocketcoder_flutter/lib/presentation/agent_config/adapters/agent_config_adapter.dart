@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
-import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
-import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
@@ -20,15 +18,10 @@ class AgentConfigAdapter extends CubitAdapter<AgentConfigCubit, AgentConfigState
     return UiFlowListener<AgentConfigCubit, AgentConfigState>(
       child: ValueListenableBuilder<AgentConfigState>(
         valueListenable: state,
-        builder: (context, value, _) => StreamBuilder<ProviderState>(
-          stream: context.read<ProviderCubit>().stream,
-          initialData: context.read<ProviderCubit>().state,
-          builder: (context, providerSnapshot) => AgentConfigView(
-            state: value,
-            providerState: providerSnapshot.data ?? const ProviderState(),
-            onSave: cubit.saveConfig,
-            onDelete: cubit.deleteConfig,
-          ),
+        builder: (context, value, _) => AgentConfigView(
+          state: value,
+          onSave: cubit.saveConfig,
+          onDelete: cubit.deleteConfig,
         ),
       ),
     );

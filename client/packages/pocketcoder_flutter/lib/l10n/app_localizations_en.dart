@@ -958,9 +958,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentConfigNameLabel => 'NAME';
 
   @override
-  String get agentConfigHarnessModelLabel => 'HARNESS MODEL';
-
-  @override
   String get agentConfigPromptLabel => 'SYSTEM PROMPT';
 
   @override
@@ -970,18 +967,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentConfigIsDefaultLabel => 'IS DEFAULT';
 
   @override
-  String get agentConfigNoHarnessModels => 'NO HARNESS MODELS AVAILABLE';
-
-  @override
-  String get agentConfigHarnessModelSearchLabel => 'SEARCH';
-
-  @override
-  String get agentConfigHarnessModelSearchHint => 'Filter harness models';
-
-  @override
-  String get agentConfigNoMatchingHarnessModels => 'NO MATCHING HARNESS MODELS';
-
-  @override
   String get agentConfigNoPrompts => 'NO PROMPTS AVAILABLE';
 
   @override
@@ -989,9 +974,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentConfigSelectPrompt => 'SELECT PROMPT';
-
-  @override
-  String get agentConfigSelectHarnessModel => 'SELECT HARNESS MODEL';
 
   @override
   String get agentConfigSelectMode => 'SELECT MODE';

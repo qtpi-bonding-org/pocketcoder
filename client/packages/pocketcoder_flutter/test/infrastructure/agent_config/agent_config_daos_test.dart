@@ -18,4 +18,12 @@ void main() {
       expect(dao.pb, same(pb));
     });
   });
+
+  group('PermissionModeDao', () {
+    test('wires the given PocketBase instance', () {
+      final pb = PocketBase('http://unused.local');
+      final dao = PermissionModeDao(pb);
+      expect(dao.pb, same(pb));
+    });
+  });
 }

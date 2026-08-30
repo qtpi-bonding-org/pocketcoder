@@ -17,6 +17,7 @@ mixin _$AgentConfigState {
   UiFlowStatus get status;
   List<PocoConfig> get configs;
   List<Prompt> get prompts;
+  List<PermissionMode> get permissionModes;
   Object? get error;
 
   /// Create a copy of AgentConfigState
@@ -35,6 +36,8 @@ mixin _$AgentConfigState {
             (identical(other.status, status) || other.status == status) &&
             const DeepCollectionEquality().equals(other.configs, configs) &&
             const DeepCollectionEquality().equals(other.prompts, prompts) &&
+            const DeepCollectionEquality()
+                .equals(other.permissionModes, permissionModes) &&
             const DeepCollectionEquality().equals(other.error, error));
   }
 
@@ -44,11 +47,12 @@ mixin _$AgentConfigState {
       status,
       const DeepCollectionEquality().hash(configs),
       const DeepCollectionEquality().hash(prompts),
+      const DeepCollectionEquality().hash(permissionModes),
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'AgentConfigState(status: $status, configs: $configs, prompts: $prompts, error: $error)';
+    return 'AgentConfigState(status: $status, configs: $configs, prompts: $prompts, permissionModes: $permissionModes, error: $error)';
   }
 }
 
@@ -62,6 +66,7 @@ abstract mixin class $AgentConfigStateCopyWith<$Res> {
       {UiFlowStatus status,
       List<PocoConfig> configs,
       List<Prompt> prompts,
+      List<PermissionMode> permissionModes,
       Object? error});
 }
 
@@ -81,6 +86,7 @@ class _$AgentConfigStateCopyWithImpl<$Res>
     Object? status = null,
     Object? configs = null,
     Object? prompts = null,
+    Object? permissionModes = null,
     Object? error = freezed,
   }) {
     return _then(_self.copyWith(
@@ -96,6 +102,10 @@ class _$AgentConfigStateCopyWithImpl<$Res>
           ? _self.prompts
           : prompts // ignore: cast_nullable_to_non_nullable
               as List<Prompt>,
+      permissionModes: null == permissionModes
+          ? _self.permissionModes
+          : permissionModes // ignore: cast_nullable_to_non_nullable
+              as List<PermissionMode>,
       error: freezed == error ? _self.error : error,
     ));
   }
@@ -192,16 +202,20 @@ extension AgentConfigStatePatterns on AgentConfigState {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(UiFlowStatus status, List<PocoConfig> configs,
-            List<Prompt> prompts, Object? error)?
+    TResult Function(
+            UiFlowStatus status,
+            List<PocoConfig> configs,
+            List<Prompt> prompts,
+            List<PermissionMode> permissionModes,
+            Object? error)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _AgentConfigState() when $default != null:
-        return $default(
-            _that.status, _that.configs, _that.prompts, _that.error);
+        return $default(_that.status, _that.configs, _that.prompts,
+            _that.permissionModes, _that.error);
       case _:
         return orElse();
     }
@@ -222,15 +236,19 @@ extension AgentConfigStatePatterns on AgentConfigState {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(UiFlowStatus status, List<PocoConfig> configs,
-            List<Prompt> prompts, Object? error)
+    TResult Function(
+            UiFlowStatus status,
+            List<PocoConfig> configs,
+            List<Prompt> prompts,
+            List<PermissionMode> permissionModes,
+            Object? error)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AgentConfigState():
-        return $default(
-            _that.status, _that.configs, _that.prompts, _that.error);
+        return $default(_that.status, _that.configs, _that.prompts,
+            _that.permissionModes, _that.error);
     }
   }
 
@@ -248,15 +266,19 @@ extension AgentConfigStatePatterns on AgentConfigState {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(UiFlowStatus status, List<PocoConfig> configs,
-            List<Prompt> prompts, Object? error)?
+    TResult? Function(
+            UiFlowStatus status,
+            List<PocoConfig> configs,
+            List<Prompt> prompts,
+            List<PermissionMode> permissionModes,
+            Object? error)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _AgentConfigState() when $default != null:
-        return $default(
-            _that.status, _that.configs, _that.prompts, _that.error);
+        return $default(_that.status, _that.configs, _that.prompts,
+            _that.permissionModes, _that.error);
       case _:
         return null;
     }
@@ -270,9 +292,11 @@ class _AgentConfigState extends AgentConfigState {
       {this.status = UiFlowStatus.idle,
       final List<PocoConfig> configs = const [],
       final List<Prompt> prompts = const [],
+      final List<PermissionMode> permissionModes = const [],
       this.error})
       : _configs = configs,
         _prompts = prompts,
+        _permissionModes = permissionModes,
         super._();
 
   @override
@@ -296,6 +320,15 @@ class _AgentConfigState extends AgentConfigState {
     return EqualUnmodifiableListView(_prompts);
   }
 
+  final List<PermissionMode> _permissionModes;
+  @override
+  @JsonKey()
+  List<PermissionMode> get permissionModes {
+    if (_permissionModes is EqualUnmodifiableListView) return _permissionModes;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_permissionModes);
+  }
+
   @override
   final Object? error;
 
@@ -315,6 +348,8 @@ class _AgentConfigState extends AgentConfigState {
             (identical(other.status, status) || other.status == status) &&
             const DeepCollectionEquality().equals(other._configs, _configs) &&
             const DeepCollectionEquality().equals(other._prompts, _prompts) &&
+            const DeepCollectionEquality()
+                .equals(other._permissionModes, _permissionModes) &&
             const DeepCollectionEquality().equals(other.error, error));
   }
 
@@ -324,11 +359,12 @@ class _AgentConfigState extends AgentConfigState {
       status,
       const DeepCollectionEquality().hash(_configs),
       const DeepCollectionEquality().hash(_prompts),
+      const DeepCollectionEquality().hash(_permissionModes),
       const DeepCollectionEquality().hash(error));
 
   @override
   String toString() {
-    return 'AgentConfigState(status: $status, configs: $configs, prompts: $prompts, error: $error)';
+    return 'AgentConfigState(status: $status, configs: $configs, prompts: $prompts, permissionModes: $permissionModes, error: $error)';
   }
 }
 
@@ -344,6 +380,7 @@ abstract mixin class _$AgentConfigStateCopyWith<$Res>
       {UiFlowStatus status,
       List<PocoConfig> configs,
       List<Prompt> prompts,
+      List<PermissionMode> permissionModes,
       Object? error});
 }
 
@@ -363,6 +400,7 @@ class __$AgentConfigStateCopyWithImpl<$Res>
     Object? status = null,
     Object? configs = null,
     Object? prompts = null,
+    Object? permissionModes = null,
     Object? error = freezed,
   }) {
     return _then(_AgentConfigState(
@@ -378,6 +416,10 @@ class __$AgentConfigStateCopyWithImpl<$Res>
           ? _self._prompts
           : prompts // ignore: cast_nullable_to_non_nullable
               as List<Prompt>,
+      permissionModes: null == permissionModes
+          ? _self._permissionModes
+          : permissionModes // ignore: cast_nullable_to_non_nullable
+              as List<PermissionMode>,
       error: freezed == error ? _self.error : error,
     ));
   }

@@ -16,13 +16,11 @@ T _$identity<T>(T value) => value;
 mixin _$PocoConfig {
   String get id;
   String get name;
-  String get harnessModel;
   String? get systemPrompt;
   dynamic get workspaceFolders;
   dynamic get acpMcpServers;
   bool? get isDefault;
-  @JsonKey(unknownEnumValue: PocoConfigMode.unknown)
-  PocoConfigMode? get mode;
+  String? get permissionMode;
 
   /// Create a copy of PocoConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -41,8 +39,6 @@ mixin _$PocoConfig {
             other is PocoConfig &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.harnessModel, harnessModel) ||
-                other.harnessModel == harnessModel) &&
             (identical(other.systemPrompt, systemPrompt) ||
                 other.systemPrompt == systemPrompt) &&
             const DeepCollectionEquality()
@@ -51,7 +47,8 @@ mixin _$PocoConfig {
                 .equals(other.acpMcpServers, acpMcpServers) &&
             (identical(other.isDefault, isDefault) ||
                 other.isDefault == isDefault) &&
-            (identical(other.mode, mode) || other.mode == mode));
+            (identical(other.permissionMode, permissionMode) ||
+                other.permissionMode == permissionMode));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -60,16 +57,15 @@ mixin _$PocoConfig {
       runtimeType,
       id,
       name,
-      harnessModel,
       systemPrompt,
       const DeepCollectionEquality().hash(workspaceFolders),
       const DeepCollectionEquality().hash(acpMcpServers),
       isDefault,
-      mode);
+      permissionMode);
 
   @override
   String toString() {
-    return 'PocoConfig(id: $id, name: $name, harnessModel: $harnessModel, systemPrompt: $systemPrompt, workspaceFolders: $workspaceFolders, acpMcpServers: $acpMcpServers, isDefault: $isDefault, mode: $mode)';
+    return 'PocoConfig(id: $id, name: $name, systemPrompt: $systemPrompt, workspaceFolders: $workspaceFolders, acpMcpServers: $acpMcpServers, isDefault: $isDefault, permissionMode: $permissionMode)';
   }
 }
 
@@ -82,12 +78,11 @@ abstract mixin class $PocoConfigCopyWith<$Res> {
   $Res call(
       {String id,
       String name,
-      String harnessModel,
       String? systemPrompt,
       dynamic workspaceFolders,
       dynamic acpMcpServers,
       bool? isDefault,
-      @JsonKey(unknownEnumValue: PocoConfigMode.unknown) PocoConfigMode? mode});
+      String? permissionMode});
 }
 
 /// @nodoc
@@ -104,12 +99,11 @@ class _$PocoConfigCopyWithImpl<$Res> implements $PocoConfigCopyWith<$Res> {
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? harnessModel = null,
     Object? systemPrompt = freezed,
     Object? workspaceFolders = freezed,
     Object? acpMcpServers = freezed,
     Object? isDefault = freezed,
-    Object? mode = freezed,
+    Object? permissionMode = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -119,10 +113,6 @@ class _$PocoConfigCopyWithImpl<$Res> implements $PocoConfigCopyWith<$Res> {
       name: null == name
           ? _self.name
           : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      harnessModel: null == harnessModel
-          ? _self.harnessModel
-          : harnessModel // ignore: cast_nullable_to_non_nullable
               as String,
       systemPrompt: freezed == systemPrompt
           ? _self.systemPrompt
@@ -140,10 +130,10 @@ class _$PocoConfigCopyWithImpl<$Res> implements $PocoConfigCopyWith<$Res> {
           ? _self.isDefault
           : isDefault // ignore: cast_nullable_to_non_nullable
               as bool?,
-      mode: freezed == mode
-          ? _self.mode
-          : mode // ignore: cast_nullable_to_non_nullable
-              as PocoConfigMode?,
+      permissionMode: freezed == permissionMode
+          ? _self.permissionMode
+          : permissionMode // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -244,13 +234,11 @@ extension PocoConfigPatterns on PocoConfig {
     TResult Function(
             String id,
             String name,
-            String harnessModel,
             String? systemPrompt,
             dynamic workspaceFolders,
             dynamic acpMcpServers,
             bool? isDefault,
-            @JsonKey(unknownEnumValue: PocoConfigMode.unknown)
-            PocoConfigMode? mode)?
+            String? permissionMode)?
         $default, {
     required TResult orElse(),
   }) {
@@ -260,12 +248,11 @@ extension PocoConfigPatterns on PocoConfig {
         return $default(
             _that.id,
             _that.name,
-            _that.harnessModel,
             _that.systemPrompt,
             _that.workspaceFolders,
             _that.acpMcpServers,
             _that.isDefault,
-            _that.mode);
+            _that.permissionMode);
       case _:
         return orElse();
     }
@@ -289,13 +276,11 @@ extension PocoConfigPatterns on PocoConfig {
     TResult Function(
             String id,
             String name,
-            String harnessModel,
             String? systemPrompt,
             dynamic workspaceFolders,
             dynamic acpMcpServers,
             bool? isDefault,
-            @JsonKey(unknownEnumValue: PocoConfigMode.unknown)
-            PocoConfigMode? mode)
+            String? permissionMode)
         $default,
   ) {
     final _that = this;
@@ -304,12 +289,11 @@ extension PocoConfigPatterns on PocoConfig {
         return $default(
             _that.id,
             _that.name,
-            _that.harnessModel,
             _that.systemPrompt,
             _that.workspaceFolders,
             _that.acpMcpServers,
             _that.isDefault,
-            _that.mode);
+            _that.permissionMode);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -332,13 +316,11 @@ extension PocoConfigPatterns on PocoConfig {
     TResult? Function(
             String id,
             String name,
-            String harnessModel,
             String? systemPrompt,
             dynamic workspaceFolders,
             dynamic acpMcpServers,
             bool? isDefault,
-            @JsonKey(unknownEnumValue: PocoConfigMode.unknown)
-            PocoConfigMode? mode)?
+            String? permissionMode)?
         $default,
   ) {
     final _that = this;
@@ -347,12 +329,11 @@ extension PocoConfigPatterns on PocoConfig {
         return $default(
             _that.id,
             _that.name,
-            _that.harnessModel,
             _that.systemPrompt,
             _that.workspaceFolders,
             _that.acpMcpServers,
             _that.isDefault,
-            _that.mode);
+            _that.permissionMode);
       case _:
         return null;
     }
@@ -365,12 +346,11 @@ class _PocoConfig implements PocoConfig {
   const _PocoConfig(
       {required this.id,
       required this.name,
-      required this.harnessModel,
       this.systemPrompt,
       this.workspaceFolders,
       this.acpMcpServers,
       this.isDefault,
-      @JsonKey(unknownEnumValue: PocoConfigMode.unknown) this.mode});
+      this.permissionMode});
   factory _PocoConfig.fromJson(Map<String, dynamic> json) =>
       _$PocoConfigFromJson(json);
 
@@ -378,8 +358,6 @@ class _PocoConfig implements PocoConfig {
   final String id;
   @override
   final String name;
-  @override
-  final String harnessModel;
   @override
   final String? systemPrompt;
   @override
@@ -389,8 +367,7 @@ class _PocoConfig implements PocoConfig {
   @override
   final bool? isDefault;
   @override
-  @JsonKey(unknownEnumValue: PocoConfigMode.unknown)
-  final PocoConfigMode? mode;
+  final String? permissionMode;
 
   /// Create a copy of PocoConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -414,8 +391,6 @@ class _PocoConfig implements PocoConfig {
             other is _PocoConfig &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.harnessModel, harnessModel) ||
-                other.harnessModel == harnessModel) &&
             (identical(other.systemPrompt, systemPrompt) ||
                 other.systemPrompt == systemPrompt) &&
             const DeepCollectionEquality()
@@ -424,7 +399,8 @@ class _PocoConfig implements PocoConfig {
                 .equals(other.acpMcpServers, acpMcpServers) &&
             (identical(other.isDefault, isDefault) ||
                 other.isDefault == isDefault) &&
-            (identical(other.mode, mode) || other.mode == mode));
+            (identical(other.permissionMode, permissionMode) ||
+                other.permissionMode == permissionMode));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -433,16 +409,15 @@ class _PocoConfig implements PocoConfig {
       runtimeType,
       id,
       name,
-      harnessModel,
       systemPrompt,
       const DeepCollectionEquality().hash(workspaceFolders),
       const DeepCollectionEquality().hash(acpMcpServers),
       isDefault,
-      mode);
+      permissionMode);
 
   @override
   String toString() {
-    return 'PocoConfig(id: $id, name: $name, harnessModel: $harnessModel, systemPrompt: $systemPrompt, workspaceFolders: $workspaceFolders, acpMcpServers: $acpMcpServers, isDefault: $isDefault, mode: $mode)';
+    return 'PocoConfig(id: $id, name: $name, systemPrompt: $systemPrompt, workspaceFolders: $workspaceFolders, acpMcpServers: $acpMcpServers, isDefault: $isDefault, permissionMode: $permissionMode)';
   }
 }
 
@@ -457,12 +432,11 @@ abstract mixin class _$PocoConfigCopyWith<$Res>
   $Res call(
       {String id,
       String name,
-      String harnessModel,
       String? systemPrompt,
       dynamic workspaceFolders,
       dynamic acpMcpServers,
       bool? isDefault,
-      @JsonKey(unknownEnumValue: PocoConfigMode.unknown) PocoConfigMode? mode});
+      String? permissionMode});
 }
 
 /// @nodoc
@@ -479,12 +453,11 @@ class __$PocoConfigCopyWithImpl<$Res> implements _$PocoConfigCopyWith<$Res> {
   $Res call({
     Object? id = null,
     Object? name = null,
-    Object? harnessModel = null,
     Object? systemPrompt = freezed,
     Object? workspaceFolders = freezed,
     Object? acpMcpServers = freezed,
     Object? isDefault = freezed,
-    Object? mode = freezed,
+    Object? permissionMode = freezed,
   }) {
     return _then(_PocoConfig(
       id: null == id
@@ -494,10 +467,6 @@ class __$PocoConfigCopyWithImpl<$Res> implements _$PocoConfigCopyWith<$Res> {
       name: null == name
           ? _self.name
           : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      harnessModel: null == harnessModel
-          ? _self.harnessModel
-          : harnessModel // ignore: cast_nullable_to_non_nullable
               as String,
       systemPrompt: freezed == systemPrompt
           ? _self.systemPrompt
@@ -515,10 +484,10 @@ class __$PocoConfigCopyWithImpl<$Res> implements _$PocoConfigCopyWith<$Res> {
           ? _self.isDefault
           : isDefault // ignore: cast_nullable_to_non_nullable
               as bool?,
-      mode: freezed == mode
-          ? _self.mode
-          : mode // ignore: cast_nullable_to_non_nullable
-              as PocoConfigMode?,
+      permissionMode: freezed == permissionMode
+          ? _self.permissionMode
+          : permissionMode // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

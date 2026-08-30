@@ -16,11 +16,13 @@ class AgentConfigCubit extends AppCubit<AgentConfigState> {
 
   StreamSubscription? _configsSub;
   StreamSubscription? _promptsSub;
+  StreamSubscription? _permissionModesSub;
 
   @override
   Future<void> close() {
     _configsSub?.cancel();
     _promptsSub?.cancel();
+    _permissionModesSub?.cancel();
     return super.close();
   }
 
@@ -46,6 +48,16 @@ class AgentConfigCubit extends AppCubit<AgentConfigState> {
     _promptsSub = _repo.watchPrompts().listen(
           (prompts) => emit(state.copyWith(
             prompts: prompts,
+            status: UiFlowStatus.success,
+          )),
+          onError: (Object e) =>
+              emit(state.copyWith(error: e, status: UiFlowStatus.failure)),
+        );
+
+    _permissionModesSub?.cancel();
+    _permissionModesSub = _repo.watchPermissionModes().listen(
+          (permissionModes) => emit(state.copyWith(
+            permissionModes: permissionModes,
             status: UiFlowStatus.success,
           )),
           onError: (Object e) =>

@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
-import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
-import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
+import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -17,9 +14,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 
 class AgentConfigView extends StatelessWidget {
-  const AgentConfigView({super.key, required this.state, required this.providerState, required this.onSave, required this.onDelete});
+  const AgentConfigView({super.key, required this.state, required this.onSave, required this.onDelete});
   final AgentConfigState state;
-  final ProviderState providerState;
   final Future<void> Function(PocoConfig) onSave;
   final Future<void> Function(String) onDelete;
 
@@ -73,7 +69,7 @@ class AgentConfigView extends StatelessWidget {
                       label: config.name.toUpperCase(),
                       value: isDefault
                           ? context.l10n.agentConfigDefaultBadge
-                          : _harnessModelLabelFor(context, config),
+                          : _permissionModeLabelFor(config),
                       hasBadge: isDefault,
                       onTap: () => _openEditor(context, config),
                     );
@@ -84,23 +80,21 @@ class AgentConfigView extends StatelessWidget {
     );
   }
 
-  String _harnessModelLabelFor(BuildContext context, PocoConfig config) => config.harnessModel.toUpperCase();
+  String _permissionModeLabelFor(PocoConfig config) => state.permissionModes
+          .where((m) => m.id == config.permissionMode)
+          .firstOrNull
+          ?.name
+          .toUpperCase() ??
+      '';
 
   void _openEditor(BuildContext context, PocoConfig? existing) {
-    // showDialog pushes a route that is a SIBLING of the route holding
-    // AgentConfigScreen's MultiBlocProvider, not a descendant of it — so
-    // BlocBuilder<AgentConfigCubit>/<ProviderCubit> inside the dialog
-    // subtree (the prompt/harness_model pickers) can't find those cubits
-    // via the outer context. Capture them here and re-provide them inside
-    // the dialog's own subtree.
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return _AgentConfigEditorDialog(
             existing: existing,
             prompts: state.prompts,
-            models: providerState.harnessModels,
-            harnesses: providerState.harnesses,
+            permissionModes: state.permissionModes,
             onSave: (updated) {
               onSave(updated);
               Navigator.of(dialogContext).pop();
@@ -164,16 +158,14 @@ class _AgentConfigEditorDialog extends StatefulWidget {
   const _AgentConfigEditorDialog({
     required this.existing,
     required this.prompts,
-    required this.models,
-    required this.harnesses,
+    required this.permissionModes,
     required this.onSave,
     this.onDelete,
   });
 
   final PocoConfig? existing;
   final List<Prompt> prompts;
-  final List<HarnessModel> models;
-  final List<Harnesse> harnesses;
+  final List<PermissionMode> permissionModes;
   final void Function(PocoConfig updated) onSave;
   final VoidCallback? onDelete;
 
@@ -184,9 +176,8 @@ class _AgentConfigEditorDialog extends StatefulWidget {
 
 class _AgentConfigEditorDialogState extends State<_AgentConfigEditorDialog> {
   late final TextEditingController _nameController;
-  String? _harnessModelId;
   String? _systemPromptId;
-  PocoConfigMode? _mode;
+  String? _permissionModeId;
   bool _isDefault = false;
 
   @override
@@ -194,9 +185,8 @@ class _AgentConfigEditorDialogState extends State<_AgentConfigEditorDialog> {
     super.initState();
     final existing = widget.existing;
     _nameController = TextEditingController(text: existing?.name ?? '');
-    _harnessModelId = existing?.harnessModel;
     _systemPromptId = existing?.systemPrompt;
-    _mode = existing?.mode;
+    _permissionModeId = existing?.permissionMode;
     _isDefault = existing?.isDefault ?? false;
   }
 
@@ -212,12 +202,11 @@ class _AgentConfigEditorDialogState extends State<_AgentConfigEditorDialog> {
     widget.onSave(PocoConfig(
       id: existing?.id ?? '',
       name: _nameController.text.trim(),
-      harnessModel: _harnessModelId ?? '',
       systemPrompt: _systemPromptId,
       workspaceFolders: existing?.workspaceFolders,
       acpMcpServers: existing?.acpMcpServers,
       isDefault: _isDefault,
-      mode: _mode,
+      permissionMode: _permissionModeId,
     ));
   }
 
@@ -248,16 +237,10 @@ class _AgentConfigEditorDialogState extends State<_AgentConfigEditorDialog> {
                 onSelected: (id) => setState(() => _systemPromptId = id),
               ),
               VSpace.x2,
-              _HarnessModelPicker(
-                models: widget.models,
-                harnesses: widget.harnesses,
-                selectedHarnessModelId: _harnessModelId,
-                onSelected: (id) => setState(() => _harnessModelId = id),
-              ),
-              VSpace.x2,
-              _ModePicker(
-                selectedMode: _mode,
-                onSelected: (mode) => setState(() => _mode = mode),
+              _PermissionModePicker(
+                permissionModes: widget.permissionModes,
+                selectedPermissionModeId: _permissionModeId,
+                onSelected: (id) => setState(() => _permissionModeId = id),
               ),
               VSpace.x2,
               _IsDefaultToggle(
@@ -331,93 +314,33 @@ class _PromptPicker extends StatelessWidget {
   }
 }
 
-class _HarnessModelPicker extends StatelessWidget {
-  const _HarnessModelPicker({required this.models, required this.harnesses, required this.selectedHarnessModelId, required this.onSelected});
-  final List<HarnessModel> models; final List<Harnesse> harnesses; final String? selectedHarnessModelId; final ValueChanged<String?> onSelected;
+class _PermissionModePicker extends StatelessWidget {
+  const _PermissionModePicker({
+    required this.permissionModes,
+    required this.selectedPermissionModeId,
+    required this.onSelected,
+  });
 
-  String _harnessNameFor(String harnessId) => harnesses
-          .where((h) => h.id == harnessId)
-          .firstOrNull
-          ?.name ??
-      harnessId;
-
-  @override Widget build(BuildContext context) {
-    final selected = models.where((m) => m.id == selectedHarnessModelId).firstOrNull;
-    return _SelectionField(label: context.l10n.agentConfigHarnessModelLabel, currentValue: selected?.harnessModelId.toUpperCase() ?? context.l10n.agentConfigSelectHarnessModel.toUpperCase(), onTap: () async {
-      final picked = await showDialog<HarnessModel>(
-        context: context,
-        builder: (dialogContext) => SearchablePickerDialog<HarnessModel>(
-          title: dialogContext.l10n.agentConfigSelectHarnessModel,
-          items: models,
-          itemLabel: (m) => m.harnessModelId,
-          groupLabel: (m) => _harnessNameFor(m.harness),
-          itemBuilder: (context, m, {required isSelected, required onTap}) =>
-              BiosRow(
-            label: m.harnessModelId.toUpperCase(),
-            isSelected: isSelected,
-            onTap: onTap,
-          ),
-          selectedItem: selected,
-          searchLabel: dialogContext.l10n.agentConfigHarnessModelSearchLabel,
-          searchHint: dialogContext.l10n.agentConfigHarnessModelSearchHint,
-          emptyLabel: dialogContext.l10n.agentConfigNoHarnessModels,
-          noMatchesLabel: dialogContext.l10n.agentConfigNoMatchingHarnessModels,
-        ),
-      );
-      if (picked != null) onSelected(picked.id);
-    });
-  }
-}
-
-class _ModePicker extends StatelessWidget {
-  const _ModePicker({required this.selectedMode, required this.onSelected});
-
-  final PocoConfigMode? selectedMode;
-  final ValueChanged<PocoConfigMode?> onSelected;
-
-  // Mirror PocoConfigMode's wire values (auto / approve / smart_approve /
-  // chat). Unknown is excluded from the picker entirely — selecting
-  // "unknown" makes no semantic sense and would round-trip to the server
-  // as a value nothing in the Go coordinator recognises.
-  static const List<PocoConfigMode> _availableModes = [
-    PocoConfigMode.auto,
-    PocoConfigMode.approve,
-    PocoConfigMode.smart_approve,
-    PocoConfigMode.chat,
-  ];
-
-  String _modeLabel(BuildContext context, PocoConfigMode mode) {
-    switch (mode) {
-      case PocoConfigMode.auto:
-        return 'AUTO';
-      case PocoConfigMode.approve:
-        return 'APPROVE';
-      case PocoConfigMode.smart_approve:
-        return 'SMART APPROVE';
-      case PocoConfigMode.chat:
-        return 'CHAT';
-      case PocoConfigMode.unknown:
-        return context.l10n.agentNone.toUpperCase();
-    }
-  }
+  final List<PermissionMode> permissionModes;
+  final String? selectedPermissionModeId;
+  final ValueChanged<String?> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final mode = selectedMode;
+    final selected = permissionModes
+        .where((m) => m.id == selectedPermissionModeId)
+        .firstOrNull;
     return _SelectionField(
       label: context.l10n.agentConfigModeLabel,
-      currentValue: mode == null
-          ? context.l10n.agentConfigSelectMode.toUpperCase()
-          : _modeLabel(context, mode),
+      currentValue: selected?.name.toUpperCase() ??
+          context.l10n.agentConfigSelectMode.toUpperCase(),
       onTap: () async {
-        final picked = await _showListDialog<PocoConfigMode>(
+        final picked = await _showListDialog<String>(
           context,
           title: context.l10n.agentConfigSelectMode,
           emptyLabel: context.l10n.agentConfigNoModes,
-          items: _availableModes
-              .map((m) => (id: m, label: _modeLabel(context, m)))
-              .toList(),
-          initialValue: selectedMode,
+          items: permissionModes.map((m) => (id: m.id, label: m.name)).toList(),
+          initialValue: selectedPermissionModeId,
         );
         if (picked != null) onSelected(picked);
       },

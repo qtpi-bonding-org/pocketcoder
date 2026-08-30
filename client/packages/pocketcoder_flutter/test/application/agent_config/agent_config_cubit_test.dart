@@ -6,6 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 
@@ -29,7 +30,6 @@ void main() {
   final testConfig = PocoConfig(
     id: 'config-1',
     name: 'Test Config',
-    harnessModel: 'hm-1',
   );
 
   final testPrompt = Prompt(
@@ -74,15 +74,20 @@ void main() {
       () async {
         final configsCtrl = StreamController<List<PocoConfig>>.broadcast();
         final promptsCtrl = StreamController<List<Prompt>>.broadcast();
+        final permissionModesCtrl =
+            StreamController<List<PermissionMode>>.broadcast();
         addTearDown(() async {
           await configsCtrl.close();
           await promptsCtrl.close();
+          await permissionModesCtrl.close();
         });
 
         when(() => repo.watchConfigs())
             .thenAnswer((_) => configsCtrl.stream);
         when(() => repo.watchPrompts())
             .thenAnswer((_) => promptsCtrl.stream);
+        when(() => repo.watchPermissionModes())
+            .thenAnswer((_) => permissionModesCtrl.stream);
 
         final cubit = buildCubit();
         cubit.watchAll();
@@ -102,6 +107,7 @@ void main() {
         expect(cubit.state.isSuccess, isTrue);
         verify(() => repo.watchConfigs()).called(1);
         verify(() => repo.watchPrompts()).called(1);
+        verify(() => repo.watchPermissionModes()).called(1);
       },
     );
 
@@ -110,15 +116,20 @@ void main() {
       () async {
         final configsCtrl = StreamController<List<PocoConfig>>.broadcast();
         final promptsCtrl = StreamController<List<Prompt>>.broadcast();
+        final permissionModesCtrl =
+            StreamController<List<PermissionMode>>.broadcast();
         addTearDown(() async {
           await configsCtrl.close();
           await promptsCtrl.close();
+          await permissionModesCtrl.close();
         });
 
         when(() => repo.watchConfigs())
             .thenAnswer((_) => configsCtrl.stream);
         when(() => repo.watchPrompts())
             .thenAnswer((_) => promptsCtrl.stream);
+        when(() => repo.watchPermissionModes())
+            .thenAnswer((_) => permissionModesCtrl.stream);
 
         final cubit = buildCubit();
         cubit.watchAll();

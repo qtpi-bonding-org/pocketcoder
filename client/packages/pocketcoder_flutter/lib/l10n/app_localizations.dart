@@ -1864,12 +1864,6 @@ abstract class AppLocalizations {
   /// **'NAME'**
   String get agentConfigNameLabel;
 
-  /// No description provided for @agentConfigHarnessModelLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'HARNESS MODEL'**
-  String get agentConfigHarnessModelLabel;
-
   /// No description provided for @agentConfigPromptLabel.
   ///
   /// In en, this message translates to:
@@ -1888,30 +1882,6 @@ abstract class AppLocalizations {
   /// **'IS DEFAULT'**
   String get agentConfigIsDefaultLabel;
 
-  /// No description provided for @agentConfigNoHarnessModels.
-  ///
-  /// In en, this message translates to:
-  /// **'NO HARNESS MODELS AVAILABLE'**
-  String get agentConfigNoHarnessModels;
-
-  /// No description provided for @agentConfigHarnessModelSearchLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'SEARCH'**
-  String get agentConfigHarnessModelSearchLabel;
-
-  /// No description provided for @agentConfigHarnessModelSearchHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Filter harness models'**
-  String get agentConfigHarnessModelSearchHint;
-
-  /// No description provided for @agentConfigNoMatchingHarnessModels.
-  ///
-  /// In en, this message translates to:
-  /// **'NO MATCHING HARNESS MODELS'**
-  String get agentConfigNoMatchingHarnessModels;
-
   /// No description provided for @agentConfigNoPrompts.
   ///
   /// In en, this message translates to:
@@ -1929,12 +1899,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SELECT PROMPT'**
   String get agentConfigSelectPrompt;
-
-  /// No description provided for @agentConfigSelectHarnessModel.
-  ///
-  /// In en, this message translates to:
-  /// **'SELECT HARNESS MODEL'**
-  String get agentConfigSelectHarnessModel;
 
   /// No description provided for @agentConfigSelectMode.
   ///

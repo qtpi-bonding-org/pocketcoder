@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-30T02:58:57.440480
+// Generated at: 2026-08-30T03:53:41.706257
 
 import 'app_localizations.dart';
 
@@ -46,20 +46,14 @@ class L10nKeyResolver {
       'agent.config.delete' => _l10n.agentConfigDelete,
       'agent.config.delete.confirm.title' => _l10n.agentConfigDeleteConfirmTitle,
       'agent.config.empty' => _l10n.agentConfigEmpty,
-      'agent.config.harness.model.label' => _l10n.agentConfigHarnessModelLabel,
-      'agent.config.harness.model.search.hint' => _l10n.agentConfigHarnessModelSearchHint,
-      'agent.config.harness.model.search.label' => _l10n.agentConfigHarnessModelSearchLabel,
       'agent.config.is.default.label' => _l10n.agentConfigIsDefaultLabel,
       'agent.config.label' => _l10n.agentConfigLabel,
       'agent.config.mode.label' => _l10n.agentConfigModeLabel,
       'agent.config.name.label' => _l10n.agentConfigNameLabel,
-      'agent.config.no.harness.models' => _l10n.agentConfigNoHarnessModels,
-      'agent.config.no.matching.harness.models' => _l10n.agentConfigNoMatchingHarnessModels,
       'agent.config.no.modes' => _l10n.agentConfigNoModes,
       'agent.config.no.prompts' => _l10n.agentConfigNoPrompts,
       'agent.config.prompt.label' => _l10n.agentConfigPromptLabel,
       'agent.config.registry' => _l10n.agentConfigRegistry,
-      'agent.config.select.harness.model' => _l10n.agentConfigSelectHarnessModel,
       'agent.config.select.mode' => _l10n.agentConfigSelectMode,
       'agent.config.select.prompt' => _l10n.agentConfigSelectPrompt,
       'agent.config.title' => _l10n.agentConfigTitle,
@@ -994,20 +988,14 @@ class L10nKeyResolver {
     'agent.config.dialog.title',
     'agent.config.empty',
     'agent.config.error.prefix',
-    'agent.config.harness.model.label',
-    'agent.config.harness.model.search.hint',
-    'agent.config.harness.model.search.label',
     'agent.config.is.default.label',
     'agent.config.label',
     'agent.config.mode.label',
     'agent.config.name.label',
-    'agent.config.no.harness.models',
-    'agent.config.no.matching.harness.models',
     'agent.config.no.modes',
     'agent.config.no.prompts',
     'agent.config.prompt.label',
     'agent.config.registry',
-    'agent.config.select.harness.model',
     'agent.config.select.mode',
     'agent.config.select.prompt',
     'agent.config.title',
@@ -1937,20 +1925,14 @@ class L10nKeyResolver {
     'agentConfigDialogTitle': 'agent.config.dialog.title',
     'agentConfigEmpty': 'agent.config.empty',
     'agentConfigErrorPrefix': 'agent.config.error.prefix',
-    'agentConfigHarnessModelLabel': 'agent.config.harness.model.label',
-    'agentConfigHarnessModelSearchHint': 'agent.config.harness.model.search.hint',
-    'agentConfigHarnessModelSearchLabel': 'agent.config.harness.model.search.label',
     'agentConfigIsDefaultLabel': 'agent.config.is.default.label',
     'agentConfigLabel': 'agent.config.label',
     'agentConfigModeLabel': 'agent.config.mode.label',
     'agentConfigNameLabel': 'agent.config.name.label',
-    'agentConfigNoHarnessModels': 'agent.config.no.harness.models',
-    'agentConfigNoMatchingHarnessModels': 'agent.config.no.matching.harness.models',
     'agentConfigNoModes': 'agent.config.no.modes',
     'agentConfigNoPrompts': 'agent.config.no.prompts',
     'agentConfigPromptLabel': 'agent.config.prompt.label',
     'agentConfigRegistry': 'agent.config.registry',
-    'agentConfigSelectHarnessModel': 'agent.config.select.harness.model',
     'agentConfigSelectMode': 'agent.config.select.mode',
     'agentConfigSelectPrompt': 'agent.config.select.prompt',
     'agentConfigTitle': 'agent.config.title',
@@ -2877,20 +2859,14 @@ class L10nKeyResolver {
     'agent.config.dialog.title': 'agentConfigDialogTitle',
     'agent.config.empty': 'agentConfigEmpty',
     'agent.config.error.prefix': 'agentConfigErrorPrefix',
-    'agent.config.harness.model.label': 'agentConfigHarnessModelLabel',
-    'agent.config.harness.model.search.hint': 'agentConfigHarnessModelSearchHint',
-    'agent.config.harness.model.search.label': 'agentConfigHarnessModelSearchLabel',
     'agent.config.is.default.label': 'agentConfigIsDefaultLabel',
     'agent.config.label': 'agentConfigLabel',
     'agent.config.mode.label': 'agentConfigModeLabel',
     'agent.config.name.label': 'agentConfigNameLabel',
-    'agent.config.no.harness.models': 'agentConfigNoHarnessModels',
-    'agent.config.no.matching.harness.models': 'agentConfigNoMatchingHarnessModels',
     'agent.config.no.modes': 'agentConfigNoModes',
     'agent.config.no.prompts': 'agentConfigNoPrompts',
     'agent.config.prompt.label': 'agentConfigPromptLabel',
     'agent.config.registry': 'agentConfigRegistry',
-    'agent.config.select.harness.model': 'agentConfigSelectHarnessModel',
     'agent.config.select.mode': 'agentConfigSelectMode',
     'agent.config.select.prompt': 'agentConfigSelectPrompt',
     'agent.config.title': 'agentConfigTitle',
@@ -3824,20 +3800,14 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) agentConfigDialogTitle(String name) => ('agent.config.dialog.title', {'name': name});
   static const agentConfigEmpty = 'agent.config.empty';
   static (String, Map<String, dynamic>) agentConfigErrorPrefix(String error) => ('agent.config.error.prefix', {'error': error});
-  static const agentConfigHarnessModelLabel = 'agent.config.harness.model.label';
-  static const agentConfigHarnessModelSearchHint = 'agent.config.harness.model.search.hint';
-  static const agentConfigHarnessModelSearchLabel = 'agent.config.harness.model.search.label';
   static const agentConfigIsDefaultLabel = 'agent.config.is.default.label';
   static const agentConfigLabel = 'agent.config.label';
   static const agentConfigModeLabel = 'agent.config.mode.label';
   static const agentConfigNameLabel = 'agent.config.name.label';
-  static const agentConfigNoHarnessModels = 'agent.config.no.harness.models';
-  static const agentConfigNoMatchingHarnessModels = 'agent.config.no.matching.harness.models';
   static const agentConfigNoModes = 'agent.config.no.modes';
   static const agentConfigNoPrompts = 'agent.config.no.prompts';
   static const agentConfigPromptLabel = 'agent.config.prompt.label';
   static const agentConfigRegistry = 'agent.config.registry';
-  static const agentConfigSelectHarnessModel = 'agent.config.select.harness.model';
   static const agentConfigSelectMode = 'agent.config.select.mode';
   static const agentConfigSelectPrompt = 'agent.config.select.prompt';
   static const agentConfigTitle = 'agent.config.title';

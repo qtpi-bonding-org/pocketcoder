@@ -271,6 +271,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i810.PocoConfigDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i810.PromptDao>(
         () => _i810.PromptDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i810.PermissionModeDao>(
+        () => _i810.PermissionModeDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i199.ChatDao>(
         () => _i199.ChatDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i464.SandboxAgentDao>(
@@ -373,11 +375,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i519.Client>(),
           gh<_i935.PocketCoderApiClient>(),
         ));
-    gh.lazySingleton<_i630.IAgentConfigRepository>(
-        () => _i857.AgentConfigRepository(
-              gh<_i810.PocoConfigDao>(),
-              gh<_i810.PromptDao>(),
-            ));
     gh.lazySingleton<_i199.ILiveActivityRepository>(
         () => _i259.LiveActivityRepository(
               gh<_i423.LiveActivityDao>(),
@@ -399,6 +396,12 @@ extension GetItInjectableX on _i174.GetIt {
               gh<String>(instanceName: 'releaseBaseUrl'),
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),
+            ));
+    gh.lazySingleton<_i630.IAgentConfigRepository>(
+        () => _i857.AgentConfigRepository(
+              gh<_i810.PocoConfigDao>(),
+              gh<_i810.PromptDao>(),
+              gh<_i810.PermissionModeDao>(),
             ));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
