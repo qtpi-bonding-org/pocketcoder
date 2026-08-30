@@ -62,7 +62,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('AUTO APPROVE'), findsOneWidget);
     expect(find.text('PRESET'), findsOneWidget);
-    await tester.tap(find.byType(Switch));
+    expect(find.byType(Switch), findsNothing);
+    await tester.tap(find.text('[ ]'));
     expect(request?.configId, 'auto-approve');
     expect(request?.value, 'true');
   });

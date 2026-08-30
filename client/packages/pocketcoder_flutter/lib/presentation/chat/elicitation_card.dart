@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 
 class ElicitationCard extends StatefulWidget {
   const ElicitationCard({
@@ -215,10 +216,10 @@ class _ElicitationCardState extends State<ElicitationCard> {
         );
         return Row(
           children: [
-            Checkbox(
+            TerminalCheckbox(
               value: value,
               onChanged: (v) {
-                setState(() => _boolValues[name] = v ?? false);
+                setState(() => _boolValues[name] = v);
               },
             ),
             HSpace.x1,

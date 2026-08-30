@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.lightTheme,
@@ -105,12 +106,12 @@ void main() {
   testWidgets('is_default toggle works', (tester) async {
     await pumpView(tester);
     await tester.tap(find.text('ADD NEW')); await tester.pumpAndSettle();
-    final toggle = find.byType(Switch);
+    final toggle = find.byType(TerminalCheckbox);
     await tester.ensureVisible(toggle);
     await tester.pumpAndSettle();
-    expect(tester.widget<Switch>(toggle).value, false);
+    expect(tester.widget<TerminalCheckbox>(toggle).value, false);
     await tester.tap(toggle); await tester.pumpAndSettle();
-    expect(tester.widget<Switch>(toggle).value, true);
+    expect(tester.widget<TerminalCheckbox>(toggle).value, true);
   });
 
   testWidgets('deleting calls the supplied callback', (tester) async {

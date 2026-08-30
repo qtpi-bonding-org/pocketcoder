@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 
 /// The trailing affordance a BiosRow renders. One row shape, four trailing
 /// behaviors. `expand` covers two different reveal mechanics (opens a picker
@@ -138,23 +139,10 @@ class BiosRow extends StatelessWidget {
   Widget _trailing(BuildContext context, Color textColor) {
     switch (variant) {
       case BiosRowVariant.toggle:
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onToggleChanged == null
-              ? null
-              : () => onToggleChanged!(!toggleValue),
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSizes.space),
-            child: Text(
-              toggleValue ? '[X]' : '[ ]',
-              style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
-                color: textColor,
-                fontSize: AppSizes.fontStandard,
-                fontWeight: AppFonts.heavy,
-              ),
-            ),
-          ),
+        return TerminalCheckbox(
+          value: toggleValue,
+          onChanged: onToggleChanged,
+          color: textColor,
         );
       case BiosRowVariant.input:
         return TextField(

@@ -1,6 +1,7 @@
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 
 class ConfigPicker extends StatefulWidget {
   const ConfigPicker(
@@ -73,7 +74,7 @@ class _ConfigPickerState extends State<ConfigPicker> {
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
           child: Row(children: [
             Expanded(child: label),
-            Switch(value: value == true, onChanged: (v) => submit('$v'))
+            TerminalCheckbox(value: value == true, onChanged: (v) => submit('$v'))
           ]));
     }
     if (kind == 'select') {
