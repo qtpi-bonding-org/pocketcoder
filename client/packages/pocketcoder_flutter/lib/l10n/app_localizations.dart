@@ -5715,7 +5715,7 @@ abstract class AppLocalizations {
   /// No description provided for @serverControlProviderConsole.
   ///
   /// In en, this message translates to:
-  /// **'PROVIDER CONSOLE'**
+  /// **'PROVIDER WEB PORTAL'**
   String get serverControlProviderConsole;
 
   /// No description provided for @serverControlProviderConsoleUnavailable.

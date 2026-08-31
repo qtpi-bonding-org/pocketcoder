@@ -425,7 +425,7 @@ void main() {
       final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
       await tester.pumpWidget(_app(cubit));
 
-      expect(find.text('PROVIDER CONSOLE'), findsNothing);
+      expect(find.text('PROVIDER WEB PORTAL'), findsNothing);
       await cubit.close();
     });
 
@@ -442,8 +442,8 @@ void main() {
         inAppBrowserLauncher: launcher,
       ));
 
-      expect(find.text('PROVIDER CONSOLE'), findsOneWidget);
-      await tester.tap(find.text('PROVIDER CONSOLE'));
+      expect(find.text('PROVIDER WEB PORTAL'), findsOneWidget);
+      await tester.tap(find.text('PROVIDER WEB PORTAL'));
       await tester.pumpAndSettle();
 
       expect(launcher.opened, Uri.parse('https://cloud.linode.com/linodes/42'));
@@ -461,7 +461,7 @@ void main() {
         inAppBrowserLauncher: launcher,
       ));
 
-      await tester.tap(find.text('PROVIDER CONSOLE'));
+      await tester.tap(find.text('PROVIDER WEB PORTAL'));
       await tester.pumpAndSettle();
 
       expect(launcher.opened, isNull);

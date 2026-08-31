@@ -3172,7 +3172,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlPrivateKeyLabel => 'SSH PRIVATE KEY';
 
   @override
-  String get serverControlProviderConsole => 'PROVIDER CONSOLE';
+  String get serverControlProviderConsole => 'PROVIDER WEB PORTAL';
 
   @override
   String get serverControlProviderConsoleUnavailable =>
