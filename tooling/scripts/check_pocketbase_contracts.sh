@@ -27,6 +27,7 @@ if ! diff -ru "$check_dir/canonical" "$checked_in_models" \
   --exclude='*.freezed.dart' \
   --exclude='*.g.dart' \
   --exclude='file_entry.dart' \
+  --exclude='file_tree_entry.dart' \
   --exclude='message.dart' \
   --exclude='ollama_model.dart' \
   --exclude='permission.dart' \
