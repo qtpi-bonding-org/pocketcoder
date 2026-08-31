@@ -125,10 +125,6 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
   @override
   chat_core.TextMessageBuilder get textMessageBuilder =>
       (context, message, index, {required isSentByMe, groupStatus}) {
-        // Reasoning messages no longer render inline in the transcript --
-        // the latest one is shown as a persistent caption above Poco's face
-        // instead (see ChatView), so older thoughts drop out of view once
-        // superseded rather than stacking up as transcript entries.
         if (_isReasoning(message)) return const SizedBox.shrink();
         if (isSentByMe) {
           final color =
@@ -177,8 +173,6 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
   TextStreamCardBuilder get textStreamMessageBuilder =>
       (context, message, index,
           {required isSentByMe, groupStatus, required streamState}) {
-        // See textMessageBuilder: reasoning messages render only as the
-        // persistent caption above Poco's face, not inline here.
         if (_isReasoning(message)) return const SizedBox.shrink();
         final child = chat_stream.FlyerChatTextStreamMessage(
           message: message,

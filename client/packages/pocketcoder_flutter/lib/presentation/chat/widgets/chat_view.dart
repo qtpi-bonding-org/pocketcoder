@@ -205,9 +205,6 @@ class _ChatViewState extends State<ChatView> {
     return null;
   }
 
-  /// The current text of the latest reasoning entry, live during streaming.
-  /// Shown as a persistent caption above Poco's face instead of inline in
-  /// the transcript, so only the most recent thought is ever visible.
   String? _latestReasoningText(List<ag_ui_widgets.TimelineItem> timeline) {
     for (final item in timeline.reversed) {
       switch (item) {

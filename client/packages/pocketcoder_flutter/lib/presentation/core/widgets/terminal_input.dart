@@ -2,17 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
-/// A [TextEditingController] whose text always begins with a fixed prompt
-/// prefix (e.g. "root@device $ "). The prefix lives in the real text content
-/// -- not an overlay widget -- so normal paragraph wrapping applies: line 1
-/// sits right after the prompt, and any wrapped continuation lines return to
-/// the left margin like ordinary text, instead of hanging-indenting under
-/// where line 1's content started.
-///
-/// [buildTextSpan] only re-styles two ranges of that one real string (prompt
-/// vs typed content); it never introduces text the controller doesn't own,
-/// so cursor placement and selection stay correctly mapped -- unlike
-/// prepending a separate, uneditable span.
+/// Keeps a fixed prompt prefix (e.g. "root@device $ ") as real text content,
+/// not an overlay, so wrapped continuation lines return to the left margin
+/// instead of hanging-indenting under the prompt.
 class _PromptController extends TextEditingController {
   _PromptController({required String prompt}) : _prompt = prompt {
     text = _prompt;
@@ -21,7 +13,6 @@ class _PromptController extends TextEditingController {
   final String _prompt;
   TextStyle promptStyle = const TextStyle();
 
-  /// The user-entered content, with the prompt prefix stripped.
   String get content =>
       text.length > _prompt.length ? text.substring(_prompt.length) : '';
 
