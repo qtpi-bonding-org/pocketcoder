@@ -13,29 +13,24 @@ class TerminalTransition {
       key: state.pageKey,
       child: child,
       transitionDuration:
-          const Duration(milliseconds: 700), // Slower, more deliberate
+          const Duration(milliseconds: 700),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        // Linear curve for mechanical "scan" feel
         final curve = CurvedAnimation(parent: animation, curve: Curves.linear);
 
         return Stack(
           children: [
-            // 1. Instant Wipe: A solid background covers the previous page immediately.
             Container(color: colors.surface),
 
-            // 2. The Content Reveal
             AnimatedBuilder(
               animation: curve,
               builder: (context, child) {
                 return Stack(
                   children: [
-                    // The Page Content (Clipped)
                     ClipRect(
                       clipper: _ScanlineClipper(curve.value),
                       child: child,
                     ),
 
-                    // The Glowing Scanline Head
                     if (curve.value < 1.0)
                       Positioned(
                         top: MediaQuery.of(context).size.height * curve.value,
@@ -74,7 +69,6 @@ class _ScanlineClipper extends CustomClipper<Rect> {
 
   @override
   Rect getClip(Size size) {
-    // Reveal from top (0) to bottom (height)
     return Rect.fromLTWH(0, 0, size.width, size.height * progress);
   }
 

@@ -1,6 +1,6 @@
 # PocketCoder
 
-**A sovereign, mobile-first coding agent you run on your own infrastructure.** Use local models through Ollama or a hosted provider, receive private notifications through ntfy, and approve consequential actions from your phone before they run — without routing commands through a chat app.
+**PocketCoder enables you to set up your own private server and deploy an agent with one tap from your phone.** You own the server and its data. Once it is running, you can use a coding-focused personal agent from anywhere, review its proposed actions, and approve or deny them from the mobile app — without becoming a systems administrator or routing commands through a chat app.
 
 PocketCoder is a solo research project built in the open. It follows an **Alpine Linux** philosophy — a tiny original surface area standing on FOSS "giant's shoulders" rather than hand-rolled glue: **PocketBase** for state and auth, **Goose** as the default harness, and open agent protocols (**ACP**, **AG-UI**, **MCP**) for everything in between.
 
@@ -29,9 +29,9 @@ connecting sensitive accounts.
 Two patterns have emerged for working with autonomous agents, and PocketCoder aims for the secure middle ground:
 
 - **Mission-control on the go.** Tools like Google Antigravity showed that a lot of agent work is *reviewing plans and approving executions*, not typing syntax. That subset fits a phone perfectly — assign tasks, review plans, approve deployments while away from your keyboard.
-- **A safe alternative to chat-bridge agents.** Tools like OpenClaw let you message a personal agent to do real work, but route system commands through unauthenticated chat apps — a documented security nightmare. PocketCoder gives you the same convenience inside a proper authenticated app where **every tool call is gated by an explicit, human-inspectable approval** before it executes.
+- **A safer alternative to chat-bridge agents.** Chat is convenient, but it is a poor permission and interruption interface for an agent with terminal, filesystem, and network access. PocketCoder puts the interaction inside an authenticated app and exposes the harness's permission requests as explicit, human-inspectable approve/deny choices. The default is human-in-the-loop; configured “always allow” rules and the security limitations of the current c2 runtime are documented in [`SECURITY.md`](SECURITY.md).
 
-**Core principles:** scoped for mobile (orchestration, not 500-line diffs on a phone) · human-in-the-loop by default · open protocols instead of bespoke glue · local-first when desired, provider-independent when useful.
+**Core principles:** scoped for mobile (orchestration, review, and control rather than 500-line diffs on a phone) · least privilege and human-in-the-loop by default · Docker as the primary runtime boundary · open protocols instead of bespoke glue · local-first when desired, provider-independent when useful.
 
 ## Mobile-first provisioning
 
@@ -50,6 +50,24 @@ Phone
 The deployment also removes a traditionally annoying setup step: the provisioned system can derive a public `sslip.io` hostname from the VPS IP and use Caddy to obtain HTTPS automatically, without asking the user to buy a domain or hand-configure a certificate. This Caddy HTTPS route is the recommended VPS path for the Flutter app. Tailscale is an optional alternative for self-hosted Docker deployments.
 
 This is different from the common mobile-agent pattern where a user must already have a running desktop, CLI session, or VPS and then pair a phone to it. PocketCoder’s open/self-hosted path remains available through [`deploy.sh`](deploy.sh); mobile VPS provisioning is a separate proprietary convenience layer.
+
+### What is public and what is Pro
+
+This repository is the complete public Core/FOSS product. It includes the
+PocketCoder backend, Compose services, Pocket Memory, MCP gateway integration,
+release manager, NixOS and standard-Linux deployment scripts, Cloudflare Worker
+source, schemas, tests, and the FOSS Flutter client. A self-hoster can inspect,
+build, deploy, update, and operate that path from this repository.
+
+PocketCoder Pro is maintained in a separate private repository. Pro adds the
+commercial mobile shell and convenience services: hosted provider
+provisioning, billing, app-store distribution, and hosted push integrations.
+The Pro shell consumes this repository's public Flutter package and public
+deployment/release contracts; it does not replace or conceal the server code
+that runs on a user's machine. The proprietary onboarding screens and Pro
+service adapters are therefore not auditable from this repository by design.
+That boundary is intentional and should not be read as claiming that the
+one-tap commercial client is fully open-source.
 
 ## Architecture
 
@@ -90,7 +108,31 @@ ask an agent to remember its own identity. The service is local and always on;
 if its bundled embedding model is unavailable, canonical writes and FTS5 recall
 continue in an explicitly degraded mode.
 
-The selected harness is the **system of record** for its conversation history. PocketBase stores authentication and the `chat_id → external harness session` mapping — it is not a conversation or approval ledger. The Flutter client keeps a local Drift cache as an offline mirror refreshed from the selected harness.
+The selected harness is the **system of record** for its conversation and session history. PocketBase stores authentication, configuration, permission rules, and the `chat_id → external harness session` mapping — it is not a second conversation database or durable approval ledger. The Flutter client keeps a local Drift cache as an offline mirror refreshed from the selected harness.
+
+### What is current, and what is experimental
+
+PocketCoder has gone through two related designs. An earlier prototype explored a
+separate Rust execution gateway, an orchestrator, and multiple subagent
+containers. That work tested the security model—especially the combination of
+sensitive-data access, untrusted-content ingestion, and external execution—but
+the transport wiring (tmux, Unix sockets, WebSockets, and OpenCode SSE) became
+too fragile for the MVP. The old sandbox and orchestration code remains under
+[`dormant/`](dormant/) as future work.
+
+The current runtime is deliberately smaller: a selected ACP-compatible harness
+executes inside c2, c1 translates ACP to AG-UI, and Docker/network isolation
+provides the hard boundary. The harness owns the conversation; PocketBase owns
+the control-plane configuration around it. This is a strong approval and scope
+boundary, not an air-gapped sandbox—see [`SECURITY.md`](SECURITY.md) for the
+current limitations.
+
+PocketCoder also includes **Pocket Memory**, a Rust/SQLite service exposed to
+the agent through MCP. It stores agent-authored observations and interpretations,
+supports FTS5 plus optional local multilingual embeddings, and keeps provenance
+so a remembered interpretation can be traced back to an observation. SQLPage is
+provided for inspection and observability; it is not an additional agent or a
+write-time security filter.
 
 The security model and its honest limits (tool execution currently lives inside c2; the hardened sandbox is dormant) are documented in [`SECURITY.md`](SECURITY.md); the full design and open questions in [`docs/architecture-refactor.md`](docs/architecture-refactor.md).
 
@@ -105,7 +147,7 @@ The security model and its honest limits (tool execution currently lives inside 
 | **LLM provider** | Ollama locally or any hosted provider | Usually one vendor | Any |
 | **Sharing model** | Trusted users sharing one deployment; not hostile multi-tenant isolation | Single session | Single user |
 | **Data sovereignty** | Fully self-hosted, no telemetry | Routes through a vendor | Self-hosted, but commands via chat apps |
-| **Security posture** | Every action gated by explicit approval | Permission modes, no mobile override | Approval bolted on, if any |
+| **Security posture** | Harness permission requests surfaced for explicit approval by default; configurable rules; c2 is not yet a hardened sandbox | Permission modes, no mobile override | Approval bolted on, if any |
 
 ## Quick Start
 
@@ -286,7 +328,10 @@ through the existing-server onboarding flow.
 
 The FOSS target can be compiled independently for Android and is intended to
 remain suitable for F-Droid distribution. The separate private PocketCoder Pro
-repository consumes this workspace as a pinned Git submodule.
+repository consumes this workspace as a pinned Git dependency/submodule. The
+public checkout intentionally contains only `apps/pocketcoder_foss`; Pro's
+`apps/pocketcoder`, `packages/pocketcoder_pro`, and app-store integrations are
+not present here.
 
 Every script and template executed on a user's VPS is kept in this public
 repository. Managed clients may orchestrate those files, but the deployed
@@ -330,11 +375,11 @@ See [`docs/agent-testing-strategy.md`](docs/agent-testing-strategy.md).
 
 | Language | LoC | Component |
 | :--- | ---: | :--- |
-| Go | 10056 | c1: PocketBase + ACP client + AG-UI server |
-| Dart | 54822 | Flutter client (non-generated) |
-| **Core code** | **~64878** | Go + Dart — product code |
-| Tests | 23684 | not code — Go 7036 · Dart 8600 · Bash 8048 |
-| Tooling | 6534 | not code — Bash scripts / infra |
+| Go | 18,801 | c1: PocketBase + ACP client + AG-UI server |
+| Dart | 89,831 | Flutter client (non-generated) |
+| **Core code** | **~108,632** | Go + Dart — product code |
+| Tests | 37,129 | not code — Go 14,765 · Dart 20,681 · Bash 1,683 |
+| Tooling | 6,812 | not code — Bash scripts / infra |
 
 The backend is deliberately tiny: PocketBase supplies auth, the database, REST, and realtime *as a library*, so c1 is just the ACP client, the AG-UI bridge, and a handful of hooks. Lean glue over battle-tested building blocks is the whole thesis.
 
@@ -351,4 +396,9 @@ other third-party dependencies retain their own FOSS licenses and provenance.
 The client and backend here are free software and fully self-hostable. The
 separate PocketCoder Pro distribution adds managed one-tap VPS provisioning,
 commercial billing, app-store integrations, and hosted push convenience;
-self-hosters skip it entirely by running `deploy.sh` directly.
+self-hosters skip it entirely by running `deploy.sh` directly. The public
+deployment source and the exact release source commit used by a server remain
+inspectable even when that server was provisioned by Pro.
+
+For a provider-independent route to the same deployment state, see the
+[manual deployment guide](deploy/README.md).

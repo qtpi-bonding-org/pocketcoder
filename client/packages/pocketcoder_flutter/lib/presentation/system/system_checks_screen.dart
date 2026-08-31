@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/application/system/health_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/health_state.dart';
 import "package:pocketcoder_flutter/domain/models/healthcheck.dart";
@@ -45,7 +46,6 @@ class SystemChecksView extends StatelessWidget {
           builder: (context) {
             return Column(
               children: [
-                // Inline REFRESH button
                 Padding(
                   padding: EdgeInsets.all(AppSizes.space),
                   child: Align(
@@ -91,23 +91,10 @@ class SystemChecksView extends StatelessWidget {
     String status,
     bool isOk,
   ) {
-    final colors = context.colorScheme;
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TerminalText(
-            component,
-            weight: TerminalTextWeight.heavy,
-          ),
-          TerminalText(
-            '[$status]',
-            color: isOk ? colors.primary : colors.error,
-            weight: TerminalTextWeight.heavy,
-          ),
-        ],
-      ),
+    return BiosRow(
+      label: component,
+      value: '[$status]',
+      isDestructive: !isOk,
     );
   }
 }

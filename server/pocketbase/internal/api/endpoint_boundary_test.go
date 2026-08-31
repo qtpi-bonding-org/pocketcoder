@@ -32,8 +32,10 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 	AddReleaseStatusOperations(registry)
 	filesystem.AddFileOperations(registry)
 	hooks.AddPushOperations(app, registry)
+	hooks.AddProDataOperations(app, registry)
 	AddHarnessAuthOperations(app, registry, HarnessAuthDeps{})
 	AddScheduleOperations(app, registry, func() coordinator.AgentRuntime { return nil })
+	AddLiveActivityOperations(app, registry)
 
 	operation.MountForTests(e, registry.Routes())
 }
@@ -82,15 +84,20 @@ var testsByEndpoint = []struct {
 	{"disconnectHarnessAuth", http.MethodPost, "/api/pocketcoder/v1/harness-auth/disconnect", `{"harness":"test-harness"}`},
 	{"runScheduleNow", http.MethodPost, "/api/pocketcoder/v1/schedules/test-schedule/run", ""},
 	{"getWorkspaceFile", http.MethodGet, "/api/pocketcoder/v1/files?path=test.txt", ""},
-	{"listWorkspaceFiles", http.MethodGet, "/api/pocketcoder/v1/files-list", ""},
+	{"listWorkspaceFileTree", http.MethodGet, "/api/pocketcoder/v1/files-tree", ""},
 	{"listOllamaModels", http.MethodGet, "/api/pocketcoder/v1/ollama/models", ""},
 	{"pullOllamaModel", http.MethodPost, "/api/pocketcoder/v1/ollama/pull", `{"model":"qwen3:0.6b"}`},
 	{"executeMcpRequest", http.MethodPost, "/api/pocketcoder/v1/mcp/request", `{"server_name":"test-server"}`},
 	{"storeMcpOAuthToken", http.MethodPost, "/api/pocketcoder/v1/mcp/oauth/store", `{"server_name":"test-server","access_token":"test-token"}`},
 	{"getReleaseStatus", http.MethodGet, "/api/pocketcoder/v1/release/status", ""},
 	{"streamContainerLogs", http.MethodGet, "/api/pocketcoder/v1/logs/pocketcoder-pocketbase", ""},
+	{"listContainers", http.MethodGet, "/api/pocketcoder/v1/containers", ""},
+	{"getHarnessInstanceLogs", http.MethodGet, "/api/pocketcoder/v1/logs/instance/test-instance", ""},
 	{"proxyObservability", http.MethodGet, "/api/pocketcoder/v1/proxy/observability/", ""},
 	{"sendPushNotification", http.MethodPost, "/api/pocketcoder/v1/push", `{"user_id":"test-user","type":"test"}`},
+	{"deleteProData", http.MethodDelete, "/api/pocketcoder/v1/pro-data", ""},
+	{"endLiveActivity", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/end", ""},
+	{"setLiveActivityToken", http.MethodPost, "/api/pocketcoder/v1/live-activities/test-activity/token", `{"activity_push_token":"tok"}`},
 }
 
 func TestCompatibilityEndpointIsPublicAtTheOperationBoundary(t *testing.T) {

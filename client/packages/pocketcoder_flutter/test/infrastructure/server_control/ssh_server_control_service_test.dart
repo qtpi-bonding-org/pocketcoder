@@ -3,8 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_command_runner.dart';
+import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_credentials_provider.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command_result.dart';
+import 'package:pocketcoder_flutter/domain/os_control/root_ssh_credentials.dart';
 import 'package:pocketcoder_flutter/domain/release/i_server_release_status_service.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_exception.dart';
@@ -56,6 +58,21 @@ class _FakeReleaseService implements IServerReleaseStatusService {
   }
 }
 
+class _FakeCredentialsProvider implements IRootSshCredentialsProvider {
+  _FakeCredentialsProvider(this.credentials);
+
+  final RootSshCredentials? credentials;
+  String? requestedInstanceId;
+
+  @override
+  Future<RootSshCredentials?> readRootSshCredentials({
+    required String instanceId,
+  }) async {
+    requestedInstanceId = instanceId;
+    return credentials;
+  }
+}
+
 ServerReleaseStatusSnapshot _release() => ServerReleaseStatusSnapshot(
   status: ServerReleaseStatus.updateAvailable,
   currentVersion: '1.0.0',
@@ -65,6 +82,40 @@ ServerReleaseStatusSnapshot _release() => ServerReleaseStatusSnapshot(
 );
 
 void main() {
+  test('reads the public key from the credentials provider', () async {
+    final provider = _FakeCredentialsProvider(
+      const RootSshCredentials(
+        privateKeyPem: 'private',
+        hostKeyType: 'ssh-ed25519',
+        hostKeyFingerprint: 'fingerprint',
+        publicKeyOpenSsh: 'ssh-ed25519 AAAA public',
+      ),
+    );
+    final service = SshServerControlService(
+      rootSshCommandRunner: _FakeRunner(),
+      pocketBase: PocketBase('https://pb.example.test'),
+      releaseStatusService: _FakeReleaseService(_release()),
+      credentialsProvider: provider,
+    );
+
+    expect(
+      await service.readPublicKey(instanceId: 'x'),
+      'ssh-ed25519 AAAA public',
+    );
+    expect(provider.requestedInstanceId, 'x');
+  });
+
+  test('returns null when credentials are unavailable', () async {
+    final service = SshServerControlService(
+      rootSshCommandRunner: _FakeRunner(),
+      pocketBase: PocketBase('https://pb.example.test'),
+      releaseStatusService: _FakeReleaseService(_release()),
+      credentialsProvider: _FakeCredentialsProvider(null),
+    );
+
+    expect(await service.readPublicKey(instanceId: 'x'), isNull);
+  });
+
   test(
     'delegates every typed command and extracts the PocketBase host',
     () async {
@@ -73,6 +124,7 @@ void main() {
         rootSshCommandRunner: runner,
         pocketBase: PocketBase('https://pb.example.test:8090'),
         releaseStatusService: _FakeReleaseService(_release()),
+        credentialsProvider: _FakeCredentialsProvider(null),
       );
 
       for (final operation in <Future<dynamic> Function()>[
@@ -108,6 +160,7 @@ void main() {
       rootSshCommandRunner: _FakeRunner(),
       pocketBase: PocketBase('https://pb.example.test'),
       releaseStatusService: release,
+      credentialsProvider: _FakeCredentialsProvider(null),
     );
 
     expect(await service.inspectRelease(), release.snapshot);
@@ -120,6 +173,7 @@ void main() {
       rootSshCommandRunner: runner,
       pocketBase: PocketBase('https://pb.example.test'),
       releaseStatusService: _FakeReleaseService(_release()),
+      credentialsProvider: _FakeCredentialsProvider(null),
     );
 
     await expectLater(
@@ -141,6 +195,7 @@ void main() {
       rootSshCommandRunner: _FakeRunner(),
       pocketBase: PocketBase('https://pb.example.test'),
       releaseStatusService: release,
+      credentialsProvider: _FakeCredentialsProvider(null),
     );
 
     await expectLater(

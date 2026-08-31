@@ -2,6 +2,10 @@ name = "pocketcoder-image-relay"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
+# Required secrets (set with scripts/set-secrets.sh):
+# SUPABASE_URL, SUPABASE_SERVICE_KEY,
+# REVENUECAT_SECRET_KEY, REVENUECAT_PROJECT_ID
+
 [[r2_buckets]]
 binding = "IMAGES"
 bucket_name = "pocketcoder-images"

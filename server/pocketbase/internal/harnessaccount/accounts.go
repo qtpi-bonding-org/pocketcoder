@@ -1,6 +1,6 @@
-// Package harnessaccount owns harness credential identities and each user's
-// selected identity per harness. PocketBase users own workspaces; harness
-// accounts own login state and may be personal or deployment-visible.
+// Package harnessaccount resolves and selects the OAuth-account side of a
+// user's harness credentials -- see harness_oauth_accounts,
+// provider_api_keys, and credential_selections in schema.json.
 package harnessaccount
 
 import (
@@ -11,79 +11,105 @@ import (
 )
 
 const (
-	ModeAccount = "account"
-	ModeAPIKey  = "api_key"
-	ModeNone    = "none"
-
 	StatusDisconnected = "disconnected"
 
 	VisibilityPersonal   = "personal"
 	VisibilityDeployment = "deployment"
 )
 
-// RegisterHooks enforces the cross-collection selection invariants that the
-// schema's relation fields and unique index cannot express on their own.
 func RegisterHooks(app core.App) {
-	app.OnRecordCreateRequest("harness_accounts").BindFunc(func(e *core.RecordRequestEvent) error {
+	app.OnRecordCreateRequest("harness_oauth_accounts").BindFunc(func(e *core.RecordRequestEvent) error {
 		if e.Auth == nil || e.Auth.Id == "" {
 			return fmt.Errorf("authentication required")
 		}
 		e.Record.Set("owner", e.Auth.Id)
-		e.Record.Set("provider_key", "")
 		e.Record.Set("status", StatusDisconnected)
 		e.Record.Set("last_error", "")
 		return e.Next()
 	})
-	app.OnRecordUpdateRequest("harness_accounts").BindFunc(func(e *core.RecordRequestEvent) error {
+	app.OnRecordCreate("harness_oauth_accounts").BindFunc(func(e *core.RecordEvent) error {
+		edge, err := app.FindFirstRecordByFilter(
+			"harness_providers",
+			"harness = {:h} && provider = {:p}",
+			map[string]any{"h": e.Record.GetString("harness"), "p": e.Record.GetString("provider")},
+		)
+		if err != nil || !edge.GetBool("supports_oauth") {
+			return fmt.Errorf("this harness/provider pair does not support OAuth login")
+		}
+		return e.Next()
+	})
+	app.OnRecordUpdateRequest("harness_oauth_accounts").BindFunc(func(e *core.RecordRequestEvent) error {
 		original := e.Record.Original()
 		if e.Auth == nil || e.Auth.Id == "" || original == nil || original.GetString("owner") != e.Auth.Id {
 			return fmt.Errorf("harness account must belong to the authenticated user")
 		}
-		for _, field := range []string{"owner", "harness", "provider_key", "status", "last_error"} {
+		for _, field := range []string{"owner", "harness", "provider", "status", "last_error"} {
 			e.Record.Set(field, original.Get(field))
 		}
 		return e.Next()
 	})
-	app.OnRecordCreateRequest("harness_account_selections").BindFunc(func(e *core.RecordRequestEvent) error {
+	app.OnRecordCreateRequest("provider_api_keys").BindFunc(func(e *core.RecordRequestEvent) error {
+		if e.Auth == nil || e.Auth.Id == "" {
+			return fmt.Errorf("authentication required")
+		}
+		e.Record.Set("owner", e.Auth.Id)
+		return e.Next()
+	})
+	app.OnRecordUpdateRequest("provider_api_keys").BindFunc(func(e *core.RecordRequestEvent) error {
+		original := e.Record.Original()
+		if e.Auth == nil || e.Auth.Id == "" || original == nil || original.GetString("owner") != e.Auth.Id {
+			return fmt.Errorf("provider API key must belong to the authenticated user")
+		}
+		e.Record.Set("owner", original.Get("owner"))
+		return e.Next()
+	})
+	app.OnRecordCreateRequest("credential_selections").BindFunc(func(e *core.RecordRequestEvent) error {
 		if e.Auth == nil || e.Auth.Id == "" {
 			return fmt.Errorf("authentication required")
 		}
 		e.Record.Set("user", e.Auth.Id)
 		return e.Next()
 	})
-	app.OnRecordUpdateRequest("harness_account_selections").BindFunc(func(e *core.RecordRequestEvent) error {
+	app.OnRecordUpdateRequest("credential_selections").BindFunc(func(e *core.RecordRequestEvent) error {
 		original := e.Record.Original()
 		if e.Auth == nil || e.Auth.Id == "" || original == nil || original.GetString("user") != e.Auth.Id {
-			return fmt.Errorf("harness account selection must belong to the authenticated user")
+			return fmt.Errorf("credential selection must belong to the authenticated user")
 		}
 		e.Record.Set("user", original.Get("user"))
 		e.Record.Set("harness", original.Get("harness"))
+		e.Record.Set("provider", original.Get("provider"))
 		return e.Next()
 	})
 
 	validate := func(e *core.RecordEvent) error {
-		account, err := app.FindRecordById("harness_accounts", e.Record.GetString("account"))
-		if err != nil {
-			return fmt.Errorf("selected harness account not found")
+		if e.Record.GetString("mode") != "oauth" {
+			e.Record.Set("oauth_account", "")
+			return e.Next()
 		}
-		if account.GetString("harness") != e.Record.GetString("harness") {
-			return fmt.Errorf("selected account does not belong to harness")
+		account, err := app.FindRecordById("harness_oauth_accounts", e.Record.GetString("oauth_account"))
+		if err != nil {
+			return fmt.Errorf("selected oauth account not found")
+		}
+		if account.GetString("harness") != e.Record.GetString("harness") || account.GetString("provider") != e.Record.GetString("provider") {
+			return fmt.Errorf("selected account does not match this harness/provider")
 		}
 		if !CanAccess(account, e.Record.GetString("user")) {
 			return fmt.Errorf("selected account is not available to user")
 		}
 		return e.Next()
 	}
-	app.OnRecordCreate("harness_account_selections").BindFunc(validate)
-	app.OnRecordUpdate("harness_account_selections").BindFunc(validate)
+	app.OnRecordCreate("credential_selections").BindFunc(validate)
+	app.OnRecordUpdate("credential_selections").BindFunc(validate)
 }
 
 // Resolve returns either an explicitly requested accessible account or the
-// user's selected account for the harness. A missing selection is not an error.
-func Resolve(app core.App, userID, harnessID, accountID string) (*core.Record, error) {
+// user's selected OAuth account for (harness, provider). A missing
+// selection, or a selection whose mode isn't "oauth", is not an error --
+// both return (nil, nil).
+func Resolve(app core.App, userID, harnessID, providerID, accountID string) (*core.Record, error) {
 	if accountID != "" {
-		account, err := app.FindRecordById("harness_accounts", accountID)
-		if err != nil || account.GetString("harness") != harnessID {
+		account, err := app.FindRecordById("harness_oauth_accounts", accountID)
+		if err != nil || account.GetString("harness") != harnessID || account.GetString("provider") != providerID {
 			return nil, fmt.Errorf("account not found")
 		}
 		if !CanAccess(account, userID) {
@@ -93,36 +119,35 @@ func Resolve(app core.App, userID, harnessID, accountID string) (*core.Record, e
 	}
 
 	selections, err := app.FindRecordsByFilter(
-		"harness_account_selections",
-		"user = {:user} && harness = {:harness}",
-		"",
-		1,
-		0,
-		map[string]any{"user": userID, "harness": harnessID},
+		"credential_selections",
+		"user = {:user} && harness = {:harness} && provider = {:provider}",
+		"", 1, 0,
+		map[string]any{"user": userID, "harness": harnessID, "provider": providerID},
 	)
 	if err != nil {
 		return nil, err
 	}
-	if len(selections) == 0 {
+	if len(selections) == 0 || selections[0].GetString("mode") != "oauth" {
 		return nil, nil
 	}
-	account, err := app.FindRecordById("harness_accounts", selections[0].GetString("account"))
-	if err != nil || account.GetString("harness") != harnessID || !CanAccess(account, userID) {
+	account, err := app.FindRecordById("harness_oauth_accounts", selections[0].GetString("oauth_account"))
+	if err != nil || account.GetString("harness") != harnessID || account.GetString("provider") != providerID || !CanAccess(account, userID) {
 		return nil, nil
 	}
 	return account, nil
 }
 
 // SelectOrCreate selects an existing account or creates the conventional
-// deployment/personal account for this harness, then records the user's
-// selection. visibility must be personal or deployment.
-func SelectOrCreate(app core.App, userID, harnessID, accountID, accountName, visibility, credentialMode string) (*core.Record, error) {
+// deployment/personal account for this (harness, provider) pair, then
+// records the user's selection as mode=oauth. visibility must be personal
+// or deployment.
+func SelectOrCreate(app core.App, userID, harnessID, providerID, accountID, accountName, visibility string) (*core.Record, error) {
 	if accountID != "" {
-		account, err := Resolve(app, userID, harnessID, accountID)
+		account, err := Resolve(app, userID, harnessID, providerID, accountID)
 		if err != nil {
 			return nil, err
 		}
-		if err := SetSelection(app, userID, harnessID, account); err != nil {
+		if err := SetSelection(app, userID, harnessID, providerID, account); err != nil {
 			return nil, err
 		}
 		return account, nil
@@ -132,13 +157,13 @@ func SelectOrCreate(app core.App, userID, harnessID, accountID, accountName, vis
 		return nil, fmt.Errorf("visibility must be personal or deployment")
 	}
 
-	filter := "harness = {:harness} && owner = {:owner} && visibility = 'personal'"
-	params := map[string]any{"harness": harnessID, "owner": userID}
+	filter := "harness = {:harness} && provider = {:provider} && owner = {:owner} && visibility = 'personal'"
+	params := map[string]any{"harness": harnessID, "provider": providerID, "owner": userID}
 	if visibility == VisibilityDeployment {
-		filter = "harness = {:harness} && visibility = 'deployment'"
-		params = map[string]any{"harness": harnessID}
+		filter = "harness = {:harness} && provider = {:provider} && visibility = 'deployment'"
+		params = map[string]any{"harness": harnessID, "provider": providerID}
 	}
-	accounts, err := app.FindRecordsByFilter("harness_accounts", filter, "created", 1, 0, params)
+	accounts, err := app.FindRecordsByFilter("harness_oauth_accounts", filter, "created", 1, 0, params)
 	if err != nil {
 		return nil, err
 	}
@@ -146,15 +171,15 @@ func SelectOrCreate(app core.App, userID, harnessID, accountID, accountName, vis
 	if len(accounts) > 0 {
 		account = accounts[0]
 	} else {
-		col, err := app.FindCollectionByNameOrId("harness_accounts")
+		col, err := app.FindCollectionByNameOrId("harness_oauth_accounts")
 		if err != nil {
 			return nil, err
 		}
 		account = core.NewRecord(col)
 		account.Set("harness", harnessID)
+		account.Set("provider", providerID)
 		account.Set("owner", userID)
 		account.Set("visibility", visibility)
-		account.Set("credential_mode", credentialMode)
 		account.Set("status", StatusDisconnected)
 		name := strings.TrimSpace(accountName)
 		if name == "" {
@@ -162,7 +187,7 @@ func SelectOrCreate(app core.App, userID, harnessID, accountID, accountName, vis
 			if visibility == VisibilityDeployment {
 				prefix = "Shared"
 			}
-			name = prefix + " harness account"
+			name = prefix + " account"
 			if harness, harnessErr := app.FindRecordById("harnesses", harnessID); harnessErr == nil {
 				name = prefix + " " + harness.GetString("name")
 			}
@@ -172,20 +197,10 @@ func SelectOrCreate(app core.App, userID, harnessID, accountID, accountName, vis
 			return nil, err
 		}
 	}
-	if err := SetSelection(app, userID, harnessID, account); err != nil {
+	if err := SetSelection(app, userID, harnessID, providerID, account); err != nil {
 		return nil, err
 	}
 	return account, nil
-}
-
-// EnsureDefaultPersonal supplies a deterministic fallback for harnesses that
-// need to start before the user visits the auth screen.
-func EnsureDefaultPersonal(app core.App, userID, harnessID string) (*core.Record, error) {
-	account, err := Resolve(app, userID, harnessID, "")
-	if err != nil || account != nil {
-		return account, err
-	}
-	return SelectOrCreate(app, userID, harnessID, "", "", VisibilityPersonal, ModeNone)
 }
 
 // CanAccess reports whether a PocketBase user may use an account. Personal
@@ -195,38 +210,39 @@ func CanAccess(account *core.Record, userID string) bool {
 	return account.GetString("owner") == userID || account.GetString("visibility") == VisibilityDeployment
 }
 
-// SetSelection records one selected account for a user and harness. The
-// collection's unique(user, harness) index enforces the cardinality invariant.
-func SetSelection(app core.App, userID, harnessID string, account *core.Record) error {
-	if account.GetString("harness") != harnessID {
-		return fmt.Errorf("account does not belong to harness")
+// SetSelection records mode=oauth with this account for (user, harness,
+// provider). The collection's unique(user, harness, provider) index
+// enforces the cardinality invariant.
+func SetSelection(app core.App, userID, harnessID, providerID string, account *core.Record) error {
+	if account.GetString("harness") != harnessID || account.GetString("provider") != providerID {
+		return fmt.Errorf("account does not belong to this harness/provider")
 	}
 	if !CanAccess(account, userID) {
 		return fmt.Errorf("account is not available to this user")
 	}
 	selections, err := app.FindRecordsByFilter(
-		"harness_account_selections",
-		"user = {:user} && harness = {:harness}",
-		"",
-		1,
-		0,
-		map[string]any{"user": userID, "harness": harnessID},
+		"credential_selections",
+		"user = {:user} && harness = {:harness} && provider = {:provider}",
+		"", 1, 0,
+		map[string]any{"user": userID, "harness": harnessID, "provider": providerID},
 	)
 	if err != nil {
 		return err
 	}
 	var selection *core.Record
 	if len(selections) == 0 {
-		col, err := app.FindCollectionByNameOrId("harness_account_selections")
+		col, err := app.FindCollectionByNameOrId("credential_selections")
 		if err != nil {
 			return err
 		}
 		selection = core.NewRecord(col)
 		selection.Set("user", userID)
 		selection.Set("harness", harnessID)
+		selection.Set("provider", providerID)
 	} else {
 		selection = selections[0]
 	}
-	selection.Set("account", account.Id)
+	selection.Set("mode", "oauth")
+	selection.Set("oauth_account", account.Id)
 	return app.Save(selection)
 }

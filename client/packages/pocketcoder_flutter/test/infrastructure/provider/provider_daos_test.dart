@@ -27,10 +27,18 @@ void main() {
     });
   });
 
-  group('ProviderKeyDao', () {
+  group('ProviderAPIKeyDao', () {
     test('wires the given PocketBase instance', () {
       final pb = PocketBase('http://unused.local');
-      final dao = ProviderKeyDao(pb);
+      final dao = ProviderAPIKeyDao(pb);
+      expect(dao.pb, same(pb));
+    });
+  });
+
+  group('HarnessProviderDao', () {
+    test('wires the given PocketBase instance', () {
+      final pb = PocketBase('http://unused.local');
+      final dao = HarnessProviderDao(pb);
       expect(dao.pb, same(pb));
     });
   });

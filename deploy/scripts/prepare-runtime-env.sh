@@ -33,6 +33,18 @@ random_secret() {
 
 # POCO:BEGIN bootstrap-runtime-settings
 chmod 0600 "$runtime_env"
+# The boot-env blob the client builds ends its last KEY=value line with no
+# trailing newline (a plain '\n'.join, not '\n'.join + trailing) -- append_default's
+# `>>` would otherwise glue its first appended line onto the end of that
+# last line. That corrupts the glued-onto value's own content AND breaks
+# append_default's own "already present" guard for the appended key, since
+# grep's `^KEY=` no longer matches a key that isn't at true line-start --
+# silently re-appending (and for a random_secret value, silently rotating)
+# it on every later activation. Confirmed live: this broke public_ip and
+# bootstrap-recovery on a real box.
+if [ -s "$runtime_env" ] && [ -n "$(tail -c1 "$runtime_env")" ]; then
+  printf '\n' >> "$runtime_env"
+fi
 append_default POCKETBASE_SUPERUSER_EMAIL superuser@pocketcoder.local
 append_default POCKETBASE_SUPERUSER_PASSWORD "$(random_secret)"
 append_default AGENT_EMAIL agent@pocketcoder.local

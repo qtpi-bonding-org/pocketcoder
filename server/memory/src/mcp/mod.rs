@@ -36,6 +36,11 @@ pub fn router(service: MemoryService, cancellation: CancellationToken) -> Router
         move || Ok(tools::MemoryMcp::new(service.clone())),
         LocalSessionManager::default().into(),
         StreamableHttpServerConfig::default()
+            // Every harness reaches this service at http://pocket-memory:8000/mcp
+            // (the docker-compose service hostname, hooks.memoryURL) -- rmcp's
+            // default DNS-rebinding allowlist only covers loopback hosts, which
+            // rejects that real inbound Host header with a 403.
+            .with_allowed_hosts(["localhost", "127.0.0.1", "::1", "pocket-memory:8000"])
             .with_legacy_session_mode(false)
             .with_json_response(true)
             .with_cancellation_token(cancellation),
@@ -70,6 +75,7 @@ fn health(service: &MemoryService) -> Json<HealthResponse> {
 
 async fn require_identity(mut request: Request, next: Next) -> Response {
     if request.headers().contains_key("origin") {
+        tracing::warn!("browser-origin request rejected");
         return (
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
@@ -83,12 +89,15 @@ async fn require_identity(mut request: Request, next: Next) -> Response {
             request.extensions_mut().insert(identity);
             next.run(request).await
         }
-        Err(error) => (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                error: error.to_string(),
-            }),
-        )
-            .into_response(),
+        Err(error) => {
+            tracing::warn!(error = %error, "MCP identity header rejected");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    error: error.to_string(),
+                }),
+            )
+                .into_response()
+        }
     }
 }

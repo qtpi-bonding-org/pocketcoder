@@ -7,9 +7,10 @@ import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
-import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
 import 'boot_view.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import '../../app_router.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
@@ -21,12 +22,11 @@ class BootScreen extends StatefulWidget {
 }
 
 class _BootScreenState extends State<BootScreen> {
-  // State Machine
   bool _logsDimmed = false;
   bool _pocoVisible = false;
-  // Data
   final List<String> _logs = [];
   final ScrollController _scrollController = ScrollController();
+  Timer? _backgroundLogTimer;
 
   @override
   void initState() {
@@ -36,6 +36,7 @@ class _BootScreenState extends State<BootScreen> {
 
   @override
   void dispose() {
+    _backgroundLogTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -47,12 +48,10 @@ class _BootScreenState extends State<BootScreen> {
 
     String fileContent = '';
     try {
-      // Try package path first (for monorepo/web consistency)
       fileContent = await rootBundle
           .loadString('packages/pocketcoder_flutter/assets/boot_log.txt');
     } catch (e) {
       try {
-        // Fallback to direct path
         fileContent = await rootBundle.loadString('assets/boot_log.txt');
       } catch (e2) {
         if (!mounted) return;
@@ -107,7 +106,7 @@ class _BootScreenState extends State<BootScreen> {
     }
   }
 
-  void _startBackgroundLogs() async {
+  void _startBackgroundLogs() {
     final noise = [
       '[sys] heartbeat: ok',
       '[net] keepalive sent',
@@ -116,77 +115,96 @@ class _BootScreenState extends State<BootScreen> {
       '[agent] reasoning_engine: idle',
     ];
 
-    int i = 0;
-    while (mounted) {
-      await Future.delayed(const Duration(seconds: 2));
+    var i = 0;
+    _backgroundLogTimer?.cancel();
+    _backgroundLogTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted) {
         setState(() {
           _logs.add(noise[i % noise.length]);
         });
         i++;
       }
-    }
+    });
   }
+
+  /// True only if nothing has navigated away from /boot yet.
+  bool _stillOnBoot() => GoRouter.of(context).state.name == RouteNames.boot;
 
   Future<void> _checkConnection() async {
     OnboardingLogger.event('boot connection check started');
+
     if (mounted) {
       context
           .read<PocoCubit>()
           .updateMessage(context.l10n.bootCheckingConnection);
     }
 
-    if (mounted) {
-      final sessionState = await getIt<AuthSessionCoordinator>().restore();
-      if (!mounted) return;
-      final hasLocalSession = sessionState != AuthSessionState.signedOut;
+    if (!mounted) return;
 
-      if (hasLocalSession) {
-        OnboardingLogger.event(
-          sessionState == AuthSessionState.signedIn
-              ? 'PocketBase session restored'
-              : 'PocketBase unavailable; preserving local session',
-        );
-        context.read<PocoCubit>().updateMessage(
-              sessionState == AuthSessionState.signedIn
-                  ? context.l10n.bootWelcomeBack
-                  : context.l10n.bootConnectionFailed,
-              sequence: PocoExpressions.happy,
-            );
-        await Future.delayed(const Duration(seconds: 2));
-        if (mounted) {
-          context.goNamed(RouteNames.home);
-        }
-      } else {
-        final pocketbaseAlive = await getIt<IStatusRepository>()
-            .checkPocketBaseHealth()
-            .timeout(const Duration(seconds: 8), onTimeout: () => false);
+    final savedBaseUrl = await getIt<IAuthRepository>().getSavedBaseUrl();
+    if (!mounted) return;
 
-        if (!mounted) return;
-        if (pocketbaseAlive) {
-          OnboardingLogger.event('PocketBase reachable; requesting login');
-          context.read<PocoCubit>().updateMessage(
-                context.l10n.bootSystemsNominal,
-                sequence: PocoExpressions.happy,
-              );
-          await Future.delayed(const Duration(seconds: 2));
-          if (mounted) context.goNamed(RouteNames.onboardingLogin);
-          return;
-        }
-
-        context.read<PocoCubit>().updateMessage(
-          context.l10n.bootConnectionFailed,
-          sequence: [
-            (PocoExpression.nervous, 500),
-            (PocoExpression.lookRight, 1000),
-            (PocoExpression.awake, 1000),
-          ],
-        );
-        // Wait a bit longer to let the user read before moving
-        await Future.delayed(const Duration(seconds: 3));
-        if (mounted) context.goNamed(RouteNames.onboarding);
-      }
+    if (savedBaseUrl == null) {
+      OnboardingLogger.event('no saved instance data; routing to onboarding');
+      context.read<PocoCubit>().updateMessage(
+            context.l10n.bootSystemsNominal,
+            sequence: PocoExpressions.happy,
+          );
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted && _stillOnBoot()) context.goNamed(RouteNames.onboarding);
+      return;
     }
+
+    final sessionState = await getIt<AuthSessionCoordinator>().restore();
+    if (!mounted) return;
+
+    var staleSessionResolved = false;
+    if (sessionState == AuthSessionState.temporarilyUnavailable &&
+        getIt.isRegistered<IInstanceExistenceResolver>()) {
+      staleSessionResolved = await getIt<IInstanceExistenceResolver>()
+          .resolveStaleSessionIfInstanceGone();
+      if (!mounted) return;
+    }
+
+    if (staleSessionResolved) {
+      context.read<PocoCubit>().updateMessage(
+            context.l10n.bootConnectionFailed,
+            sequence: [
+              (PocoExpression.nervous, 500),
+              (PocoExpression.lookRight, 1000),
+              (PocoExpression.awake, 1000),
+            ],
+          );
+      await Future.delayed(const Duration(seconds: 3));
+      if (mounted && _stillOnBoot()) context.goNamed(RouteNames.onboarding);
+      return;
+    }
+
+    final hasValidSession = sessionState != AuthSessionState.signedOut;
+    if (hasValidSession) {
+      OnboardingLogger.event(
+        sessionState == AuthSessionState.signedIn
+            ? 'PocketBase session restored'
+            : 'PocketBase unavailable; preserving local session',
+      );
+      context.read<PocoCubit>().updateMessage(
+            sessionState == AuthSessionState.signedIn
+                ? context.l10n.bootWelcomeBack
+                : context.l10n.bootConnectionFailed,
+            sequence: PocoExpressions.happy,
+          );
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted && _stillOnBoot()) context.goNamed(RouteNames.home);
+      return;
+    }
+
+    OnboardingLogger.event('instance data present, no session; routing to login');
+    context.read<PocoCubit>().updateMessage(
+          context.l10n.bootSystemsNominal,
+          sequence: PocoExpressions.happy,
+        );
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted && _stillOnBoot()) context.goNamed(RouteNames.onboardingLogin);
   }
 
   @override

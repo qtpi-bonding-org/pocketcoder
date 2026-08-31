@@ -48,12 +48,26 @@ type SessionProfile struct {
 	AgentProfileID                     string
 	AgentName                          string
 
-	Target                        Target
-	ResolvedInstanceID            string // the harness_instances id this chat resolves to right now
-	PinnedInstanceID              string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
-	SupportsLiveConfig            bool
-	SupportsSessionDelete         bool
-	SupportsAdditionalDirectories bool
+	// AccountLogin is true when the resolved (harness, provider) pair uses
+	// an account/OAuth login (credential_selections.mode == "oauth") rather
+	// than a bare API key. This is the real signal for whether an auth-shaped error
+	// from the harness should map to the "reauthenticate" flow -- it comes
+	// from the account row itself, not a hardcoded per-provider allowlist,
+	// so a new harness that adds account-login support is covered
+	// automatically instead of silently falling through to a generic
+	// failure the way Codex did before this field existed.
+	AccountLogin bool
+	HarnessName  string // display name (harnesses.name, e.g. "Codex"), for user-facing reauth copy
+
+	Target                             Target
+	ResolvedInstanceID                 string // the harness_instances id this chat resolves to right now
+	PinnedInstanceID                   string // the harness_instances id agent_sessions.harness_instance already points at (empty if none yet)
+	SupportsLiveConfig                 bool
+	SupportsLiveCredentialRegistration bool
+	CredentialFieldName                string
+	CredentialFieldValue               string
+	SupportsSessionDelete              bool
+	SupportsAdditionalDirectories      bool
 }
 
 // ToolPermissionAction is the PocketBase policy decision for one ACP tool
@@ -216,8 +230,22 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 	if err := (GlobalConfigApplier{}).Apply(ctx, conn, sessionID, p, modes); err != nil {
 		return err
 	}
+	// Provider-credential registration now happens in ProviderBootstrap,
+	// before this session ever existed (see establishSession in run.go) --
+	// SetSessionConfigOption below is always a genuine switch, never a
+	// bootstrap.
 	if p.SupportsLiveConfig {
-		if p.Provider != "" {
+		// A live-config harness's session/set_config_option support for
+		// configId "provider" is NOT implied by SupportsLiveConfig alone --
+		// opencode is also SupportsLiveConfig but its ACP server only
+		// implements "model"/"effort"/"mode" (confirmed against opencode's
+		// real source);
+		// provider is implicitly fixed by whichever model is selected.
+		// Sending configId "provider" to it fails every time with
+		// {"code":-32602,"data":{"configId":"provider"},"message":"Invalid params: unknown config option: provider"}.
+		// SupportsLiveCredentialRegistration happens to be exactly the flag
+		// that's true only for goose today, so it doubles as this gate.
+		if p.SupportsLiveCredentialRegistration && p.Provider != "" {
 			if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
 				ValueId: &acpsdk.SetSessionConfigOptionValueId{
 					SessionId: acpsdk.SessionId(sessionID),

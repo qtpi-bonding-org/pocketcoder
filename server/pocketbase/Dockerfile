@@ -1,6 +1,6 @@
 # STAGE 1: The PocketBase (Go / PocketBase)
 # ------------------------------------------------------------------------------
-FROM golang:1.24.4-alpine AS pocketbase-builder
+FROM golang:1.27.0-alpine AS pocketbase-builder
 
 RUN apk add --no-cache git openssh-client gcc musl-dev
 

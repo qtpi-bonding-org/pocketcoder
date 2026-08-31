@@ -44,21 +44,31 @@ var authorizationBoundaryTable = []authorizationBoundaryCase{
 	{operationID: "pollHarnessAuth"}, {operationID: "submitHarnessAuth"},
 	{operationID: "cancelHarnessAuth"}, {operationID: "disconnectHarnessAuth"},
 	{operationID: "runScheduleNow", owned: true},
-	// getWorkspaceFile/listWorkspaceFiles have no role gate, but
+	// getWorkspaceFile/listWorkspaceFileTree have no role gate, but
 	// filesystem.resolveWorkspacePath legitimately 403s here because the
 	// test process has no real workspace root to resolve -- see
 	// skipRoleGateCheck's doc comment.
 	{operationID: "getWorkspaceFile", skipRoleGateCheck: true},
-	{operationID: "listWorkspaceFiles", skipRoleGateCheck: true},
-	{operationID: "listOllamaModels"},
+	{operationID: "listWorkspaceFileTree", skipRoleGateCheck: true},
+	{operationID: "listOllamaModels", adminOnly: true},
 	{operationID: "pullOllamaModel", adminOnly: true},
 	{operationID: "executeMcpRequest", agentOrAdmin: true},
 	{operationID: "storeMcpOAuthToken"},
 	{operationID: "getReleaseCompatibility", public: true},
 	{operationID: "getReleaseStatus"},
 	{operationID: "streamContainerLogs", adminOnly: true},
-	{operationID: "proxyObservability", adminOnly: true},
+	{operationID: "listContainers", adminOnly: true},
+	{operationID: "getHarnessInstanceLogs", adminOnly: true},
+	// proxyObservability has a narrow authenticated-user carve-out for
+	// memory.sql; its exact-path boundary is covered separately.
+	{operationID: "proxyObservability", skipRoleGateCheck: true},
 	{operationID: "sendPushNotification", agentOrAdmin: true},
+	// deleteProData has no path parameter and no target-resource id at
+	// all -- it always operates on the caller's own auth id, so there is
+	// no ownership boundary to test, just plain authenticated access.
+	{operationID: "deleteProData"},
+	{operationID: "endLiveActivity", owned: true},
+	{operationID: "setLiveActivityToken", owned: true},
 }
 
 func TestAuthorizationBoundaryTableIsExplicit(t *testing.T) {
@@ -236,6 +246,15 @@ func TestSendPushNotificationValidatesRequiredFields(t *testing.T) {
 
 func mountedRequest(t *testing.T, app core.App, method, url, body, token string) int {
 	t.Helper()
+	_, rec := mountedRequestRaw(t, app, method, url, body, token)
+	return rec.Code
+}
+
+// mountedRequestRaw is mountedRequest's non-lossy sibling: it hands back the
+// real request and recorder so callers (e.g. contract tests) can inspect the
+// full response, not just its status code.
+func mountedRequestRaw(t *testing.T, app core.App, method, url, body, token string) (*http.Request, *httptest.ResponseRecorder) {
+	t.Helper()
 	router, err := apis.NewRouter(app)
 	if err != nil {
 		t.Fatal(err)
@@ -244,11 +263,12 @@ func mountedRequest(t *testing.T, app core.App, method, url, body, token string)
 	mountAllPocketCoderOperations(t, app, e)
 	req := httptest.NewRequest(method, url, strings.NewReader(body))
 	req.Header.Set("Authorization", token)
+	req.Header.Set("Content-Type", "application/json")
 	mux, err := e.Router.BuildMux()
 	if err != nil {
 		t.Fatal(err)
 	}
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
-	return rec.Code
+	return req, rec
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:acp_dart/acp_dart.dart';
 import 'package:ag_ui/ag_ui.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
+import 'package:collection/collection.dart';
 
 import '../../domain/agent/elicitation_response.dart';
 import 'agent_chat_repository.dart';
@@ -23,41 +24,47 @@ class PocketcoderAgUiTransport implements IAgUiTransport {
   final String _chatId;
   final _events = StreamController<BaseEvent>.broadcast();
   StreamSubscription<List<BaseEvent>>? _rawSub;
-  int _seen = 0;
+  List<String> _seenJson = const [];
 
   @override
   Stream<BaseEvent> get events {
     _rawSub ??= _repository.watchRawEvents(_chatId).listen((all) {
-      if (all.length > _seen) {
-        for (final event in all.skip(_seen)) {
+      // The cache upserts by (chatId, seq): a reconnect can replay an
+      // EXISTING seq with corrected/finalized content, leaving the row
+      // count unchanged. Diffing on length alone missed that entirely --
+      // compare serialized content so a same-length content change is
+      // caught too, not just growth/shrink.
+      final serialized = all.map((event) => event.toJsonString()).toList();
+      if (serialized.length > _seenJson.length &&
+          const ListEquality<String>()
+              .equals(serialized.sublist(0, _seenJson.length), _seenJson)) {
+        // Pure append: everything already seen is an unchanged prefix.
+        for (final event in all.skip(_seenJson.length)) {
           _events.add(event);
         }
-        _seen = all.length;
-      } else if (all.length < _seen) {
-        // Cache shrank — a cold-replay reset happened. Emit a synthesized
-        // reset marker FIRST so any downstream ConversationReducer
-        // actually resets, then replay everything now in the cache.
+      } else if (!const ListEquality<String>().equals(serialized, _seenJson)) {
+        // Anything else that actually changed -- a shrink (cold-replay
+        // reset) or a same-length content correction at an existing seq.
+        // Emit a synthesized reset marker FIRST so any downstream
+        // ConversationReducer actually resets, then replay the full
+        // current snapshot.
         _events.add(_syntheticResetMarker());
         for (final event in all) {
           _events.add(event);
         }
-        _seen = all.length;
       }
-      // all.length == _seen: no-op emission (cache row content changed
-      // without a count change — doesn't happen on this repository's
-      // insert-or-replace-by-seq upsert model, but guarding avoids
-      // silently reprocessing on a no-op cache notify).
+      _seenJson = serialized;
     });
     return _events.stream;
   }
 
   @override
   Future<void> sendMessage(String text,
-      {List<AgUiContextItem> context = const []}) async {
+      {List<AgUiContextItem> context = const [], String? messageId}) async {
     // pocketcoder's sendPrompt has no context-item support yet (that's a
     // newer AgUiChat capability) — dropped like submitToolResult below,
     // satisfying IAgUiTransport's now-wider interface.
-    await _repository.sendPrompt(_chatId, text);
+    await _repository.sendPrompt(_chatId, text, messageId: messageId);
   }
 
   @override

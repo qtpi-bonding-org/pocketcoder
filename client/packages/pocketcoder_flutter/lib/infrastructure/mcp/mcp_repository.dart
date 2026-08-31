@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart';
@@ -79,10 +80,12 @@ class McpRepository implements IMcpRepository {
     return tryMethod(
       () async {
         await _api.mcp.storeMcpOAuthToken(
-          requestBody: PocketCoderApiClient.encodeJson({
-            'server_name': serverName,
-            'access_token': accessToken,
-            if (refreshToken != null && refreshToken.isNotEmpty) 'refresh_token': refreshToken,
+          mcpOAuthRequest: generated.McpOAuthRequest((b) {
+            b.serverName = serverName;
+            b.accessToken = accessToken;
+            if (refreshToken != null && refreshToken.isNotEmpty) {
+              b.refreshToken = refreshToken;
+            }
           }),
         );
       },

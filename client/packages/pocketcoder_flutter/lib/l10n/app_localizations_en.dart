@@ -27,6 +27,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorGeneric => 'Something went wrong';
 
   @override
+  String get errorCouldNotOpenBrowser =>
+      'Could not open the browser. Please try again.';
+
+  @override
   String get authLoginFailed => 'Login failed';
 
   @override
@@ -40,7 +44,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get providerReauthenticationRequired =>
-      'Claude Code needs to be reauthenticated. Your saved login was kept.';
+      'Your provider needs to be reauthenticated. Your saved login was kept.';
 
   @override
   String get chatFetchFailed => 'Unable to load chats';
@@ -91,6 +95,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolPermissionsError => 'Tool permissions error';
 
   @override
+  String get billingRestoreFailed =>
+      'Couldn\'t restore your purchases. Check your connection and try again.';
+
+  @override
+  String get billingError => 'Billing error';
+
+  @override
   String get actionCancel => 'CANCEL';
 
   @override
@@ -112,7 +123,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionBack => 'BACK';
 
   @override
-  String get actionContinue => 'CONTINUE';
+  String get actionContinue => 'NEXT';
 
   @override
   String get actionChange => 'CHANGE';
@@ -133,6 +144,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionReject => 'REJECT';
 
   @override
+  String get externalAuthTitle => 'EXTERNAL AUTHENTICATION';
+
+  @override
+  String externalAuthConnecting(String label) {
+    return 'Connecting to $label...';
+  }
+
+  @override
+  String get externalAuthRetry => 'RETRY';
+
+  @override
+  String get externalAuthCancel => 'CANCEL';
+
+  @override
   String get navChats => 'CHATS';
 
   @override
@@ -140,6 +165,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get navConfigure => 'CONFIGURE';
+
+  @override
+  String get navManage => 'MANAGE';
 
   @override
   String get bootLoadError =>
@@ -257,9 +285,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingCodexAccountLogin => 'CHATGPT ACCOUNT LOGIN';
 
   @override
+  String onboardingHarnessAccountLogin(String harness) {
+    return '$harness ACCOUNT LOGIN';
+  }
+
+  @override
   String onboardingHarnessLoginTitle(String provider) {
     return '$provider LOGIN';
   }
+
+  @override
+  String get onboardingHarnessAccountVisibilityTitle =>
+      'Who uses this harness account?';
+
+  @override
+  String get onboardingHarnessAccountVisibilityBody =>
+      'Shared reuses this login across profiles on this server. Personal keeps a separate login for this profile.';
+
+  @override
+  String get onboardingHarnessAccountVisibilityPersonal => 'Personal';
+
+  @override
+  String get onboardingHarnessAccountVisibilityShared => 'Shared';
+
+  @override
+  String get onboardingHarnessAccountVisibilityCancel => 'Cancel';
 
   @override
   String get onboardingConnected => 'CONNECTED';
@@ -283,18 +333,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingCheckStatus => 'CHECK STATUS';
 
   @override
-  String onboardingOpenChatFailed(String error) {
-    return 'Could not open a new chat: $error';
-  }
+  String get onboardingOpenChatFailed =>
+      'Could not open a new chat. Please try again.';
 
   @override
-  String get onboardingDeployTitle => 'DEPLOY SERVER';
+  String get onboardingServerCredentialsTitle => 'SERVER CREDENTIALS';
 
   @override
-  String get onboardingPocketbaseAdminEmail => 'POCKETBASE ADMIN EMAIL';
+  String get onboardingPocketbaseAdminEmail => 'POCKETCODER ADMIN EMAIL';
 
   @override
-  String get onboardingPocketbaseAdminPassword => 'POCKETBASE ADMIN PASSWORD';
+  String get onboardingPocketbaseAdminPassword => 'POCKETCODER ADMIN PASSWORD';
 
   @override
   String get homeTitle => 'CHATS';
@@ -320,7 +369,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatTerminalAction => 'TERMINAL';
 
   @override
-  String get chatListNewChat => '+ NEW CHAT';
+  String get chatListNewChat => 'NEW';
 
   @override
   String get chatListNoMessages => 'No messages yet';
@@ -411,6 +460,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatSessionAction => 'SESSION';
 
   @override
+  String get chatMonitorAction => 'WATCH';
+
+  @override
   String get chatSendTooltip => 'Send';
 
   @override
@@ -440,9 +492,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get chatRunOutcomeInterruptedBody =>
       'The connection ended before the run finished.';
-
-  @override
-  String get chatRunOutcomeInterruptedRetry => 'RETRY';
 
   @override
   String get chatRunOutcomeCancelledTitle => 'RUN STOPPED';
@@ -813,22 +862,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'CONFIGURE';
 
   @override
-  String get settingsAiAgentsSection => 'AI & AGENTS';
+  String get settingsAiAgentsSection => 'AGENTS & ACCESS';
 
   @override
-  String get settingsSecuritySection => 'SECURITY';
-
-  @override
-  String get settingsGovernanceSection => 'GOVERNANCE';
+  String get settingsReportAiContentLabel => 'REPORT AI CONTENT';
 
   @override
   String get settingsSystemSection => 'SYSTEM';
-
-  @override
-  String get settingsObservabilitySection => 'OBSERVABILITY';
-
-  @override
-  String get settingsAutomationSection => 'AUTOMATION';
 
   @override
   String get settingsAccountSection => 'ACCOUNT';
@@ -845,6 +885,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLogoutConfirm => 'SIGN OUT';
+
+  @override
+  String get settingsFactoryResetConfirmTitle => 'RESET';
+
+  @override
+  String get settingsFactoryResetConfirmBody =>
+      'This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.';
+
+  @override
+  String get settingsFactoryResetCancel => 'CANCEL';
+
+  @override
+  String get settingsFactoryResetConfirm => 'RESET';
+
+  @override
+  String get settingsDeleteProDataLabel => 'DELETE POCKETCODER PRO DATA';
+
+  @override
+  String get settingsDeleteProDataConfirmTitle => 'DELETE PRO DATA';
+
+  @override
+  String get settingsDeleteProDataConfirmBody =>
+      'This removes your subscription and notification records from PocketCoder Pro\'s systems. Your server and everything on it are unaffected -- use your own SSH access if you want to wipe that too.';
+
+  @override
+  String get settingsDeleteProDataCancel => 'CANCEL';
+
+  @override
+  String get settingsDeleteProDataConfirm => 'DELETE';
 
   @override
   String get agentTitle => 'AGENT REGISTRY';
@@ -908,9 +977,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentConfigNameLabel => 'NAME';
 
   @override
-  String get agentConfigHarnessModelLabel => 'HARNESS MODEL';
-
-  @override
   String get agentConfigPromptLabel => 'SYSTEM PROMPT';
 
   @override
@@ -920,9 +986,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentConfigIsDefaultLabel => 'IS DEFAULT';
 
   @override
-  String get agentConfigNoHarnessModels => 'NO HARNESS MODELS AVAILABLE';
-
-  @override
   String get agentConfigNoPrompts => 'NO PROMPTS AVAILABLE';
 
   @override
@@ -930,9 +993,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentConfigSelectPrompt => 'SELECT PROMPT';
-
-  @override
-  String get agentConfigSelectHarnessModel => 'SELECT HARNESS MODEL';
 
   @override
   String get agentConfigSelectMode => 'SELECT MODE';
@@ -972,6 +1032,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get providerScreenNoHarnessModels => 'NO HARNESS MODELS LISTED';
 
   @override
+  String providerScreenHarnessModelCount(int count) {
+    return '$count MODELS';
+  }
+
+  @override
+  String providerScreenBrowseAllModels(int count) {
+    return 'BROWSE ALL $count MODELS';
+  }
+
+  @override
   String get providerScreenNoApiKeys => 'NO API KEYS CONFIGURED';
 
   @override
@@ -998,6 +1068,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get providerScreenNoProviders => 'NO PROVIDERS AVAILABLE';
+
+  @override
+  String get providerScreenSearchLabel => 'SEARCH';
+
+  @override
+  String get providerScreenSearchHint => 'Filter providers';
+
+  @override
+  String get providerScreenSearchNoMatches => 'NO MATCHING PROVIDERS';
 
   @override
   String get providerScreenDefaultBadge => '[ DEFAULT ]';
@@ -1085,34 +1164,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monitorTitle => 'MONITOR';
 
   @override
-  String get monitorFetchingTelemetry => 'FETCHING TELEMETRY';
-
-  @override
-  String get monitorSystemHealth => 'SYSTEM HEALTH';
-
-  @override
-  String get monitorKeyMetrics => 'KEY METRICS';
-
-  @override
-  String get monitorTokenUsage => 'TOKEN USAGE BY MODEL';
-
-  @override
-  String get monitorAgentActivity => 'AGENT ACTIVITY';
-
-  @override
   String get monitorTelemetryUnavailable => 'TELEMETRY UNAVAILABLE';
-
-  @override
-  String get monitorNoData => 'NO DATA — TAP REFRESH';
-
-  @override
-  String get monitorMessagesLabel => 'MESSAGES';
-
-  @override
-  String get monitorCostLabel => 'COST';
-
-  @override
-  String get monitorTokensLabel => 'TOKENS';
 
   @override
   String get fileTitle => 'SOURCE OUTPUT MANIFEST';
@@ -1145,25 +1197,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get systemChecksEmpty => 'NO DIAGNOSTICS AVAILABLE';
 
   @override
-  String get observabilityTitle => 'PLATFORM OBSERVABILITY';
-
-  @override
   String get observabilityRegistry => 'REGISTRY';
 
   @override
   String get observabilityLogTerminal => 'SYSTEM LOG TERMINAL';
-
-  @override
-  String get observabilityCost => 'COST';
-
-  @override
-  String get observabilityTokens => 'TOKENS';
-
-  @override
-  String get observabilityMsgs => 'MSGS';
-
-  @override
-  String get observabilityBackend => 'BACKEND';
 
   @override
   String get observabilitySelectContainer =>
@@ -1203,6 +1240,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get proTrialNoPaymentInfo =>
+      'STARTS A FREE WEEK. NO PAYMENT INFO IS COLLECTED NOW.';
+
+  @override
+  String get proTrialLapseExplainer =>
+      'IF YOU DO NOT KEEP PRO, ONLY HOSTED PUSH NOTIFICATIONS STOP. YOUR SERVER KEEPS RUNNING.';
+
+  @override
   String proPrice(String price) {
     return '$price';
   }
@@ -1239,7 +1284,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proRestore => 'RESTORE PURCHASES';
 
   @override
-  String get proNotNow => 'NOT NOW';
+  String get proManageSubscription => 'MANAGE SUBSCRIPTION';
 
   @override
   String proTerms(String price) {
@@ -1250,6 +1295,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String proTrialTerms(int days, String price) {
     return 'FREE FOR $days DAYS, THEN $price UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.';
   }
+
+  @override
+  String get proTermsOfServiceLink => 'TERMS OF SERVICE';
+
+  @override
+  String get proPrivacyPolicyLink => 'PRIVACY POLICY';
+
+  @override
+  String get proBenefitServerSetup =>
+      'ONE-TAP SERVER SETUP -- NO MANUAL VPS CONFIGURATION';
+
+  @override
+  String get proBenefitPushNotifications =>
+      'PUSH NOTIFICATIONS FOR AGENT ACTIVITY -- APPROVALS, TASK COMPLETION';
+
+  @override
+  String get proBenefitLiveMonitoring => 'LIVE AGENT MONITORING';
 
   @override
   String get proActive => '> ENTITLEMENT: ACTIVE';
@@ -1282,7 +1344,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proSettingsStatus => '[STATUS]';
 
   @override
-  String get deployTitle => 'DEPLOY POCKETCODER';
+  String get chooseProviderTitle => 'CHOOSE PROVIDER';
 
   @override
   String get deploySelectProvider => 'SELECT PROVIDER';
@@ -1291,10 +1353,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deployChooseProvider => 'CHOOSE WHERE TO DEPLOY YOUR INSTANCE';
 
   @override
-  String get deployProBadge => 'PRO';
+  String get chooseProviderProBadge => 'PRO';
 
   @override
-  String get deployComingSoon => 'COMING SOON';
+  String get chooseProviderComingSoon => 'COMING SOON';
 
   @override
   String get pocketCoderProgressProvisionServer => 'PROVISION SERVER';
@@ -1318,43 +1380,142 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pocketCoderProgressInitializing => 'INITIALIZING';
 
   @override
-  String get deploymentScreenTitle => 'DEPLOYMENT IN PROGRESS';
+  String get deploymentStepCreateInstance => 'Creating server';
 
   @override
-  String get deploymentActionAbort => 'ABORT';
+  String get deploymentStepPlanLookup => 'Looking up plan details';
 
   @override
-  String get deploymentActionRetryScan => 'RETRY SCAN';
+  String get deploymentStepCreateInstallerDisk => 'Preparing installer disk';
 
   @override
-  String get deploymentUnknown => 'UNKNOWN';
+  String get deploymentStepWaitInstallerDiskReady =>
+      'Waiting for installer disk';
 
   @override
-  String get deploymentNetworkIp => 'NETWORK IP';
+  String get deploymentStepCreateTargetDisk => 'Preparing target disk';
 
   @override
-  String get deploymentGeoGrid => 'GEO GRID';
+  String get deploymentStepWaitTargetDiskReady => 'Waiting for target disk';
 
   @override
-  String deploymentFaultDetected(String error) {
+  String get deploymentStepCreateInstallerConfig =>
+      'Configuring installer boot';
+
+  @override
+  String get deploymentStepBootInstaller => 'Booting installer';
+
+  @override
+  String get deploymentStepWaitInstallerCompletion =>
+      'Installing operating system';
+
+  @override
+  String get deploymentStepRemoveInstallerResources => 'Cleaning up installer';
+
+  @override
+  String get deploymentStepCreateFinalConfig => 'Configuring server boot';
+
+  @override
+  String get deploymentStepPreBootShutdown => 'Restarting server';
+
+  @override
+  String get deploymentStepBootFinal => 'Booting server';
+
+  @override
+  String get deploymentStepFinalInstanceFetch => 'Confirming server is up';
+
+  @override
+  String get deploymentStepWaitingForConnection => 'Connecting to server';
+
+  @override
+  String get deploymentStepConfiguringOperatingSystem =>
+      'Configuring operating system';
+
+  @override
+  String get deploymentStepFetchingRelease => 'Fetching PocketCoder release';
+
+  @override
+  String get deploymentStepLoadingImages => 'Loading container images';
+
+  @override
+  String get deploymentStepComposeUp => 'Starting services';
+
+  @override
+  String get deploymentStepBootstrapComplete => 'Finishing setup';
+
+  @override
+  String get deploymentStepReady => 'Ready';
+
+  @override
+  String get initializationScreenTitle => 'INITIALIZING SERVER';
+
+  @override
+  String get initializationActionAbort => 'ABORT';
+
+  @override
+  String get initializationActionRetry => 'RETRY';
+
+  @override
+  String get initializationUnknown => 'UNKNOWN';
+
+  @override
+  String get initializationTechnicalDetailsToggle => 'TECHNICAL DETAILS';
+
+  @override
+  String get initializationNetworkIp => 'NETWORK IP';
+
+  @override
+  String get initializationGeoGrid => 'GEO GRID';
+
+  @override
+  String initializationFaultDetected(Object error) {
     return 'FAULT DETECTED: $error';
   }
 
   @override
-  String get deploymentFaultGeneric =>
+  String get initializationFaultGeneric =>
       'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
 
   @override
-  String get deploymentFailed =>
+  String get initializationFaultProvisionInterruptedNoResource =>
+      'Provisioning was interrupted before a provider resource was recorded. Return to configuration to retry or reset local initialization state.';
+
+  @override
+  String get initializationFaultProvisionResourceStillExists =>
+      'Provisioning was interrupted after a provider resource was created. The resource still exists and was not recreated automatically. Use cleanup or resume from the provider account before trying again.';
+
+  @override
+  String get initializationFaultProvisionResourceNotFound =>
+      'The tracked provider resource is no longer found in your account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.';
+
+  @override
+  String get deploymentFaultDeploymentInstanceNotFound =>
+      'The tracked deployment instance is no longer found in your provider account. It may have been deleted outside the app. Use Reset Deployment State to clear local state, or re-deploy from configuration.';
+
+  @override
+  String get initializationFaultResourceAlreadyExists =>
+      'A provider resource already exists. Retrying provisioning could create a duplicate billable resource. Use Reset/Cleanup/Resume instead.';
+
+  @override
+  String get initializationFaultAuthenticationExpired =>
+      'Your Linode connection has expired or was revoked. Reconnect your account, then restart the initialization.';
+
+  @override
+  String initializationFaultMaxRetriesExceeded(Object maxAttempts) {
+    return 'Max retry attempts ($maxAttempts) exceeded.';
+  }
+
+  @override
+  String get initializationFailed =>
       'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
 
   @override
-  String deploymentReady(String ipAddress) {
+  String initializationReady(Object ipAddress) {
     return 'SERVER READY AT $ipAddress.';
   }
 
   @override
-  String get deploymentInProgress => 'SERVER SETUP STARTED.';
+  String get initializationInProgress => 'SERVER SETUP STARTED.';
 
   @override
   String get deploymentStatusValidating => 'VALIDATING CONFIGURATION';
@@ -1403,7 +1564,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentStatusFailed => 'DEPLOYMENT ABORTED';
 
   @override
-  String get deploymentStatusInitializing => 'INITIALIZING STACK';
+  String get initializationStatusInitializing => 'INITIALIZING STACK';
 
   @override
   String get deploymentDescriptionValidating =>
@@ -1462,25 +1623,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'SETUP STOPPED BEFORE COMPLETION. NO LATER STEP WILL CONTINUE.';
 
   @override
-  String get deploymentDescriptionInitializing =>
-      'PREPARING DEPLOYMENT MANIFEST.';
+  String get initializationDescriptionInitializing =>
+      'PREPARING INITIALIZATION MANIFEST.';
 
   @override
-  String deploymentStatusPrefix(String status) {
+  String initializationStatusPrefix(Object status) {
     return 'STATUS: $status';
   }
 
   @override
-  String get deploymentSecure => '[SECURE]';
+  String get initializationSecure => '[SECURE]';
 
   @override
-  String get deploymentConnectionParameters => 'CONNECTION PARAMETERS';
+  String get initializationConnectionParameters => 'CONNECTION PARAMETERS';
 
   @override
-  String get deploymentMetadataRegistry => 'METADATA REGISTRY';
+  String get initializationMetadataRegistry => 'METADATA REGISTRY';
 
   @override
-  String get deploymentActionLoginNow => 'LOG IN NOW';
+  String get initializationActionLogin => 'LOGIN';
 
   @override
   String get deploymentActionRefresh => 'REFRESH';
@@ -1492,40 +1653,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentActionDismiss => 'DISMISS';
 
   @override
-  String get deploymentInstanceManifest => 'INSTANCE MANIFEST';
+  String get initializationInstanceManifest => 'INSTANCE MANIFEST';
 
   @override
-  String get deploymentIpAddress => 'IP ADDRESS';
+  String get initializationIpAddress => 'IP ADDRESS';
 
   @override
-  String get deploymentHttpsEndpoint => 'HTTPS ENDPOINT';
+  String get initializationHttpsEndpoint => 'HTTPS ENDPOINT';
 
   @override
-  String get deploymentAdminIdentity => 'ADMIN IDENTITY';
+  String get initializationAdminIdentity => 'ADMIN IDENTITY';
 
   @override
-  String get deploymentAdminPassword => 'ADMIN PASSWORD';
+  String get initializationAdminPassword => 'ADMIN PASSWORD';
 
   @override
   String get deploymentProvisioned => 'PROVISIONED';
 
   @override
-  String get deploymentCloudRegion => 'CLOUD REGION';
+  String get initializationCloudRegion => 'CLOUD REGION';
 
   @override
-  String get deploymentHardwarePlan => 'HARDWARE PLAN';
+  String get initializationHardwarePlan => 'HARDWARE PLAN';
 
   @override
-  String get deploymentSecurityNotice =>
+  String get initializationSecurityNotice =>
       'SECURITY NOTICE: CREDENTIALS ARE STORED IN LOCAL SECURE ENCLAVE. PASSPHRASE RETAINS ENCRYPTION AT REST.';
 
   @override
-  String deploymentCopiedToBuffer(String label) {
+  String initializationCopiedToBuffer(Object label) {
     return '$label COPIED TO BUFFER';
   }
 
   @override
-  String deploymentCopyLabel(String label) {
+  String initializationCopyLabel(Object label) {
     return 'COPY $label';
   }
 
@@ -1539,7 +1700,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentActionDeployInstance => 'DEPLOY INSTANCE';
 
   @override
-  String get deploymentActionProvisionServer => 'PROVISION SERVER';
+  String get deploymentActionInitialize => 'INITIALIZE';
 
   @override
   String get deploymentSystemParameters => 'SYSTEM PARAMETERS';
@@ -1629,8 +1790,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentRunLocalModel => 'RUN A LOCAL MODEL';
 
   @override
-  String deploymentPlanPoco(String minimumMemory, String recommendedMemory) {
-    return 'The $minimumMemory option is the minimum for remote models. I recommend $recommendedMemory for builds, tests, and updates. You can choose either or go larger.';
+  String deploymentPlanPoco(String minimumMemory) {
+    return 'The $minimumMemory option is the minimum for remote models. Choose it or go larger for builds, tests, and updates.';
   }
 
   @override
@@ -1711,6 +1872,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkthroughAskPoco => 'ASK POCO';
 
   @override
+  String get walkthroughActionSkip => 'SKIP';
+
+  @override
   String get walkthroughBriefDivider => 'BRIEF';
 
   @override
@@ -1722,27 +1886,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Now we’ll follow the verified release onto the host.';
 
   @override
-  String deploymentSyncAttempt(int attempt) {
+  String initializationSyncAttempt(Object attempt) {
     return 'SYNC ATTEMPT: $attempt';
   }
 
   @override
-  String get deploymentCurrentOperation => 'CURRENT OPERATION';
+  String get initializationCurrentOperation => 'CURRENT OPERATION';
 
   @override
-  String get deploymentSourceCommit => 'SOURCE COMMIT';
+  String get initializationSourceCommit => 'SOURCE COMMIT';
 
   @override
-  String get deploymentRunId => 'DEPLOYMENT RUN';
+  String get initializationRunId => 'INITIALIZATION RUN';
 
   @override
-  String get deploymentStatusSchema => 'STATUS SCHEMA';
+  String get initializationStatusSchema => 'STATUS SCHEMA';
 
   @override
-  String get deploymentLastSignal => 'LAST SERVER SIGNAL';
+  String get initializationLastSignal => 'LAST SERVER SIGNAL';
 
   @override
-  String get deploymentErrorCode => 'SERVER ERROR CODE';
+  String get initializationErrorCode => 'SERVER ERROR CODE';
 
   @override
   String get pocoProvisioningTourTitle => 'POCO WALKTHROUGH';
@@ -1804,11 +1968,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'SSH is the emergency and administration door to your VPS. PocketCoder disables password login, requires your cryptographic key, and temporarily bans repeated guessing attempts.';
 
   @override
-  String get pocoLessonDockerTitle => 'The container engine';
+  String get pocoLessonDockerTitle => 'Getting the OS ready';
 
   @override
   String get pocoLessonDockerExplanation =>
-      'Docker runs each PocketCoder component in a defined container. NixOS manages the Docker engine itself, while Compose describes what Docker should run.';
+      'NixOS enables the Docker engine that will run every PocketCoder component. The VPS then receives its owner settings once, stores them in a protected file, installs your SSH key, and removes the temporary copy used during first boot.';
 
   @override
   String get pocoLessonOwnerConfigTitle => 'Receiving your configuration';
@@ -1825,11 +1989,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Internal services need private handshake secrets. The VPS creates random values locally instead of sending those secrets through the app or committing them to GitHub.';
 
   @override
-  String get pocoLessonReleaseSourceTitle => 'The exact release source';
+  String get pocoLessonReleaseSourceTitle => 'Activating the verified release';
 
   @override
   String get pocoLessonReleaseSourceExplanation =>
-      'The server checks out the precise Git commit embedded in the release. That makes the code on your VPS inspectable and keeps later updates tied to a real repository.';
+      'The server checks out the exact release commit, verifies every container image\'s signature, prepares fresh internal secrets, and starts the stack — writing a completion marker only once a real health check succeeds.';
 
   @override
   String get pocoLessonVerifiedImagesTitle => 'Verified container images';
@@ -1945,10 +2109,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you already part of the PocketCoder Initiative?';
 
   @override
-  String get onboardingNoServerChipExisting => 'YES — CONNECT ME';
+  String get onboardingNoServerChipExisting => 'I HAVE A SERVER — LOG IN';
 
   @override
-  String get onboardingNoServerChipNew => 'NO — I’D LIKE TO JOIN';
+  String get onboardingNoServerChipNew => 'I’M NEW — JOIN';
 
   @override
   String get onboardingWelcomeTitle => 'WELCOME';
@@ -1984,10 +2148,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSelfHostRequirementAccess => 'SSH ACCESS TO THE SERVER';
 
   @override
-  String get onboardingSelfHostActionGuide => 'OPEN SETUP GUIDE';
+  String get onboardingSelfHostActionGuide => 'GUIDE';
 
   @override
-  String get onboardingSelfHostActionConnect => 'CONNECT TO MY SERVER';
+  String get onboardingSelfHostActionConnect => 'CONNECT';
 
   @override
   String get onboardingSignInPoco =>
@@ -1997,8 +2161,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSignInTitle => 'SET UP YOUR SIGN-IN';
 
   @override
-  String get onboardingDeployCredentialsPoco =>
+  String get onboardingServerCredentialsPoco =>
       'These are the administrator credentials for PocketCoder on the server we are about to provision.\n\nThey are separate from your Linode password. I will use them to finish setup, and you will use them to sign in to PocketCoder when the server is ready. Keep them safe.';
+
+  @override
+  String get onboardingPasswordTooShort => 'Must be at least 8 characters';
 
   @override
   String get onboardingProviderPoco =>
@@ -2033,13 +2200,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'CONNECT YOUR SERVER PROVIDER';
 
   @override
-  String onboardingProviderAuthorizationAction(String providerName) {
-    return 'CONTINUE WITH $providerName';
-  }
+  String get onboardingProviderAuthorizationAction => 'CONTINUE';
 
   @override
-  String get onboardingProviderAuthorizationWaiting =>
-      'WAITING FOR PROVIDER SIGN-IN';
+  String get onboardingProviderAuthorizationWaiting => 'CONNECTING';
 
   @override
   String get onboardingProviderAuthorizationError => 'CONNECTION STOPPED';
@@ -2510,6 +2674,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get permissionSignoffTitle => 'COMMANDER\'S SIGNOFF';
 
   @override
+  String get permissionRequestedFallback => 'Permission requested';
+
+  @override
   String permissionRequestingLabel(String source) {
     return '$source IS REQUESTING PERMISSION:';
   }
@@ -2544,6 +2711,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorsCopy => 'COPY REPORT';
 
   @override
+  String get errorsReportOnGithub => 'REPORT ON GITHUB';
+
+  @override
   String get errorsCopyAll => 'COPY ALL';
 
   @override
@@ -2554,6 +2724,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get harnessAuthChallengeTargetCopied => 'CHALLENGE TARGET COPIED';
+
+  @override
+  String get harnessAuthCopy => '[COPY]';
+
+  @override
+  String get harnessAuthChallengeDetailsCopied => 'CODE COPIED';
 
   @override
   String get harnessAuthLoading => 'Loading harnesses';
@@ -2655,6 +2831,45 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get credentialConnectionApiKey => 'Connect with an API key.';
+
+  @override
+  String get credentialConnectionCopy => '[COPY]';
+
+  @override
+  String get credentialConnectionOpenAuthorizationPage =>
+      '[OPEN AUTHORIZATION PAGE]';
+
+  @override
+  String get credentialConnectionPasteCode =>
+      'Paste this code on the authorization page.';
+
+  @override
+  String get credentialConnectionEnterCode =>
+      'Enter the code shown on the authorization page.';
+
+  @override
+  String get credentialConnectionSubmit => '[SUBMIT]';
+
+  @override
+  String get credentialConnectionCancel => 'CANCEL';
+
+  @override
+  String get credentialConnectionRetry => 'RETRY';
+
+  @override
+  String get credentialConnectionOpenFailed =>
+      'Could not open the authorization page. Please try again.';
+
+  @override
+  String credentialConnectionExpiresAt(DateTime expiresAt) {
+    final intl.DateFormat expiresAtDateFormat = intl.DateFormat.yMd(localeName);
+    final String expiresAtString = expiresAtDateFormat.format(expiresAt);
+
+    return 'Expires at $expiresAtString';
+  }
+
+  @override
   String get agentModeLabel => 'MODE:';
 
   @override
@@ -2666,9 +2881,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pocketCoderUpdateCheckAgain => 'CHECK AGAIN';
-
-  @override
-  String get pocketCoderUpdateTitle => 'POCKETCODER UPDATE';
 
   @override
   String get pocketCoderUpdateNoDeployment =>
@@ -2744,4 +2956,255 @@ class AppLocalizationsEn extends AppLocalizations {
   String errorsOccurred(int count) {
     return 'Occurred ${count}x';
   }
+
+  @override
+  String get deploymentResetAction => 'RESET';
+
+  @override
+  String get deploymentResetConfirmationTitle =>
+      'Reset local deployment state?';
+
+  @override
+  String get deploymentResetConfirmationBody =>
+      'This clears local deployment state only: the saved session, instance id, and credentials stored on this device. It does NOT delete your cloud server.';
+
+  @override
+  String get deploymentResetConfirmationWarnCloud =>
+      'Your cloud instance is unaffected. Use your provider console to inspect or delete it.';
+
+  @override
+  String get deploymentResetAlsoClearOAuth =>
+      'Also sign out of the cloud provider (clear OAuth tokens)';
+
+  @override
+  String get deploymentResetConfirm => 'RESET';
+
+  @override
+  String get deploymentResetCancel => 'CANCEL';
+
+  @override
+  String get deploymentResetComplete => 'Local deployment state cleared.';
+
+  @override
+  String get deploymentDisconnectAction => 'DISCONNECT';
+
+  @override
+  String get deploymentDisconnectConfirmationTitle =>
+      'Disconnect this instance?';
+
+  @override
+  String get deploymentDisconnectConfirmationBody =>
+      'This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.';
+
+  @override
+  String get deploymentDisconnectConfirm => 'DISCONNECT';
+
+  @override
+  String get deploymentDisconnectCancel => 'CANCEL';
+
+  @override
+  String get deploymentDiscardAttemptTitle => 'DISCARD THIS DEPLOYMENT RECORD?';
+
+  @override
+  String get deploymentDiscardAttemptBody =>
+      'PocketCoder still has a record of a provider resource from a previous attempt. Discarding this record does NOT delete anything in your provider account -- it only clears PocketCoder\'s own bookkeeping, so a new deployment can start.';
+
+  @override
+  String deploymentDiscardAttemptResourceId(String resourceId) {
+    return 'Recorded resource: $resourceId';
+  }
+
+  @override
+  String get deploymentDiscardAttemptCheckLink =>
+      'Open provider dashboard to check';
+
+  @override
+  String get deploymentDiscardAttemptConfirmCheckbox =>
+      'I checked and this won\'t create a duplicate charge';
+
+  @override
+  String get deploymentDiscardAttemptCancel => 'CANCEL';
+
+  @override
+  String get deploymentDiscardAttemptConfirm => 'DISCARD';
+
+  @override
+  String get deploymentCleanupSucceeded => 'Cloud server deleted.';
+
+  @override
+  String get deploymentCleanupFailed =>
+      'Could not delete the cloud server. Use your provider console to remove it.';
+
+  @override
+  String get deploymentCleanupPending =>
+      'Cleanup could not run automatically. Use your provider console to remove the cloud server.';
+
+  @override
+  String get deploymentCleanupNotNeeded => 'No cloud server to clean up.';
+
+  @override
+  String get serverControlTitle => 'SERVER CONTROLS';
+
+  @override
+  String get serverControlConnectionDetails => 'CONNECTION DETAILS';
+
+  @override
+  String get serverControlIpAddress => 'IP ADDRESS';
+
+  @override
+  String get serverControlHttpsEndpoint => 'HTTPS ENDPOINT';
+
+  @override
+  String get serverControlAdminIdentity => 'ADMIN IDENTITY';
+
+  @override
+  String get serverControlAdminPassword => 'ADMIN PASSWORD';
+
+  @override
+  String get serverControlShow => 'SHOW';
+
+  @override
+  String get serverControlHide => 'HIDE';
+
+  @override
+  String get serverControlLocalAuthReason =>
+      'Authenticate to reveal this credential';
+
+  @override
+  String get serverControlCopy => 'COPY';
+
+  @override
+  String get serverControlCopied => 'COPIED';
+
+  @override
+  String get serverControlConfirmTitle => 'CONFIRM SERVER CONTROL';
+
+  @override
+  String serverControlConfirmBody(String operation) {
+    return '$operation will run on your server.';
+  }
+
+  @override
+  String get serverControlConfirmCancel => 'CANCEL';
+
+  @override
+  String get serverControlConfirmConfirm => 'CONFIRM';
+
+  @override
+  String get serverControlConfirmRestoreTitle => 'RESTORE BACKUP?';
+
+  @override
+  String get serverControlConfirmRestoreBody =>
+      'This overwrites all current data on your server with the last saved backup. This cannot be undone.';
+
+  @override
+  String get serverControlReleaseChecking => 'RELEASE STATUS: CHECKING';
+
+  @override
+  String serverControlReleaseStatus(String status) {
+    return 'RELEASE STATUS: $status';
+  }
+
+  @override
+  String serverControlReleaseCurrent(String version) {
+    return 'CURRENT: $version';
+  }
+
+  @override
+  String serverControlReleaseAvailable(String version) {
+    return 'AVAILABLE: $version';
+  }
+
+  @override
+  String serverControlReleaseContracts(
+      String app, String server, String deployment) {
+    return 'CONTRACTS: APP v$app · SERVER v$server · DEPLOYMENT v$deployment';
+  }
+
+  @override
+  String serverControlReleaseNixos(String version) {
+    return 'NIXOS: $version';
+  }
+
+  @override
+  String get serverControlOperationRestartPocketCoder => 'Restart PocketCoder';
+
+  @override
+  String get serverControlOperationUpdatePocketCoder => 'Update PocketCoder';
+
+  @override
+  String get serverControlOperationRestartNixOs => 'Restart NixOS';
+
+  @override
+  String get serverControlOperationUpdateNixOs => 'Update NixOS';
+
+  @override
+  String get serverControlOperationSaveBackup => 'Save backup';
+
+  @override
+  String get serverControlOperationRestoreBackup => 'Restore backup';
+
+  @override
+  String get serverControlActionRestart => 'RESTART';
+
+  @override
+  String get serverControlActionUpdate => 'UPDATE';
+
+  @override
+  String get serverControlActionSave => 'SAVE';
+
+  @override
+  String get serverControlActionRestore => 'RESTORE';
+
+  @override
+  String get serverControlGroupPocketCoder => 'POCKETCODER';
+
+  @override
+  String get serverControlGroupNixOs => 'NIXOS';
+
+  @override
+  String get serverControlGroupData => 'DATA';
+
+  @override
+  String get serverControlPublicKeyLabel => 'SSH PUBLIC KEY ON FILE';
+
+  @override
+  String get serverControlPrivateKeyLabel => 'SSH PRIVATE KEY';
+
+  @override
+  String get serverControlProviderConsole => 'PROVIDER WEB PORTAL';
+
+  @override
+  String get serverControlProviderConsoleUnavailable =>
+      'No active provider-managed instance found.';
+
+  @override
+  String get fossServerSetupTitle => 'CONNECT YOUR SERVER';
+
+  @override
+  String get fossServerSetupIntro =>
+      'Generate a key, add it to your VPS, then verify the connection.';
+
+  @override
+  String get fossServerSetupGenerateKey => 'GENERATE KEY';
+
+  @override
+  String get fossServerSetupPublicKeyLabel =>
+      'PUBLIC KEY -- add this to /root/.ssh/authorized_keys on your VPS';
+
+  @override
+  String get fossServerSetupHostLabel => 'This will connect to:';
+
+  @override
+  String get fossServerSetupTestAndSave => 'TEST CONNECTION & SAVE';
+
+  @override
+  String get fossServerSetupConnected =>
+      'CONNECTED -- YOUR SERVER IS NOW MANAGED';
+
+  @override
+  String get initializationInstanceId => 'INSTANCE ID';
+
+  @override
+  String get initializationRetryAttempt => 'RETRY ATTEMPT';
 }

@@ -11,9 +11,11 @@ class NotificationSettingsAdapter
   const NotificationSettingsAdapter({
     super.key,
     required this.onEnableDevice,
+    required this.onConfigureSelfHostedPush,
   });
 
   final Future<bool> Function() onEnableDevice;
+  final VoidCallback onConfigureSelfHostedPush;
 
   static NotificationRuleState _selectState(NotificationRuleState state) =>
       state;
@@ -31,6 +33,7 @@ class NotificationSettingsAdapter
           state: value,
           onChanged: context.read<NotificationRuleCubit>().setTypeEnabled,
           onEnableDevice: onEnableDevice,
+          onConfigureSelfHostedPush: onConfigureSelfHostedPush,
         ),
       ),
     );

@@ -8,6 +8,7 @@ final class RootSshCredentials {
     required this.privateKeyPem,
     required this.hostKeyType,
     required this.hostKeyFingerprint,
+    this.publicKeyOpenSsh,
   });
 
   final String privateKeyPem;
@@ -16,4 +17,6 @@ final class RootSshCredentials {
   /// OpenSSH SHA256 fingerprint (`SHA256:<base64>`) as dartssh2's host-key
   /// verification callback expects it.
   final String hostKeyFingerprint;
+
+  final String? publicKeyOpenSsh;
 }

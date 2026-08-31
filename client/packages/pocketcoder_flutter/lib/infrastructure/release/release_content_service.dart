@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
+import 'package:pocketcoder_flutter/domain/release/i_image_relay_proof_provider.dart';
 import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dart';
 
 /// Selects bounded release metadata for the UI. This is intentionally not a
@@ -14,7 +16,10 @@ import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dar
 @LazySingleton(as: IReleaseContentService)
 class ReleaseContentService implements IReleaseContentService {
   ReleaseContentService(
-      this._http, this._storage, @Named('releaseBaseUrl') this._baseUrl);
+      this._http, this._storage, this._proofProvider,
+      @Named('releaseBaseUrl') this._baseUrl,
+      [@Named('useTestingChannel') this._useTestingChannel = false,
+      @Named('releaseChannel') this._defaultChannel = 'stable']);
 
   static const _maximumManifestBytes = 1024 * 1024;
   static const _maximumMetadataBytes = 256 * 1024;
@@ -22,19 +27,34 @@ class ReleaseContentService implements IReleaseContentService {
   static const _appContractVersion = 1;
   final http.Client _http;
   final FlutterSecureStorage _storage;
+  final IImageRelayProofProvider _proofProvider;
   final String _baseUrl;
+  final bool _useTestingChannel;
+  final String _defaultChannel;
 
   @override
-  Future<ReleaseSelection> resolve({String channel = 'stable'}) =>
-      tryMethod(() async {
-        if (!const {'stable', 'beta', 'nightly'}.contains(channel)) {
+  Future<ReleaseSelection> resolve({String? channel}) => tryMethod(() async {
+        // kReleaseMode is a second, independent guard on BOTH knobs below:
+        // even if a debug-only dart-define somehow leaked into a release
+        // build, a genuine `--release` build ignores it and only ever
+        // fetches the real, non-testing 'stable' channel. The pointer's own
+        // "channel" field always holds the unqualified name regardless of
+        // which path served it, so identity verification below is
+        // unaffected by this path choice.
+        final resolvedChannel =
+            kReleaseMode ? 'stable' : (channel ?? _defaultChannel);
+        if (!const {'stable', 'beta', 'nightly'}.contains(resolvedChannel)) {
           throw const ReleaseContentException('Unsupported release channel');
         }
+        final pathSegment = _useTestingChannel && !kReleaseMode
+            ? '$resolvedChannel-testing'
+            : resolvedChannel;
         final pointerBytes = await _getBounded(
-            Uri.parse('$_baseUrl/channels/$channel.json'),
+            Uri.parse('$_baseUrl/channels/$pathSegment.json'),
             _maximumMetadataBytes);
         final pointer = _decodeObject(pointerBytes);
-        if (pointer['schemaVersion'] != 1 || pointer['channel'] != channel) {
+        if (pointer['schemaVersion'] != 1 ||
+            pointer['channel'] != resolvedChannel) {
           throw const ReleaseContentException(
               'Unsupported release channel pointer');
         }
@@ -42,10 +62,10 @@ class ReleaseContentService implements IReleaseContentService {
         _allowlistedUri(
             _object(pointer['attestation'])['url'],
             RegExp(
-                '/attestations/channels/$channel/[1-9][0-9]*[.]sigstore[.]json'
+                '/attestations/channels/$pathSegment/[1-9][0-9]*[.]sigstore[.]json'
                 r'$'));
-        final persisted = await _readSequence('channel-$channel');
-        final floor = channel == 'stable' && persisted < _stableFloor
+        final persisted = await _readSequence('channel-$pathSegment');
+        final floor = resolvedChannel == 'stable' && persisted < _stableFloor
             ? _stableFloor
             : persisted;
         if (sequence < floor) {
@@ -96,10 +116,10 @@ class ReleaseContentService implements IReleaseContentService {
           throw const ReleaseContentException(
               'The selected release is revoked');
         }
-        await _writeSequence('channel-$channel', sequence);
+        await _writeSequence('channel-$pathSegment', sequence);
         await _writeSequence('revocation', revocationSequence);
         return ReleaseSelection(
-            channel: channel,
+            channel: resolvedChannel,
             sequence: sequence,
             revocationSequence: revocationSequence,
             digest: digest,
@@ -141,10 +161,36 @@ class ReleaseContentService implements IReleaseContentService {
   }
 
   Future<Uint8List> _getBounded(Uri uri, int maximumBytes) async {
-    final response = await _http.send(http.Request('GET', uri));
+    final credential = await _proofProvider.credential();
+    var requestUri = uri;
+    var retriedNotFound = false;
+    late http.StreamedResponse response;
+    while (true) {
+      final proof = await _proofProvider.proof(
+        method: 'GET',
+        url: requestUri.toString(),
+      );
+      final request = http.Request('GET', requestUri)
+        ..headers['Pocketcoder-Credential'] = credential
+        ..headers['Pocketcoder-Proof'] = proof;
+      response = await _http.send(request);
+      if (response.statusCode != 404 || retriedNotFound) break;
+
+      // Release metadata can briefly return 404 while the release service's
+      // pointer/object cache catches up. Retry once without reusing a cached
+      // response; all other HTTP errors remain terminal.
+      retriedNotFound = true;
+      requestUri = requestUri.replace(queryParameters: {
+        ...requestUri.queryParameters,
+        '_refresh': DateTime.now().microsecondsSinceEpoch.toString(),
+      });
+    }
     if (response.statusCode != 200) {
       throw ReleaseContentException(
-          'Release service returned ${response.statusCode}');
+        'Release service returned ${response.statusCode}',
+        null,
+        response.statusCode,
+      );
     }
     final builder = BytesBuilder(copy: false);
     var length = 0;

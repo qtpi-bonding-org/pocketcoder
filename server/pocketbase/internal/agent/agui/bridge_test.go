@@ -367,6 +367,58 @@ func TestBridgePlanAndModeAndUsageState(t *testing.T) {
 	}
 }
 
+// TestBridgePlanUpdateUnion covers SessionPlanUpdate's discriminated union
+// (Items | File | Markdown). Items carries a full entry list and must
+// full-replace the /pocketcoder/plan projection the same way Plan does; File
+// and Markdown have no entries shape, so they're projected under their own
+// keys instead of falling back to RAW.
+func TestBridgePlanUpdateUnion(t *testing.T) {
+	bridge := NewBridge("c", "r")
+
+	items, err := bridge.Update(acpsdk.SessionUpdate{PlanUpdate: &acpsdk.SessionPlanUpdate{
+		SessionUpdate: "plan_update",
+		Plan: acpsdk.PlanUpdateContent{Items: &acpsdk.PlanUpdateContentItems{
+			Type: "items",
+			Entries: []acpsdk.PlanEntry{{
+				Content:  "step 1",
+				Priority: acpsdk.PlanEntryPriorityHigh,
+				Status:   acpsdk.PlanEntryStatusPending,
+			}},
+		}},
+	}})
+	if err != nil || len(items) != 1 || items[0].Type() != "STATE_DELTA" {
+		t.Fatalf("items: %#v err=%v", items, err)
+	}
+	b, _ := json.Marshal(items[0])
+	if !strings.Contains(string(b), `"content":"step 1"`) {
+		t.Fatalf("plan_update items not decoded: %s", string(b))
+	}
+
+	file, err := bridge.Update(acpsdk.SessionUpdate{PlanUpdate: &acpsdk.SessionPlanUpdate{
+		SessionUpdate: "plan_update",
+		Plan:          acpsdk.PlanUpdateContent{File: &acpsdk.PlanUpdateContentFile{Type: "file", Uri: "file:///plan.md"}},
+	}})
+	if err != nil || len(file) != 1 || file[0].Type() != "STATE_DELTA" {
+		t.Fatalf("file: %#v err=%v", file, err)
+	}
+	b, _ = json.Marshal(file[0])
+	if !strings.Contains(string(b), `"uri":"file:///plan.md"`) {
+		t.Fatalf("plan_update file not decoded: %s", string(b))
+	}
+
+	md, err := bridge.Update(acpsdk.SessionUpdate{PlanUpdate: &acpsdk.SessionPlanUpdate{
+		SessionUpdate: "plan_update",
+		Plan:          acpsdk.PlanUpdateContent{Markdown: &acpsdk.PlanUpdateContentMarkdown{Type: "markdown", Content: "# Plan"}},
+	}})
+	if err != nil || len(md) != 1 || md[0].Type() != "STATE_DELTA" {
+		t.Fatalf("markdown: %#v err=%v", md, err)
+	}
+	b, _ = json.Marshal(md[0])
+	if !strings.Contains(string(b), `"markdown":"# Plan"`) {
+		t.Fatalf("plan_update markdown not decoded: %s", string(b))
+	}
+}
+
 // TestBridgeConfigOptionUnion covers the ACP discriminated-union decode:
 // a ConfigOptionUpdate carrying both a Boolean and a Select option must
 // produce one STATE_DELTA whose payload preserves the kind discriminator

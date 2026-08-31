@@ -2,6 +2,10 @@ import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
 
 abstract interface class IServerControlService {
+  Future<String?> readPublicKey({required String instanceId});
+
+  Future<String?> readPrivateKey({required String instanceId});
+
   Future<ServerReleaseStatusSnapshot> inspectRelease();
 
   Future<ServerControlResult> restartPocketCoder({
@@ -21,6 +25,10 @@ abstract interface class IServerControlService {
   });
 
   Future<ServerControlResult> saveBackup({
+    required String instanceId,
+  });
+
+  Future<ServerControlResult> restoreBackup({
     required String instanceId,
   });
 }

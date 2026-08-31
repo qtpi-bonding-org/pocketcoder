@@ -17,7 +17,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
-import 'thinking_block.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_terminal_response.dart';
@@ -39,6 +38,8 @@ StackedChatBuilders pocketcoderChatBuilders(
       onPermissionOptionSelected,
   required void Function(String requestId, Map<String, dynamic> response)
       onElicitationRespond,
+  required Set<String> animatedMessageIds,
+  required void Function(String messageId) onMessageAnimated,
   String? latestReasoningId,
 }) {
   final colors = context.colorScheme;
@@ -65,9 +66,9 @@ StackedChatBuilders pocketcoderChatBuilders(
     roleHeaderBuilder: pocketcoderRoleHeader,
     padding: EdgeInsets.symmetric(
         horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
-    cardBorderColor: terminalColors.attention.withValues(alpha: 0.3),
-    diffAddedColor: terminalColors.attention,
-    diffRemovedColor: terminalColors.danger,
+    cardBorderColor: colors.secondary.withValues(alpha: 0.3),
+    diffAddedColor: colors.secondary,
+    diffRemovedColor: terminalColors.warning,
   );
 
   final callbacks = ChatActionCallbacks(
@@ -83,7 +84,8 @@ StackedChatBuilders pocketcoderChatBuilders(
     ),
   );
 
-  return _PocketcoderChatBuilders(style, callbacks, latestReasoningId);
+  return _PocketcoderChatBuilders(style, callbacks, latestReasoningId,
+      animatedMessageIds, onMessageAnimated);
 }
 
 /// Intercepts only reasoning ("thinking") messages -- completed or still
@@ -91,10 +93,12 @@ StackedChatBuilders pocketcoderChatBuilders(
 /// the generic full-width bubble every other message kind still gets via the
 /// inherited [StackedChatBuilders] behavior.
 class _PocketcoderChatBuilders extends StackedChatBuilders {
-  _PocketcoderChatBuilders(
-      super.style, super.callbacks, this.latestReasoningId);
+  _PocketcoderChatBuilders(super.style, super.callbacks, this.latestReasoningId,
+      this.animatedMessageIds, this.onMessageAnimated);
 
   final String? latestReasoningId;
+  final Set<String> animatedMessageIds;
+  final void Function(String messageId) onMessageAnimated;
 
   @override
   CustomCardBuilder get toolCallBuilder =>
@@ -121,52 +125,55 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
   @override
   chat_core.TextMessageBuilder get textMessageBuilder =>
       (context, message, index, {required isSentByMe, groupStatus}) {
-        if (_isReasoning(message)) {
-          return ThinkingBlock(
-            key: ValueKey(message.id),
-            text: message.text,
-            isLatest: message.id == latestReasoningId,
-            isStreaming: false,
-          );
-        }
+        if (_isReasoning(message)) return const SizedBox.shrink();
         if (isSentByMe) {
+          final color =
+              emphasize(context.colorScheme.secondary, Emphasis.selected).text;
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
-            showUserBorder: false,
-            child: TerminalTranscriptLine(
-              prefix: 'root@device \$ ',
-              color: context.terminalColors.attention,
-              child: Text(
-                message.text,
-                style: TextStyle(
-                  color: context.terminalColors.attention,
-                  fontFamily: AppFonts.bodyFamily,
-                  package: 'pocketcoder_flutter',
-                  fontSize: AppSizes.fontStandard,
-                  fontWeight: AppFonts.medium,
-                  height: 1.4,
-                ),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'root@device \$ ',
+                    style: TextStyle(
+                      color: color,
+                      fontFamily: AppFonts.bodyFamily,
+                      package: 'pocketcoder_flutter',
+                      fontSize: AppSizes.fontStandard,
+                      fontWeight: AppFonts.heavy,
+                      height: 1.4,
+                    ),
+                  ),
+                  TextSpan(
+                    text: message.text,
+                    style: TextStyle(
+                      color: color,
+                      fontFamily: AppFonts.bodyFamily,
+                      package: 'pocketcoder_flutter',
+                      fontSize: AppSizes.fontStandard,
+                      fontWeight: AppFonts.medium,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
               ),
             ),
           );
         }
-        return PocoTerminalResponse(message: message.text);
+        return PocoTerminalResponse(
+          messageId: message.id,
+          message: message.text,
+          instant: animatedMessageIds.contains(message.id),
+          onAnimationComplete: () => onMessageAnimated(message.id),
+        );
       };
 
   @override
   TextStreamCardBuilder get textStreamMessageBuilder =>
       (context, message, index,
           {required isSentByMe, groupStatus, required streamState}) {
-        if (_isReasoning(message)) {
-          return ThinkingBlock(
-            key: ValueKey(message.id),
-            text: streamState is chat_stream.StreamStateStreaming
-                ? streamState.accumulatedText
-                : '',
-            isLatest: message.id == latestReasoningId,
-            isStreaming: true,
-          );
-        }
+        if (_isReasoning(message)) return const SizedBox.shrink();
         final child = chat_stream.FlyerChatTextStreamMessage(
           message: message,
           index: index,
@@ -175,7 +182,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           showTime: false,
           showStatus: false,
           sentTextStyle: style.textStyle.copyWith(
-            color: context.terminalColors.attention,
+            color: emphasize(context.colorScheme.secondary, Emphasis.selected)
+                .text,
             fontWeight: AppFonts.medium,
           ),
           receivedTextStyle: style.textStyle,
@@ -183,10 +191,10 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         if (isSentByMe) {
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
-            showUserBorder: false,
             child: TerminalTranscriptLine(
               prefix: 'root@device \$ ',
-              color: context.terminalColors.attention,
+              color: emphasize(context.colorScheme.secondary, Emphasis.selected)
+                  .text,
               child: child,
             ),
           );

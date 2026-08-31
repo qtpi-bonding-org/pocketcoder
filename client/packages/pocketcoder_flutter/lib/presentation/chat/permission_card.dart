@@ -26,7 +26,14 @@ class PermissionCard extends StatelessWidget {
     final options = permission.options;
 
     final requestId = permission.requestId;
-    final toolTitle = permission.toolTitle;
+    // toolTitle is ACP's ToolCallUpdate.Title, optional on the wire -- a
+    // harness (goose, seen live) can omit it entirely for a given tool
+    // call. Without a fallback this card showed nothing but its own
+    // internal request UUID, with no indication at all of what it was
+    // actually asking permission for.
+    final toolTitle = permission.toolTitle ??
+        permission.description ??
+        context.l10n.permissionRequestedFallback;
 
     return Container(
       margin: EdgeInsets.all(AppSizes.space),
@@ -68,7 +75,7 @@ class PermissionCard extends StatelessWidget {
             ],
           ),
           VSpace.x2,
-          if (toolTitle != null && toolTitle.isNotEmpty) ...[
+          if (toolTitle.isNotEmpty) ...[
             VSpace.x1,
             Container(
               padding: EdgeInsets.all(AppSizes.space),

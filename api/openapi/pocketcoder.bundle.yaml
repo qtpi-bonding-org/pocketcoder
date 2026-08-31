@@ -203,7 +203,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -227,7 +231,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -251,7 +259,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -275,7 +287,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -299,7 +315,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -323,7 +343,11 @@ paths:
               $ref: '#/components/schemas/HarnessRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Harness authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessAuthStatus'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -381,9 +405,9 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /api/pocketcoder/v1/files-list:
+  /api/pocketcoder/v1/files-tree:
     get:
-      operationId: listWorkspaceFiles
+      operationId: listWorkspaceFileTree
       tags:
         - files
       security:
@@ -392,11 +416,11 @@ paths:
         - $ref: '#/components/parameters/DirectoryPath'
       responses:
         '200':
-          description: Immediate directory entries
+          description: Full recursive directory tree
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileListResponse'
+                $ref: '#/components/schemas/FileTreeResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -412,11 +436,17 @@ paths:
         - pocketbaseToken: []
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Ollama model inventory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OllamaModelsResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -460,6 +490,7 @@ paths:
       tags:
         - mcp
       x-pocketcoder-roles:
+        - agent
         - admin
       security:
         - pocketbaseToken: []
@@ -471,7 +502,11 @@ paths:
               $ref: '#/components/schemas/McpRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: MCP request result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecuteMcpRequestResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -499,7 +534,11 @@ paths:
               $ref: '#/components/schemas/McpOAuthRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: OAuth token stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreMcpOAuthTokenResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -516,7 +555,11 @@ paths:
       security: []
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Release compatibility
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseCompatibilityResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -534,7 +577,11 @@ paths:
         - pocketbaseToken: []
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Release status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseStatusResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -548,6 +595,8 @@ paths:
       operationId: streamContainerLogs
       tags:
         - logs
+      x-pocketcoder-roles:
+        - admin
       x-pocketcoder-transport: sse
       security:
         - pocketbaseToken: []
@@ -564,15 +613,61 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/pocketcoder/v1/logs/instance/{id}:
+    get:
+      operationId: getHarnessInstanceLogs
+      tags:
+        - logs
+      x-pocketcoder-roles:
+        - admin
+      security:
+        - pocketbaseToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Persisted container log excerpt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarnessInstanceLogResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/pocketcoder/v1/containers:
+    get:
+      operationId: listContainers
+      tags:
+        - logs
+      x-pocketcoder-roles:
+        - admin
+      security:
+        - pocketbaseToken: []
+      responses:
+        '200':
+          description: This deployment's containers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/pocketcoder/v1/proxy/observability/{path}:
     get:
       operationId: proxyObservability
       tags:
         - observability
-      x-pocketcoder-roles:
-        - admin
       x-pocketcoder-transport: opaque-proxy
       x-pocketcoder-router-path: /api/pocketcoder/v1/proxy/observability/{path...}
+      description: Authenticated users may access exactly `memory.sql`, the read-only memory dashboard. Every other SQLPage sub-path under this wildcard is restricted to administrators.
       security:
         - pocketbaseToken: []
       parameters:
@@ -595,6 +690,9 @@ paths:
       operationId: sendPushNotification
       tags:
         - push
+      x-pocketcoder-roles:
+        - agent
+        - admin
       security:
         - pocketbaseToken: []
       requestBody:
@@ -605,7 +703,11 @@ paths:
               $ref: '#/components/schemas/PushRequest'
       responses:
         '200':
-          $ref: '#/components/responses/JsonSuccess'
+          description: Push notification sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
         '204':
           description: Operation completed
         '400':
@@ -614,6 +716,75 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/pocketcoder/v1/pro-data:
+    delete:
+      operationId: deleteProData
+      tags:
+        - pro-data
+      description: Purges this user's PocketCoder-Pro-hosted data (push-relay's Supabase rows and the RevenueCat customer record). Pure pass-through to push-relay -- never touches this deployment's own local PocketBase data, which the user already owns and controls on their own server.
+      security:
+        - pocketbaseToken: []
+      responses:
+        '204':
+          description: Pro data deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+  /api/pocketcoder/v1/live-activities/{id}/end:
+    post:
+      operationId: endLiveActivity
+      tags:
+        - live-activities
+      security:
+        - pocketbaseToken: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      responses:
+        '200':
+          description: Live activity ended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Activity is not active
+  /api/pocketcoder/v1/live-activities/{id}/token:
+    post:
+      operationId: setLiveActivityToken
+      tags:
+        - live-activities
+      security:
+        - pocketbaseToken: []
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetLiveActivityTokenRequest'
+      responses:
+        '200':
+          description: Token updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Activity is not active
 components:
   securitySchemes:
     pocketbaseToken:
@@ -665,12 +836,6 @@ components:
         type: string
         minLength: 1
   responses:
-    JsonSuccess:
-      description: Successful JSON response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/JsonObject'
     BadRequest:
       description: Invalid request
       content:
@@ -720,24 +885,50 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
-    JsonObject:
-      type: object
-      additionalProperties: true
     ErrorResponse:
       type: object
       required:
-        - code
+        - status
         - message
         - data
       additionalProperties: false
       properties:
-        code:
+        status:
           type: integer
         message:
           type: string
         data:
           type: object
           additionalProperties: true
+    OkResponse:
+      type: object
+      required:
+        - ok
+      additionalProperties: false
+      properties:
+        ok:
+          type: boolean
+    StoreMcpOAuthTokenResponse:
+      type: object
+      required:
+        - stored
+      additionalProperties: false
+      properties:
+        stored:
+          type: boolean
+    ExecuteMcpRequestResponse:
+      type: object
+      required:
+        - id
+        - status
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        synced:
+          type: boolean
     AcceptedResponse:
       type: object
       required:
@@ -768,6 +959,10 @@ components:
           minItems: 1
           items:
             $ref: '#/components/schemas/ContentBlock'
+        messageId:
+          type: string
+          format: uuid
+          description: Client-generated unique identifier for this user message, echoed back into the AG-UI event stream so it survives reconnect/cache-replay. Optional for backward compatibility with older clients.
     ContentBlock:
       type: object
       required:
@@ -788,6 +983,15 @@ components:
         modeId:
           type: string
           minLength: 1
+    SetLiveActivityTokenRequest:
+      type: object
+      required:
+        - activity_push_token
+      additionalProperties: false
+      properties:
+        activity_push_token:
+          type: string
+          minLength: 1
     ConfigOptionRequest:
       type: object
       required:
@@ -805,7 +1009,117 @@ components:
       additionalProperties: true
     HarnessRequest:
       type: object
-      additionalProperties: true
+      required:
+        - harness
+        - provider
+      additionalProperties: false
+      properties:
+        harness:
+          type: string
+          minLength: 1
+        provider:
+          type: string
+          minLength: 1
+          description: PocketBase providers record id
+        accountId:
+          type: string
+        accountName:
+          type: string
+        visibility:
+          type: string
+        mode:
+          type: string
+          enum:
+            - oauth
+            - none
+        attemptId:
+          type: string
+        code:
+          type: string
+    HarnessAuthStatus:
+      type: object
+      required:
+        - harness
+        - provider
+        - mode
+        - status
+      additionalProperties: false
+      properties:
+        harness:
+          type: string
+        provider:
+          type: string
+        accountId:
+          type: string
+        accountName:
+          type: string
+        visibility:
+          type: string
+        mode:
+          type: string
+          enum:
+            - oauth
+            - none
+        status:
+          type: string
+        lastError:
+          type: string
+        attempt:
+          $ref: '#/components/schemas/HarnessAuthAttempt'
+        challenge:
+          $ref: '#/components/schemas/HarnessAuthChallenge'
+    HarnessAuthAttempt:
+      type: object
+      required:
+        - id
+        - status
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        lastError:
+          type: string
+    HarnessAuthChallenge:
+      type: object
+      required:
+        - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+        text:
+          type: string
+          deprecated: true
+        target:
+          type: string
+          deprecated: true
+        details:
+          type: string
+          deprecated: true
+        kind:
+          type: string
+          enum:
+            - device_code
+            - browser_code
+        verificationUri:
+          type: string
+          format: uri
+        userCode:
+          type: string
+        codeDestination:
+          type: string
+          enum:
+            - browser
+            - app
+            - none
+        expiresAt:
+          type: string
+          format: date-time
+        pollIntervalSeconds:
+          type: integer
+          minimum: 1
     ModelRequest:
       type: object
       required:
@@ -820,11 +1134,39 @@ components:
       additionalProperties: true
     McpOAuthRequest:
       type: object
-      additionalProperties: true
+      required:
+        - server_name
+        - access_token
+      additionalProperties: false
+      properties:
+        server_name:
+          type: string
+          minLength: 1
+        access_token:
+          type: string
+          minLength: 1
+        refresh_token:
+          type: string
     PushRequest:
       type: object
-      additionalProperties: true
-    FileListResponse:
+      required:
+        - user_id
+        - type
+      additionalProperties: false
+      properties:
+        user_id:
+          type: string
+          minLength: 1
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          minLength: 1
+        chat:
+          type: string
+    FileTreeResponse:
       type: object
       required:
         - path
@@ -836,14 +1178,12 @@ components:
         entries:
           type: array
           items:
-            $ref: '#/components/schemas/FileEntry'
-    FileEntry:
+            $ref: '#/components/schemas/FileTreeEntry'
+    FileTreeEntry:
       type: object
       required:
         - name
         - isDir
-        - size
-        - modTime
       additionalProperties: false
       properties:
         name:
@@ -855,6 +1195,97 @@ components:
           format: int64
         modTime:
           type: string
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileTreeEntry'
+    ContainerListResponse:
+      type: object
+      required:
+        - containers
+      additionalProperties: false
+      properties:
+        containers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerSummary'
+    ContainerSummary:
+      type: object
+      required:
+        - name
+        - state
+        - status
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+    OllamaModelsResponse:
+      type: object
+      required:
+        - models
+        - enabled
+      additionalProperties: false
+      properties:
+        models:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        enabled:
+          type: boolean
+    ReleaseCompatibilityResponse:
+      type: object
+      required:
+        - schemaVersion
+        - dataVersion
+        - compatibility
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          type: integer
+        dataVersion:
+          type: integer
+        compatibility:
+          type: object
+          additionalProperties: true
+    ReleaseStatusResponse:
+      type: object
+      required:
+        - schemaVersion
+        - current
+        - metadataStatus
+      additionalProperties: false
+      properties:
+        schemaVersion:
+          type: integer
+        current:
+          type: object
+          additionalProperties: false
+          properties:
+            releaseDigest:
+              type: string
+            sourceCommit:
+              type: string
+            serverVersion:
+              type: string
+            dataVersion:
+              type: integer
+            deploymentContractVersion:
+              type: integer
+            compatibility:
+              type: object
+              additionalProperties: true
+            selectedHarnesses:
+              type: array
+              items:
+                type: string
+        metadataStatus:
+          type: object
+          additionalProperties: true
     OllamaProgress:
       type: object
       additionalProperties: true
@@ -864,3 +1295,16 @@ components:
     LogEvent:
       type: object
       additionalProperties: true
+    HarnessInstanceLogResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - lines
+        - truncated
+      properties:
+        lines:
+          type: array
+          items:
+            type: string
+        truncated:
+          type: boolean

@@ -62,12 +62,14 @@ func mountOllamaRequest(t *testing.T, app *tests.TestApp, reg *operation.Registr
 	}
 	e := &core.ServeEvent{App: app, Router: router}
 	operation.MountForTests(e, reg.Routes())
-	token, err := user.NewAuthToken()
-	if err != nil {
-		t.Fatal(err)
-	}
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
-	req.Header.Set("Authorization", token)
+	if user != nil {
+		token, err := user.NewAuthToken()
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", token)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	mux, err := e.Router.BuildMux()
 	if err != nil {
@@ -77,6 +79,42 @@ func mountOllamaRequest(t *testing.T, app *tests.TestApp, reg *operation.Registr
 	mux.ServeHTTP(rec, req)
 	return rec
 }
+
+func TestListOllamaModelsAuthorizationBoundary(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"models":[]}`))
+	}))
+	defer backend.Close()
+
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	reg := operation.NewRegistry()
+	AddOllamaOperations(reg, OllamaDeps{HTTP: backend.Client(), Config: ollama.Config{BaseURL: backend.URL}})
+
+	user := testUser(t, app, "ollama-user-"+randomSuffix()+"@example.com")
+	admin := newOllamaAdmin(t, app)
+	cases := []struct {
+		name string
+		user *core.Record
+		want int
+	}{
+		{name: "unauthenticated", want: http.StatusUnauthorized},
+		{name: "authenticated non-admin", user: user, want: http.StatusForbidden},
+		{name: "authenticated admin", user: admin, want: http.StatusOK},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := mountOllamaRequest(t, app, reg, http.MethodGet, "/api/pocketcoder/v1/ollama/models", "", tc.user)
+			if rec.Code != tc.want {
+				t.Fatalf("status=%d body=%s, want %d", rec.Code, rec.Body, tc.want)
+			}
+		})
+	}
+}
+
 func newOllamaAdmin(t *testing.T, app *tests.TestApp) *core.Record {
 	u := testUser(t, app, "ollama-admin-"+randomSuffix()+"@example.com")
 	u.Set("role", "admin")

@@ -1,54 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
+import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
 
 class HarnessAuthScreenView extends StatelessWidget {
   const HarnessAuthScreenView({
     super.key,
     required this.onboarding,
     required this.harnesses,
-    required this.providerKeys,
+    required this.harnessProviders,
     required this.statuses,
     required this.error,
     required this.isLoading,
     required this.isHarnessBusy,
     required this.onStartAccount,
-    required this.onStartApiKey,
     required this.onStartNone,
     required this.onPoll,
     required this.onSubmit,
     required this.onCancel,
     required this.onDisconnect,
     required this.onRefresh,
+    required this.onOpenAuthorizationPage,
   });
 
   final bool onboarding;
   final List<Harnesse> harnesses;
-  final List<ProviderKey> providerKeys;
-  final Map<String, HarnessAuthStatus> statuses;
+  final List<HarnessProvider> harnessProviders;
+  final Map<HarnessProviderKey, HarnessAuthStatus> statuses;
   final Object? error;
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
-  final Future<void> Function(Harnesse) onStartAccount;
-  final Future<void> Function(Harnesse) onStartApiKey;
+  final Future<void> Function(Harnesse, String) onStartAccount;
   final Future<void> Function(Harnesse) onStartNone;
   final void Function(Harnesse) onPoll;
   final Future<void> Function(Harnesse, String) onSubmit;
   final void Function(Harnesse) onCancel;
   final void Function(Harnesse) onDisconnect;
   final void Function(Harnesse) onRefresh;
+  final void Function(Harnesse, Uri) onOpenAuthorizationPage;
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
@@ -60,19 +59,19 @@ class HarnessAuthScreenView extends StatelessWidget {
         body: HarnessAuthView(
           onboarding: onboarding,
           harnesses: harnesses,
-          providerKeys: providerKeys,
+          harnessProviders: harnessProviders,
           statuses: statuses,
           error: error,
           isLoading: isLoading,
           isHarnessBusy: isHarnessBusy,
           onStartAccount: onStartAccount,
-          onStartApiKey: onStartApiKey,
           onStartNone: onStartNone,
           onPoll: onPoll,
           onSubmit: onSubmit,
           onCancel: onCancel,
           onDisconnect: onDisconnect,
           onRefresh: onRefresh,
+          onOpenAuthorizationPage: onOpenAuthorizationPage,
         ),
       );
 }
@@ -82,35 +81,35 @@ class HarnessAuthView extends StatefulWidget {
     super.key,
     required this.onboarding,
     required this.harnesses,
-    required this.providerKeys,
+    required this.harnessProviders,
     required this.statuses,
     required this.error,
     required this.isLoading,
     required this.isHarnessBusy,
     required this.onStartAccount,
-    required this.onStartApiKey,
     required this.onStartNone,
     required this.onPoll,
     required this.onSubmit,
     required this.onCancel,
     required this.onDisconnect,
     required this.onRefresh,
+    required this.onOpenAuthorizationPage,
   });
   final bool onboarding;
   final List<Harnesse> harnesses;
-  final List<ProviderKey> providerKeys;
-  final Map<String, HarnessAuthStatus> statuses;
+  final List<HarnessProvider> harnessProviders;
+  final Map<HarnessProviderKey, HarnessAuthStatus> statuses;
   final Object? error;
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
-  final Future<void> Function(Harnesse) onStartAccount;
-  final Future<void> Function(Harnesse) onStartApiKey;
+  final Future<void> Function(Harnesse, String) onStartAccount;
   final Future<void> Function(Harnesse) onStartNone;
   final void Function(Harnesse) onPoll;
   final Future<void> Function(Harnesse, String) onSubmit;
   final void Function(Harnesse) onCancel;
   final void Function(Harnesse) onDisconnect;
   final void Function(Harnesse) onRefresh;
+  final void Function(Harnesse, Uri) onOpenAuthorizationPage;
 
   @override
   State<HarnessAuthView> createState() => _HarnessAuthViewState();
@@ -132,6 +131,17 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
       !widget.onboarding ||
       ['claude-code', 'codex'].contains(h.cliId.trim().toLowerCase());
 
+  HarnessAuthStatus? _statusFor(Harnesse harness) {
+    final provider = widget.harnessProviders
+        .where(
+            (edge) => edge.harness == harness.id && edge.supportsOauth == true)
+        .firstOrNull
+        ?.provider;
+    return provider == null
+        ? null
+        : widget.statuses[HarnessProviderKey(harness.id, provider)];
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading && widget.harnesses.isEmpty) {
@@ -152,23 +162,26 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
       if (widget.error != null)
         Padding(
             padding: EdgeInsets.only(bottom: AppSizes.space),
-            child: TerminalText(widget.error.toString(),
-                color: Theme.of(context).colorScheme.error, alpha: .9)),
+            child: TerminalText(safeErrorMessage(widget.error),
+                color: context.terminalColors.warning, alpha: .9)),
       for (final h in harnesses)
         HarnessAuthCard(
             harness: h,
-            status: widget.statuses[h.id],
-            providerKeys: widget.providerKeys,
+            harnessProviders: widget.harnessProviders,
+            status: _statusFor(h),
             codeController: _controller(h.id),
             isBusy: widget.isHarnessBusy(h.id),
-            onStartAccount: () => widget.onStartAccount(h),
-            onStartApiKey: () => widget.onStartApiKey(h),
+            onStartAccount: (provider) => widget.onStartAccount(h, provider),
             onStartNone: () => widget.onStartNone(h),
             onPoll: () => widget.onPoll(h),
             onSubmit: (code) => widget.onSubmit(h, code),
             onCancel: () => widget.onCancel(h),
             onDisconnect: () => widget.onDisconnect(h),
-            onRefresh: () => widget.onRefresh(h)),
+            onRefresh: () => widget.onRefresh(h),
+            onOpenAuthorizationPage: (uri) =>
+                widget.onOpenAuthorizationPage(h, uri),
+            onCopyCode: (_) {},
+            onRetry: () => widget.onPoll(h)),
     ]);
   }
 }
@@ -177,46 +190,54 @@ class HarnessAuthCard extends StatelessWidget {
   const HarnessAuthCard(
       {super.key,
       required this.harness,
+      required this.harnessProviders,
       required this.status,
-      required this.providerKeys,
       required this.codeController,
       required this.isBusy,
       required this.onStartAccount,
-      required this.onStartApiKey,
       required this.onStartNone,
       required this.onPoll,
       required this.onSubmit,
       required this.onCancel,
       required this.onDisconnect,
-      required this.onRefresh});
+      required this.onRefresh,
+      required this.onOpenAuthorizationPage,
+      required this.onCopyCode,
+      required this.onRetry});
   final Harnesse harness;
+  final List<HarnessProvider> harnessProviders;
   final HarnessAuthStatus? status;
-  final List<ProviderKey> providerKeys;
   final TextEditingController codeController;
   final bool isBusy;
-  final VoidCallback onStartAccount;
-  final VoidCallback onStartApiKey;
+  final void Function(String) onStartAccount;
   final VoidCallback onStartNone;
   final VoidCallback onPoll;
   final Future<void> Function(String) onSubmit;
   final VoidCallback onCancel;
   final VoidCallback onDisconnect;
   final VoidCallback onRefresh;
+  final void Function(Uri) onOpenAuthorizationPage;
+  final ValueChanged<String> onCopyCode;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final edges =
+        harnessProviders.where((p) => p.harness == harness.id).toList();
     final s = status ??
         HarnessAuthStatus(
             harness: harness.id,
+            provider: edges
+                    .where((e) => e.supportsOauth == true)
+                    .firstOrNull
+                    ?.provider ??
+                '',
             accountId: '',
             accountName: '',
             visibility: harnessAccountVisibilityPersonal,
             credentialMode: 'none',
             status: 'disconnected');
-    final keys = providerKeys
-        .where((k) => k.provider.toLowerCase() == harness.cliId.toLowerCase())
-        .toList();
     return BiosSection(
         title: '${harness.name} [${harness.cliId}]',
         child: TerminalCard(
@@ -228,8 +249,7 @@ class HarnessAuthCard extends StatelessWidget {
               if (s.lastError case final lastError?
                   when lastError.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText(lastError,
-                    color: Theme.of(context).colorScheme.error)
+                TerminalText(lastError, color: context.terminalColors.warning)
               ],
               if (s.credentialMode.isNotEmpty) ...[
                 VSpace.x1,
@@ -246,25 +266,9 @@ class HarnessAuthCard extends StatelessWidget {
               ],
               VSpace.x2,
               if (s.challenge case final challenge?)
-                HarnessChallengePanel(challenge: challenge),
-              if (s.challenge != null) ...[
-                VSpace.x1,
-                TerminalTextField(
-                    controller: codeController,
-                    label: l10n.harnessAuthOneTimeCode,
-                    hint: l10n.harnessAuthPasteCode,
-                    onSubmitted: _submit,
-                    enabled: !isBusy),
-                VSpace.x1,
-                Align(
-                    alignment: Alignment.centerRight,
-                    child: TerminalButton(
-                        label: l10n.harnessAuthSubmit,
-                        onTap: () => _submit(codeController.text),
-                        isLoading: isBusy))
-              ],
+                _connectionView(context, challenge),
               VSpace.x2,
-              _actions(context, s, keys.isNotEmpty),
+              _actions(context, s, edges),
               VSpace.x2,
               Align(
                   alignment: Alignment.centerLeft,
@@ -281,22 +285,42 @@ class HarnessAuthCard extends StatelessWidget {
             ])));
   }
 
-  Widget _actions(BuildContext context, HarnessAuthStatus s, bool hasKeys) {
+  Widget _connectionView(BuildContext context, HarnessAuthChallenge challenge) {
+    final uri = challenge.verificationUri;
+    final destination = challenge.codeDestination;
+    if (uri == null ||
+        (destination != HarnessAuthCodeDestination.browser &&
+            destination != HarnessAuthCodeDestination.app)) {
+      return TerminalText(challenge.legacyText ?? challenge.text);
+    }
+    return CredentialConnectionView(
+      step: BrowserVerificationConnectionStep(
+        verificationUri: uri,
+        codeDestination: destination,
+        userCode: challenge.userCode,
+        expiresAt: challenge.expiresAt,
+      ),
+      onOpenAuthorizationPage: () => onOpenAuthorizationPage(uri),
+      onCopyCode: onCopyCode,
+      onSubmitCode: _submit,
+      onCancel: onCancel,
+      onRetry: onRetry,
+    );
+  }
+
+  Widget _actions(
+      BuildContext context, HarnessAuthStatus s, List<HarnessProvider> edges) {
     if (s.isDisconnected) {
       return Wrap(
           spacing: AppSizes.space,
           runSpacing: AppSizes.space,
           children: [
-            TerminalButton(
-                label: context.l10n.harnessAuthAccountLogin,
-                onTap: isBusy ? () {} : onStartAccount,
-                isLoading: isBusy),
-            TerminalButton(
-                label: context.l10n.harnessAuthApiKey,
-                onTap: hasKeys
-                    ? (isBusy ? () {} : onStartApiKey)
-                    : () => _noKey(context),
-                isLoading: isBusy),
+            for (final edge in edges)
+              if (edge.supportsOauth == true)
+                TerminalButton(
+                    label: context.l10n.harnessAuthAccountLogin,
+                    onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
+                    isLoading: isBusy),
             TerminalButton(
                 label: context.l10n.harnessAuthNone,
                 onTap: isBusy ? () {} : onStartNone,
@@ -328,16 +352,6 @@ class HarnessAuthCard extends StatelessWidget {
     ]);
   }
 
-  void _noKey(BuildContext context) => showDialog<void>(
-      context: context,
-      builder: (d) => TerminalDialog(
-              title: context.l10n.harnessAuthNoApiKeyTitle,
-              content: Text(context.l10n.harnessAuthNoApiKeyBody),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.of(d).pop(),
-                    child: Text(context.l10n.actionClose))
-              ]));
   Future<void> _submit(String code) async {
     final value = code.trim();
     if (value.isEmpty || isBusy) {
@@ -346,36 +360,4 @@ class HarnessAuthCard extends StatelessWidget {
     await onSubmit(value);
     codeController.clear();
   }
-}
-
-class HarnessChallengePanel extends StatelessWidget {
-  const HarnessChallengePanel({super.key, required this.challenge});
-  final HarnessAuthChallenge challenge;
-  @override
-  Widget build(BuildContext context) => Container(
-      margin: EdgeInsets.only(bottom: AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space),
-      decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(context).colorScheme.primary)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        TerminalText(context.l10n.harnessAuthChallenge,
-            weight: TerminalTextWeight.heavy),
-        VSpace.x1,
-        TerminalText(challenge.text),
-        if (challenge.target case final target? when target.isNotEmpty) ...[
-          VSpace.x1,
-          GestureDetector(
-              onLongPress: () {
-                Clipboard.setData(ClipboardData(text: target));
-                VimToast.show(
-                    context, context.l10n.harnessAuthChallengeTargetCopied);
-              },
-              child: TerminalText(target,
-                  color: Theme.of(context).colorScheme.primary, alpha: .9))
-        ],
-        if (challenge.details case final details? when details.isNotEmpty) ...[
-          VSpace.x1,
-          TerminalText(context.l10n.harnessAuthDetails(details), alpha: .7)
-        ],
-      ]));
 }

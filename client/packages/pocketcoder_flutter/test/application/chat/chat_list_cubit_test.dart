@@ -8,7 +8,13 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 
-class MockChatListRepository extends Mock implements IChatListRepository {}
+class MockChatListRepository extends Mock implements IChatListRepository {
+  @override
+  Future<void> recordMessagePreview(String chatId,
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {}
+}
 
 void main() {
   late MockChatListRepository repo;
@@ -136,7 +142,9 @@ void main() {
       expect(cubit.state.lastCreatedChatId, isNull);
     });
 
-    test('threads harness/harnessModelOverride/workspaceOverride through to repo', () async {
+    test(
+        'threads harness/harnessModelOverride/workspaceOverride through to repo',
+        () async {
       when(() => repo.createChat(
             title: any(named: 'title'),
             harness: any(named: 'harness'),
@@ -187,6 +195,30 @@ void main() {
       verifyNever(() => repo.createChat(title: any(named: 'title')));
       expect(cubit.state.lastCreatedChatId, isNull);
       expect(cubit.state.status, UiFlowStatus.success);
+    });
+
+    test(
+        'only runs once per cubit lifetime -- a second call (e.g. from '
+        're-entering the chat-list screen, which mounts a fresh adapter '
+        'each time even though the cubit itself is app-lifetime) is a '
+        'no-op, even if the user has deleted their only chat since', () async {
+      when(() => repo.hasAnyChats()).thenAnswer((_) async => false);
+      when(() => repo.createChat(title: any(named: 'title')))
+          .thenAnswer((_) async => testChat);
+
+      final cubit = buildCubit();
+      await cubit.checkEmptyAndMaybeAutoCreate();
+      verify(() => repo.hasAnyChats()).called(1);
+      verify(() => repo.createChat(title: null)).called(1);
+
+      // Simulate re-entering the chat-list screen after the user deleted
+      // their only chat -- hasAnyChats() would again say "none", but this
+      // must not auto-create a second time.
+      await cubit.checkEmptyAndMaybeAutoCreate();
+
+      // No NEW calls beyond the one already verified above.
+      verifyNever(() => repo.createChat(title: any(named: 'title')));
+      verifyNever(() => repo.hasAnyChats());
     });
   });
 

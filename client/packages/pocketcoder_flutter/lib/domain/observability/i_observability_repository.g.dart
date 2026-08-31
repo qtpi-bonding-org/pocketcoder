@@ -6,6 +6,20 @@ part of 'i_observability_repository.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_ContainerInfo _$ContainerInfoFromJson(Map<String, dynamic> json) =>
+    _ContainerInfo(
+      name: json['name'] as String,
+      state: json['state'] as String,
+      status: json['status'] as String,
+    );
+
+Map<String, dynamic> _$ContainerInfoToJson(_ContainerInfo instance) =>
+    <String, dynamic>{
+      'name': instance.name,
+      'state': instance.state,
+      'status': instance.status,
+    };
+
 _OperationalTask _$OperationalTaskFromJson(Map<String, dynamic> json) =>
     _OperationalTask(
       id: json['id'] as String,

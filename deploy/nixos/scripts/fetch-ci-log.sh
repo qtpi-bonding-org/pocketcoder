@@ -1,16 +1,26 @@
 #!/bin/sh
-# Fetches and prints the full log of the most recent "Build NixOS Image"
-# GitHub Actions run. Reads GH_TOKEN from the environment (injected by the
-# secrets-daemon via `sops exec-env` -- never read from a file here, never
-# echoed).
+# Fetches and prints a short summary of the last few "Build NixOS Image"
+# GitHub Actions runs (id, commit, status), then the full log of the most
+# recent one. The summary exists so an agent can tell its own dispatched
+# run apart from a concurrent one from another agent/process (there is no
+# way to query a specific run id directly -- this is the workaround: match
+# by commit sha instead). Reads GH_TOKEN from the environment (injected by
+# the secrets-daemon via `sops exec-env` -- never read from a file here,
+# never echoed).
 set -eu
 
 API="https://api.github.com/repos/qtpi-bonding-org/pocketcoder/actions"
 AUTH="Authorization: Bearer $GH_TOKEN"
 
 WORKFLOW=${POCKETCODER_CI_WORKFLOW:-nixos-image.yml}
-RUNS_JSON=$(curl -sf -H "$AUTH" "$API/workflows/$WORKFLOW/runs?per_page=1")
-RUN_ID=$(printf '%s' "$RUNS_JSON" | grep -o '"id":[[:space:]]*[0-9]*' | head -1 | tr -dc '0-9')
+RECENT_COUNT=${POCKETCODER_CI_RECENT_COUNT:-5}
+RUNS_JSON=$(curl -sf -H "$AUTH" "$API/workflows/$WORKFLOW/runs?per_page=$RECENT_COUNT")
+
+echo "=== last $RECENT_COUNT runs (newest first) ==="
+printf '%s' "$RUNS_JSON" | jq -r \
+  '.workflow_runs[] | "run \(.id) sha=\(.head_sha[0:12]) status=\(.status) conclusion=\(.conclusion // "pending")"'
+
+RUN_ID=$(printf '%s' "$RUNS_JSON" | jq -r '.workflow_runs[0].id // empty')
 
 if [ -z "$RUN_ID" ]; then
   echo "ERROR: could not extract a run id for $WORKFLOW. Raw API response:" >&2
@@ -19,7 +29,7 @@ if [ -z "$RUN_ID" ]; then
 fi
 RUN_STATUS=$(printf '%s' "$RUNS_JSON" | jq -r '.workflow_runs[0].status // "unknown"')
 RUN_CONCLUSION=$(printf '%s' "$RUNS_JSON" | jq -r '.workflow_runs[0].conclusion // "pending"')
-echo "=== run $RUN_ID status=$RUN_STATUS conclusion=$RUN_CONCLUSION ==="
+echo "=== most recent: run $RUN_ID status=$RUN_STATUS conclusion=$RUN_CONCLUSION ==="
 JOBS_JSON=$(curl --http1.1 -sS -f -H "$AUTH" "$API/runs/$RUN_ID/jobs?per_page=100")
 printf '%s' "$JOBS_JSON" | jq -r '.jobs[] | "job=\(.name) status=\(.status) conclusion=\(.conclusion // "pending")"'
 if [ "$RUN_STATUS" != "completed" ] || [ "$RUN_CONCLUSION" != "success" ]; then

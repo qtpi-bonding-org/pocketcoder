@@ -21,10 +21,24 @@ class ChatListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final firstMessage = chat.firstMessage;
+    final preview = chat.preview;
+    final headline = (firstMessage != null && firstMessage.isNotEmpty)
+        ? firstMessage
+        : ((preview != null && preview.isNotEmpty)
+            ? preview
+            : context.l10n.chatListNoMessages);
+    final previewLine = (preview != null &&
+            preview.isNotEmpty &&
+            preview != firstMessage &&
+            firstMessage != null &&
+            firstMessage.isNotEmpty)
+        ? preview
+        : null;
+
     return Semantics(
       button: true,
-      label:
-          '${chat.title}. ${chat.preview ?? context.l10n.chatListNoMessages}. ${_formatRelativeTime(context, chat.lastActive)}',
+      label: '$headline. ${_formatRelativeTime(context, chat.lastActive)}',
       child: InkWell(
         onTap: () => onOpen(chat.id),
         onLongPress: () => _showActions(context),
@@ -33,11 +47,18 @@ class ChatListTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TerminalText.label(chat.title),
-              TerminalText.mini(
-                chat.preview ?? context.l10n.chatListNoMessages,
-                alpha: 0.6,
+              TerminalText.label(
+                headline,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
+              if (previewLine != null)
+                TerminalText.mini(
+                  previewLine,
+                  alpha: 0.6,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               if (chat.lastActive != null)
                 TerminalText.mini(
                   _formatRelativeTime(context, chat.lastActive),

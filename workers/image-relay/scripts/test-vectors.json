@@ -1,0 +1,59 @@
+{
+  "rootJwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "VL_nny8q40SwpbS3eH43rSqmp5MWlG-6vpSDQr125XA",
+    "y": "m3uWw-xU0y5YfFg_m4QyR9wj2WUabgApw1_qvNVgIlE"
+  },
+  "boxJwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "NkH9I5K6GLaZwU42r04EzgkdDggVwhJ5DCHX4SzMAPM",
+    "y": "cR8n4Rw6OgEAB36AesHpHrDkGp8iwNi1xz8mpFsey8M"
+  },
+  "iss": "w8mThHOeSZEBQRfIyILR27bgOpLMyvwDHQ4Yjm4GaAo",
+  "credential": "eyJhbGciOiJFUzI1NiIsInR5cCI6InBvY2tldGNvZGVyLWJveC1jZXJ0K2p3dCIsImp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6IlZMX25ueThxNDBTd3BiUzNlSDQzclNxbXA1TVdsRy02dnBTRFFyMTI1WEEiLCJ5IjoibTN1V3cteFUweTVZZkZnX200UXlSOXdqMldVYWJnQXB3MV9xdk5WZ0lsRSJ9fQ.eyJpc3MiOiJ3OG1UaEhPZVNaRUJRUmZJeUlMUjI3YmdPcExNeXZ3REhRNFlqbTRHYUFvIiwiYXVkIjoiaHR0cHM6Ly9pbWFnZXMucmVsYXkucG9ja2V0Y29kZXIub3JnIiwiaWF0IjoxNzM1Njg5NjAwLCJqdGkiOiJkR1Z6ZEMxamNtVmtMV3AwYVEiLCJjbmYiOnsiandrIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoiTmtIOUk1SzZHTGFad1U0MnIwNEV6Z2tkRGdnVndoSjVEQ0hYNFN6TUFQTSIsInkiOiJjUjhuNFJ3Nk9nRUFCMzZBZXNIcEhyRGtHcDhpd05pMXh6OG1wRnNleThNIn19fQ.1m_hlXipuiMuH2FnZZYe-yi1boQUYV7oy3coV7nom9A8T1LhlePZVVKaIiiis1r-tQYZp6Y0l2Z5323l2PjitQ",
+  "proof": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0IiwiandrIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoiTmtIOUk1SzZHTGFad1U0MnIwNEV6Z2tkRGdnVndoSjVEQ0hYNFN6TUFQTSIsInkiOiJjUjhuNFJ3Nk9nRUFCMzZBZXNIcEhyRGtHcDhpd05pMXh6OG1wRnNleThNIn19.eyJodG0iOiJHRVQiLCJodHUiOiJodHRwczovL2ltYWdlcy5yZWxheS5wb2NrZXRjb2Rlci5vcmcvdjEvY2hhbm5lbHMvc3RhYmxlLmpzb24iLCJpYXQiOjE3MzU2ODk2MDAsImp0aSI6ImRHVnpkQzF3Y205dlppMXFkR2sifQ.goQU6YnIGRglisbUurrhlJXIrVCJpdEcUxdV3NHYOHjN1oIqln_fqzqVEbomowBn-nY8iXmycdlB2eKoxuq8IA",
+  "credentialBadSignature": "eyJhbGciOiJFUzI1NiIsInR5cCI6InBvY2tldGNvZGVyLWJveC1jZXJ0K2p3dCIsImp3ayI6eyJrdHkiOiJFQyIsImNydiI6IlAtMjU2IiwieCI6IlZMX25ueThxNDBTd3BiUzNlSDQzclNxbXA1TVdsRy02dnBTRFFyMTI1WEEiLCJ5IjoibTN1V3cteFUweTVZZkZnX200UXlSOXdqMldVYWJnQXB3MV9xdk5WZ0lsRSJ9fQ.eyJpc3MiOiJ3OG1UaEhPZVNaRUJRUmZJeUlMUjI3YmdPcExNeXZ3REhRNFlqbTRHYUFvIiwiYXVkIjoiaHR0cHM6Ly9pbWFnZXMucmVsYXkucG9ja2V0Y29kZXIub3JnIiwiaWF0IjoxNzM1Njg5NjAwLCJqdGkiOiJkR1Z6ZEMxamNtVmtMV3AwYVEiLCJjbmYiOnsiandrIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoiTmtIOUk1SzZHTGFad1U0MnIwNEV6Z2tkRGdnVndoSjVEQ0hYNFN6TUFQTSIsInkiOiJjUjhuNFJ3Nk9nRUFCMzZBZXNIcEhyRGtHcDhpd05pMXh6OG1wRnNleThNIn19fQ.1m_hlXipuiMuH2FnZZYe-yi1boQUYV7oy3coV7nom9A8T1LhlePZVVKaIiiis1r-tQYZp6Y0l2Z5323l2PXXXX",
+  "proofBadSignature": "eyJhbGciOiJFUzI1NiIsInR5cCI6ImRwb3Arand0IiwiandrIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoiTmtIOUk1SzZHTGFad1U0MnIwNEV6Z2tkRGdnVndoSjVEQ0hYNFN6TUFQTSIsInkiOiJjUjhuNFJ3Nk9nRUFCMzZBZXNIcEhyRGtHcDhpd05pMXh6OG1wRnNleThNIn19.eyJodG0iOiJHRVQiLCJodHUiOiJodHRwczovL2ltYWdlcy5yZWxheS5wb2NrZXRjb2Rlci5vcmcvdjEvY2hhbm5lbHMvc3RhYmxlLmpzb24iLCJpYXQiOjE3MzU2ODk2MDAsImp0aSI6ImRHVnpkQzF3Y205dlppMXFkR2sifQ.goQU6YnIGRglisbUurrhlJXIrVCJpdEcUxdV3NHYOHjN1oIqln_fqzqVEbomowBn-nY8iXmycdlB2eKoxuXXXX",
+  "proofWrongMethod": {
+    "htm": "POST",
+    "htu": "https://images.relay.pocketcoder.org/v1/channels/stable.json",
+    "iat": 1735689600,
+    "jti": "dGVzdC1wcm9vZi1qdGk"
+  },
+  "jwkWithLeadingZeroCoordinate": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "y": "m3uWw-xU0y5YfFg_m4QyR9wj2WUabgApw1_qvNVgIlE"
+  },
+  "offCurveJwk": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "VL_nny8q40SwpbS3eH43rSqmp5MWlG-6vpSDQr125XA",
+    "y": "VL_nny8q40SwpbS3eH43rSqmp5MWlG-6vpSDQr125XA"
+  },
+  "rawDuplicateMemberClaims": "{\"htm\":\"GET\",\"htm\":\"POST\",\"htu\":\"https://images.relay.pocketcoder.org/v1/channels/stable.json\",\"iat\":1735689600,\"jti\":\"dGVzdA\"}",
+  "nonCanonicalPaddedX": "VL_nny8q40SwpbS3eH43rSqmp5MWlG-6vpSDQr125XA==",
+  "wrongAlgHeader": {
+    "alg": "HS256",
+    "typ": "dpop+jwt",
+    "jwk": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "NkH9I5K6GLaZwU42r04EzgkdDggVwhJ5DCHX4SzMAPM",
+      "y": "cR8n4Rw6OgEAB36AesHpHrDkGp8iwNi1xz8mpFsey8M"
+    }
+  },
+  "wrongTypHeader": {
+    "alg": "ES256",
+    "typ": "jwt",
+    "jwk": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "NkH9I5K6GLaZwU42r04EzgkdDggVwhJ5DCHX4SzMAPM",
+      "y": "cR8n4Rw6OgEAB36AesHpHrDkGp8iwNi1xz8mpFsey8M"
+    }
+  }
+}

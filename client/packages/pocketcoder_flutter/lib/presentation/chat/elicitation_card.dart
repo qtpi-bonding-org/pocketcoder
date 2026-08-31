@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 
 class ElicitationCard extends StatefulWidget {
   const ElicitationCard({
@@ -78,7 +79,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
     Map<String, dynamic>? properties,
   ) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
 
     final elicitationId = widget.item.requestId;
     final fields = properties?.entries.toList() ?? const [];
@@ -87,9 +87,9 @@ class _ElicitationCardState extends State<ElicitationCard> {
       margin: EdgeInsets.all(AppSizes.space),
       padding: EdgeInsets.all(AppSizes.space * 2),
       decoration: BoxDecoration(
-        color: terminalColors.attention.withValues(alpha: 0.05),
+        color: colors.secondary.withValues(alpha: 0.05),
         border: Border.all(
-          color: terminalColors.attention.withValues(alpha: 0.3),
+          color: colors.secondary.withValues(alpha: 0.3),
           width: AppSizes.borderWidth,
         ),
       ),
@@ -102,7 +102,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
               Text(
                 'FORM',
                 style: TextStyle(
-                  color: terminalColors.attention,
+                  color: colors.secondary,
                   fontSize: AppSizes.fontTiny,
                   fontWeight: AppFonts.heavy,
                   letterSpacing: 2,
@@ -113,7 +113,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
                 child: Text(
                   context.l10n.chatElicitationRequest,
                   style: TextStyle(
-                    color: terminalColors.attention,
+                    color: colors.secondary,
                     fontSize: AppSizes.fontTiny,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
@@ -127,7 +127,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             Text(
               message,
               style: TextStyle(
-                color: terminalColors.attention,
+                color: colors.secondary,
                 fontFamily: AppFonts.bodyFamily,
                 fontSize: AppSizes.fontStandard,
               ),
@@ -138,7 +138,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             Text(
               '[$elicitationId]',
               style: TextStyle(
-                color: terminalColors.attention.withValues(alpha: 0.5),
+                color: colors.secondary.withValues(alpha: 0.5),
                 fontSize: AppSizes.fontMini,
               ),
             ),
@@ -170,7 +170,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
                 child: TerminalButton(
                   label: context.l10n.actionCancel,
                   isPrimary: false,
-                  color: terminalColors.danger,
                   onTap: () => _submit(context, ElicitationResponse.cancel()),
                 ),
               ),
@@ -179,7 +178,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
                 child: TerminalButton(
                   label: context.l10n.chatDecline,
                   isPrimary: false,
-                  color: terminalColors.danger,
                   onTap: () => _submit(context, ElicitationResponse.decline()),
                 ),
               ),
@@ -218,10 +216,10 @@ class _ElicitationCardState extends State<ElicitationCard> {
         );
         return Row(
           children: [
-            Checkbox(
+            TerminalCheckbox(
               value: value,
               onChanged: (v) {
-                setState(() => _boolValues[name] = v ?? false);
+                setState(() => _boolValues[name] = v);
               },
             ),
             HSpace.x1,

@@ -50,6 +50,7 @@
       sed \
         -e 's|{{CADDY_GLOBAL_OPTIONS}}||g' \
         -e "s|{{DOMAIN}}|$DOMAIN|g" \
+        -e "s|{{PUBLIC_IP}}|$PUBLIC_IP|g" \
         -e 's|{{STATUS_ROOT}}|/var/lib/pocketcoder/public|g' \
         -e 's|{{UPSTREAM}}|127.0.0.1:8090|g' \
         ${caddyTemplate} \
@@ -121,5 +122,7 @@
     "d /var/lib/pocketcoder 0755 root root -"
     "d /var/lib/pocketcoder/public 0755 root root -"
   ];
+  # nixpkgs services.caddy persists its StateDirectory at /var/lib/caddy;
+  # this keeps the internal CA across reboots, but not across redeployment.
   # POCO:END caddy-web-entry
 }

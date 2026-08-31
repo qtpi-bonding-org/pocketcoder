@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 
 /// A configuration object for a single footer button
 class TerminalAction {
@@ -7,13 +8,30 @@ class TerminalAction {
   final VoidCallback onTap;
   final bool hasBadge;
   final bool isActive;
+  final Color? color;
+
+  /// Overrides the emphasis derived from [isActive] -- lets a footer
+  /// button read as the recommended next action (.outlined) without being
+  /// the active tab. See the emphasis-states spec (2026-08-23).
+  final Emphasis? emphasis;
 
   TerminalAction({
     required this.label,
     required this.onTap,
     this.hasBadge = false,
     this.isActive = false,
+    this.color,
+    this.emphasis,
   });
+
+  BiosActionStripItem get _asStripItem => BiosActionStripItem(
+        label: label,
+        onTap: onTap,
+        hasBadge: hasBadge,
+        isActive: isActive,
+        color: color,
+        emphasis: emphasis,
+      );
 }
 
 class TerminalFooter extends StatelessWidget {
@@ -27,7 +45,6 @@ class TerminalFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    // A single green line to separate footer from content
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -44,65 +61,24 @@ class TerminalFooter extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: actions.map((action) {
-                return _buildActionButton(context, action);
+                final stripItem = action._asStripItem;
+                final showDivider =
+                    stripItem.resolvedEmphasis != Emphasis.outlined;
+                return Container(
+                  decoration: BoxDecoration(
+                    border: showDivider
+                        ? Border(
+                            right: BorderSide(
+                              color: colors.onSurface.withValues(alpha: 0.1),
+                              width: AppSizes.borderWidth,
+                            ),
+                          )
+                        : null,
+                  ),
+                  child: BiosActionButton(action: stripItem),
+                );
               }).toList(),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton(BuildContext context, TerminalAction action) {
-    final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-
-    final bgColor = action.isActive ? colors.onSurface : Colors.transparent;
-    final fgColor = action.isActive ? colors.surface : colors.onSurface;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: action.onTap,
-        splashColor: colors.onSurface.withValues(alpha: 0.2),
-        highlightColor: colors.onSurface.withValues(alpha: 0.1),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
-          decoration: BoxDecoration(
-            color: bgColor,
-            border: Border(
-              right: BorderSide(
-                  color: colors.onSurface.withValues(alpha: 0.1),
-                  width: AppSizes.borderWidth),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                action.label.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: fgColor,
-                  fontSize: AppSizes.fontMini,
-                  fontWeight: AppFonts.heavy,
-                  letterSpacing: 2,
-                ),
-              ),
-              if (action.hasBadge) ...[
-                HSpace.x1,
-                Text(
-                  '[!]',
-                  style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
-                    color: action.isActive ? colors.surface : terminalColors.warning,
-                    fontSize: AppSizes.fontMini,
-                    fontWeight: AppFonts.heavy,
-                  ),
-                ),
-              ],
-            ],
           ),
         ),
       ),

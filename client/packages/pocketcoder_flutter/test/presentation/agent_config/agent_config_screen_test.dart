@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
-import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
+import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: AppTheme.lightTheme,
@@ -18,19 +19,21 @@ Widget _wrap(Widget child) => MaterialApp(
 );
 
 void main() {
-  final config = PocoConfig(id: 'config-1', name: 'Test Config', harnessModel: 'hm-1');
+  final config = PocoConfig(id: 'config-1', name: 'Test Config');
   final prompt = Prompt(id: 'prompt-1', name: 'Test Prompt', body: 'hello');
-  final model = HarnessModel(id: 'hm-1', harness: 'h-1', model: 'm-1', harnessModelId: 'harness::model');
+  final permissionMode = PermissionMode(
+    id: 'mode-1',
+    name: 'Balanced',
+    baseSessionMode: PermissionModeBaseSessionMode.approve,
+  );
 
   Future<void> pumpView(WidgetTester tester, {
     AgentConfigState state = const AgentConfigState(),
-    ProviderState providerState = const ProviderState(),
     Future<void> Function(PocoConfig)? onSave,
     Future<void> Function(String)? onDelete,
   }) async {
     await tester.pumpWidget(_wrap(AgentConfigView(
       state: state,
-      providerState: providerState,
       onSave: onSave ?? (_) async {},
       onDelete: onDelete ?? (_) async {},
     )));
@@ -48,6 +51,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('AGENT CONFIGURATION'), findsWidgets);
     expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(BiosRow), findsWidgets);
   });
 
   testWidgets('existing config prefills the editor', (tester) async {
@@ -77,31 +81,37 @@ void main() {
     expect(find.text('SECOND PROMPT'), findsOneWidget);
   });
 
-  testWidgets('harness model picker lists models', (tester) async {
-    await pumpView(tester, providerState: ProviderState(harnessModels: [model]));
-    await tester.tap(find.text('ADD NEW')); await tester.pumpAndSettle();
-    await tester.tap(find.text('HARNESS MODEL')); await tester.pumpAndSettle();
-    expect(find.text('SELECT HARNESS MODEL'), findsOneWidget);
-    expect(find.text('HARNESS::MODEL'), findsOneWidget);
-  });
-
-  testWidgets('mode picker lists modes', (tester) async {
-    await pumpView(tester);
-    await tester.tap(find.text('ADD NEW')); await tester.pumpAndSettle();
-    await tester.tap(find.text('MODE')); await tester.pumpAndSettle();
+  testWidgets('mode picker lists live permission modes and selects one',
+      (tester) async {
+    await pumpView(
+      tester,
+      state: AgentConfigState(permissionModes: [
+        permissionMode,
+        PermissionMode(
+          id: 'mode-2',
+          name: 'Autonomous',
+          baseSessionMode: PermissionModeBaseSessionMode.auto,
+        ),
+      ]),
+    );
+    await tester.tap(find.text('ADD NEW'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('MODE'));
+    await tester.pumpAndSettle();
     expect(find.text('SELECT MODE'), findsOneWidget);
-    expect(find.text('APPROVE'), findsOneWidget);
+    expect(find.text('BALANCED'), findsOneWidget);
+    expect(find.text('AUTONOMOUS'), findsOneWidget);
   });
 
   testWidgets('is_default toggle works', (tester) async {
     await pumpView(tester);
     await tester.tap(find.text('ADD NEW')); await tester.pumpAndSettle();
-    final toggle = find.byType(Switch);
+    final toggle = find.byType(TerminalCheckbox);
     await tester.ensureVisible(toggle);
     await tester.pumpAndSettle();
-    expect(tester.widget<Switch>(toggle).value, false);
+    expect(tester.widget<TerminalCheckbox>(toggle).value, false);
     await tester.tap(toggle); await tester.pumpAndSettle();
-    expect(tester.widget<Switch>(toggle).value, true);
+    expect(tester.widget<TerminalCheckbox>(toggle).value, true);
   });
 
   testWidgets('deleting calls the supplied callback', (tester) async {

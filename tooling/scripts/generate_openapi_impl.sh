@@ -62,6 +62,7 @@ for dart_file in \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/agent_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/files_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/harness_auth_api.dart" \
+  "$repo_root/client/packages/pocketcoder_api/lib/src/api/live_activities_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/logs_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/mcp_api.dart" \
   "$repo_root/client/packages/pocketcoder_api/lib/src/api/observability_api.dart" \
@@ -72,6 +73,15 @@ for dart_file in \
   "$repo_root/client/packages/pocketcoder_api/lib/src/model/content_block.dart"; do
   perl -0pi -e 's#(// AUTO-GENERATED FILE, DO NOT MODIFY!\n//\n)(?!// ignore_for_file:)#$1// ignore_for_file: duplicate_import, unused_import\n#' "$dart_file"
 done
+
+# OpenAPI Generator scaffolds a fresh analysis_options.yaml on every run,
+# dropping the platform-dir excludes (build/**, android/**, etc.) that keep
+# `flutter analyze` from choking on the generator's own stub platform dirs.
+# Restore them deterministically.
+analysis_options="$repo_root/client/packages/pocketcoder_api/analysis_options.yaml"
+if ! grep -q '    - build/\*\*' "$analysis_options"; then
+  perl -0pi -e "s/(  exclude:\n    - test\/\*\.dart\n)/\$1    - build\/**\n    - android\/**\n    - ios\/**\n    - web\/**\n    - windows\/**\n    - macos\/**\n    - linux\/**\n/" "$analysis_options"
+fi
 
 (cd "$repo_root/client" && dart pub get)
 (cd "$repo_root/client/packages/pocketcoder_api" && \

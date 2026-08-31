@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -109,7 +110,11 @@ func SyncDirectory(directory string) error {
 	if err != nil {
 		return err
 	}
-	defer dir.Close()
+	defer func() {
+		if err := dir.Close(); err != nil {
+			log.Printf("[State] failed to close directory %s: %v", directory, err)
+		}
+	}()
 	return dir.Sync()
 }
 

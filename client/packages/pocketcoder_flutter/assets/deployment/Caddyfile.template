@@ -10,6 +10,24 @@
 }
 
 {{DOMAIN}} {
+  tls {
+    issuer acme
+    issuer internal
+  }
+  handle /_pocketcoder/status.json* {
+    uri strip_prefix /_pocketcoder
+    root * {{STATUS_ROOT}}
+    file_server
+  }
+  handle {
+    reverse_proxy {{UPSTREAM}}
+  }
+}
+
+{{PUBLIC_IP}} {
+  tls {
+    issuer internal
+  }
   handle /_pocketcoder/status.json* {
     uri strip_prefix /_pocketcoder
     root * {{STATUS_ROOT}}

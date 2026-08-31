@@ -111,12 +111,49 @@ func TestSessionMetaContainsOptionalPromptExtension(t *testing.T) {
 
 func TestPerSessionApplierDeliversProviderLive(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Provider: "anthropic", SupportsLiveConfig: true}, nil)
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Provider: "anthropic", SupportsLiveConfig: true, SupportsLiveCredentialRegistration: true,
+	}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
 	if fc.lastSetConfigOption.ValueId == nil || fc.lastSetConfigOption.ValueId.ConfigId != "provider" || fc.lastSetConfigOption.ValueId.Value != "anthropic" {
 		t.Errorf("expected configId=provider value=anthropic, got %+v", fc.lastSetConfigOption)
+	}
+	if len(fc.setConfigOptionCalls) != 1 {
+		t.Errorf("config calls = %d, want exactly 1", len(fc.setConfigOptionCalls))
+	}
+}
+
+// TestPerSessionApplierSkipsProviderConfigForOpencodeShapedProfile guards
+// against a real bug: opencode is SupportsLiveConfig=true (like goose) but
+// its ACP server only implements session/set_config_option for
+// "model"/"effort"/"mode", never "provider" -- sending it always fails with
+// "unknown config option: provider". SupportsLiveCredentialRegistration is
+// goose-exclusive today and is what actually gates whether "provider" is a
+// supported configId, not SupportsLiveConfig alone.
+func TestPerSessionApplierSkipsProviderConfigForOpencodeShapedProfile(t *testing.T) {
+	fc := &fakeConn{}
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Provider: "openrouter", Model: "openrouter/auto",
+		SupportsLiveConfig: true, SupportsLiveCredentialRegistration: false,
+	}, nil)
+	if err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	for _, c := range fc.setConfigOptionCalls {
+		if c.ValueId != nil && c.ValueId.ConfigId == "provider" {
+			t.Fatalf("expected no configId=provider call for an opencode-shaped profile, got %+v", c)
+		}
+	}
+	found := false
+	for _, c := range fc.setConfigOptionCalls {
+		if c.ValueId != nil && c.ValueId.ConfigId == "model" && c.ValueId.Value == "openrouter/auto" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected a configId=model value=openrouter/auto call, got %+v", fc.setConfigOptionCalls)
 	}
 }
 

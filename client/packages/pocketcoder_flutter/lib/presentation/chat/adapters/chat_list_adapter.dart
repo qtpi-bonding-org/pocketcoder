@@ -10,7 +10,11 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/credential_selection.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_oauth_account.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
@@ -22,10 +26,12 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
     super.key,
     required this.providerRepository,
     required this.loadOllamaModels,
+    this.harnessAuthRepository,
   });
 
   final IProviderRepository providerRepository;
   final Future<List<OllamaModel>> Function() loadOllamaModels;
+  final IHarnessAuthRepository? harnessAuthRepository;
 
   static ChatListState _selectState(ChatListState state) => state;
   static String? _selectCreatedChat(ChatListState state) =>
@@ -36,6 +42,24 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
     BuildContext context,
     CubitAdapterState<ChatListCubit, ChatListState> adapter,
   ) {
+    // Runs exactly once per time this screen is reached (adapter.keep()
+    // memoizes by key for this adapter's lifetime -- see progress_adapter
+    // .dart for the same pattern) -- ChatListCubit is now a single,
+    // app-lifetime instance provided at the app root (see App's
+    // MultiBlocProvider) rather than freshly created by this screen's own
+    // BlocProvider, specifically so onboarding's AgentAuthAdapter
+    // can also read it (createAndOpen() for the first-connected-harness's
+    // first chat) without needing its own separate instance. Deliberately
+    // NOT chained onto the cubit's own creation any more: that now happens
+    // at app boot, before login/onboarding ever completes, and
+    // checkEmptyAndMaybeAutoCreate() must run against an authenticated
+    // session to mean anything.
+    adapter.keep<bool>('chatListCubitStarted', () {
+      adapter.cubit
+        ..watchChats()
+        ..checkEmptyAndMaybeAutoCreate();
+      return true;
+    });
     final state = adapter.cubitField(_selectState);
     final createdChat = adapter.cubitField(_selectCreatedChat);
     adapter.listenTo(#createdChat, createdChat, () {
@@ -54,6 +78,7 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
             final selection = await _openNewChatDialog(
               context,
               providerRepository: providerRepository,
+              harnessAuthRepository: harnessAuthRepository,
               loadOllamaModels: loadOllamaModels,
             );
             if (selection == null) return;
@@ -76,20 +101,34 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
   Future<NewChatSelection?> _openNewChatDialog(
     BuildContext context, {
     required IProviderRepository providerRepository,
+    required IHarnessAuthRepository? harnessAuthRepository,
     required Future<List<OllamaModel>> Function() loadOllamaModels,
   }) async {
-    final futures = await Future.wait([
+    final futures = await Future.wait<Object>([
       providerRepository.watchHarnesses().first,
       providerRepository.watchModels().first,
-      providerRepository.watchHarnessModels().first,
-      providerRepository.watchProviderKeys().first,
+      providerRepository.fetchHarnessModels(),
+      providerRepository.watchProviderAPIKeys().first,
+      providerRepository.watchHarnessProviders().first,
+      if (harnessAuthRepository != null)
+        harnessAuthRepository.watchCredentialSelections().first,
+      if (harnessAuthRepository != null)
+        harnessAuthRepository.watchHarnessOAuthAccounts().first,
       loadOllamaModels(),
     ]);
     final harnesses = futures[0] as List<Harnesse>;
     final models = futures[1] as List<Model>;
     final harnessModels = futures[2] as List<HarnessModel>;
-    final providerKeys = futures[3] as List<ProviderKey>;
-    final ollamaModels = futures[4] as List<OllamaModel>;
+    final providerAPIKeys = futures[3] as List<ProviderApiKey>;
+    final harnessProviders = futures[4] as List<HarnessProvider>;
+    var index = 5;
+    final credentialSelections = harnessAuthRepository == null
+        ? const <CredentialSelection>[]
+        : futures[index++] as List<CredentialSelection>;
+    final harnessOAuthAccounts = harnessAuthRepository == null
+        ? const <HarnessOauthAccount>[]
+        : futures[index++] as List<HarnessOauthAccount>;
+    final ollamaModels = futures[index] as List<OllamaModel>;
 
     if (!context.mounted) {
       return null;
@@ -101,7 +140,10 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
         harnesses: harnesses,
         models: models,
         harnessModels: harnessModels,
-        providerKeys: providerKeys,
+        harnessProviders: harnessProviders,
+        providerAPIKeys: providerAPIKeys,
+        credentialSelections: credentialSelections,
+        harnessOAuthAccounts: harnessOAuthAccounts,
         ollamaModels: ollamaModels,
       ),
     );
@@ -113,14 +155,10 @@ class ChatListScreenAdapter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<ChatListCubit>()
-        ..watchChats()
-        ..checkEmptyAndMaybeAutoCreate(),
-      child: ChatListAdapter(
-        providerRepository: getIt<IProviderRepository>(),
-        loadOllamaModels: getIt<OllamaApi>().listModels,
-      ),
+    return ChatListAdapter(
+      providerRepository: getIt<IProviderRepository>(),
+      harnessAuthRepository: getIt<IHarnessAuthRepository>(),
+      loadOllamaModels: getIt<OllamaApi>().listModels,
     );
   }
 }

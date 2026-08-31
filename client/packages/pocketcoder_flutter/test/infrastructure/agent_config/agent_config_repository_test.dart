@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/agent_config_exception.dart';
+import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
@@ -11,6 +12,8 @@ class MockPocoConfigDao extends Mock implements PocoConfigDao {}
 
 class MockPromptDao extends Mock implements PromptDao {}
 
+class MockPermissionModeDao extends Mock implements PermissionModeDao {}
+
 class _FakePocoConfig extends Fake implements PocoConfig {}
 
 class _FakePrompt extends Fake implements Prompt {}
@@ -19,11 +22,17 @@ void main() {
   late AgentConfigRepository repo;
   late MockPocoConfigDao configDao;
   late MockPromptDao promptDao;
+  late MockPermissionModeDao permissionModeDao;
 
   final testConfig = PocoConfig(
     id: 'config-1',
     name: 'Test Config',
-    harnessModel: 'hm-1',
+  );
+
+  final testPermissionMode = PermissionMode(
+    id: 'mode-1',
+    name: 'Balanced',
+    baseSessionMode: PermissionModeBaseSessionMode.approve,
   );
 
   final testPrompt = Prompt(
@@ -41,7 +50,8 @@ void main() {
   setUp(() {
     configDao = MockPocoConfigDao();
     promptDao = MockPromptDao();
-    repo = AgentConfigRepository(configDao, promptDao);
+    permissionModeDao = MockPermissionModeDao();
+    repo = AgentConfigRepository(configDao, promptDao, permissionModeDao);
   });
 
   test('watchConfigs forwards configDao.watch()', () {
@@ -58,6 +68,14 @@ void main() {
 
     expect(repo.watchPrompts(), emits([testPrompt]));
     verify(() => promptDao.watch()).called(1);
+  });
+
+  test('watchPermissionModes forwards permissionModeDao.watch()', () {
+    final stream = Stream.value([testPermissionMode]);
+    when(() => permissionModeDao.watch()).thenAnswer((_) => stream);
+
+    expect(repo.watchPermissionModes(), emits([testPermissionMode]));
+    verify(() => permissionModeDao.watch()).called(1);
   });
 
   test(

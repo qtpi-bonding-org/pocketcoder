@@ -1,29 +1,51 @@
 import 'package:path/path.dart' as p;
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_oauth_account.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
+import 'package:pocketcoder_flutter/domain/models/credential_selection.dart';
 
 /// Filters `harness_models` rows to the ones a user can actually pick for
-/// [harnessId] — design spec §5.9: a model needs a `harness_models` row for
-/// the selected harness, AND the current user needs a `provider_keys` row
-/// for that model's provider. `models`/`providerKeys.provider` are plain,
-/// uncanonicalized text (no shared enum, per the design spec's open
-/// question) — this does an exact string match, which is what the spec
-/// says makes a casing mismatch user-visible as "my model list is empty."
+/// [harnessId] — a model needs a `harness_models` row, a
+/// `harness_providers` edge, and a usable credential for that provider.
 List<HarnessModel> selectableModels({
   required String harnessId,
   required List<HarnessModel> harnessModels,
   required List<Model> models,
-  required List<ProviderKey> providerKeys,
+  required List<HarnessProvider> harnessProviders,
+  required List<ProviderApiKey> providerAPIKeys,
+  List<CredentialSelection> credentialSelections = const [],
+  List<HarnessOauthAccount> harnessOAuthAccounts = const [],
 }) {
   final modelsById = {for (final m in models) m.id: m};
-  final keyedProviders = providerKeys.map((k) => k.provider).toSet();
+  final usableProviders = <String>{};
+  for (final edge in harnessProviders.where((e) => e.harness == harnessId)) {
+    final selection = credentialSelections
+        .where((s) => s.harness == harnessId && s.provider == edge.provider)
+        .firstOrNull;
+    if (selection?.mode == CredentialSelectionMode.none) continue;
+    if (selection?.mode == CredentialSelectionMode.oauth) {
+      final connected = harnessOAuthAccounts.any((account) =>
+          account.harness == harnessId &&
+          account.provider == edge.provider &&
+          account.status == HarnessOauthAccountStatus.connected);
+      if (edge.supportsOauth == true && connected) {
+        usableProviders.add(edge.provider);
+      }
+    } else if (providerAPIKeys.any((key) => key.provider == edge.provider)) {
+      usableProviders.add(edge.provider);
+    }
+  }
 
   return harnessModels.where((hm) {
     if (hm.harness != harnessId) return false;
     final model = modelsById[hm.model];
     if (model == null) return false;
-    return keyedProviders.contains(model.provider);
+    return harnessProviders.any((edge) =>
+        edge.harness == harnessId &&
+        edge.provider == model.provider &&
+        usableProviders.contains(edge.provider));
   }).toList();
 }
 
@@ -55,7 +77,6 @@ WorkspacePathValidationError? validateWorkspacePath(
     return WorkspacePathValidationError.empty;
   }
 
-  // Normalize the path: resolves . and .., removes trailing slashes.
   final normalized = p.normalize(path);
 
   if (normalized == root) return null;

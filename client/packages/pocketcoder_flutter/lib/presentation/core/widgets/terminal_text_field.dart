@@ -74,13 +74,21 @@ class TerminalTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: errorText != null ? colors.error : colors.onSurface,
+                color: errorText != null ? context.terminalColors.warning : colors.onSurface,
               ),
+              borderRadius: BorderRadius.zero,
+            ),
+            errorBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: context.terminalColors.warning),
+              borderRadius: BorderRadius.zero,
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: context.terminalColors.warning),
               borderRadius: BorderRadius.zero,
             ),
             errorText: errorText,
             errorStyle: TextStyle(
-              color: colors.error,
+              color: context.terminalColors.warning,
               fontFamily: AppFonts.bodyFamily,
               package: 'pocketcoder_flutter',
               fontSize: AppSizes.fontMini,

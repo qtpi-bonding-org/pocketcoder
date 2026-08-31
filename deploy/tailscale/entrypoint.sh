@@ -6,12 +6,17 @@ tailscaled --state=/var/lib/tailscale/tailscaled.state &
 TAILSCALED_PID=$!
 
 # Wait for tailscaled socket to be ready
+ready=0
 for i in $(seq 1 30); do
   if tailscale status >/dev/null 2>&1; then
+    ready=1
     break
   fi
   sleep 1
 done
+if [ "$ready" -eq 0 ]; then
+  echo "WARNING: tailscale did not report ready after 30s" >&2
+fi
 
 # Authenticate — auth key for headless, interactive login URL if not set
 if [ -n "$TS_AUTHKEY" ]; then
@@ -47,7 +52,7 @@ echo ""
 tailscale status
 echo ""
 echo "Your PocketCoder URL:"
-tailscale funnel status 2>/dev/null || tailscale serve status 2>/dev/null || true
+tailscale funnel status || tailscale serve status 2>/dev/null || true
 
 # Keep container alive
 wait $TAILSCALED_PID

@@ -13,13 +13,13 @@ part 'error_response.g.dart';
 /// ErrorResponse
 ///
 /// Properties:
-/// * [code]
+/// * [status]
 /// * [message]
 /// * [data]
 @BuiltValue()
 abstract class ErrorResponse implements Built<ErrorResponse, ErrorResponseBuilder> {
-  @BuiltValueField(wireName: r'code')
-  int get code;
+  @BuiltValueField(wireName: r'status')
+  int get status;
 
   @BuiltValueField(wireName: r'message')
   String get message;
@@ -50,9 +50,9 @@ class _$ErrorResponseSerializer implements PrimitiveSerializer<ErrorResponse> {
     ErrorResponse object, {
     FullType specifiedType = FullType.unspecified,
   }) sync* {
-    yield r'code';
+    yield r'status';
     yield serializers.serialize(
-      object.code,
+      object.status,
       specifiedType: const FullType(int),
     );
     yield r'message';
@@ -88,12 +88,12 @@ class _$ErrorResponseSerializer implements PrimitiveSerializer<ErrorResponse> {
       final key = serializedList[i] as String;
       final value = serializedList[i + 1];
       switch (key) {
-        case r'code':
+        case r'status':
           final valueDes = serializers.deserialize(
             value,
             specifiedType: const FullType(int),
           ) as int;
-          result.code = valueDes;
+          result.status = valueDes;
           break;
         case r'message':
           final valueDes = serializers.deserialize(

@@ -1,15 +1,23 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
+import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
+import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'server_control_state.dart';
 
 @injectable
 class ServerControlCubit extends AppCubit<ServerControlState> {
-  ServerControlCubit(this._service) : super(const ServerControlState());
+  ServerControlCubit(
+    this._service,
+    this._localAuthGate, [
+    IServerConnectionDetailsProvider? connectionDetails,
+  ]) : super(ServerControlState(connectionDetails: connectionDetails));
 
   final IServerControlService _service;
+  final ILocalAuthGate _localAuthGate;
 
   Future<void> inspectRelease() async {
     await tryOperation(() async {
@@ -21,6 +29,8 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
       );
     }, emitLoading: true);
   }
+
+  static const _releaseRefreshRetryDelay = Duration(seconds: 1);
 
   Future<void> run({
     required ServerControlOperation operation,
@@ -38,6 +48,8 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
           await _service.updateNixOs(instanceId: instanceId),
         ServerControlOperation.saveBackup =>
           await _service.saveBackup(instanceId: instanceId),
+        ServerControlOperation.restoreBackup =>
+          await _service.restoreBackup(instanceId: instanceId),
       };
       return state.copyWith(
         status: UiFlowStatus.success,
@@ -46,6 +58,68 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
         clearError: true,
       );
     }, emitLoading: true);
+    if (state.status == UiFlowStatus.success && _refreshesRelease(operation)) {
+      await _refreshReleaseAfterOperation();
+    }
+  }
+
+  static bool _refreshesRelease(ServerControlOperation operation) => switch (
+      operation) {
+    ServerControlOperation.saveBackup ||
+    ServerControlOperation.restoreBackup =>
+      false,
+    _ => true,
+  };
+
+  /// Deliberately does not use [tryOperation] -- a failure here must not
+  /// surface an error banner or clear [ServerControlState.release] for an
+  /// operation that already succeeded.
+  Future<void> _refreshReleaseAfterOperation() async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await Future<void>.delayed(_releaseRefreshRetryDelay);
+      if (await _tryInspectRelease() case final release?) {
+        emit(state.copyWith(release: release));
+        return;
+      }
+    }
+  }
+
+  Future<ServerReleaseStatusSnapshot?> _tryInspectRelease() async {
+    try {
+      return await _service.inspectRelease();
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<void> loadPublicKey(String instanceId) async {
+    try {
+      final publicKey = await _service.readPublicKey(instanceId: instanceId);
+      emit(state.copyWith(publicKey: publicKey));
+    } on Object {
+      // A failed key read shouldn't block the control buttons -- and this
+      // is fire-and-forget, so an uncaught error here becomes unhandled.
+    }
+  }
+
+  /// Thin passthrough so widgets can gate a local-only reveal (e.g. the
+  /// admin password, which is already in [state.connectionDetails] and
+  /// needs no fetch) without reaching into DI directly.
+  Future<bool> confirmLocalAuth({required String reason}) =>
+      _localAuthGate.authenticate(reason: reason);
+
+  Future<void> revealPrivateKey({
+    required String instanceId,
+    required String authReason,
+  }) async {
+    if (!await _localAuthGate.authenticate(reason: authReason)) return;
+    try {
+      final privateKey = await _service.readPrivateKey(instanceId: instanceId);
+      emit(state.copyWith(privateKey: privateKey));
+    } on Object {
+      // Fire-and-forget, matching loadPublicKey: a failed read shouldn't
+      // block the control buttons.
+    }
   }
 
   static RootSshCommand commandFor(ServerControlOperation operation) =>
@@ -57,5 +131,6 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
         ServerControlOperation.restartNixOs => RootSshCommand.restartNixOs,
         ServerControlOperation.updateNixOs => RootSshCommand.updateNixOs,
         ServerControlOperation.saveBackup => RootSshCommand.saveBackup,
+        ServerControlOperation.restoreBackup => RootSshCommand.restoreBackup,
       };
 }

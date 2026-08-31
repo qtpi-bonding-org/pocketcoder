@@ -55,6 +55,8 @@ void main() {
           context,
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
         );
         return host(
           context,
@@ -72,7 +74,7 @@ void main() {
       }),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('root@device \$ '), findsOneWidget);
+    expect(find.textContaining('root@device \$ '), findsOneWidget);
     expect(find.byType(TerminalConversationFrame), findsOneWidget);
   });
 
@@ -84,6 +86,8 @@ void main() {
           context,
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
         );
         return host(
           context,
@@ -102,8 +106,78 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('[poco] '), findsOneWidget);
+    expect(find.textContaining('[poco] '), findsOneWidget);
     expect(find.byType(TypewriterText), findsOneWidget);
+  });
+
+  testWidgets('reasoning messages render inside a Poco frame with the '
+      'default (non-warning) accent', (tester) async {
+    late StackedChatBuilders builders;
+    await tester.pumpWidget(wrap(
+      Builder(builder: (context) {
+        builders = pocketcoderChatBuilders(
+          context,
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
+        );
+        return host(
+          context,
+          builders,
+          const Conversation(timeline: [
+            TimelineItem.text(
+              id: 'reasoning-1',
+              kind: ChatMessageKind.reasoning,
+              role: 'assistant',
+              text: 'thinking...',
+              order: OrderKey(1),
+            ),
+          ]),
+        );
+      }),
+    ));
+    await tester.pumpAndSettle();
+
+    final frame = tester.widget<TerminalConversationFrame>(
+        find.byType(TerminalConversationFrame));
+    expect(frame.speaker, TerminalConversationSpeaker.poco);
+    expect(frame.isReasoning, isFalse);
+  });
+
+  testWidgets(
+      'a poco text message already in animatedMessageIds renders instantly',
+      (tester) async {
+    late StackedChatBuilders builders;
+    await tester.pumpWidget(wrap(
+      Builder(builder: (context) {
+        builders = pocketcoderChatBuilders(
+          context,
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {'m1'},
+          onMessageAnimated: (_) {},
+        );
+        return host(
+          context,
+          builders,
+          const Conversation(timeline: [
+            TimelineItem.text(
+              id: 'm1',
+              kind: ChatMessageKind.text,
+              role: 'assistant',
+              text: 'already complete',
+              order: OrderKey(1),
+            ),
+          ]),
+        );
+      }),
+    ));
+
+    // No pump-forward: instant rendering makes the complete text available
+    // on the first frame.
+    await tester.pump();
+    expect(find.textContaining('already complete'), findsOneWidget);
   });
 
   testWidgets('permissionCardBuilder renders pocketcoder\'s own PermissionCard',
@@ -115,6 +189,8 @@ void main() {
           context,
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
         );
         return host(
           context,
@@ -145,6 +221,8 @@ void main() {
           context,
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
         );
         return host(
           context,

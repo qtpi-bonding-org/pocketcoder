@@ -35,6 +35,17 @@ type ProxyDeps struct {
 	TargetURL string
 }
 
+// ObservabilityProxyPrefix is the path this proxy is mounted at, exported
+// so config_consistency_test.go can assert docker-compose.yml's
+// SQLPAGE_SITE_PREFIX actually matches it. It has to: the reverse proxy
+// strips this prefix before forwarding, so SQLPage sees an unprefixed
+// path and 308-redirects to whatever site prefix IT was told to expect --
+// a mismatch there sends that redirect to a path this proxy never
+// registered at all, 404ing. Confirmed live: SQLPAGE_SITE_PREFIX had
+// drifted to a stale pre-v1 path (missing this route's "v1" segment),
+// breaking the Monitor screen's observability dashboard 100% of the time.
+const ObservabilityProxyPrefix = "/api/pocketcoder/v1/proxy/observability"
+
 func AddProxyOperations(registry *operation.Registry, deps ProxyDeps) {
 	target := strings.TrimSpace(deps.TargetURL)
 	if target == "" {
@@ -50,10 +61,10 @@ func AddProxyOperations(registry *operation.Registry, deps ProxyDeps) {
 	registry.Add(operation.Route{
 		OperationID: "proxyObservability",
 		Method:      http.MethodGet,
-		Path:        "/api/pocketcoder/v1/proxy/observability/{path...}",
+		Path:        ObservabilityProxyPrefix + "/{path...}",
 		Auth:        true,
 		Direct:      true,
-		Action:      createProxyHandler(target, "/api/pocketcoder/v1/proxy/observability", transport),
+		Action:      createProxyHandler(target, ObservabilityProxyPrefix, transport),
 	})
 }
 
@@ -61,7 +72,6 @@ func AddProxyOperations(registry *operation.Registry, deps ProxyDeps) {
 func createProxyHandler(target string, prefix string, transport http.RoundTripper) func(re *core.RequestEvent) error {
 	targetUrl, err := url.Parse(target)
 	if err != nil {
-		// Return a handler that always reports the misconfiguration.
 		return func(re *core.RequestEvent) error {
 			return re.BadRequestError(fmt.Sprintf("Proxy target URL is malformed: %v", err), nil)
 		}
@@ -80,21 +90,27 @@ func createProxyHandler(target string, prefix string, transport http.RoundTrippe
 			}
 		}
 
-		// Update headers and target URL for the proxy
 		req.URL.Host = targetUrl.Host
 		req.URL.Scheme = targetUrl.Scheme
 		req.Header.Set("X-Forwarded-Host", req.Host)
 		req.Header.Set("X-Forwarded-Prefix", prefix)
 		req.Host = targetUrl.Host
 
-		// Strip prefix from the path so the target service sees its own root
-		path := req.URL.Path
-		if strings.HasPrefix(path, prefix) {
-			req.URL.Path = strings.TrimPrefix(path, prefix)
-			if req.URL.Path == "" {
-				req.URL.Path = "/"
-			}
-		}
+		// Deliberately NOT stripping prefix from the path here. SQLPage's own
+		// site_prefix config (SQLPAGE_SITE_PREFIX) expects to see this prefix
+		// still present in the request path -- it strips/routes internally
+		// itself, and any request that arrives WITHOUT its configured prefix
+		// gets a 308 redirect TO that prefix (its own "you're missing my
+		// mount point" recovery). Confirmed live: stripping here caused an
+		// infinite redirect loop -- our proxy stripped the prefix before
+		// forwarding, SQLPage saw an unprefixed path and 308-redirected back
+		// to the (correctly-configured, matching) prefixed path, which
+		// re-entered this same proxy, which stripped the prefix again, ad
+		// infinitum, until the client's own HTTP stack gave up with
+		// "Redirect loop detected". See sql-page.com's own nginx reverse-
+		// proxy guide: the documented pattern is `proxy_pass` with the
+		// prefixed path left completely intact, matched by
+		// `"site_prefix": "<same prefix>"` in sqlpage.json.
 
 		// Perform the proxying
 		proxy.ServeHTTP(re.Response, req)

@@ -8,7 +8,7 @@ enum RootSshCommand {
   restartNixOs,
   updateNixOs,
   saveBackup,
-  exportCaddyCertificate,
-  restoreCaddyCertificate,
+  restoreBackup,
+  exportCaddyCaFingerprint,
   rollback,
 }

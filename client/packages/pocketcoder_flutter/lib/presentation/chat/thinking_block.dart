@@ -1,20 +1,14 @@
-// ThinkingBlock renders one reasoning entry in the chat timeline as a
-// terminal-style status row with expandable text. It opens automatically
-// only while it is the newest reasoning entry; older entries collapse when a
-// newer one arrives. Tapping the status row always toggles it.
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 class ThinkingBlock extends StatefulWidget {
   final String text;
-  final bool isLatest;
   final bool isStreaming;
 
   const ThinkingBlock({
     super.key,
     required this.text,
-    required this.isLatest,
     required this.isStreaming,
   });
 
@@ -23,20 +17,11 @@ class ThinkingBlock extends StatefulWidget {
 }
 
 class _ThinkingBlockState extends State<ThinkingBlock> {
-  late bool _expanded = widget.isLatest;
-
-  @override
-  void didUpdateWidget(covariant ThinkingBlock oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isLatest != oldWidget.isLatest) {
-      _expanded = widget.isLatest;
-    }
-  }
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -52,7 +37,7 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
                 Text(
                   '[ THOUGHTS ]',
                   style: TextStyle(
-                    color: terminalColors.warning,
+                    color: colors.primary,
                     fontFamily: AppFonts.bodyFamily,
                     fontSize: AppSizes.fontSmall,
                     fontWeight: AppFonts.heavy,
@@ -71,7 +56,7 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
         ),
         if (_expanded)
           Padding(
-            padding: EdgeInsets.only(bottom: AppSizes.space),
+            padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
             child: Text(
               widget.text,
               style: TextStyle(

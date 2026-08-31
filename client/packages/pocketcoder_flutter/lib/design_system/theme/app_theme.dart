@@ -10,25 +10,47 @@ export '../primitives/app_sizes.dart';
 export '../primitives/app_motion.dart';
 export '../primitives/spacers.dart';
 
+/// How an element should read: not yet acted on (plain), the recommended
+/// next action or current reading-position (outlined), or already-true --
+/// the active tab, a sent message, the user's current selection (selected).
+/// Per the emphasis-states spec (2026-08-23), `outlined` is deliberately NOT
+/// a variant of `selected` -- applying the invert treatment to a button you
+/// haven't pressed yet reads as "you're already here," which is wrong for a
+/// primary CTA or a stepper's current-position marker.
+enum Emphasis { plain, outlined, selected }
+
+/// Given a color and how this instance should read, returns what to
+/// render. This is the ONLY place "invert" or "outline" happens -- every
+/// emphasis-aware widget (TerminalFooter's tab buttons, a primary CTA not
+/// yet pressed, the chat transcript's user-turn rows, a stepper's
+/// current-position marker) calls this directly and inline, passing its
+/// own base color and the Emphasis it already knows, instead of hand-
+/// rolling its own two- or three-way ternary -- which is exactly how
+/// `attention`/`userCyan` diverged in the color-system spec's audit.
+({Color? fill, Color? border, Color text}) emphasize(
+  Color base,
+  Emphasis emphasis,
+) =>
+    switch (emphasis) {
+      Emphasis.plain => (fill: null, border: null, text: base),
+      Emphasis.outlined => (fill: null, border: base, text: base),
+      Emphasis.selected => (fill: base, border: null, text: Colors.black),
+    };
+
 /// Extension for terminal-specific colors that don't fit into standard ColorScheme.
 class TerminalColors extends ThemeExtension<TerminalColors> {
   final Color glow;
   final Color scanline;
   final double scanlineOpacity;
 
-  // ANSI Accents
-  final Color user;
   final Color danger;
-  final Color attention;
   final Color warning;
 
   const TerminalColors({
     required this.glow,
     required this.scanline,
     required this.scanlineOpacity,
-    required this.user,
     required this.danger,
-    required this.attention,
     required this.warning,
   });
 
@@ -37,18 +59,14 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
     Color? glow,
     Color? scanline,
     double? scanlineOpacity,
-    Color? user,
     Color? danger,
-    Color? attention,
     Color? warning,
   }) {
     return TerminalColors(
       glow: glow ?? this.glow,
       scanline: scanline ?? this.scanline,
       scanlineOpacity: scanlineOpacity ?? this.scanlineOpacity,
-      user: user ?? this.user,
       danger: danger ?? this.danger,
-      attention: attention ?? this.attention,
       warning: warning ?? this.warning,
     );
   }
@@ -61,9 +79,7 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
       scanline: Color.lerp(scanline, other.scanline, t) ?? scanline,
       scanlineOpacity: lerpDouble(scanlineOpacity, other.scanlineOpacity, t) ??
           scanlineOpacity,
-      user: Color.lerp(user, other.user, t) ?? user,
       danger: Color.lerp(danger, other.danger, t) ?? danger,
-      attention: Color.lerp(attention, other.attention, t) ?? attention,
       warning: Color.lerp(warning, other.warning, t) ?? warning,
     );
   }
@@ -106,15 +122,13 @@ class AppTheme {
           glow: palette.vividGreen.withValues(alpha: 0.1),
           scanline: palette.vividGreen.withValues(alpha: 0.05),
           scanlineOpacity: 0.05,
-          user: palette.userCyan,
           danger: palette.dangerRed,
-          attention: palette.infoWhite,
           warning: palette.warningAmber,
         ),
       ],
       textTheme: AppFonts.textTheme.apply(
-        bodyColor: palette.phosphorGreen, // Standard reading text
-        displayColor: palette.vividGreen, // Headers / Highlights
+        bodyColor: palette.phosphorGreen,
+        displayColor: palette.vividGreen,
         fontFamily: AppFonts.bodyFamily,
         package: 'pocketcoder_flutter',
       ),
@@ -139,7 +153,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: palette.vividGreen,
-          foregroundColor: const Color(0xFF000000), // True Black
+          foregroundColor: const Color(0xFF000000),
           minimumSize: Size.fromHeight(AppSizes.buttonHeight),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.zero,

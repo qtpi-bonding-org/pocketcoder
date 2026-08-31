@@ -4,15 +4,13 @@
 typedef McpOAuthTokenPair = ({String accessToken, String? refreshToken});
 
 /// A provider workers/oauth-relay currently has configured (both a
-/// PROVIDERS entry and live wrangler secrets) — see
-/// docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md.
+/// PROVIDERS entry and live wrangler secrets).
 /// `displayName` is human-facing ("GitHub"); `id` is the opaque string
 /// stored in McpServer.oauthProvider and passed to authenticate().
 typedef McpOAuthProvider = ({String id, String displayName});
 
-/// Client-side half of the MCP OAuth flow (see
-/// docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md, Component
-/// 2, as refined by the provider-discovery addendum). Runs the PKCE
+/// Client-side half of the MCP OAuth flow (Component 2, as refined by the
+/// provider-discovery addendum). Runs the PKCE
 /// authorize/browser/claim dance against workers/oauth-relay and hands
 /// back the resulting token pair. This service is a courier, not a
 /// holder: callers are responsible for delivering the returned token to
@@ -27,7 +25,7 @@ typedef McpOAuthProvider = ({String id, String displayName});
 /// and builds the authorize URL itself at GET /authorize time. Adding a
 /// new OAuth provider is therefore a Worker-only change (one PROVIDERS
 /// entry + one `wrangler secret put`), never a Flutter code change or app
-/// release. See the provider-discovery spec's Problem section.
+/// release.
 abstract class IMcpOAuthService {
   /// Returns the list of providers the Worker currently has configured
   /// (PROVIDERS entry + live secrets). Cached in-memory for the app

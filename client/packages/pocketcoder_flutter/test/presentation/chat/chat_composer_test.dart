@@ -34,14 +34,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('root@device \$ '), findsOneWidget);
-    expect(find.text('SEND'), findsOneWidget);
+    expect(find.text('SEND'), findsNothing);
     final field = tester.widget<TextField>(find.byType(TextField));
     field.onSubmitted?.call('hello');
     expect(submitted, isTrue);
     controller.dispose();
   });
 
-  testWidgets('disables input and send action while loading', (tester) async {
+  testWidgets('disables input while loading', (tester) async {
     final controller = TextEditingController();
     await tester.pumpWidget(_wrap(
       MediaQuery(
@@ -59,17 +59,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
-    expect(
-      tester
-          .widget<TextButton>(
-            find.ancestor(
-              of: find.text('SEND'),
-              matching: find.byType(TextButton),
-            ),
-          )
-          .onPressed,
-      isNull,
-    );
     controller.dispose();
   });
 

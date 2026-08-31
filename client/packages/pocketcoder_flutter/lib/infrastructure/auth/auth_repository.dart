@@ -2,8 +2,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
-import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
-import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import "package:pocketcoder_flutter/domain/models/collections.dart";
 import 'package:pocketcoder_flutter/infrastructure/core/auth_store.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
@@ -20,17 +18,15 @@ class AuthRepository implements IAuthRepository {
   final PocketBase _pocketBase;
   final AuthStoreConfig _authStoreConfig;
   final FlutterSecureStorage _storage;
-  final BillingService _billingService;
-  final PushService _pushService;
   final PocketCoderApiClient _api;
+  final AuthHttpState _authHttpState;
 
   AuthRepository(
     this._pocketBase,
     this._authStoreConfig,
     this._storage,
-    this._billingService,
-    this._pushService,
     this._api,
+    this._authHttpState,
   );
 
   @override
@@ -42,6 +38,9 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
+  Stream<void> get authChanges => _pocketBase.authStore.onChange.map((_) {});
+
+  @override
   Future<bool> login(String email, String password) async {
     return tryMethod(
       () async {
@@ -49,11 +48,9 @@ class AuthRepository implements IAuthRepository {
             .collection(Collections.users)
             .authWithPassword(email, password);
         await _refireConnectivityCheck();
-        final userId = _pocketBase.authStore.record?.id;
-        if (userId != null) {
-          await _billingService.identify(userId);
-          await _pushService.syncAuthenticatedDevice();
-        }
+        // Authentication success is intentionally independent of provider
+        // effects: AuthSessionEffects runs best-effort after login returns and
+        // retries on a later qualifying session transition.
         return true;
       },
       AuthException.new,
@@ -66,13 +63,15 @@ class AuthRepository implements IAuthRepository {
     await tryMethod(
       () async {
         final generatedResponse = await _api.release.getReleaseCompatibility();
-        final response =
-            PocketCoderApiClient.decodeJson(generatedResponse.data);
-        final compatibility = response['compatibility'];
-        if (compatibility is! Map<String, dynamic>) {
+        final compatibilityField = generatedResponse.data?.compatibility;
+        if (compatibilityField == null) {
           throw const FormatException(
               'Invalid release compatibility response.');
         }
+        final compatibility = {
+          for (final entry in compatibilityField.entries)
+            entry.key: entry.value?.value,
+        };
         final app = compatibility['app'];
         final server = compatibility['server'];
         final deployment = compatibility['deployment'];
@@ -111,15 +110,29 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<void> logout() async {
-    await _pushService.unregisterAuthenticatedDevice();
     _pocketBase.authStore.clear();
     await _authStoreConfig.clear();
-    await _billingService.reset();
+  }
+
+  @override
+  Future<void> clearSession() async {
+    _pocketBase.authStore.clear();
+    await _authStoreConfig.clear();
+    await _storage.delete(key: 'pb_server_url');
+    // Without this, every record pocketbase_drift ever synced (chats
+    // included) stays sitting in its local offline cache -- readable
+    // straight from disk with no auth and no network at all -- so a
+    // "cleared" session could still render an old deployment's chat list.
+    if (_pocketBase is $PocketBase) {
+      await _pocketBase.db.clearAllData();
+    }
   }
 
   @override
   Future<AuthRefreshResult> refreshToken() async {
     try {
+      // Deliberate exception: this is the auth refresh operation itself and
+      // necessarily runs before DAO session guards can apply.
       await _pocketBase.collection(Collections.users).authRefresh(
         headers: {AuthAwareHttpClient.skipRefreshHeader: '1'},
       );
@@ -159,10 +172,23 @@ class AuthRepository implements IAuthRepository {
       _pocketBase.authStore.record?.getStringValue('role');
 
   @override
+  String? get currentBaseUrl => _pocketBase.baseURL;
+
+  @override
   Future<void> updateBaseUrl(String url) async {
+    // In-memory only, deliberately not persisted here -- a candidate URL
+    // needs to be active for verifyServerCompatibility()/login() to target
+    // it, but persisting an unverified URL let one typo on the login
+    // screen permanently overwrite the last-known-good saved URL. Callers
+    // persist explicitly via persistBaseUrl() once the candidate is
+    // actually confirmed good.
     _pocketBase.baseURL = url;
-    await _storage.write(key: 'pb_server_url', value: url);
+    _authHttpState.updateDeploymentOrigin(url);
   }
+
+  @override
+  Future<void> persistBaseUrl(String url) =>
+      _storage.write(key: 'pb_server_url', value: url);
 
   @override
   Future<String?> getSavedBaseUrl() => _storage.read(key: 'pb_server_url');

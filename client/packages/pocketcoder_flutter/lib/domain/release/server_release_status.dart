@@ -12,6 +12,7 @@ class ServerReleaseStatusSnapshot {
     required this.currentDataVersion,
     required this.currentReleaseDigest,
     required this.checkedAt,
+    this.selectedHarnesses = const [],
     this.availableVersion,
     this.availableDataVersion,
     this.availableReleaseDigest,
@@ -20,6 +21,10 @@ class ServerReleaseStatusSnapshot {
     this.normalRollbackAvailableAfterSuccess,
     this.reasonCode,
     this.summary,
+    this.deploymentContractVersion,
+    this.appContractVersion,
+    this.serverApiVersion,
+    this.nixosVersion,
   });
 
   final ServerReleaseStatus status;
@@ -27,6 +32,7 @@ class ServerReleaseStatusSnapshot {
   final int currentDataVersion;
   final String currentReleaseDigest;
   final DateTime? checkedAt;
+  final List<String> selectedHarnesses;
   final String? availableVersion;
   final int? availableDataVersion;
   final String? availableReleaseDigest;
@@ -35,6 +41,19 @@ class ServerReleaseStatusSnapshot {
   final bool? normalRollbackAvailableAfterSuccess;
   final String? reasonCode;
   final String? summary;
+
+  /// The NixOS/backend deployment contract version this release requires --
+  /// distinct from [currentDataVersion] (PocketBase schema/data shape) and
+  /// from the app/server contract versions below.
+  final int? deploymentContractVersion;
+
+  final int? appContractVersion;
+  final int? serverApiVersion;
+
+  /// The NixOS release line this deployment is currently running, e.g.
+  /// "26.05" -- from compatibility.os.nixosVersion, always present once a
+  /// release has actually installed (not a mismatch-only signal).
+  final String? nixosVersion;
 
   bool get crossesDataVersion =>
       availableDataVersion != null &&
@@ -49,6 +68,10 @@ class ServerReleaseStatusSnapshot {
   ) {
     final release = _map(value['current']);
     final metadata = _map(value['metadataStatus']);
+    final compatibility = _map(release['compatibility']);
+    final appCompatibility = _map(compatibility['app']);
+    final serverCompatibility = _map(compatibility['server']);
+    final osCompatibility = _map(compatibility['os']);
     return ServerReleaseStatusSnapshot(
       status: _status(metadata['status']),
       currentVersion: _string(
@@ -61,6 +84,7 @@ class ServerReleaseStatusSnapshot {
         metadata['currentReleaseDigest'] ?? release['releaseDigest'],
       ),
       checkedAt: DateTime.tryParse(_string(metadata['checkedAt'])),
+      selectedHarnesses: _stringList(release['selectedHarnesses']),
       availableVersion: _nullableString(metadata['availableVersion']),
       availableDataVersion: _nullableInteger(
         metadata['availableDataVersion'],
@@ -74,6 +98,11 @@ class ServerReleaseStatusSnapshot {
           metadata['normalRollbackAvailableAfterSuccess'] as bool?,
       reasonCode: _nullableString(metadata['reasonCode']),
       summary: _nullableString(metadata['summary']),
+      deploymentContractVersion:
+          _nullableInteger(release['deploymentContractVersion']),
+      appContractVersion: _nullableInteger(appCompatibility['contractVersion']),
+      serverApiVersion: _nullableInteger(serverCompatibility['apiVersion']),
+      nixosVersion: _nullableString(osCompatibility['nixosVersion']),
     );
   }
 
@@ -96,4 +125,7 @@ class ServerReleaseStatusSnapshot {
   static int _integer(Object? value) => value is int ? value : 0;
 
   static int? _nullableInteger(Object? value) => value is int ? value : null;
+
+  static List<String> _stringList(Object? value) =>
+      value is List ? value.whereType<String>().toList() : const [];
 }

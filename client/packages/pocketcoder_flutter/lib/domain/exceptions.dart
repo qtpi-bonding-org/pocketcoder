@@ -63,6 +63,13 @@ class ToolPermissionsException extends DomainException {
       ToolPermissionsException('Failed to update tool permissions', cause);
 }
 
+class BillingException extends DomainException {
+  BillingException(super.message, [super.cause]);
+
+  factory BillingException.restoreFailed([dynamic cause]) =>
+      BillingException('Failed to restore purchases', cause);
+}
+
 /// Generic repository exceptions.
 class RepositoryException extends DomainException {
   RepositoryException(super.message, [super.cause]);
@@ -115,6 +122,11 @@ class SkillsException extends DomainException {
 /// Scheduler-related exceptions.
 class SchedulerException extends DomainException {
   SchedulerException(super.message, [super.cause]);
+}
+
+/// Live-activity-related exceptions.
+class LiveActivityException extends DomainException {
+  LiveActivityException(super.message, [super.cause]);
 }
 
 /// Files-related exceptions.

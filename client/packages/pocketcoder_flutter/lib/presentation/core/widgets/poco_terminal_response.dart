@@ -11,31 +11,45 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/typewriter_text.da
 class PocoTerminalResponse extends StatelessWidget {
   const PocoTerminalResponse({
     super.key,
+    required this.messageId,
     required this.message,
+    required this.instant,
+    this.onAnimationComplete,
     this.speed = const Duration(milliseconds: 10),
   });
 
+  final String messageId;
   final String message;
+  final bool instant;
+  final VoidCallback? onAnimationComplete;
   final Duration speed;
 
   @override
   Widget build(BuildContext context) {
     return TerminalConversationFrame(
       speaker: TerminalConversationSpeaker.poco,
-      child: TerminalTranscriptLine(
+      child: TypewriterText(
+        key: ValueKey(messageId),
         prefix: '[poco] ',
-        color: context.colorScheme.primary,
-        child: TypewriterText(
-          text: message,
-          speed: speed,
-          style: TextStyle(
-            color: context.colorScheme.primary,
-            fontFamily: AppFonts.bodyFamily,
-            package: 'pocketcoder_flutter',
-            fontSize: AppSizes.fontStandard,
-            fontWeight: AppFonts.medium,
-            height: 1.4,
-          ),
+        prefixStyle: TextStyle(
+          color: context.colorScheme.primary,
+          fontFamily: AppFonts.bodyFamily,
+          package: 'pocketcoder_flutter',
+          fontSize: AppSizes.fontStandard,
+          fontWeight: AppFonts.medium,
+          height: 1.4,
+        ),
+        text: message,
+        speed: speed,
+        instant: instant,
+        onComplete: onAnimationComplete,
+        style: TextStyle(
+          color: context.colorScheme.primary,
+          fontFamily: AppFonts.bodyFamily,
+          package: 'pocketcoder_flutter',
+          fontSize: AppSizes.fontStandard,
+          fontWeight: AppFonts.medium,
+          height: 1.4,
         ),
       ),
     );

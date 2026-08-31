@@ -71,9 +71,9 @@ class _TerminalStatusGlyphState extends State<TerminalStatusGlyph> {
       };
 
   Color _color(BuildContext context) => switch (widget.status) {
-        TerminalStatus.running => context.terminalColors.attention,
-        TerminalStatus.success => context.terminalColors.attention,
-        TerminalStatus.failure => context.terminalColors.danger,
+        TerminalStatus.running => context.colorScheme.secondary,
+        TerminalStatus.success => context.colorScheme.secondary,
+        TerminalStatus.failure => context.terminalColors.warning,
         TerminalStatus.attention => context.terminalColors.warning,
       };
 

@@ -1025,6 +1025,7 @@ dependencies = [
  "tokio",
  "tokio-rusqlite",
  "tokio-util",
+ "tower",
  "tracing",
  "tracing-subscriber",
  "uuid",

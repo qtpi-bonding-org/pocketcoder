@@ -89,19 +89,17 @@ class TerminalConversationFrame extends StatelessWidget {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
     final isUser = speaker == TerminalConversationSpeaker.user;
-    final accent = isReasoning
-        ? terminalColors.warning
-        : isUser
-            ? terminalColors.user
-            : colors.primary;
+    final resolved =
+        emphasize(colors.secondary, isUser ? Emphasis.selected : Emphasis.plain);
+    final accent = isReasoning ? terminalColors.warning : resolved.text;
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (roleLabel != null)
+        if (roleLabel case final resolvedRoleLabel?)
           Padding(
             padding: EdgeInsets.only(bottom: AppSizes.space),
-            child: TerminalRoleLabel(label: roleLabel!, color: accent),
+            child: TerminalRoleLabel(label: resolvedRoleLabel, color: accent),
           ),
         child,
       ],
@@ -111,12 +109,7 @@ class TerminalConversationFrame extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
       padding: EdgeInsets.all(AppSizes.space),
       decoration: isUser && showUserBorder
-          ? BoxDecoration(
-              border: Border.all(
-                color: terminalColors.user.withValues(alpha: 0.45),
-              ),
-              color: colors.surfaceContainerHighest.withValues(alpha: 0.2),
-            )
+          ? BoxDecoration(color: resolved.fill)
           : null,
       child: content,
     );
@@ -180,7 +173,7 @@ class TerminalConversationTurn extends StatelessWidget {
       child: Text(
         '\$ $message',
         style: TextStyle(
-          color: context.terminalColors.user,
+          color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
           fontFamily: AppFonts.bodyFamily,
           fontSize: AppSizes.fontStandard,
         ),
@@ -196,14 +189,26 @@ class TerminalPromptSuggestion extends StatelessWidget {
     super.key,
     required this.label,
     required this.onSelected,
+    this.emphasis,
   });
 
   final String label;
   final VoidCallback onSelected;
 
+  /// When set, routes the border/text color through emphasize() instead
+  /// of the default alpha-0.3 border. See the emphasis-states spec
+  /// (2026-08-23).
+  final Emphasis? emphasis;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final resolvedEmphasis = emphasis;
+    final resolved = resolvedEmphasis == null
+        ? null
+        : emphasize(colors.primary, resolvedEmphasis);
+    final borderColor = resolved?.border ?? colors.primary.withValues(alpha: 0.3);
+    final textColor = resolved?.text ?? colors.primary;
     return SizedBox(
       width: double.infinity,
       child: TextButton(
@@ -215,16 +220,14 @@ class TerminalPromptSuggestion extends StatelessWidget {
             vertical: AppSizes.space,
           ),
           shape: RoundedRectangleBorder(
-            side: BorderSide(
-              color: colors.primary.withValues(alpha: 0.3),
-            ),
+            side: BorderSide(color: borderColor),
             borderRadius: BorderRadius.zero,
           ),
         ),
         child: Text(
           '> ${label.toUpperCase()}',
           style: TextStyle(
-            color: colors.primary,
+            color: textColor,
             fontFamily: AppFonts.bodyFamily,
             fontSize: AppSizes.fontTiny,
             fontWeight: AppFonts.heavy,

@@ -13,6 +13,7 @@ class ChatListCubit extends AppCubit<ChatListState> {
   final IChatListRepository _repo;
 
   StreamSubscription? _chatsSub;
+  bool _autoCreateChecked = false;
 
   @override
   Future<void> close() {
@@ -75,22 +76,34 @@ class ChatListCubit extends AppCubit<ChatListState> {
         return createSuccessState();
       });
 
-  /// Runs once (via the screen's `BlocProvider(create: ...)` cascade) to
-  /// decide, authoritatively, whether this user needs their first chat
+  /// Decides, authoritatively, whether this user needs their first chat
   /// auto-created. Deliberately independent of whatever `watchChats()` has
   /// emitted — a cache-only "chats.isEmpty" check would spuriously
   /// double-create a chat for a returning user whose local drift cache is
   /// cold (e.g. fresh install) but who has real chats server-side.
-  Future<void> checkEmptyAndMaybeAutoCreate() => tryOperation(() async {
-        final hasAny = await _repo.hasAnyChats();
-        if (hasAny) {
-          return state.copyWith(status: UiFlowStatus.success, error: null);
-        }
-        final chat = await _repo.createChat();
-        return state.copyWith(
-          status: UiFlowStatus.success,
-          error: null,
-          lastCreatedChatId: chat.id,
-        );
-      });
+  ///
+  /// Guarded to run at most once per cubit lifetime via [_autoCreateChecked]
+  /// -- the cubit is an app-lifetime instance provided at the app root, but
+  /// the screen that calls this (ChatListAdapter) mounts a fresh adapter
+  /// every time it's re-entered, so a call-site-only guard would re-run this
+  /// on every visit. Without this, a user who deletes their only chat and
+  /// returns to the (now genuinely empty) chat list would silently get a
+  /// new one auto-created for them every time — the app could never
+  /// actually show an empty chat list.
+  Future<void> checkEmptyAndMaybeAutoCreate() async {
+    if (_autoCreateChecked) return;
+    _autoCreateChecked = true;
+    await tryOperation(() async {
+      final hasAny = await _repo.hasAnyChats();
+      if (hasAny) {
+        return state.copyWith(status: UiFlowStatus.success, error: null);
+      }
+      final chat = await _repo.createChat();
+      return state.copyWith(
+        status: UiFlowStatus.success,
+        error: null,
+        lastCreatedChatId: chat.id,
+      );
+    });
+  }
 }

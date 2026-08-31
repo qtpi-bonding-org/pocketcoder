@@ -29,6 +29,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/pocoprompt"
@@ -146,15 +148,6 @@ func testUser(t *testing.T, app core.App, email string) *core.Record {
 	return u
 }
 
-func testHarnessAccountID(t *testing.T, app core.App, userID, harnessID string) string {
-	t.Helper()
-	account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harnessID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return account.Id
-}
-
 // seedTestHarnessAndInstance creates a harness and its default harness_instance.
 // It uses a unique suffix to avoid conflicts with other tests using the same name.
 func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, supportsLive bool, userID string) (*core.Record, *core.Record) {
@@ -192,11 +185,7 @@ func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, 
 	instance.Set("managed", false)
 	if userID != "" {
 		instance.Set("user", userID)
-		account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harness.Id)
-		if err != nil {
-			t.Fatal(err)
-		}
-		instance.Set("harness_account", account.Id)
+		instance.Set("oauth_account", "")
 	}
 	if err := app.Save(instance); err != nil {
 		t.Fatal(err)
@@ -242,7 +231,11 @@ func createTestHarnessModel(t *testing.T, app core.App, harness *core.Record) *c
 	}
 	model := core.NewRecord(modelsColl)
 	model.Set("name", "test-model-"+randomSuffix())
-	model.Set("provider", "anthropic")
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model.Set("provider", provider.Id)
 	if err := app.Save(model); err != nil {
 		t.Fatal(err)
 	}
@@ -260,6 +253,99 @@ func createTestHarnessModel(t *testing.T, app core.App, harness *core.Record) *c
 		t.Fatal(err)
 	}
 	return hm
+}
+
+func testModel(t *testing.T, app core.App, providerID, name string) *core.Record {
+	t.Helper()
+	coll, err := app.FindCollectionByNameOrId("models")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := core.NewRecord(coll)
+	r.Set("name", name)
+	r.Set("provider", providerID)
+	if err := app.Save(r); err != nil {
+		t.Fatal(err)
+	}
+	return r
+}
+
+func testHarnessModel(t *testing.T, app core.App, harnessID, modelID, modelName string) *core.Record {
+	t.Helper()
+	coll, err := app.FindCollectionByNameOrId("harness_models")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := core.NewRecord(coll)
+	r.Set("harness", harnessID)
+	r.Set("model", modelID)
+	r.Set("harness_model_id", modelName)
+	if err := app.Save(r); err != nil {
+		t.Fatal(err)
+	}
+	return r
+}
+
+func testChat(t *testing.T, app core.App, userID string, fields map[string]any) *core.Record {
+	t.Helper()
+	coll, err := app.FindCollectionByNameOrId("chats")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := core.NewRecord(coll)
+	r.Set("user", userID)
+	r.Set("title", "Test Chat")
+	r.Set("archived", false)
+	for k, v := range fields {
+		r.Set(k, v)
+	}
+	if err := app.Save(r); err != nil {
+		t.Fatal(err)
+	}
+	return r
+}
+
+func TestBuildResolvesProviderAsStringAndAccountLoginFromCredentialSelections(t *testing.T) {
+	app := testApp(t)
+	user := testUser(t, app, "sessionprofile-"+uuid.NewString()[:8]+"@example.com")
+	codex, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account, err := harnessaccount.SelectOrCreate(app, user.Id, codex.Id, openai.Id, "", "", harnessaccount.VisibilityPersonal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account.Set("status", "connected")
+	if err := app.Save(account); err != nil {
+		t.Fatal(err)
+	}
+	model := testModel(t, app, openai.Id, "gpt-5.2")
+	hm := testHarnessModel(t, app, codex.Id, model.Id, "gpt-5.2")
+	chat := testChat(t, app, user.Id, map[string]any{"harness": codex.Id, "harness_model_override": hm.Id})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), "")
+	if err != nil && !errors.Is(err, sessionprofile.ErrProvisioning) {
+		t.Fatal(err)
+	}
+	if profile.Provider != "openai" {
+		t.Errorf("Provider = %q, want %q (a provider_id string, not a PocketBase record id)", profile.Provider, "openai")
+	}
+	if !profile.AccountLogin {
+		t.Error("AccountLogin = false, want true (credential_selections.mode == oauth for this user/harness/provider)")
+	}
+	// Build fires the background provisioning goroutine as a side effect of
+	// the ErrProvisioning path above -- drain it to a terminal status before
+	// this test returns, the same way TestProfileErrorClassificationForSyncShortCircuit
+	// does, otherwise t.Cleanup(app.Cleanup) can tear the app down while
+	// that goroutine is still mid-flight (observed: nil-pointer dereference
+	// in RecordQuery after Cleanup closes the underlying DB).
+	if errors.Is(err, sessionprofile.ErrProvisioning) {
+		waitForHarnessProvisioning(t, app, codex.Id, user.Id)
+	}
 }
 
 // createTestPocoConfig creates an agent_profile record with optional fields.
@@ -361,7 +447,7 @@ func TestBuildSessionProfileResolvesVirtualOllamaTagWithoutCatalogRows(t *testin
 	instance := core.NewRecord(instances)
 	instance.Set("harness", harness.Id)
 	instance.Set("user", userID)
-	instance.Set("harness_account", testHarnessAccountID(t, app, userID, harness.Id))
+	instance.Set("oauth_account", "")
 	instance.Set("launch_key", "")
 	instance.Set("container_name", "pocketcoder-goose-"+randomSuffix())
 	instance.Set("status", "running")
@@ -532,7 +618,7 @@ func TestBuildSessionProfileReturnsHarnessFailedForErrorStatusInstance(t *testin
 	inst := core.NewRecord(instColl)
 	inst.Set("user", userID)
 	inst.Set("harness", harness.Id)
-	inst.Set("harness_account", testHarnessAccountID(t, app, userID, harness.Id))
+	inst.Set("oauth_account", "")
 	inst.Set("launch_key", "")
 	inst.Set("container_name", "pocketcoder-failed-"+randomSuffix())
 	inst.Set("secret", "s")
@@ -599,7 +685,7 @@ func TestProfileErrorClassificationForSyncShortCircuit(t *testing.T) {
 	inst := core.NewRecord(instColl)
 	inst.Set("user", failedUserID)
 	inst.Set("harness", failedHarness.Id)
-	inst.Set("harness_account", testHarnessAccountID(t, app, failedUserID, failedHarness.Id))
+	inst.Set("oauth_account", "")
 	inst.Set("launch_key", "")
 	inst.Set("container_name", "pocketcoder-classify-"+randomSuffix())
 	inst.Set("secret", "s")
@@ -656,7 +742,7 @@ func runningInstanceFor(t *testing.T, app core.App, harness *core.Record, userID
 	inst := core.NewRecord(instColl)
 	inst.Set("user", userID)
 	inst.Set("harness", harness.Id)
-	inst.Set("harness_account", testHarnessAccountID(t, app, userID, harness.Id))
+	inst.Set("oauth_account", "")
 	inst.Set("launch_key", "")
 	inst.Set("container_name", "pocketcoder-"+harness.GetString("cli_id")+"-"+randomSuffix())
 	inst.Set("secret", "s")
@@ -750,6 +836,437 @@ func TestBuildSessionProfileOmitsMcpGatewayWithoutToken(t *testing.T) {
 		if m.Http != nil && m.Http.Name == "gateway" {
 			t.Fatal("expected no gateway entry when MCP_GATEWAY_AUTH_TOKEN is unset")
 		}
+	}
+}
+
+// TestBuildSessionProfileSetsAccountLoginForEveryAccountModeHarness is a
+// regression test for the bug where Codex's account-login auth failures
+// were silently misclassified as a generic "run failed" error instead of
+// the reauthentication flow: coordinator.providerAuthFailure used to gate
+// on a hardcoded list of provider name strings ("claude", "claude-code")
+// that nobody updated when Codex grew its own account-owned login. Iterating
+// every seeded harness here (rather than hardcoding just "codex") means a
+// future harness that adds account-login support is covered automatically
+// -- exactly the class of gap that let Codex slip through unnoticed.
+func TestBuildSessionProfileSetsAccountLoginForEveryAccountModeHarness(t *testing.T) {
+	app := testApp(t)
+	for _, cliID := range []string{"claude-code", "codex"} {
+		t.Run(cliID, func(t *testing.T) {
+			userID := testUser(t, app, "acctlogin-"+cliID+"-"+randomSuffix()+"@example.com").Id
+			harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:c}", map[string]any{"c": cliID})
+			if err != nil {
+				t.Fatal(err)
+			}
+			instance := runningInstanceFor(t, app, harness, userID)
+
+			providerID := "anthropic"
+			if cliID == "codex" {
+				providerID = "openai"
+			}
+			provider, err := app.FindFirstRecordByFilter("providers", "provider_id = {:p}", map[string]any{"p": providerID})
+			if err != nil {
+				t.Fatal(err)
+			}
+			account, err := harnessaccount.SelectOrCreate(app, userID, harness.Id, provider.Id, "", "", harnessaccount.VisibilityPersonal)
+			if err != nil {
+				t.Fatal(err)
+			}
+			account.Set("status", "connected")
+			if err := app.Save(account); err != nil {
+				t.Fatal(err)
+			}
+			model := testModel(t, app, provider.Id, "account-login-"+cliID)
+			hm := testHarnessModel(t, app, harness.Id, model.Id, "account-login-"+cliID)
+			instance.Set("oauth_account", account.Id)
+			if !harness.GetBool("supports_live_config") {
+				instance.Set("launch_key", hm.Id)
+			}
+			if err := app.Save(instance); err != nil {
+				t.Fatal(err)
+			}
+			chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "harness_model_override": hm.Id, "user": userID})
+			profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !profile.AccountLogin {
+				t.Errorf("AccountLogin = false for %s with credential_selections.mode=oauth, want true", cliID)
+			}
+			if profile.HarnessName != harness.GetString("name") {
+				t.Errorf("HarnessName = %q, want %q", profile.HarnessName, harness.GetString("name"))
+			}
+		})
+	}
+}
+
+// TestBuildSessionProfileResolvesDefaultModelProviderWithoutOverride is a
+// regression test for a real bug found live 2026-08-28: a chat created
+// straight from the onboarding harness picker (ChatListCubit.createAndOpen)
+// never sets harness_model_override, and Build's provider/model resolution
+// used to run ONLY inside the `hmID != ""` branch -- so providerRec stayed
+// nil, ResolveOAuthAccountForLaunch never ran, and the harness instance
+// lookup got an empty oauthAccountID. The ACP subprocess then correctly
+// reported "Authentication required" since no credential was ever resolved,
+// even though the user's harness account was genuinely connected. Every
+// existing test up to this one explicitly set harness_model_override in its
+// chat fixture, which is exactly why this was never caught: it tested a path
+// real users don't take on first contact with a harness.
+//
+// This fixture deliberately does NOT set harness_models.is_default anywhere
+// -- confirmed live 2026-08-28 that neither the seed migration nor
+// modelcatalog's models.dev sync ever sets that field on a real deployment,
+// so a fix that only worked via an is_default row would have been a no-op
+// in production. Multiple undefaulted rows are seeded (mirroring a real
+// models.dev catalog sync creating one row per model) to prove the fallback
+// resolves the correct provider regardless of which specific model it picks
+// -- correct because a non-live-config harness is single-provider by
+// construction, so every one of its harness_models rows shares that provider.
+func TestBuildSessionProfileResolvesDefaultModelProviderWithoutOverride(t *testing.T) {
+	app := testApp(t)
+	for _, cliID := range []string{"claude-code", "codex"} {
+		t.Run(cliID, func(t *testing.T) {
+			userID := testUser(t, app, "defaultmodel-"+cliID+"-"+randomSuffix()+"@example.com").Id
+			harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:c}", map[string]any{"c": cliID})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			providerID := "anthropic"
+			if cliID == "codex" {
+				providerID = "openai"
+			}
+			provider, err := app.FindFirstRecordByFilter("providers", "provider_id = {:p}", map[string]any{"p": providerID})
+			if err != nil {
+				t.Fatal(err)
+			}
+			account, err := harnessaccount.SelectOrCreate(app, userID, harness.Id, provider.Id, "", "", harnessaccount.VisibilityPersonal)
+			if err != nil {
+				t.Fatal(err)
+			}
+			account.Set("status", "connected")
+			if err := app.Save(account); err != nil {
+				t.Fatal(err)
+			}
+
+			// Two undefaulted rows, neither is_default -- matches the real
+			// deployment shape from models.dev sync exactly. The fallback
+			// sorts by harness_model_id ascending, so "catalog-model-a"
+			// deterministically wins over "catalog-model-b" -- the instance
+			// below is scoped to that same row so the full resolution
+			// (provider AND the harness_instances lookup) succeeds, proving
+			// the fallback's chosen row is actually usable end to end, not
+			// just that *some* provider string got set.
+			modelA := testModel(t, app, provider.Id, "catalog-model-a-"+cliID)
+			hmA := testHarnessModel(t, app, harness.Id, modelA.Id, "catalog-model-a-"+cliID)
+			modelB := testModel(t, app, provider.Id, "catalog-model-b-"+cliID)
+			testHarnessModel(t, app, harness.Id, modelB.Id, "catalog-model-b-"+cliID)
+
+			instance := runningInstanceFor(t, app, harness, userID)
+			instance.Set("oauth_account", account.Id)
+			instance.Set("launch_key", hmA.Id)
+			if err := app.Save(instance); err != nil {
+				t.Fatal(err)
+			}
+
+			// The real golden path: no harness_model_override at all.
+			chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+			profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if profile.Provider != providerID {
+				t.Errorf("Provider = %q, want %q -- fallback did not resolve any harness_models row", profile.Provider, providerID)
+			}
+			if !profile.AccountLogin {
+				t.Error("AccountLogin = false, want true -- the connected oauth account should have been resolved via the fallback-picked model's provider")
+			}
+		})
+	}
+}
+
+// TestBuildSessionProfileSkipsDefaultModelForLiveConfigHarness guards the
+// other direction: Goose/OpenCode (supports_live_config) must NOT have a
+// single default provider resolved for them even if a default harness_models
+// row exists -- multi-provider harnesses have no single provider to
+// authenticate as (spec §10), and every credentialed provider is injected at
+// launch time instead (see hooks.ProvisionHarnessInstance).
+func TestBuildSessionProfileSkipsDefaultModelForLiveConfigHarness(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "liveconfig-nodefault-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !harness.GetBool("supports_live_config") {
+		t.Fatal("expected goose to have supports_live_config = true")
+	}
+
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := testModel(t, app, provider.Id, "goose-default-model")
+	hm := testHarnessModel(t, app, harness.Id, model.Id, "goose-default-model")
+	hm.Set("is_default", true)
+	if err := app.Save(hm); err != nil {
+		t.Fatal(err)
+	}
+	runningInstanceFor(t, app, harness, userID)
+
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if profile.Provider != "" {
+		t.Errorf("Provider = %q, want empty -- a live-config harness must not default to a single provider", profile.Provider)
+	}
+}
+
+// TestBuildSessionProfileResolvesLiveConfigProviderFromCredentialSelection is
+// a regression test for a real bug found live 2026-08-28, in the same audit
+// that found finding #1 above: a live-config harness (Goose, OpenCode)
+// reached through the real onboarding API-key flow
+// (HarnessAuthCubit.startWithNone) never got Provider/Model populated at
+// all, even though the user had explicitly picked a provider and entered a
+// key for it. ProvisionHarnessInstance boots the container on a hardcoded
+// anthropic/MiniMax-M2.5 placeholder regardless (by design -- a live-config
+// harness's boot doesn't pin one chat's choice), but
+// coordinator.PerSessionApplier is supposed to correct that live via ACP
+// set_config_option right after the session starts -- it only does that
+// when SessionProfile.Provider/Model are non-empty, which they never were
+// for this path. The fix reads the same signal the onboarding flow already
+// records -- the most recently updated credential_selections row for
+// (user, harness) -- rather than inventing a second resolution path.
+func TestBuildSessionProfileResolvesLiveConfigProviderFromCredentialSelection(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "liveconfig-selection-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !harness.GetBool("supports_live_config") {
+		t.Fatal("expected goose to have supports_live_config = true")
+	}
+
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := testModel(t, app, provider.Id, "goose-openai-model")
+	testHarnessModel(t, app, harness.Id, model.Id, "goose-openai-model")
+
+	// Exactly what HarnessAuthCubit.startWithNone / clearSelectionToNone
+	// record for the real onboarding API-key path.
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", harness.Id)
+	sel.Set("provider", provider.Id)
+	sel.Set("mode", "none")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+	runningInstanceFor(t, app, harness, userID)
+
+	// The real golden path: no harness_model_override at all.
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if profile.Provider != "openai" {
+		t.Errorf("Provider = %q, want %q -- the user's credential_selections choice was not resolved", profile.Provider, "openai")
+	}
+	if profile.Model != "goose-openai-model" {
+		t.Errorf("Model = %q, want %q", profile.Model, "goose-openai-model")
+	}
+}
+
+func seedLiveConfigCredentialTest(t *testing.T, app core.App, withEdge bool, withKey bool) *core.Record {
+	t.Helper()
+	userID := testUser(t, app, "liveconfig-credential-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := testModel(t, app, provider.Id, "goose-openai-credential-model-"+randomSuffix())
+	testHarnessModel(t, app, harness.Id, model.Id, model.GetString("name"))
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", harness.Id)
+	sel.Set("provider", provider.Id)
+	sel.Set("mode", "none")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+	if withEdge {
+		edges, err := app.FindCollectionByNameOrId("harness_providers")
+		if err != nil {
+			t.Fatal(err)
+		}
+		edge := core.NewRecord(edges)
+		edge.Set("harness", harness.Id)
+		edge.Set("provider", provider.Id)
+		if err := app.Save(edge); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if withKey {
+		keys, err := app.FindCollectionByNameOrId("provider_api_keys")
+		if err != nil {
+			t.Fatal(err)
+		}
+		key := core.NewRecord(keys)
+		key.Set("owner", userID)
+		key.Set("provider", provider.Id)
+		key.Set("api_key", "the-seeded-api-key-value")
+		if err := app.Save(key); err != nil {
+			t.Fatal(err)
+		}
+	}
+	runningInstanceFor(t, app, harness, userID)
+	return createTestChat(t, app, map[string]any{"harness": harness.Id, "user": userID})
+}
+
+func TestBuildSessionProfilePopulatesCredentialFieldForLiveConfigProvider(t *testing.T) {
+	app := testApp(t)
+	chat := seedLiveConfigCredentialTest(t, app, true, true)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), "")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if !profile.SupportsLiveCredentialRegistration {
+		t.Fatal("expected SupportsLiveCredentialRegistration = true for a goose-like harness")
+	}
+	if profile.CredentialFieldName == "" {
+		t.Fatal("expected a non-empty CredentialFieldName")
+	}
+	if profile.CredentialFieldValue != "the-seeded-api-key-value" {
+		t.Fatalf("CredentialFieldValue = %q, want the seeded key", profile.CredentialFieldValue)
+	}
+}
+
+func TestBuildSessionProfileLeavesCredentialFieldEmptyWithoutSavedKey(t *testing.T) {
+	app := testApp(t)
+	chat := seedLiveConfigCredentialTest(t, app, true, false)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), "")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if profile.CredentialFieldName != "" || profile.CredentialFieldValue != "" {
+		t.Fatalf("expected empty credential field with no saved key, got %+v", profile)
+	}
+}
+
+func TestBuildSessionProfileLeavesCredentialFieldEmptyWithoutHarnessProvidersEdge(t *testing.T) {
+	app := testApp(t)
+	chat := seedLiveConfigCredentialTest(t, app, false, true)
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), "")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if profile.CredentialFieldName != "" || profile.CredentialFieldValue != "" {
+		t.Fatalf("expected empty credential field with no harness_providers edge, got %+v", profile)
+	}
+}
+
+func TestBuildSessionProfileLeavesCredentialFieldEmptyForOllama(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"models":[{"name":"qwen2.5:0.5b"}]}`))
+	}))
+	defer server.Close()
+	app := testApp(t)
+	userID := testUser(t, app, "ollama-credential-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	instances, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
+		t.Fatal(err)
+	}
+	instance := core.NewRecord(instances)
+	instance.Set("harness", harness.Id)
+	instance.Set("user", userID)
+	instance.Set("oauth_account", "")
+	instance.Set("launch_key", "")
+	instance.Set("container_name", "pocketcoder-goose-"+randomSuffix())
+	instance.Set("status", "running")
+	instance.Set("managed", false)
+	if err := app.Save(instance); err != nil {
+		t.Fatal(err)
+	}
+	chat := createTestChat(t, app, map[string]any{"user": userID, "harness": harness.Id, "ollama_model_override": "qwen2.5:0.5b"})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), server.URL)
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if profile.CredentialFieldName != "" || profile.CredentialFieldValue != "" {
+		t.Fatalf("expected empty credential field for Ollama, got %+v", profile)
+	}
+}
+
+// TestBuildSessionProfileLeavesAccountLoginFalseForApiKeyMode guards the
+// other direction: a harness account still on api_key (or none) credential
+// mode must not be treated as account-login, or a bad API key would
+// incorrectly surface the "your saved login was kept" reauth flow instead of
+// a message that actually points at rotating the key.
+func TestBuildSessionProfileLeavesAccountLoginFalseForApiKeyMode(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "acctlogin-apikey-"+randomSuffix()+"@example.com").Id
+	harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	instance := runningInstanceFor(t, app, harness, userID)
+
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := testModel(t, app, provider.Id, "api-key-model")
+	hm := testHarnessModel(t, app, harness.Id, model.Id, "api-key-model")
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", harness.Id)
+	sel.Set("provider", provider.Id)
+	sel.Set("mode", "api_key")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+	if !harness.GetBool("supports_live_config") {
+		instance.Set("launch_key", hm.Id)
+	}
+	if err := app.Save(instance); err != nil {
+		t.Fatal(err)
+	}
+
+	chat := createTestChat(t, app, map[string]any{"harness": harness.Id, "harness_model_override": hm.Id, "user": userID})
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if profile.AccountLogin {
+		t.Error("AccountLogin = true for a credential_selections.mode=api_key account, want false")
 	}
 }
 

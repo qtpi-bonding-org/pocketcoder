@@ -13,6 +13,7 @@ import 'package:built_collection/built_collection.dart';
 import 'package:built_value/json_object.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
 import 'package:pocketcoder_api/src/model/model_request.dart';
+import 'package:pocketcoder_api/src/model/ollama_models_response.dart';
 
 class OllamaApi {
 
@@ -33,9 +34,9 @@ class OllamaApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
+  /// Returns a [Future] containing a [Response] with a [OllamaModelsResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> listOllamaModels({
+  Future<Response<OllamaModelsResponse>> listOllamaModels({
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -71,14 +72,14 @@ class OllamaApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    BuiltMap<String, JsonObject>? _responseData;
+    OllamaModelsResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),
-      ) as BuiltMap<String, JsonObject>;
+        specifiedType: const FullType(OllamaModelsResponse),
+      ) as OllamaModelsResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -90,7 +91,7 @@ class OllamaApi {
       );
     }
 
-    return Response<BuiltMap<String, JsonObject>>(
+    return Response<OllamaModelsResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

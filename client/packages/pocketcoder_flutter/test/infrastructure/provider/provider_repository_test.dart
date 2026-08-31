@@ -1,10 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketbase_drift/pocketbase_drift.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/provider_exception.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
-import 'package:pocketcoder_flutter/domain/models/provider_key.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
+import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_repository.dart';
@@ -15,16 +19,25 @@ class MockModelDao extends Mock implements ModelDao {}
 
 class MockHarnessModelDao extends Mock implements HarnessModelDao {}
 
-class MockProviderKeyDao extends Mock implements ProviderKeyDao {}
+class MockProviderAPIKeyDao extends Mock implements ProviderAPIKeyDao {}
 
-class _FakeProviderKey extends Fake implements ProviderKey {}
+class MockHarnessProviderDao extends Mock implements HarnessProviderDao {}
+
+class MockProviderCatalogDao extends Mock implements ProviderCatalogDao {}
+
+class MockAuthRepository extends Mock implements IAuthRepository {}
+
+class _FakeProviderApiKey extends Fake implements ProviderApiKey {}
 
 void main() {
   late ProviderRepository repo;
   late MockHarnesseDao harnesseDao;
   late MockModelDao modelDao;
   late MockHarnessModelDao harnessModelDao;
-  late MockProviderKeyDao providerKeyDao;
+  late MockProviderAPIKeyDao providerAPIKeyDao;
+  late MockHarnessProviderDao harnessProviderDao;
+  late MockProviderCatalogDao providerCatalogDao;
+  late MockAuthRepository authRepository;
 
   final testHarnesse = Harnesse(
     id: 'h-1',
@@ -46,28 +59,49 @@ void main() {
     harnessModelId: 'claude-opus-via-claude-code',
   );
 
-  final testProviderKey = ProviderKey(
+  final testProviderAPIKey = ProviderApiKey(
     id: 'pk-1',
-    user: 'user-1',
+    owner: 'user-1',
     provider: 'anthropic',
-    envVars: {'ANTHROPIC_API_KEY': 'sk-test'},
+    apiKey: 'sk-test',
+  );
+
+  final testHarnessProvider = HarnessProvider(
+    id: 'hp-1',
+    harness: 'h-1',
+    provider: 'p-1',
+    supportsOauth: true,
+  );
+
+  final testProviderCatalogEntry = domain.Provider(
+    id: 'p-1',
+    providerId: 'anthropic',
+    name: 'Anthropic',
+    apiKeyEnv: 'ANTHROPIC_API_KEY',
   );
 
   setUpAll(() {
     registerFallbackValue(<String, dynamic>{});
-    registerFallbackValue(_FakeProviderKey());
+    registerFallbackValue(_FakeProviderApiKey());
   });
 
   setUp(() {
     harnesseDao = MockHarnesseDao();
     modelDao = MockModelDao();
     harnessModelDao = MockHarnessModelDao();
-    providerKeyDao = MockProviderKeyDao();
+    providerAPIKeyDao = MockProviderAPIKeyDao();
+    harnessProviderDao = MockHarnessProviderDao();
+    providerCatalogDao = MockProviderCatalogDao();
+    authRepository = MockAuthRepository();
+    when(() => authRepository.currentUserId).thenReturn('user-1');
     repo = ProviderRepository(
       harnesseDao,
       modelDao,
       harnessModelDao,
-      providerKeyDao,
+      providerAPIKeyDao,
+      harnessProviderDao,
+      providerCatalogDao,
+      authRepository,
     );
   });
 
@@ -87,53 +121,107 @@ void main() {
     verify(() => modelDao.watch()).called(1);
   });
 
-  test('watchHarnessModels forwards harnessModelDao.watch()', () {
-    final stream = Stream<List<HarnessModel>>.value([testHarnessModel]);
-    when(() => harnessModelDao.watch()).thenAnswer((_) => stream);
+  test(
+      'fetchHarnessModels calls harnessModelDao.getFullList with '
+      'RequestPolicy.networkOnly -- harness_models is a 16k+ row read-only '
+      'catalog that must never be written into the local drift cache',
+      () async {
+    when(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) async => [testHarnessModel]);
 
-    expect(repo.watchHarnessModels(), emits([testHarnessModel]));
-    verify(() => harnessModelDao.watch()).called(1);
+    final result = await repo.fetchHarnessModels();
+
+    expect(result, [testHarnessModel]);
+    verify(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(1);
   });
 
-  test('watchProviderKeys forwards providerKeyDao.watch()', () {
-    final stream = Stream<List<ProviderKey>>.value([testProviderKey]);
-    when(() => providerKeyDao.watch()).thenAnswer((_) => stream);
+  test('watchProviderAPIKeys forwards providerAPIKeyDao.watch()', () {
+    final stream = Stream<List<ProviderApiKey>>.value([testProviderAPIKey]);
+    when(() => providerAPIKeyDao.watch()).thenAnswer((_) => stream);
 
-    expect(repo.watchProviderKeys(), emits([testProviderKey]));
-    verify(() => providerKeyDao.watch()).called(1);
+    expect(repo.watchProviderAPIKeys(), emits([testProviderAPIKey]));
+    verify(() => providerAPIKeyDao.watch()).called(1);
+  });
+
+  test('watchHarnessProviders forwards harnessProviderDao.watch()', () {
+    final stream = Stream<List<HarnessProvider>>.value([testHarnessProvider]);
+    when(() => harnessProviderDao.watch()).thenAnswer((_) => stream);
+
+    expect(repo.watchHarnessProviders(), emits([testHarnessProvider]));
+    verify(() => harnessProviderDao.watch()).called(1);
+  });
+
+  test('watchProviderCatalog forwards providerCatalogDao.watch()', () {
+    final stream =
+        Stream<List<domain.Provider>>.value([testProviderCatalogEntry]);
+    when(() => providerCatalogDao.watch()).thenAnswer((_) => stream);
+
+    expect(repo.watchProviderCatalog(), emits([testProviderCatalogEntry]));
+    verify(() => providerCatalogDao.watch()).called(1);
   });
 
   test(
-      'saveProviderKey calls providerKeyDao.save with id and toJson, '
+      'saveProviderAPIKey calls providerAPIKeyDao.save with id and toJson, '
       'wraps failures in ProviderException', () async {
-    when(() => providerKeyDao.save(any(), any()))
-        .thenAnswer((_) async => testProviderKey);
+    when(() => providerAPIKeyDao.save(any(), any()))
+        .thenAnswer((_) async => testProviderAPIKey);
 
-    await repo.saveProviderKey(testProviderKey);
-    verify(() => providerKeyDao.save(
-          testProviderKey.id,
-          testProviderKey.toJson(),
+    await repo.saveProviderAPIKey(testProviderAPIKey);
+    verify(() => providerAPIKeyDao.save(
+          testProviderAPIKey.id,
+          testProviderAPIKey.toJson(),
         )).called(1);
 
-    when(() => providerKeyDao.save(any(), any()))
+    when(() => providerAPIKeyDao.save(any(), any()))
         .thenThrow(Exception('boom'));
     await expectLater(
-      () => repo.saveProviderKey(testProviderKey),
+      () => repo.saveProviderAPIKey(testProviderAPIKey),
       throwsA(isA<ProviderException>()),
     );
   });
 
+  // Regression test: a brand-new key always arrives with owner: '' (the
+  // onboarding dialog only ever copies an *existing* record's owner --
+  // there is none for a new key). provider_api_keys.createRule requires
+  // owner = @request.auth.id, and PocketBase evaluates that rule against
+  // the client-submitted data itself, before any server-side hook could
+  // fix it up -- so an unfilled owner made every real create fail outright
+  // ("Failed to create record"), breaking the entire API-key onboarding
+  // path end to end until this was caught and fixed here.
   test(
-      'deleteProviderKey calls providerKeyDao.delete and '
+      'saveProviderAPIKey fills owner from the authenticated user for a '
+      'brand-new key', () async {
+    final newKey = ProviderApiKey(
+      id: '',
+      owner: '',
+      provider: 'anthropic',
+      apiKey: 'sk-new',
+    );
+    when(() => providerAPIKeyDao.save(any(), any()))
+        .thenAnswer((_) async => newKey);
+
+    await repo.saveProviderAPIKey(newKey);
+
+    final captured = verify(() => providerAPIKeyDao.save('', captureAny()))
+        .captured
+        .single as Map<String, dynamic>;
+    expect(captured['owner'], 'user-1');
+  });
+
+  test(
+      'deleteProviderAPIKey calls providerAPIKeyDao.delete and '
       'wraps failures in ProviderException', () async {
-    when(() => providerKeyDao.delete(any())).thenAnswer((_) async {});
+    when(() => providerAPIKeyDao.delete(any())).thenAnswer((_) async {});
 
-    await repo.deleteProviderKey('pk-1');
-    verify(() => providerKeyDao.delete('pk-1')).called(1);
+    await repo.deleteProviderAPIKey('pk-1');
+    verify(() => providerAPIKeyDao.delete('pk-1')).called(1);
 
-    when(() => providerKeyDao.delete(any())).thenThrow(Exception('boom'));
+    when(() => providerAPIKeyDao.delete(any())).thenThrow(Exception('boom'));
     await expectLater(
-      () => repo.deleteProviderKey('pk-1'),
+      () => repo.deleteProviderAPIKey('pk-1'),
       throwsA(isA<ProviderException>()),
     );
   });

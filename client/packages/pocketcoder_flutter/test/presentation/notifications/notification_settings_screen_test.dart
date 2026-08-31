@@ -19,12 +19,18 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 
 class MockNotificationRuleCubit extends Mock implements NotificationRuleCubit {}
 
 class FakePushService implements PushService {
+  int configureCalls = 0;
+
   @override
-  Future<void> configure() async {}
+  Future<void> configure() async {
+    configureCalls += 1;
+  }
 
   @override
   Future<PushNotificationPayload?> getInitialNotification() async => null;
@@ -65,9 +71,11 @@ Widget _wrap() {
 
 void main() {
   late MockNotificationRuleCubit cubit;
+  late FakePushService pushService;
 
   setUp(() {
     cubit = MockNotificationRuleCubit();
+    pushService = FakePushService();
     when(() => cubit.watchRules()).thenReturn(null);
     when(() => cubit.setTypeEnabled(any(), any())).thenAnswer((_) async {});
     when(() => cubit.state)
@@ -83,7 +91,7 @@ void main() {
     // the mock into getIt instead of wrapping the screen in an external
     // BlocProvider.value, which would conflict with the screen's own.
     getIt.registerFactory<NotificationRuleCubit>(() => cubit);
-    getIt.registerSingleton<PushService>(FakePushService());
+    getIt.registerSingleton<PushService>(pushService);
   });
 
   tearDown(() {
@@ -104,11 +112,10 @@ void main() {
     expect(find.text('TASK COMPLETE'), findsOneWidget);
     expect(find.text('TASK ERRORS'), findsOneWidget);
 
-    final switches = find.byType(Switch);
-    expect(switches, findsNWidgets(4));
-    for (var i = 0; i < 4; i++) {
-      expect(tester.widget<Switch>(switches.at(i)).value, isTrue);
-    }
+    final rows = tester.widgetList<BiosRow>(find.byType(BiosRow)).toList();
+    expect(rows, hasLength(4));
+    expect(rows.every((row) => row.toggleValue), isTrue);
+    expect(find.byType(Switch), findsNothing);
   });
 
   testWidgets('honors a non-default value from the loaded rules map',
@@ -126,16 +133,15 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    final switches = find.byType(Switch);
-    expect(switches, findsNWidgets(4));
-    expect(tester.widget<Switch>(switches.at(0)).value, isFalse); // chat_reply
-    expect(tester.widget<Switch>(switches.at(1)).value, isTrue); // schedule
-    expect(
-        tester.widget<Switch>(switches.at(2)).value, isTrue); // task_complete
-    expect(tester.widget<Switch>(switches.at(3)).value, isFalse); // task_error
+    final rows = tester.widgetList<BiosRow>(find.byType(BiosRow)).toList();
+    expect(rows, hasLength(4));
+    expect(rows[0].toggleValue, isFalse); // chat_reply
+    expect(rows[1].toggleValue, isTrue); // schedule
+    expect(rows[2].toggleValue, isTrue); // task_complete
+    expect(rows[3].toggleValue, isFalse); // task_error
   });
 
-  testWidgets('tapping a switch calls cubit.setTypeEnabled with the right args',
+  testWidgets('tapping a toggle calls cubit.setTypeEnabled with the right args',
       (tester) async {
     when(() => cubit.state)
         .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
@@ -143,10 +149,41 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    // Tap the first switch (chat_reply) — flips it off.
-    await tester.tap(find.byType(Switch).first);
+    // Tap the first toggle (chat_reply) — flips it off.
+    await tester.tap(find.text('[X]').first);
     await tester.pumpAndSettle();
 
     verify(() => cubit.setTypeEnabled('chat_reply', false)).called(1);
+  });
+
+  testWidgets('has no PocoBubble -- this is a plain settings screen',
+      (tester) async {
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
+
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PocoBubble), findsNothing);
+  });
+
+  testWidgets(
+      'shows the self-hosted push option, reachable regardless of edition, '
+      'and tapping configure calls PushService.configure()', (tester) async {
+    when(() => cubit.state)
+        .thenReturn(const NotificationRuleState(status: UiFlowStatus.success));
+
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    expect(find.text(l10n.proSelfHostedPushTitle), findsOneWidget);
+
+    await tester.ensureVisible(find.text(l10n.proConfigureSelfHostedPush));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.proConfigureSelfHostedPush));
+    await tester.pumpAndSettle();
+
+    expect(pushService.configureCalls, 1);
   });
 }

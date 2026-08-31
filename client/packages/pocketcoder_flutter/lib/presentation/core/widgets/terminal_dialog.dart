@@ -26,9 +26,11 @@ class TerminalDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: EdgeInsets.all(AppSizes.space * 2),
-              child: content,
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(AppSizes.space * 2),
+                child: content,
+              ),
             ),
             VSpace.x2,
             Padding(

@@ -1,6 +1,3 @@
-// State for PermissionCubit (plan Task 12): the current SessionState.permission
-// slice surfaced as a cubit state so the UI can render the prompt and call
-// authorize/deny. Pure data — no protocol types leak past this file.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';

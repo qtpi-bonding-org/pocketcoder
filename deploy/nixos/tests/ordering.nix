@@ -12,13 +12,13 @@ pkgs.testers.runNixOSTest {
     # not apply a module function's own `?` default for an argument it
     # doesn't otherwise recognize, so every such argument must be supplied
     # explicitly here.
-    _module.args.sourceCommit = "main";
     _module.args.releaseBranch = "main";
     _module.args.releaseManager = self.packages.${system}.release-manager;
     _module.args.caddyTemplate = ../../../client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template;
     _module.args.tlsStatusScript = ../../scripts/tls-status.sh;
     _module.args.bootstrapScript = ../bootstrap.sh;
     _module.args.statusScript = ../status.sh;
+    _module.args.pcRetryScript = ../pc_retry.sh;
     imports = [ ../caddy.nix ../bootstrap.nix ];
     systemd.services.detect-public-ip.script = pkgs.lib.mkForce ''
       mkdir -p /etc/caddy /etc/pocketcoder
@@ -49,7 +49,7 @@ pkgs.testers.runNixOSTest {
     machine.succeed("grep -q '^active$' /var/lib/pocketcoder/caddy-was-active")
     machine.succeed("test -d /var/lib/pocketcoder/public")
     machine.succeed("test $(stat -c %a /var/lib/pocketcoder/public) = 755")
-    machine.succeed("echo '{\\\"phase\\\":\\\"loading_images\\\"}' > /var/lib/pocketcoder/public/status.json")
+    machine.succeed("echo '{\\\"operation\\\":\\\"loading_images\\\"}' > /var/lib/pocketcoder/public/status.json")
     machine.succeed("chmod 0644 /var/lib/pocketcoder/public/status.json")
     machine.succeed("curl -sf http://localhost/_pocketcoder/status.json | grep -q loading_images")
   '';

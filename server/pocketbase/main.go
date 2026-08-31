@@ -35,6 +35,7 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/modelcatalog"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operationapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/releaseidentity"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
@@ -78,14 +79,13 @@ func main() {
 	var coord coordinator.AgentRuntime
 	coordGetter := func() coordinator.AgentRuntime { return coord }
 
-	// 1. Register Migrations
 	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
 		Automigrate: true,
 	})
 
-	// 2. Register Global Sovereign Hooks
 	hooks.RegisterGlobalTimestamps(app)
 	hooks.RegisterNotificationHooks(app)
+	hooks.RegisterLiveActivityHooks(app)
 	hooks.RegisterChatsHarnessPinHook(app)
 	harnessaccount.RegisterHooks(app)
 
@@ -96,7 +96,6 @@ func main() {
 	hooks.RegisterAgentFileHooks(app)
 	hooks.RegisterGitSSHHooks(app)
 
-	// 4. Main Application Boot & API Registration
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
 		release := os.Getenv("POCKETCODER_RELEASE")
@@ -110,12 +109,17 @@ func main() {
 			}
 		}
 
-		// A. Register the generated PocketCoder API boundary.
 		var err error
 		coord, err = operationapi.Register(app, e, coordGetter)
 		if err != nil {
 			app.Logger().Warn("agent API not configured; agent profile disabled", "error", err)
 		}
+
+		// A2. Keep the providers/models/harness_models catalog in sync with
+		// models.dev (the same source Goose and OpenCode themselves build
+		// their catalogs from), so API key entry and model selection reflect
+		// real current data instead of a hand-seeded snapshot.
+		modelcatalog.RegisterSync(app)
 
 		// F. Harness instance status watcher: subscribes to the Docker
 		// event stream and reconciles harness_instances.status against
@@ -141,7 +145,6 @@ func main() {
 		return e.Next()
 	})
 
-	// 5. Launch PocketBase
 	if err := app.Start(); err != nil {
 		log.Fatal(err)
 	}

@@ -23,16 +23,13 @@ package agui
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/ag-ui-protocol/ag-ui/sdks/community/go/pkg/core/events"
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/google/uuid"
 )
 
-// toolMeta is the per-tool retained state kept while a tool call is open: the
-// last seen title/kind/status (read-modify-write across tool_call_update).
-// Declared here in Task 5 so the openTools map can carry structured values
-// from the start; Task 6 populates it through startTool/updateTool.
 type toolMeta struct {
 	title, kind, status string
 }
@@ -107,9 +104,7 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 	case update.Plan != nil:
 		return []events.Event{b.state.set("plan", map[string]any{"entries": planEntries(update.Plan.Entries)})}, nil
 	case update.PlanUpdate != nil:
-		// Unstable ACP. Verify SessionPlanUpdate's shape at impl time: if it carries
-		// entries, full-replace like Plan; otherwise surface as RAW (don't guess a merge).
-		return []events.Event{rawEvent("plan_update", nil)}, nil
+		return b.planUpdate(update.PlanUpdate), nil
 	case update.PlanRemoved != nil:
 		return []events.Event{b.state.remove("plan")}, nil
 	case update.CurrentModeUpdate != nil:
@@ -132,6 +127,25 @@ func (b *Bridge) Update(update acpsdk.SessionUpdate) ([]events.Event, error) {
 	return []events.Event{rawEvent("session_update", nil)}, nil
 }
 
+// planUpdate decodes SessionPlanUpdate's discriminated union (Items | File |
+// Markdown). Items carries a full entry list — same full-replace semantics as
+// the Plan variant, so it's projected through planEntries the same way. File
+// and Markdown have no entries shape to reuse; they're projected under their
+// own keys so the client can still render a URI or raw markdown plan. Any
+// future union member is a soft miss: never abort the turn; surface as
+// redacted RAW.
+func (b *Bridge) planUpdate(u *acpsdk.SessionPlanUpdate) []events.Event {
+	switch {
+	case u.Plan.Items != nil:
+		return []events.Event{b.state.set("plan", map[string]any{"entries": planEntries(u.Plan.Items.Entries)})}
+	case u.Plan.File != nil:
+		return []events.Event{b.state.set("plan", map[string]any{"uri": u.Plan.File.Uri})}
+	case u.Plan.Markdown != nil:
+		return []events.Event{b.state.set("plan", map[string]any{"markdown": u.Plan.Markdown.Content})}
+	}
+	return []events.Event{rawEvent("plan_update", nil)}
+}
+
 // startTool handles the initial tool_call. tc is the FLAT SessionUpdate variant:
 // fields (ToolCallId, Title, Kind, Status, Content, RawInput, RawOutput,
 // Locations) live directly on it. Single-shot: an initial terminal status with
@@ -150,6 +164,8 @@ func (b *Bridge) startTool(tc *acpsdk.SessionUpdateToolCall) []events.Event {
 	if tc.RawInput != nil {
 		if in, err := json.Marshal(tc.RawInput); err == nil {
 			result = append(result, events.NewToolCallArgsEvent(id, string(in)))
+		} else {
+			log.Printf("[AGUI] marshal tool call input %q: %v", id, err)
 		}
 	}
 	kind := string(tc.Kind)
@@ -178,6 +194,8 @@ func (b *Bridge) updateTool(u *acpsdk.SessionToolCallUpdate) []events.Event {
 	if u.RawInput != nil {
 		if in, err := json.Marshal(u.RawInput); err == nil {
 			result = append(result, events.NewToolCallArgsEvent(id, string(in)))
+		} else {
+			log.Printf("[AGUI] marshal tool call update input %q: %v", id, err)
 		}
 	}
 	if len(u.Content) > 0 {
@@ -270,14 +288,18 @@ func (b *Bridge) messageChunk(role string, msgID *string, content acpsdk.Content
 	return append(result, events.NewTextMessageContentEvent(id, text))
 }
 
-// PermissionPending represents the one transient c1 state exposed to AG-UI.
-// The detailed choices stay in the authenticated c1 approval endpoint.
-// Routing through b.state.set records the pending permission in the projection
-// (so Snapshot() surfaces it) AND returns the same STATE_DELTA/add/pocketcoder-
-// permission event shape the bare version emitted — TestBridgePermissionState
-// keeps passing on the payload, and Task 8's Snapshot-omits-resolved becomes
-// reachable because the value is now retained.
 func (b *Bridge) PermissionPending(requestID string, options []acpsdk.PermissionOption, toolCallID string, title *string, kind *acpsdk.ToolKind) events.Event {
+	return b.state.set("permission", PermissionPayload(requestID, options, toolCallID, title, kind))
+}
+
+// PermissionPayload builds the same AG-UI-shaped payload PermissionPending
+// wraps into a STATE_DELTA -- exported so a non-SSE consumer (push
+// notification dispatch) can carry the exact vocabulary the client already
+// parses (requestId/options[].optionId,name,kind/toolCallId/title/kind)
+// instead of a second, narrower schema. Single source of truth: the live
+// STATE stream and any push payload are built from this one function, so
+// they cannot drift apart.
+func PermissionPayload(requestID string, options []acpsdk.PermissionOption, toolCallID string, title *string, kind *acpsdk.ToolKind) map[string]any {
 	choices := make([]map[string]string, 0, len(options))
 	for _, option := range options {
 		choices = append(choices, map[string]string{"optionId": string(option.OptionId), "name": option.Name, "kind": string(option.Kind)})
@@ -292,7 +314,7 @@ func (b *Bridge) PermissionPending(requestID string, options []acpsdk.Permission
 	if kind != nil {
 		payload["kind"] = string(*kind)
 	}
-	return b.state.set("permission", payload)
+	return payload
 }
 
 // Finished closes all lifecycle events. Call this only after the correlated
@@ -504,6 +526,13 @@ func (b *Bridge) ResolveElicitation(id string) []events.Event {
 // returned STATE_DELTA mirrors PermissionPending's shape so the client UI can
 // render any pending side-channel request from the same STATE stream.
 func (b *Bridge) ElicitationPending(id, message, mode string, schema any, url string) events.Event {
+	return b.state.set("elicitation", ElicitationPayload(id, message, mode, schema, url))
+}
+
+// ElicitationPayload is ElicitationPending's payload-builder, exported for
+// the same reason as PermissionPayload -- one shape shared by the live
+// STATE stream and any push notification dispatch.
+func ElicitationPayload(id, message, mode string, schema any, url string) map[string]any {
 	payload := map[string]any{
 		"elicitationId":   id,
 		"message":         message,
@@ -513,7 +542,7 @@ func (b *Bridge) ElicitationPending(id, message, mode string, schema any, url st
 	if url != "" {
 		payload["url"] = url
 	}
-	return b.state.set("elicitation", payload)
+	return payload
 }
 
 // sessionModes projects an ACP session-mode slice into the AG-UI client's

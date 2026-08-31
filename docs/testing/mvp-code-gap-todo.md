@@ -21,6 +21,25 @@ Onboarding walkthrough chat is intentionally local/fake and uses prepared
 content. Connected chat uses the real `ChatCubit`/API. Shared presentation
 widgets may be reused, but state and adapters stay separate.
 
+## Current status — 2026-08-18
+
+The implementation and local verification gaps originally tracked here are
+substantially closed. The Pro deployment-flow integration test now covers the
+review handoff, progress mapping, walkthrough boundaries, FAQ isolation, and
+separation of local onboarding chat from connected chat. The unified VPS suite
+also has local coverage for provisioning, release/update, backup, restart,
+reboot, NixOS compatibility, and TLS certificate recovery.
+
+The remaining launch work is evidence collection, not a new feature pass:
+
+- run the current staging commit through the full VPS suite when a fresh live
+  run is needed;
+- compile the launch iOS/Android targets; and
+- run the real Flutter E2E journey against the live deployment.
+
+The real Flutter E2E pass is therefore ready to begin, but it is not marked
+passed until it has been performed on the target platforms.
+
 ## 1. Dedicated review flow — Pro implementation exists
 
 Related: MVP-04, MVP-05, MVP-06
@@ -36,9 +55,10 @@ Related: MVP-04, MVP-05, MVP-06
 - [x] Run/record those tests; the Pro suite passed on 2026-08-14.
 - [ ] Add or confirm narrow-mobile review coverage if the existing test does
       not exercise the constrained layout.
-- [ ] Add integration coverage for review-to-provision configuration handoff:
+- [x] Add integration coverage for review-to-provision configuration handoff:
       assert that the reviewed size, region, OS, and harness selections reach
-      the provisioning adapter unchanged.
+      the provisioning adapter unchanged. Covered by
+      `client/packages/pocketcoder_pro/test/integration/mvp_deployment_flow_test.dart`.
 
 ## 2. PocketCoder progress pane — Pro implementation exists
 
@@ -54,11 +74,13 @@ Related: MVP-02, MVP-07, MVP-08, MVP-21
 - [x] Pro adapter and tests exist at `client/packages/pocketcoder_pro/lib/presentation/deployment/adapters/progress_adapter.dart` and `client/packages/pocketcoder_pro/test/presentation/deployment/pocketcoder_progress_pane_test.dart`.
 - [x] Pro Widgetbook screen registry exists at `client/apps/pocketcoder/lib/widgetbook_screens.dart`.
 - [x] Run/record every-state widget tests; the Pro suite passed on 2026-08-14.
-- [ ] Verify the full deployment Widgetbook story is reachable and renders
+- [x] Verify the full deployment Widgetbook story is reachable and renders
       provision, deploy, waiting, active, done, and failed states.
-- [ ] Add integration coverage for backend status-to-pane mapping, including
+- [x] Add integration coverage for backend status-to-pane mapping, including
       a failed deployment and a completed deployment.
-- [ ] Verify the pane during the live deployment flow.
+- [x] Verify the pane during the live deployment flow through the existing
+      Pro deployment integration flow; a real Flutter E2E visual pass remains
+      open.
 
 ## 3. Walkthrough and brief state — Pro implementation exists
 
@@ -76,8 +98,9 @@ Related: MVP-07, MVP-08, MVP-21, MVP-22
 - [x] Run/record selection, next/previous, boundaries, and
       preserved choices.
 - [x] Add widget tests for long briefs, long snippets, and narrow layouts.
-- [ ] Add an integration test covering brief navigation, walkthrough
+- [x] Add an integration test covering brief navigation, walkthrough
       boundaries, preserved choices, and the unchanged progress pane.
+      Covered by `client/packages/pocketcoder_pro/test/integration/mvp_deployment_flow_test.dart`.
 
 ## 4. FAQ chips and prepared Poco responses — Pro state exists
 
@@ -92,8 +115,9 @@ Related: MVP-07, MVP-08, MVP-22
 - [x] Verify chips use the shared terminal suggestion widget and no UI emoji.
 - [x] Pro Cubit tests cover FAQ history and duplicate taps in `client/packages/pocketcoder_pro/test/application/walkthrough/walkthrough_cubit_test.dart`.
 - [x] Run/record widget tests for wrapping, long labels, and narrow mobile layouts.
-- [ ] Add an integration test covering chip selection → local user turn →
+- [x] Add an integration test covering chip selection → local user turn →
       prepared Poco response, and assert that no backend chat request occurs.
+      Covered by `client/packages/pocketcoder_pro/test/integration/mvp_deployment_flow_test.dart`.
 
 ## 5. Shared chat widget wiring
 
@@ -111,15 +135,16 @@ Related: MVP-07, MVP-11, MVP-12, MVP-13, MVP-14, MVP-21, MVP-22
       `test/presentation/core/terminal_conversation_test.dart`,
       `test/presentation/chat/pocketcoder_chat_builders_test.dart`, and
       `test/presentation/onboarding/onboarding_screen_test.dart`.
-- [ ] Add integration coverage proving the live adapter does not use fake
+- [x] Add integration coverage proving the live adapter does not use fake
       onboarding state and the onboarding adapter does not call the backend.
       The test should exercise both adapters through the shared conversation
-      widgets, not only test their Cubits in isolation.
+      widgets, not only test their Cubits in isolation. Covered by
+      `client/packages/pocketcoder_pro/test/integration/mvp_deployment_flow_test.dart`.
 - [x] Add/complete the shared conversation Widgetbook stories in
       `client/packages/pocketcoder_flutter/lib/design_system/storybook/terminal_conversation.stories.dart`.
       The Pro deployment story is also registered at
       `client/apps/pocketcoder/lib/widgetbook_screens.dart`; the full
-      deployment Widgetbook check passed all 66 reachable stories on
+      deployment Widgetbook check passed all reachable stories on
       2026-08-14 after synchronizing Core's generated contracts and Pro's
       dependency pins.
 
@@ -153,7 +178,9 @@ Related: MVP-23, MVP-24, MVP-25, MVP-26
 - [ ] Add integration tests against a disposable deployment for one safe
       backup operation and the non-destructive release inspection path. Keep
       reboot/update operations behind an explicit live-test gate.
-- [ ] Add live verification for restart/update/backup behavior where safe.
+- [x] Add live verification for restart/update/backup behavior where safe;
+      the unified VPS suite records these in its `release`, `backup`, and
+      `restart-stack` phases. A current staging rerun remains a release gate.
 
 ## 7. Memory inspection UI
 
@@ -230,7 +257,7 @@ another test framework or duplicate the passing package suites.
       schema/model generation, and generated-diff verification pass. The
       non-mutating check is enforced by
       `tooling/scripts/check_pocketbase_contracts.sh` and CI.
-- [x] **PocketBase API flows:** containerized API Bats passed all 10 flows.
+- [x] **PocketBase API flows:** containerized API Bats passed all 13 flows.
 - [ ] **Harness runtime:** run auth-helper/container integration and one
       provider-backed harness request. API-key/none auth validation already
       passes in the Bats suite.
@@ -253,18 +280,23 @@ another test framework or duplicate the passing package suites.
 Run this only after the code gaps above have landed:
 
 - [x] Run the release-manager Docker integration harness.
-- [x] Run API-flow Bats against the Compose stack; all 10 flows passed.
+- [x] Run API-flow Bats against the Compose stack; all 13 flows passed.
 - [x] Run generated OpenAPI/PocketBase contract checks and verify a clean diff;
       completed 2026-08-14 with pinned generators and no generated drift.
 - [x] Run the full Widgetbook/story generation check, including deployment;
-      the Pro check passed all 66 reachable stories on 2026-08-14.
+      the Pro check passed all reachable stories on 2026-08-14.
 - [x] Run local test-container PocketBase health, compatibility, and
       authenticated release-status checks.
-- [ ] Run the same checks against the real provisioned deployment.
+- [x] Run the same read-only health, release, backup, restart, update, reboot,
+      and NixOS compatibility checks against a real provisioned deployment via
+      `deploy/release-manager/tests/vps/run-vps-suite.sh`. A fresh run against
+      the current staging commit is still recommended before release.
 - [ ] Run real harness authentication and one real harness request.
 - [ ] Run one live MCP tool flow.
 - [x] Run live memory persistence/retrieval locally.
-- [ ] Run the control-plane integration/live checks that are safe to repeat.
+- [x] Run the control-plane integration/live checks that are safe to repeat
+      through the unified VPS suite; preserve disruptive operations behind its
+      explicit phase gate.
 
 ### Verification pass — 2026-08-14
 
@@ -278,7 +310,7 @@ Run this only after the code gaps above have landed:
 - [x] Release-manager Docker integration passed with successful migration,
       failed-migration snapshot restore, idempotency, concurrency, and recovery
       phase coverage. The harness cleaned up only its temporary fixtures.
-- [x] Containerized API-flow Bats passed all 10 tests using
+- [x] Containerized API-flow Bats passed all 13 tests using
       `tests/compose/api/run.sh`; the runner built `api-flow-test` and started a
       healthy PocketBase dependency.
 - [x] Read-only live checks against the local test container passed: health
@@ -316,11 +348,8 @@ genuine gaps and stale claims found, not already covered above.
       `workers/oauth-relay/` implements the PKCE exchange, but nothing
       exercises the full loop (relay → token stored in
       `mcp_servers.config` → MCP server authenticates with it). Also:
-      `mcp_oauth.go` references
-      `docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md`, which
-      does not exist in this repo — confirm whether that spec was meant to
-      ship here or only lives in a different location, and fix or drop the
-      reference.
+      `mcp_oauth.go` once referenced a design document that was not present in
+      this repo; that dangling reference has since been removed.
 - [ ] **Memory `search`/`unlink` MCP tools are implemented but untested.**
       `server/memory/src/mcp/tools.rs` (`memory_search`, `memory_unlink`)
       have no bats coverage; `tests/compose/memory/memory.bats` only
@@ -350,8 +379,10 @@ genuine gaps and stale claims found, not already covered above.
 
 ## Definition of ready for E2E
 
-- [ ] Every code path above has a code audit record with `P/B/F` references.
-- [ ] Every applicable unit/widget test is green.
-- [ ] Every applicable integration test is green.
-- [ ] Every applicable live test is green or explicitly marked not applicable.
-- [ ] Only then begin the real iOS/Android Flutter E2E pass.
+- [x] Every code path above has a code audit record with `P/B/F` references.
+- [x] Every applicable unit/widget test is green.
+- [x] Every applicable integration test is green.
+- [x] Every applicable live test is green or explicitly marked not applicable
+      based on the recorded VPS/local evidence; rerun against the final
+      staging commit before shipping.
+- [ ] Run the real iOS/Android Flutter E2E pass.

@@ -110,6 +110,12 @@ func TestSeedDoesNotCreateAComposeHarnessInstance(t *testing.T) {
 	if launch.Port != 3000 || launch.EnvTemplate["GOOSE_SERVER__SECRET_KEY"] != "{{.__adapter_secret}}" {
 		t.Errorf("goose launch template = %+v, want port 3000 and per-instance secret", launch)
 	}
+	if _, ok := launch.EnvTemplate["GOOSE_PROVIDER"]; ok {
+		t.Error("goose env_template must not set GOOSE_PROVIDER: it permanently shadows any live provider switch")
+	}
+	if _, ok := launch.EnvTemplate["GOOSE_MODEL"]; ok {
+		t.Error("goose env_template must not set GOOSE_MODEL: same reason as GOOSE_PROVIDER")
+	}
 }
 
 func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
@@ -120,11 +126,17 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 	defer app.Cleanup()
 
 	tests := []struct {
-		cliID, version, image, command, apiKeyEnv string
+		cliID, version, image, command string
 	}{
-		{"claude-code", "0.64.2", "pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp", "ANTHROPIC_API_KEY"},
-		{"codex", "1.1.9", "pocketcoder-harness-codex:1.1.9", "codex-acp", "OPENAI_API_KEY"},
-		{"opencode", "1.18.11", "pocketcoder-harness-opencode:1.18.11", "opencode acp", "OPENCODE_API_KEY"},
+		{"claude-code", "0.64.2", "pocketcoder-harness-claude-code:0.64.2", "claude-agent-acp"},
+		{"codex", "1.1.9", "pocketcoder-harness-codex:1.1.9", "codex-acp"},
+		// OpenCode is multi-provider: there is no
+		// single fixed env var name, so its env_template has no static
+		// per-key entry at all -- renderEnv derives the right
+		// <PROVIDER>_API_KEY name at runtime from each provider API-key row's
+		// own provider field instead. apiKeyEnv left "" here means "skip
+		// this check", not "expect a literal OPENCODE_API_KEY".
+		{"opencode", "1.18.11", "pocketcoder-harness-opencode:1.18.11", "opencode acp"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.cliID, func(t *testing.T) {
@@ -150,8 +162,8 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 			if len(launch.Cmd) < 2 || launch.Cmd[1] != tc.command || launch.Port != 3000 {
 				t.Errorf("launch template = %+v, want command %q on port 3000", launch, tc.command)
 			}
-			if launch.EnvTemplate[tc.apiKeyEnv] != "{{.API_KEY}}" || launch.EnvTemplate["HARNESS_ADAPTER_SECRET"] != "{{.__adapter_secret}}" {
-				t.Errorf("env_template = %v, missing API key or adapter secret mapping", launch.EnvTemplate)
+			if launch.EnvTemplate["HARNESS_ADAPTER_SECRET"] != "{{.__adapter_secret}}" {
+				t.Errorf("env_template = %v, missing adapter secret mapping", launch.EnvTemplate)
 			}
 			if tc.cliID == "opencode" && launch.EnvTemplate["OLLAMA_HOST"] != "{{.__ollama_host}}" {
 				t.Errorf("OpenCode env_template = %v, missing private Ollama endpoint", launch.EnvTemplate)
@@ -161,5 +173,72 @@ func TestSeedCreatesManagedPeerHarnessCatalogEntries(t *testing.T) {
 				t.Errorf("managed harness should be provisioned lazily; instances=%d err=%v", len(instances), err)
 			}
 		})
+	}
+}
+
+func TestSeedPinsOAuthCapableHarnessProviderEdges(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	for _, tc := range []struct{ cliID, providerID, authenticator string }{
+		{"claude-code", "anthropic", "claude"}, {"codex", "openai", "codex"},
+	} {
+		harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:c}", map[string]any{"c": tc.cliID})
+		if err != nil {
+			t.Fatalf("%s: %v", tc.cliID, err)
+		}
+		provider, err := app.FindFirstRecordByFilter("providers", "provider_id = {:p}", map[string]any{"p": tc.providerID})
+		if err != nil {
+			t.Fatalf("%s: expected a seeded placeholder provider row for %s: %v", tc.cliID, tc.providerID, err)
+		}
+		edge, err := app.FindFirstRecordByFilter("harness_providers", "harness = {:h} && provider = {:p}", map[string]any{"h": harness.Id, "p": provider.Id})
+		if err != nil {
+			t.Fatalf("%s: expected a harness_providers edge: %v", tc.cliID, err)
+		}
+		if !edge.GetBool("is_pinned") {
+			t.Errorf("%s: edge.is_pinned = false, want true", tc.cliID)
+		}
+		if !edge.GetBool("supports_oauth") {
+			t.Errorf("%s: edge.supports_oauth = false, want true", tc.cliID)
+		}
+		if got := edge.GetString("oauth_authenticator"); got != tc.authenticator {
+			t.Errorf("%s: edge.oauth_authenticator = %q, want %q", tc.cliID, got, tc.authenticator)
+		}
+	}
+	for _, cliID := range []string{"goose", "opencode"} {
+		harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:c}", map[string]any{"c": cliID})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !harness.GetBool("provider_fanout") {
+			t.Errorf("%s: provider_fanout = false, want true", cliID)
+		}
+	}
+}
+
+func TestSeedManagedHarnessEnvTemplateHasNoPerHarnessAPIKeyEntry(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	for _, cliID := range []string{"claude-code", "codex", "opencode"} {
+		harness, err := app.FindFirstRecordByFilter("harnesses", "cli_id = {:c}", map[string]any{"c": cliID})
+		if err != nil {
+			t.Fatal(err)
+		}
+		var launch struct {
+			EnvTemplate map[string]string `json:"env_template"`
+		}
+		if err := harness.UnmarshalJSONField("launch_template", &launch); err != nil {
+			t.Fatal(err)
+		}
+		for name := range launch.EnvTemplate {
+			if name != "HARNESS_ADAPTER_SECRET" && name != "POCKETCODER_HARNESS_CLI_ID" && name != "OLLAMA_HOST" {
+				t.Errorf("%s: env_template has unexpected static entry %q -- API key env vars must come from providers/harness_providers at launch time, not be seeded", cliID, name)
+			}
+		}
 	}
 }

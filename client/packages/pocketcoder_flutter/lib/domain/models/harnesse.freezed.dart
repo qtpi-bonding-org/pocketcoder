@@ -24,8 +24,8 @@ mixin _$Harnesse {
   String? get containerImage;
   dynamic get launchTemplate;
   bool? get supportsLiveConfig;
-  @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-  HarnesseProviderScope? get providerScope;
+  bool? get supportsLiveCredentialRegistration;
+  bool? get providerFanout;
   bool? get supportsOllama;
   bool? get supportsSessionDelete;
   bool? get supportsAdditionalDirectories;
@@ -59,8 +59,12 @@ mixin _$Harnesse {
                 .equals(other.launchTemplate, launchTemplate) &&
             (identical(other.supportsLiveConfig, supportsLiveConfig) ||
                 other.supportsLiveConfig == supportsLiveConfig) &&
-            (identical(other.providerScope, providerScope) ||
-                other.providerScope == providerScope) &&
+            (identical(other.supportsLiveCredentialRegistration,
+                    supportsLiveCredentialRegistration) ||
+                other.supportsLiveCredentialRegistration ==
+                    supportsLiveCredentialRegistration) &&
+            (identical(other.providerFanout, providerFanout) ||
+                other.providerFanout == providerFanout) &&
             (identical(other.supportsOllama, supportsOllama) ||
                 other.supportsOllama == supportsOllama) &&
             (identical(other.supportsSessionDelete, supportsSessionDelete) ||
@@ -84,14 +88,15 @@ mixin _$Harnesse {
       containerImage,
       const DeepCollectionEquality().hash(launchTemplate),
       supportsLiveConfig,
-      providerScope,
+      supportsLiveCredentialRegistration,
+      providerFanout,
       supportsOllama,
       supportsSessionDelete,
       supportsAdditionalDirectories);
 
   @override
   String toString() {
-    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerScope: $providerScope, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
+    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, supportsLiveCredentialRegistration: $supportsLiveCredentialRegistration, providerFanout: $providerFanout, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
   }
 }
 
@@ -111,8 +116,8 @@ abstract mixin class $HarnesseCopyWith<$Res> {
       String? containerImage,
       dynamic launchTemplate,
       bool? supportsLiveConfig,
-      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-      HarnesseProviderScope? providerScope,
+      bool? supportsLiveCredentialRegistration,
+      bool? providerFanout,
       bool? supportsOllama,
       bool? supportsSessionDelete,
       bool? supportsAdditionalDirectories});
@@ -139,7 +144,8 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
     Object? containerImage = freezed,
     Object? launchTemplate = freezed,
     Object? supportsLiveConfig = freezed,
-    Object? providerScope = freezed,
+    Object? supportsLiveCredentialRegistration = freezed,
+    Object? providerFanout = freezed,
     Object? supportsOllama = freezed,
     Object? supportsSessionDelete = freezed,
     Object? supportsAdditionalDirectories = freezed,
@@ -181,10 +187,15 @@ class _$HarnesseCopyWithImpl<$Res> implements $HarnesseCopyWith<$Res> {
           ? _self.supportsLiveConfig
           : supportsLiveConfig // ignore: cast_nullable_to_non_nullable
               as bool?,
-      providerScope: freezed == providerScope
-          ? _self.providerScope
-          : providerScope // ignore: cast_nullable_to_non_nullable
-              as HarnesseProviderScope?,
+      supportsLiveCredentialRegistration: freezed ==
+              supportsLiveCredentialRegistration
+          ? _self.supportsLiveCredentialRegistration
+          : supportsLiveCredentialRegistration // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      providerFanout: freezed == providerFanout
+          ? _self.providerFanout
+          : providerFanout // ignore: cast_nullable_to_non_nullable
+              as bool?,
       supportsOllama: freezed == supportsOllama
           ? _self.supportsOllama
           : supportsOllama // ignore: cast_nullable_to_non_nullable
@@ -305,8 +316,8 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
-            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-            HarnesseProviderScope? providerScope,
+            bool? supportsLiveCredentialRegistration,
+            bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
             bool? supportsAdditionalDirectories)?
@@ -326,7 +337,8 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.providerScope,
+            _that.supportsLiveCredentialRegistration,
+            _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
             _that.supportsAdditionalDirectories);
@@ -361,8 +373,8 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
-            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-            HarnesseProviderScope? providerScope,
+            bool? supportsLiveCredentialRegistration,
+            bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
             bool? supportsAdditionalDirectories)
@@ -381,7 +393,8 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.providerScope,
+            _that.supportsLiveCredentialRegistration,
+            _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
             _that.supportsAdditionalDirectories);
@@ -415,8 +428,8 @@ extension HarnessePatterns on Harnesse {
             String? containerImage,
             dynamic launchTemplate,
             bool? supportsLiveConfig,
-            @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-            HarnesseProviderScope? providerScope,
+            bool? supportsLiveCredentialRegistration,
+            bool? providerFanout,
             bool? supportsOllama,
             bool? supportsSessionDelete,
             bool? supportsAdditionalDirectories)?
@@ -435,7 +448,8 @@ extension HarnessePatterns on Harnesse {
             _that.containerImage,
             _that.launchTemplate,
             _that.supportsLiveConfig,
-            _that.providerScope,
+            _that.supportsLiveCredentialRegistration,
+            _that.providerFanout,
             _that.supportsOllama,
             _that.supportsSessionDelete,
             _that.supportsAdditionalDirectories);
@@ -459,8 +473,8 @@ class _Harnesse implements Harnesse {
       this.containerImage,
       this.launchTemplate,
       this.supportsLiveConfig,
-      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-      this.providerScope,
+      this.supportsLiveCredentialRegistration,
+      this.providerFanout,
       this.supportsOllama,
       this.supportsSessionDelete,
       this.supportsAdditionalDirectories});
@@ -487,8 +501,9 @@ class _Harnesse implements Harnesse {
   @override
   final bool? supportsLiveConfig;
   @override
-  @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-  final HarnesseProviderScope? providerScope;
+  final bool? supportsLiveCredentialRegistration;
+  @override
+  final bool? providerFanout;
   @override
   final bool? supportsOllama;
   @override
@@ -530,8 +545,12 @@ class _Harnesse implements Harnesse {
                 .equals(other.launchTemplate, launchTemplate) &&
             (identical(other.supportsLiveConfig, supportsLiveConfig) ||
                 other.supportsLiveConfig == supportsLiveConfig) &&
-            (identical(other.providerScope, providerScope) ||
-                other.providerScope == providerScope) &&
+            (identical(other.supportsLiveCredentialRegistration,
+                    supportsLiveCredentialRegistration) ||
+                other.supportsLiveCredentialRegistration ==
+                    supportsLiveCredentialRegistration) &&
+            (identical(other.providerFanout, providerFanout) ||
+                other.providerFanout == providerFanout) &&
             (identical(other.supportsOllama, supportsOllama) ||
                 other.supportsOllama == supportsOllama) &&
             (identical(other.supportsSessionDelete, supportsSessionDelete) ||
@@ -555,14 +574,15 @@ class _Harnesse implements Harnesse {
       containerImage,
       const DeepCollectionEquality().hash(launchTemplate),
       supportsLiveConfig,
-      providerScope,
+      supportsLiveCredentialRegistration,
+      providerFanout,
       supportsOllama,
       supportsSessionDelete,
       supportsAdditionalDirectories);
 
   @override
   String toString() {
-    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, providerScope: $providerScope, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
+    return 'Harnesse(id: $id, name: $name, cliId: $cliId, version: $version, description: $description, acpTransport: $acpTransport, containerImage: $containerImage, launchTemplate: $launchTemplate, supportsLiveConfig: $supportsLiveConfig, supportsLiveCredentialRegistration: $supportsLiveCredentialRegistration, providerFanout: $providerFanout, supportsOllama: $supportsOllama, supportsSessionDelete: $supportsSessionDelete, supportsAdditionalDirectories: $supportsAdditionalDirectories)';
   }
 }
 
@@ -584,8 +604,8 @@ abstract mixin class _$HarnesseCopyWith<$Res>
       String? containerImage,
       dynamic launchTemplate,
       bool? supportsLiveConfig,
-      @JsonKey(unknownEnumValue: HarnesseProviderScope.unknown)
-      HarnesseProviderScope? providerScope,
+      bool? supportsLiveCredentialRegistration,
+      bool? providerFanout,
       bool? supportsOllama,
       bool? supportsSessionDelete,
       bool? supportsAdditionalDirectories});
@@ -612,7 +632,8 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
     Object? containerImage = freezed,
     Object? launchTemplate = freezed,
     Object? supportsLiveConfig = freezed,
-    Object? providerScope = freezed,
+    Object? supportsLiveCredentialRegistration = freezed,
+    Object? providerFanout = freezed,
     Object? supportsOllama = freezed,
     Object? supportsSessionDelete = freezed,
     Object? supportsAdditionalDirectories = freezed,
@@ -654,10 +675,15 @@ class __$HarnesseCopyWithImpl<$Res> implements _$HarnesseCopyWith<$Res> {
           ? _self.supportsLiveConfig
           : supportsLiveConfig // ignore: cast_nullable_to_non_nullable
               as bool?,
-      providerScope: freezed == providerScope
-          ? _self.providerScope
-          : providerScope // ignore: cast_nullable_to_non_nullable
-              as HarnesseProviderScope?,
+      supportsLiveCredentialRegistration: freezed ==
+              supportsLiveCredentialRegistration
+          ? _self.supportsLiveCredentialRegistration
+          : supportsLiveCredentialRegistration // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      providerFanout: freezed == providerFanout
+          ? _self.providerFanout
+          : providerFanout // ignore: cast_nullable_to_non_nullable
+              as bool?,
       supportsOllama: freezed == supportsOllama
           ? _self.supportsOllama
           : supportsOllama // ignore: cast_nullable_to_non_nullable

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"path"
 	"path/filepath"
 	"sort"
@@ -105,7 +106,9 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 
 func skillMaterializationRoot(skill *core.Record) (string, error) {
 	var metadata map[string]any
-	_ = skill.UnmarshalJSONField("metadata", &metadata)
+	if err := skill.UnmarshalJSONField("metadata", &metadata); err != nil {
+		log.Printf("[AgentFiles] failed to unmarshal metadata for skill %q: %v", skill.GetString("name"), err)
+	}
 	projectDir, _ := metadata["projectDir"].(string)
 	projectDir = strings.TrimSpace(projectDir)
 	if projectDir == "" || filepath.Clean(projectDir) == workspaceRoot {
@@ -201,6 +204,7 @@ func RegisterAgentFileHooks(app core.App) {
 		}
 		instances, err := app.FindRecordsByFilter("harness_instances", filter, "", 0, 0, params)
 		if err != nil {
+			log.Printf("[AgentFiles] failed to find running harness instances: %v", err)
 			return e.Next()
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

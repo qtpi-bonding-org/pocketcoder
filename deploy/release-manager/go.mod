@@ -2,7 +2,7 @@ module github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager
 
 go 1.25.8
 
-require github.com/sigstore/sigstore-go v1.1.4
+require github.com/sigstore/sigstore-go v1.3.0
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect

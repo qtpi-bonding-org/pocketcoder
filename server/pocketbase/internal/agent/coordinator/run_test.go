@@ -114,6 +114,17 @@ type fakeConn struct {
 	lastExtensionMethod string
 	lastExtensionParams any
 	callExtensionCalls  int
+	extensionResponse   json.RawMessage
+	extensionErr        error
+	callOrder           []string
+	extensionMethods    []string
+	// extensionResponseByMethod lets a test return a different fake response
+	// per extension method (e.g. providers/config/save vs defaults/save),
+	// which a single fixed extensionResponse can't do now that
+	// LiveConfigBootstrap makes two distinct CallExtension calls in a row.
+	// Checked first; falls back to extensionResponse/extensionErr when the
+	// method has no entry.
+	extensionResponseByMethod map[string]json.RawMessage
 
 	resumeCalls                int
 	lastResumeSessionReq       acpsdk.ResumeSessionRequest
@@ -185,6 +196,7 @@ func (f *fakeConn) Initialize(context.Context, acpsdk.InitializeRequest) (acpsdk
 	f.mu.Lock()
 	f.initializeCalls++
 	initResp := f.initResp
+	f.callOrder = append(f.callOrder, "initialize")
 	f.mu.Unlock()
 	return initResp, nil
 }
@@ -192,12 +204,14 @@ func (f *fakeConn) NewSession(_ context.Context, req acpsdk.NewSessionRequest) (
 	f.mu.Lock()
 	f.lastNewSessionReq = req
 	f.newSessionCalls++
+	f.callOrder = append(f.callOrder, "new_session")
 	f.mu.Unlock()
 	return acpsdk.NewSessionResponse{SessionId: acpsdk.SessionId(f.newSession)}, nil
 }
 func (f *fakeConn) LoadSession(_ context.Context, req acpsdk.LoadSessionRequest) (acpsdk.LoadSessionResponse, error) {
 	f.mu.Lock()
 	f.lastLoadSessionReq = req
+	f.callOrder = append(f.callOrder, "load_session")
 	f.mu.Unlock()
 	return acpsdk.LoadSessionResponse{}, nil
 }
@@ -205,12 +219,143 @@ func (f *fakeConn) ResumeSession(_ context.Context, req acpsdk.ResumeSessionRequ
 	f.mu.Lock()
 	f.lastResumeSessionReq = req
 	f.resumeCalls++
+	f.callOrder = append(f.callOrder, "resume_session")
 	err := f.resumeErr
 	f.mu.Unlock()
 	if err != nil {
 		return acpsdk.ResumeSessionResponse{}, err
 	}
 	return acpsdk.ResumeSessionResponse{}, nil
+}
+
+// newTestCoordinatorDialing builds a minimal Coordinator whose Dial always
+// returns fc, for exercising establishSession directly.
+func newTestCoordinatorDialing(fc *fakeConn) *Coordinator {
+	return &Coordinator{config: Config{Dial: func(context.Context, acpsdk.Client, Target) (acp.Conn, error) {
+		return fc, nil
+	}}}
+}
+
+func TestEstablishSessionBootstrapsProviderBeforeNewSession(t *testing.T) {
+	fc := &fakeConn{
+		newSession: "sess-1",
+		extensionResponseByMethod: map[string]json.RawMessage{
+			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+			gooseProvidersListMethod:      json.RawMessage(`{"entries":[{"providerId":"openai","defaultModel":"gpt-5"}]}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":"gpt-5"}`),
+		},
+	}
+	c := newTestCoordinatorDialing(fc)
+	profile := SessionProfile{
+		Provider:                           "openai",
+		SupportsLiveConfig:                 true,
+		SupportsLiveCredentialRegistration: true,
+		CredentialFieldName:                "OPENAI_API_KEY",
+		CredentialFieldValue:               "sk-test",
+	}
+	// sessionID == "" selects the NewSession branch (run.go:746-760).
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	// LiveConfigBootstrap now makes two CallExtension calls -- register the
+	// credential, then set it as goose's active default provider -- before
+	// NewSession ever runs.
+	want := []string{"initialize", "call_extension", "call_extension", "call_extension", "new_session"}
+	if len(fc.callOrder) != len(want) {
+		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+	}
+	for i := range want {
+		if fc.callOrder[i] != want[i] {
+			t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+		}
+	}
+}
+
+func TestEstablishSessionBootstrapsProviderBeforeResumeSession(t *testing.T) {
+	fc := &fakeConn{
+		extensionResponseByMethod: map[string]json.RawMessage{
+			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+			gooseProvidersListMethod:      json.RawMessage(`{"entries":[{"providerId":"openai","defaultModel":"gpt-5"}]}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":"gpt-5"}`),
+		},
+		// A non-nil Resume capability selects the ResumeSession branch
+		// for a non-empty sessionID (run.go:762-772).
+		initResp: acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{
+			SessionCapabilities: acpsdk.SessionCapabilities{Resume: &acpsdk.SessionResumeCapabilities{}},
+		}},
+	}
+	c := newTestCoordinatorDialing(fc)
+	profile := SessionProfile{
+		Provider:                           "openai",
+		SupportsLiveConfig:                 true,
+		SupportsLiveCredentialRegistration: true,
+		CredentialFieldName:                "OPENAI_API_KEY",
+		CredentialFieldValue:               "sk-test",
+	}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "sess-existing", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	want := []string{"initialize", "call_extension", "call_extension", "call_extension", "resume_session"}
+	if len(fc.callOrder) != len(want) {
+		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+	}
+	for i := range want {
+		if fc.callOrder[i] != want[i] {
+			t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+		}
+	}
+}
+
+func TestEstablishSessionBootstrapsProviderBeforeLoadSession(t *testing.T) {
+	fc := &fakeConn{
+		extensionResponseByMethod: map[string]json.RawMessage{
+			gooseProviderConfigSaveMethod: json.RawMessage(`{"status":{"providerId":"openai","isConfigured":true}}`),
+			gooseProvidersListMethod:      json.RawMessage(`{"entries":[{"providerId":"openai","defaultModel":"gpt-5"}]}`),
+			gooseDefaultsSaveMethod:       json.RawMessage(`{"providerId":"openai","modelId":"gpt-5"}`),
+		},
+		// Resume is nil and LoadSession is true, selecting the LoadSession
+		// branch for a non-empty sessionID (run.go:774-786).
+		initResp: acpsdk.InitializeResponse{AgentCapabilities: acpsdk.AgentCapabilities{LoadSession: true}},
+	}
+	c := newTestCoordinatorDialing(fc)
+	profile := SessionProfile{
+		Provider:                           "openai",
+		SupportsLiveConfig:                 true,
+		SupportsLiveCredentialRegistration: true,
+		CredentialFieldName:                "OPENAI_API_KEY",
+		CredentialFieldValue:               "sk-test",
+	}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "sess-existing", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	want := []string{"initialize", "call_extension", "call_extension", "call_extension", "load_session"}
+	if len(fc.callOrder) != len(want) {
+		t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+	}
+	for i := range want {
+		if fc.callOrder[i] != want[i] {
+			t.Fatalf("callOrder = %v, want %v", fc.callOrder, want)
+		}
+	}
+}
+
+func TestEstablishSessionSkipsBootstrapCallForStaticEnvHarness(t *testing.T) {
+	fc := &fakeConn{newSession: "sess-1"}
+	c := newTestCoordinatorDialing(fc)
+	// opencode-shaped profile: SupportsLiveConfig true, registration false
+	// -- selectProviderBootstrap must still pick StaticEnvBootstrap.
+	profile := SessionProfile{Provider: "openai", SupportsLiveConfig: true, SupportsLiveCredentialRegistration: false}
+	_, _, _, _, _, _, err := c.establishSession(context.Background(), nil, profile, "", func() {})
+	if err != nil {
+		t.Fatalf("establishSession: %v", err)
+	}
+	want := []string{"initialize", "new_session"}
+	if len(fc.callOrder) != len(want) {
+		t.Fatalf("callOrder = %v, want %v (no call_extension for a static-env harness)", fc.callOrder, want)
+	}
 }
 func (f *fakeConn) Done() <-chan struct{} {
 	f.mu.Lock()
@@ -245,6 +390,7 @@ func (f *fakeConn) SetSessionConfigOption(_ context.Context, req acpsdk.SetSessi
 	f.mu.Lock()
 	f.lastSetConfigOption = req
 	f.setConfigOptionCalls = append(f.setConfigOptionCalls, req)
+	f.callOrder = append(f.callOrder, "set_config_option")
 	f.mu.Unlock()
 	return acpsdk.SetSessionConfigOptionResponse{}, nil
 }
@@ -333,8 +479,17 @@ func (f *fakeConn) CallExtension(_ context.Context, method string, params any) (
 	f.lastExtensionMethod = method
 	f.lastExtensionParams = params
 	f.callExtensionCalls++
+	f.callOrder = append(f.callOrder, "call_extension")
+	f.extensionMethods = append(f.extensionMethods, method)
+	byMethod := f.extensionResponseByMethod
 	f.mu.Unlock()
-	return json.RawMessage(`{}`), nil
+	if resp, ok := byMethod[method]; ok {
+		return resp, nil
+	}
+	if f.extensionResponse == nil && f.extensionErr == nil {
+		return json.RawMessage(`{}`), nil
+	}
+	return f.extensionResponse, f.extensionErr
 }
 
 func (f *fakeConn) Close() error {
@@ -529,6 +684,256 @@ func TestRequestPermissionForwardsToolCallID(t *testing.T) {
 		t.Fatal(err)
 	}
 	c.waitRunDone(t, "A")
+}
+
+func TestStartPromptWithUserMessageIDEchoesTextMessage(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	att := c.hubFor("A").Attach(0)
+	defer att.Unsubscribe()
+
+	_, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil,
+		WithUserMessageID("user-msg-1"),
+	)
+	if err != nil {
+		t.Fatalf("StartPrompt err=%v", err)
+	}
+	c.waitRunDone(t, "A")
+
+	var sawStart, sawContent, sawEnd bool
+	for i := 0; i < 20; i++ {
+		select {
+		case se := <-att.Live:
+			switch ev := se.Ev.(type) {
+			case *events.TextMessageStartEvent:
+				if ev.MessageID == "user-msg-1" && ev.Role != nil && *ev.Role == "user" {
+					sawStart = true
+				}
+			case *events.TextMessageContentEvent:
+				if ev.MessageID == "user-msg-1" && ev.Delta == "hi" {
+					sawContent = true
+				}
+			case *events.TextMessageEndEvent:
+				if ev.MessageID == "user-msg-1" {
+					sawEnd = true
+				}
+			}
+		default:
+		}
+	}
+	if !sawStart || !sawContent || !sawEnd {
+		t.Fatalf("user message echo incomplete: start=%v content=%v end=%v",
+			sawStart, sawContent, sawEnd)
+	}
+}
+
+// TestStartPromptWithUserMessageIDEchoesEvenWhenSessionResolveFails covers
+// the fix for the final-review finding that the echo was published only
+// after resolve/profileFn succeeded, so a real provisioning/auth failure
+// dropped the user's message on reconnect exactly like the original bug
+// this feature was meant to fix. The echo must now happen unconditionally
+// as soon as the run starts, before resolve/profileFn are ever called.
+func TestStartPromptWithUserMessageIDEchoesEvenWhenSessionResolveFails(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	att := c.hubFor("A").Attach(0)
+	defer att.Unsubscribe()
+
+	_, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "", errors.New("session mapping failed") },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil,
+		WithUserMessageID("user-msg-2"),
+	)
+	if err != nil {
+		t.Fatalf("StartPrompt err=%v", err)
+	}
+	c.waitRunDone(t, "A")
+
+	var sawStart bool
+	for i := 0; i < 20; i++ {
+		select {
+		case se := <-att.Live:
+			if ev, ok := se.Ev.(*events.TextMessageStartEvent); ok {
+				if ev.MessageID == "user-msg-2" && ev.Role != nil && *ev.Role == "user" {
+					sawStart = true
+				}
+			}
+		default:
+		}
+	}
+	if !sawStart {
+		t.Fatal("expected user message echo even though session resolution failed")
+	}
+}
+
+func TestStartPromptWithoutUserMessageIDEchoesNothing(t *testing.T) {
+	f := newFakeConn()
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	att := c.hubFor("A").Attach(0)
+	defer att.Unsubscribe()
+
+	_, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	if err != nil {
+		t.Fatalf("StartPrompt err=%v", err)
+	}
+	c.waitRunDone(t, "A")
+
+	for i := 0; i < 20; i++ {
+		select {
+		case se := <-att.Live:
+			if _, ok := se.Ev.(*events.TextMessageStartEvent); ok {
+				t.Fatal("no user message echo expected when WithUserMessageID is not set")
+			}
+		default:
+		}
+	}
+}
+
+// testCoordinatorWithConnAndConfig is testCoordinatorWithConn plus a hook
+// to set additional Config fields (e.g. OnPermissionPending) that the
+// 3-arg helper has no room for.
+func testCoordinatorWithConnAndConfig(t *testing.T, f *fakeConn, clk Clock, configure func(*Config)) *Coordinator {
+	t.Helper()
+	cfg := Config{Workspace: "/w", Clock: clk,
+		Dial: func(_ context.Context, client acpsdk.Client, _ Target) (acp.Conn, error) {
+			f.mu.Lock()
+			f.client = client
+			f.mu.Unlock()
+			return f, nil
+		}}
+	configure(&cfg)
+	c, err := New(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+// TestRequestPermissionFiresOnPermissionPendingWithAGUIShapedPayload covers
+// this session's push-schema slice: OnPermissionPending must fire with
+// exactly the AG-UI STATE_DELTA payload shape (agui.PermissionPayload) the
+// live SSE stream already carries -- not a second, ACP-shaped schema.
+func TestRequestPermissionFiresOnPermissionPendingWithAGUIShapedPayload(t *testing.T) {
+	f := newFakeConn()
+	f.requestPermission = true
+	var gotChatID string
+	var gotPayload map[string]any
+	done := make(chan struct{})
+	c := testCoordinatorWithConnAndConfig(t, f, NewFakeClock(time.Unix(0, 0)), func(cfg *Config) {
+		cfg.OnPermissionPending = func(_ context.Context, chatID string, payload map[string]any) {
+			gotChatID, gotPayload = chatID, payload
+			close(done)
+		}
+	})
+	c.StartPrompt("A", "do it",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	id := c.waitForPendingPermission(t, "A")
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("OnPermissionPending never fired")
+	}
+	if gotChatID != "A" {
+		t.Fatalf("chatID = %q, want %q", gotChatID, "A")
+	}
+	if gotPayload["requestId"] != id {
+		t.Fatalf("payload[\"requestId\"] = %v, want %q", gotPayload["requestId"], id)
+	}
+	if gotPayload["status"] != "pending" {
+		t.Fatalf("payload[\"status\"] = %v, want \"pending\"", gotPayload["status"])
+	}
+	options, ok := gotPayload["options"].([]map[string]string)
+	if !ok || len(options) == 0 {
+		t.Fatalf("payload[\"options\"] = %#v, want a non-empty []map[string]string (AG-UI shape)", gotPayload["options"])
+	}
+
+	if err := c.Approve(context.Background(), "A", id, options[0]["optionId"]); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A")
+}
+
+// TestUnstableCreateElicitationFiresOnElicitationPendingWithAGUIShapedPayload
+// mirrors the permission test above -- OnElicitationPending must fire with
+// agui.ElicitationPayload's exact shape (elicitationId/message/mode/url),
+// the same one the live SSE STATE_DELTA carries.
+func TestUnstableCreateElicitationFiresOnElicitationPendingWithAGUIShapedPayload(t *testing.T) {
+	f := newFakeConn()
+	f.emitElicitationURL = true
+	var gotChatID string
+	var gotPayload map[string]any
+	done := make(chan struct{})
+	c := testCoordinatorWithConnAndConfig(t, f, NewFakeClock(time.Unix(0, 0)), func(cfg *Config) {
+		cfg.OnElicitationPending = func(_ context.Context, chatID string, payload map[string]any) {
+			gotChatID, gotPayload = chatID, payload
+			close(done)
+		}
+	})
+	c.StartPrompt("A", "need input",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	id := c.waitForPendingElicitation(t, "A")
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("OnElicitationPending never fired")
+	}
+	if gotChatID != "A" {
+		t.Fatalf("chatID = %q, want %q", gotChatID, "A")
+	}
+	if gotPayload["elicitationId"] != id {
+		t.Fatalf("payload[\"elicitationId\"] = %v, want %q", gotPayload["elicitationId"], id)
+	}
+	if gotPayload["message"] != "Please authorize in your browser" {
+		t.Fatalf("payload[\"message\"] = %v, want %q", gotPayload["message"], "Please authorize in your browser")
+	}
+	if gotPayload["mode"] != "url" {
+		t.Fatalf("payload[\"mode\"] = %v, want \"url\"", gotPayload["mode"])
+	}
+	if gotPayload["url"] != "https://example.com/auth" {
+		t.Fatalf("payload[\"url\"] = %v, want %q", gotPayload["url"], "https://example.com/auth")
+	}
+
+	if err := c.ResolveElicitation("A", id, acpsdk.UnstableCreateElicitationResponse{
+		Accept: &acpsdk.UnstableCreateElicitationAccept{},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	c.waitRunDone(t, "A")
+}
+
+func TestNoPermissionRequestDoesNotFireOnPermissionPending(t *testing.T) {
+	f := newFakeConn()
+	fired := false
+	c := testCoordinatorWithConnAndConfig(t, f, NewFakeClock(time.Unix(0, 0)), func(cfg *Config) {
+		cfg.OnPermissionPending = func(context.Context, string, map[string]any) { fired = true }
+	})
+	c.StartPrompt("B", "do it",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	c.waitRunDone(t, "B")
+	if fired {
+		t.Fatal("OnPermissionPending fired for a run with no permission request at all")
+	}
 }
 
 func TestAutomaticPermissionResponseUsesOneShotOption(t *testing.T) {

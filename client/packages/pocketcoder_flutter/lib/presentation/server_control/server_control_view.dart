@@ -1,57 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
+import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_provider_console_link.dart';
+import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+
+/// Confirm-dialog body text only; buttons use [_buttonLabel] instead.
+String _localizedOperationLabel(
+  BuildContext context,
+  ServerControlOperation operation,
+) =>
+    switch (operation) {
+      ServerControlOperation.restartPocketCoder =>
+        context.l10n.serverControlOperationRestartPocketCoder,
+      ServerControlOperation.updatePocketCoder =>
+        context.l10n.serverControlOperationUpdatePocketCoder,
+      ServerControlOperation.restartNixOs =>
+        context.l10n.serverControlOperationRestartNixOs,
+      ServerControlOperation.updateNixOs =>
+        context.l10n.serverControlOperationUpdateNixOs,
+      ServerControlOperation.saveBackup =>
+        context.l10n.serverControlOperationSaveBackup,
+      ServerControlOperation.restoreBackup =>
+        context.l10n.serverControlOperationRestoreBackup,
+    };
+
+String _buttonLabel(BuildContext context, ServerControlOperation operation) =>
+    switch (operation) {
+      ServerControlOperation.restartPocketCoder ||
+      ServerControlOperation.restartNixOs =>
+        context.l10n.serverControlActionRestart,
+      ServerControlOperation.updatePocketCoder ||
+      ServerControlOperation.updateNixOs =>
+        context.l10n.serverControlActionUpdate,
+      ServerControlOperation.saveBackup => context.l10n.serverControlActionSave,
+      ServerControlOperation.restoreBackup =>
+        context.l10n.serverControlActionRestore,
+    };
 
 class ServerControlView extends StatelessWidget {
   const ServerControlView({
     super.key,
     required this.instanceId,
+    required this.inAppBrowserLauncher,
+    this.providerConsoleLink,
   });
 
   final String instanceId;
+  final InAppBrowserLauncher inAppBrowserLauncher;
+
+  /// Null in FOSS, which has no provider integration to link to -- the
+  /// button below only renders when this is non-null.
+  final IProviderConsoleLink? providerConsoleLink;
 
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<ServerControlCubit>();
     return BlocBuilder<ServerControlCubit, ServerControlState>(
-      builder: (context, state) => TerminalScaffold(
-        title: 'SERVER CONTROLS',
-        actions: [
-          TerminalAction(
-            label: 'BACK',
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-        ],
+      builder: (context, state) => PocketCoderShell(
+        title: context.l10n.serverControlTitle,
+        activePillar: NavPillar.manage,
+        showBack: false,
         body: ListView(
           children: [
+            if (state.connectionDetails case final details?
+                when details.isAvailable) ...[
+              _ConnectionDetails(details: details),
+              VSpace.x2,
+            ],
             _ReleaseLine(state: state),
             VSpace.x2,
-            for (final operation in ServerControlOperation.values)
-              Padding(
-                padding: EdgeInsets.only(bottom: AppSizes.space),
-                child: _ControlButton(
-                  operation: operation,
-                  disabled: state.isBusy,
-                  onPressed: () => _confirm(
-                    context,
-                    operation,
-                    () => cubit.run(
-                      operation: operation,
-                      instanceId: instanceId,
-                    ),
-                  ),
-                ),
+            if (providerConsoleLink case final link?) ...[
+              _ProviderConsoleButton(link: link, launcher: inAppBrowserLauncher),
+              VSpace.x2,
+            ],
+            if (state.publicKey case final publicKey?) ...[
+              Text(context.l10n.serverControlPublicKeyLabel),
+              VSpace.x1,
+              Row(
+                children: [
+                  Expanded(child: SelectableText(publicKey)),
+                  _CopyButton(value: publicKey),
+                ],
               ),
+              VSpace.x2,
+              _PrivateKeySection(instanceId: instanceId, state: state),
+              VSpace.x2,
+            ],
+            _ControlGrid(
+              state: state,
+              onRun: (operation) => _confirm(
+                context,
+                operation,
+                () => cubit.run(operation: operation, instanceId: instanceId),
+              ),
+            ),
             if (state.error case final error?)
               Text(
                 'ERROR: $error',
-                style: TextStyle(color: context.colorScheme.error),
+                style: TextStyle(color: context.terminalColors.warning),
               ),
             if (state.result case final result?) ...[
               VSpace.x2,
@@ -75,19 +130,30 @@ class ServerControlView extends StatelessWidget {
     ServerControlOperation operation,
     VoidCallback onConfirm,
   ) async {
+    final isRestore = operation == ServerControlOperation.restoreBackup;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('CONFIRM SERVER CONTROL'),
-        content: Text('${_label(operation)} will run on your server.'),
+        title: Text(
+          isRestore
+              ? context.l10n.serverControlConfirmRestoreTitle
+              : context.l10n.serverControlConfirmTitle,
+        ),
+        content: Text(
+          isRestore
+              ? context.l10n.serverControlConfirmRestoreBody
+              : context.l10n.serverControlConfirmBody(
+                  _localizedOperationLabel(context, operation),
+                ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('CANCEL'),
+            child: Text(context.l10n.serverControlConfirmCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('CONFIRM'),
+            child: Text(context.l10n.serverControlConfirmConfirm),
           ),
         ],
       ),
@@ -97,14 +163,209 @@ class ServerControlView extends StatelessWidget {
 
   String _output(String stdout, String stderr) =>
       stderr.isEmpty ? stdout : '$stdout\nSTDERR\n$stderr';
+}
 
-  static String _label(ServerControlOperation operation) => switch (operation) {
-        ServerControlOperation.restartPocketCoder => 'Restart PocketCoder',
-        ServerControlOperation.updatePocketCoder => 'Update PocketCoder',
-        ServerControlOperation.restartNixOs => 'Restart NixOS',
-        ServerControlOperation.updateNixOs => 'Update NixOS',
-        ServerControlOperation.saveBackup => 'Save backup',
-      };
+class _ConnectionDetails extends StatefulWidget {
+  const _ConnectionDetails({required this.details});
+
+  final IServerConnectionDetailsProvider details;
+
+  @override
+  State<_ConnectionDetails> createState() => _ConnectionDetailsState();
+}
+
+class _ConnectionDetailsState extends State<_ConnectionDetails> {
+  bool _showPassword = false;
+
+  Future<void> _toggleShowPassword(BuildContext context) async {
+    if (_showPassword) {
+      setState(() => _showPassword = false);
+      return;
+    }
+    final approved = await context.read<ServerControlCubit>().confirmLocalAuth(
+          reason: context.l10n.serverControlLocalAuthReason,
+        );
+    if (approved && mounted) setState(() => _showPassword = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final details = widget.details;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(context.l10n.serverControlConnectionDetails,
+            style: TextStyle(
+              color: context.colorScheme.primary,
+              fontFamily: AppFonts.bodyFamily,
+              fontSize: AppSizes.fontSmall,
+            )),
+        VSpace.x1,
+        if (details.ipAddress case final value?)
+          _DetailRow(label: context.l10n.serverControlIpAddress, value: value),
+        if (details.httpsEndpoint case final value?)
+          _DetailRow(
+              label: context.l10n.serverControlHttpsEndpoint, value: value),
+        if (details.adminIdentity case final value?)
+          _DetailRow(
+              label: context.l10n.serverControlAdminIdentity, value: value),
+        if (details.adminPassword case final value?)
+          _DetailRow(
+            label: context.l10n.serverControlAdminPassword,
+            value: _showPassword ? value : '•' * value.length,
+            action: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                BiosActionButton(
+                  action: BiosActionStripItem(
+                    label: _showPassword
+                        ? context.l10n.serverControlHide
+                        : context.l10n.serverControlShow,
+                    emphasis: Emphasis.outlined,
+                    onTap: () => _toggleShowPassword(context),
+                  ),
+                ),
+                HSpace.x1,
+                _CopyButton(value: value),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PrivateKeySection extends StatefulWidget {
+  const _PrivateKeySection({required this.instanceId, required this.state});
+
+  final String instanceId;
+  final ServerControlState state;
+
+  @override
+  State<_PrivateKeySection> createState() => _PrivateKeySectionState();
+}
+
+class _PrivateKeySectionState extends State<_PrivateKeySection> {
+  bool _revealed = false;
+
+  Future<void> _toggleReveal(BuildContext context) async {
+    if (_revealed) {
+      setState(() => _revealed = false);
+      return;
+    }
+    final cubit = context.read<ServerControlCubit>();
+    await cubit.revealPrivateKey(
+      instanceId: widget.instanceId,
+      authReason: context.l10n.serverControlLocalAuthReason,
+    );
+    if (mounted && cubit.state.privateKey != null) {
+      setState(() => _revealed = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final privateKey = widget.state.privateKey;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(context.l10n.serverControlPrivateKeyLabel),
+        VSpace.x1,
+        if (_revealed && privateKey != null)
+          Row(
+            children: [
+              Expanded(child: SelectableText(privateKey)),
+              _CopyButton(value: privateKey),
+            ],
+          )
+        else
+          const SizedBox.shrink(),
+        VSpace.x1,
+        BiosActionButton(
+          action: BiosActionStripItem(
+            label: _revealed
+                ? context.l10n.serverControlHide
+                : context.l10n.serverControlShow,
+            emphasis: Emphasis.outlined,
+            onTap: () => _toggleReveal(context),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value, this.action});
+
+  final String label;
+  final String value;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: AppSizes.space),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: Text('$label\n$value')),
+            action ?? _CopyButton(value: value),
+          ],
+        ),
+      );
+}
+
+class _CopyButton extends StatelessWidget {
+  const _CopyButton({required this.value});
+
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => BiosActionButton(
+        action: BiosActionStripItem(
+          label: context.l10n.serverControlCopy,
+          emphasis: Emphasis.outlined,
+          onTap: () async {
+            await Clipboard.setData(ClipboardData(text: value));
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(context.l10n.serverControlCopied)),
+              );
+            }
+          },
+        ),
+      );
+}
+
+class _ProviderConsoleButton extends StatelessWidget {
+  const _ProviderConsoleButton({required this.link, required this.launcher});
+
+  final IProviderConsoleLink link;
+  final InAppBrowserLauncher launcher;
+
+  @override
+  Widget build(BuildContext context) => BiosActionStrip(
+        actions: [
+          BiosActionStripItem(
+            label: context.l10n.serverControlProviderConsole,
+            emphasis: Emphasis.outlined,
+            onTap: () async {
+              final uri = await link.resolve();
+              if (!context.mounted) return;
+              if (uri == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        context.l10n.serverControlProviderConsoleUnavailable),
+                  ),
+                );
+                return;
+              }
+              await launcher.open(uri);
+            },
+          ),
+        ],
+      );
 }
 
 class _ReleaseLine extends StatelessWidget {
@@ -116,10 +377,7 @@ class _ReleaseLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final release = state.release;
     return Text(
-      release == null
-          ? 'RELEASE STATUS: CHECKING'
-          : 'RELEASE STATUS: ${release.status.name.toUpperCase()}\n'
-              'CURRENT: ${release.currentVersion}',
+      release == null ? context.l10n.serverControlReleaseChecking : _lines(context, release),
       style: TextStyle(
         color: context.colorScheme.primary,
         fontFamily: AppFonts.bodyFamily,
@@ -127,30 +385,116 @@ class _ReleaseLine extends StatelessWidget {
       ),
     );
   }
+
+  String _lines(BuildContext context, ServerReleaseStatusSnapshot release) {
+    final lines = [
+      context.l10n.serverControlReleaseStatus(release.status.name.toUpperCase()),
+      context.l10n.serverControlReleaseCurrent(release.currentVersion),
+      if (release.availableVersion case final available?)
+        context.l10n.serverControlReleaseAvailable(available),
+      if (release.appContractVersion case final app?)
+        if (release.serverApiVersion case final server?)
+          if (release.deploymentContractVersion case final deployment?)
+            context.l10n.serverControlReleaseContracts(
+              app.toString(),
+              server.toString(),
+              deployment.toString(),
+            ),
+      if (release.nixosVersion case final nixos?)
+        context.l10n.serverControlReleaseNixos(nixos),
+    ];
+    return lines.join('\n');
+  }
 }
 
-class _ControlButton extends StatelessWidget {
-  const _ControlButton({
-    required this.operation,
-    required this.disabled,
-    required this.onPressed,
-  });
+class _ControlGrid extends StatelessWidget {
+  const _ControlGrid({required this.state, required this.onRun});
 
-  final ServerControlOperation operation;
-  final bool disabled;
-  final VoidCallback onPressed;
+  final ServerControlState state;
+  final void Function(ServerControlOperation operation) onRun;
 
   @override
-  Widget build(BuildContext context) => OutlinedButton(
-        onPressed: disabled ? null : onPressed,
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(operation.name
-              .replaceAllMapped(
-                RegExp(r'([A-Z])'),
-                (match) => ' ${match.group(1)}',
-              )
-              .toUpperCase()),
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ControlGroupRow(
+            groupLabel: context.l10n.serverControlGroupPocketCoder,
+            left: ServerControlOperation.restartPocketCoder,
+            right: ServerControlOperation.updatePocketCoder,
+            disabled: state.isBusy,
+            onRun: onRun,
+          ),
+          VSpace.x1,
+          _ControlGroupRow(
+            groupLabel: context.l10n.serverControlGroupNixOs,
+            left: ServerControlOperation.restartNixOs,
+            right: ServerControlOperation.updateNixOs,
+            disabled: state.isBusy,
+            onRun: onRun,
+          ),
+          VSpace.x1,
+          _ControlGroupRow(
+            groupLabel: context.l10n.serverControlGroupData,
+            left: ServerControlOperation.saveBackup,
+            right: ServerControlOperation.restoreBackup,
+            disabled: state.isBusy,
+            onRun: onRun,
+          ),
+        ],
+      );
+}
+
+class _ControlGroupRow extends StatelessWidget {
+  const _ControlGroupRow({
+    required this.groupLabel,
+    required this.left,
+    required this.right,
+    required this.disabled,
+    required this.onRun,
+  });
+
+  final String groupLabel;
+  final ServerControlOperation left;
+  final ServerControlOperation right;
+  final bool disabled;
+  final void Function(ServerControlOperation operation) onRun;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: AppSizes.space),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              groupLabel,
+              style: TextStyle(
+                color: context.colorScheme.primary,
+                fontFamily: AppFonts.bodyFamily,
+                fontSize: AppSizes.fontSmall,
+              ),
+            ),
+            VSpace.x1,
+            IgnorePointer(
+              ignoring: disabled,
+              child: Opacity(
+                opacity: disabled ? 0.4 : 1,
+                child: BiosActionStrip(
+                  actions: [
+                    BiosActionStripItem(
+                      label: _buttonLabel(context, left),
+                      emphasis: Emphasis.outlined,
+                      onTap: () => onRun(left),
+                    ),
+                    BiosActionStripItem(
+                      label: _buttonLabel(context, right),
+                      emphasis: Emphasis.outlined,
+                      onTap: () => onRun(right),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       );
 }

@@ -20,6 +20,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -31,8 +32,83 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
+
+type fakeContainerLister struct {
+	summaries []dockerapi.ContainerSummary
+	err       error
+}
+
+func (f fakeContainerLister) ListContainers(context.Context) ([]dockerapi.ContainerSummary, error) {
+	return f.summaries, f.err
+}
+
+func TestListContainersAuthorizationBoundary(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	reg := operation.NewRegistry()
+	AddLogOperations(reg, LogsDeps{Lister: fakeContainerLister{summaries: []dockerapi.ContainerSummary{{Names: []string{"/pocketcoder-sqlpage"}, State: "running", Status: "Up 1h"}}}})
+	user := testUser(t, app, "list-containers-user-"+randomSuffix()+"@example.com")
+	admin := newOllamaAdmin(t, app)
+	for _, tc := range []struct {
+		name string
+		user *core.Record
+		want int
+	}{{"unauthenticated", nil, http.StatusUnauthorized}, {"authenticated non-admin", user, http.StatusForbidden}, {"authenticated admin", admin, http.StatusOK}} {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := mountOllamaRequest(t, app, reg, http.MethodGet, "/api/pocketcoder/v1/containers", "", tc.user)
+			if rec.Code != tc.want {
+				t.Fatalf("status=%d body=%s, want %d", rec.Code, rec.Body, tc.want)
+			}
+		})
+	}
+}
+
+func TestListContainersReturnsSummaries(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	reg := operation.NewRegistry()
+	AddLogOperations(reg, LogsDeps{Lister: fakeContainerLister{summaries: []dockerapi.ContainerSummary{{Names: []string{"/pocketcoder-sqlpage"}, State: "running", Status: "Up 1h"}, {Names: []string{"/pocketcoder-ollama"}, State: "exited", Status: "Exited (0)"}}}})
+	rec := mountOllamaRequest(t, app, reg, http.MethodGet, "/api/pocketcoder/v1/containers", "", newOllamaAdmin(t, app))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", rec.Code, rec.Body)
+	}
+	var body struct {
+		Containers []struct {
+			Name   string
+			State  string
+			Status string
+		}
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Containers) != 2 || body.Containers[0].Name != "pocketcoder-sqlpage" {
+		t.Fatalf("unexpected body: %+v", body.Containers)
+	}
+}
+
+func TestListContainersSurfacesListerError(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	reg := operation.NewRegistry()
+	AddLogOperations(reg, LogsDeps{Lister: fakeContainerLister{err: errors.New("proxy unreachable")}})
+	rec := mountOllamaRequest(t, app, reg, http.MethodGet, "/api/pocketcoder/v1/containers", "", newOllamaAdmin(t, app))
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status=%d, want 500", rec.Code)
+	}
+}
 
 type fakeLogSource struct {
 	body io.ReadCloser

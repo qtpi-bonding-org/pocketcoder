@@ -25,7 +25,6 @@ import (
 
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
@@ -149,11 +148,7 @@ func seedTestHarnessAndInstance(t *testing.T, app core.App, harnessName string, 
 	instance.Set("managed", false)
 	if userID != "" {
 		instance.Set("user", userID)
-		account, err := harnessaccount.EnsureDefaultPersonal(app, userID, harness.Id)
-		if err != nil {
-			t.Fatal(err)
-		}
-		instance.Set("harness_account", account.Id)
+		instance.Set("oauth_account", "")
 	}
 	if err := app.Save(instance); err != nil {
 		t.Fatal(err)

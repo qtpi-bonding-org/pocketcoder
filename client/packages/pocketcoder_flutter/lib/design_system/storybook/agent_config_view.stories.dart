@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:widgetbook_annotation/widgetbook_annotation.dart' as wb;
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
-import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_view.dart';
@@ -17,7 +16,6 @@ Widget _app(Widget child) => MaterialApp(
 @wb.UseCase(name: 'empty registry', type: AgentConfigView)
 Widget agentConfigEmpty(BuildContext context) => _app(AgentConfigView(
   state: const AgentConfigState(status: UiFlowStatus.success),
-  providerState: const ProviderState(),
   onSave: (_) async {},
   onDelete: (_) async {},
 ));
@@ -25,7 +23,6 @@ Widget agentConfigEmpty(BuildContext context) => _app(AgentConfigView(
 @wb.UseCase(name: 'loading registry', type: AgentConfigView)
 Widget agentConfigLoading(BuildContext context) => _app(AgentConfigView(
   state: const AgentConfigState(status: UiFlowStatus.loading),
-  providerState: const ProviderState(),
   onSave: (_) async {},
   onDelete: (_) async {},
 ));

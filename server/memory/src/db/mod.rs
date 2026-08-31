@@ -89,11 +89,17 @@ impl Repository {
                 Ok::<_, rusqlite::Error>(())
             })
             .await
-            .map_err(|_| MemoryError::DatabaseWorkerStopped)?;
+            .map_err(|error| {
+                tracing::warn!(error = %error, "wal checkpoint failed during shutdown");
+                MemoryError::DatabaseWorkerStopped
+            })?;
         self.connection
             .close()
             .await
-            .map_err(|_| MemoryError::DatabaseWorkerStopped)
+            .map_err(|error| {
+                tracing::warn!(error = %error, "database connection close failed during shutdown");
+                MemoryError::DatabaseWorkerStopped
+            })
     }
 
     pub(crate) async fn call<F, T>(&self, operation: F) -> Result<T>

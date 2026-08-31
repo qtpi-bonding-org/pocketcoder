@@ -14,10 +14,15 @@ part 'prompt_request.g.dart';
 ///
 /// Properties:
 /// * [prompt]
+/// * [messageId] - Client-generated unique identifier for this user message, echoed back into the AG-UI event stream so it survives reconnect/cache-replay. Optional for backward compatibility with older clients.
 @BuiltValue()
 abstract class PromptRequest implements Built<PromptRequest, PromptRequestBuilder> {
   @BuiltValueField(wireName: r'prompt')
   BuiltList<ContentBlock> get prompt;
+
+  /// Client-generated unique identifier for this user message, echoed back into the AG-UI event stream so it survives reconnect/cache-replay. Optional for backward compatibility with older clients.
+  @BuiltValueField(wireName: r'messageId')
+  String? get messageId;
 
   PromptRequest._();
 
@@ -47,6 +52,13 @@ class _$PromptRequestSerializer implements PrimitiveSerializer<PromptRequest> {
       object.prompt,
       specifiedType: const FullType(BuiltList, [FullType(ContentBlock)]),
     );
+    if (object.messageId != null) {
+      yield r'messageId';
+      yield serializers.serialize(
+        object.messageId,
+        specifiedType: const FullType(String),
+      );
+    }
   }
 
   @override
@@ -76,6 +88,14 @@ class _$PromptRequestSerializer implements PrimitiveSerializer<PromptRequest> {
             specifiedType: const FullType(BuiltList, [FullType(ContentBlock)]),
           ) as BuiltList<ContentBlock>;
           result.prompt.replace(valueDes);
+          break;
+        case r'messageId':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
+          result.messageId = valueDes;
           break;
         default:
           unhandled.add(key);

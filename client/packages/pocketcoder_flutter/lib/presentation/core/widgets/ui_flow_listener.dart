@@ -10,6 +10,7 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
   final B? bloc;
   final IStateMessageMapper<S>? mapper;
   final void Function(BuildContext context, S state)? listener;
+  final bool Function(S previous, S current)? listenWhen;
   final bool showSuccessToasts;
   final String? successMessage;
   final bool autoDismissLoading;
@@ -20,19 +21,42 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
     this.bloc,
     this.mapper,
     this.listener,
+    this.listenWhen,
     this.showSuccessToasts = false,
     this.successMessage,
     this.autoDismissLoading = true,
   });
 
+  static bool _defaultListenWhen(IUiFlowState previous, IUiFlowState current) {
+    return previous.status != current.status || previous.error != current.error;
+  }
+
   @override
   Widget build(BuildContext context) {
+    Widget content = child;
+
+    // The custom `listener` callback often depends on fields other than
+    // status/error (a connection-status map, a per-item field, ...) that
+    // can change while status/error stay put -- gating it on the same
+    // status/error-only condition as the built-in toast/loading handling
+    // below silently drops those side effects. A second, independent
+    // BlocListener subscribes to the same bloc so the custom callback gets
+    // its own previous-state tracking and its own (optionally
+    // caller-supplied) listenWhen, entirely decoupled from when the
+    // built-in handlers fire.
+    final resolvedListener = listener;
+    if (resolvedListener != null) {
+      content = BlocListener<B, S>(
+        bloc: bloc,
+        listenWhen: listenWhen ?? _defaultListenWhen,
+        listener: (context, state) => resolvedListener(context, state),
+        child: content,
+      );
+    }
+
     return BlocListener<B, S>(
       bloc: bloc,
-      listenWhen: (previous, current) {
-        return previous.status != current.status ||
-            previous.error != current.error;
-      },
+      listenWhen: _defaultListenWhen,
       listener: (context, state) {
         _handleLoadingState(state);
 
@@ -42,10 +66,8 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
           _handleErrorState(state);
           _handleSuccessState(state);
         }
-
-        listener?.call(context, state);
       },
-      child: child,
+      child: content,
     );
   }
 
@@ -59,7 +81,6 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
         loadingService.hide();
       }
     } catch (_) {
-      // Service might not be registered
     }
   }
 
@@ -74,9 +95,12 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
         messageKey = exceptionMapper.map(state.error ?? 'Unknown error');
       } catch (_) {}
 
-      messageKey ??= MessageKey.error(
-        state.error.toString(),
-      );
+      // Never fall back to the raw error's toString() -- for an exception
+      // with no mapper entry this renders Dart's default
+      // Object.toString() ("Instance of 'X'") or a DomainException's raw
+      // internal detail straight to the user. A generic, localized
+      // message is always safer than exposing unmapped technical text.
+      messageKey ??= MessageKey.genericError;
     }
 
     if (messageKey == null) return;
@@ -99,20 +123,24 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
   void _handleErrorState(S state) {
     if (state.error == null) return;
 
-    String message = state.error.toString();
+    // Never fall back to the raw error's toString() -- for an exception
+    // with no mapper entry this renders Dart's default Object.toString()
+    // ("Instance of 'X'") or a DomainException's raw internal detail
+    // straight to the user.
+    var messageKey = MessageKey.genericError;
     try {
       final exceptionMapper = GetIt.instance<IExceptionKeyMapper>();
-      final messageKey = exceptionMapper.map(state.error ?? 'Unknown error');
-      if (messageKey != null) {
-        try {
-          final localization = GetIt.instance<ILocalizationService>();
-          message =
-              localization.translate(messageKey.key, args: messageKey.args);
-        } catch (_) {
-          message = messageKey.key;
-        }
-      }
+      messageKey =
+          exceptionMapper.map(state.error ?? 'Unknown error') ?? messageKey;
     } catch (_) {}
+
+    String message;
+    try {
+      final localization = GetIt.instance<ILocalizationService>();
+      message = localization.translate(messageKey.key, args: messageKey.args);
+    } catch (_) {
+      message = messageKey.key;
+    }
 
     final feedbackService = GetIt.instance<IFeedbackService>();
     feedbackService.show(FeedbackMessage(

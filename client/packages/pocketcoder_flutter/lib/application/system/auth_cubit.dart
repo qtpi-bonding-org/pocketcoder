@@ -1,8 +1,12 @@
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
+import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
+import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import "package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart";
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
 part 'auth_cubit.freezed.dart';
@@ -15,6 +19,11 @@ sealed class AuthState with _$AuthState, UiFlowStateMixin {
     @Default(UiFlowStatus.idle) UiFlowStatus status,
     Object? error,
     String? savedUrl,
+    // Distinguishes deleteProData's success from every other success this
+    // cubit emits (login/logout/factoryReset) -- those all end the local
+    // session and should navigate to onboarding; deleteProData
+    // deliberately leaves the session untouched and must not.
+    @Default(false) bool skipOnboardingNavigation,
   }) = _AuthState;
 
   factory AuthState.initial() => const AuthState();
@@ -23,8 +32,13 @@ sealed class AuthState with _$AuthState, UiFlowStateMixin {
 @injectable
 class AuthCubit extends AppCubit<AuthState> {
   final IAuthRepository _authRepository;
+  final CaddyCaPinStore _caddyCaPinStore;
+  final FactoryResetHook _factoryResetHook;
+  final ProDataDeletionHook _proDataDeletionHook;
 
-  AuthCubit(this._authRepository) : super(AuthState.initial());
+  AuthCubit(this._authRepository, this._caddyCaPinStore,
+      this._factoryResetHook, this._proDataDeletionHook)
+      : super(AuthState.initial());
 
   Future<void> restoreSavedUrl() async {
     String? savedUrl;
@@ -42,13 +56,32 @@ class AuthCubit extends AppCubit<AuthState> {
     OnboardingLogger.event('server login started', {
       'email_domain': email.contains('@') ? email.split('@').last : 'invalid',
     });
+    // Persisting a candidate URL before it's verified let one typo
+    // permanently overwrite the last-known-good saved URL, stranding the
+    // user away from their real deployment on the next launch. The
+    // previously-saved URL is captured up front so a failed attempt can
+    // restore it in memory too, rather than leaving the app pointed at an
+    // unverified URL for the rest of the session.
+    final previousUrl = await _authRepository.getSavedBaseUrl();
     await tryOperation(() async {
       await _authRepository.updateBaseUrl(url);
-      await _authRepository.verifyServerCompatibility();
-      final success = await _authRepository.login(email, password);
-      if (!success) {
-        throw 'ACCESS DENIED. CHECK CREDENTIALS.';
+      try {
+        await _authRepository.verifyServerCompatibility();
+        final success = await _authRepository.login(email, password);
+        if (!success) {
+          throw AuthException.loginFailed();
+        }
+      } catch (_) {
+        if (previousUrl != null) {
+          // Best-effort: a revert failure must never mask the real reason
+          // this login attempt failed.
+          try {
+            await _authRepository.updateBaseUrl(previousUrl);
+          } catch (_) {}
+        }
+        rethrow;
       }
+      await _authRepository.persistBaseUrl(url);
       OnboardingLogger.event('server login succeeded');
       return createSuccessState();
     });
@@ -63,6 +96,31 @@ class AuthCubit extends AppCubit<AuthState> {
     return tryOperation(() async {
       await _authRepository.logout();
       return createSuccessState();
+    });
+  }
+
+  /// Unlike [logout], also forgets the saved server URL and every other
+  /// piece of deployment-identity state, so the next attempt is genuinely
+  /// fresh rather than re-offering (or silently re-trusting) the same
+  /// possibly-stale deployment. Clearing the auth session alone used to
+  /// leave a since-stale CA pin (and, on the Pro app, its own deployment-
+  /// tracking stores -- see FactoryResetHook) behind, so a reset looked
+  /// clean but the next connection attempt could still inherit a cert
+  /// that no longer matched the server.
+  Future<void> factoryReset() async {
+    return tryOperation(() async {
+      await _authRepository.clearSession();
+      await _caddyCaPinStore.clearAll();
+      await _factoryResetHook.resetForFactoryReset();
+      return createSuccessState();
+    });
+  }
+
+  /// Unlike [factoryReset], never touches the local session.
+  Future<void> deleteProData() async {
+    return tryOperation(() async {
+      await _proDataDeletionHook.deleteProData();
+      return createSuccessState().copyWith(skipOnboardingNavigation: true);
     });
   }
 }

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -51,7 +52,9 @@ func (manager Manager) Create(releaseDigest string, dataVersion int) (string, er
 	restartOnError := true
 	defer func() {
 		if restartOnError {
-			_ = exec.Command("docker", "start", manager.container()).Run()
+			if err := exec.Command("docker", "start", manager.container()).Run(); err != nil {
+				log.Printf("[Snapshot] failed to restart container %s after backup failure: %v", manager.container(), err)
+			}
 		}
 	}()
 	archiveName := "update-" + releaseDigest + ".tar.gz"
@@ -100,7 +103,9 @@ func (manager Manager) Restore(metadataPath string) error {
 	if digest != metadata.SHA256 || bytes != metadata.Bytes {
 		return fmt.Errorf("snapshot checksum or size mismatch")
 	}
-	_ = exec.Command("docker", "stop", manager.container()).Run()
+	if err := exec.Command("docker", "stop", manager.container()).Run(); err != nil {
+		log.Printf("[Snapshot] failed to stop container %s before restore: %v", manager.container(), err)
+	}
 	entries, err := os.ReadDir(dataRoot)
 	if err != nil {
 		return err
@@ -231,7 +236,9 @@ func createArchive(source, destination string) error {
 		err = closeErr
 	}
 	if err != nil {
-		os.Remove(temporary)
+		if err := os.Remove(temporary); err != nil {
+			log.Printf("[Snapshot] failed to remove incomplete archive %s: %v", temporary, err)
+		}
 		return err
 	}
 	if err := os.Rename(temporary, destination); err != nil {

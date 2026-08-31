@@ -2,41 +2,59 @@ import 'dart:async';
 
 import 'package:ag_ui/ag_ui.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
+import 'package:collection/collection.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
+import 'package:uuid/uuid.dart';
 
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
+import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
+    show AgentUnavailableFailure;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_transport.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
+import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
+import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/application/agent/seen_messages_registry.dart';
 import 'chat_state.dart';
 import 'provider_reauthentication_required.dart';
 
 @injectable
 class ChatCubit extends AppCubit<ChatState> {
-  ChatCubit(this._repository, this._networkRecoverySignal)
+  ChatCubit(
+    this._repository,
+    this._networkRecoverySignal,
+    this._chatListRepository,
+    this._seenMessages,
+  )
       : super(const ChatState());
 
   final AgentChatRepository _repository;
   final NetworkRecoverySignal _networkRecoverySignal;
+  final IChatListRepository _chatListRepository;
+  final SeenMessagesRegistry _seenMessages;
   PocketcoderAgUiTransport? _transport;
   ConversationReducer? _reducer;
   StreamSubscription<BaseEvent>? _eventSub;
   StreamSubscription<void>? _recoverySub;
   Completer<void>? _retryWake;
   int _generation = 0;
+  bool _closed = false;
   String? _lastPrompt;
 
   @override
   Future<void> close() {
+    if (_closed) return Future<void>.value();
+    _closed = true;
     _generation++;
     _eventSub?.cancel();
     _recoverySub?.cancel();
     _retryWake?.complete();
     _transport?.dispose();
+    unawaited(_repository.cancelStreams());
     return super.close();
   }
 
@@ -57,6 +75,7 @@ class ChatCubit extends AppCubit<ChatState> {
     _recoverySub?.cancel();
     _retryWake?.complete();
     _transport?.dispose();
+    unawaited(_repository.cancelStreams());
     _reducer = ConversationReducer();
     _transport = PocketcoderAgUiTransport(_repository, chatId: chatId);
     final transport = _transport;
@@ -66,6 +85,7 @@ class ChatCubit extends AppCubit<ChatState> {
       chatId: chatId,
       status: UiFlowStatus.loading,
       lastOperation: AgentChatOperation.open,
+      animatedMessageIds: _seenMessages.seenIdsFor(chatId),
     ));
 
     _eventSub = transport.events.listen(
@@ -74,8 +94,26 @@ class ChatCubit extends AppCubit<ChatState> {
         final reducer = _reducer;
         if (reducer == null) return;
         reducer.apply(event);
+        var animatedIds = state.animatedMessageIds;
+        if (event is TextMessageEndEvent) {
+          _seenMessages.markSeen(chatId, event.messageId);
+          animatedIds = {...animatedIds, event.messageId};
+          final finished = reducer.current.timeline
+              .whereType<TextTimelineItem>()
+              .firstWhereOrNull((item) => item.id == event.messageId);
+          if (finished != null &&
+              finished.kind != ChatMessageKind.reasoning) {
+            unawaited(_chatListRepository.recordMessagePreview(
+              chatId,
+              text: finished.text,
+              turn: ChatTurn.assistant,
+              isFirst: false,
+            ));
+          }
+        }
         emit(state.copyWith(
           conversation: reducer.current,
+          animatedMessageIds: animatedIds,
           status: UiFlowStatus.success,
           error:
               event is RunErrorEvent && event.code == 'provider_auth_required'
@@ -162,6 +200,18 @@ class ChatCubit extends AppCubit<ChatState> {
     }
   }
 
+  // A fresh container's harness can take up to ~150s to finish its cold
+  // start (image load + compose up + agent init -- observed live against a
+  // real deployment), during which every prompt gets a 503
+  // AgentUnavailableFailure ("Harness is starting; retry shortly."). That's
+  // an expected, temporary condition, not a real failure -- surfacing it as
+  // a generic error toast and making the user manually resend is exactly
+  // the friction this retry loop removes. 40 attempts * 4s covers the
+  // observed cold-start window with margin; beyond that it's surfaced as a
+  // real failure like any other.
+  static const _harnessRetryDelay = Duration(seconds: 4);
+  static const _harnessRetryMaxAttempts = 40;
+
   Future<void> sendPrompt(String text) async {
     final chatId = state.chatId;
     final transport = _transport;
@@ -169,19 +219,113 @@ class ChatCubit extends AppCubit<ChatState> {
       logWarning('🤖 [ChatCubit] sendPrompt called before open()');
       return;
     }
+    // Incoming stream events are already generation-guarded against a
+    // stale chat (see the events.listen callback in open()) -- this send
+    // itself wasn't: if the user switches chats before it resolves, its
+    // late result (success or failure) must not stomp the new chat's
+    // state.
+    final myGeneration = _generation;
     _lastPrompt = text;
-    await tryOperation(() async {
-      await transport.sendMessage(text);
-      return state.copyWith(
-          status: UiFlowStatus.success,
-          lastOperation: AgentChatOperation.sendPrompt);
-    });
+    logDebug(
+        '🤖 [ChatCubit] sendPrompt', {'chatId': chatId, 'length': text.length});
+    // Optimistic local echo: the transcript's only real source of truth is
+    // ConversationReducer, fed by the backend's AG-UI event stream — and
+    // that stream never echoes the user's own prompt back (it's one-way
+    // input to the run, not a replayed event). Without this, the user's
+    // turn never renders even though the agent clearly received it. Insert
+    // it directly via addLocalMessage so it appears immediately; if some
+    // backend ever does echo it back under the same id, _upsert's keying
+    // supersedes this entry in place instead of duplicating it.
+    final messageId = const Uuid().v4();
+    final reducer = _reducer;
+    if (reducer != null) {
+      final isFirst = reducer.current.timeline
+          .whereType<TextTimelineItem>()
+          .every((item) => item.kind == ChatMessageKind.reasoning);
+      reducer.addLocalMessage(
+        id: messageId,
+        role: 'user',
+        text: text,
+      );
+      emit(state.copyWith(conversation: reducer.current));
+      unawaited(_chatListRepository.recordMessagePreview(
+        chatId,
+        text: text,
+        turn: ChatTurn.user,
+        isFirst: isFirst,
+      ));
+    }
+    await tryOperation(() => _sendWithHarnessRetry(
+          text: text,
+          messageId: messageId,
+          chatId: chatId,
+          transport: transport,
+          myGeneration: myGeneration,
+          attempt: 0,
+        ));
+  }
+
+  Future<ChatState> _sendWithHarnessRetry({
+    required String text,
+    required String messageId,
+    required String chatId,
+    required PocketcoderAgUiTransport transport,
+    required int myGeneration,
+    required int attempt,
+  }) async {
+    try {
+      await transport.sendMessage(text, messageId: messageId);
+    } catch (error, stackTrace) {
+      if (myGeneration != _generation) return state;
+      if (error is AgentUnavailableFailure &&
+          attempt < _harnessRetryMaxAttempts) {
+        logDebug('🤖 [ChatCubit] harness not ready yet, retrying', {
+          'chatId': chatId,
+          'attempt': attempt + 1,
+          'maxAttempts': _harnessRetryMaxAttempts,
+        });
+        emit(state.copyWith(
+            status: UiFlowStatus.loading, awaitingHarnessStart: true));
+        await Future<void>.delayed(_harnessRetryDelay);
+        if (myGeneration != _generation || _closed) return state;
+        return _sendWithHarnessRetry(
+          text: text,
+          messageId: messageId,
+          chatId: chatId,
+          transport: transport,
+          myGeneration: myGeneration,
+          attempt: attempt + 1,
+        );
+      }
+      logError(
+          '🤖 [ChatCubit] sendPrompt failed | {chatId: $chatId, '
+          'error: $error}',
+          error,
+          stackTrace);
+      if (myGeneration != _generation) return state;
+      rethrow;
+    }
+    if (myGeneration != _generation) return state;
+    return state.copyWith(
+        status: UiFlowStatus.success,
+        awaitingHarnessStart: false,
+        lastOperation: AgentChatOperation.sendPrompt);
   }
 
   Future<void> retryLastPrompt() async {
     final prompt = _lastPrompt;
     if (prompt == null || prompt.isEmpty) return;
     await sendPrompt(prompt);
+  }
+
+  void markMessageAnimated(String messageId) {
+    final chatId = state.chatId;
+    if (chatId == null) return;
+    if (state.animatedMessageIds.contains(messageId)) return;
+    _seenMessages.markSeen(chatId, messageId);
+    emit(state.copyWith(
+      animatedMessageIds: {...state.animatedMessageIds, messageId},
+    ));
   }
 
   Future<void> cancel() async {

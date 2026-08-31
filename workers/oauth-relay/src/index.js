@@ -3,21 +3,16 @@ import { validateRecord } from '../../../contracts/generated/validators.js';
 /**
  * PocketCoder MCP OAuth Relay
  *
- * Central-broker-with-HTTPS-callback shape informed by reading
- * docker/mcp-gateway (MIT, Copyright (c) 2025 Docker, Inc.) — see
- * docs/superpowers/specs/2026-07-27-mcp-oauth-flow-design.md, "Precedent
- * this design follows directly" / "Attribution & licensing". No code from
- * that project is copied or adapted here.
+ * Central-broker-with-HTTPS-callback shape informed by docker/mcp-gateway
+ * (MIT, Copyright (c) 2025 Docker, Inc.). No code from that project is
+ * copied or adapted here.
  *
  * One centrally-registered OAuth App's client_secret lives here (via
  * `wrangler secret put`), never in the app or any self-hosted deployment.
  * Every Aeroform-provisioned PocketCoder instance shares this one Worker.
  *
- * Flow (see
- * docs/superpowers/specs/2026-07-27-mcp-oauth-provider-discovery-design.md,
- * which supersedes the base spec's "app builds the authorize URL itself"
- * step — this Worker now builds it, so the Flutter client never hardcodes
- * a provider's authorize URL, scope, or client_id):
+ * Flow: this Worker builds the authorize URL, so the Flutter client never hardcodes
+ * a provider's authorize URL, scope, or client_id:
  *   1. App calls GET /authorize?provider=github&code_challenge=... (opened
  *      in a browser sheet via FlutterWebAuth2, not fetched directly). This
  *      Worker looks provider up in PROVIDERS, builds `state` itself
@@ -37,14 +32,12 @@ import { validateRecord } from '../../../contracts/generated/validators.js';
  *
  * GET /providers lists which providers currently have both a PROVIDERS
  * entry and live secrets configured — {id, displayName} only, nothing
- * else (see the provider-discovery spec's security review: this response
- * shape is a stated invariant, not an accident).
+ * else. This response shape is a deliberate security invariant.
  *
  * `state` carries {p, cc} in plaintext (code_challenge is not secret —
  * RFC 7636 §4.2), built server-side at /authorize time now (previously
- * client-side — see the provider-discovery spec's security review for why
- * that's still safe, and why the Flutter client independently re-verifies
- * the `cc`/`p` it gets back before calling /claim, as defense in depth).
+ * client-side. The Flutter client independently re-verifies the `cc`/`p` it
+ * gets back before calling /claim as defense in depth.
  */
 
 const PROVIDERS = {
@@ -241,7 +234,12 @@ async function handleCallback(url, env) {
 		return redirectToApp({ error: 'token_exchange_failed' });
 	}
 
-	const tokenBody = await tokenResp.json().catch(() => null);
+	const tokenBody = await tokenResp.json().catch(() => {
+		// Deliberately not logging the parse error's message: it may embed a
+		// snippet of the raw (potentially token-bearing) response body.
+		console.error('Token response was not valid JSON, HTTP', tokenResp.status);
+		return null;
+	});
 	if (!tokenResp.ok || !tokenBody || tokenBody.error || !tokenBody.access_token) {
 		// Never log the authorization code, request body, client credentials, or
 		// token response. These fields are enough to diagnose provider failures
@@ -256,17 +254,22 @@ async function handleCallback(url, env) {
 	}
 
 	const exchangeCode = crypto.randomUUID();
-	await env.OAUTH_RELAY_KV.put(
-		`exchange:${exchangeCode}`,
-		JSON.stringify({
-			codeChallenge: state.cc,
-			accessToken: tokenBody.access_token,
-			refreshToken: tokenBody.refresh_token || null,
-			expiresIn: tokenBody.expires_in ?? null,
-			scope: tokenBody.scope ?? null,
-		}),
-		{ expirationTtl: EXCHANGE_TTL_SECONDS }
-	);
+	try {
+		await env.OAUTH_RELAY_KV.put(
+			`exchange:${exchangeCode}`,
+			JSON.stringify({
+				codeChallenge: state.cc,
+				accessToken: tokenBody.access_token,
+				refreshToken: tokenBody.refresh_token || null,
+				expiresIn: tokenBody.expires_in ?? null,
+				scope: tokenBody.scope ?? null,
+			}),
+			{ expirationTtl: EXCHANGE_TTL_SECONDS }
+		);
+	} catch (e) {
+		console.error('Failed to store OAuth exchange in KV:', e.message);
+		return redirectToApp({ error: 'storage_failed' });
+	}
 
 	// Tokens never ride in this redirect URL — only the one-time
 	// exchange_code does. See the base spec's Component 1.
@@ -297,19 +300,44 @@ async function handleClaim(request, env) {
 	}
 
 	const kvKey = `exchange:${exchangeCode}`;
-	const raw = await env.OAUTH_RELAY_KV.get(kvKey);
+	let raw;
+	try {
+		raw = await env.OAUTH_RELAY_KV.get(kvKey);
+	} catch (e) {
+		console.error(`Failed to read OAuth exchange from KV (key ${kvKey}):`, e.message);
+		return json({ error: 'storage_read_failed' }, 502);
+	}
 	if (!raw) {
 		return json({ error: 'expired_or_already_claimed' }, 404);
 	}
-	const entry = JSON.parse(raw);
+	let entry;
+	try {
+		entry = JSON.parse(raw);
+	} catch {
+		// Deliberately not logging the parse error's message: it may embed a
+		// snippet of the raw stored value, which contains the access/refresh token.
+		console.error(`Stored OAuth exchange was not valid JSON (key ${kvKey})`);
+		return json({ error: 'storage_corrupted' }, 500);
+	}
 
-	const computedChallenge = await sha256Base64url(codeVerifier);
+	let computedChallenge;
+	try {
+		computedChallenge = await sha256Base64url(codeVerifier);
+	} catch (e) {
+		console.error('Failed to compute PKCE challenge:', e.message);
+		return json({ error: 'pkce_verification_failed' }, 500);
+	}
 
 	// Delete on every outcome (match or mismatch), not just on success: a
 	// single exchange_code must never be claimable twice, even by a retried
 	// wrong verifier. Fail closed — this check is PKCE's entire purpose in
 	// this flow.
-	await env.OAUTH_RELAY_KV.delete(kvKey);
+	try {
+		await env.OAUTH_RELAY_KV.delete(kvKey);
+	} catch (e) {
+		console.error(`Failed to delete claimed exchange code (key ${kvKey}); refusing to release tokens:`, e.message);
+		return json({ error: 'claim_failed' }, 500);
+	}
 
 	if (computedChallenge !== entry.codeChallenge) {
 		return json({ error: 'verifier_mismatch' }, 400);
@@ -367,10 +395,16 @@ async function handleRefresh(request, env) {
 			body: reqBody,
 		});
 	} catch (e) {
+		console.error('Refresh token request failed:', e.message);
 		return json({ error: 'refresh_request_failed' }, 502);
 	}
 
-	const tokenBody = await tokenResp.json().catch(() => null);
+	const tokenBody = await tokenResp.json().catch(() => {
+		// Deliberately not logging the parse error's message: it may embed a
+		// snippet of the raw (potentially token-bearing) response body.
+		console.error('Token response was not valid JSON, HTTP', tokenResp.status);
+		return null;
+	});
 	if (!tokenResp.ok || !tokenBody || tokenBody.error || !tokenBody.access_token) {
 		return json({ error: (tokenBody && tokenBody.error) || 'refresh_rejected' }, 401);
 	}

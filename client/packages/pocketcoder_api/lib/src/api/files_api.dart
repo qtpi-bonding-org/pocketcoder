@@ -12,7 +12,7 @@ import 'package:dio/dio.dart';
 import 'dart:typed_data';
 import 'package:pocketcoder_api/src/api_util.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
-import 'package:pocketcoder_api/src/model/file_list_response.dart';
+import 'package:pocketcoder_api/src/model/file_tree_response.dart';
 
 class FilesApi {
 
@@ -107,7 +107,7 @@ class FilesApi {
     );
   }
 
-  /// listWorkspaceFiles
+  /// listWorkspaceFileTree
   ///
   ///
   /// Parameters:
@@ -119,9 +119,9 @@ class FilesApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [FileListResponse] as data
+  /// Returns a [Future] containing a [Response] with a [FileTreeResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<FileListResponse>> listWorkspaceFiles({
+  Future<Response<FileTreeResponse>> listWorkspaceFileTree({
     String? path = '',
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -130,7 +130,7 @@ class FilesApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/api/pocketcoder/v1/files-list';
+    final _path = r'/api/pocketcoder/v1/files-tree';
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -163,14 +163,14 @@ class FilesApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    FileListResponse? _responseData;
+    FileTreeResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(FileListResponse),
-      ) as FileListResponse;
+        specifiedType: const FullType(FileTreeResponse),
+      ) as FileTreeResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -182,7 +182,7 @@ class FilesApi {
       );
     }
 
-    return Response<FileListResponse>(
+    return Response<FileTreeResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

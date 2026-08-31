@@ -14,19 +14,13 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/schedule"
 )
 
-func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() coordinator.AgentRuntime) {
+func AddScheduleOperations(app core.App, registry *operation.Registry, coord func() coordinator.AgentRuntime) *schedule.Runner {
 	ollamaBaseURL := ollama.ResolveBaseURL()
 	runner := &schedule.Runner{App: app, Coord: coord, OllamaBaseURL: ollamaBaseURL}
 	registry.Add(operation.Route{OperationID: "runScheduleNow", Method: http.MethodPost, Path: "/api/pocketcoder/v1/schedules/{scheduleId}/run", Auth: true, Action: func(re *core.RequestEvent) error {
-		id := re.Request.PathValue("scheduleId")
-		if id == "" {
-			return pocketCoderError(re, 400, "scheduleId is required")
-		}
-		row, err := requireOwnedRecord(app, re, "schedule_owners", id)
-		if err != nil {
+		if err := RunScheduleNow(app, runner, re); err != nil {
 			return err
 		}
-		go runner.RunDetached(row.Id)
 		return re.JSON(202, map[string]string{"status": "started"})
 	}})
 
@@ -71,9 +65,23 @@ func AddScheduleOperations(app core.App, registry *operation.Registry, coord fun
 	rows, err := app.FindRecordsByFilter("schedule_owners", "1=1", "", 0, 0)
 	if err != nil {
 		log.Printf("[Scheduler] failed to load schedules at startup: %v", err)
-		return
+		return runner
 	}
 	for _, row := range rows {
 		schedule.Register(runner, row)
 	}
+	return runner
+}
+
+func RunScheduleNow(app core.App, runner *schedule.Runner, re *core.RequestEvent) error {
+	id := re.Request.PathValue("scheduleId")
+	if id == "" {
+		return re.BadRequestError("scheduleId is required", nil)
+	}
+	row, err := requireOwnedRecord(app, re, "schedule_owners", id)
+	if err != nil {
+		return err
+	}
+	go runner.RunDetached(row.Id)
+	return nil
 }

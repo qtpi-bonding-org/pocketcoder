@@ -110,9 +110,6 @@ class TerminalText extends StatelessWidget {
   })  : size = TerminalTextSize.mini,
         weight = TerminalTextWeight.heavy;
 
-  // ---------------------------------------------------------------------------
-  // Token mapping helpers
-  // ---------------------------------------------------------------------------
 
   double _resolveSize() => switch (size) {
         TerminalTextSize.tiny => AppSizes.fontTiny,
@@ -128,9 +125,6 @@ class TerminalText extends StatelessWidget {
         TerminalTextWeight.heavy => AppFonts.heavy,
       };
 
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {

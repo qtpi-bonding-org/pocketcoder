@@ -1,6 +1,9 @@
 package harnessvolume
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestResolveKeepsUserWorkspacesSeparateAndSharesAccountAuth(t *testing.T) {
 	first, err := Resolve("pocketcoder_workspace", "user123456789", "codex", "account1234567")
@@ -38,6 +41,16 @@ func TestResolveSeparatesAccountsForOneHarness(t *testing.T) {
 	personal, _ := Resolve("base", "user-one", "codex", "personal-account")
 	if shared.Auth == personal.Auth {
 		t.Fatal("different harness accounts must not share authentication volumes")
+	}
+}
+
+func TestResolveNoAccountUsesUserScopedAuthVolume(t *testing.T) {
+	names, err := Resolve("pocketcoder_workspace", "userid", "codex", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(names.Auth, "_user_userid_") {
+		t.Fatalf("Auth = %q, want a user-scoped auth volume", names.Auth)
 	}
 }
 

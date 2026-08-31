@@ -62,7 +62,6 @@ class _NotificationWrapperState extends State<NotificationWrapper> {
         return;
     }
 
-    // Fallback: no type or no chatId — go home
     AppRouter.router.goNamed(RouteNames.home);
   }
 
@@ -74,7 +73,6 @@ class _NotificationWrapperState extends State<NotificationWrapper> {
         type: MessageType.info,
       ));
     } catch (_) {
-      // Feedback service might not be ready yet during bootstrap
     }
   }
 

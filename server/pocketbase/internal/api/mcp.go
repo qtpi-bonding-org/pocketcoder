@@ -21,6 +21,8 @@ package api
 
 import (
 	"errors"
+	"github.com/pocketbase/pocketbase/apis"
+	"log"
 	"net/http"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -30,38 +32,45 @@ import (
 
 type McpDeps struct{ ResolveImage mcpserver.ImageResolver }
 
+func ExecuteMcpRequest(app core.App, resolveImage mcpserver.ImageResolver, re *core.RequestEvent) (mcpserver.Result, error) {
+	if err := requireRole(re, "agent", "admin"); err != nil {
+		return mcpserver.Result{}, err
+	}
+	var req mcpserver.Request
+	if err := re.BindBody(&req); err != nil {
+		return mcpserver.Result{}, re.BadRequestError("Invalid request body", nil)
+	}
+	if req.ServerName == "" {
+		return mcpserver.Result{}, re.BadRequestError("server_name is required", nil)
+	}
+	result, err := mcpserver.RequestServer(re.Request.Context(), app, resolveImage, req)
+	if err != nil {
+		log.Printf("[MCP] request server failed: %v", err)
+		var rse *mcpserver.RequestServerError
+		if errors.As(err, &rse) {
+			switch rse.Kind {
+			case mcpserver.ErrKindInvalidRequest:
+				return mcpserver.Result{}, re.BadRequestError(rse.Error(), nil)
+			case mcpserver.ErrKindImageResolution:
+				return mcpserver.Result{}, apis.NewApiError(422, "Could not resolve image to a digest: "+rse.Error(), nil)
+			case mcpserver.ErrKindSaveSync, mcpserver.ErrKindSaveCreate:
+				return mcpserver.Result{}, re.InternalServerError("Failed to save record", nil)
+			}
+		}
+		return mcpserver.Result{}, re.InternalServerError("Internal error", nil)
+	}
+	return result, nil
+}
+
 func AddMcpOperations(app core.App, registry *operation.Registry, deps McpDeps) {
 	resolveImage := deps.ResolveImage
 	if resolveImage == nil {
 		resolveImage = mcpserver.ResolveImageDigest
 	}
 	registry.Add(operation.Route{OperationID: "executeMcpRequest", Method: http.MethodPost, Path: "/api/pocketcoder/v1/mcp/request", Auth: true, Action: func(re *core.RequestEvent) error {
-		if err := requireRole(re, "agent", "admin"); err != nil {
-			return err
-		}
-		var req mcpserver.Request
-		if err := re.BindBody(&req); err != nil {
-			return pocketCoderError(re, 400, "Invalid request body")
-		}
-		if req.ServerName == "" {
-			return pocketCoderError(re, 400, "server_name is required")
-		}
-		result, err := mcpserver.RequestServer(re.Request.Context(), app, resolveImage, req)
+		result, err := ExecuteMcpRequest(app, resolveImage, re)
 		if err != nil {
-			var rse *mcpserver.RequestServerError
-			if errors.As(err, &rse) {
-				switch rse.Kind {
-				case mcpserver.ErrKindInvalidRequest:
-					return pocketCoderError(re, 400, rse.Error())
-				case mcpserver.ErrKindImageResolution:
-					return pocketCoderError(re, 422, "Could not resolve image to a digest: "+rse.Error())
-				case mcpserver.ErrKindSaveSync:
-					return pocketCoderError(re, 500, "Failed to sync record")
-				case mcpserver.ErrKindSaveCreate:
-					return pocketCoderError(re, 500, "Failed to create record")
-				}
-			}
-			return pocketCoderError(re, 500, "Internal error")
+			return err
 		}
 		response := map[string]any{"id": result.ID, "status": result.Status}
 		if result.Synced {

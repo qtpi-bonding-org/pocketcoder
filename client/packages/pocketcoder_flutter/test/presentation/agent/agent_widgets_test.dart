@@ -33,8 +33,14 @@ void main() {
       onSelectMode: (id) => selected = id,
     )));
     expect(find.text('AUTO'), findsOneWidget);
+    expect(find.text('CHAT'), findsNothing);
+
+    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.pumpAndSettle();
     expect(find.text('CHAT'), findsOneWidget);
-    await tester.tap(find.text('CHAT'));
+
+    await tester.tap(find.text('CHAT').last);
+    await tester.pumpAndSettle();
     expect(selected, 'chat');
   });
 
@@ -56,7 +62,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('AUTO APPROVE'), findsOneWidget);
     expect(find.text('PRESET'), findsOneWidget);
-    await tester.tap(find.byType(Switch));
+    expect(find.byType(Switch), findsNothing);
+    await tester.tap(find.text('[ ]'));
     expect(request?.configId, 'auto-approve');
     expect(request?.value, 'true');
   });

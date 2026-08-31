@@ -1,12 +1,15 @@
 # PocketCoder Flutter Workspace
 
-This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It uses a core logic package shared between a base FOSS foundation and proprietary additions.
+This public checkout is the **Melos-managed FOSS workspace** for PocketCoder.
+The private Pro repository consumes the core package and adds its own workspace
+around it; Pro packages are not expected to exist in this checkout.
 
 ## 🏗️ Structure
 
 - **`packages/pocketcoder_flutter`**: Core logic, UI, and state management. **Must remain FOSS-pure.**
-- **`packages/pocketcoder_pro`**: Proprietary SDK container (Firebase, RevenueCat, etc.).
-- **`apps/pocketcoder`**: The primary PocketCoder application shell. Injects services from both packages.
+- **Private Pro repository**: proprietary SDK/container and commercial app shell
+  (Firebase, RevenueCat, hosted provisioning, etc.).
+- **`apps/pocketcoder_foss`**: the public app shell for this checkout.
 
 ## 🚀 Getting Started
 
@@ -25,19 +28,16 @@ This is a **Melos-managed monorepo** for the PocketCoder Flutter application. It
     melos bootstrap
     ```
 
-The workspace contains both `apps/pocketcoder` (the Pro shell) and
-`apps/pocketcoder_foss` (the FOSS/F-Droid-compatible target). Shared feature code lives in
-`packages/pocketcoder_flutter`.
+The public workspace contains `apps/pocketcoder_foss` and the shared feature
+package in `packages/pocketcoder_flutter`. The private Pro workspace supplies
+`apps/pocketcoder` and `packages/pocketcoder_pro` separately.
 
 ## 🛠️ Essential Commands
 
 | Command | Description |
 | --- | --- |
 | `melos run check:purity` | **Critical**: Verifies the core package has no proprietary leaks. |
-| `melos run run_app` | Run the Pro app. |
 | `melos run run_foss` | Run the FOSS/F-Droid-compatible app. |
-| `melos run run_incognito` | Run the Pro app in Chrome Incognito. |
-| `melos run build_app` | Build the Pro Android debug APK. |
 | `melos run build_foss` | Build the FOSS/F-Droid-compatible Android debug APK. |
 | `melos run test` | Run tests across all packages. |
 | `melos run fix` | Apply `dart fix` to all packages in the workspace. |

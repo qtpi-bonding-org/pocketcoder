@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/errors/error_inbox_cubit.dart';
 import 'package:pocketcoder_flutter/application/errors/error_inbox_state.dart';
 import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_cubit.dart';
 import 'package:pocketcoder_flutter/application/errors/error_inbox_diagnostics_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/release/i_server_release_status_service.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_inbox_screen.dart';
 
@@ -23,7 +26,10 @@ class ErrorInboxAdapter extends CubitAdapter<ErrorInboxCubit, ErrorInboxState> {
   ) {
     final errors = adapter.cubitField(_selectErrors);
     return BlocProvider(
-      create: (_) => ErrorInboxDiagnosticsCubit(),
+      create: (_) => ErrorInboxDiagnosticsCubit(
+        getIt<IServerReleaseStatusService>(),
+        getIt<InAppBrowserLauncher>(),
+      ),
       child: UiFlowListener<ErrorInboxDiagnosticsCubit,
           ErrorInboxDiagnosticsState>(
         showSuccessToasts: true,
@@ -42,6 +48,9 @@ class ErrorInboxAdapter extends CubitAdapter<ErrorInboxCubit, ErrorInboxState> {
             },
             onCopy: (entry) =>
                 context.read<ErrorInboxDiagnosticsCubit>().copyReport(entry),
+            onReportOnGithub: (entry) => context
+                .read<ErrorInboxDiagnosticsCubit>()
+                .reportOnGithub(entry),
             onDelete: context.read<ErrorInboxCubit>().deleteError,
           ),
         ),

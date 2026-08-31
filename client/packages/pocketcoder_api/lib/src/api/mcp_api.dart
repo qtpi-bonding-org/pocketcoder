@@ -12,6 +12,9 @@ import 'package:dio/dio.dart';
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/json_object.dart';
 import 'package:pocketcoder_api/src/model/error_response.dart';
+import 'package:pocketcoder_api/src/model/execute_mcp_request_response.dart';
+import 'package:pocketcoder_api/src/model/mcp_o_auth_request.dart';
+import 'package:pocketcoder_api/src/model/store_mcp_o_auth_token_response.dart';
 
 class McpApi {
 
@@ -33,9 +36,9 @@ class McpApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
+  /// Returns a [Future] containing a [Response] with a [ExecuteMcpRequestResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> executeMcpRequest({
+  Future<Response<ExecuteMcpRequestResponse>> executeMcpRequest({
     required BuiltMap<String, JsonObject> requestBody,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -92,14 +95,14 @@ class McpApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    BuiltMap<String, JsonObject>? _responseData;
+    ExecuteMcpRequestResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),
-      ) as BuiltMap<String, JsonObject>;
+        specifiedType: const FullType(ExecuteMcpRequestResponse),
+      ) as ExecuteMcpRequestResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -111,7 +114,7 @@ class McpApi {
       );
     }
 
-    return Response<BuiltMap<String, JsonObject>>(
+    return Response<ExecuteMcpRequestResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -127,7 +130,7 @@ class McpApi {
   ///
   ///
   /// Parameters:
-  /// * [requestBody]
+  /// * [mcpOAuthRequest]
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -135,10 +138,10 @@ class McpApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [BuiltMap<String, JsonObject>] as data
+  /// Returns a [Future] containing a [Response] with a [StoreMcpOAuthTokenResponse] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<BuiltMap<String, JsonObject>>> storeMcpOAuthToken({
-    required BuiltMap<String, JsonObject> requestBody,
+  Future<Response<StoreMcpOAuthTokenResponse>> storeMcpOAuthToken({
+    required McpOAuthRequest mcpOAuthRequest,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -170,8 +173,8 @@ class McpApi {
     dynamic _bodyData;
 
     try {
-      const _type = FullType(BuiltMap, [FullType(String), FullType(JsonObject)]);
-      _bodyData = _serializers.serialize(requestBody, specifiedType: _type);
+      const _type = FullType(McpOAuthRequest);
+      _bodyData = _serializers.serialize(mcpOAuthRequest, specifiedType: _type);
 
     } catch(error, stackTrace) {
       throw DioException(
@@ -194,14 +197,14 @@ class McpApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    BuiltMap<String, JsonObject>? _responseData;
+    StoreMcpOAuthTokenResponse? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(BuiltMap, [FullType(String), FullType(JsonObject)]),
-      ) as BuiltMap<String, JsonObject>;
+        specifiedType: const FullType(StoreMcpOAuthTokenResponse),
+      ) as StoreMcpOAuthTokenResponse;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -213,7 +216,7 @@ class McpApi {
       );
     }
 
-    return Response<BuiltMap<String, JsonObject>>(
+    return Response<StoreMcpOAuthTokenResponse>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

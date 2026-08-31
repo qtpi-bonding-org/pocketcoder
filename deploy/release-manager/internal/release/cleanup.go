@@ -3,6 +3,7 @@ package release
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -72,6 +73,7 @@ func CleanupRetainedReleases(paths state.Paths, runtime CleanupRuntime) error {
 				continue
 			}
 			if err := runtime.RemoveImage(image); err != nil {
+				log.Printf("[Cleanup] failed to remove image %s: %v", image, err)
 				removable = false
 			}
 		}

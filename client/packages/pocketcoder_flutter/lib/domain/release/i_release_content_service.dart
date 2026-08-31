@@ -24,7 +24,10 @@ class ReleaseSelection {
 typedef VerifiedRelease = ReleaseSelection;
 
 abstract interface class IReleaseContentService {
-  Future<ReleaseSelection> resolve({String channel = 'stable'});
+  /// A null channel defers to the implementation's own default (debug-only
+  /// RELEASE_CHANNEL dart-define, 'stable' otherwise) -- see
+  /// ReleaseContentService.resolve.
+  Future<ReleaseSelection> resolve({String? channel});
 
   Future<Uint8List> fetchDocument(
     ReleaseSelection release,
@@ -33,9 +36,10 @@ abstract interface class IReleaseContentService {
 }
 
 class ReleaseContentException implements Exception {
-  const ReleaseContentException(this.message, [this.cause]);
+  const ReleaseContentException(this.message, [this.cause, this.statusCode]);
   final String message;
   final Object? cause;
+  final int? statusCode;
 
   @override
   String toString() => 'ReleaseContentException: $message';

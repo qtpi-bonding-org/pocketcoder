@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -57,6 +58,26 @@ type Config struct {
 type Loader struct {
 	config  Config
 	flights flightGroup
+}
+
+type progressReader struct {
+	reader           io.Reader
+	label            string
+	bytes, lastBytes int64
+	lastReport       time.Time
+}
+
+func (r *progressReader) Read(p []byte) (int, error) {
+	n, err := r.reader.Read(p)
+	r.bytes += int64(n)
+	if r.lastReport.IsZero() {
+		r.lastReport = time.Now()
+	}
+	if r.bytes-r.lastBytes >= 10*1024*1024 || time.Since(r.lastReport) >= 10*time.Second {
+		log.Printf("[release] downloading %s: %d bytes", r.label, r.bytes)
+		r.lastBytes, r.lastReport = r.bytes, time.Now()
+	}
+	return n, err
 }
 
 type releasePointer struct {
@@ -335,7 +356,8 @@ func (l *Loader) installArtifact(ctx context.Context, docker DockerLoader, artif
 	}
 
 	hasher := sha256.New()
-	written, err := io.Copy(io.MultiWriter(temp, hasher), io.LimitReader(resp.Body, selected.DownloadBytes+1))
+	countingBody := &progressReader{reader: resp.Body, label: artifactLabel}
+	written, err := io.Copy(io.MultiWriter(temp, hasher), io.LimitReader(countingBody, selected.DownloadBytes+1))
 	if err != nil {
 		return fmt.Errorf("download %s artifact body: %w", artifactLabel, err)
 	}

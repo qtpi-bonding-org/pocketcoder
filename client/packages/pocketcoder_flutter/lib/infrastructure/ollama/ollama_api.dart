@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/json_object.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/api_endpoints.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/pocketbase_auth_header.dart';
 
 /// PocketBase proxy for the private Ollama control network. The app never
 /// receives Ollama's hostname or a host-published port.
@@ -20,10 +23,11 @@ class OllamaApi {
 
   Future<List<OllamaModel>> listModels() async {
     final response = await _api.ollama.listOllamaModels();
-    final json = PocketCoderApiClient.decodeJson(response.data);
-    final models = (json['models'] as List<dynamic>? ?? const []);
+    final models = response.data?.models ?? const <BuiltMap<String, JsonObject?>>[];
     return models
-        .map((item) => OllamaModel.fromJson(item as Map<String, dynamic>))
+        .map((item) => OllamaModel.fromJson({
+              for (final entry in item.entries) entry.key: entry.value?.value,
+            }))
         .toList(growable: false);
   }
 
@@ -36,8 +40,8 @@ class OllamaApi {
       ..headers['Content-Type'] = 'application/json'
       ..headers['Accept'] = 'application/x-ndjson'
       ..body = jsonEncode({'model': model});
-    final token = _pb.authStore.token;
-    if (token.isNotEmpty) request.headers['Authorization'] = 'Bearer $token';
+    final authHeader = pocketBaseAuthHeaderValue(_pb);
+    if (authHeader != null) request.headers['Authorization'] = authHeader;
 
     final response = await _http.send(request);
     if (response.statusCode < 200 || response.statusCode >= 300) {

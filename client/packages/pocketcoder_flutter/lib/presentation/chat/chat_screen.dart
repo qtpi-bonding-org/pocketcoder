@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/elicitation_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart';
+import 'package:pocketcoder_flutter/application/chat/chat_monitoring_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/chat/adapters/chat_adapter.dart';
 
 class ChatScreen extends StatelessWidget {
@@ -21,6 +22,9 @@ class ChatScreen extends StatelessWidget {
         BlocProvider<ElicitationCubit>(create: (_) => getIt<ElicitationCubit>()),
         BlocProvider<SessionControlsCubit>(
           create: (_) => getIt<SessionControlsCubit>(),
+        ),
+        BlocProvider<ChatMonitoringCubit>(
+          create: (_) => getIt<ChatMonitoringCubit>(),
         ),
       ],
       child: ChatAdapter(chatId: chatId),

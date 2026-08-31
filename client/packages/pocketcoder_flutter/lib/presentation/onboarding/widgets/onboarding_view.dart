@@ -4,7 +4,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 
 class OnboardingView extends StatelessWidget {
   const OnboardingView(
@@ -18,9 +18,10 @@ class OnboardingView extends StatelessWidget {
   final VoidCallback onDeploy;
 
   @override
-  Widget build(BuildContext context) => TerminalScaffold(
-        title: context.l10n.onboardingSetupTitle,
-        showHeader: false,
+  Widget build(BuildContext context) => PocketCoderShell(
+        title: null,
+        activePillar: NavPillar.chats,
+        showNavigation: false,
         body: Center(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(vertical: AppSizes.space * 4),

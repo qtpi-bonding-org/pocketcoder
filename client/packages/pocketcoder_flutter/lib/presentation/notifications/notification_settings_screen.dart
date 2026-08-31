@@ -8,9 +8,12 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'adapters/notification_settings_adapter.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
@@ -21,6 +24,7 @@ class NotificationSettingsScreen extends StatelessWidget {
         create: (_) => getIt<NotificationRuleCubit>()..watchRules(),
         child: NotificationSettingsAdapter(
           onEnableDevice: getIt<PushService>().requestPermissions,
+          onConfigureSelfHostedPush: getIt<PushService>().configure,
         ),
       );
 }
@@ -31,6 +35,7 @@ class NotificationSettingsView extends StatelessWidget {
     required this.state,
     required this.onChanged,
     required this.onEnableDevice,
+    required this.onConfigureSelfHostedPush,
   });
 
   static const List<(String, String)> types = [
@@ -43,6 +48,7 @@ class NotificationSettingsView extends StatelessWidget {
   final NotificationRuleState state;
   final Future<void> Function(String type, bool enabled) onChanged;
   final Future<bool> Function() onEnableDevice;
+  final VoidCallback onConfigureSelfHostedPush;
 
   String _labelFor(BuildContext context, String key) => switch (key) {
         'chatReply' => context.l10n.notificationSettingsChatReplyLabel,
@@ -65,17 +71,12 @@ class NotificationSettingsView extends StatelessWidget {
             const Center(child: CircularProgressIndicator()),
           UiFlowStatus.failure => Center(
               child: Text(
-                'ERROR: ${state.error}',
-                style: TextStyle(color: context.colorScheme.error),
+                safeErrorMessage(state.error),
+                style: TextStyle(color: context.terminalColors.warning),
               ),
             ),
           UiFlowStatus.success => ListView(
               children: [
-                PocoBubble(
-                  message: context.l10n.notificationSettingsPoco,
-                  pocoSize: AppSizes.fontLarge,
-                ),
-                VSpace.x3,
                 TerminalButton(
                   label: context.l10n.notificationSettingsEnableDevice,
                   onTap: onEnableDevice,
@@ -86,14 +87,17 @@ class NotificationSettingsView extends StatelessWidget {
                   child: Column(
                     children: [
                       for (final (type, key) in types)
-                        _SwitchTile(
+                        BiosRow(
                           label: _labelFor(context, key),
-                          value: state.rules[type] ?? true,
-                          onChanged: (value) => onChanged(type, value),
+                          variant: BiosRowVariant.toggle,
+                          toggleValue: state.rules[type] ?? true,
+                          onToggleChanged: (value) => onChanged(type, value),
                         ),
                     ],
                   ),
                 ),
+                VSpace.x3,
+                _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
               ],
             ),
           UiFlowStatus.idle => const SizedBox.shrink(),
@@ -103,40 +107,32 @@ class NotificationSettingsView extends StatelessWidget {
   }
 }
 
-class _SwitchTile extends StatelessWidget {
-  const _SwitchTile({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
+class _SelfHostedPushOption extends StatelessWidget {
+  const _SelfHostedPushOption({required this.onConfigure});
 
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
+  final VoidCallback onConfigure;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.space,
-          vertical: AppSizes.space / 2,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
-                  color: context.colorScheme.onSurface,
-                  fontSize: AppSizes.fontStandard,
-                  fontWeight: AppFonts.heavy,
-                  package: 'pocketcoder_flutter',
-                ),
-              ),
-            ),
-            Switch(value: value, onChanged: onChanged),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    return TerminalCard(
+      padding: EdgeInsets.all(AppSizes.space * 1.5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TerminalText.label(context.l10n.proSelfHostedPushTitle),
+          VSpace.x1,
+          TerminalText.mini(
+            context.l10n.proSelfHostedPushBody,
+            alpha: 0.75,
+          ),
+          VSpace.x2,
+          TerminalButton(
+            label: context.l10n.proConfigureSelfHostedPush,
+            onTap: onConfigure,
+            isPrimary: false,
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -3,19 +3,15 @@
 -- Pocket Memory is attached via config/on_connect.sql. Harness session stores
 -- live in account-scoped dynamic volumes, so this deployment-wide dashboard
 -- deliberately does not privilege one harness by mounting its private store.
+--
+-- Message/cost/token usage has no real source anywhere in this deployment
+-- yet (no such tracking exists in PocketBase's schema) -- left genuinely
+-- empty rather than a fabricated non-zero value. Wiring stays in place on
+-- both ends (this endpoint, SystemStats, ObservabilityCubit) for whenever
+-- real usage tracking exists to back it.
 
--- Set output to JSON mode
 SELECT 'json' AS component;
 
--- 1. System Health & Stats
-SELECT
-    0 AS total_messages,
-    '$0.0000' AS cumulative_cost,
-    0 AS cumulative_tokens,
-    (SELECT status FROM healthchecks WHERE name = 'backend' LIMIT 1) AS backend_status;
-
--- Harness-neutral aggregate usage needs a common metrics contract. Until one
--- exists, return an honest empty series rather than reading Goose-only state.
 SELECT
     'token_usage_by_model' AS key,
     json('[]') AS value;

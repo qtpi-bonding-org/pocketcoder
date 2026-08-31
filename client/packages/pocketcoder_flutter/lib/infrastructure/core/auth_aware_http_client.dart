@@ -11,13 +11,22 @@ class AuthHttpState {
     String baseUrl, {
     required String Function() tokenProvider,
   }) {
+    updateDeploymentOrigin(baseUrl);
+    this.tokenProvider = tokenProvider;
+  }
+
+  /// Retargets which origin's 401s are eligible for auth-refresh recovery,
+  /// leaving [tokenProvider]/[refresh] untouched. Needed whenever the
+  /// active deployment's base URL changes after DI-time configuration --
+  /// e.g. a real login to the user's own deployment, distinct from the
+  /// local-default origin [configureDeployment] was first called with.
+  void updateDeploymentOrigin(String baseUrl) {
     final parsed = Uri.parse(baseUrl);
     deploymentOrigin = Uri(
       scheme: parsed.scheme,
       host: parsed.host,
       port: parsed.hasPort ? parsed.port : null,
     );
-    this.tokenProvider = tokenProvider;
   }
 }
 

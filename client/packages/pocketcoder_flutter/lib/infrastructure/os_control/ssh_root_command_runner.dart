@@ -31,13 +31,13 @@ const _saveBackupCommand =
     'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
     'then /opt/pocketcoder/current/bin/pocketcoder-release backup-data; '
     'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
-const _exportCaddyCertificateCommand =
+const _restoreBackupCommand =
     'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
-    'then /opt/pocketcoder/current/bin/pocketcoder-release export-cert; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release restore-data; '
     'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
-const _restoreCaddyCertificateCommand =
+const _exportCaddyCaFingerprintCommand =
     'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
-    'then /opt/pocketcoder/current/bin/pocketcoder-release import-cert; '
+    'then /opt/pocketcoder/current/bin/pocketcoder-release export-ca-fingerprint; '
     'else echo "PocketCoder release manager was not found" >&2; exit 1; fi';
 const _rollbackCommand =
     'if [ -x /opt/pocketcoder/current/bin/pocketcoder-release ]; '
@@ -126,12 +126,10 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
       }
       final stdoutBytes = BytesBuilder();
       final stderrBytes = BytesBuilder();
-      final stdoutDone = session.stdout
-          .listen(stdoutBytes.add)
-          .asFuture<void>();
-      final stderrDone = session.stderr
-          .listen(stderrBytes.add)
-          .asFuture<void>();
+      final stdoutDone =
+          session.stdout.listen(stdoutBytes.add).asFuture<void>();
+      final stderrDone =
+          session.stderr.listen(stderrBytes.add).asFuture<void>();
       await session.done;
       await Future.wait([stdoutDone, stderrDone]);
 
@@ -146,15 +144,16 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
   }
 
   static String _shellCommand(RootSshCommand command) => switch (command) {
-    RootSshCommand.restartPocketCoder => _restartPocketCoderCommand,
-    RootSshCommand.updatePocketCoder => _updatePocketCoderCommand,
-    RootSshCommand.restartNixOs => _restartNixOsCommand,
-    RootSshCommand.updateNixOs => _updateNixOsCommand,
-    RootSshCommand.saveBackup => _saveBackupCommand,
-    RootSshCommand.exportCaddyCertificate => _exportCaddyCertificateCommand,
-    RootSshCommand.restoreCaddyCertificate => _restoreCaddyCertificateCommand,
-    RootSshCommand.rollback => _rollbackCommand,
-  };
+        RootSshCommand.restartPocketCoder => _restartPocketCoderCommand,
+        RootSshCommand.updatePocketCoder => _updatePocketCoderCommand,
+        RootSshCommand.restartNixOs => _restartNixOsCommand,
+        RootSshCommand.updateNixOs => _updateNixOsCommand,
+        RootSshCommand.saveBackup => _saveBackupCommand,
+        RootSshCommand.restoreBackup => _restoreBackupCommand,
+        RootSshCommand.exportCaddyCaFingerprint =>
+          _exportCaddyCaFingerprintCommand,
+        RootSshCommand.rollback => _rollbackCommand,
+      };
 
   // dartssh2's onVerifyHostKey passes the SHA256 fingerprint as the literal
   // UTF-8 bytes of "SHA256:<base64>" (see SSHHostkeyVerifyHandler's doc

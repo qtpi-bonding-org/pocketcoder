@@ -46,6 +46,10 @@ class AgentChatRepository {
     return frameCount;
   }
 
+  /// Stops any active SSE ingest, including connections still awaiting HTTP
+  /// response headers.
+  Future<void> cancelStreams() => _streamClient.cancel();
+
   /// Reactive reduced view of the chat's cached AG-UI events.
   Stream<Conversation> watch(String chatId) {
     return _cache.watchChat(chatId).map((rows) {
@@ -71,8 +75,8 @@ class AgentChatRepository {
     return await _cache.maxSeq(chatId) ?? 0;
   }
 
-  Future<String> sendPrompt(String chatId, String text) {
-    return _actions.prompt(chatId, text);
+  Future<String> sendPrompt(String chatId, String text, {String? messageId}) {
+    return _actions.prompt(chatId, text, messageId: messageId);
   }
 
   Future<void> cancel(String chatId) {

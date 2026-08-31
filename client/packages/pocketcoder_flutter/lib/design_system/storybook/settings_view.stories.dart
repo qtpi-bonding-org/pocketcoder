@@ -13,10 +13,10 @@ Widget _app(Widget child) => MaterialApp(
 
 @wb.UseCase(name: 'no pending changes', type: SettingsView)
 Widget settingsDefault(BuildContext context) => _app(SettingsView(
-  hasPendingMcp: false, onNavigate: (_) {}, onLogout: () {},
+  hasPendingMcp: false, isPro: true, onNavigate: (_) {}, onLogout: () {}, onFactoryReset: () {}, onDeleteProData: () {}, onReportAiContent: () {},
 ));
 
 @wb.UseCase(name: 'pending MCP badge', type: SettingsView)
 Widget settingsPendingMcp(BuildContext context) => _app(SettingsView(
-  hasPendingMcp: true, onNavigate: (_) {}, onLogout: () {},
+  hasPendingMcp: true, isPro: true, onNavigate: (_) {}, onLogout: () {}, onFactoryReset: () {}, onDeleteProData: () {}, onReportAiContent: () {},
 ));

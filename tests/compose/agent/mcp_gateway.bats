@@ -1,9 +1,7 @@
 #!/usr/bin/env bats
 
-# Regression coverage for docs/superpowers/specs/2026-07-23-mcp-governance-ui-design.md.
-# Proves the full pipeline spikes/goose-mcp-gateway-attach/README.md validated
-# manually: gateway registration, catalog approval, and tool exposure through
-# a real model-invoked call.
+# Regression coverage for the full MCP gateway pipeline: gateway registration,
+# catalog approval, and tool exposure through a real model-invoked call.
 
 setup() {
   : "${PB_URL:?}"

@@ -10,6 +10,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'adapters/file_viewer_adapter.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 
 const _imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
 const _maxPreviewBytes = 10 * 1024 * 1024;
@@ -57,7 +58,7 @@ class FileViewerView extends StatelessWidget {
     if (loading) return const Center(child: TerminalLoadingIndicator());
     if (error != null) {
       return Center(
-          child: TerminalText(context.l10n.homeErrorPrefix(error.toString()),
+          child: TerminalText(safeErrorMessage(error),
               alpha: 0.8));
     }
     final value = bytes;

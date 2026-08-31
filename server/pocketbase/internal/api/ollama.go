@@ -7,7 +7,9 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"github.com/pocketbase/pocketbase/apis"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -27,6 +29,18 @@ type OllamaDeps struct {
 	StreamHTTP *http.Client
 	Config     ollama.Config
 	RuntimeMu  *sync.Mutex
+}
+
+func ListOllamaModels(re *core.RequestEvent, client *http.Client, baseURL string) ([]ollama.Model, bool, error) {
+	if err := requireRole(re, "admin"); err != nil {
+		return nil, false, err
+	}
+	models, err := ollama.FetchTags(re.Request.Context(), client, baseURL)
+	if err != nil {
+		log.Printf("[Ollama] fetch tags failed: %v", err)
+		return []ollama.Model{}, false, nil
+	}
+	return models, true, nil
 }
 
 func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
@@ -56,14 +70,15 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 	}
 
 	registry.Add(operation.Route{OperationID: "listOllamaModels", Method: http.MethodGet, Path: "/api/pocketcoder/v1/ollama/models", Auth: true, Action: func(re *core.RequestEvent) error {
-		models, err := ollama.FetchTags(re.Request.Context(), client, config.BaseURL)
+		// Model inventory exposes deployment configuration; keep this admin-only
+		// even though single-user Pro deployments always authenticate as admin.
+		// This deliberate restriction also applies to FOSS users seeded with the
+		// user role, rather than treating the model picker as generally readable.
+		models, enabled, err := ListOllamaModels(re, client, config.BaseURL)
 		if err != nil {
-			return re.JSON(http.StatusOK, map[string]any{
-				"models":  []ollama.Model{},
-				"enabled": false,
-			})
+			return err
 		}
-		return re.JSON(http.StatusOK, map[string]any{"models": models, "enabled": true})
+		return re.JSON(http.StatusOK, map[string]any{"models": models, "enabled": enabled})
 	}})
 
 	registry.Add(operation.Route{OperationID: "pullOllamaModel", Method: http.MethodPost, Path: "/api/pocketcoder/v1/ollama/pull", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
@@ -72,25 +87,32 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 		}
 		var input ollamaPullRequest
 		if err := re.BindBody(&input); err != nil || !ollama.ModelNameValid(input.Model) {
-			return pocketCoderError(re, http.StatusBadRequest, "model must be a valid Ollama model name")
+			return re.BadRequestError("model must be a valid Ollama model name", nil)
 		}
 		if err := ollama.EnsureRuntime(re.Request.Context(), docker, client, config, nil, runtimeMu); err != nil {
-			return pocketCoderError(re, http.StatusServiceUnavailable, err.Error())
+			log.Printf("[Ollama] ensure runtime failed: %v", err)
+			return apis.NewApiError(http.StatusServiceUnavailable, err.Error(), nil)
 		}
-		payload, _ := json.Marshal(map[string]string{"model": input.Model})
+		payload, err := json.Marshal(map[string]string{"model": input.Model})
+		if err != nil {
+			log.Printf("[Ollama] marshal pull request payload failed: %v", err)
+		}
 		request, err := http.NewRequestWithContext(re.Request.Context(), http.MethodPost, config.BaseURL+"/api/pull", bytes.NewReader(payload))
 		if err != nil {
-			return pocketCoderError(re, http.StatusInternalServerError, "create Ollama pull request")
+			log.Printf("[Ollama] create pull request failed: %v", err)
+			return re.InternalServerError("create Ollama pull request", nil)
 		}
 		request.Header.Set("Content-Type", "application/json")
 		response, err := streamClient.Do(request)
 		if err != nil {
-			return pocketCoderError(re, http.StatusBadGateway, "Ollama is unavailable")
+			log.Printf("[Ollama] pull request failed: %v", err)
+			return apis.NewApiError(http.StatusBadGateway, "Ollama is unavailable", nil)
 		}
 		defer response.Body.Close()
 		if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 			body, _ := io.ReadAll(io.LimitReader(response.Body, 4096))
-			return pocketCoderError(re, http.StatusBadGateway, strings.TrimSpace(string(body)))
+			log.Printf("[Ollama] pull request returned status %d: %q", response.StatusCode, strings.TrimSpace(string(body)))
+			return apis.NewApiError(http.StatusBadGateway, strings.TrimSpace(string(body)), nil)
 		}
 
 		re.Response.Header().Set("Content-Type", "application/x-ndjson")
@@ -101,12 +123,17 @@ func AddOllamaOperations(registry *operation.Registry, deps OllamaDeps) {
 		for scanner.Scan() {
 			line := scanner.Bytes()
 			if _, err := re.Response.Write(append(line, '\n')); err != nil {
+				log.Printf("[Ollama] ollama pull stream write failed (client likely disconnected): %v", err)
 				return nil
 			}
 			if flusher, ok := re.Response.(http.Flusher); ok {
 				flusher.Flush()
 			}
 		}
-		return scanner.Err()
+		if err := scanner.Err(); err != nil {
+			log.Printf("[Ollama] ollama pull stream scan failed: %v", err)
+			return err
+		}
+		return nil
 	}})
 }

@@ -22,19 +22,68 @@ package hooks
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
+// SendLiveActivityUpdate posts the live-activity payload directly to
+// push-relay. fcmToken is the device's normal FCM registration token
+// (devices.push_token) -- FCM's v1 API requires it alongside the
+// activity's own push token in the same request to deliver an
+// ActivityKit update (see the push-relay Worker's push_type ==
+// "live_activity" branch).
+func SendLiveActivityUpdate(token, fcmToken, userID string, state LiveActivityContentState, version int, event, attributesType string, attributes any) error {
+	url := os.Getenv("PN_URL")
+	if url == "" {
+		return nil
+	}
+	payload := map[string]any{
+		"push_type": "live_activity", "user_id": userID,
+		"token": token, "fcm_token": fcmToken,
+		"content_state": state, "content_state_version": version,
+		"event": event, "stale_date": time.Now().Add(time.Hour).Unix(),
+	}
+	if event == "start" {
+		payload["attributes_type"] = attributesType
+		payload["attributes"] = attributes
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if secret := os.Getenv("PN_RELAY_SECRET"); secret != "" {
+		req.Header.Set("X-Relay-Secret", secret)
+	}
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("live activity relay: %s", resp.Status)
+	}
+	return nil
+}
+
 // PushProvider defines the interface for different notification services.
+// extra carries notification-type-specific structured data (e.g. a pending
+// permission's request_id and offered options) that a provider merges into
+// its payload if it can; a provider with no such support just ignores it.
 type PushProvider interface {
-	Send(token, title, body string) error
+	Send(token, title, body string, extra map[string]string) error
 }
 
 // NtfyDirectProvider sends notifications directly to a UnifiedPush (ntfy) endpoint.
@@ -44,7 +93,9 @@ type NtfyDirectProvider struct {
 	Type   string
 }
 
-func (p *NtfyDirectProvider) Send(endpoint, title, body string) error {
+// extra is ignored here: ntfy's direct path has no structured-action
+// support yet -- that's out of scope for this slice.
+func (p *NtfyDirectProvider) Send(endpoint, title, body string, extra map[string]string) error {
 	req, err := http.NewRequest("POST", endpoint, strings.NewReader(body))
 	if err != nil {
 		return err
@@ -87,7 +138,7 @@ type FcmRelayProvider struct {
 	Type     string
 }
 
-func (p *FcmRelayProvider) Send(token, title, body string) error {
+func (p *FcmRelayProvider) Send(token, title, body string, extra map[string]string) error {
 	if p.RelayURL == "" {
 		log.Printf("⚠️ [Push/FCM] Relay URL not configured. Skipping.")
 		return nil
@@ -101,6 +152,9 @@ func (p *FcmRelayProvider) Send(token, title, body string) error {
 		"message": body,
 		"type":    p.Type,
 		"chat":    p.ChatID,
+	}
+	for k, v := range extra {
+		payload[k] = v
 	}
 
 	bodyBytes, err := json.Marshal(payload)
@@ -140,55 +194,76 @@ func RegisterNotificationHooks(app core.App) {
 
 func AddPushOperations(app core.App, registry *operation.Registry) {
 	registry.Add(operation.Route{OperationID: "sendPushNotification", Method: http.MethodPost, Path: "/api/pocketcoder/v1/push", Auth: true, Action: func(re *core.RequestEvent) error {
-		// Only agent or admin can send push notifications
-		role := re.Auth.GetString("role")
-		if role != "agent" && role != "admin" {
-			return apis.NewApiError(403, "Insufficient permissions", nil)
+		if err := SendPushOperation(app, re); err != nil {
+			return err
 		}
-
-		var input struct {
-			UserID  string `json:"user_id"`
-			Title   string `json:"title"`
-			Message string `json:"message"`
-			Type    string `json:"type"`
-			ChatID  string `json:"chat"`
-		}
-
-		if err := re.BindBody(&input); err != nil {
-			return apis.NewApiError(400, "Invalid request body", nil)
-		}
-
-		if input.UserID == "" || input.Type == "" {
-			return apis.NewApiError(400, "user_id and type are required", nil)
-		}
-
-		go func() {
-			if err := SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID); err != nil {
-				log.Printf("[Push] dispatch: %v", err)
-			}
-		}()
-
 		return re.JSON(200, map[string]any{"ok": true})
 	}})
+}
+
+func SendPushOperation(app core.App, re *core.RequestEvent) error {
+	// Only agent or admin can send push notifications
+	role := re.Auth.GetString("role")
+	if role != "agent" && role != "admin" {
+		return apis.NewApiError(403, "Insufficient permissions", nil)
+	}
+
+	var input struct {
+		UserID  string `json:"user_id"`
+		Title   string `json:"title"`
+		Message string `json:"message"`
+		Type    string `json:"type"`
+		ChatID  string `json:"chat"`
+	}
+
+	if err := re.BindBody(&input); err != nil {
+		return apis.NewApiError(400, "Invalid request body", nil)
+	}
+
+	if input.UserID == "" || input.Type == "" {
+		return apis.NewApiError(400, "user_id and type are required", nil)
+	}
+
+	go func() {
+		// This response has already been sent by the time this runs, so
+		// a panic here (e.g. the app tearing down mid-flight, which a
+		// test reproduced as a nil-pointer panic inside PocketBase's own
+		// query path) would otherwise escape unrecovered and crash the
+		// whole process instead of just failing to notify.
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[Push] dispatch panic: %v", r)
+			}
+		}()
+		if err := SendPushNotification(app, input.UserID, input.Title, input.Message, input.Type, input.ChatID); err != nil {
+			log.Printf("[Push] dispatch: %v", err)
+		}
+	}()
+
+	return nil
 }
 
 // SendPushNotification is the unified dispatch function.
 // Flow: rules check -> presence check -> device dispatch
 func SendPushNotification(app core.App, userID, title, message, notifType, chatID string) error {
-	// 1. Notification Rules: check if this type is enabled for the user
+	return SendPushNotificationWithExtra(app, userID, title, message, notifType, chatID, nil)
+}
+
+// SendPushNotificationWithExtra is SendPushNotification plus structured
+// type-specific data (e.g. a pending permission's request_id and offered
+// options) merged into the outgoing payload -- see PushProvider.Send.
+func SendPushNotificationWithExtra(app core.App, userID, title, message, notifType, chatID string, extra map[string]string) error {
 	if !isNotificationTypeEnabled(app, userID, notifType) {
 		log.Printf("🔕 [Push] User %s has disabled '%s' notifications. Skipping.", userID, notifType)
 		return nil
 	}
 
-	// 2. Presence Check: suppress if user is online
 	if IsUserOnline(app, userID) {
 		log.Printf("🔔 [Push] User %s is online. Suppressing '%s' notification.", userID, notifType)
 		return nil
 	}
 
-	// 3. Dispatch to all active devices
-	return dispatchToDevices(app, userID, title, message, notifType, chatID)
+	return dispatchToDevices(app, userID, title, message, notifType, chatID, extra)
 }
 
 // isNotificationTypeEnabled checks the user's notification_rules record.
@@ -209,11 +284,11 @@ func isNotificationTypeEnabled(app core.App, userID, notifType string) bool {
 		return true
 	}
 
-	// Parse the JSON rules map
 	var rules map[string]bool
 	switch v := rulesRaw.(type) {
 	case string:
 		if err := json.Unmarshal([]byte(v), &rules); err != nil {
+			log.Printf("⚠️ [Push] Failed to parse notification rules: %v", err)
 			return true
 		}
 	case map[string]any:
@@ -254,7 +329,7 @@ func IsUserOnline(app core.App, userID string) bool {
 }
 
 // dispatchToDevices sends notifications to every active device registered to the user.
-func dispatchToDevices(app core.App, userID, title, message, notifType, chatID string) error {
+func dispatchToDevices(app core.App, userID, title, message, notifType, chatID string, extra map[string]string) error {
 	devices, err := app.FindRecordsByFilter(
 		"devices",
 		"user = {:userID} && is_active = true",
@@ -297,7 +372,7 @@ func dispatchToDevices(app core.App, userID, title, message, notifType, chatID s
 		}
 
 		if provider != nil {
-			if err := provider.Send(token, title, message); err != nil {
+			if err := provider.Send(token, title, message, extra); err != nil {
 				log.Printf("❌ [Push] %s dispatch error: %v", serviceType, err)
 			} else {
 				log.Printf("✅ [Push] '%s' notification dispatched via %s", notifType, serviceType)

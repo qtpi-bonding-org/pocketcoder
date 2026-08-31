@@ -6,23 +6,35 @@ class ServerStatusDocument {
   ServerStatusDocument({
     required this.schema,
     required this.runId,
-    required this.phase,
+    required this.operation,
     required this.updatedAt,
     required Map<String, Object?> raw,
     this.detail,
     this.sourceCommit,
-    this.error,
+    this.errorCode,
+    this.errorMessage,
+    this.attempt = 1,
+    this.maxAttempts = 1,
     this.sshHostKey,
     this.tls,
   }) : raw = Map<String, Object?>.unmodifiable(raw);
 
   final int schema;
   final String runId;
-  final String phase;
+  final String operation;
   final String? detail;
   final String? sourceCommit;
   final DateTime updatedAt;
-  final String? error;
+  final String? errorCode;
+  final String? errorMessage;
+
+  /// How many times the enclosing retry-wrapped unit (currently: the
+  /// whole `pocketcoder-release install` invocation) has been attempted.
+  /// Absent on the wire means not retry-wrapped -- defaults to 1/1, which
+  /// preserves always-terminal error handling for those steps.
+  final int attempt;
+  final int maxAttempts;
+
   final ServerSshHostKey? sshHostKey;
 
   /// Caddy's certificate state, when the server has published one (schema 2+).
@@ -39,8 +51,8 @@ class ServerStatusDocument {
       if (value is! Map<String, dynamic>) return null;
       final updated = DateTime.tryParse(value['updatedAt']?.toString() ?? '');
       final runId = value['runId']?.toString();
-      final phase = value['phase']?.toString();
-      if (updated == null || runId == null || phase == null) return null;
+      final operation = value['operation']?.toString();
+      if (updated == null || runId == null || operation == null) return null;
       final sshHostKeyValue = value['sshHostKey'];
       final sshHostKey = sshHostKeyValue is Map<String, dynamic>
           ? ServerSshHostKey.tryParse(sshHostKeyValue)
@@ -49,14 +61,19 @@ class ServerStatusDocument {
       final tls = tlsValue is Map<String, dynamic>
           ? ServerTlsStatus.fromJson(tlsValue)
           : null;
+      final attemptValue = value['attempt'];
+      final maxAttemptsValue = value['maxAttempts'];
       return ServerStatusDocument(
         schema: value['schema'] is num ? (value['schema'] as num).toInt() : 1,
         runId: runId,
-        phase: phase,
+        operation: operation,
         updatedAt: updated,
         detail: value['detail']?.toString(),
         sourceCommit: value['sourceCommit']?.toString(),
-        error: value['error']?.toString(),
+        errorCode: value['errorCode']?.toString(),
+        errorMessage: value['errorMessage']?.toString(),
+        attempt: attemptValue is num ? attemptValue.toInt() : 1,
+        maxAttempts: maxAttemptsValue is num ? maxAttemptsValue.toInt() : 1,
         sshHostKey: sshHostKey,
         tls: tls,
         raw: Map<String, Object?>.from(value),

@@ -14,6 +14,7 @@ _Chat _$ChatFromJson(Map<String, dynamic> json) => _Chat(
           ? null
           : DateTime.parse(json['last_active'] as String),
       preview: json['preview'] as String?,
+      firstMessage: json['first_message'] as String?,
       turn: $enumDecodeNullable(_$ChatTurnEnumMap, json['turn'],
           unknownValue: ChatTurn.unknown),
       description: json['description'] as String?,
@@ -30,6 +31,7 @@ _Chat _$ChatFromJson(Map<String, dynamic> json) => _Chat(
       ollamaModelOverride: json['ollama_model_override'] as String?,
       harness: json['harness'] as String?,
       workspaceOverride: json['workspace_override'],
+      monitored: json['monitored'] as bool?,
     );
 
 Map<String, dynamic> _$ChatToJson(_Chat instance) => <String, dynamic>{
@@ -38,6 +40,7 @@ Map<String, dynamic> _$ChatToJson(_Chat instance) => <String, dynamic>{
       'user': instance.user,
       'last_active': instance.lastActive?.toIso8601String(),
       'preview': instance.preview,
+      'first_message': instance.firstMessage,
       'turn': _$ChatTurnEnumMap[instance.turn],
       'description': instance.description,
       'archived': instance.archived,
@@ -49,6 +52,7 @@ Map<String, dynamic> _$ChatToJson(_Chat instance) => <String, dynamic>{
       'ollama_model_override': instance.ollamaModelOverride,
       'harness': instance.harness,
       'workspace_override': instance.workspaceOverride,
+      'monitored': instance.monitored,
     };
 
 const _$ChatTurnEnumMap = {

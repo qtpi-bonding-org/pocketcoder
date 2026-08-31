@@ -1,7 +1,3 @@
-// State for SessionControlsCubit (plan Task 12): the current
-// SessionState.modes + SessionState.config slices surfaced as a cubit state
-// so the UI can render mode/config pickers and forward selections through
-// AgentChatRepository.setMode / setConfigOption.
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';

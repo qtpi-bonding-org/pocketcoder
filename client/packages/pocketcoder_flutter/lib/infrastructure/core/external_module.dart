@@ -6,27 +6,31 @@ import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'auth_aware_http_client.dart';
 import 'auth_store.dart';
+import 'caddy_ca_pinning_http_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 
 @module
 abstract class ExternalModule {
   final _authHttpState = AuthHttpState();
+  AuthStoreConfig? _authStoreConfig;
+  CaddyCaPinningHttpClient? _caddyCaPinningHttpClient;
+  CaddyCaPinStore? _caddyCaPinStore;
 
   @preResolve
   @singleton
   Future<PocketBase> get pocketBase async {
     logInfo('PocketBaseInit: Starting...');
 
-    // Restore persisted server URL, or fall back to default
     const storage = FlutterSecureStorage();
     final savedUrl = await storage.read(key: 'pb_server_url');
     final baseUrl = savedUrl ?? 'http://127.0.0.1:8090';
     logDebug(
         'PocketBaseInit: Using URL: $baseUrl${savedUrl != null ? ' (restored)' : ' (default)'}');
 
-    // Load Schema (for offline capabilities)
     String? schemaJson;
     try {
       logDebug('PocketBaseInit: Loading assets/pb_schema.json...');
@@ -47,20 +51,21 @@ abstract class ExternalModule {
       }
     }
 
-    // Create secure auth store (reuses storage from above)
-    final authStoreConfig = AuthStoreConfig(storage);
-    final authStore = authStoreConfig.createAuthStore();
+    final authStoreConfig = _authStoreConfig ??= AuthStoreConfig(storage);
+    final authStore = await authStoreConfig.createAuthStore();
     _authHttpState.configureDeployment(
       baseUrl,
       tokenProvider: () => authStore.token,
     );
 
-    // Initialize PocketBase Drift Client with persistent auth
     final client = $PocketBase.database(
       baseUrl,
       requestPolicy: RequestPolicy.cacheAndNetwork,
       authStore: authStore,
-      httpClientFactory: () => AuthAwareHttpClient(_authHttpState),
+      httpClientFactory: () => AuthAwareHttpClient(
+        _authHttpState,
+        inner: caddyCaPinningHttpClient,
+      ),
     );
 
     if (schemaJson != null && schemaJson.isNotEmpty && schemaJson != '[]') {
@@ -90,7 +95,7 @@ abstract class ExternalModule {
 
         logDebug(
             'PocketBaseInit: Caching schema synchronously via drift client...');
-        await client.cacheSchema(reEncoded);
+        await client.setSchema(reEncoded);
         logDebug(
             'PocketBaseInit: Schema cached successfully inside pocketbase_drift!');
       } catch (e, stack) {
@@ -106,8 +111,11 @@ abstract class ExternalModule {
   }
 
   @singleton
+  AuthHttpState get authHttpState => _authHttpState;
+
+  @singleton
   AuthStoreConfig get authStoreConfig {
-    return AuthStoreConfig(const FlutterSecureStorage());
+    return _authStoreConfig ??= AuthStoreConfig(const FlutterSecureStorage());
   }
 
   @singleton
@@ -115,13 +123,27 @@ abstract class ExternalModule {
     return const FlutterSecureStorage();
   }
 
+  @singleton
+  CaddyCaPinningHttpClient get caddyCaPinningHttpClient =>
+      _caddyCaPinningHttpClient ??= CaddyCaPinningHttpClient();
+
+  @singleton
+  CaddyCaPinStore get caddyCaPinStore =>
+      _caddyCaPinStore ??= CaddyCaPinStore(const FlutterSecureStorage());
+
   @lazySingleton
-  PocketCoderApiClient pocketCoderApiClient(PocketBase pocketBase) =>
-      PocketCoderApiClient.fromPocketBase(pocketBase);
+  PocketCoderApiClient pocketCoderApiClient(
+    PocketBase pocketBase,
+    CaddyCaPinningHttpClient caddyCaPinningHttpClient,
+  ) =>
+      PocketCoderApiClient.fromPocketBase(pocketBase, caddyCaPinningHttpClient);
 
   /// HTTP client for API requests
   @lazySingleton
-  http.Client get httpClient => AuthAwareHttpClient(_authHttpState);
+  http.Client get httpClient => AuthAwareHttpClient(
+        _authHttpState,
+        inner: caddyCaPinningHttpClient,
+      );
 
   /// Base URL of the shared OAuth relay. No trailing slash.
   @Named('oauthRelayBaseUrl')
@@ -132,8 +154,40 @@ abstract class ExternalModule {
   @lazySingleton
   String get releaseBaseUrl => 'https://images.relay.pocketcoder.org/v1';
 
+  /// Dev/debug-only: request the `-testing` variant of whatever release
+  /// channel would otherwise be fetched, so a `staging`-branch build can be
+  /// tested on a real device without ever touching `main` or the real
+  /// `stable`/`nightly` channels. See ReleaseContentService.resolve's doc
+  /// comment for the second, independent guard (kReleaseMode) that keeps
+  /// this inert in a real release build even if this were ever set there.
+  @Named('useTestingChannel')
+  @lazySingleton
+  bool get useTestingChannel =>
+      const bool.fromEnvironment('USE_TESTING_CHANNEL');
+
+  /// Dev/debug-only: which release channel to resolve when a caller doesn't
+  /// pin one explicitly. Defaults to 'stable' -- forgetting to set this
+  /// dart-define must always fall back to the real channel, never a
+  /// testing one. See ReleaseContentService.resolve's kReleaseMode guard,
+  /// which forces 'stable' regardless of this value in a real release build.
+  @Named('releaseChannel')
+  @lazySingleton
+  String get releaseChannel =>
+      const String.fromEnvironment('RELEASE_CHANNEL', defaultValue: 'stable');
+
   /// Local-only storage for the on-device error inbox. Never synced or
-  /// transmitted — see docs/superpowers/specs/2026-08-02-error-catcher-inbox-design.md.
+  /// transmitted.
   @lazySingleton
   ErrorBoxStorage get errorBoxStorage => SharedPrefsErrorBoxStorage();
+
+  /// Registered here, not via @LazySingleton on the class itself:
+  /// injectable's generator can't register UrlLauncherInAppBrowserLauncher's
+  /// LaunchUrlDelegate constructor parameter (a bare function type -- "is
+  /// not a class element"), so a class-level annotation would either fail
+  /// codegen or force an unregistered `gh<LaunchUrlDelegate>()` call that
+  /// throws at runtime. Calling the constructor directly here lets its
+  /// real Dart default value (launchUrl) apply untouched.
+  @lazySingleton
+  InAppBrowserLauncher get inAppBrowserLauncher =>
+      UrlLauncherInAppBrowserLauncher();
 }

@@ -21,6 +21,11 @@ mixin _$Device {
   @JsonKey(unknownEnumValue: DevicePushService.unknown)
   DevicePushService get pushService;
   bool? get isActive;
+  DateTime? get created;
+  DateTime? get updated;
+  @JsonKey(unknownEnumValue: DevicePlatform.unknown)
+  DevicePlatform? get platform;
+  String? get pushToStartToken;
 
   /// Create a copy of Device
   /// with the given fields replaced by the non-null parameter values.
@@ -45,17 +50,23 @@ mixin _$Device {
             (identical(other.pushService, pushService) ||
                 other.pushService == pushService) &&
             (identical(other.isActive, isActive) ||
-                other.isActive == isActive));
+                other.isActive == isActive) &&
+            (identical(other.created, created) || other.created == created) &&
+            (identical(other.updated, updated) || other.updated == updated) &&
+            (identical(other.platform, platform) ||
+                other.platform == platform) &&
+            (identical(other.pushToStartToken, pushToStartToken) ||
+                other.pushToStartToken == pushToStartToken));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, user, name, pushToken, pushService, isActive);
+  int get hashCode => Object.hash(runtimeType, id, user, name, pushToken,
+      pushService, isActive, created, updated, platform, pushToStartToken);
 
   @override
   String toString() {
-    return 'Device(id: $id, user: $user, name: $name, pushToken: $pushToken, pushService: $pushService, isActive: $isActive)';
+    return 'Device(id: $id, user: $user, name: $name, pushToken: $pushToken, pushService: $pushService, isActive: $isActive, created: $created, updated: $updated, platform: $platform, pushToStartToken: $pushToStartToken)';
   }
 }
 
@@ -71,7 +82,12 @@ abstract mixin class $DeviceCopyWith<$Res> {
       String pushToken,
       @JsonKey(unknownEnumValue: DevicePushService.unknown)
       DevicePushService pushService,
-      bool? isActive});
+      bool? isActive,
+      DateTime? created,
+      DateTime? updated,
+      @JsonKey(unknownEnumValue: DevicePlatform.unknown)
+      DevicePlatform? platform,
+      String? pushToStartToken});
 }
 
 /// @nodoc
@@ -92,6 +108,10 @@ class _$DeviceCopyWithImpl<$Res> implements $DeviceCopyWith<$Res> {
     Object? pushToken = null,
     Object? pushService = null,
     Object? isActive = freezed,
+    Object? created = freezed,
+    Object? updated = freezed,
+    Object? platform = freezed,
+    Object? pushToStartToken = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -118,6 +138,22 @@ class _$DeviceCopyWithImpl<$Res> implements $DeviceCopyWith<$Res> {
           ? _self.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
+      created: freezed == created
+          ? _self.created
+          : created // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updated: freezed == updated
+          ? _self.updated
+          : updated // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      platform: freezed == platform
+          ? _self.platform
+          : platform // ignore: cast_nullable_to_non_nullable
+              as DevicePlatform?,
+      pushToStartToken: freezed == pushToStartToken
+          ? _self.pushToStartToken
+          : pushToStartToken // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -222,15 +258,29 @@ extension DevicePatterns on Device {
             String pushToken,
             @JsonKey(unknownEnumValue: DevicePushService.unknown)
             DevicePushService pushService,
-            bool? isActive)?
+            bool? isActive,
+            DateTime? created,
+            DateTime? updated,
+            @JsonKey(unknownEnumValue: DevicePlatform.unknown)
+            DevicePlatform? platform,
+            String? pushToStartToken)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _Device() when $default != null:
-        return $default(_that.id, _that.user, _that.name, _that.pushToken,
-            _that.pushService, _that.isActive);
+        return $default(
+            _that.id,
+            _that.user,
+            _that.name,
+            _that.pushToken,
+            _that.pushService,
+            _that.isActive,
+            _that.created,
+            _that.updated,
+            _that.platform,
+            _that.pushToStartToken);
       case _:
         return orElse();
     }
@@ -258,14 +308,28 @@ extension DevicePatterns on Device {
             String pushToken,
             @JsonKey(unknownEnumValue: DevicePushService.unknown)
             DevicePushService pushService,
-            bool? isActive)
+            bool? isActive,
+            DateTime? created,
+            DateTime? updated,
+            @JsonKey(unknownEnumValue: DevicePlatform.unknown)
+            DevicePlatform? platform,
+            String? pushToStartToken)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Device():
-        return $default(_that.id, _that.user, _that.name, _that.pushToken,
-            _that.pushService, _that.isActive);
+        return $default(
+            _that.id,
+            _that.user,
+            _that.name,
+            _that.pushToken,
+            _that.pushService,
+            _that.isActive,
+            _that.created,
+            _that.updated,
+            _that.platform,
+            _that.pushToStartToken);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -292,14 +356,28 @@ extension DevicePatterns on Device {
             String pushToken,
             @JsonKey(unknownEnumValue: DevicePushService.unknown)
             DevicePushService pushService,
-            bool? isActive)?
+            bool? isActive,
+            DateTime? created,
+            DateTime? updated,
+            @JsonKey(unknownEnumValue: DevicePlatform.unknown)
+            DevicePlatform? platform,
+            String? pushToStartToken)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _Device() when $default != null:
-        return $default(_that.id, _that.user, _that.name, _that.pushToken,
-            _that.pushService, _that.isActive);
+        return $default(
+            _that.id,
+            _that.user,
+            _that.name,
+            _that.pushToken,
+            _that.pushService,
+            _that.isActive,
+            _that.created,
+            _that.updated,
+            _that.platform,
+            _that.pushToStartToken);
       case _:
         return null;
     }
@@ -316,7 +394,11 @@ class _Device implements Device {
       required this.pushToken,
       @JsonKey(unknownEnumValue: DevicePushService.unknown)
       required this.pushService,
-      this.isActive});
+      this.isActive,
+      this.created,
+      this.updated,
+      @JsonKey(unknownEnumValue: DevicePlatform.unknown) this.platform,
+      this.pushToStartToken});
   factory _Device.fromJson(Map<String, dynamic> json) => _$DeviceFromJson(json);
 
   @override
@@ -332,6 +414,15 @@ class _Device implements Device {
   final DevicePushService pushService;
   @override
   final bool? isActive;
+  @override
+  final DateTime? created;
+  @override
+  final DateTime? updated;
+  @override
+  @JsonKey(unknownEnumValue: DevicePlatform.unknown)
+  final DevicePlatform? platform;
+  @override
+  final String? pushToStartToken;
 
   /// Create a copy of Device
   /// with the given fields replaced by the non-null parameter values.
@@ -361,17 +452,23 @@ class _Device implements Device {
             (identical(other.pushService, pushService) ||
                 other.pushService == pushService) &&
             (identical(other.isActive, isActive) ||
-                other.isActive == isActive));
+                other.isActive == isActive) &&
+            (identical(other.created, created) || other.created == created) &&
+            (identical(other.updated, updated) || other.updated == updated) &&
+            (identical(other.platform, platform) ||
+                other.platform == platform) &&
+            (identical(other.pushToStartToken, pushToStartToken) ||
+                other.pushToStartToken == pushToStartToken));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, user, name, pushToken, pushService, isActive);
+  int get hashCode => Object.hash(runtimeType, id, user, name, pushToken,
+      pushService, isActive, created, updated, platform, pushToStartToken);
 
   @override
   String toString() {
-    return 'Device(id: $id, user: $user, name: $name, pushToken: $pushToken, pushService: $pushService, isActive: $isActive)';
+    return 'Device(id: $id, user: $user, name: $name, pushToken: $pushToken, pushService: $pushService, isActive: $isActive, created: $created, updated: $updated, platform: $platform, pushToStartToken: $pushToStartToken)';
   }
 }
 
@@ -388,7 +485,12 @@ abstract mixin class _$DeviceCopyWith<$Res> implements $DeviceCopyWith<$Res> {
       String pushToken,
       @JsonKey(unknownEnumValue: DevicePushService.unknown)
       DevicePushService pushService,
-      bool? isActive});
+      bool? isActive,
+      DateTime? created,
+      DateTime? updated,
+      @JsonKey(unknownEnumValue: DevicePlatform.unknown)
+      DevicePlatform? platform,
+      String? pushToStartToken});
 }
 
 /// @nodoc
@@ -409,6 +511,10 @@ class __$DeviceCopyWithImpl<$Res> implements _$DeviceCopyWith<$Res> {
     Object? pushToken = null,
     Object? pushService = null,
     Object? isActive = freezed,
+    Object? created = freezed,
+    Object? updated = freezed,
+    Object? platform = freezed,
+    Object? pushToStartToken = freezed,
   }) {
     return _then(_Device(
       id: null == id
@@ -435,6 +541,22 @@ class __$DeviceCopyWithImpl<$Res> implements _$DeviceCopyWith<$Res> {
           ? _self.isActive
           : isActive // ignore: cast_nullable_to_non_nullable
               as bool?,
+      created: freezed == created
+          ? _self.created
+          : created // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updated: freezed == updated
+          ? _self.updated
+          : updated // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      platform: freezed == platform
+          ? _self.platform
+          : platform // ignore: cast_nullable_to_non_nullable
+              as DevicePlatform?,
+      pushToStartToken: freezed == pushToStartToken
+          ? _self.pushToStartToken
+          : pushToStartToken // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }

@@ -21,11 +21,32 @@ class ObservabilityCubit extends AppCubit<ObservabilityState> {
 
   Future<void> refreshStats() async {
     await tryOperation(() async {
-      final stats = await _repository.fetchSystemStats();
-      return state.copyWith(
-        stats: stats,
-        status: UiFlowStatus.success,
-      );
+      try {
+        final stats = await _repository.fetchSystemStats();
+        return state.copyWith(
+          stats: stats,
+          status: UiFlowStatus.success,
+        );
+      } catch (e, stackTrace) {
+        logError('📈 [ObservabilityCubit] refreshStats failed', e, stackTrace);
+        rethrow;
+      }
+    });
+  }
+
+  Future<void> loadContainers() async {
+    await tryOperation(() async {
+      try {
+        final containers = await _repository.listContainers();
+        return state.copyWith(
+          containers: containers,
+          status: UiFlowStatus.success,
+        );
+      } catch (e, stackTrace) {
+        logError(
+            '📈 [ObservabilityCubit] loadContainers failed', e, stackTrace);
+        rethrow;
+      }
     });
   }
 
@@ -39,8 +60,7 @@ class ObservabilityCubit extends AppCubit<ObservabilityState> {
 
     _logSub = _repository.watchLogs(containerName).listen(
       (logLine) {
-        // Keep only last 500 lines for performance
-        final updatedLogs = List<String>.from(state.logs)..add(logLine);
+        final updatedLogs = List<LogEntry>.from(state.logs)..add(logLine);
         if (updatedLogs.length > 500) {
           updatedLogs.removeAt(0);
         }

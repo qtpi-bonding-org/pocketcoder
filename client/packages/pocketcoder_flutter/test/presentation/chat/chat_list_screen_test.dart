@@ -13,7 +13,13 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/adapters/chat_list_adapter.dart';
 import 'package:pocketcoder_flutter/presentation/chat/new_chat_dialog.dart';
 
-class MockChatListRepository extends Mock implements IChatListRepository {}
+class MockChatListRepository extends Mock implements IChatListRepository {
+  @override
+  Future<void> recordMessagePreview(String chatId,
+      {required String text,
+      required ChatTurn turn,
+      required bool isFirst}) async {}
+}
 
 class MockProviderRepository extends Mock implements IProviderRepository {}
 
@@ -39,6 +45,14 @@ void main() {
   setUp(() {
     repo = MockChatListRepository();
     when(() => repo.watchChats()).thenAnswer((_) => const Stream.empty());
+    // ChatListAdapter.buildAdapter now triggers
+    // checkEmptyAndMaybeAutoCreate() itself (via adapter.keep()) rather
+    // than relying on the screen's old BlocProvider(create: ...) cascade
+    // -- ChatListCubit is provided app-wide now, not freshly created per
+    // screen-visit. Stub it as "already has chats" so these tests, which
+    // emit their own fixture state directly onto the cubit, don't race an
+    // unstubbed hasAnyChats() call auto-creating an unwanted chat.
+    when(() => repo.hasAnyChats()).thenAnswer((_) async => true);
 
     providerRepo = MockProviderRepository();
     getIt.registerSingleton<IProviderRepository>(providerRepo);
@@ -46,9 +60,11 @@ void main() {
         .thenAnswer((_) => Stream.value(const []));
     when(() => providerRepo.watchModels())
         .thenAnswer((_) => Stream.value(const []));
-    when(() => providerRepo.watchHarnessModels())
+    when(() => providerRepo.fetchHarnessModels())
+        .thenAnswer((_) async => const []);
+    when(() => providerRepo.watchProviderAPIKeys())
         .thenAnswer((_) => Stream.value(const []));
-    when(() => providerRepo.watchProviderKeys())
+    when(() => providerRepo.watchHarnessProviders())
         .thenAnswer((_) => Stream.value(const []));
   });
 
@@ -63,7 +79,11 @@ void main() {
       status: UiFlowStatus.success,
       chats: const [
         Chat(
-            id: 'chat-1', title: 'Hello World', user: 'u', preview: 'hi there'),
+            id: 'chat-1',
+            title: 'Hello World',
+            user: 'u',
+            firstMessage: 'Hello World',
+            preview: 'hi there'),
       ],
     ));
 
@@ -80,7 +100,13 @@ void main() {
     final cubit = ChatListCubit(repo);
     cubit.emit(cubit.state.copyWith(
       status: UiFlowStatus.success,
-      chats: const [Chat(id: 'chat-1', title: 'Hello World', user: 'u')],
+      chats: const [
+        Chat(
+            id: 'chat-1',
+            title: 'Hello World',
+            user: 'u',
+            firstMessage: 'Hello World'),
+      ],
     ));
 
     await tester.pumpWidget(_wrap(cubit, providerRepo));
@@ -104,7 +130,7 @@ void main() {
     await tester.pumpWidget(_wrap(cubit, providerRepo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('[ + NEW CHAT ]'));
+    await tester.tap(find.text('NEW'));
     await tester.pumpAndSettle();
 
     expect(find.byType(NewChatDialog), findsOneWidget);
