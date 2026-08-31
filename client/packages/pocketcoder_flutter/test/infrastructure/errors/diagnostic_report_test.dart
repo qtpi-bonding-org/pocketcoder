@@ -18,12 +18,16 @@ void main() {
         appVersion: '1.2.3+45',
         serverVersion: '2.0.0',
         nixosVersion: '26.05',
+        platform: 'ios',
+        osVersion: 'Version 18.2 (Build 22C150)',
       ),
     );
 
     expect(report, contains('App version: 1.2.3+45'));
     expect(report, contains('PocketBase version: 2.0.0'));
     expect(report, contains('NixOS version: 26.05'));
+    expect(report, contains('Platform: ios'));
+    expect(report, contains('OS version: Version 18.2 (Build 22C150)'));
   });
 
   test('omits version lines entirely when the environment is empty', () {
@@ -32,6 +36,8 @@ void main() {
     expect(report, isNot(contains('App version:')));
     expect(report, isNot(contains('PocketBase version:')));
     expect(report, isNot(contains('NixOS version:')));
+    expect(report, isNot(contains('Platform:')));
+    expect(report, isNot(contains('OS version:')));
     expect(report, contains('CHAT_001'));
   });
 }

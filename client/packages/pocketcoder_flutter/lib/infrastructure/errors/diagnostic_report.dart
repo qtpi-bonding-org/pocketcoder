@@ -8,11 +8,15 @@ class DiagnosticEnvironment {
     this.appVersion,
     this.serverVersion,
     this.nixosVersion,
+    this.platform,
+    this.osVersion,
   });
 
   final String? appVersion;
   final String? serverVersion;
   final String? nixosVersion;
+  final String? platform;
+  final String? osVersion;
 }
 
 /// Formats only the allowlisted fields from Privserver's ErrorEntry.
@@ -25,6 +29,9 @@ class DiagnosticReportFormatter {
   }) {
     final lines = <String>[
       'PocketCoder diagnostic report',
+      if (environment.platform case final platform?)
+        'Platform: $platform',
+      if (environment.osVersion case final version?) 'OS version: $version',
       if (environment.appVersion case final version?) 'App version: $version',
       if (environment.serverVersion case final version?)
         'PocketBase version: $version',

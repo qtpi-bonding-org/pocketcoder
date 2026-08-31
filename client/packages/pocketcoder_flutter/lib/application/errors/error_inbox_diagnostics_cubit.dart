@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -72,6 +75,18 @@ class ErrorInboxDiagnosticsCubit extends AppCubit<ErrorInboxDiagnosticsState> {
       // the platform channel for app version happened to be unavailable.
     }
 
+    String? platform;
+    String? osVersion;
+    try {
+      if (!kIsWeb) {
+        platform = Platform.operatingSystem;
+        osVersion = Platform.operatingSystemVersion;
+      }
+    } catch (_) {
+      // A bug report must never fail to copy just because platform
+      // detection was unavailable.
+    }
+
     String? serverVersion;
     String? nixosVersion;
     try {
@@ -89,6 +104,8 @@ class ErrorInboxDiagnosticsCubit extends AppCubit<ErrorInboxDiagnosticsState> {
       appVersion: appVersion,
       serverVersion: serverVersion,
       nixosVersion: nixosVersion,
+      platform: platform,
+      osVersion: osVersion,
     );
   }
 }
