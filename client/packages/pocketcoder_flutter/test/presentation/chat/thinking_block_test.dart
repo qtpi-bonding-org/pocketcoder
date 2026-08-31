@@ -15,7 +15,6 @@ void main() {
           capturedContext = context;
           return const ThinkingBlock(
             text: 'thinking...',
-            isLatest: true,
             isStreaming: false,
           );
         }),
@@ -26,5 +25,21 @@ void main() {
     final expectedColor = capturedContext.colorScheme.primary;
     expect(label.style?.color, expectedColor);
     expect(label.style?.color, isNot(capturedContext.terminalColors.warning));
+  });
+
+  testWidgets('is collapsed by default, and tapping the label expands it',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+        body: ThinkingBlock(text: 'thinking...', isStreaming: false),
+      ),
+    ));
+
+    expect(find.text('thinking...'), findsNothing);
+
+    await tester.tap(find.text('[ THOUGHTS ]'));
+    await tester.pump();
+
+    expect(find.text('thinking...'), findsOneWidget);
   });
 }

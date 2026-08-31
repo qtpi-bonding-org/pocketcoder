@@ -281,7 +281,6 @@ class _ChatViewState extends State<ChatView> {
                           ? 'Starting the harness -- this can take a '
                               'minute or two on a fresh container.'
                           : 'Working through the request.',
-                      isLatest: true,
                       isStreaming: true,
                     ),
                   )
@@ -295,7 +294,6 @@ class _ChatViewState extends State<ChatView> {
                     child: ThinkingBlock(
                       key: ValueKey(latestReasoningId),
                       text: latestReasoningText.trim(),
-                      isLatest: true,
                       isStreaming: widget.isLoading,
                     ),
                   ),
