@@ -70,6 +70,14 @@ jobs:
         with:
           channel: stable
 
+      - name: Resolve pocketcoder_api dependencies
+        working-directory: client/packages/pocketcoder_api
+        run: flutter pub get
+
+      - name: Generate pocketcoder_api codegen
+        working-directory: client/packages/pocketcoder_api
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Resolve Flutter dependencies
         working-directory: client/packages/pocketcoder_flutter
         run: flutter pub get
