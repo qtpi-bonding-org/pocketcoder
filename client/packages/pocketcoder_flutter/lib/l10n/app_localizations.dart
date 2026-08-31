@@ -1690,6 +1690,12 @@ abstract class AppLocalizations {
   /// **'AGENTS & ACCESS'**
   String get settingsAiAgentsSection;
 
+  /// No description provided for @settingsReportAiContentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'REPORT AI CONTENT'**
+  String get settingsReportAiContentLabel;
+
   /// No description provided for @settingsSystemSection.
   ///
   /// In en, this message translates to:
@@ -2439,6 +2445,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'RESTORE PURCHASES'**
   String get proRestore;
+
+  /// No description provided for @proManageSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'MANAGE SUBSCRIPTION'**
+  String get proManageSubscription;
 
   /// No description provided for @proTerms.
   ///

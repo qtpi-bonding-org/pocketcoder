@@ -27,6 +27,8 @@ abstract class BillingService {
   /// Restore purchases.
   Future<void> restorePurchases();
 
+  Future<void> manageSubscription();
+
   /// Purchase the Pro package represented by [identifier].
   Future<bool> purchasePro(String identifier);
 

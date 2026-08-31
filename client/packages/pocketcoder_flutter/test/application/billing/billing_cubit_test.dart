@@ -6,6 +6,7 @@ class _FakeBillingService implements BillingService {
   BillingPackage? package;
   bool pro = false;
   bool purchaseResult = false;
+  bool manageSubscriptionCalled = false;
 
   @override
   Future<BillingPackage?> getProPackage() async => package;
@@ -21,6 +22,11 @@ class _FakeBillingService implements BillingService {
 
   @override
   Future<void> restorePurchases() async {}
+
+  @override
+  Future<void> manageSubscription() async {
+    manageSubscriptionCalled = true;
+  }
 
   @override
   Future<void> identify(String userId) async {}
@@ -73,6 +79,17 @@ void main() {
     expect(cubit.state.isPro, isFalse);
     expect(cubit.state.isSuccess, isTrue);
     expect(cubit.state.hasError, isFalse);
+    await cubit.close();
+  });
+
+  test('manageSubscription delegates to the billing service', () async {
+    final service = _FakeBillingService();
+    final cubit = BillingCubit(service);
+
+    await cubit.manageSubscription();
+
+    expect(service.manageSubscriptionCalled, isTrue);
+    expect(cubit.state.isSuccess, isTrue);
     await cubit.close();
   });
 }

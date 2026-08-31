@@ -25,6 +25,7 @@ void main() {
         onLogout: () {},
         onFactoryReset: () {},
         onDeleteProData: () {},
+        onReportAiContent: () {},
       ),
     ));
 
@@ -36,6 +37,34 @@ void main() {
         reason: 'promoted to the MANAGE footer button; the Configure row '
             'was a dead link before that (no instanceId reached the '
             'screen) and is redundant now');
+  });
+
+  testWidgets(
+      'REPORT AI CONTENT row is present and invokes onReportAiContent',
+      (tester) async {
+    var tapped = false;
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.darkTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en')],
+      home: SettingsView(
+        hasPendingMcp: false,
+        isPro: true,
+        onNavigate: (_) {},
+        onLogout: () {},
+        onFactoryReset: () {},
+        onDeleteProData: () {},
+        onReportAiContent: () => tapped = true,
+      ),
+    ));
+
+    await tester.tap(find.text('REPORT AI CONTENT'));
+    expect(tapped, isTrue);
   });
 
   testWidgets('Pro Settings row is hidden when isPro is false',
@@ -56,6 +85,7 @@ void main() {
         onLogout: () {},
         onFactoryReset: () {},
         onDeleteProData: () {},
+        onReportAiContent: () {},
       ),
     ));
 

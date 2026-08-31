@@ -865,6 +865,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAiAgentsSection => 'AGENTS & ACCESS';
 
   @override
+  String get settingsReportAiContentLabel => 'REPORT AI CONTENT';
+
+  @override
   String get settingsSystemSection => 'SYSTEM';
 
   @override
@@ -1279,6 +1282,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get proRestore => 'RESTORE PURCHASES';
+
+  @override
+  String get proManageSubscription => 'MANAGE SUBSCRIPTION';
 
   @override
   String proTerms(String price) {

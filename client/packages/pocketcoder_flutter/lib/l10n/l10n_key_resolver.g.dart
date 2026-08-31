@@ -646,6 +646,7 @@ class L10nKeyResolver {
       'pro.feature.deploy' => _l10n.proFeatureDeploy,
       'pro.feature.push' => _l10n.proFeaturePush,
       'pro.feature.ready' => _l10n.proFeatureReady,
+      'pro.manage.subscription' => _l10n.proManageSubscription,
       'pro.plan.title' => _l10n.proPlanTitle,
       'pro.privacy.policy.link' => _l10n.proPrivacyPolicyLink,
       'pro.restore' => _l10n.proRestore,
@@ -746,6 +747,7 @@ class L10nKeyResolver {
       'settings.logout.confirm' => _l10n.settingsLogoutConfirm,
       'settings.logout.confirm.body' => _l10n.settingsLogoutConfirmBody,
       'settings.logout.confirm.title' => _l10n.settingsLogoutConfirmTitle,
+      'settings.report.ai.content.label' => _l10n.settingsReportAiContentLabel,
       'settings.system.section' => _l10n.settingsSystemSection,
       'settings.title' => _l10n.settingsTitle,
       'skills.add.button' => _l10n.skillsAddButton,
@@ -1653,6 +1655,7 @@ class L10nKeyResolver {
     'pro.feature.deploy',
     'pro.feature.push',
     'pro.feature.ready',
+    'pro.manage.subscription',
     'pro.plan.title',
     'pro.price',
     'pro.price.after.trial',
@@ -1774,6 +1777,7 @@ class L10nKeyResolver {
     'settings.logout.confirm',
     'settings.logout.confirm.body',
     'settings.logout.confirm.title',
+    'settings.report.ai.content.label',
     'settings.system.section',
     'settings.title',
     'skills.add.button',
@@ -2605,6 +2609,7 @@ class L10nKeyResolver {
     'proFeatureDeploy': 'pro.feature.deploy',
     'proFeaturePush': 'pro.feature.push',
     'proFeatureReady': 'pro.feature.ready',
+    'proManageSubscription': 'pro.manage.subscription',
     'proPlanTitle': 'pro.plan.title',
     'proPrice': 'pro.price',
     'proPriceAfterTrial': 'pro.price.after.trial',
@@ -2726,6 +2731,7 @@ class L10nKeyResolver {
     'settingsLogoutConfirm': 'settings.logout.confirm',
     'settingsLogoutConfirmBody': 'settings.logout.confirm.body',
     'settingsLogoutConfirmTitle': 'settings.logout.confirm.title',
+    'settingsReportAiContentLabel': 'settings.report.ai.content.label',
     'settingsSystemSection': 'settings.system.section',
     'settingsTitle': 'settings.title',
     'skillsAddButton': 'skills.add.button',
@@ -3554,6 +3560,7 @@ class L10nKeyResolver {
     'pro.feature.deploy': 'proFeatureDeploy',
     'pro.feature.push': 'proFeaturePush',
     'pro.feature.ready': 'proFeatureReady',
+    'pro.manage.subscription': 'proManageSubscription',
     'pro.plan.title': 'proPlanTitle',
     'pro.price': 'proPrice',
     'pro.price.after.trial': 'proPriceAfterTrial',
@@ -3675,6 +3682,7 @@ class L10nKeyResolver {
     'settings.logout.confirm': 'settingsLogoutConfirm',
     'settings.logout.confirm.body': 'settingsLogoutConfirmBody',
     'settings.logout.confirm.title': 'settingsLogoutConfirmTitle',
+    'settings.report.ai.content.label': 'settingsReportAiContentLabel',
     'settings.system.section': 'settingsSystemSection',
     'settings.title': 'settingsTitle',
     'skills.add.button': 'skillsAddButton',
@@ -4510,6 +4518,7 @@ abstract class L10nKeys {
   static const proFeatureDeploy = 'pro.feature.deploy';
   static const proFeaturePush = 'pro.feature.push';
   static const proFeatureReady = 'pro.feature.ready';
+  static const proManageSubscription = 'pro.manage.subscription';
   static const proPlanTitle = 'pro.plan.title';
   static (String, Map<String, dynamic>) proPrice(String price) => ('pro.price', {'price': price});
   static (String, Map<String, dynamic>) proPriceAfterTrial(String price) => ('pro.price.after.trial', {'price': price});
@@ -4631,6 +4640,7 @@ abstract class L10nKeys {
   static const settingsLogoutConfirm = 'settings.logout.confirm';
   static const settingsLogoutConfirmBody = 'settings.logout.confirm.body';
   static const settingsLogoutConfirmTitle = 'settings.logout.confirm.title';
+  static const settingsReportAiContentLabel = 'settings.report.ai.content.label';
   static const settingsSystemSection = 'settings.system.section';
   static const settingsTitle = 'settings.title';
   static const skillsAddButton = 'skills.add.button';

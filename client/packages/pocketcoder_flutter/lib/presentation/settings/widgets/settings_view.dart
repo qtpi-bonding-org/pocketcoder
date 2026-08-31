@@ -13,6 +13,7 @@ class SettingsView extends StatelessWidget {
     required this.onLogout,
     required this.onFactoryReset,
     required this.onDeleteProData,
+    required this.onReportAiContent,
   });
 
   final bool hasPendingMcp;
@@ -21,6 +22,7 @@ class SettingsView extends StatelessWidget {
   final VoidCallback onLogout;
   final VoidCallback onFactoryReset;
   final VoidCallback onDeleteProData;
+  final VoidCallback onReportAiContent;
 
   List<(String, List<(String, String)>)> _sections(
       BuildContext context) {
@@ -34,6 +36,7 @@ class SettingsView extends StatelessWidget {
           ('SKILLS', 'configureSkills'),
           ('TOOL PERMISSIONS', 'configureToolPermissions'),
           ('HARNESS CONNECTIONS', 'configureHarnessAuth'),
+          (context.l10n.settingsReportAiContentLabel, 'reportAiContent'),
         ]
       ),
       (
@@ -85,6 +88,7 @@ class SettingsView extends StatelessWidget {
                         'logout' => onLogout(),
                         'factoryReset' => onFactoryReset(),
                         'deleteProData' => onDeleteProData(),
+                        'reportAiContent' => onReportAiContent(),
                         _ => onNavigate(item.$2),
                       },
                     ),

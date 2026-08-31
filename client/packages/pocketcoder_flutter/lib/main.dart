@@ -45,6 +45,8 @@ class LocalBillingService implements BillingService {
   @override
   Future<void> restorePurchases() async {}
   @override
+  Future<void> manageSubscription() async {}
+  @override
   Future<bool> purchasePro(String identifier) async => true;
   @override
   Future<BillingPackage?> getProPackage() async => null;

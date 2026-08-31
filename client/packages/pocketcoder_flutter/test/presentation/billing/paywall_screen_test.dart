@@ -21,6 +21,7 @@ void main() {
     BillingState state = const BillingState(package: package),
     VoidCallback? onPurchase,
     VoidCallback? onRestore,
+    VoidCallback? onManageSubscription,
     VoidCallback? onOpenTermsOfService,
     VoidCallback? onOpenPrivacyPolicy,
   }) {
@@ -32,6 +33,7 @@ void main() {
         state: state,
         onPurchase: onPurchase ?? () {},
         onRestore: onRestore ?? () {},
+        onManageSubscription: onManageSubscription ?? () {},
         onOpenTermsOfService: onOpenTermsOfService ?? () {},
         onOpenPrivacyPolicy: onOpenPrivacyPolicy ?? () {},
       ),
@@ -98,6 +100,22 @@ void main() {
 
     expect(purchases, 1);
     expect(restores, 1);
+  });
+
+  testWidgets(
+      'an active Pro subscriber sees and can tap Manage Subscription',
+      (tester) async {
+    var manageCalls = 0;
+    await tester.pumpWidget(subject(
+      state: const BillingState(package: package, isPro: true),
+      onManageSubscription: () => manageCalls += 1,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('MANAGE SUBSCRIPTION'), findsOneWidget);
+    await tester.tap(find.text('MANAGE SUBSCRIPTION'));
+
+    expect(manageCalls, 1);
   });
 
   testWidgets('keeps only the back action, whether reached during '

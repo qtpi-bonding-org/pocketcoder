@@ -52,6 +52,7 @@ class PaywallView extends StatelessWidget {
     required this.state,
     required this.onPurchase,
     required this.onRestore,
+    required this.onManageSubscription,
     required this.onOpenTermsOfService,
     required this.onOpenPrivacyPolicy,
   });
@@ -59,6 +60,7 @@ class PaywallView extends StatelessWidget {
   final BillingState state;
   final VoidCallback onPurchase;
   final VoidCallback onRestore;
+  final VoidCallback onManageSubscription;
   final VoidCallback onOpenTermsOfService;
   final VoidCallback onOpenPrivacyPolicy;
 
@@ -87,7 +89,12 @@ class PaywallView extends StatelessWidget {
     if (state.isLoading) {
       return TerminalLoadingIndicator(label: context.l10n.proCheckingStatus);
     }
-    if (state.isPro) return _ActiveProStatus(onRestore: onRestore);
+    if (state.isPro) {
+      return _ActiveProStatus(
+        onRestore: onRestore,
+        onManageSubscription: onManageSubscription,
+      );
+    }
 
     final package = state.package;
     if (package == null) {
@@ -199,9 +206,13 @@ class _ProOffer extends StatelessWidget {
 }
 
 class _ActiveProStatus extends StatelessWidget {
-  const _ActiveProStatus({required this.onRestore});
+  const _ActiveProStatus({
+    required this.onRestore,
+    required this.onManageSubscription,
+  });
 
   final VoidCallback onRestore;
+  final VoidCallback onManageSubscription;
 
   @override
   Widget build(BuildContext context) {
@@ -217,6 +228,12 @@ class _ActiveProStatus extends StatelessWidget {
         VSpace.x2,
         TerminalText(context.l10n.proActiveBody),
         VSpace.x3,
+        TerminalButton(
+          label: context.l10n.proManageSubscription,
+          onTap: onManageSubscription,
+          isPrimary: false,
+        ),
+        VSpace.x1,
         TerminalButton(
           label: context.l10n.proRestore,
           onTap: onRestore,

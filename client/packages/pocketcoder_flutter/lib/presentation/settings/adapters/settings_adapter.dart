@@ -12,7 +12,14 @@ import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/settings_view.dart';
+
+final Uri _reportAiContentUri = Uri(
+  scheme: 'mailto',
+  path: 'marketing@qtpi.app',
+  query: 'subject=PocketCoder AI content report',
+);
 
 bool _hasPendingMcp(McpState state) =>
     state.status == UiFlowStatus.success &&
@@ -51,6 +58,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
             onLogout: () => _confirmLogout(context, authCubit),
             onFactoryReset: () => _confirmFactoryReset(context, authCubit),
             onDeleteProData: () => _confirmDeleteProData(context, authCubit),
+            onReportAiContent: () => launchUrl(_reportAiContentUri),
           ),
         ),
       ),

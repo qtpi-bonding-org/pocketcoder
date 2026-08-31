@@ -35,6 +35,7 @@ class ProPaywallAdapter extends CubitAdapter<BillingCubit, BillingState> {
           state: value,
           onPurchase: () => _purchase(context, cubit, value),
           onRestore: () => _restore(context, cubit),
+          onManageSubscription: cubit.manageSubscription,
           onOpenTermsOfService: onOpenTermsOfService,
           onOpenPrivacyPolicy: onOpenPrivacyPolicy,
         ),

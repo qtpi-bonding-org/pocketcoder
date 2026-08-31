@@ -21,6 +21,9 @@ class FossBillingService implements BillingService {
   Future<void> restorePurchases() async {}
 
   @override
+  Future<void> manageSubscription() async {}
+
+  @override
   Future<bool> purchasePro(String identifier) async => true;
 
   @override

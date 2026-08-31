@@ -51,4 +51,11 @@ class BillingCubit extends AppCubit<BillingState> {
       );
     });
   }
+
+  Future<void> manageSubscription() async {
+    await tryOperation(() async {
+      await _billingService.manageSubscription();
+      return state.copyWith(status: UiFlowStatus.success, error: null);
+    });
+  }
 }
