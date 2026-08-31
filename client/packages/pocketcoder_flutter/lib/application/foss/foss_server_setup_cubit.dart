@@ -1,4 +1,4 @@
-import 'package:flutter_aeroform/domain/security/i_ssh_key_generator.dart';
+import 'package:pocketcoder_flutter/domain/security/i_ssh_key_generator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/foss/foss_server_setup_state.dart';

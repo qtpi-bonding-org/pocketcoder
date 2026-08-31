@@ -1,5 +1,4 @@
-import 'package:flutter_aeroform/domain/security/i_ssh_key_generator.dart';
-import 'package:flutter_aeroform/infrastructure/security/ssh_key_generator.dart';
+import 'package:pocketcoder_flutter/domain/security/i_ssh_key_generator.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -53,7 +52,9 @@ class FossAppModule implements AppDependencyModule {
     getIt.registerLazySingleton<FossRootSshCredentialsStore>(
       () => FossRootSshCredentialsStore(getIt<FlutterSecureStorage>()),
     );
-    getIt.registerLazySingleton<ISshKeyGenerator>(() => SshKeyGenerator());
+    // ISshKeyGenerator is registered by pocketcoder_flutter's own
+    // injectable-generated config (see SshKeyGenerator's @LazySingleton),
+    // same as ILocalAuthGate -- not manually registered here.
     getIt.registerFactory<FossServerSetupCubit>(
       () => FossServerSetupCubit(
         getIt<ISshKeyGenerator>(),

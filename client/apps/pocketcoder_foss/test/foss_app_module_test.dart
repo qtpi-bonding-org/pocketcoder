@@ -12,7 +12,6 @@ import 'package:pocketcoder_flutter/domain/server_control/i_server_control_servi
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_setup_gate.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_setup_flow.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_root_ssh_credentials_store.dart';
-import 'package:flutter_aeroform/domain/security/i_ssh_key_generator.dart';
 
 void main() {
   test('FOSS app module registers every shared app-level binding', () {
@@ -26,7 +25,6 @@ void main() {
     expect(getIt<IProviderOptionService>(), isA<IProviderOptionService>());
     expect(getIt<OnboardingSetupFlow>(), isA<OnboardingSetupFlow>());
     expect(getIt.isRegistered<FossRootSshCredentialsStore>(), isTrue);
-    expect(getIt.isRegistered<ISshKeyGenerator>(), isTrue);
     expect(getIt.isRegistered<FossServerSetupCubit>(), isTrue);
     expect(getIt.isRegistered<IServerControlSetupGate>(), isTrue);
     expect(getIt.isRegistered<IRootSshCredentialsProvider>(), isTrue);

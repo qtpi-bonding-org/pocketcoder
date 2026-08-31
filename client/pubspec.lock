@@ -496,15 +496,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_aeroform:
-    dependency: transitive
-    description:
-      path: "."
-      ref: "6df491dfa7c8a6356255fe1e1ad2cc7b38489cb3"
-      resolved-ref: "6df491dfa7c8a6356255fe1e1ad2cc7b38489cb3"
-      url: "git@github-qtpi-bonding-org-flutter_aeroform:qtpi-bonding-org/flutter_aeroform.git"
-    source: git
-    version: "0.1.4"
   flutter_bloc:
     dependency: transitive
     description:

@@ -117,6 +117,8 @@ import 'package:pocketcoder_flutter/domain/scheduler/i_scheduler_repository.dart
     as _i470;
 import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart'
     as _i870;
+import 'package:pocketcoder_flutter/domain/security/i_ssh_key_generator.dart'
+    as _i103;
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart'
     as _i990;
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart'
@@ -225,6 +227,8 @@ import 'package:pocketcoder_flutter/infrastructure/scheduler/scheduler_repositor
     as _i715;
 import 'package:pocketcoder_flutter/infrastructure/security/local_auth_gate.dart'
     as _i492;
+import 'package:pocketcoder_flutter/infrastructure/security/ssh_key_generator.dart'
+    as _i346;
 import 'package:pocketcoder_flutter/infrastructure/skills/skill_dao.dart'
     as _i9;
 import 'package:pocketcoder_flutter/infrastructure/skills/skills_repository.dart'
@@ -281,6 +285,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.releaseChannel,
       instanceName: 'releaseChannel',
     );
+    gh.lazySingleton<_i103.ISshKeyGenerator>(() => _i346.SshKeyGenerator());
     gh.lazySingleton<_i810.PocoConfigDao>(
         () => _i810.PocoConfigDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i810.PromptDao>(
