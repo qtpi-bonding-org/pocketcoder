@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,5 +59,45 @@ exit 1
 	err := (Docker{}).ComposeUp("compose.yml", "runtime.env", nil)
 	if err == nil || !strings.Contains(err.Error(), "exit status 42") {
 		t.Fatalf("ComposeUp error = %v, want plugin failure", err)
+	}
+}
+
+func TestComposeUpCapturesComposeLogsOnFailure(t *testing.T) {
+	directory := t.TempDir()
+	dockerPath := filepath.Join(directory, "docker")
+	const logsMarker = "FAKE-COMPOSE-LOGS-OUTPUT-abc123"
+	script := `#!/bin/sh
+set -eu
+if [ "${1:-}" = network ]; then
+  exit 0
+fi
+if [ "${1:-}" = compose ] && [ "${2:-}" = version ]; then
+  exit 0
+fi
+found_logs=0
+for arg in "$@"; do
+  if [ "$arg" = logs ]; then
+    found_logs=1
+  fi
+done
+if [ "$found_logs" = 1 ]; then
+  echo "` + logsMarker + `"
+  exit 0
+fi
+exit 1
+`
+	if err := os.WriteFile(dockerPath, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", directory+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+	var stdout bytes.Buffer
+	docker := Docker{Stdout: &stdout}
+	err := docker.ComposeUp("compose.yml", "runtime.env", nil)
+	if err == nil {
+		t.Fatal("ComposeUp error = nil, want the up failure")
+	}
+	if !strings.Contains(stdout.String(), logsMarker) {
+		t.Fatalf("ComposeUp did not capture compose logs on failure; Stdout = %q", stdout.String())
 	}
 }
