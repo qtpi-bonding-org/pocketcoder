@@ -1281,9 +1281,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proRestore => 'RESTORE PURCHASES';
 
   @override
-  String get proNotNow => 'SKIP';
-
-  @override
   String proTerms(String price) {
     return 'SUBSCRIPTION RENEWS AT $price UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.';
   }

@@ -54,7 +54,6 @@ class PaywallView extends StatelessWidget {
     required this.onRestore,
     required this.onOpenTermsOfService,
     required this.onOpenPrivacyPolicy,
-    this.isOnboarding = false,
   });
 
   final BillingState state;
@@ -62,7 +61,6 @@ class PaywallView extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onOpenTermsOfService;
   final VoidCallback onOpenPrivacyPolicy;
-  final bool isOnboarding;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +68,6 @@ class PaywallView extends StatelessWidget {
       title: context.l10n.proTitle,
       activePillar: NavPillar.configure,
       showBack: true,
-      backLabel: isOnboarding ? context.l10n.proNotNow : null,
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
@@ -151,13 +148,7 @@ class _ProOffer extends StatelessWidget {
             context.l10n.proTrialLapseExplainer,
             alpha: 0.8,
           ),
-        ] else
-          TerminalText(
-            context.l10n.proSubscribe,
-            size: TerminalTextSize.base,
-            weight: TerminalTextWeight.heavy,
-            color: context.colorScheme.primary,
-          ),
+        ],
         VSpace.x3,
         TerminalButton(
           label: trialDays == null

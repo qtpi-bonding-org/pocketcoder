@@ -33,7 +33,6 @@ class ProPaywallAdapter extends CubitAdapter<BillingCubit, BillingState> {
         valueListenable: state,
         builder: (context, value, _) => PaywallView(
           state: value,
-          isOnboarding: returnOnUnlock,
           onPurchase: () => _purchase(context, cubit, value),
           onRestore: () => _restore(context, cubit),
           onOpenTermsOfService: onOpenTermsOfService,

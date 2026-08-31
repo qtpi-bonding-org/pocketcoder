@@ -23,7 +23,6 @@ void main() {
     VoidCallback? onRestore,
     VoidCallback? onOpenTermsOfService,
     VoidCallback? onOpenPrivacyPolicy,
-    bool isOnboarding = false,
   }) {
     return MaterialApp(
       theme: AppTheme.terminalTheme,
@@ -35,7 +34,6 @@ void main() {
         onRestore: onRestore ?? () {},
         onOpenTermsOfService: onOpenTermsOfService ?? () {},
         onOpenPrivacyPolicy: onOpenPrivacyPolicy ?? () {},
-        isOnboarding: isOnboarding,
       ),
     );
   }
@@ -102,24 +100,13 @@ void main() {
     expect(restores, 1);
   });
 
-  testWidgets('keeps only the back action inside the deployment flow',
-      (tester) async {
-    await tester.pumpWidget(subject(isOnboarding: true));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(TerminalFooter), findsOneWidget);
-    expect(find.text('SKIP'), findsOneWidget);
-    expect(find.text('CHATS'), findsNothing);
-    expect(find.text('MONITOR'), findsNothing);
-    expect(find.text('CONFIGURE'), findsNothing);
-  });
-
-  testWidgets(
-      'keeps only the back action when reached standalone from Configure, '
-      'not just during onboarding', (tester) async {
+  testWidgets('keeps only the back action, whether reached during '
+      'onboarding or standalone from Configure', (tester) async {
     await tester.pumpWidget(subject());
     await tester.pumpAndSettle();
 
+    expect(find.byType(TerminalFooter), findsOneWidget);
+    expect(find.text('BACK'), findsOneWidget);
     expect(find.text('CHATS'), findsNothing);
     expect(find.text('MONITOR'), findsNothing);
     expect(find.text('CONFIGURE'), findsNothing);

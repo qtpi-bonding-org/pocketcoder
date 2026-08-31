@@ -2440,12 +2440,6 @@ abstract class AppLocalizations {
   /// **'RESTORE PURCHASES'**
   String get proRestore;
 
-  /// No description provided for @proNotNow.
-  ///
-  /// In en, this message translates to:
-  /// **'SKIP'**
-  String get proNotNow;
-
   /// No description provided for @proTerms.
   ///
   /// In en, this message translates to:

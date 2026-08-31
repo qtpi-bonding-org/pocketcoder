@@ -585,7 +585,6 @@
   },
   "proSubscribe": "UNLOCK POCKETCODER PRO",
   "proRestore": "RESTORE PURCHASES",
-  "proNotNow": "SKIP",
   "proTerms": "SUBSCRIPTION RENEWS AT {price} UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.",
   "@proTerms": {
     "placeholders": {"price": {"type": "String"}}

@@ -646,7 +646,6 @@ class L10nKeyResolver {
       'pro.feature.deploy' => _l10n.proFeatureDeploy,
       'pro.feature.push' => _l10n.proFeaturePush,
       'pro.feature.ready' => _l10n.proFeatureReady,
-      'pro.not.now' => _l10n.proNotNow,
       'pro.plan.title' => _l10n.proPlanTitle,
       'pro.privacy.policy.link' => _l10n.proPrivacyPolicyLink,
       'pro.restore' => _l10n.proRestore,
@@ -1654,7 +1653,6 @@ class L10nKeyResolver {
     'pro.feature.deploy',
     'pro.feature.push',
     'pro.feature.ready',
-    'pro.not.now',
     'pro.plan.title',
     'pro.price',
     'pro.price.after.trial',
@@ -2607,7 +2605,6 @@ class L10nKeyResolver {
     'proFeatureDeploy': 'pro.feature.deploy',
     'proFeaturePush': 'pro.feature.push',
     'proFeatureReady': 'pro.feature.ready',
-    'proNotNow': 'pro.not.now',
     'proPlanTitle': 'pro.plan.title',
     'proPrice': 'pro.price',
     'proPriceAfterTrial': 'pro.price.after.trial',
@@ -3557,7 +3554,6 @@ class L10nKeyResolver {
     'pro.feature.deploy': 'proFeatureDeploy',
     'pro.feature.push': 'proFeaturePush',
     'pro.feature.ready': 'proFeatureReady',
-    'pro.not.now': 'proNotNow',
     'pro.plan.title': 'proPlanTitle',
     'pro.price': 'proPrice',
     'pro.price.after.trial': 'proPriceAfterTrial',
@@ -4514,7 +4510,6 @@ abstract class L10nKeys {
   static const proFeatureDeploy = 'pro.feature.deploy';
   static const proFeaturePush = 'pro.feature.push';
   static const proFeatureReady = 'pro.feature.ready';
-  static const proNotNow = 'pro.not.now';
   static const proPlanTitle = 'pro.plan.title';
   static (String, Map<String, dynamic>) proPrice(String price) => ('pro.price', {'price': price});
   static (String, Map<String, dynamic>) proPriceAfterTrial(String price) => ('pro.price.after.trial', {'price': price});
