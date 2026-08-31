@@ -397,3 +397,43 @@ func TestSyncNeverDeletesRowsForProvidersRemovedUpstream(t *testing.T) {
 		t.Error("goose's harness_models row for reseller-model was deleted -- this would break any chat.harness_model_override still pointing at it")
 	}
 }
+
+// An empty model id (the map key models.dev keys each model by) fails
+// models.name's required-field validation.
+func malformedModelFixtureServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	const malformed = `{
+		"anthropic": {
+			"id": "anthropic", "name": "Anthropic", "env": ["ANTHROPIC_API_KEY"],
+			"models": {
+				"": {"id": "", "name": "Broken Model", "limit": {"context": 1}},
+				"claude-sonnet-5": {"id": "claude-sonnet-5", "name": "Claude Sonnet 5", "limit": {"context": 1000000}}
+			}
+		}
+	}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(malformed))
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+// A row's Save error must never propagate out of the per-harness
+// transaction callback, or it would roll back every already-upserted
+// good row in that harness's batch along with the one bad row.
+func TestSyncSkipsOneMalformedRowWithoutAbortingRestOfHarnessBatch(t *testing.T) {
+	app := testApp(t)
+	srv := malformedModelFixtureServer(t)
+
+	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := app.FindFirstRecordByFilter("models", "name = 'claude-sonnet-5'", nil); err != nil {
+		t.Error("well-formed sibling model was not saved -- a malformed row must not abort the rest of the batch")
+	}
+	if _, err := app.FindFirstRecordByFilter("models", "name = ''", nil); err == nil {
+		t.Error("malformed (empty-id) model was saved despite failing required-field validation")
+	}
+}

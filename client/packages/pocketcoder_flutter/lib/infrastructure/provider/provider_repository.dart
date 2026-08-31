@@ -32,6 +32,10 @@ class ProviderRepository implements IProviderRepository {
   final ProviderCatalogDao _providerCatalogDao;
   final IAuthRepository _auth;
 
+  // Memoized so the 16k+ row catalog fetch (networkOnly, uncached) only
+  // ever hits the network once per app session, not once per call site.
+  Future<List<HarnessModel>>? _harnessModelsFuture;
+
   @override
   Stream<List<Harnesse>> watchHarnesses() => _harnesseDao.watch();
 
@@ -39,8 +43,22 @@ class ProviderRepository implements IProviderRepository {
   Stream<List<Model>> watchModels() => _modelDao.watch();
 
   @override
-  Future<List<HarnessModel>> fetchHarnessModels() =>
-      _harnessModelDao.getFullList(requestPolicy: RequestPolicy.networkOnly);
+  Future<List<HarnessModel>> fetchHarnessModels() {
+    return _harnessModelsFuture ??= _fetchHarnessModelsFresh();
+  }
+
+  Future<List<HarnessModel>> _fetchHarnessModelsFresh() async {
+    try {
+      return await _harnessModelDao.getFullList(
+        requestPolicy: RequestPolicy.networkOnly,
+      );
+    } catch (_) {
+      // Don't let a failed fetch permanently poison every future call --
+      // clear the cached future so the next call retries the network.
+      _harnessModelsFuture = null;
+      rethrow;
+    }
+  }
 
   @override
   Stream<List<HarnessProvider>> watchHarnessProviders() =>
