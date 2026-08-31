@@ -15,6 +15,7 @@ import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_app_edition.dart';
+import 'package:pocketcoder_flutter/infrastructure/foss/foss_billing_service.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/settings/settings_screen.dart';
@@ -61,6 +62,7 @@ void main() {
           CaddyCaPinStore(secureStorage),
           const NoopFactoryResetHook(),
           proDataDeletionHook,
+          FossBillingService(),
         ));
     getIt.registerSingleton<IAppEdition>(const FossAppEdition());
   });

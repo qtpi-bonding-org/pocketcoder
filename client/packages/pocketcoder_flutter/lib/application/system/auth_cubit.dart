@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
@@ -35,9 +36,10 @@ class AuthCubit extends AppCubit<AuthState> {
   final CaddyCaPinStore _caddyCaPinStore;
   final FactoryResetHook _factoryResetHook;
   final ProDataDeletionHook _proDataDeletionHook;
+  final BillingService _billingService;
 
   AuthCubit(this._authRepository, this._caddyCaPinStore,
-      this._factoryResetHook, this._proDataDeletionHook)
+      this._factoryResetHook, this._proDataDeletionHook, this._billingService)
       : super(AuthState.initial());
 
   Future<void> restoreSavedUrl() async {
@@ -112,6 +114,7 @@ class AuthCubit extends AppCubit<AuthState> {
       await _authRepository.clearSession();
       await _caddyCaPinStore.clearAll();
       await _factoryResetHook.resetForFactoryReset();
+      await _billingService.reset();
       return createSuccessState();
     });
   }

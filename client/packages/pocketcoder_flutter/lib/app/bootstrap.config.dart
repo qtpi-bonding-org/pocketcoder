@@ -448,12 +448,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
-    gh.factory<_i464.AuthCubit>(() => _i464.AuthCubit(
-          gh<_i50.IAuthRepository>(),
-          gh<_i888.CaddyCaPinStore>(),
-          gh<_i1021.FactoryResetHook>(),
-          gh<_i131.ProDataDeletionHook>(),
-        ));
     gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
           gh<_i519.Client>(),
           gh<String>(instanceName: 'oauthRelayBaseUrl'),
@@ -488,6 +482,13 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i110.FileBrowserCubit(gh<_i209.IFilesRepository>()));
     gh.factory<_i90.FileViewerCubit>(
         () => _i90.FileViewerCubit(gh<_i209.IFilesRepository>()));
+    gh.factory<_i464.AuthCubit>(() => _i464.AuthCubit(
+          gh<_i50.IAuthRepository>(),
+          gh<_i888.CaddyCaPinStore>(),
+          gh<_i1021.FactoryResetHook>(),
+          gh<_i131.ProDataDeletionHook>(),
+          gh<_i619.BillingService>(),
+        ));
     gh.factory<_i490.SchedulerCubit>(
         () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
     gh.factory<_i614.ReleaseStatusCubit>(() =>

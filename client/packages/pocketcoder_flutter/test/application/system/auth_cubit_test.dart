@@ -4,11 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 
 class MockAuthRepository extends Mock implements IAuthRepository {}
+
+class MockBillingService extends Mock implements BillingService {}
 
 // CaddyCaPinStore is a `final class`, so it can't be mocked directly from
 // this test library -- build a real instance over a mocked
@@ -24,6 +27,7 @@ void main() {
   late MockFlutterSecureStorage secureStorage;
   late MockFactoryResetHook factoryResetHook;
   late MockProDataDeletionHook proDataDeletionHook;
+  late MockBillingService billingService;
   AuthCubit? lastCubit;
 
   AuthCubit buildCubit() {
@@ -32,6 +36,7 @@ void main() {
       CaddyCaPinStore(secureStorage),
       factoryResetHook,
       proDataDeletionHook,
+      billingService,
     );
     lastCubit = cubit;
     return cubit;
@@ -42,6 +47,8 @@ void main() {
     secureStorage = MockFlutterSecureStorage();
     factoryResetHook = MockFactoryResetHook();
     proDataDeletionHook = MockProDataDeletionHook();
+    billingService = MockBillingService();
+    when(() => billingService.reset()).thenAnswer((_) async {});
     when(() => secureStorage.readAll(
           aOptions: any(named: 'aOptions'),
           iOptions: any(named: 'iOptions'),
@@ -165,8 +172,9 @@ void main() {
   });
 
   group('AuthCubit.factoryReset', () {
-    test('clears the auth session, every stored CA pin, and the '
-        'app-specific hook, and emits success', () async {
+    test('clears the auth session, every stored CA pin, the '
+        'app-specific hook, and the billing identity, and emits success',
+        () async {
       when(() => repo.clearSession()).thenAnswer((_) async {});
       when(() => secureStorage.readAll(
             aOptions: any(named: 'aOptions'),
@@ -212,6 +220,7 @@ void main() {
             wOptions: any(named: 'wOptions'),
           ));
       verify(() => factoryResetHook.resetForFactoryReset()).called(1);
+      verify(() => billingService.reset()).called(1);
       expect(cubit.state.status, UiFlowStatus.success);
     });
   });
