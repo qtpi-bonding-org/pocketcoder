@@ -174,8 +174,9 @@ class MonitorView extends StatelessWidget {
     final colors = context.colorScheme;
     final terminal = context.terminalColors;
     final upper = log.toUpperCase();
-    if (upper.contains('ERR') || upper.contains('FAIL'))
+    if (upper.contains('ERR') || upper.contains('FAIL')) {
       return terminal.warning;
+    }
     if (upper.contains('WARN')) return terminal.warning;
     if (upper.contains('INFO')) return colors.primary;
     if (upper.contains('DEBUG')) return colors.secondary;

@@ -3,7 +3,8 @@ import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 
 void main() {
-  test('maps structured device-code challenge fields without losing semantics', () {
+  test('maps structured device-code challenge fields without losing semantics',
+      () {
     final challenge = generated.HarnessAuthChallenge((b) {
       b.type = 'device';
       b.text = 'Use the browser to continue';
@@ -39,6 +40,7 @@ void main() {
     expect(domain.userCode, isNull);
     expect(domain.codeDestination, HarnessAuthCodeDestination.unknown);
     expect(domain.pollIntervalSeconds, isNull);
+    // ignore: deprecated_member_use
     expect(domain.legacyText, challenge.text);
   });
 }

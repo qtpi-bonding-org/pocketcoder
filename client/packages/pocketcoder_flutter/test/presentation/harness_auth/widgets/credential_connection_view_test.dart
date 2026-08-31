@@ -69,14 +69,16 @@ void main() {
       (tester) async {
     const channel = SystemChannels.platform;
     Map<String, dynamic>? message;
-    final handler = channel.setMockMethodCallHandler((call) async {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel,
+        (call) async {
       if (call.method == 'Clipboard.setData') {
         message = Map<String, dynamic>.from(call.arguments as Map);
       }
       return null;
     });
     addTearDown(() async {
-      channel.setMockMethodCallHandler(null);
+      tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
     });
     await tester.pumpWidget(host(CredentialConnectionView(
       step: BrowserVerificationConnectionStep(

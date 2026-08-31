@@ -28,8 +28,7 @@ void main() {
         models: [model1],
         harnessModels: [hm1],
         harnessProviders: [
-          const HarnessProvider(
-              id: 'hp1', harness: 'h1', provider: 'p-anthropic')
+          HarnessProvider(id: 'hp1', harness: 'h1', provider: 'p-anthropic')
         ],
         providerAPIKeys: [key1],
         ollamaModels: [ollamaModel1],

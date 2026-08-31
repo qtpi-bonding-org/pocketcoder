@@ -194,8 +194,9 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
               timer?.cancel();
               timerInterval = interval;
               timer = Timer.periodic(Duration(seconds: interval), (_) {
-                if (!auth.state.isHarnessBusy(harness.id))
+                if (!auth.state.isHarnessBusy(harness.id)) {
                   unawaited(auth.poll(harness.id, provider));
+                }
               });
             }
           } else {
@@ -255,8 +256,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                   onOpenAuthorizationPage: () {
                     if (uri != null) unawaited(_openChallenge(context, uri));
                   },
-                  onCopyCode: (code) {
-                  },
+                  onCopyCode: (code) {},
                   onSubmitCode: (code) => auth.submitCode(
                       harnessId: harness.id, code: code, provider: provider),
                   onCancel: () async {
@@ -264,8 +264,9 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                     timer = null;
                     timerInterval = null;
                     await auth.cancel(harness.id, provider);
-                    if (dialogContext.mounted)
+                    if (dialogContext.mounted) {
                       Navigator.of(dialogContext).pop();
+                    }
                   },
                   onRetry: () => auth.startWithAccount(
                     harnessId: harness.id,

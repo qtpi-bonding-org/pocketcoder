@@ -62,14 +62,16 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
     _harnessProvidersSub?.cancel();
     _harnessProvidersSub = _providerRepository.watchHarnessProviders().listen(
       (providers) {
-        if (!isClosed)
+        if (!isClosed) {
           emit(state.copyWith(
               harnessProviders: providers, harnessProvidersLoaded: true));
+        }
         _refreshStatuses();
       },
       onError: (Object e) {
-        if (!isClosed)
+        if (!isClosed) {
           emit(state.copyWith(status: UiFlowStatus.failure, error: e));
+        }
       },
     );
   }
@@ -103,16 +105,18 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
     await _setBusy(harnessId, provider, true);
     try {
       await action();
-      if (!isClosed)
+      if (!isClosed) {
         emit(state.copyWith(status: UiFlowStatus.success, error: null));
+      }
     } catch (e) {
       await pocketCoderDiagnosticCapture.capture(
         error: e,
         source: 'HarnessAuthCubit',
         operation: 'harnessOperation',
       );
-      if (!isClosed)
+      if (!isClosed) {
         emit(state.copyWith(status: UiFlowStatus.failure, error: e));
+      }
     } finally {
       await _setBusy(harnessId, provider, false);
     }
@@ -134,8 +138,9 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
 
   Future<void> _safeRefreshHarness(String harnessId) async {
     final provider = _oauthProviderFor(harnessId);
-    if (provider == null)
+    if (provider == null) {
       return; // no oauth-capable provider -- nothing to check
+    }
     try {
       _updateStatus(
           harnessId,
@@ -148,8 +153,9 @@ class HarnessAuthCubit extends AppCubit<HarnessAuthState> {
         source: 'HarnessAuthCubit',
         operation: 'refreshStatus',
       );
-      if (!isClosed)
+      if (!isClosed) {
         emit(state.copyWith(status: UiFlowStatus.failure, error: e));
+      }
     }
   }
 
