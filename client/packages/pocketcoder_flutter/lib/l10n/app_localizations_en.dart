@@ -1965,11 +1965,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'SSH is the emergency and administration door to your VPS. PocketCoder disables password login, requires your cryptographic key, and temporarily bans repeated guessing attempts.';
 
   @override
-  String get pocoLessonDockerTitle => 'The container engine';
+  String get pocoLessonDockerTitle => 'Getting the OS ready';
 
   @override
   String get pocoLessonDockerExplanation =>
-      'Docker runs each PocketCoder component in a defined container. NixOS manages the Docker engine itself, while Compose describes what Docker should run.';
+      'NixOS enables the Docker engine that will run every PocketCoder component. The VPS then receives its owner settings once, stores them in a protected file, installs your SSH key, and removes the temporary copy used during first boot.';
 
   @override
   String get pocoLessonOwnerConfigTitle => 'Receiving your configuration';
@@ -1986,11 +1986,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Internal services need private handshake secrets. The VPS creates random values locally instead of sending those secrets through the app or committing them to GitHub.';
 
   @override
-  String get pocoLessonReleaseSourceTitle => 'The exact release source';
+  String get pocoLessonReleaseSourceTitle => 'Activating the verified release';
 
   @override
   String get pocoLessonReleaseSourceExplanation =>
-      'The server checks out the precise Git commit embedded in the release. That makes the code on your VPS inspectable and keeps later updates tied to a real repository.';
+      'The server checks out the exact release commit, verifies every container image\'s signature, prepares fresh internal secrets, and starts the stack — writing a completion marker only once a real health check succeeds.';
 
   @override
   String get pocoLessonVerifiedImagesTitle => 'Verified container images';

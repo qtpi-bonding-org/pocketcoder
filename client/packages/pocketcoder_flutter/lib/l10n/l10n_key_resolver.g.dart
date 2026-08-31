@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-08-30T15:36:08.166711
+// Generated at: 2026-08-30T17:38:50.328211
 
 import 'app_localizations.dart';
 
@@ -276,6 +276,7 @@ class L10nKeyResolver {
       'errors.copy' => _l10n.errorsCopy,
       'errors.copy.all' => _l10n.errorsCopyAll,
       'errors.empty' => _l10n.errorsEmpty,
+      'errors.report.on.github' => _l10n.errorsReportOnGithub,
       'errors.title' => _l10n.errorsTitle,
       'external.auth.cancel' => _l10n.externalAuthCancel,
       'external.auth.retry' => _l10n.externalAuthRetry,
@@ -965,6 +966,7 @@ class L10nKeyResolver {
       'server.control.release.available' => _l10n.serverControlReleaseAvailable(args?['version'] as String? ?? ''),
       'server.control.release.contracts' => _l10n.serverControlReleaseContracts(args?['app'] as String? ?? '', args?['server'] as String? ?? '', args?['deployment'] as String? ?? ''),
       'server.control.release.current' => _l10n.serverControlReleaseCurrent(args?['version'] as String? ?? ''),
+      'server.control.release.nixos' => _l10n.serverControlReleaseNixos(args?['version'] as String? ?? ''),
       'server.control.release.status' => _l10n.serverControlReleaseStatus(args?['status'] as String? ?? ''),
       'skills.edit.dialog.title' => _l10n.skillsEditDialogTitle(args?['name'] as String? ?? ''),
       'terminal.ssh.link' => _l10n.terminalSshLink(args?['host'] as String? ?? '', args?['port'] as String? ?? ''),
@@ -1245,6 +1247,7 @@ class L10nKeyResolver {
     'errors.copy.all',
     'errors.empty',
     'errors.occurred',
+    'errors.report.on.github',
     'errors.title',
     'external.auth.cancel',
     'external.auth.connecting',
@@ -1755,6 +1758,7 @@ class L10nKeyResolver {
     'server.control.release.checking',
     'server.control.release.contracts',
     'server.control.release.current',
+    'server.control.release.nixos',
     'server.control.release.status',
     'server.control.show',
     'server.control.title',
@@ -2196,6 +2200,7 @@ class L10nKeyResolver {
     'errorsCopyAll': 'errors.copy.all',
     'errorsEmpty': 'errors.empty',
     'errorsOccurred': 'errors.occurred',
+    'errorsReportOnGithub': 'errors.report.on.github',
     'errorsTitle': 'errors.title',
     'externalAuthCancel': 'external.auth.cancel',
     'externalAuthConnecting': 'external.auth.connecting',
@@ -2706,6 +2711,7 @@ class L10nKeyResolver {
     'serverControlReleaseChecking': 'server.control.release.checking',
     'serverControlReleaseContracts': 'server.control.release.contracts',
     'serverControlReleaseCurrent': 'server.control.release.current',
+    'serverControlReleaseNixos': 'server.control.release.nixos',
     'serverControlReleaseStatus': 'server.control.release.status',
     'serverControlShow': 'server.control.show',
     'serverControlTitle': 'server.control.title',
@@ -3144,6 +3150,7 @@ class L10nKeyResolver {
     'errors.copy.all': 'errorsCopyAll',
     'errors.empty': 'errorsEmpty',
     'errors.occurred': 'errorsOccurred',
+    'errors.report.on.github': 'errorsReportOnGithub',
     'errors.title': 'errorsTitle',
     'external.auth.cancel': 'externalAuthCancel',
     'external.auth.connecting': 'externalAuthConnecting',
@@ -3654,6 +3661,7 @@ class L10nKeyResolver {
     'server.control.release.checking': 'serverControlReleaseChecking',
     'server.control.release.contracts': 'serverControlReleaseContracts',
     'server.control.release.current': 'serverControlReleaseCurrent',
+    'server.control.release.nixos': 'serverControlReleaseNixos',
     'server.control.release.status': 'serverControlReleaseStatus',
     'server.control.show': 'serverControlShow',
     'server.control.title': 'serverControlTitle',
@@ -4099,6 +4107,7 @@ abstract class L10nKeys {
   static const errorsCopyAll = 'errors.copy.all';
   static const errorsEmpty = 'errors.empty';
   static (String, Map<String, dynamic>) errorsOccurred(int count) => ('errors.occurred', {'count': count});
+  static const errorsReportOnGithub = 'errors.report.on.github';
   static const errorsTitle = 'errors.title';
   static const externalAuthCancel = 'external.auth.cancel';
   static (String, Map<String, dynamic>) externalAuthConnecting(String label) => ('external.auth.connecting', {'label': label});
@@ -4609,6 +4618,7 @@ abstract class L10nKeys {
   static const serverControlReleaseChecking = 'server.control.release.checking';
   static (String, Map<String, dynamic>) serverControlReleaseContracts(String app, String server, String deployment) => ('server.control.release.contracts', {'app': app, 'server': server, 'deployment': deployment});
   static (String, Map<String, dynamic>) serverControlReleaseCurrent(String version) => ('server.control.release.current', {'version': version});
+  static (String, Map<String, dynamic>) serverControlReleaseNixos(String version) => ('server.control.release.nixos', {'version': version});
   static (String, Map<String, dynamic>) serverControlReleaseStatus(String status) => ('server.control.release.status', {'status': status});
   static const serverControlShow = 'server.control.show';
   static const serverControlTitle = 'server.control.title';

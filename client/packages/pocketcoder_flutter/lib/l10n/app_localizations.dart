@@ -3643,13 +3643,13 @@ abstract class AppLocalizations {
   /// No description provided for @pocoLessonDockerTitle.
   ///
   /// In en, this message translates to:
-  /// **'The container engine'**
+  /// **'Getting the OS ready'**
   String get pocoLessonDockerTitle;
 
   /// No description provided for @pocoLessonDockerExplanation.
   ///
   /// In en, this message translates to:
-  /// **'Docker runs each PocketCoder component in a defined container. NixOS manages the Docker engine itself, while Compose describes what Docker should run.'**
+  /// **'NixOS enables the Docker engine that will run every PocketCoder component. The VPS then receives its owner settings once, stores them in a protected file, installs your SSH key, and removes the temporary copy used during first boot.'**
   String get pocoLessonDockerExplanation;
 
   /// No description provided for @pocoLessonOwnerConfigTitle.
@@ -3679,13 +3679,13 @@ abstract class AppLocalizations {
   /// No description provided for @pocoLessonReleaseSourceTitle.
   ///
   /// In en, this message translates to:
-  /// **'The exact release source'**
+  /// **'Activating the verified release'**
   String get pocoLessonReleaseSourceTitle;
 
   /// No description provided for @pocoLessonReleaseSourceExplanation.
   ///
   /// In en, this message translates to:
-  /// **'The server checks out the precise Git commit embedded in the release. That makes the code on your VPS inspectable and keeps later updates tied to a real repository.'**
+  /// **'The server checks out the exact release commit, verifies every container image\'s signature, prepares fresh internal secrets, and starts the stack — writing a completion marker only once a real health check succeeds.'**
   String get pocoLessonReleaseSourceExplanation;
 
   /// No description provided for @pocoLessonVerifiedImagesTitle.
