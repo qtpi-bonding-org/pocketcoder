@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_input.dart';
 
 /// The chat prompt at the bottom of the terminal transcript.
@@ -23,15 +22,12 @@ class ChatComposer extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      child: Padding(
-        padding: EdgeInsets.all(AppSizes.space),
-        child: TerminalInput(
-          controller: controller,
-          focusNode: focusNode,
-          prompt: 'root@device \$',
-          enabled: enabled,
-          onSubmitted: onSubmitted,
-        ),
+      child: TerminalInput(
+        controller: controller,
+        focusNode: focusNode,
+        prompt: 'root@device \$',
+        enabled: enabled,
+        onSubmitted: onSubmitted,
       ),
     );
   }

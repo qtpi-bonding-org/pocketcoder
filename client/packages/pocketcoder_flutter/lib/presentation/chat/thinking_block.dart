@@ -70,7 +70,7 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
         ),
         if (_expanded)
           Padding(
-            padding: EdgeInsets.only(bottom: AppSizes.space),
+            padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
             child: Text(
               widget.text,
               style: TextStyle(

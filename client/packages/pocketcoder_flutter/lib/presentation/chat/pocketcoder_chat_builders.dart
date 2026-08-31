@@ -17,7 +17,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
-import 'thinking_block.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_terminal_response.dart';
@@ -126,18 +125,11 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
   @override
   chat_core.TextMessageBuilder get textMessageBuilder =>
       (context, message, index, {required isSentByMe, groupStatus}) {
-        if (_isReasoning(message)) {
-          return TerminalConversationFrame(
-            speaker: TerminalConversationSpeaker.poco,
-            showUserBorder: false,
-            child: ThinkingBlock(
-              key: ValueKey(message.id),
-              text: message.text,
-              isLatest: message.id == latestReasoningId,
-              isStreaming: false,
-            ),
-          );
-        }
+        // Reasoning messages no longer render inline in the transcript --
+        // the latest one is shown as a persistent caption above Poco's face
+        // instead (see ChatView), so older thoughts drop out of view once
+        // superseded rather than stacking up as transcript entries.
+        if (_isReasoning(message)) return const SizedBox.shrink();
         if (isSentByMe) {
           final color =
               emphasize(context.colorScheme.secondary, Emphasis.selected).text;
@@ -148,7 +140,14 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
                 children: [
                   TextSpan(
                     text: 'root@device \$ ',
-                    style: TextStyle(color: color),
+                    style: TextStyle(
+                      color: color,
+                      fontFamily: AppFonts.bodyFamily,
+                      package: 'pocketcoder_flutter',
+                      fontSize: AppSizes.fontStandard,
+                      fontWeight: AppFonts.heavy,
+                      height: 1.4,
+                    ),
                   ),
                   TextSpan(
                     text: message.text,
@@ -178,20 +177,9 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
   TextStreamCardBuilder get textStreamMessageBuilder =>
       (context, message, index,
           {required isSentByMe, groupStatus, required streamState}) {
-        if (_isReasoning(message)) {
-          return TerminalConversationFrame(
-            speaker: TerminalConversationSpeaker.poco,
-            showUserBorder: false,
-            child: ThinkingBlock(
-              key: ValueKey(message.id),
-              text: streamState is chat_stream.StreamStateStreaming
-                  ? streamState.accumulatedText
-                  : '',
-              isLatest: message.id == latestReasoningId,
-              isStreaming: true,
-            ),
-          );
-        }
+        // See textMessageBuilder: reasoning messages render only as the
+        // persistent caption above Poco's face, not inline here.
+        if (_isReasoning(message)) return const SizedBox.shrink();
         final child = chat_stream.FlyerChatTextStreamMessage(
           message: message,
           index: index,

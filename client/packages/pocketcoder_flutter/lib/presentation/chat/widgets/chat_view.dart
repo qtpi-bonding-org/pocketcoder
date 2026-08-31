@@ -205,6 +205,25 @@ class _ChatViewState extends State<ChatView> {
     return null;
   }
 
+  /// The current text of the latest reasoning entry, live during streaming.
+  /// Shown as a persistent caption above Poco's face instead of inline in
+  /// the transcript, so only the most recent thought is ever visible.
+  String? _latestReasoningText(List<ag_ui_widgets.TimelineItem> timeline) {
+    for (final item in timeline.reversed) {
+      switch (item) {
+        case ag_ui_widgets.TextTimelineItem(:final text, :final kind)
+            when kind == ag_ui_widgets.ChatMessageKind.reasoning:
+          return text;
+        case ag_ui_widgets.TextStreamTimelineItem(:final text, :final kind)
+            when kind == ag_ui_widgets.ChatMessageKind.reasoning:
+          return text;
+        default:
+          continue;
+      }
+    }
+    return null;
+  }
+
   void _submit() {
     final text = _inputController.text.trim();
     if (text.isEmpty) return;
@@ -215,9 +234,12 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   Widget build(BuildContext context) {
+    final latestReasoningId = _latestReasoningId(widget.conversation.timeline);
+    final latestReasoningText =
+        _latestReasoningText(widget.conversation.timeline);
     final builders = pocketcoderChatBuilders(
       context,
-      latestReasoningId: _latestReasoningId(widget.conversation.timeline),
+      latestReasoningId: latestReasoningId,
       onPermissionOptionSelected: widget.onPermissionOptionSelected,
       onElicitationRespond: widget.onElicitationRespond,
       animatedMessageIds: widget.animatedMessageIds,
@@ -248,10 +270,15 @@ class _ChatViewState extends State<ChatView> {
           ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
           Expanded(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (widget.isLoading &&
-                    _latestReasoningId(widget.conversation.timeline) == null)
-                  Center(
+                if (widget.isLoading && latestReasoningId == null)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: AppSizes.space,
+                      right: AppSizes.space,
+                      top: AppSizes.space * 0.5,
+                    ),
                     child: ThinkingBlock(
                       text: widget.awaitingHarnessStart
                           ? 'Starting the harness -- this can take a '
@@ -260,10 +287,24 @@ class _ChatViewState extends State<ChatView> {
                       isLatest: true,
                       isStreaming: true,
                     ),
+                  )
+                else if (latestReasoningText != null)
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: AppSizes.space,
+                      right: AppSizes.space,
+                      top: AppSizes.space * 0.5,
+                    ),
+                    child: ThinkingBlock(
+                      key: ValueKey(latestReasoningId),
+                      text: latestReasoningText.trim(),
+                      isLatest: true,
+                      isStreaming: widget.isLoading,
+                    ),
                   ),
                 if (widget.conversation.timeline.isNotEmpty)
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: AppSizes.space),
+                    padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
                     child: Center(
                       child: PocoFace(fontSize: AppSizes.fontLarge),
                     ),
