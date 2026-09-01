@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 class _FakeAgentChatRepository implements AgentChatRepository {
@@ -216,6 +217,54 @@ void main() {
       expect(repo.respondPermissionCalls, hasLength(1));
       expect(repo.respondPermissionCalls.single['requestId'], 'req-2');
       expect(repo.respondPermissionCalls.single['cancelled'], true);
+    });
+
+    testWidgets(
+        'option buttons are outlined, not filled -- reject options use the '
+        'warning color, allow options use primary', (tester) async {
+      await tester.pumpWidget(_wrap(
+        BlocProvider<PermissionCubit>.value(
+          value: cubit,
+          child: PermissionCard(
+            onSelect: (_, {optionId, cancelled = false}) {},
+            item: PermissionRequestTimelineItem(
+              requestId: 'req-3',
+              order: const OrderKey(1),
+              options: const [
+                PermissionOption(
+                    optionId: 'allow', label: 'Allow Once', kind: 'allow_once'),
+                PermissionOption(
+                    optionId: 'reject',
+                    label: 'Reject Once',
+                    kind: 'reject_once'),
+              ],
+            ),
+          ),
+        ),
+      ));
+      await _settle(tester);
+
+      cubit.open('chat-1');
+      await _settle(tester);
+      repo.controllerFor('chat-1').add(Conversation(
+            sessionState: SessionState(
+              permission: {'requestId': 'req-3', 'status': 'pending'},
+            ),
+          ));
+      await _settle(tester);
+
+      final allowButton = tester.widget<TerminalButton>(
+          find.widgetWithText(TerminalButton, 'ALLOW ONCE'));
+      final rejectButton = tester.widget<TerminalButton>(
+          find.widgetWithText(TerminalButton, 'REJECT ONCE'));
+
+      expect(allowButton.filled, isFalse);
+      expect(rejectButton.filled, isFalse);
+      expect(allowButton.color, isNot(rejectButton.color));
+
+      final context = tester.element(find.byType(PermissionCard));
+      expect(rejectButton.color, context.terminalColors.warning);
+      expect(allowButton.color, context.colorScheme.primary);
     });
   });
 }

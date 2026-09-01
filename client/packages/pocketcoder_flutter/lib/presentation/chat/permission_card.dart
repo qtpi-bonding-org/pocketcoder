@@ -119,6 +119,7 @@ class PermissionCard extends StatelessWidget {
               child: TerminalButton(
                 label: context.l10n.actionDeny,
                 isPrimary: false,
+                filled: false,
                 color: terminalColors.warning,
                 onTap: () => onSelect(requestId, cancelled: true),
               ),
@@ -131,6 +132,10 @@ class PermissionCard extends StatelessWidget {
                 for (final option in options)
                   TerminalButton(
                     label: option.label,
+                    filled: false,
+                    color: option.kind.startsWith('reject')
+                        ? terminalColors.warning
+                        : colors.primary,
                     onTap: () => onSelect(
                       requestId,
                       optionId: option.optionId,
