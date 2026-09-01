@@ -6,6 +6,19 @@ RELEASE_STATE=/var/lib/pocketcoder/release
 ARTIFACT_DIR=/var/lib/pocketcoder/artifacts
 RUNTIME_ENV=/var/lib/pocketcoder/config/runtime.env
 MARKER="$RELEASE_STATE/.initialized"
+INSTALLER_LOG=/var/lib/pocketcoder-installer-debug.log
+INSTALLER_LOG_IMPORTED_MARKER=/var/lib/pocketcoder-installer-log-imported
+
+# systemd may retry this unit before initialization completes. Import once
+# per boot attempt and fail open so diagnostics cannot block provisioning.
+if [ -f "$INSTALLER_LOG" ] && [ ! -f "$INSTALLER_LOG_IMPORTED_MARKER" ]; then
+  if systemd-cat -t pocketcoder-installer < "$INSTALLER_LOG" && \
+      touch "$INSTALLER_LOG_IMPORTED_MARKER"; then
+    :
+  else
+    echo "WARNING: failed to import installer log into journald -- continuing boot" >&2
+  fi
+fi
 
 if [ -f "$MARKER" ]; then
   echo "PocketCoder already initialized, skipping bootstrap"

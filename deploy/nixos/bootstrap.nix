@@ -47,6 +47,7 @@
       gzip
       gnutar
       util-linux
+      systemd
       config.services.openssh.package
       config.virtualisation.docker.package
       releaseManager
