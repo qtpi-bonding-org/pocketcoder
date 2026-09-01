@@ -290,6 +290,21 @@ void main() {
     await t.start(tester);
     expect(t.router.state.name, RouteNames.deploymentProgress);
   });
+  testWidgets(
+      'a fresh managed deployment -- ready+signedOut at start, then a '
+      'first-ever login completes via an external auth-store change (not '
+      'a decider-owned restore()) -- must not strand the user on '
+      'deploymentProgress', (tester) async {
+    final t = HarnessTest(instanceId: 'i', harnessConnected: true);
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.deploymentProgress);
+
+    t.authRepository.authenticated = true;
+    t.authRepository.publish();
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+
+    expect(t.router.state.name, RouteNames.chats);
+  });
   testWidgets('unconfirmed temporarilyUnavailable is signed out',
       (tester) async {
     final t = HarnessTest(signedIn: true);
