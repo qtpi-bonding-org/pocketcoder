@@ -13,6 +13,8 @@ import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/self_host_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/auth_aware_http_client.dart';
 import 'package:http/http.dart' as http;
@@ -61,6 +63,13 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
     if (!getIt.isRegistered<AuthSessionCoordinator>()) {
       getIt.registerLazySingleton<AuthSessionCoordinator>(
         () => AuthSessionCoordinator(getIt<IAuthRepository>()),
+      );
+    }
+    if (!getIt.isRegistered<IServerReadinessCheck>()) {
+      getIt.registerLazySingleton<IServerReadinessCheck>(
+        () => SelfHostServerReadinessCheck(
+          authRepository: getIt<IAuthRepository>(),
+        ),
       );
     }
     getIt<PocketCoderApiClient>().setAuthSessionCoordinator(
