@@ -2704,6 +2704,12 @@ abstract class AppLocalizations {
   /// **'Confirming server is up'**
   String get deploymentStepFinalInstanceFetch;
 
+  /// No description provided for @deploymentStepEnableWatchdog.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-enabling server monitoring'**
+  String get deploymentStepEnableWatchdog;
+
   /// No description provided for @deploymentStepWaitingForConnection.
   ///
   /// In en, this message translates to:

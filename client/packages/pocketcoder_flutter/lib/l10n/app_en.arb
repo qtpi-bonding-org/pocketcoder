@@ -639,6 +639,7 @@
   "deploymentStepPreBootShutdown": "Restarting server",
   "deploymentStepBootFinal": "Booting server",
   "deploymentStepFinalInstanceFetch": "Confirming server is up",
+  "deploymentStepEnableWatchdog": "Re-enabling server monitoring",
   "deploymentStepWaitingForConnection": "Connecting to server",
   "deploymentStepConfiguringOperatingSystem": "Configuring operating system",
   "deploymentStepFetchingRelease": "Fetching PocketCoder release",

@@ -1425,6 +1425,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentStepFinalInstanceFetch => 'Confirming server is up';
 
   @override
+  String get deploymentStepEnableWatchdog => 'Re-enabling server monitoring';
+
+  @override
   String get deploymentStepWaitingForConnection => 'Connecting to server';
 
   @override
