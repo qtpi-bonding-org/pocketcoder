@@ -13,7 +13,7 @@ import 'package:pocketcoder_flutter/application/agent/chat_cubit.dart';
 import 'package:pocketcoder_flutter/application/agent/chat_state.dart';
 import 'package:pocketcoder_flutter/application/agent/seen_messages_registry.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
-    show AgentUnavailableFailure;
+    show AgentUnavailableFailure, RunInProgressFailure;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/network_recovery_signal.dart';
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
@@ -122,6 +122,7 @@ class _FakeAgentChatRepository implements AgentChatRepository {
   }
 
   int failWithHarnessUnavailableTimes = 0;
+  int failWithRunInProgressTimes = 0;
 
   @override
   Future<String> sendPrompt(String chatId, String text,
@@ -134,6 +135,11 @@ class _FakeAgentChatRepository implements AgentChatRepository {
       failWithHarnessUnavailableTimes--;
       throw const AgentUnavailableFailure('Harness is starting; retry '
           'shortly.');
+    }
+    if (failWithRunInProgressTimes > 0) {
+      failWithRunInProgressTimes--;
+      throw const RunInProgressFailure(
+          'A run is already active for this chat.');
     }
     return 'run-123';
   }
@@ -312,6 +318,36 @@ void main() {
         reason: 'the retry must reuse the same optimistic message id, not '
             'mint a new one');
     expect(cubit.state.awaitingHarnessStart, isFalse);
+    expect(cubit.state.status, UiFlowStatus.success);
+    expect(cubit.state.conversation.timeline, hasLength(1),
+        reason: 'the optimistic local echo must be inserted exactly once, '
+            'not once per retry attempt');
+  }, timeout: const Timeout(Duration(seconds: 10)));
+
+  test(
+      'sendPrompt auto-retries on RunInProgressFailure instead of surfacing '
+      'the 409 -- a prior run finishing frees the chat up without the user '
+      'needing to manually resend', () async {
+    cubit.open('chat-1');
+    await _settle();
+    repo.failWithRunInProgressTimes = 1;
+
+    final send = cubit.sendPrompt('are you done yet');
+    await pumpEventQueue();
+
+    expect(cubit.state.status, UiFlowStatus.loading);
+    expect(cubit.state.awaitingHarnessStart, isFalse,
+        reason: 'this is a different wait than harness startup -- it must '
+            'not show the harness-starting copy');
+
+    await send;
+
+    expect(repo.promptCalls, ['are you done yet', 'are you done yet'],
+        reason: 'the first (rejected) attempt and the retry both call '
+            'sendPrompt with the same text');
+    expect(repo.promptMessageIds.toSet(), hasLength(1),
+        reason: 'the retry must reuse the same optimistic message id, not '
+            'mint a new one');
     expect(cubit.state.status, UiFlowStatus.success);
     expect(cubit.state.conversation.timeline, hasLength(1),
         reason: 'the optimistic local echo must be inserted exactly once, '

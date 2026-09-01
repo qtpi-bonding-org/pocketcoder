@@ -10,7 +10,7 @@ import 'package:uuid/uuid.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
-    show AgentUnavailableFailure;
+    show AgentUnavailableFailure, RunInProgressFailure;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_stream_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_transport.dart';
@@ -212,6 +212,12 @@ class ChatCubit extends AppCubit<ChatState> {
   static const _harnessRetryDelay = Duration(seconds: 4);
   static const _harnessRetryMaxAttempts = 40;
 
+  // A send is marked successful once the run-starting request returns, not
+  // once the run finishes -- a prompt sent before that gets a 409
+  // RunInProgressFailure. Poll until it frees up rather than fail it.
+  static const _runInProgressRetryDelay = Duration(seconds: 3);
+  static const _runInProgressRetryMaxAttempts = 100;
+
   Future<void> sendPrompt(String text) async {
     final chatId = state.chatId;
     final transport = _transport;
@@ -262,6 +268,7 @@ class ChatCubit extends AppCubit<ChatState> {
           transport: transport,
           myGeneration: myGeneration,
           attempt: 0,
+          runInProgressAttempt: 0,
         ));
   }
 
@@ -272,6 +279,7 @@ class ChatCubit extends AppCubit<ChatState> {
     required PocketcoderAgUiTransport transport,
     required int myGeneration,
     required int attempt,
+    required int runInProgressAttempt,
   }) async {
     try {
       await transport.sendMessage(text, messageId: messageId);
@@ -295,6 +303,28 @@ class ChatCubit extends AppCubit<ChatState> {
           transport: transport,
           myGeneration: myGeneration,
           attempt: attempt + 1,
+          runInProgressAttempt: runInProgressAttempt,
+        );
+      }
+      if (error is RunInProgressFailure &&
+          runInProgressAttempt < _runInProgressRetryMaxAttempts) {
+        logDebug('🤖 [ChatCubit] a run is still active, retrying', {
+          'chatId': chatId,
+          'attempt': runInProgressAttempt + 1,
+          'maxAttempts': _runInProgressRetryMaxAttempts,
+        });
+        emit(state.copyWith(
+            status: UiFlowStatus.loading, awaitingHarnessStart: false));
+        await Future<void>.delayed(_runInProgressRetryDelay);
+        if (myGeneration != _generation || _closed) return state;
+        return _sendWithHarnessRetry(
+          text: text,
+          messageId: messageId,
+          chatId: chatId,
+          transport: transport,
+          myGeneration: myGeneration,
+          attempt: attempt,
+          runInProgressAttempt: runInProgressAttempt + 1,
         );
       }
       logError(
