@@ -51,6 +51,8 @@ class AuthSessionCoordinator {
   final StreamController<AuthSessionSnapshot> _liveChanges =
       StreamController<AuthSessionSnapshot>.broadcast();
 
+  AuthSessionSnapshot get current => _latestSnapshot;
+
   /// A broadcast stream replaying the latest snapshot to each listener.
   Stream<AuthSessionSnapshot> get sessionChanges => Stream.multi(
         (multi) {

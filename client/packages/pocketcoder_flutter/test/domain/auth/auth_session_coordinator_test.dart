@@ -22,6 +22,14 @@ void main() {
 
   tearDown(() => authChanges.close());
 
+  test('current returns the latest snapshot synchronously, without needing a listener',
+      () {
+    when(() => repository.isAuthenticated).thenReturn(true);
+    final coordinator = AuthSessionCoordinator(repository);
+
+    expect(coordinator.current.state, AuthSessionState.signedIn);
+  });
+
   test('restores a valid persisted session silently', () async {
     when(() => repository.isAuthenticated).thenReturn(true);
     when(() => repository.refreshToken())
