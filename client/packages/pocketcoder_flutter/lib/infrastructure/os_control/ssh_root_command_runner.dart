@@ -60,12 +60,45 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
   final IRootSshCredentialsProvider _credentialsProvider;
 
   @override
+  Future<RootSshCommandResult> fetchProvisioningLogs({
+    required String instanceId,
+    required String host,
+    required DateTime since,
+    required DateTime until,
+  }) {
+    final command = 'journalctl -o json --no-pager -n 5000 '
+        '--since "${since.toIso8601String()}" '
+        '--until "${until.toIso8601String()}"';
+    return _execute(
+      instanceId: instanceId,
+      host: host,
+      shellCommand: command,
+    );
+  }
+
+  @override
   Future<RootSshCommandResult> run({
     required String instanceId,
     required String host,
     required RootSshCommand command,
     Uint8List? stdin,
     String? shellEnvPrefix,
+  }) async {
+    return _execute(
+      instanceId: instanceId,
+      host: host,
+      shellCommand: shellEnvPrefix != null && shellEnvPrefix.isNotEmpty
+          ? '$shellEnvPrefix${_shellCommand(command)}'
+          : _shellCommand(command),
+      stdin: stdin,
+    );
+  }
+
+  Future<RootSshCommandResult> _execute({
+    required String instanceId,
+    required String host,
+    required String shellCommand,
+    Uint8List? stdin,
   }) async {
     if (host.isEmpty) {
       throw const RootSshException('No known server host to connect to.');
@@ -115,11 +148,8 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
 
     try {
       await client.authenticated;
-      final shellCommand = _shellCommand(command);
       final session = await client.execute(
-        shellEnvPrefix != null && shellEnvPrefix.isNotEmpty
-            ? '$shellEnvPrefix$shellCommand'
-            : shellCommand,
+        shellCommand,
       );
       if (stdin != null) {
         await Stream<Uint8List>.value(stdin).pipe(session.stdin);

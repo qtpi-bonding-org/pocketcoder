@@ -21,6 +21,15 @@ import 'package:pocketcoder_flutter/presentation/server_control/server_control_s
 
 class _FakeRunner implements IRootSshCommandRunner {
   @override
+  Future<RootSshCommandResult> fetchProvisioningLogs({
+    required String instanceId,
+    required String host,
+    required DateTime since,
+    required DateTime until,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
   Future<RootSshCommandResult> run({
     required String instanceId,
     required String host,
@@ -53,7 +62,8 @@ class _FakeCredentialsProvider implements IRootSshCredentialsProvider {
   @override
   Future<RootSshCredentials?> readRootSshCredentials({
     required String instanceId,
-  }) async => null;
+  }) async =>
+      null;
 }
 
 class _FakeLocalAuthGate implements ILocalAuthGate {
@@ -68,13 +78,15 @@ class _FakeInAppBrowserLauncher implements InAppBrowserLauncher {
 
 class _BlockingGate implements IServerControlSetupGate {
   @override
-  Future<Widget?> resolveSetupScreen({required VoidCallback onSetupComplete}) async =>
+  Future<Widget?> resolveSetupScreen(
+          {required VoidCallback onSetupComplete}) async =>
       const Text('SET UP YOUR SERVER FIRST');
 }
 
 class _ThrowingGate implements IServerControlSetupGate {
   @override
-  Future<Widget?> resolveSetupScreen({required VoidCallback onSetupComplete}) async =>
+  Future<Widget?> resolveSetupScreen(
+          {required VoidCallback onSetupComplete}) async =>
       throw StateError('secure storage unavailable');
 }
 
@@ -84,13 +96,15 @@ class _OneShotGate implements IServerControlSetupGate {
   final bool Function() isDone;
 
   @override
-  Future<Widget?> resolveSetupScreen({required VoidCallback onSetupComplete}) async {
+  Future<Widget?> resolveSetupScreen(
+      {required VoidCallback onSetupComplete}) async {
     if (isDone()) return null;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         const Text('SET UP YOUR SERVER FIRST'),
-        TextButton(onPressed: onSetupComplete, child: const Text('FINISH SETUP')),
+        TextButton(
+            onPressed: onSetupComplete, child: const Text('FINISH SETUP')),
       ],
     );
   }
