@@ -123,6 +123,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionBack => 'BACK';
 
   @override
+  String get actionSkip => 'SKIP';
+
+  @override
   String get actionContinue => 'NEXT';
 
   @override

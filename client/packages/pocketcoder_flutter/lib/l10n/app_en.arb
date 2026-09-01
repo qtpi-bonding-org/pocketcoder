@@ -48,6 +48,7 @@
   "actionAuthorize": "AUTHORIZE",
   "actionRefresh": "REFRESH",
   "actionBack": "BACK",
+  "actionSkip": "SKIP",
   "actionContinue": "NEXT",
   "actionChange": "CHANGE",
   "actionCreate": "CREATE",

@@ -316,6 +316,12 @@ abstract class AppLocalizations {
   /// **'BACK'**
   String get actionBack;
 
+  /// No description provided for @actionSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'SKIP'**
+  String get actionSkip;
+
   /// No description provided for @actionContinue.
   ///
   /// In en, this message translates to:
