@@ -16,7 +16,12 @@ class AgentAuthScreen extends StatelessWidget {
         BlocProvider(create: (_) => getIt<ProviderCubit>()..watchAll()),
         BlocProvider(create: (_) => getIt<HarnessAuthCubit>()..watchData()),
       ],
-      child: AgentAuthAdapter(launcher: getIt<InAppBrowserLauncher>()),
+      // Terminal onboarding step: SKIP is the only sanctioned exit, so the
+      // platform back gesture/button must not pop this screen either.
+      child: PopScope(
+        canPop: false,
+        child: AgentAuthAdapter(launcher: getIt<InAppBrowserLauncher>()),
+      ),
     );
   }
 }

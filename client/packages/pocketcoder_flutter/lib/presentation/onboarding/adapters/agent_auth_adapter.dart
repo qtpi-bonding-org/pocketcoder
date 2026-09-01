@@ -55,20 +55,26 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
         valueListenable: harnesses,
         builder: (context, harnesses, _) => ValueListenableBuilder<Set<String>>(
           valueListenable: connected,
-          builder: (context, connectedIds, _) => AgentAuthView(
-            status: status,
-            harnesses: harnesses,
-            error: context.read<ProviderCubit>().state.error,
-            onSelected: (harness) => _select(context, harness, connected),
-            harnessProvidersLoaded: auth.state.harnessProvidersLoaded,
-            selectedHarnesses: selectedHarnesses,
-            connectedHarnessIds: connectedIds,
-            onSkip: () => context.go(AppRoutes.chats),
-            onContinue: connectedIds.isEmpty
-                ? null
-                : () => _openChat(context,
-                    harnesses.firstWhere((h) => connectedIds.contains(h.id))),
-          ),
+          builder: (context, connectedIds, _) {
+            // connectedIds is monotonic for this screen's lifetime, but
+            // harnesses is live and can drop an id it once contained --
+            // NEXT must disappear rather than throw if that happens.
+            final connectedHarness =
+                harnesses.where((h) => connectedIds.contains(h.id)).firstOrNull;
+            return AgentAuthView(
+              status: status,
+              harnesses: harnesses,
+              error: context.read<ProviderCubit>().state.error,
+              onSelected: (harness) => _select(context, harness, connected),
+              harnessProvidersLoaded: auth.state.harnessProvidersLoaded,
+              selectedHarnesses: selectedHarnesses,
+              connectedHarnessIds: connectedIds,
+              onSkip: () => context.go(AppRoutes.chats),
+              onContinue: connectedHarness == null
+                  ? null
+                  : () => _openChat(context, connectedHarness),
+            );
+          },
         ),
       ),
     );
@@ -173,6 +179,10 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     if (!context.mounted) return;
     await auth.startWithNone(harness.id,
         provider: providerId, visibility: harnessAccountVisibilityPersonal);
+    // startWithNone goes through _withBusy, which records a failure in
+    // cubit state instead of throwing -- same swallowed-failure hazard as
+    // saveProviderAPIKey above.
+    if (auth.state.status == UiFlowStatus.failure) return;
     connected.value = {...connected.value, harness.id};
   }
 
