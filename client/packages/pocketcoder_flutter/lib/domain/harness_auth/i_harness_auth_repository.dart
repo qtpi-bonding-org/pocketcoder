@@ -8,6 +8,10 @@ abstract class IHarnessAuthRepository {
   /// One-shot, always-networkOnly fetch -- unlike [watchHarnessOAuthAccounts],
   /// never returns a stale local snapshot.
   Future<List<HarnessOauthAccount>> fetchHarnessOAuthAccounts();
+
+  /// An API-key connection is stored as CredentialSelectionMode.none --
+  /// HarnessAuthCubit.startWithNone()'s actual wire value.
+  Future<bool> hasEffectiveHarnessConnection();
   Stream<List<CredentialSelection>> watchCredentialSelections();
   Future<HarnessAuthStatus> status({
     required String harnessId,
