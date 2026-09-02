@@ -290,6 +290,26 @@ void main() {
     expect(t.router.state.name, RouteNames.onboarding);
   });
   testWidgets(
+      'resolving stays on the boot screen -- Q1 unanswered means no '
+      'navigation yet, not a guess to be corrected later', (tester) async {
+    final t = HarnessTest(status: ServerReadinessStatus.resolving);
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.boot);
+  });
+  testWidgets(
+      'resolving then notProvisioned lands directly on onboarding -- no '
+      'earlier navigation to correct', (tester) async {
+    final t = HarnessTest(status: ServerReadinessStatus.resolving);
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.boot);
+
+    t.readiness.set(
+        const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned));
+    await t.settleReconcile(tester);
+
+    expect(t.router.state.name, RouteNames.onboarding);
+  });
+  testWidgets(
       'Pro provisioning -> deploymentProgress (route name only, no extra: payload)',
       (tester) async {
     final t = HarnessTest(

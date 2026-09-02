@@ -124,6 +124,12 @@ class BootRoutingDecider {
       'instanceId': readiness.instanceId,
     });
     switch (readiness.status) {
+      case ServerReadinessStatus.resolving:
+        // Q1 unanswered -- stay wherever we are (the boot screen, on a
+        // fresh launch) rather than navigating on a guess we'd have to
+        // correct a moment later.
+        _wasReady = false;
+        return;
       case ServerReadinessStatus.notProvisioned:
         _wasReady = false;
         _navigate(RouteNames.onboarding);
