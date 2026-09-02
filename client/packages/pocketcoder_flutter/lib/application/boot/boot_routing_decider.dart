@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 
 typedef _LatchKey = (String? instanceId, String? baseUrl, String? userId);
 
@@ -70,6 +71,11 @@ class BootRoutingDecider {
   Future<void> _reconcile() async {
     final generation = ++_generation;
     final readiness = _readiness.current;
+    AppLogger.debug('BootRoutingDecider reconcile', {
+      'generation': generation,
+      'readinessStatus': readiness.status.name,
+      'instanceId': readiness.instanceId,
+    });
     switch (readiness.status) {
       case ServerReadinessStatus.notProvisioned:
         _wasReady = false;
@@ -99,6 +105,12 @@ class BootRoutingDecider {
     final signOutDestination = readiness.instanceId != null
         ? RouteNames.deploymentProgress
         : RouteNames.onboardingLogin;
+    AppLogger.debug('BootRoutingDecider session', {
+      'generation': generation,
+      'sessionState': session.state.name,
+      'latchKey': latchKey.toString(),
+      'confirmedLatchKey': _confirmedLatchKey?.toString(),
+    });
 
     switch (session.state) {
       case AuthSessionState.signedOut:
@@ -123,13 +135,24 @@ class BootRoutingDecider {
     if (generation != _generation) {
       return; // superseded while awaiting
     }
+    AppLogger.debug('BootRoutingDecider harness check', {
+      'generation': generation,
+      'harnessConnected': harnessConnected,
+    });
     _confirmedLatchKey = latchKey;
     _navigate(
         harnessConnected ? RouteNames.chats : RouteNames.onboardingHarnessAuth);
   }
 
   void _navigate(String routeName) {
-    if (_currentRouteName() != routeName) _router.goNamed(routeName);
+    final current = _currentRouteName();
+    final navigating = current != routeName;
+    AppLogger.debug('BootRoutingDecider navigate', {
+      'requested': routeName,
+      'current': current,
+      'navigating': navigating,
+    });
+    if (navigating) _router.goNamed(routeName);
   }
 
   /// GoRouter.state can throw (empty RouteMatchList) before first resolution.
