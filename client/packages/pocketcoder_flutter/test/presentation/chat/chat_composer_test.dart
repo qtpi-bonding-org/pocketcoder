@@ -33,7 +33,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('root@device \$ '), findsOneWidget);
+    expect(find.text('commander@pc \$ '), findsOneWidget);
     expect(find.text('SEND'), findsNothing);
     final field = tester.widget<TextField>(find.byType(TextField));
     field.onSubmitted?.call('hello');

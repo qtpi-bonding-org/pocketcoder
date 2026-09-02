@@ -25,7 +25,7 @@ class ChatComposer extends StatelessWidget {
       child: TerminalInput(
         controller: controller,
         focusNode: focusNode,
-        prompt: 'root@device \$',
+        prompt: 'commander@pc \$',
         enabled: enabled,
         onSubmitted: onSubmitted,
       ),
