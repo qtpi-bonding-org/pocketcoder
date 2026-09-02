@@ -115,7 +115,7 @@ class BootRoutingDecider {
     }
 
     if (latchKey == _confirmedLatchKey &&
-        _router.state.name == RouteNames.chats) {
+        _currentRouteName() == RouteNames.chats) {
       return;
     }
 
@@ -129,6 +129,15 @@ class BootRoutingDecider {
   }
 
   void _navigate(String routeName) {
-    if (_router.state.name != routeName) _router.goNamed(routeName);
+    if (_currentRouteName() != routeName) _router.goNamed(routeName);
+  }
+
+  /// GoRouter.state can throw (empty RouteMatchList) before first resolution.
+  String? _currentRouteName() {
+    try {
+      return _router.state.name;
+    } on StateError {
+      return null;
+    }
   }
 }

@@ -216,6 +216,28 @@ class HarnessTest {
 }
 
 void main() {
+  testWidgets(
+      'start() reading GoRouter.state before any widget has ever attached '
+      'the router (the real main() ordering -- runApp() schedules a build, '
+      'it does not synchronously run one before the next line executes) '
+      'does not crash', (tester) async {
+    final readiness = FakeReadiness(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.ready, instanceId: 'i'));
+    final authRepository = FakeAuthRepository(authenticated: true);
+    final auth = AuthSessionCoordinator(authRepository);
+    final harness = FakeHarness(connected: true);
+    final router = makeRouter();
+    final decider = BootRoutingDecider(
+        readinessCheck: readiness,
+        authCoordinator: auth,
+        harnessAuthRepository: harness,
+        router: router);
+    addTearDown(decider.dispose);
+
+    // No tester.pumpWidget -- router.state's RouteMatchList is empty here.
+    await decider.start();
+  });
+
   testWidgets('notProvisioned -> onboarding', (tester) async {
     final t = HarnessTest(status: ServerReadinessStatus.notProvisioned);
     await t.start(tester);
