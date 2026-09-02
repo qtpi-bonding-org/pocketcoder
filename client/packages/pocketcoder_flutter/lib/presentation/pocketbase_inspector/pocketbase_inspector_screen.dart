@@ -17,8 +17,7 @@ class PocketbaseInspectorScreen extends StatefulWidget {
       _PocketbaseInspectorScreenState();
 }
 
-class _PocketbaseInspectorScreenState
-    extends State<PocketbaseInspectorScreen> {
+class _PocketbaseInspectorScreenState extends State<PocketbaseInspectorScreen> {
   @override
   void initState() {
     super.initState();
@@ -64,7 +63,11 @@ class _PocketbaseContent extends StatelessWidget {
             crossAxisCount: 3,
             mainAxisSpacing: AppSizes.space,
             crossAxisSpacing: AppSizes.space,
-            childAspectRatio: 1.4,
+            // The terminal shell caps its content width, so at larger display
+            // scales each of these three columns can be only about 100 px
+            // wide. A slightly taller card keeps the scaled count and label
+            // within the padded content area.
+            childAspectRatio: 1.15,
             children: [
               _CountCard(label: 'USERS', value: stats.users),
               _CountCard(label: 'CHATS', value: stats.chats),

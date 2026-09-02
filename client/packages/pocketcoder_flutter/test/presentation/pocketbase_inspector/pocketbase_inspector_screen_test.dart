@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/pocketbase_inspector/pocketbase_inspector_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/ui_scaler.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/pocketbase_inspector/i_pocketbase_inspector_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
@@ -23,6 +24,10 @@ class _FakePocketbaseInspectorRepository
 
 Widget _app(PocketbaseInspectorCubit cubit) => MaterialApp(
       theme: AppTheme.darkTheme,
+      builder: (context, child) {
+        UiScaler.instance.init(context);
+        return child ?? const SizedBox.shrink();
+      },
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: BlocProvider.value(
@@ -69,6 +74,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('DATABASE UNAVAILABLE'), findsOneWidget);
+    await cubit.close();
+  });
+
+  testWidgets('fits count cards at the shell content width', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(480, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final cubit = PocketbaseInspectorCubit(
+      _FakePocketbaseInspectorRepository(),
+    );
+
+    await tester.pumpWidget(_app(cubit));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
     await cubit.close();
   });
 }
