@@ -30,10 +30,6 @@ class MonitorAdapter
         valueListenable: state,
         builder: (context, value, _) => MonitorView(
           state: value,
-          onRefresh: () {
-            cubit.refreshStats();
-            cubit.loadContainers();
-          },
           onSelectContainer: (container) {
             if (container == null) {
               cubit.stopLogStreaming();
