@@ -161,7 +161,7 @@ void main() {
     dao = HealthcheckDao(client);
     await _seed(client);
     final repository = _AuthRepository(authenticated: true, baseUrl: 'https://one');
-    final coordinator = AuthSessionCoordinator(repository);
+    final coordinator = AuthSessionCoordinator(repository, refreshRetryDelay: (_) async {});
     BaseDao.configureSessionCoordinator(coordinator);
     final errors = <Object>[];
     final values = <List<Healthcheck>>[];

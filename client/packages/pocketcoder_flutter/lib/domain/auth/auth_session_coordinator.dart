@@ -26,8 +26,10 @@ class AuthSessionSnapshot {
 class AuthSessionCoordinator {
   AuthSessionCoordinator(
     this._authRepository, {
-    this.refreshTimeout = const Duration(seconds: 8),
-  }) {
+    this.refreshTimeout = const Duration(seconds: 2),
+    this.maxRefreshAttempts = 3,
+    Future<void> Function(int attempt)? refreshRetryDelay,
+  }) : _refreshRetryDelay = refreshRetryDelay ?? _defaultRefreshRetryDelay {
     // Subscribe before taking the initial snapshot. This prevents a change
     // between subscription and the first replay from being missed.
     _authRepository.authChanges.listen((_) {
@@ -44,8 +46,13 @@ class AuthSessionCoordinator {
     );
   }
 
+  static Future<void> _defaultRefreshRetryDelay(int attempt) =>
+      Future<void>.delayed(const Duration(seconds: 2));
+
   final IAuthRepository _authRepository;
   final Duration refreshTimeout;
+  final int maxRefreshAttempts;
+  final Future<void> Function(int attempt) _refreshRetryDelay;
   Future<AuthRefreshResult>? _refreshInFlight;
   late AuthSessionSnapshot _latestSnapshot;
   final StreamController<AuthSessionSnapshot> _liveChanges =
@@ -112,10 +119,20 @@ class AuthSessionCoordinator {
     return state;
   }
 
-  Future<AuthRefreshResult> _refreshWithTimeout() {
-    return _authRepository.refreshToken().timeout(
-          refreshTimeout,
-          onTimeout: () => AuthRefreshResult.temporarilyUnavailable,
-        );
+  Future<AuthRefreshResult> _refreshWithTimeout() async {
+    for (var attempt = 1; attempt <= maxRefreshAttempts; attempt++) {
+      final result = await _authRepository.refreshToken().timeout(
+            refreshTimeout,
+            onTimeout: () => AuthRefreshResult.temporarilyUnavailable,
+          );
+      // Only a timeout/transient failure is worth retrying -- a definitive
+      // result (refreshed or invalidSession) should return immediately.
+      if (result != AuthRefreshResult.temporarilyUnavailable ||
+          attempt == maxRefreshAttempts) {
+        return result;
+      }
+      await _refreshRetryDelay(attempt);
+    }
+    return AuthRefreshResult.temporarilyUnavailable;
   }
 }

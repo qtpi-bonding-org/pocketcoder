@@ -47,13 +47,56 @@ void main() {
       (_) async => AuthRefreshResult.temporarilyUnavailable,
     );
 
-    final state = await AuthSessionCoordinator(repository).restore();
+    final state = await AuthSessionCoordinator(
+      repository,
+      refreshRetryDelay: (_) async {},
+    ).restore();
 
     expect(state, AuthSessionState.temporarilyUnavailable);
   });
 
-  test('requires login only when the session is definitively invalid',
+  test('retries a transient failure up to maxRefreshAttempts before giving up',
       () async {
+    when(() => repository.isAuthenticated).thenReturn(true);
+    when(() => repository.refreshToken()).thenAnswer(
+      (_) async => AuthRefreshResult.temporarilyUnavailable,
+    );
+    final delays = <int>[];
+
+    final state = await AuthSessionCoordinator(
+      repository,
+      refreshRetryDelay: (attempt) async {
+        delays.add(attempt);
+      },
+    ).restore();
+
+    expect(state, AuthSessionState.temporarilyUnavailable);
+    verify(() => repository.refreshToken()).called(3);
+    expect(delays, [1, 2]);
+  });
+
+  test('a transient failure that recovers on retry does not exhaust '
+      'every attempt', () async {
+    when(() => repository.isAuthenticated).thenReturn(true);
+    var calls = 0;
+    when(() => repository.refreshToken()).thenAnswer((_) async {
+      calls++;
+      return calls == 1
+          ? AuthRefreshResult.temporarilyUnavailable
+          : AuthRefreshResult.refreshed;
+    });
+
+    final state = await AuthSessionCoordinator(
+      repository,
+      refreshRetryDelay: (_) async {},
+    ).restore();
+
+    expect(state, AuthSessionState.signedIn);
+    verify(() => repository.refreshToken()).called(2);
+  });
+
+  test('requires login only when the session is definitively invalid, '
+      'without retrying', () async {
     when(() => repository.isAuthenticated).thenReturn(true);
     when(() => repository.refreshToken())
         .thenAnswer((_) async => AuthRefreshResult.invalidSession);
@@ -61,6 +104,7 @@ void main() {
     final state = await AuthSessionCoordinator(repository).restore();
 
     expect(state, AuthSessionState.signedOut);
+    verify(() => repository.refreshToken()).called(1);
   });
 
   test('does not contact the server without a persisted session', () async {
