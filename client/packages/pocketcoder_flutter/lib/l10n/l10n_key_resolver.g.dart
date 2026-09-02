@@ -367,6 +367,13 @@ class L10nKeyResolver {
       'initialization.status.schema' => _l10n.initializationStatusSchema,
       'initialization.technical.details.toggle' => _l10n.initializationTechnicalDetailsToggle,
       'initialization.unknown' => _l10n.initializationUnknown,
+      'instance.gone.body' => _l10n.instanceGoneBody,
+      'instance.gone.reset.action' => _l10n.instanceGoneResetAction,
+      'instance.gone.reset.cancel' => _l10n.instanceGoneResetCancel,
+      'instance.gone.reset.confirm' => _l10n.instanceGoneResetConfirm,
+      'instance.gone.reset.confirmation.body' => _l10n.instanceGoneResetConfirmationBody,
+      'instance.gone.reset.confirmation.title' => _l10n.instanceGoneResetConfirmationTitle,
+      'instance.gone.title' => _l10n.instanceGoneTitle,
       'instance.verification.body' => _l10n.instanceVerificationBody,
       'instance.verification.check.failed.message' => _l10n.instanceVerificationCheckFailedMessage,
       'instance.verification.reset.action' => _l10n.instanceVerificationResetAction,
@@ -1366,6 +1373,13 @@ class L10nKeyResolver {
     'initialization.sync.attempt',
     'initialization.technical.details.toggle',
     'initialization.unknown',
+    'instance.gone.body',
+    'instance.gone.reset.action',
+    'instance.gone.reset.cancel',
+    'instance.gone.reset.confirm',
+    'instance.gone.reset.confirmation.body',
+    'instance.gone.reset.confirmation.title',
+    'instance.gone.title',
     'instance.verification.body',
     'instance.verification.check.action',
     'instance.verification.check.failed.message',
@@ -2332,6 +2346,13 @@ class L10nKeyResolver {
     'initializationSyncAttempt': 'initialization.sync.attempt',
     'initializationTechnicalDetailsToggle': 'initialization.technical.details.toggle',
     'initializationUnknown': 'initialization.unknown',
+    'instanceGoneBody': 'instance.gone.body',
+    'instanceGoneResetAction': 'instance.gone.reset.action',
+    'instanceGoneResetCancel': 'instance.gone.reset.cancel',
+    'instanceGoneResetConfirm': 'instance.gone.reset.confirm',
+    'instanceGoneResetConfirmationBody': 'instance.gone.reset.confirmation.body',
+    'instanceGoneResetConfirmationTitle': 'instance.gone.reset.confirmation.title',
+    'instanceGoneTitle': 'instance.gone.title',
     'instanceVerificationBody': 'instance.verification.body',
     'instanceVerificationCheckAction': 'instance.verification.check.action',
     'instanceVerificationCheckFailedMessage': 'instance.verification.check.failed.message',
@@ -3295,6 +3316,13 @@ class L10nKeyResolver {
     'initialization.sync.attempt': 'initializationSyncAttempt',
     'initialization.technical.details.toggle': 'initializationTechnicalDetailsToggle',
     'initialization.unknown': 'initializationUnknown',
+    'instance.gone.body': 'instanceGoneBody',
+    'instance.gone.reset.action': 'instanceGoneResetAction',
+    'instance.gone.reset.cancel': 'instanceGoneResetCancel',
+    'instance.gone.reset.confirm': 'instanceGoneResetConfirm',
+    'instance.gone.reset.confirmation.body': 'instanceGoneResetConfirmationBody',
+    'instance.gone.reset.confirmation.title': 'instanceGoneResetConfirmationTitle',
+    'instance.gone.title': 'instanceGoneTitle',
     'instance.verification.body': 'instanceVerificationBody',
     'instance.verification.check.action': 'instanceVerificationCheckAction',
     'instance.verification.check.failed.message': 'instanceVerificationCheckFailedMessage',
@@ -4265,6 +4293,13 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) initializationSyncAttempt(String attempt) => ('initialization.sync.attempt', {'attempt': attempt});
   static const initializationTechnicalDetailsToggle = 'initialization.technical.details.toggle';
   static const initializationUnknown = 'initialization.unknown';
+  static const instanceGoneBody = 'instance.gone.body';
+  static const instanceGoneResetAction = 'instance.gone.reset.action';
+  static const instanceGoneResetCancel = 'instance.gone.reset.cancel';
+  static const instanceGoneResetConfirm = 'instance.gone.reset.confirm';
+  static const instanceGoneResetConfirmationBody = 'instance.gone.reset.confirmation.body';
+  static const instanceGoneResetConfirmationTitle = 'instance.gone.reset.confirmation.title';
+  static const instanceGoneTitle = 'instance.gone.title';
   static const instanceVerificationBody = 'instance.verification.body';
   static (String, Map<String, dynamic>) instanceVerificationCheckAction(String provider) => ('instance.verification.check.action', {'provider': provider});
   static const instanceVerificationCheckFailedMessage = 'instance.verification.check.failed.message';
