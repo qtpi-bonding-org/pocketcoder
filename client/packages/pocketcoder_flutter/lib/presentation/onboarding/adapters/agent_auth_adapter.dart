@@ -243,8 +243,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             timer = null;
             timerInterval = null;
             closedDialog = true;
-            connected.value = {...connected.value, harness.id};
+            // Deferred: connected has its own ValueListenableBuilder
+            // listener elsewhere, which cannot rebuild while this
+            // BlocBuilder is still mid-build.
             WidgetsBinding.instance.addPostFrameCallback((_) {
+              connected.value = {...connected.value, harness.id};
               Navigator.of(dialogContext).pop();
             });
           }

@@ -226,6 +226,12 @@ void main() {
           mode: 'none',
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
+
+    await tester.tap(find.text('NEXT'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
     verify(() => chatRepo.createChat(
           title: any(named: 'title'),
           harness: _gooseId,
@@ -307,6 +313,12 @@ void main() {
           mode: 'none',
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
+
+    await tester.tap(find.text('NEXT'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
     verify(() => chatRepo.createChat(
           title: any(named: 'title'),
           harness: _gooseId,
