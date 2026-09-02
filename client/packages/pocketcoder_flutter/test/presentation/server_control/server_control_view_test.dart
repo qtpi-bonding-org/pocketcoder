@@ -328,7 +328,10 @@ void main() {
       isTrue,
     );
     pending.complete(_success(ServerControlOperation.restartNixOs));
-    await run;
+    // No release set on _FakeService, so inspectRelease()'s retry path hits
+    // a real 1s Future.delayed -- runAsync escapes the FakeAsync zone that
+    // testWidgets otherwise traps it in, where nothing ever advances it.
+    await tester.runAsync(() => run);
     await cubit.close();
   });
 
@@ -358,10 +361,13 @@ void main() {
         Future.value(_failure(ServerControlOperation.updateNixOs));
     await tester.pumpWidget(_app(cubit));
 
-    await cubit.run(
-      operation: ServerControlOperation.updateNixOs,
-      instanceId: 'instance-1',
-    );
+    // No release set on _FakeService, so inspectRelease()'s retry path hits
+    // a real 1s Future.delayed -- runAsync escapes the FakeAsync zone that
+    // testWidgets otherwise traps it in, where nothing ever advances it.
+    await tester.runAsync(() => cubit.run(
+          operation: ServerControlOperation.updateNixOs,
+          instanceId: 'instance-1',
+        ));
     await tester.pumpAndSettle();
     await tester.tap(find.text('OUTPUT'));
     await tester.pumpAndSettle();
