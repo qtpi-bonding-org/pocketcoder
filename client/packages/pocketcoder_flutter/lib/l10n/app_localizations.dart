@@ -5489,6 +5489,48 @@ abstract class AppLocalizations {
   /// **'CANCEL'**
   String get instanceVerificationResetCancel;
 
+  /// Title for the screen shown when a cloud provider confirms the deployed instance was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance no longer exists'**
+  String get instanceGoneTitle;
+
+  /// Body copy for the instance-gone screen.
+  ///
+  /// In en, this message translates to:
+  /// **'The provider confirms this deployment\'s server no longer exists. The only way forward is to reset local state and set up a new deployment.'**
+  String get instanceGoneBody;
+
+  /// Label for the destructive reset button on the instance-gone screen.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get instanceGoneResetAction;
+
+  /// Confirm-dialog title before clearing local state on the instance-gone screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset local deployment state?'**
+  String get instanceGoneResetConfirmationTitle;
+
+  /// Confirm-dialog body before clearing local state on the instance-gone screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears all local deployment state on this device. The instance is already gone on the provider side, so nothing further will be deleted remotely.'**
+  String get instanceGoneResetConfirmationBody;
+
+  /// Cancel label for the instance-gone reset confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get instanceGoneResetCancel;
+
+  /// Confirm label for the instance-gone reset confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get instanceGoneResetConfirm;
+
   /// Title of the confirmation dialog for discarding a stuck local deployment record
   ///
   /// In en, this message translates to:

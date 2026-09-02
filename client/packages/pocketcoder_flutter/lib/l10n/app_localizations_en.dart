@@ -3045,6 +3045,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get instanceVerificationResetCancel => 'CANCEL';
 
   @override
+  String get instanceGoneTitle => 'Instance no longer exists';
+
+  @override
+  String get instanceGoneBody =>
+      'The provider confirms this deployment\'s server no longer exists. The only way forward is to reset local state and set up a new deployment.';
+
+  @override
+  String get instanceGoneResetAction => 'RESET';
+
+  @override
+  String get instanceGoneResetConfirmationTitle =>
+      'Reset local deployment state?';
+
+  @override
+  String get instanceGoneResetConfirmationBody =>
+      'This clears all local deployment state on this device. The instance is already gone on the provider side, so nothing further will be deleted remotely.';
+
+  @override
+  String get instanceGoneResetCancel => 'CANCEL';
+
+  @override
+  String get instanceGoneResetConfirm => 'RESET';
+
+  @override
   String get deploymentDiscardAttemptTitle => 'DISCARD THIS DEPLOYMENT RECORD?';
 
   @override
