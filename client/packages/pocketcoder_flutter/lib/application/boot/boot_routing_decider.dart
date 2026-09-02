@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repositor
 import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 
 typedef _LatchKey = (String? instanceId, String? baseUrl, String? userId);
+typedef _ExistenceKey = (int epoch, String? instanceId);
 
 class BootRoutingDecider {
   BootRoutingDecider({
@@ -37,7 +38,11 @@ class BootRoutingDecider {
   bool _wasReady = false;
   int? _restoredEpoch;
   ({int epoch, Future<void> future})? _inFlightRestore;
-  Future<InstanceExistenceResult>? _inFlightExistenceCheck;
+  ({_ExistenceKey key, InstanceExistenceResult result})? _existenceAnswer;
+  ({
+    _ExistenceKey key,
+    Future<InstanceExistenceResult> future
+  })? _inFlightExistence;
   int _generation = 0;
 
   Future<void> start() async {
@@ -53,6 +58,7 @@ class BootRoutingDecider {
   }
 
   Future<void> retryAuth() async {
+    _existenceAnswer = null;
     _restoredEpoch = null;
     await _reconcile();
   }
@@ -73,12 +79,20 @@ class BootRoutingDecider {
     return future;
   }
 
-  Future<InstanceExistenceResult> _resolveExistenceOnce(
+  Future<InstanceExistenceResult> _existenceFor(
+    _ExistenceKey key,
     IInstanceExistenceResolver resolver,
   ) {
-    final inFlight = _inFlightExistenceCheck;
-    if (inFlight != null) return inFlight;
-    final future = (() async {
+    final answered = _existenceAnswer;
+    if (answered != null && answered.key == key) {
+      return Future<InstanceExistenceResult>.value(answered.result);
+    }
+    final inFlight = _inFlightExistence;
+    if (inFlight != null && inFlight.key == key) {
+      return inFlight.future;
+    }
+    late final Future<InstanceExistenceResult> future;
+    future = Future(() async {
       try {
         return await resolver.checkInstanceExists();
       } on Object catch (error) {
@@ -87,13 +101,17 @@ class BootRoutingDecider {
         });
         return InstanceExistenceResult.unknown;
       }
-    })();
-    _inFlightExistenceCheck = future;
-    future.whenComplete(() {
-      if (identical(_inFlightExistenceCheck, future)) {
-        _inFlightExistenceCheck = null;
+    }).then((result) {
+      if (identical(_inFlightExistence?.future, future)) {
+        _existenceAnswer = (key: key, result: result);
+      }
+      return result;
+    }).whenComplete(() {
+      if (identical(_inFlightExistence?.future, future)) {
+        _inFlightExistence = null;
       }
     });
+    _inFlightExistence = (key: key, future: future);
     return future;
   }
 
@@ -131,9 +149,6 @@ class BootRoutingDecider {
 
     final session = _auth.current;
     final latchKey = (readiness.instanceId, session.baseUrl, session.userId);
-    final signOutDestination = readiness.instanceId != null
-        ? RouteNames.deploymentProgress
-        : RouteNames.onboardingLogin;
     AppLogger.debug('BootRoutingDecider session', {
       'generation': generation,
       'sessionState': session.state.name,
@@ -141,38 +156,37 @@ class BootRoutingDecider {
       'confirmedLatchKey': _confirmedLatchKey?.toString(),
     });
 
-    switch (session.state) {
-      case AuthSessionState.signedOut:
-        _navigate(signOutDestination);
+    final authOk = switch (session.state) {
+      AuthSessionState.signedIn => true,
+      AuthSessionState.temporarilyUnavailable => latchKey == _confirmedLatchKey,
+      AuthSessionState.signedOut => false,
+    };
+
+    if (session.state == AuthSessionState.signedIn) {
+      _existenceAnswer = null;
+      _inFlightExistence = null;
+    }
+
+    if (!authOk) {
+      final resolver = _instanceExistence;
+      if (resolver == null) {
+        _navigate(RouteNames.onboardingLogin);
         return;
-      case AuthSessionState.temporarilyUnavailable:
-        if (latchKey != _confirmedLatchKey) {
-          final resolver = _instanceExistence;
-          if (resolver != null) {
-            final result = await _resolveExistenceOnce(resolver);
-            if (generation != _generation) {
-              return; // superseded while awaiting
-            }
-            AppLogger.debug('BootRoutingDecider instance existence', {
-              'generation': generation,
-              'result': result.name,
-            });
-            switch (result) {
-              case InstanceExistenceResult.unknown:
-                _navigate(RouteNames.instanceUnverifiable);
-                return;
-              case InstanceExistenceResult.gone:
-                return;
-              case InstanceExistenceResult.exists:
-                break;
-            }
-          }
-          _navigate(signOutDestination);
-          return;
-        }
-        break;
-      case AuthSessionState.signedIn:
-        break;
+      }
+      final result =
+          await _existenceFor((epoch, readiness.instanceId), resolver);
+      if (generation != _generation) {
+        return; // superseded while awaiting
+      }
+      switch (result) {
+        case InstanceExistenceResult.exists:
+          _navigate(RouteNames.onboardingLogin);
+        case InstanceExistenceResult.gone:
+          _navigate(RouteNames.instanceGone);
+        case InstanceExistenceResult.unknown:
+          _navigate(RouteNames.instanceUnverifiable);
+      }
+      return;
     }
 
     if (latchKey == _confirmedLatchKey &&

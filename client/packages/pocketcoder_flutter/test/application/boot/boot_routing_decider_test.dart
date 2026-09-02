@@ -169,15 +169,12 @@ class FakeHarness implements IHarnessAuthRepository {
 }
 
 class FakeInstanceExistenceResolver implements IInstanceExistenceResolver {
-  FakeInstanceExistenceResolver(this.result, {this.authRepository, this.readiness});
+  FakeInstanceExistenceResolver(this.result);
   InstanceExistenceResult result;
-  FakeAuthRepository? authRepository;
-  FakeReadiness? readiness;
   int calls = 0;
 
   Object? throwError;
   Future<InstanceExistenceResult>? resultOverride;
-  Completer<void>? clearGate;
 
   @override
   Future<InstanceExistenceResult> checkInstanceExists() async {
@@ -186,14 +183,6 @@ class FakeInstanceExistenceResolver implements IInstanceExistenceResolver {
     if (error != null) throw error;
     final override = resultOverride;
     final outcome = override != null ? await override : result;
-    if (outcome == InstanceExistenceResult.gone) {
-      readiness?.set(const ServerReadinessSnapshot(
-          status: ServerReadinessStatus.notProvisioned));
-      await authRepository?.clearSession();
-      authRepository?.publish();
-      final gate = clearGate;
-      if (gate != null) await gate.future;
-    }
     return outcome;
   }
 }
@@ -207,6 +196,7 @@ GoRouter makeRouter() => GoRouter(initialLocation: '/boot', routes: [
         ('chats', '/chats'),
         ('deploymentProgress', '/deployment'),
         ('instanceUnverifiable', '/instance-unverifiable'),
+        ('instanceGone', '/instance-gone'),
       ])
         GoRoute(
             name: pair.$1, path: pair.$2, builder: (_, __) => const SizedBox()),
@@ -238,7 +228,7 @@ class HarnessTest {
         router: router,
         instanceExistenceResolver: instanceExistenceResolver);
   }
-  Future<void> start(WidgetTester tester) async {
+  Future<void> start(WidgetTester tester, {bool settle = true}) async {
     addTearDown(decider.dispose);
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
@@ -246,6 +236,28 @@ class HarnessTest {
     ));
     await decider.start();
     await tester.pump();
+    if (settle) await settleReconcile(tester);
+  }
+
+  Future<void> settleReconcile(WidgetTester tester) async {
+    for (var i = 0; i < 10; i++) {
+      await tester.pump();
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+        await Future<void>.delayed(Duration.zero);
+      });
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> waitForResolverCalls(
+      WidgetTester tester, FakeInstanceExistenceResolver resolver, int count) async {
+    for (var i = 0; i < 100 && resolver.calls < count; i++) {
+      await tester.pump();
+      await tester.runAsync(() => Future<void>.delayed(
+          const Duration(milliseconds: 1)));
+    }
   }
 }
 
@@ -341,19 +353,26 @@ void main() {
     await t.start(tester);
     expect(t.router.state.name, RouteNames.onboardingLogin);
   });
-  testWidgets('ready + signedOut Pro -> deploymentProgress', (tester) async {
-    final t = HarnessTest(instanceId: 'i');
+  testWidgets('ready + signedOut Pro -> onboardingLogin', (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.exists);
+    final t = HarnessTest(instanceId: 'i', instanceExistenceResolver: resolver);
     await t.start(tester);
-    expect(t.router.state.name, RouteNames.deploymentProgress);
+    expect(t.router.state.name, RouteNames.onboardingLogin);
   });
   testWidgets(
       'a fresh managed deployment -- ready+signedOut at start, then a '
       'first-ever login completes via an external auth-store change (not '
       'a decider-owned restore()) -- must not strand the user on '
       'deploymentProgress', (tester) async {
-    final t = HarnessTest(instanceId: 'i', harnessConnected: true);
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.exists);
+    final t = HarnessTest(
+        instanceId: 'i',
+        harnessConnected: true,
+        instanceExistenceResolver: resolver);
     await t.start(tester);
-    expect(t.router.state.name, RouteNames.deploymentProgress);
+    expect(t.router.state.name, RouteNames.onboardingLogin);
 
     t.authRepository.authenticated = true;
     t.authRepository.publish();
@@ -411,24 +430,29 @@ void main() {
     final first = Completer<bool>();
     t.harness.resultOverride = first.future;
     t.harness.overrideOnce = true;
-    final pending = t.start(tester);
+    addTearDown(t.decider.dispose);
+    await tester.pumpWidget(Directionality(
+      textDirection: TextDirection.ltr,
+      child: Router.withConfig(config: t.router),
+    ));
+    final pending = t.decider.start();
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     t.harness.connected = true;
     t.readiness.changes.add(t.readiness.current);
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     first.complete(false);
     await tester.runAsync(() => pending);
+    await t.settleReconcile(tester);
     expect(t.router.state.name, RouteNames.chats);
   });
 
   testWidgets(
       'unconfirmed temporarilyUnavailable with an unknown existence check '
       'routes to instanceUnverifiable instead of signing out', (tester) async {
-    final resolver = FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
     final t = HarnessTest(
-        signedIn: true,
-        instanceId: 'i',
-        instanceExistenceResolver: resolver);
+        signedIn: true, instanceId: 'i', instanceExistenceResolver: resolver);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
     await t.start(tester);
     expect(resolver.calls, 1);
@@ -436,38 +460,29 @@ void main() {
   });
 
   testWidgets(
-      'unconfirmed temporarilyUnavailable with a confirmed-existing '
-      'instance still routes to signOutDestination, unchanged from before',
-      (tester) async {
-    final resolver = FakeInstanceExistenceResolver(InstanceExistenceResult.exists);
+      'unconfirmed temporarilyUnavailable with an existing instance routes '
+      'to onboarding login', (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.exists);
     final t = HarnessTest(
-        signedIn: true,
-        instanceId: 'i',
-        instanceExistenceResolver: resolver);
+        signedIn: true, instanceId: 'i', instanceExistenceResolver: resolver);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
     await t.start(tester);
     expect(resolver.calls, 1);
-    expect(t.router.state.name, RouteNames.deploymentProgress);
+    expect(t.router.state.name, RouteNames.onboardingLogin);
   });
 
   testWidgets(
       'unconfirmed temporarilyUnavailable with a confirmed-gone instance '
-      'lets the resolver clear both readiness and the session, which '
-      're-routes to onboarding via the normal readiness/sessionChanges '
-      'reconcile -- no direct navigation from this branch', (tester) async {
-    final resolver = FakeInstanceExistenceResolver(InstanceExistenceResult.gone);
+      'routes directly to instanceGone', (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.gone);
     final t = HarnessTest(
-        signedIn: true,
-        instanceId: 'i',
-        instanceExistenceResolver: resolver);
-    resolver.authRepository = t.authRepository;
-    resolver.readiness = t.readiness;
+        signedIn: true, instanceId: 'i', instanceExistenceResolver: resolver);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
     await t.start(tester);
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     expect(resolver.calls, 1);
-    expect(t.authRepository.authenticated, isFalse);
-    expect(t.router.state.name, RouteNames.onboarding);
+    expect(t.router.state.name, RouteNames.instanceGone);
   });
 
   testWidgets(
@@ -483,12 +498,11 @@ void main() {
   testWidgets(
       'a resolver that throws is treated as unknown -- routes to '
       'instanceUnverifiable and does not crash reconcile', (tester) async {
-    final resolver = FakeInstanceExistenceResolver(InstanceExistenceResult.exists)
-      ..throwError = Exception('provider unreachable');
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.exists)
+          ..throwError = Exception('provider unreachable');
     final t = HarnessTest(
-        signedIn: true,
-        instanceId: 'i',
-        instanceExistenceResolver: resolver);
+        signedIn: true, instanceId: 'i', instanceExistenceResolver: resolver);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
     await t.start(tester);
     expect(t.router.state.name, RouteNames.instanceUnverifiable);
@@ -498,59 +512,100 @@ void main() {
       'concurrent readiness/auth emissions while an existence check is '
       'still pending are coalesced into a single resolver call, not one '
       'per emission', (tester) async {
-    final resolver = FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
     final gate = Completer<InstanceExistenceResult>();
     resolver.resultOverride = gate.future;
     final t = HarnessTest(
-        signedIn: true,
-        instanceId: 'i',
-        instanceExistenceResolver: resolver);
+        signedIn: true, instanceId: 'i', instanceExistenceResolver: resolver);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
-
-    final pending = t.start(tester);
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    addTearDown(t.decider.dispose);
+    await tester.pumpWidget(Directionality(
+      textDirection: TextDirection.ltr,
+      child: Router.withConfig(config: t.router),
+    ));
+    final pending = t.decider.start();
+    await tester.pump();
+    await t.settleReconcile(tester);
     expect(resolver.calls, 1);
-    // authRepository.publish() is deliberately not used here -- it flips
-    // FakeAuthRepository's session state to signedIn, not
-    // temporarilyUnavailable.
     t.readiness.changes.add(t.readiness.current);
     t.readiness.changes.add(t.readiness.current);
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pump();
 
     gate.complete(InstanceExistenceResult.unknown);
     await tester.runAsync(() => pending);
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
-
+    await t.settleReconcile(tester);
     expect(resolver.calls, 1);
     expect(t.router.state.name, RouteNames.instanceUnverifiable);
   });
 
-  testWidgets(
-      'a confirmed-gone instance never navigates directly from the '
-      'temporarilyUnavailable branch itself -- only the resolver\'s own '
-      'ordered clear (readiness -> session), observed later via the '
-      'normal reconcile listeners, is what actually moves the router',
-      (tester) async {
-    final resolver = FakeInstanceExistenceResolver(InstanceExistenceResult.gone);
-    final gate = Completer<void>();
-    resolver.clearGate = gate;
+  testWidgets('confirmed-gone instance navigates directly', (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.gone);
     final t = HarnessTest(
-        signedIn: true,
-        instanceId: 'i',
-        instanceExistenceResolver: resolver);
-    resolver.authRepository = t.authRepository;
-    resolver.readiness = t.readiness;
+        signedIn: true, instanceId: 'i', instanceExistenceResolver: resolver);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
-
-    final pending = t.start(tester);
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
-    expect(t.router.state.name, RouteNames.onboarding);
-
-    gate.complete();
-    await tester.runAsync(() => pending);
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
-
+    await t.start(tester);
     expect(resolver.calls, 1);
-    expect(t.router.state.name, RouteNames.onboarding);
+    expect(t.router.state.name, RouteNames.instanceGone);
+  });
+
+  testWidgets('signedOut existence result is cached for the ready epoch',
+      (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
+    final t = HarnessTest(instanceId: 'i', instanceExistenceResolver: resolver);
+    await t.start(tester);
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    t.readiness.changes.add(t.readiness.current);
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    expect(resolver.calls, 1);
+  });
+
+  testWidgets('readiness epoch change does not reuse existence answer',
+      (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
+    final t = HarnessTest(instanceId: 'i', instanceExistenceResolver: resolver);
+    await t.start(tester);
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.notProvisioned));
+    await tester.pump();
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.ready, instanceId: 'i'));
+    await tester.pump();
+    await t.settleReconcile(tester);
+    expect(resolver.calls, 2);
+  });
+
+  testWidgets('retryAuth clears a cached unknown existence answer',
+      (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
+    final t = HarnessTest(instanceId: 'i', instanceExistenceResolver: resolver);
+    await t.start(tester);
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    expect(t.router.state.name, RouteNames.instanceUnverifiable);
+    resolver.result = InstanceExistenceResult.exists;
+    final retried = t.decider.retryAuth();
+    await t.settleReconcile(tester);
+    await retried;
+    expect(resolver.calls, 2);
+    expect(t.router.state.name, RouteNames.onboardingLogin);
+  });
+
+  testWidgets('confirmed temporary unavailability does not query resolver',
+      (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.gone);
+    final t = HarnessTest(instanceId: 'i', harnessConnected: true,
+        signedIn: true, instanceExistenceResolver: resolver);
+    await t.start(tester);
+    t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
+    t.authRepository.publish();
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    expect(resolver.calls, 0);
+    expect(t.router.state.name, RouteNames.chats);
   });
 }
