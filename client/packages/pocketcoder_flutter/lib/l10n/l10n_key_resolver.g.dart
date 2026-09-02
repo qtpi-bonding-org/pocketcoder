@@ -367,7 +367,6 @@ class L10nKeyResolver {
       'initialization.status.schema' => _l10n.initializationStatusSchema,
       'initialization.technical.details.toggle' => _l10n.initializationTechnicalDetailsToggle,
       'initialization.unknown' => _l10n.initializationUnknown,
-      'instance.verification.back.action' => _l10n.instanceVerificationBackAction,
       'instance.verification.body' => _l10n.instanceVerificationBody,
       'instance.verification.check.failed.message' => _l10n.instanceVerificationCheckFailedMessage,
       'instance.verification.reset.action' => _l10n.instanceVerificationResetAction,
@@ -1367,7 +1366,6 @@ class L10nKeyResolver {
     'initialization.sync.attempt',
     'initialization.technical.details.toggle',
     'initialization.unknown',
-    'instance.verification.back.action',
     'instance.verification.body',
     'instance.verification.check.action',
     'instance.verification.check.failed.message',
@@ -2334,7 +2332,6 @@ class L10nKeyResolver {
     'initializationSyncAttempt': 'initialization.sync.attempt',
     'initializationTechnicalDetailsToggle': 'initialization.technical.details.toggle',
     'initializationUnknown': 'initialization.unknown',
-    'instanceVerificationBackAction': 'instance.verification.back.action',
     'instanceVerificationBody': 'instance.verification.body',
     'instanceVerificationCheckAction': 'instance.verification.check.action',
     'instanceVerificationCheckFailedMessage': 'instance.verification.check.failed.message',
@@ -3298,7 +3295,6 @@ class L10nKeyResolver {
     'initialization.sync.attempt': 'initializationSyncAttempt',
     'initialization.technical.details.toggle': 'initializationTechnicalDetailsToggle',
     'initialization.unknown': 'initializationUnknown',
-    'instance.verification.back.action': 'instanceVerificationBackAction',
     'instance.verification.body': 'instanceVerificationBody',
     'instance.verification.check.action': 'instanceVerificationCheckAction',
     'instance.verification.check.failed.message': 'instanceVerificationCheckFailedMessage',
@@ -4269,7 +4265,6 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) initializationSyncAttempt(String attempt) => ('initialization.sync.attempt', {'attempt': attempt});
   static const initializationTechnicalDetailsToggle = 'initialization.technical.details.toggle';
   static const initializationUnknown = 'initialization.unknown';
-  static const instanceVerificationBackAction = 'instance.verification.back.action';
   static const instanceVerificationBody = 'instance.verification.body';
   static (String, Map<String, dynamic>) instanceVerificationCheckAction(String provider) => ('instance.verification.check.action', {'provider': provider});
   static const instanceVerificationCheckFailedMessage = 'instance.verification.check.failed.message';

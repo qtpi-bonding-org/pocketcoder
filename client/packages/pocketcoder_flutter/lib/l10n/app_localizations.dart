@@ -5459,12 +5459,6 @@ abstract class AppLocalizations {
   /// **'CHECK VIA {provider}'**
   String instanceVerificationCheckAction(String provider);
 
-  /// Button label for the non-destructive option that just returns to onboarding without changing any local state
-  ///
-  /// In en, this message translates to:
-  /// **'GO BACK'**
-  String get instanceVerificationBackAction;
-
   /// Button label for the destructive option that clears local deployment state
   ///
   /// In en, this message translates to:

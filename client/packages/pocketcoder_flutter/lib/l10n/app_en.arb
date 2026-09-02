@@ -1240,8 +1240,6 @@
     "description": "Button label to sign in to (or re-verify via) the cloud provider and retry the existence check",
     "placeholders": {"provider": {"type": "String"}}
   },
-  "instanceVerificationBackAction": "GO BACK",
-  "@instanceVerificationBackAction": { "description": "Button label for the non-destructive option that just returns to onboarding without changing any local state" },
   "instanceVerificationResetAction": "RESET",
   "@instanceVerificationResetAction": { "description": "Button label for the destructive option that clears local deployment state" },
   "instanceVerificationResetConfirmationTitle": "Reset and start over?",

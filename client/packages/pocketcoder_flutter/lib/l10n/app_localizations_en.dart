@@ -3028,9 +3028,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get instanceVerificationBackAction => 'GO BACK';
-
-  @override
   String get instanceVerificationResetAction => 'RESET';
 
   @override
