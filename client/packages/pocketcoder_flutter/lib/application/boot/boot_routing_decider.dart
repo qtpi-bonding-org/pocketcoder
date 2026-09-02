@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
@@ -15,15 +16,18 @@ class BootRoutingDecider {
     required AuthSessionCoordinator authCoordinator,
     required IHarnessAuthRepository harnessAuthRepository,
     required GoRouter router,
+    IInstanceExistenceResolver? instanceExistenceResolver,
   })  : _readiness = readinessCheck,
         _auth = authCoordinator,
         _harness = harnessAuthRepository,
-        _router = router;
+        _router = router,
+        _instanceExistence = instanceExistenceResolver;
 
   final IServerReadinessCheck _readiness;
   final AuthSessionCoordinator _auth;
   final IHarnessAuthRepository _harness;
   final GoRouter _router;
+  final IInstanceExistenceResolver? _instanceExistence;
 
   StreamSubscription<ServerReadinessSnapshot>? _readinessSub;
   StreamSubscription<AuthSessionSnapshot>? _authSub;
@@ -33,6 +37,7 @@ class BootRoutingDecider {
   bool _wasReady = false;
   int? _restoredEpoch;
   ({int epoch, Future<void> future})? _inFlightRestore;
+  Future<InstanceExistenceResult>? _inFlightExistenceCheck;
   int _generation = 0;
 
   Future<void> start() async {
@@ -65,6 +70,30 @@ class BootRoutingDecider {
       if (identical(_inFlightRestore?.future, future)) _inFlightRestore = null;
     });
     _inFlightRestore = (epoch: epoch, future: future);
+    return future;
+  }
+
+  Future<InstanceExistenceResult> _resolveExistenceOnce(
+    IInstanceExistenceResolver resolver,
+  ) {
+    final inFlight = _inFlightExistenceCheck;
+    if (inFlight != null) return inFlight;
+    final future = (() async {
+      try {
+        return await resolver.checkInstanceExists();
+      } on Object catch (error) {
+        AppLogger.debug('BootRoutingDecider instance existence check failed', {
+          'error': error.toString(),
+        });
+        return InstanceExistenceResult.unknown;
+      }
+    })();
+    _inFlightExistenceCheck = future;
+    future.whenComplete(() {
+      if (identical(_inFlightExistenceCheck, future)) {
+        _inFlightExistenceCheck = null;
+      }
+    });
     return future;
   }
 
@@ -118,6 +147,26 @@ class BootRoutingDecider {
         return;
       case AuthSessionState.temporarilyUnavailable:
         if (latchKey != _confirmedLatchKey) {
+          final resolver = _instanceExistence;
+          if (resolver != null) {
+            final result = await _resolveExistenceOnce(resolver);
+            if (generation != _generation) {
+              return; // superseded while awaiting
+            }
+            AppLogger.debug('BootRoutingDecider instance existence', {
+              'generation': generation,
+              'result': result.name,
+            });
+            switch (result) {
+              case InstanceExistenceResult.unknown:
+                _navigate(RouteNames.instanceUnverifiable);
+                return;
+              case InstanceExistenceResult.gone:
+                return;
+              case InstanceExistenceResult.exists:
+                break;
+            }
+          }
           _navigate(signOutDestination);
           return;
         }

@@ -16,6 +16,7 @@ import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/application/boot/boot_routing_decider.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/self_host_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/auth_aware_http_client.dart';
@@ -81,6 +82,10 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
           authCoordinator: getIt<AuthSessionCoordinator>(),
           harnessAuthRepository: getIt(),
           router: AppRouter.router,
+          instanceExistenceResolver:
+              getIt.isRegistered<IInstanceExistenceResolver>()
+                  ? getIt<IInstanceExistenceResolver>()
+                  : null,
         ),
       );
     }
