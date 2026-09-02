@@ -8,8 +8,6 @@
 // `toolRequestOverrides` are left empty. Tool calls use pocketcoder's
 // terminal command card so commands are visible and output stays collapsed
 // until the user expands it.
-import 'dart:convert';
-
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
@@ -19,6 +17,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
+import 'tool_command.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_terminal_response.dart';
@@ -111,7 +110,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         final toolKind = metadata['toolKind'] as String?;
         final result = metadata['result'] as String?;
         final diffs = (metadata['diffs'] as List<dynamic>?) ?? const [];
-        final command = _commandFor(
+        final command = commandFor(
           name: name,
           args: args,
           toolKind: toolKind,
@@ -126,34 +125,6 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           diffs: diffs,
         );
       };
-
-  /// An "execute" tool call's actual command lives inside `args`' raw JSON
-  /// (ACP's RawInput, harness-defined shape -- not standardized by the
-  /// protocol) rather than in `name` (ACP's optional Title, often empty for
-  /// goose). `args` may still be incomplete/invalid JSON while a call is
-  /// mid-stream -- that's tolerated, not an error, and just falls through.
-  static String _commandFor({
-    required String name,
-    required String args,
-    required String? toolKind,
-    required String fallback,
-  }) {
-    if (toolKind == 'execute' && args.trim().isNotEmpty) {
-      try {
-        final decoded = jsonDecode(args);
-        if (decoded is Map) {
-          for (final key in const ['command', 'cmd', 'script']) {
-            final value = decoded[key];
-            if (value is String && value.trim().isNotEmpty) return value;
-          }
-        }
-      } catch (_) {}
-    }
-    if (name.trim().isNotEmpty) {
-      return args.trim().isEmpty ? name : '$name $args';
-    }
-    return fallback;
-  }
 
   bool _isReasoning(chat_core.Message message) =>
       message.metadata?['kind'] == 'reasoning';
