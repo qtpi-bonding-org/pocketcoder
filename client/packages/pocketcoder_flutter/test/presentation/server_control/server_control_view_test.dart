@@ -310,7 +310,12 @@ void main() {
   });
 
   testWidgets('disables controls while busy', (tester) async {
-    final service = _FakeService();
+    // A release is set so inspectRelease() succeeds on its first attempt --
+    // otherwise the retry path's real 1s Future.delayed hangs forever under
+    // testWidgets' FakeAsync zone, since cubit.run() (and any Timer it
+    // schedules) is already bound to that zone by the time it's invoked
+    // below; wrapping the await afterward in runAsync does not move it.
+    final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final pending = Completer<ServerControlResult>();
     service.pending[ServerControlOperation.restartNixOs] = pending.future;
@@ -321,17 +326,23 @@ void main() {
     );
     await tester.pump();
     expect(cubit.state.status, UiFlowStatus.loading);
-    expect(
-      tester
-          .widgetList<IgnorePointer>(find.byType(IgnorePointer))
-          .every((widget) => widget.ignoring),
-      isTrue,
-    );
+    // The control-group IgnorePointers are what busy state disables --
+    // unrelated shell chrome (nav, etc.) also uses IgnorePointer for other
+    // reasons, so scope this to the actual operation buttons, not the tree.
+    for (final label in ['RESTART', 'UPDATE', 'SAVE', 'RESTORE']) {
+      for (final finder in find.text(label).evaluate()) {
+        final ignorePointer = tester.widget<IgnorePointer>(find
+            .ancestor(
+              of: find.byWidget(finder.widget),
+              matching: find.byType(IgnorePointer),
+            )
+            .first);
+        expect(ignorePointer.ignoring, isTrue,
+            reason: '$label should be disabled while busy');
+      }
+    }
     pending.complete(_success(ServerControlOperation.restartNixOs));
-    // No release set on _FakeService, so inspectRelease()'s retry path hits
-    // a real 1s Future.delayed -- runAsync escapes the FakeAsync zone that
-    // testWidgets otherwise traps it in, where nothing ever advances it.
-    await tester.runAsync(() => run);
+    await run;
     await cubit.close();
   });
 
