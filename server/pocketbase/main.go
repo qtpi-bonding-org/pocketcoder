@@ -142,6 +142,7 @@ func main() {
 			return nil
 		})
 
+		app.Logger().Info("✅ PocketCoder backend restarted and ready")
 		return e.Next()
 	})
 
