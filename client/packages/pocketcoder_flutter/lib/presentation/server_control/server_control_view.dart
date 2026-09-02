@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_c
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_confirm_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 /// Confirm-dialog body text only; buttons use [_buttonLabel] instead.
@@ -131,32 +132,19 @@ class ServerControlView extends StatelessWidget {
     VoidCallback onConfirm,
   ) async {
     final isRestore = operation == ServerControlOperation.restoreBackup;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          isRestore
-              ? context.l10n.serverControlConfirmRestoreTitle
-              : context.l10n.serverControlConfirmTitle,
-        ),
-        content: Text(
-          isRestore
-              ? context.l10n.serverControlConfirmRestoreBody
-              : context.l10n.serverControlConfirmBody(
-                  _localizedOperationLabel(context, operation),
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(context.l10n.serverControlConfirmCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(context.l10n.serverControlConfirmConfirm),
-          ),
-        ],
-      ),
+    final confirmed = await showTerminalConfirmDialog(
+      context,
+      title: isRestore
+          ? context.l10n.serverControlConfirmRestoreTitle
+          : context.l10n.serverControlConfirmTitle,
+      body: isRestore
+          ? context.l10n.serverControlConfirmRestoreBody
+          : context.l10n.serverControlConfirmBody(
+              _localizedOperationLabel(context, operation),
+            ),
+      cancelLabel: context.l10n.serverControlConfirmCancel,
+      confirmLabel: context.l10n.serverControlConfirmConfirm,
+      danger: isRestore,
     );
     if (confirmed == true && context.mounted) onConfirm();
   }
