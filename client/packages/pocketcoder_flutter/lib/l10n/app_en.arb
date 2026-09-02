@@ -1235,8 +1235,11 @@
   "@instanceVerificationBody": { "description": "Body text explaining why the instance-verification screen is showing" },
   "instanceVerificationCheckFailedMessage": "Still couldn't confirm. Try again, or choose an option below.",
   "@instanceVerificationCheckFailedMessage": { "description": "Shown after a retry via Linode still couldn't get a definitive answer" },
-  "instanceVerificationCheckAction": "CHECK VIA LINODE",
-  "@instanceVerificationCheckAction": { "description": "Button label to sign in to (or re-verify via) the cloud provider and retry the existence check" },
+  "instanceVerificationCheckAction": "CHECK VIA {provider}",
+  "@instanceVerificationCheckAction": {
+    "description": "Button label to sign in to (or re-verify via) the cloud provider and retry the existence check",
+    "placeholders": {"provider": {"type": "String"}}
+  },
   "instanceVerificationBackAction": "GO BACK",
   "@instanceVerificationBackAction": { "description": "Button label for the non-destructive option that just returns to onboarding without changing any local state" },
   "instanceVerificationResetAction": "RESET",

@@ -369,7 +369,6 @@ class L10nKeyResolver {
       'initialization.unknown' => _l10n.initializationUnknown,
       'instance.verification.back.action' => _l10n.instanceVerificationBackAction,
       'instance.verification.body' => _l10n.instanceVerificationBody,
-      'instance.verification.check.action' => _l10n.instanceVerificationCheckAction,
       'instance.verification.check.failed.message' => _l10n.instanceVerificationCheckFailedMessage,
       'instance.verification.reset.action' => _l10n.instanceVerificationResetAction,
       'instance.verification.reset.cancel' => _l10n.instanceVerificationResetCancel,
@@ -938,6 +937,7 @@ class L10nKeyResolver {
       'initialization.ready' => _l10n.initializationReady(args?['ipAddress'] as String? ?? ''),
       'initialization.status.prefix' => _l10n.initializationStatusPrefix(args?['status'] as String? ?? ''),
       'initialization.sync.attempt' => _l10n.initializationSyncAttempt(args?['attempt'] as String? ?? ''),
+      'instance.verification.check.action' => _l10n.instanceVerificationCheckAction(args?['provider'] as String? ?? ''),
       'llm.api.key.dialog.title' => _l10n.llmApiKeyDialogTitle(args?['provider'] as String? ?? ''),
       'llm.enter.credentials' => _l10n.llmEnterCredentials(args?['provider'] as String? ?? ''),
       'llm.models.available' => _l10n.llmModelsAvailable(args?['count'] as int? ?? 0),
@@ -4271,7 +4271,7 @@ abstract class L10nKeys {
   static const initializationUnknown = 'initialization.unknown';
   static const instanceVerificationBackAction = 'instance.verification.back.action';
   static const instanceVerificationBody = 'instance.verification.body';
-  static const instanceVerificationCheckAction = 'instance.verification.check.action';
+  static (String, Map<String, dynamic>) instanceVerificationCheckAction(String provider) => ('instance.verification.check.action', {'provider': provider});
   static const instanceVerificationCheckFailedMessage = 'instance.verification.check.failed.message';
   static const instanceVerificationResetAction = 'instance.verification.reset.action';
   static const instanceVerificationResetCancel = 'instance.verification.reset.cancel';

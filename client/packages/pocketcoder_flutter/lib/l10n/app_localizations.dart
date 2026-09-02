@@ -5456,8 +5456,8 @@ abstract class AppLocalizations {
   /// Button label to sign in to (or re-verify via) the cloud provider and retry the existence check
   ///
   /// In en, this message translates to:
-  /// **'CHECK VIA LINODE'**
-  String get instanceVerificationCheckAction;
+  /// **'CHECK VIA {provider}'**
+  String instanceVerificationCheckAction(String provider);
 
   /// Button label for the non-destructive option that just returns to onboarding without changing any local state
   ///

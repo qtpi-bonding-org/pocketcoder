@@ -3023,7 +3023,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Still couldn\'t confirm. Try again, or choose an option below.';
 
   @override
-  String get instanceVerificationCheckAction => 'CHECK VIA LINODE';
+  String instanceVerificationCheckAction(String provider) {
+    return 'CHECK VIA $provider';
+  }
 
   @override
   String get instanceVerificationBackAction => 'GO BACK';
