@@ -120,6 +120,8 @@ void main() {
       ]),
     ));
     await tester.pumpAndSettle();
+    // TypewriterText needs an elapsed duration, not just pumpAndSettle.
+    await tester.pump(const Duration(seconds: 1));
 
     expect(tester.getTopLeft(find.text('commander@pc \$ ')).dy,
         greaterThan(tester.getTopLeft(find.textContaining('a response')).dy));

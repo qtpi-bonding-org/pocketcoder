@@ -89,10 +89,8 @@ StackedChatBuilders pocketcoderChatBuilders(
       animatedMessageIds, onMessageAnimated);
 }
 
-/// Intercepts only reasoning ("thinking") messages -- completed or still
-/// streaming -- to render them as a collapsible [ThinkingBlock] instead of
-/// the generic full-width bubble every other message kind still gets via the
-/// inherited [StackedChatBuilders] behavior.
+/// Reasoning ("thinking") messages render nothing here -- the caption
+/// above Poco owns their display, not the transcript's bubble list.
 class _PocketcoderChatBuilders extends StackedChatBuilders {
   _PocketcoderChatBuilders(super.style, super.callbacks, this.latestReasoningId,
       this.animatedMessageIds, this.onMessageAnimated);
