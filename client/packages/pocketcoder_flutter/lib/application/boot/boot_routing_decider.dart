@@ -56,7 +56,7 @@ class BootRoutingDecider {
   int _generation = 0;
   final DateTime _bootStartedAt = DateTime.now();
   bool _hasLeftBootScreen = false;
-  String? _lastDeployPhaseRoute;
+  String? _lastDeployProgressRoute;
 
   Future<void> start() async {
     _readinessSub = _readiness.readinessChanges.listen((_) => _reconcile());
@@ -250,15 +250,23 @@ class BootRoutingDecider {
         harnessConnected ? RouteNames.chats : RouteNames.onboardingHarnessAuth);
   }
 
-  // Scoped to provisioning/notProvisioned only -- the ready branch must
-  // always be able to redirect on a real state change (e.g. sign-out).
+  // Only set on an actual deploymentProgress push, not on onboarding --
+  // onboarding's own forward navigation must never poison this guard.
   void _navigateDeployPhase(String routeName) {
     final current = _currentRouteName();
-    if (_lastDeployPhaseRoute != null && current != _lastDeployPhaseRoute) {
+    if (_lastDeployProgressRoute != null &&
+        current != _lastDeployProgressRoute) {
+      AppLogger.debug('BootRoutingDecider deploy-phase nav suppressed', {
+        'requested': routeName,
+        'current': current,
+        'lastDeployProgressRoute': _lastDeployProgressRoute,
+      });
       return;
     }
     _navigate(routeName);
-    _lastDeployPhaseRoute = routeName;
+    if (routeName == RouteNames.deploymentProgress) {
+      _lastDeployProgressRoute = routeName;
+    }
   }
 
   void _navigate(String routeName) {

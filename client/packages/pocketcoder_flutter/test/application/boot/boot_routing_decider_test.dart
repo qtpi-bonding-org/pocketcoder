@@ -385,6 +385,37 @@ void main() {
   });
 
   testWidgets(
+      'navigating through onboarding\'s own screens before any deploy '
+      'attempt starts does not suppress the first real push to '
+      'deploymentProgress once one does -- regression for the live bug '
+      'where Initialize silently did nothing after the user had already '
+      'clicked through provider/OAuth/plan-selection screens',
+      (tester) async {
+    final t = HarnessTest(status: ServerReadinessStatus.notProvisioned);
+    addTearDown(t.decider.dispose);
+    await tester.pumpWidget(Directionality(
+        textDirection: TextDirection.ltr,
+        child: Router.withConfig(config: t.router)));
+    final pending = t.decider.start();
+    await tester.pump();
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
+    await pending;
+    await t.settleReconcile(tester);
+    expect(t.router.state.name, RouteNames.onboarding);
+
+    // Stand-in for onboarding's own screens, none of which are pushed by
+    // BootRoutingDecider itself.
+    t.router.goNamed(RouteNames.chats);
+    await tester.pump();
+
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.provisioning, instanceId: 'i'));
+    await tester.pump();
+
+    expect(t.router.state.name, RouteNames.deploymentProgress);
+  });
+
+  testWidgets(
       'start() reading GoRouter.state before any widget has ever attached '
       'the router (the real main() ordering -- runApp() schedules a build, '
       'it does not synchronously run one before the next line executes) '
