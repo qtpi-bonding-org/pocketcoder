@@ -940,6 +940,12 @@ abstract class AppLocalizations {
   /// **'OUTPUT'**
   String get chatCommandOutput;
 
+  /// No description provided for @chatToolCallFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool call'**
+  String get chatToolCallFallback;
+
   /// No description provided for @chatSessionAction.
   ///
   /// In en, this message translates to:

@@ -8,6 +8,8 @@
 // `toolRequestOverrides` are left empty. Tool calls use pocketcoder's
 // terminal command card so commands are visible and output stays collapsed
 // until the user expands it.
+import 'dart:convert';
+
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
@@ -106,9 +108,15 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         final metadata = message.metadata ?? const <String, dynamic>{};
         final name = metadata['name'] as String? ?? '';
         final args = metadata['args'] as String? ?? '';
+        final toolKind = metadata['toolKind'] as String?;
         final result = metadata['result'] as String?;
         final diffs = (metadata['diffs'] as List<dynamic>?) ?? const [];
-        final command = args.trim().isEmpty ? name : '$name $args';
+        final command = _commandFor(
+          name: name,
+          args: args,
+          toolKind: toolKind,
+          fallback: context.l10n.chatToolCallFallback,
+        );
         return TerminalCommandCard(
           command: command,
           status:
@@ -118,6 +126,34 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           diffs: diffs,
         );
       };
+
+  /// An "execute" tool call's actual command lives inside `args`' raw JSON
+  /// (ACP's RawInput, harness-defined shape -- not standardized by the
+  /// protocol) rather than in `name` (ACP's optional Title, often empty for
+  /// goose). `args` may still be incomplete/invalid JSON while a call is
+  /// mid-stream -- that's tolerated, not an error, and just falls through.
+  static String _commandFor({
+    required String name,
+    required String args,
+    required String? toolKind,
+    required String fallback,
+  }) {
+    if (toolKind == 'execute' && args.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(args);
+        if (decoded is Map) {
+          for (final key in const ['command', 'cmd', 'script']) {
+            final value = decoded[key];
+            if (value is String && value.trim().isNotEmpty) return value;
+          }
+        }
+      } catch (_) {}
+    }
+    if (name.trim().isNotEmpty) {
+      return args.trim().isEmpty ? name : '$name $args';
+    }
+    return fallback;
+  }
 
   bool _isReasoning(chat_core.Message message) =>
       message.metadata?['kind'] == 'reasoning';
@@ -135,7 +171,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: 'root@device \$ ',
+                    text: 'commander@pc \$ ',
                     style: TextStyle(
                       color: color,
                       fontFamily: AppFonts.bodyFamily,
@@ -192,7 +228,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
             child: TerminalTranscriptLine(
-              prefix: 'root@device \$ ',
+              prefix: 'commander@pc \$ ',
               color: emphasize(context.colorScheme.secondary, Emphasis.selected)
                   .text,
               child: child,

@@ -460,6 +460,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatCommandOutput => 'OUTPUT';
 
   @override
+  String get chatToolCallFallback => 'Tool call';
+
+  @override
   String get chatSessionAction => 'SESSION';
 
   @override

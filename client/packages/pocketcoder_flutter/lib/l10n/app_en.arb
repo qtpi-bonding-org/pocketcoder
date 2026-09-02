@@ -186,6 +186,7 @@
   "chatThinkingLive": "THINKING...",
   "chatThought": "THOUGHT",
   "chatCommandOutput": "OUTPUT",
+  "chatToolCallFallback": "Tool call",
   "chatSessionAction": "SESSION",
   "chatMonitorAction": "WATCH",
   "chatSendTooltip": "Send",
