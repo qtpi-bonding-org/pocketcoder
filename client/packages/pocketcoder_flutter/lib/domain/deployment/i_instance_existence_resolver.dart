@@ -8,10 +8,8 @@
 enum InstanceExistenceResult {
   exists,
 
-  /// The provider confirms the instance is gone. A call that returns this
-  /// has already performed the ordered local clear (deployment state,
-  /// active-instance record, readiness re-check, then session) as a side
-  /// effect -- callers don't need to clear anything themselves.
+  /// The provider confirms the instance is gone. This call never clears
+  /// local state itself -- the caller owns any destructive cleanup.
   gone,
 
   /// No definitive answer could be obtained (no provider credential, a
