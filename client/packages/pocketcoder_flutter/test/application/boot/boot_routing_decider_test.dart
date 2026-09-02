@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/application/boot/boot_routing_decider.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_deployment_auth_status.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
@@ -187,6 +188,23 @@ class FakeInstanceExistenceResolver implements IInstanceExistenceResolver {
   }
 }
 
+class FakeDeploymentAuthStatus implements IDeploymentAuthStatus {
+  FakeDeploymentAuthStatus([this._current]);
+  DeploymentAuthStatusSnapshot? _current;
+  final _controller = StreamController<void>.broadcast();
+
+  @override
+  DeploymentAuthStatusSnapshot? get current => _current;
+
+  @override
+  Stream<void> get changes => _controller.stream;
+
+  void set(DeploymentAuthStatusSnapshot? value) {
+    _current = value;
+    _controller.add(null);
+  }
+}
+
 GoRouter makeRouter() => GoRouter(initialLocation: '/boot', routes: [
       for (final pair in const [
         ('boot', '/boot'),
@@ -214,7 +232,8 @@ class HarnessTest {
       String? instanceId,
       bool signedIn = false,
       bool harnessConnected = false,
-      IInstanceExistenceResolver? instanceExistenceResolver}) {
+      IInstanceExistenceResolver? instanceExistenceResolver,
+      IDeploymentAuthStatus? deploymentAuthStatus}) {
     readiness = FakeReadiness(
         ServerReadinessSnapshot(status: status, instanceId: instanceId));
     authRepository = FakeAuthRepository(authenticated: signedIn);
@@ -226,7 +245,8 @@ class HarnessTest {
         authCoordinator: auth,
         harnessAuthRepository: harness,
         router: router,
-        instanceExistenceResolver: instanceExistenceResolver);
+        instanceExistenceResolver: instanceExistenceResolver,
+        deploymentAuthStatus: deploymentAuthStatus);
   }
   Future<void> start(WidgetTester tester, {bool settle = true}) async {
     addTearDown(decider.dispose);
@@ -251,17 +271,119 @@ class HarnessTest {
     await tester.pumpAndSettle();
   }
 
-  Future<void> waitForResolverCalls(
-      WidgetTester tester, FakeInstanceExistenceResolver resolver, int count) async {
+  Future<void> waitForResolverCalls(WidgetTester tester,
+      FakeInstanceExistenceResolver resolver, int count) async {
     for (var i = 0; i < 100 && resolver.calls < count; i++) {
       await tester.pump();
-      await tester.runAsync(() => Future<void>.delayed(
-          const Duration(milliseconds: 1)));
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 1)));
     }
   }
 }
 
 void main() {
+  testWidgets('same-instance deployment auth in flight holds Q2',
+      (tester) async {
+    final authStatus = FakeDeploymentAuthStatus(
+        const DeploymentAuthStatusSnapshot(
+            instanceId: 'i', phase: DeploymentAuthPhase.signingIn));
+    final t = HarnessTest(instanceId: 'i', deploymentAuthStatus: authStatus);
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.boot);
+  });
+
+  testWidgets('deployment auth completion wakes a held reconcile',
+      (tester) async {
+    final authStatus = FakeDeploymentAuthStatus(
+        const DeploymentAuthStatusSnapshot(
+            instanceId: 'i', phase: DeploymentAuthPhase.signingIn));
+    final t = HarnessTest(
+        instanceId: 'i',
+        signedIn: true,
+        harnessConnected: true,
+        deploymentAuthStatus: authStatus);
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.boot);
+    authStatus.set(const DeploymentAuthStatusSnapshot(
+        instanceId: 'i', phase: DeploymentAuthPhase.authenticated));
+    await t.settleReconcile(tester);
+    expect(t.router.state.name, RouteNames.chats);
+  });
+
+  testWidgets('failed deployment auth does not hold Q2', (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.exists);
+    final authStatus = FakeDeploymentAuthStatus(
+        const DeploymentAuthStatusSnapshot(
+            instanceId: 'i',
+            phase: DeploymentAuthPhase.failed,
+            error: 'invalid credentials'));
+    final t = HarnessTest(
+        instanceId: 'i',
+        instanceExistenceResolver: resolver,
+        deploymentAuthStatus: authStatus);
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.onboardingLogin);
+  });
+
+  testWidgets('different-instance deployment auth does not hold Q2',
+      (tester) async {
+    final resolver =
+        FakeInstanceExistenceResolver(InstanceExistenceResult.exists);
+    final authStatus = FakeDeploymentAuthStatus(
+        const DeploymentAuthStatusSnapshot(
+            instanceId: 'other', phase: DeploymentAuthPhase.signingIn));
+    final t = HarnessTest(
+        instanceId: 'i',
+        instanceExistenceResolver: resolver,
+        deploymentAuthStatus: authStatus);
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.onboardingLogin);
+  });
+
+  testWidgets('optional deployment auth leaves FOSS boot wait unchanged',
+      (tester) async {
+    final t = HarnessTest(status: ServerReadinessStatus.notProvisioned);
+    addTearDown(t.decider.dispose);
+    await tester.pumpWidget(Directionality(
+        textDirection: TextDirection.ltr,
+        child: Router.withConfig(config: t.router)));
+    final pending = t.decider.start();
+    await tester.pump();
+    expect(t.router.state.name, RouteNames.boot);
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
+    await pending;
+    await t.settleReconcile(tester);
+    expect(t.router.state.name, RouteNames.onboarding);
+  });
+
+  testWidgets('user route survives redundant provisioning emission',
+      (tester) async {
+    final t = HarnessTest(
+        status: ServerReadinessStatus.provisioning, instanceId: 'i');
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.deploymentProgress);
+    t.router.goNamed(RouteNames.chats);
+    await tester.pump();
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.provisioning, instanceId: 'i'));
+    await tester.pump();
+    expect(t.router.state.name, RouteNames.chats);
+  });
+
+  testWidgets('user route survives later notProvisioned emission',
+      (tester) async {
+    final t = HarnessTest(
+        status: ServerReadinessStatus.provisioning, instanceId: 'i');
+    await t.start(tester);
+    t.router.goNamed(RouteNames.chats);
+    await tester.pump();
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.notProvisioned));
+    await tester.pump();
+    expect(t.router.state.name, RouteNames.chats);
+  });
+
   testWidgets(
       'start() reading GoRouter.state before any widget has ever attached '
       'the router (the real main() ordering -- runApp() schedules a build, '
@@ -320,8 +442,8 @@ void main() {
     await t.start(tester);
     expect(t.router.state.name, RouteNames.boot);
 
-    t.readiness.set(
-        const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned));
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.notProvisioned));
     await tester.pump();
     expect(t.router.state.name, RouteNames.boot);
 
@@ -334,12 +456,15 @@ void main() {
       'notProvisioned observed again later (e.g. after RESET) does not '
       'replay the boot-animation wait -- only the very first landing does',
       (tester) async {
-    final t = HarnessTest(status: ServerReadinessStatus.ready, signedIn: true, harnessConnected: true);
+    final t = HarnessTest(
+        status: ServerReadinessStatus.ready,
+        signedIn: true,
+        harnessConnected: true);
     await t.start(tester);
     expect(t.router.state.name, RouteNames.chats);
 
-    t.readiness.set(
-        const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned));
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.notProvisioned));
     await tester.pump();
 
     expect(t.router.state.name, RouteNames.onboarding);
@@ -654,8 +779,11 @@ void main() {
       (tester) async {
     final resolver =
         FakeInstanceExistenceResolver(InstanceExistenceResult.gone);
-    final t = HarnessTest(instanceId: 'i', harnessConnected: true,
-        signedIn: true, instanceExistenceResolver: resolver);
+    final t = HarnessTest(
+        instanceId: 'i',
+        harnessConnected: true,
+        signedIn: true,
+        instanceExistenceResolver: resolver);
     await t.start(tester);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
     t.authRepository.publish();
