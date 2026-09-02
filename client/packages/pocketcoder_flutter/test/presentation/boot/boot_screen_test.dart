@@ -64,7 +64,7 @@ void main() {
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pump();
-    await tester.pump(const Duration(seconds: 5));
+    await tester.pump(const Duration(seconds: 7));
     await tester.pump();
 
     expect(router.routeInformationProvider.value.uri.path, '/boot');

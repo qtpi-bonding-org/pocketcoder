@@ -24,6 +24,11 @@ class BootRoutingDecider {
         _router = router,
         _instanceExistence = instanceExistenceResolver;
 
+  /// Must equal BootScreen's own scripted timeline length (2.5s + 6.5s),
+  /// since nothing here observes BootScreen's actual animation state.
+  static const Duration kMinFreshInstallBootDuration =
+      Duration(milliseconds: 9000);
+
   final IServerReadinessCheck _readiness;
   final AuthSessionCoordinator _auth;
   final IHarnessAuthRepository _harness;
@@ -44,6 +49,8 @@ class BootRoutingDecider {
     Future<InstanceExistenceResult> future
   })? _inFlightExistence;
   int _generation = 0;
+  final DateTime _bootStartedAt = DateTime.now();
+  bool _hasLeftBootScreen = false;
 
   Future<void> start() async {
     _readinessSub = _readiness.readinessChanges.listen((_) => _reconcile());
@@ -132,6 +139,18 @@ class BootRoutingDecider {
         return;
       case ServerReadinessStatus.notProvisioned:
         _wasReady = false;
+        // Only the very first landing waits -- _hasLeftBootScreen is false
+        // exactly once, regardless of what later produces this same status.
+        if (!_hasLeftBootScreen) {
+          final elapsed = DateTime.now().difference(_bootStartedAt);
+          final remaining = kMinFreshInstallBootDuration - elapsed;
+          if (remaining > Duration.zero) {
+            await Future<void>.delayed(remaining);
+          }
+          if (generation != _generation) {
+            return; // superseded while awaiting
+          }
+        }
         _navigate(RouteNames.onboarding);
         return;
       case ServerReadinessStatus.provisioning:
@@ -221,7 +240,10 @@ class BootRoutingDecider {
       'current': current,
       'navigating': navigating,
     });
-    if (navigating) _router.goNamed(routeName);
+    if (navigating) {
+      _router.goNamed(routeName);
+      _hasLeftBootScreen = true;
+    }
   }
 
   /// GoRouter.state can throw (empty RouteMatchList) before first resolution.

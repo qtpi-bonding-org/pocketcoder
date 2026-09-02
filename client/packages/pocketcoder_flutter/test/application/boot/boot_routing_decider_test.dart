@@ -284,9 +284,25 @@ void main() {
     await decider.start();
   });
 
-  testWidgets('notProvisioned -> onboarding', (tester) async {
+  testWidgets(
+      'notProvisioned (fresh install) waits for the boot animation before '
+      'landing on onboarding', (tester) async {
     final t = HarnessTest(status: ServerReadinessStatus.notProvisioned);
-    await t.start(tester);
+    addTearDown(t.decider.dispose);
+    await tester.pumpWidget(Directionality(
+      textDirection: TextDirection.ltr,
+      child: Router.withConfig(config: t.router),
+    ));
+    final pending = t.decider.start();
+    await tester.pump();
+    // Still on boot -- the answer is known, but the animation's minimum
+    // duration hasn't elapsed yet.
+    expect(t.router.state.name, RouteNames.boot);
+
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
+    await pending;
+    await t.settleReconcile(tester);
+
     expect(t.router.state.name, RouteNames.onboarding);
   });
   testWidgets(
@@ -297,15 +313,34 @@ void main() {
     expect(t.router.state.name, RouteNames.boot);
   });
   testWidgets(
-      'resolving then notProvisioned lands directly on onboarding -- no '
-      'earlier navigation to correct', (tester) async {
+      'resolving then notProvisioned lands directly on onboarding once the '
+      'boot animation finishes -- no earlier navigation to correct',
+      (tester) async {
     final t = HarnessTest(status: ServerReadinessStatus.resolving);
     await t.start(tester);
     expect(t.router.state.name, RouteNames.boot);
 
     t.readiness.set(
         const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned));
+    await tester.pump();
+    expect(t.router.state.name, RouteNames.boot);
+
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
     await t.settleReconcile(tester);
+
+    expect(t.router.state.name, RouteNames.onboarding);
+  });
+  testWidgets(
+      'notProvisioned observed again later (e.g. after RESET) does not '
+      'replay the boot-animation wait -- only the very first landing does',
+      (tester) async {
+    final t = HarnessTest(status: ServerReadinessStatus.ready, signedIn: true, harnessConnected: true);
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.chats);
+
+    t.readiness.set(
+        const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned));
+    await tester.pump();
 
     expect(t.router.state.name, RouteNames.onboarding);
   });

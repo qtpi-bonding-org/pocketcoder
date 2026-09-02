@@ -93,7 +93,7 @@ class _BootScreenState extends State<BootScreen> {
       });
     }
 
-    await Future.delayed(const Duration(seconds: 4));
+    await Future.delayed(const Duration(milliseconds: 6500));
     if (mounted) {
       _checkConnection();
     }
