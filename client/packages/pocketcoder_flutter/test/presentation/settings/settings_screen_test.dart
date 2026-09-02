@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
@@ -32,6 +33,19 @@ class _FakeProEdition implements IAppEdition {
   const _FakeProEdition();
   @override
   bool get isPro => true;
+}
+
+class _NoopServerReadinessCheck implements IServerReadinessCheck {
+  const _NoopServerReadinessCheck();
+  @override
+  ServerReadinessSnapshot get current =>
+      const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned);
+  @override
+  Stream<ServerReadinessSnapshot> get readinessChanges => const Stream.empty();
+  @override
+  Future<void> initialize() async {}
+  @override
+  Future<void> retry() async {}
 }
 
 void main() {
@@ -63,6 +77,7 @@ void main() {
           const NoopFactoryResetHook(),
           proDataDeletionHook,
           FossBillingService(),
+          const _NoopServerReadinessCheck(),
         ));
     getIt.registerSingleton<IAppEdition>(const FossAppEdition());
   });

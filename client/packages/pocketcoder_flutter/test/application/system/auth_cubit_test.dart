@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
@@ -22,12 +23,15 @@ class MockFactoryResetHook extends Mock implements FactoryResetHook {}
 
 class MockProDataDeletionHook extends Mock implements ProDataDeletionHook {}
 
+class MockServerReadinessCheck extends Mock implements IServerReadinessCheck {}
+
 void main() {
   late MockAuthRepository repo;
   late MockFlutterSecureStorage secureStorage;
   late MockFactoryResetHook factoryResetHook;
   late MockProDataDeletionHook proDataDeletionHook;
   late MockBillingService billingService;
+  late MockServerReadinessCheck serverReadinessCheck;
   AuthCubit? lastCubit;
 
   AuthCubit buildCubit() {
@@ -37,6 +41,7 @@ void main() {
       factoryResetHook,
       proDataDeletionHook,
       billingService,
+      serverReadinessCheck,
     );
     lastCubit = cubit;
     return cubit;
@@ -48,7 +53,9 @@ void main() {
     factoryResetHook = MockFactoryResetHook();
     proDataDeletionHook = MockProDataDeletionHook();
     billingService = MockBillingService();
+    serverReadinessCheck = MockServerReadinessCheck();
     when(() => billingService.reset()).thenAnswer((_) async {});
+    when(() => serverReadinessCheck.retry()).thenAnswer((_) async {});
     when(() => secureStorage.readAll(
           aOptions: any(named: 'aOptions'),
           iOptions: any(named: 'iOptions'),
@@ -222,6 +229,31 @@ void main() {
       verify(() => factoryResetHook.resetForFactoryReset()).called(1);
       verify(() => billingService.reset()).called(1);
       expect(cubit.state.status, UiFlowStatus.success);
+    });
+
+    test(
+        'clears deployment-identity state and re-checks readiness before '
+        'clearing the session -- a boot-routing listener reacting to '
+        'clearSession() must see the post-reset state, not a stale '
+        'pre-reset readiness snapshot', () async {
+      when(() => repo.clearSession()).thenAnswer((_) async {});
+      when(() => secureStorage.readAll(
+            aOptions: any(named: 'aOptions'),
+            iOptions: any(named: 'iOptions'),
+            lOptions: any(named: 'lOptions'),
+            webOptions: any(named: 'webOptions'),
+            mOptions: any(named: 'mOptions'),
+            wOptions: any(named: 'wOptions'),
+          )).thenAnswer((_) async => {});
+      final cubit = buildCubit();
+
+      await cubit.factoryReset();
+
+      verifyInOrder([
+        () => factoryResetHook.resetForFactoryReset(),
+        () => serverReadinessCheck.retry(),
+        () => repo.clearSession(),
+      ]);
     });
   });
 

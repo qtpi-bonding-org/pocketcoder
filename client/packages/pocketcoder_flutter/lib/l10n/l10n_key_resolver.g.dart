@@ -41,6 +41,7 @@ class L10nKeyResolver {
       'action.reject' => _l10n.actionReject,
       'action.restore' => _l10n.actionRestore,
       'action.save' => _l10n.actionSave,
+      'action.skip' => _l10n.actionSkip,
       'agent.config.default.badge' => _l10n.agentConfigDefaultBadge,
       'agent.config.delete' => _l10n.agentConfigDelete,
       'agent.config.delete.confirm.title' => _l10n.agentConfigDeleteConfirmTitle,
@@ -126,6 +127,7 @@ class L10nKeyResolver {
       'chat.thinking.live' => _l10n.chatThinkingLive,
       'chat.thinking.role' => _l10n.chatThinkingRole,
       'chat.thought' => _l10n.chatThought,
+      'chat.tool.call.fallback' => _l10n.chatToolCallFallback,
       'chat.use.global.default' => _l10n.chatUseGlobalDefault,
       'choose.provider.coming.soon' => _l10n.chooseProviderComingSoon,
       'choose.provider.pro.badge' => _l10n.chooseProviderProBadge,
@@ -247,6 +249,7 @@ class L10nKeyResolver {
       'deployment.step.create.installer.disk' => _l10n.deploymentStepCreateInstallerDisk,
       'deployment.step.create.instance' => _l10n.deploymentStepCreateInstance,
       'deployment.step.create.target.disk' => _l10n.deploymentStepCreateTargetDisk,
+      'deployment.step.enable.watchdog' => _l10n.deploymentStepEnableWatchdog,
       'deployment.step.fetching.release' => _l10n.deploymentStepFetchingRelease,
       'deployment.step.final.instance.fetch' => _l10n.deploymentStepFinalInstanceFetch,
       'deployment.step.loading.images' => _l10n.deploymentStepLoadingImages,
@@ -997,6 +1000,7 @@ class L10nKeyResolver {
     'action.reject',
     'action.restore',
     'action.save',
+    'action.skip',
     'agent.config.default.badge',
     'agent.config.delete',
     'agent.config.delete.confirm.body',
@@ -1090,6 +1094,7 @@ class L10nKeyResolver {
     'chat.thinking.live',
     'chat.thinking.role',
     'chat.thought',
+    'chat.tool.call.fallback',
     'chat.use.global.default',
     'choose.provider.coming.soon',
     'choose.provider.pro.badge',
@@ -1218,6 +1223,7 @@ class L10nKeyResolver {
     'deployment.step.create.installer.disk',
     'deployment.step.create.instance',
     'deployment.step.create.target.disk',
+    'deployment.step.enable.watchdog',
     'deployment.step.fetching.release',
     'deployment.step.final.instance.fetch',
     'deployment.step.loading.images',
@@ -1951,6 +1957,7 @@ class L10nKeyResolver {
     'actionReject': 'action.reject',
     'actionRestore': 'action.restore',
     'actionSave': 'action.save',
+    'actionSkip': 'action.skip',
     'agentConfigDefaultBadge': 'agent.config.default.badge',
     'agentConfigDelete': 'agent.config.delete',
     'agentConfigDeleteConfirmBody': 'agent.config.delete.confirm.body',
@@ -2044,6 +2051,7 @@ class L10nKeyResolver {
     'chatThinkingLive': 'chat.thinking.live',
     'chatThinkingRole': 'chat.thinking.role',
     'chatThought': 'chat.thought',
+    'chatToolCallFallback': 'chat.tool.call.fallback',
     'chatUseGlobalDefault': 'chat.use.global.default',
     'chooseProviderComingSoon': 'choose.provider.coming.soon',
     'chooseProviderProBadge': 'choose.provider.pro.badge',
@@ -2172,6 +2180,7 @@ class L10nKeyResolver {
     'deploymentStepCreateInstallerDisk': 'deployment.step.create.installer.disk',
     'deploymentStepCreateInstance': 'deployment.step.create.instance',
     'deploymentStepCreateTargetDisk': 'deployment.step.create.target.disk',
+    'deploymentStepEnableWatchdog': 'deployment.step.enable.watchdog',
     'deploymentStepFetchingRelease': 'deployment.step.fetching.release',
     'deploymentStepFinalInstanceFetch': 'deployment.step.final.instance.fetch',
     'deploymentStepLoadingImages': 'deployment.step.loading.images',
@@ -2902,6 +2911,7 @@ class L10nKeyResolver {
     'action.reject': 'actionReject',
     'action.restore': 'actionRestore',
     'action.save': 'actionSave',
+    'action.skip': 'actionSkip',
     'agent.config.default.badge': 'agentConfigDefaultBadge',
     'agent.config.delete': 'agentConfigDelete',
     'agent.config.delete.confirm.body': 'agentConfigDeleteConfirmBody',
@@ -2995,6 +3005,7 @@ class L10nKeyResolver {
     'chat.thinking.live': 'chatThinkingLive',
     'chat.thinking.role': 'chatThinkingRole',
     'chat.thought': 'chatThought',
+    'chat.tool.call.fallback': 'chatToolCallFallback',
     'chat.use.global.default': 'chatUseGlobalDefault',
     'choose.provider.coming.soon': 'chooseProviderComingSoon',
     'choose.provider.pro.badge': 'chooseProviderProBadge',
@@ -3123,6 +3134,7 @@ class L10nKeyResolver {
     'deployment.step.create.installer.disk': 'deploymentStepCreateInstallerDisk',
     'deployment.step.create.instance': 'deploymentStepCreateInstance',
     'deployment.step.create.target.disk': 'deploymentStepCreateTargetDisk',
+    'deployment.step.enable.watchdog': 'deploymentStepEnableWatchdog',
     'deployment.step.fetching.release': 'deploymentStepFetchingRelease',
     'deployment.step.final.instance.fetch': 'deploymentStepFinalInstanceFetch',
     'deployment.step.loading.images': 'deploymentStepLoadingImages',
@@ -3860,6 +3872,7 @@ abstract class L10nKeys {
   static const actionReject = 'action.reject';
   static const actionRestore = 'action.restore';
   static const actionSave = 'action.save';
+  static const actionSkip = 'action.skip';
   static const agentConfigDefaultBadge = 'agent.config.default.badge';
   static const agentConfigDelete = 'agent.config.delete';
   static (String, Map<String, dynamic>) agentConfigDeleteConfirmBody(String name) => ('agent.config.delete.confirm.body', {'name': name});
@@ -3953,6 +3966,7 @@ abstract class L10nKeys {
   static const chatThinkingLive = 'chat.thinking.live';
   static const chatThinkingRole = 'chat.thinking.role';
   static const chatThought = 'chat.thought';
+  static const chatToolCallFallback = 'chat.tool.call.fallback';
   static const chatUseGlobalDefault = 'chat.use.global.default';
   static const chooseProviderComingSoon = 'choose.provider.coming.soon';
   static const chooseProviderProBadge = 'choose.provider.pro.badge';
@@ -4081,6 +4095,7 @@ abstract class L10nKeys {
   static const deploymentStepCreateInstallerDisk = 'deployment.step.create.installer.disk';
   static const deploymentStepCreateInstance = 'deployment.step.create.instance';
   static const deploymentStepCreateTargetDisk = 'deployment.step.create.target.disk';
+  static const deploymentStepEnableWatchdog = 'deployment.step.enable.watchdog';
   static const deploymentStepFetchingRelease = 'deployment.step.fetching.release';
   static const deploymentStepFinalInstanceFetch = 'deployment.step.final.instance.fetch';
   static const deploymentStepLoadingImages = 'deployment.step.loading.images';

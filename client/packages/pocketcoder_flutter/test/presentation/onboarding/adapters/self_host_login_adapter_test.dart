@@ -8,6 +8,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
@@ -24,6 +25,19 @@ class _MockFactoryResetHook extends Mock implements FactoryResetHook {}
 class _MockDeletionHook extends Mock implements ProDataDeletionHook {}
 
 class _MockBillingService extends Mock implements BillingService {}
+
+class _NoopServerReadinessCheck implements IServerReadinessCheck {
+  const _NoopServerReadinessCheck();
+  @override
+  ServerReadinessSnapshot get current =>
+      const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned);
+  @override
+  Stream<ServerReadinessSnapshot> get readinessChanges => const Stream.empty();
+  @override
+  Future<void> initialize() async {}
+  @override
+  Future<void> retry() async {}
+}
 
 void main() {
   testWidgets('successful login does not navigate from the adapter',
@@ -56,7 +70,7 @@ void main() {
         )).thenAnswer((_) async => {});
 
     final authCubit = AuthCubit(repository, CaddyCaPinStore(storage),
-        factoryResetHook, deletionHook, billing);
+        factoryResetHook, deletionHook, billing, const _NoopServerReadinessCheck());
     addTearDown(authCubit.close);
     final router = GoRouter(
       initialLocation: '/login',
