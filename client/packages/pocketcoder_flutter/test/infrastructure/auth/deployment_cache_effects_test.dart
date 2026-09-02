@@ -81,7 +81,7 @@ void main() {
     client = await _client();
     repository =
         _Repository(authenticated: true, baseUrl: 'https://one.example');
-    coordinator = AuthSessionCoordinator(repository, refreshRetryDelay: (_) async {});
+    coordinator = AuthSessionCoordinator(repository);
     effects = DeploymentCacheEffects(
       coordinator,
       client,

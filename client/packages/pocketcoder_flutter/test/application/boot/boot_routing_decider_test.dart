@@ -228,7 +228,7 @@ class HarnessTest {
     readiness = FakeReadiness(
         ServerReadinessSnapshot(status: status, instanceId: instanceId));
     authRepository = FakeAuthRepository(authenticated: signedIn);
-    auth = AuthSessionCoordinator(authRepository, refreshRetryDelay: (_) async {});
+    auth = AuthSessionCoordinator(authRepository);
     harness = FakeHarness(connected: harnessConnected);
     router = makeRouter();
     decider = BootRoutingDecider(
@@ -258,7 +258,7 @@ void main() {
     final readiness = FakeReadiness(const ServerReadinessSnapshot(
         status: ServerReadinessStatus.ready, instanceId: 'i'));
     final authRepository = FakeAuthRepository(authenticated: true);
-    final auth = AuthSessionCoordinator(authRepository, refreshRetryDelay: (_) async {});
+    final auth = AuthSessionCoordinator(authRepository);
     final harness = FakeHarness(connected: true);
     final router = makeRouter();
     final decider = BootRoutingDecider(
