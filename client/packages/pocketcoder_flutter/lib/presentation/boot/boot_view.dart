@@ -55,7 +55,22 @@ class BootView extends StatelessWidget {
               Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 500),
-                  child: PocoBubble(message: pocoState.message, sequence: pocoState.sequence, history: pocoState.history, pocoSize: AppSizes.fontBig),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Opaque backdrop so the dimmed log wall behind it
+                      // doesn't bleed through the face glyph.
+                      Center(
+                        child: Container(
+                          color: colors.surface,
+                          child: PocoFace(fontSize: AppSizes.fontMassive, sequence: pocoState.sequence),
+                        ),
+                      ),
+                      VSpace.x4,
+                      PocoBubble(message: pocoState.message, history: pocoState.history, showFace: false),
+                    ],
+                  ),
                 ),
               ),
           ],
