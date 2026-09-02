@@ -1,10 +1,10 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
@@ -16,6 +16,9 @@ class AgentAuthView extends StatelessWidget {
     required this.error,
     required this.onSelected,
     required this.harnessProvidersLoaded,
+    required this.onSkip,
+    this.onContinue,
+    this.connectedHarnessIds = const {},
     this.selectedHarnesses = const [],
   });
 
@@ -24,6 +27,17 @@ class AgentAuthView extends StatelessWidget {
   final Object? error;
   final ValueChanged<Harnesse> onSelected;
   final bool harnessProvidersLoaded;
+
+  /// Always available: connecting a harness is optional up front, so the
+  /// user can reach chats without ever picking one.
+  final VoidCallback onSkip;
+
+  /// Null until at least one harness is connected -- lets someone connect
+  /// more than one before moving on, instead of auto-navigating to chat
+  /// the moment the first one succeeds.
+  final VoidCallback? onContinue;
+
+  final Set<String> connectedHarnessIds;
 
   /// The harness cli_ids chosen for this deployment during initial
   /// provisioning (server/pocketbase's getReleaseStatus, sourced from
@@ -46,8 +60,17 @@ class AgentAuthView extends StatelessWidget {
     return PocketCoderShell(
       title: context.l10n.onboardingChooseHarnessTitle,
       activePillar: NavPillar.configure,
-      showBack: true,
-      backFallbackRoute: AppRoutes.onboarding,
+      showBack: false,
+      showNavigation: false,
+      actions: [
+        TerminalAction(label: context.l10n.actionSkip, onTap: onSkip),
+        if (onContinue case final continueTap?)
+          TerminalAction(
+            label: context.l10n.actionContinue,
+            onTap: continueTap,
+            emphasis: Emphasis.outlined,
+          ),
+      ],
       body: _buildBody(context, supported),
     );
   }
@@ -91,6 +114,7 @@ class AgentAuthView extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: AppSizes.space),
                 child: _HarnessChoiceCard(
                   harness: harness,
+                  connected: connectedHarnessIds.contains(harness.id),
                   onTap:
                       harnessProvidersLoaded ? () => onSelected(harness) : null,
                 ),
@@ -103,9 +127,14 @@ class AgentAuthView extends StatelessWidget {
 }
 
 class _HarnessChoiceCard extends StatelessWidget {
-  const _HarnessChoiceCard({required this.harness, required this.onTap});
+  const _HarnessChoiceCard({
+    required this.harness,
+    required this.connected,
+    required this.onTap,
+  });
 
   final Harnesse harness;
+  final bool connected;
   final VoidCallback? onTap;
 
   @override
@@ -133,18 +162,23 @@ class _HarnessChoiceCard extends StatelessWidget {
                   ),
                   VSpace.x1,
                   TerminalText(
-                    switch (harness.cliId.trim().toLowerCase()) {
-                      'codex' => context.l10n.onboardingCodexAccountLogin,
-                      'claude-code' => context.l10n.onboardingClaudeAccountLogin,
-                      _ => context.l10n
-                          .onboardingHarnessAccountLogin(harness.name),
-                    },
+                    connected
+                        ? context.l10n.onboardingConnected
+                        : switch (harness.cliId.trim().toLowerCase()) {
+                            'codex' => context.l10n.onboardingCodexAccountLogin,
+                            'claude-code' =>
+                              context.l10n.onboardingClaudeAccountLogin,
+                            _ => context.l10n
+                                .onboardingHarnessAccountLogin(harness.name),
+                          },
                     alpha: 0.6,
+                    color: connected ? colors.primary : null,
                   ),
                 ],
               ),
             ),
-            Text('[>]', style: TextStyle(color: colors.primary)),
+            Text(connected ? '[x]' : '[>]',
+                style: TextStyle(color: colors.primary)),
           ],
         ),
       ),

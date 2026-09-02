@@ -1,6 +1,8 @@
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
+import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
@@ -35,9 +37,16 @@ class AuthCubit extends AppCubit<AuthState> {
   final CaddyCaPinStore _caddyCaPinStore;
   final FactoryResetHook _factoryResetHook;
   final ProDataDeletionHook _proDataDeletionHook;
+  final BillingService _billingService;
+  final IServerReadinessCheck _serverReadinessCheck;
 
-  AuthCubit(this._authRepository, this._caddyCaPinStore,
-      this._factoryResetHook, this._proDataDeletionHook)
+  AuthCubit(
+      this._authRepository,
+      this._caddyCaPinStore,
+      this._factoryResetHook,
+      this._proDataDeletionHook,
+      this._billingService,
+      this._serverReadinessCheck)
       : super(AuthState.initial());
 
   Future<void> restoreSavedUrl() async {
@@ -109,9 +118,15 @@ class AuthCubit extends AppCubit<AuthState> {
   /// that no longer matched the server.
   Future<void> factoryReset() async {
     return tryOperation(() async {
-      await _authRepository.clearSession();
+      // Deployment-identity state (including any readiness cache derived
+      // from it) is cleared and re-checked before the session itself --
+      // clearSession() is what a boot-routing listener reacts to, and it
+      // must see the post-reset state, not a stale pre-reset snapshot.
       await _caddyCaPinStore.clearAll();
       await _factoryResetHook.resetForFactoryReset();
+      await _serverReadinessCheck.retry();
+      await _authRepository.clearSession();
+      await _billingService.reset();
       return createSuccessState();
     });
   }

@@ -20,6 +20,15 @@ class _FakeRunner implements IRootSshCommandRunner {
   Object? error;
 
   @override
+  Future<RootSshCommandResult> fetchProvisioningLogs({
+    required String instanceId,
+    required String host,
+    required DateTime since,
+    required DateTime until,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
   Future<RootSshCommandResult> run({
     required String instanceId,
     required String host,
@@ -74,12 +83,12 @@ class _FakeCredentialsProvider implements IRootSshCredentialsProvider {
 }
 
 ServerReleaseStatusSnapshot _release() => ServerReleaseStatusSnapshot(
-  status: ServerReleaseStatus.updateAvailable,
-  currentVersion: '1.0.0',
-  currentDataVersion: 1,
-  currentReleaseDigest: _digest,
-  checkedAt: DateTime.utc(2026, 8, 14),
-);
+      status: ServerReleaseStatus.updateAvailable,
+      currentVersion: '1.0.0',
+      currentDataVersion: 1,
+      currentReleaseDigest: _digest,
+      checkedAt: DateTime.utc(2026, 8, 14),
+    );
 
 void main() {
   test('reads the public key from the credentials provider', () async {

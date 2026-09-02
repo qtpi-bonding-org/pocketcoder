@@ -316,6 +316,12 @@ abstract class AppLocalizations {
   /// **'BACK'**
   String get actionBack;
 
+  /// No description provided for @actionSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'SKIP'**
+  String get actionSkip;
+
   /// No description provided for @actionContinue.
   ///
   /// In en, this message translates to:
@@ -933,6 +939,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'OUTPUT'**
   String get chatCommandOutput;
+
+  /// No description provided for @chatToolCallFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool call'**
+  String get chatToolCallFallback;
 
   /// No description provided for @chatSessionAction.
   ///
@@ -2703,6 +2715,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirming server is up'**
   String get deploymentStepFinalInstanceFetch;
+
+  /// No description provided for @deploymentStepEnableWatchdog.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-enabling server monitoring'**
+  String get deploymentStepEnableWatchdog;
 
   /// No description provided for @deploymentStepWaitingForConnection.
   ///
@@ -5416,6 +5434,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CANCEL'**
   String get deploymentDisconnectCancel;
+
+  /// Title of the screen shown when the app can't reach the server and can't confirm with the cloud provider whether the instance still exists
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t verify your deployment'**
+  String get instanceVerificationTitle;
+
+  /// Body text explaining why the instance-verification screen is showing
+  ///
+  /// In en, this message translates to:
+  /// **'PocketCoder couldn\'t reach your server, and couldn\'t confirm with your cloud provider whether the instance still exists.'**
+  String get instanceVerificationBody;
+
+  /// Shown after a retry via Linode still couldn't get a definitive answer
+  ///
+  /// In en, this message translates to:
+  /// **'Still couldn\'t confirm. Try again, or choose an option below.'**
+  String get instanceVerificationCheckFailedMessage;
+
+  /// Button label to sign in to (or re-verify via) the cloud provider and retry the existence check
+  ///
+  /// In en, this message translates to:
+  /// **'CHECK VIA {provider}'**
+  String instanceVerificationCheckAction(String provider);
+
+  /// Button label for the destructive option that clears local deployment state
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get instanceVerificationResetAction;
+
+  /// Title of the confirmation dialog for the destructive reset option
+  ///
+  /// In en, this message translates to:
+  /// **'Reset and start over?'**
+  String get instanceVerificationResetConfirmationTitle;
+
+  /// Body of the reset confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'This clears the saved session and local deployment state on this device. It does not delete your cloud server.'**
+  String get instanceVerificationResetConfirmationBody;
+
+  /// Confirm button label on the reset confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get instanceVerificationResetConfirm;
+
+  /// Cancel button label on the reset confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get instanceVerificationResetCancel;
+
+  /// Title for the screen shown when a cloud provider confirms the deployed instance was deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance no longer exists'**
+  String get instanceGoneTitle;
+
+  /// Body copy for the instance-gone screen.
+  ///
+  /// In en, this message translates to:
+  /// **'The provider confirms this deployment\'s server no longer exists. The only way forward is to reset local state and set up a new deployment.'**
+  String get instanceGoneBody;
+
+  /// Label for the destructive reset button on the instance-gone screen.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get instanceGoneResetAction;
+
+  /// Confirm-dialog title before clearing local state on the instance-gone screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset local deployment state?'**
+  String get instanceGoneResetConfirmationTitle;
+
+  /// Confirm-dialog body before clearing local state on the instance-gone screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears all local deployment state on this device. The instance is already gone on the provider side, so nothing further will be deleted remotely.'**
+  String get instanceGoneResetConfirmationBody;
+
+  /// Cancel label for the instance-gone reset confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get instanceGoneResetCancel;
+
+  /// Confirm label for the instance-gone reset confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get instanceGoneResetConfirm;
 
   /// Title of the confirmation dialog for discarding a stuck local deployment record
   ///

@@ -10,6 +10,10 @@
 # host_ssh_private_key (base64), host_ssh_public_key, and public_ip fields.
 set -euo pipefail
 
+DEBUG_LOG=/root/pocketcoder-installer-debug.log
+exec > >(tee -a "$DEBUG_LOG") 2>&1
+echo "=== script started at $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
+
 command -v curl >/dev/null || { apt-get update && apt-get install -y curl; }
 command -v xxd >/dev/null || { apt-get update && apt-get install -y xxd; }
 
@@ -115,32 +119,16 @@ until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
   PROOF="${PROOF_SIGNING_INPUT}.${PROOF_SIG}"
   rm -f /tmp/box_key.der /tmp/box_pub.der /tmp/box_pub_point.bin /tmp/box_pub_xy.bin /tmp/box_pub_x.bin /tmp/box_pub_y.bin /tmp/proof_sig.der
 
-  # Every prior live failure of this download has been an instant, 0-byte
-  # curl error during this StackScript's own very-early boot-time
-  # execution, with the pipeline's overall exit status (via pipefail)
-  # correctly detected but curl's OWN specific error (its exit code, and
-  # -v's TLS/HTTP negotiation trace) never captured anywhere -- once the
-  # box reaches steady state and this script exits, that detail is gone
-  # for good, unlike /tmp/sum or a mount check, which survive. This is the
-  # gap that made every past investigation reconstruct after the fact
-  # instead of just reading what actually happened: append curl's real
-  # exit code and full -v trace to a fixed, persistent log file (survives
-  # exactly like /tmp/sum does -- the instance stays online on failure) on
-  # every attempt, not just on final failure.
-  DEBUG_LOG=/root/pocketcoder-installer-debug.log
-  {
-    echo "=== attempt $attempt at $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
-  } >> "$DEBUG_LOG"
+  echo "=== attempt $attempt at $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
   if curl -v -fSL --http1.1 --retry 0 --max-time 1800 --speed-limit 1024 --speed-time 60 \
       -H "Pocketcoder-Credential: $BOX_CREDENTIAL" \
       -H "Pocketcoder-Proof: $PROOF" \
       "$IMAGE_URL" \
-      2>> "$DEBUG_LOG" \
       | tee /tmp/sumpipe \
       | gunzip \
       | dd of=/dev/sdb bs=16M conv=fsync status=progress; then
     CURL_EXIT="${PIPESTATUS[0]}"
-    echo "curl exit code: $CURL_EXIT" >> "$DEBUG_LOG"
+    echo "curl exit code: $CURL_EXIT"
     wait "$SUMPID"
     rm -f /tmp/sumpipe
     read -r ACTUAL_SHA _ < /tmp/sum
@@ -164,6 +152,11 @@ until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
       mkdir -p /mnt/target/var/lib
       printf '%s' "$ADMIN_USER_DATA" | base64 -d > /mnt/target/var/lib/pocketcoder-bootstrap-env
       chmod 600 /mnt/target/var/lib/pocketcoder-bootstrap-env
+      # Keep installer diagnostics on the target disk while removing the
+      # credentials and proof headers present in curl's verbose trace.
+      sed -E 's/(Pocketcoder-(Credential|Proof): ).*/\1[REDACTED]/I' \
+        "$DEBUG_LOG" > /mnt/target/var/lib/pocketcoder-installer-debug.log
+      chmod 600 /mnt/target/var/lib/pocketcoder-installer-debug.log
       # Verify before powering off -- a bad write here means the final
       # NixOS boot fails closed with no admin config and no way to SSH
       # in to diagnose it (bootstrap.nix's own fail-closed check has no
@@ -187,7 +180,7 @@ until [ "$attempt" -ge "$MAX_ATTEMPTS" ]; do
     echo "Checksum mismatch on attempt $attempt (got $ACTUAL_SHA)"
   else
     CURL_EXIT="${PIPESTATUS[0]}"
-    echo "curl exit code: $CURL_EXIT" >> "$DEBUG_LOG"
+    echo "curl exit code: $CURL_EXIT"
     wait "$SUMPID" 2>/dev/null || true
     rm -f /tmp/sumpipe
     echo "Transfer failed on attempt $attempt (curl exit $CURL_EXIT -- see $DEBUG_LOG)"

@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 
 import 'app/app.dart';
 import 'app/bootstrap.dart';
+import 'application/boot/boot_routing_decider.dart';
 import 'app/app_dependency_module.dart';
 import 'domain/notifications/push_service.dart';
 import 'domain/billing/billing_service.dart';
@@ -58,6 +59,7 @@ void main() async {
   await bootstrap(appModule: LocalAppModule());
 
   runApp(const App());
+  await getIt<BootRoutingDecider>().start();
 }
 
 /// Local composition used by the shared package's development entry point.
@@ -66,7 +68,8 @@ class LocalAppModule implements AppDependencyModule {
   void register(GetIt getIt) {
     getIt.registerSingleton<PushService>(LocalPushService());
     getIt.registerSingleton<BillingService>(LocalBillingService());
-    getIt.registerSingleton<IProviderOptionService>(FossProviderOptionService());
+    getIt
+        .registerSingleton<IProviderOptionService>(FossProviderOptionService());
     getIt.registerSingleton<OnboardingSetupFlow>(
       const SelfHostedOnboardingSetupFlow(),
     );

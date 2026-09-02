@@ -3,7 +3,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
@@ -20,12 +19,10 @@ class MonitorView extends StatelessWidget {
   const MonitorView({
     super.key,
     required this.state,
-    required this.onRefresh,
     required this.onSelectContainer,
   });
 
   final ObservabilityState state;
-  final VoidCallback onRefresh;
   final ValueChanged<String?> onSelectContainer;
 
   @override
@@ -34,30 +31,7 @@ class MonitorView extends StatelessWidget {
       title: context.l10n.monitorTitle,
       activePillar: NavPillar.monitor,
       showBack: false,
-      body: _buildBody(context),
-    );
-  }
-
-  Widget _buildBody(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSizes.space,
-            vertical: AppSizes.space * 0.5,
-          ),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: TerminalButton(
-              label: context.l10n.actionRefresh,
-              isLoading: state.isLoading,
-              onTap: onRefresh,
-            ),
-          ),
-        ),
-        Expanded(child: _buildRegistryAndLogs(context)),
-      ],
+      body: _buildRegistryAndLogs(context),
     );
   }
 

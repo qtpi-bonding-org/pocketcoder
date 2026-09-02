@@ -8,6 +8,8 @@ class TerminalButton extends StatelessWidget {
   final Color? color;
   final bool isLoading;
 
+  final bool filled;
+
   const TerminalButton({
     super.key,
     required this.label,
@@ -15,6 +17,7 @@ class TerminalButton extends StatelessWidget {
     this.isPrimary = true,
     this.color,
     this.isLoading = false,
+    this.filled = true,
   });
 
   @override
@@ -22,8 +25,8 @@ class TerminalButton extends StatelessWidget {
     final colors = context.colorScheme;
     final accentColor =
         color ?? (isPrimary ? colors.primary : colors.onSurface);
-    final textColor = colors.surface; // True Black
-    final bgColor = accentColor;
+    final textColor = filled ? colors.surface : accentColor;
+    final bgColor = filled ? accentColor : Colors.transparent;
 
     return InkWell(
       onTap: isLoading ? null : onTap,

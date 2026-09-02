@@ -24,6 +24,9 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
   final HarnessOAuthAccountDao? _oauthAccountDao;
   final CredentialSelectionDao? _credentialSelectionDao;
 
+  static const _retries = 8;
+  static const _retryDelay = Duration(milliseconds: 600);
+
   @override
   Stream<List<HarnessOauthAccount>> watchHarnessOAuthAccounts() =>
       requireNonNull(
@@ -33,11 +36,32 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
       ).watch();
 
   @override
-  Future<List<HarnessOauthAccount>> fetchOAuthAccounts() => requireNonNull(
+  Future<List<HarnessOauthAccount>> fetchHarnessOAuthAccounts() =>
+      requireNonNull(
         _oauthAccountDao,
         'harness oauth account dao',
         HarnessAuthException.new,
       ).getFullList(requestPolicy: RequestPolicy.networkOnly);
+
+  @override
+  Future<bool> hasEffectiveHarnessConnection() async {
+    for (var attempt = 0; attempt < _retries; attempt++) {
+      try {
+        final oauth = await fetchHarnessOAuthAccounts();
+        final apiKey = await requireNonNull(
+          _credentialSelectionDao,
+          'credential selection dao',
+          HarnessAuthException.new,
+        ).getFullList(requestPolicy: RequestPolicy.networkOnly);
+        final connected =
+            oauth.any((a) => a.status == HarnessOauthAccountStatus.connected) ||
+                apiKey.any((c) => c.mode == CredentialSelectionMode.none);
+        if (connected) return true;
+      } catch (_) {}
+      if (attempt < _retries - 1) await Future.delayed(_retryDelay);
+    }
+    return false;
+  }
 
   @override
   Stream<List<CredentialSelection>> watchCredentialSelections() =>
@@ -209,8 +233,8 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
         }
 
         final response = switch (operation) {
-          _HarnessAuthOperation.status =>
-            await _api.harnessAuth.getHarnessAuthStatus(harnessRequest: request),
+          _HarnessAuthOperation.status => await _api.harnessAuth
+              .getHarnessAuthStatus(harnessRequest: request),
           _HarnessAuthOperation.start =>
             await _api.harnessAuth.startHarnessAuth(harnessRequest: request),
           _HarnessAuthOperation.poll =>
@@ -219,8 +243,8 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
             await _api.harnessAuth.submitHarnessAuth(harnessRequest: request),
           _HarnessAuthOperation.cancel =>
             await _api.harnessAuth.cancelHarnessAuth(harnessRequest: request),
-          _HarnessAuthOperation.disconnect =>
-            await _api.harnessAuth.disconnectHarnessAuth(harnessRequest: request),
+          _HarnessAuthOperation.disconnect => await _api.harnessAuth
+              .disconnectHarnessAuth(harnessRequest: request),
         };
         final generated = response.data;
         if (generated == null) {

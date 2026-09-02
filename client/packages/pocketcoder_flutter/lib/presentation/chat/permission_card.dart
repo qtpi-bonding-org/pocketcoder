@@ -5,6 +5,7 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'tool_command.dart';
 
 class PermissionCard extends StatelessWidget {
   const PermissionCard({super.key, required this.item, required this.onSelect});
@@ -26,14 +27,14 @@ class PermissionCard extends StatelessWidget {
     final options = permission.options;
 
     final requestId = permission.requestId;
-    // toolTitle is ACP's ToolCallUpdate.Title, optional on the wire -- a
-    // harness (goose, seen live) can omit it entirely for a given tool
-    // call. Without a fallback this card showed nothing but its own
-    // internal request UUID, with no indication at all of what it was
-    // actually asking permission for.
-    final toolTitle = permission.toolTitle ??
-        permission.description ??
-        context.l10n.permissionRequestedFallback;
+    // toolTitle alone (ACP's optional Title) is often a generic "shell".
+    final toolTitle = commandFor(
+      name: permission.toolTitle ?? '',
+      args: permission.toolArgs ?? '',
+      toolKind: permission.toolKind,
+      fallback:
+          permission.description ?? context.l10n.permissionRequestedFallback,
+    );
 
     return Container(
       margin: EdgeInsets.all(AppSizes.space),
@@ -119,6 +120,7 @@ class PermissionCard extends StatelessWidget {
               child: TerminalButton(
                 label: context.l10n.actionDeny,
                 isPrimary: false,
+                filled: false,
                 color: terminalColors.warning,
                 onTap: () => onSelect(requestId, cancelled: true),
               ),
@@ -131,6 +133,10 @@ class PermissionCard extends StatelessWidget {
                 for (final option in options)
                   TerminalButton(
                     label: option.label,
+                    filled: false,
+                    color: option.kind.startsWith('reject')
+                        ? terminalColors.warning
+                        : colors.primary,
                     onTap: () => onSelect(
                       requestId,
                       optionId: option.optionId,

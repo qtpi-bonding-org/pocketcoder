@@ -82,6 +82,8 @@ import 'package:pocketcoder_flutter/domain/billing/billing_service.dart'
     as _i619;
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart'
     as _i34;
+import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart'
+    as _i220;
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart'
     as _i209;
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart'
@@ -168,6 +170,8 @@ import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.d
     as _i935;
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart'
     as _i888;
+import 'package:pocketcoder_flutter/infrastructure/deployment/provisioning_log_db.dart'
+    as _i12;
 import 'package:pocketcoder_flutter/infrastructure/feedback/exception_mapper.dart'
     as _i976;
 import 'package:pocketcoder_flutter/infrastructure/feedback/feedback_service.dart'
@@ -281,6 +285,7 @@ extension GetItInjectableX on _i174.GetIt {
         () => externalModule.inAppBrowserLauncher);
     gh.lazySingleton<_i72.NetworkRecoverySignal>(
         () => _i72.NetworkRecoverySignal());
+    gh.lazySingleton<_i12.ProvisioningLogDb>(() => _i12.ProvisioningLogDb());
     gh.lazySingleton<String>(
       () => externalModule.releaseChannel,
       instanceName: 'releaseChannel',
@@ -448,12 +453,6 @@ extension GetItInjectableX on _i174.GetIt {
         ));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
-    gh.factory<_i464.AuthCubit>(() => _i464.AuthCubit(
-          gh<_i50.IAuthRepository>(),
-          gh<_i888.CaddyCaPinStore>(),
-          gh<_i1021.FactoryResetHook>(),
-          gh<_i131.ProDataDeletionHook>(),
-        ));
     gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
           gh<_i519.Client>(),
           gh<String>(instanceName: 'oauthRelayBaseUrl'),
@@ -484,6 +483,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i220.ToolPermissionRepository(gh<_i398.ToolPermissionDao>()));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
+    gh.factory<_i464.AuthCubit>(() => _i464.AuthCubit(
+          gh<_i50.IAuthRepository>(),
+          gh<_i888.CaddyCaPinStore>(),
+          gh<_i1021.FactoryResetHook>(),
+          gh<_i131.ProDataDeletionHook>(),
+          gh<_i619.BillingService>(),
+          gh<_i220.IServerReadinessCheck>(),
+        ));
     gh.factory<_i110.FileBrowserCubit>(
         () => _i110.FileBrowserCubit(gh<_i209.IFilesRepository>()));
     gh.factory<_i90.FileViewerCubit>(

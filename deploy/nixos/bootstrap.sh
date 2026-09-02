@@ -6,6 +6,19 @@ RELEASE_STATE=/var/lib/pocketcoder/release
 ARTIFACT_DIR=/var/lib/pocketcoder/artifacts
 RUNTIME_ENV=/var/lib/pocketcoder/config/runtime.env
 MARKER="$RELEASE_STATE/.initialized"
+INSTALLER_LOG=/var/lib/pocketcoder-installer-debug.log
+INSTALLER_LOG_IMPORTED_MARKER=/var/lib/pocketcoder-installer-log-imported
+
+# systemd may retry this unit before initialization completes. Import once
+# per boot attempt and fail open so diagnostics cannot block provisioning.
+if [ -f "$INSTALLER_LOG" ] && [ ! -f "$INSTALLER_LOG_IMPORTED_MARKER" ]; then
+  if systemd-cat -t pocketcoder-installer < "$INSTALLER_LOG" && \
+      touch "$INSTALLER_LOG_IMPORTED_MARKER"; then
+    :
+  else
+    echo "WARNING: failed to import installer log into journald -- continuing boot" >&2
+  fi
+fi
 
 if [ -f "$MARKER" ]; then
   echo "PocketCoder already initialized, skipping bootstrap"
@@ -17,6 +30,16 @@ source /etc/pocketcoder/pc_retry.sh
 trap 'pc_status_error "$PC_CURRENT_PHASE" "step failed at line ${BASH_LINENO[0]}"' ERR
 pc_status_init
 umask 077
+
+pc_debug_dump() {
+  echo "===== pc_debug_dump: $1 ====="
+  df -h /var/lib/pocketcoder 2>&1 || true
+  free -h 2>&1 || true
+  docker ps -a 2>&1 || true
+  docker compose -f /opt/pocketcoder/releases/current/docker-compose.yml \
+    --project-name pocketcoder ps 2>&1 || true
+  echo "===== end pc_debug_dump: $1 ====="
+}
 install -d -m 0755 "$RELEASES_DIR" "$RELEASE_STATE/manifests"
 install -d -m 0700 "$ARTIFACT_DIR" /var/lib/pocketcoder/config
 
@@ -234,6 +257,7 @@ pc_status_heartbeat_stop
 pc_retry 3 5 -- _pc_install_release && install_ok=1
 if [ "$install_ok" != 1 ]; then
   last_operation=$(pc_status_last_operation)
+  pc_debug_dump "release install failed after retries"
   pc_status_error "${last_operation:-fetching_release}" release_install_failed
   exit 1
 fi

@@ -11,9 +11,11 @@ import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
+import 'package:pocketcoder_flutter/infrastructure/foss/foss_billing_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/server_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/create_account_screen.dart';
@@ -28,6 +30,19 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversat
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class MockAuthRepository extends Mock implements IAuthRepository {}
+
+class _NoopServerReadinessCheck implements IServerReadinessCheck {
+  const _NoopServerReadinessCheck();
+  @override
+  ServerReadinessSnapshot get current =>
+      const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned);
+  @override
+  Stream<ServerReadinessSnapshot> get readinessChanges => const Stream.empty();
+  @override
+  Future<void> initialize() async {}
+  @override
+  Future<void> retry() async {}
+}
 
 void main() {
   late MockFlutterSecureStorage secureStorage;
@@ -44,6 +59,8 @@ void main() {
           CaddyCaPinStore(secureStorage),
           const NoopFactoryResetHook(),
           const NoopProDataDeletionHook(),
+          FossBillingService(),
+          const _NoopServerReadinessCheck(),
         ));
   });
 

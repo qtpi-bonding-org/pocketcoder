@@ -67,7 +67,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ag_ui_widgets.AgUiTranscript), findsOneWidget);
-    expect(find.text('root@device \$ '), findsOneWidget);
+    expect(find.text('commander@pc \$ '), findsOneWidget);
   });
 
   testWidgets('tapping WATCH calls onToggleMonitored', (tester) async {
@@ -121,7 +121,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(tester.getTopLeft(find.text('root@device \$ ')).dy,
+    expect(tester.getTopLeft(find.text('commander@pc \$ ')).dy,
         greaterThan(tester.getTopLeft(find.textContaining('a response')).dy));
   });
 

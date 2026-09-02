@@ -123,6 +123,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionBack => 'BACK';
 
   @override
+  String get actionSkip => 'SKIP';
+
+  @override
   String get actionContinue => 'NEXT';
 
   @override
@@ -455,6 +458,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chatCommandOutput => 'OUTPUT';
+
+  @override
+  String get chatToolCallFallback => 'Tool call';
 
   @override
   String get chatSessionAction => 'SESSION';
@@ -1423,6 +1429,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentStepFinalInstanceFetch => 'Confirming server is up';
+
+  @override
+  String get deploymentStepEnableWatchdog => 'Re-enabling server monitoring';
 
   @override
   String get deploymentStepWaitingForConnection => 'Connecting to server';
@@ -3001,6 +3010,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentDisconnectCancel => 'CANCEL';
+
+  @override
+  String get instanceVerificationTitle => 'Can\'t verify your deployment';
+
+  @override
+  String get instanceVerificationBody =>
+      'PocketCoder couldn\'t reach your server, and couldn\'t confirm with your cloud provider whether the instance still exists.';
+
+  @override
+  String get instanceVerificationCheckFailedMessage =>
+      'Still couldn\'t confirm. Try again, or choose an option below.';
+
+  @override
+  String instanceVerificationCheckAction(String provider) {
+    return 'CHECK VIA $provider';
+  }
+
+  @override
+  String get instanceVerificationResetAction => 'RESET';
+
+  @override
+  String get instanceVerificationResetConfirmationTitle =>
+      'Reset and start over?';
+
+  @override
+  String get instanceVerificationResetConfirmationBody =>
+      'This clears the saved session and local deployment state on this device. It does not delete your cloud server.';
+
+  @override
+  String get instanceVerificationResetConfirm => 'RESET';
+
+  @override
+  String get instanceVerificationResetCancel => 'CANCEL';
+
+  @override
+  String get instanceGoneTitle => 'Instance no longer exists';
+
+  @override
+  String get instanceGoneBody =>
+      'The provider confirms this deployment\'s server no longer exists. The only way forward is to reset local state and set up a new deployment.';
+
+  @override
+  String get instanceGoneResetAction => 'RESET';
+
+  @override
+  String get instanceGoneResetConfirmationTitle =>
+      'Reset local deployment state?';
+
+  @override
+  String get instanceGoneResetConfirmationBody =>
+      'This clears all local deployment state on this device. The instance is already gone on the provider side, so nothing further will be deleted remotely.';
+
+  @override
+  String get instanceGoneResetCancel => 'CANCEL';
+
+  @override
+  String get instanceGoneResetConfirm => 'RESET';
 
   @override
   String get deploymentDiscardAttemptTitle => 'DISCARD THIS DEPLOYMENT RECORD?';

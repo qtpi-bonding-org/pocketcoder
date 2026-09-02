@@ -295,7 +295,7 @@ void main() {
 
     await tester.tap(find.text('SAVE'));
     await tester.pumpAndSettle();
-    expect(find.text('CONFIRM SERVER CONTROL'), findsOneWidget);
+    expect(find.text('[ CONFIRM SERVER CONTROL ]'), findsOneWidget);
     expect(service.calls, isEmpty);
     await tester.tap(find.text('CANCEL'));
     await tester.pumpAndSettle();

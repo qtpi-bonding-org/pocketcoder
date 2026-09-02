@@ -70,9 +70,6 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
           'existing server connected; opening harness choice');
       _pocoMessage.value = context.l10n.onboardingPocoWelcome;
       _pocoSequence.value = PocoExpressions.happy;
-      Future.delayed(const Duration(seconds: 2), () {
-        if (context.mounted) context.goNamed(RouteNames.onboardingHarnessAuth);
-      });
     } else if (state.status == UiFlowStatus.failure) {
       // Never surfaces state.error's raw text -- it may carry an
       // unpredictable underlying exception (network, decoding, etc.) that

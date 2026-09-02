@@ -455,6 +455,8 @@ class AppRoutes {
   static const String config = '/config';
   static const String deploymentProgress = '/deployment/progress';
   static const String deploymentDetails = '/deployment/details';
+  static const String instanceUnverifiable = '/deployment/unverifiable';
+  static const String instanceGone = '/deployment/gone';
 }
 
 class RouteNames {
@@ -503,6 +505,8 @@ class RouteNames {
   static const String config = 'config';
   static const String deploymentProgress = 'deploymentProgress';
   static const String deploymentDetails = 'deploymentDetails';
+  static const String instanceUnverifiable = 'instanceUnverifiable';
+  static const String instanceGone = 'instanceGone';
 }
 
 class AppNavigation {

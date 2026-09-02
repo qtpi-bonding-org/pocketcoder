@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
@@ -133,6 +135,73 @@ void main() {
     final result = await repo.fetchHarnessModels();
 
     expect(result, [testHarnessModel]);
+    verify(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(1);
+  });
+
+  test(
+      'fetchHarnessModels only hits the network once across repeated calls '
+      'in the same app session', () async {
+    when(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) async => [testHarnessModel]);
+
+    final first = await repo.fetchHarnessModels();
+    final second = await repo.fetchHarnessModels();
+    final third = await repo.fetchHarnessModels();
+
+    expect(first, [testHarnessModel]);
+    expect(second, [testHarnessModel]);
+    expect(third, [testHarnessModel]);
+    verify(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(1);
+  });
+
+  test(
+      'fetchHarnessModels does not permanently cache a failure -- a later '
+      'call retries the network fetch', () async {
+    when(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) => Future.error(Exception('network unreachable')));
+
+    Object? caughtError;
+    try {
+      await repo.fetchHarnessModels();
+    } catch (e) {
+      caughtError = e;
+    }
+    expect(caughtError, isA<Exception>());
+
+    when(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) async => [testHarnessModel]);
+
+    final result = await repo.fetchHarnessModels();
+
+    expect(result, [testHarnessModel]);
+    verify(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(2);
+  });
+
+  test(
+      'fetchHarnessModels de-duplicates concurrent in-flight calls into a '
+      'single network fetch', () async {
+    final controller = Completer<List<HarnessModel>>();
+    when(() => harnessModelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) => controller.future);
+
+    final firstCall = repo.fetchHarnessModels();
+    final secondCall = repo.fetchHarnessModels();
+    controller.complete([testHarnessModel]);
+
+    final results = await Future.wait([firstCall, secondCall]);
+
+    expect(results[0], [testHarnessModel]);
+    expect(results[1], [testHarnessModel]);
     verify(() => harnessModelDao.getFullList(
           requestPolicy: RequestPolicy.networkOnly,
         )).called(1);

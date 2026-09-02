@@ -4,6 +4,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
@@ -43,17 +44,37 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             .snapshot
             ?.selectedHarnesses ??
         const [];
+    final connected = adapter.keep<ValueNotifier<Set<String>>>(
+      'connectedHarnessIds',
+      () => ValueNotifier(<String>{}),
+      dispose: (notifier) => notifier.dispose(),
+    );
     return ValueListenableBuilder<UiFlowStatus>(
       valueListenable: status,
       builder: (context, status, _) => ValueListenableBuilder<List<Harnesse>>(
         valueListenable: harnesses,
-        builder: (context, harnesses, _) => AgentAuthView(
-          status: status,
-          harnesses: harnesses,
-          error: context.read<ProviderCubit>().state.error,
-          onSelected: (harness) => _select(context, harness),
-          harnessProvidersLoaded: auth.state.harnessProvidersLoaded,
-          selectedHarnesses: selectedHarnesses,
+        builder: (context, harnesses, _) => ValueListenableBuilder<Set<String>>(
+          valueListenable: connected,
+          builder: (context, connectedIds, _) {
+            // connectedIds is monotonic for this screen's lifetime, but
+            // harnesses is live and can drop an id it once contained --
+            // NEXT must disappear rather than throw if that happens.
+            final connectedHarness =
+                harnesses.where((h) => connectedIds.contains(h.id)).firstOrNull;
+            return AgentAuthView(
+              status: status,
+              harnesses: harnesses,
+              error: context.read<ProviderCubit>().state.error,
+              onSelected: (harness) => _select(context, harness, connected),
+              harnessProvidersLoaded: auth.state.harnessProvidersLoaded,
+              selectedHarnesses: selectedHarnesses,
+              connectedHarnessIds: connectedIds,
+              onSkip: () => context.go(AppRoutes.chats),
+              onContinue: connectedHarness == null
+                  ? null
+                  : () => _openChat(context, connectedHarness),
+            );
+          },
         ),
       ),
     );
@@ -73,7 +94,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     return null;
   }
 
-  Future<void> _select(BuildContext context, Harnesse harness) async {
+  Future<void> _select(
+    BuildContext context,
+    Harnesse harness,
+    ValueNotifier<Set<String>> connected,
+  ) async {
     final auth = context.read<HarnessAuthCubit>();
     if (!auth.state.harnessProvidersLoaded) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -86,7 +111,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
       // oauth-capable edge to log in with. These authenticate via a plain
       // provider_api_keys credential instead (mode: none) -- see
       // _selectWithApiKey.
-      await _selectWithApiKey(context, harness);
+      await _selectWithApiKey(context, harness, connected);
       return;
     }
     OnboardingLogger.event(
@@ -100,15 +125,16 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
       visibility: harnessAccountVisibilityPersonal,
     ));
     if (!context.mounted) return;
-    await _showAuthDialog(context, auth, harness, provider);
+    await _showAuthDialog(context, auth, harness, provider, connected);
   }
 
-  /// mode: none is synchronous on the server (it just records which
-  /// provider's credential to use -- see harness_auth.go's StartHarnessAuth,
-  /// there is no connecting/polling phase at all), so this never opens the
-  /// OAuth dialog: it resolves a provider (an existing key, or one just
-  /// entered), starts the credential selection, and goes straight to chat.
-  Future<void> _selectWithApiKey(BuildContext context, Harnesse harness) async {
+  /// mode: none is synchronous (harness_auth.go's StartHarnessAuth just
+  /// records the credential, no connecting/polling phase), so no dialog.
+  Future<void> _selectWithApiKey(
+    BuildContext context,
+    Harnesse harness,
+    ValueNotifier<Set<String>> connected,
+  ) async {
     final auth = context.read<HarnessAuthCubit>();
     final providerCubit = context.read<ProviderCubit>();
     final providerIds = auth.state.harnessProviders
@@ -153,8 +179,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     if (!context.mounted) return;
     await auth.startWithNone(harness.id,
         provider: providerId, visibility: harnessAccountVisibilityPersonal);
-    if (!context.mounted) return;
-    await _openChat(context, harness);
+    // startWithNone goes through _withBusy, which records a failure in
+    // cubit state instead of throwing -- same swallowed-failure hazard as
+    // saveProviderAPIKey above.
+    if (auth.state.status == UiFlowStatus.failure) return;
+    connected.value = {...connected.value, harness.id};
   }
 
   Future<void> _openChat(BuildContext context, Harnesse harness) async {
@@ -176,10 +205,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     HarnessAuthCubit auth,
     Harnesse harness,
     String provider,
+    ValueNotifier<Set<String>> connected,
   ) async {
     Timer? timer;
     int? timerInterval;
-    var openedChat = false;
+    var closedDialog = false;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -208,14 +238,14 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             timer = null;
             timerInterval = null;
           }
-          if (status?.isConnected == true && !openedChat) {
+          if (status?.isConnected == true && !closedDialog) {
             timer?.cancel();
             timer = null;
             timerInterval = null;
-            openedChat = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
+            closedDialog = true;
+            connected.value = {...connected.value, harness.id};
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               Navigator.of(dialogContext).pop();
-              await _openChat(context, harness);
             });
           }
           final challenge = status?.challenge;

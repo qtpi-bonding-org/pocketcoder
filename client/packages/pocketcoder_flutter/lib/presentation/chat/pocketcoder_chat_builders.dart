@@ -17,6 +17,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
+import 'tool_command.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_terminal_response.dart';
@@ -106,9 +107,15 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         final metadata = message.metadata ?? const <String, dynamic>{};
         final name = metadata['name'] as String? ?? '';
         final args = metadata['args'] as String? ?? '';
+        final toolKind = metadata['toolKind'] as String?;
         final result = metadata['result'] as String?;
         final diffs = (metadata['diffs'] as List<dynamic>?) ?? const [];
-        final command = args.trim().isEmpty ? name : '$name $args';
+        final command = commandFor(
+          name: name,
+          args: args,
+          toolKind: toolKind,
+          fallback: context.l10n.chatToolCallFallback,
+        );
         return TerminalCommandCard(
           command: command,
           status:
@@ -135,7 +142,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: 'root@device \$ ',
+                    text: 'commander@pc \$ ',
                     style: TextStyle(
                       color: color,
                       fontFamily: AppFonts.bodyFamily,
@@ -192,7 +199,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
             child: TerminalTranscriptLine(
-              prefix: 'root@device \$ ',
+              prefix: 'commander@pc \$ ',
               color: emphasize(context.colorScheme.secondary, Emphasis.selected)
                   .text,
               child: child,

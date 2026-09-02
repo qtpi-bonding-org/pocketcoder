@@ -89,7 +89,7 @@ dependencies:
   ag_ui_widgets_flutter:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
-      ref: 0e818c83834b9a61987518189f02e357f8f4b534
+      ref: 4d6c0bc96e2eaf56547e806543b689b1f757ab91
 
 dependency_overrides:
   # Keep the UnifiedPush crypto dependency on the portable hosted 0.6.0

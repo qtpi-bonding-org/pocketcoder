@@ -41,6 +41,7 @@ class L10nKeyResolver {
       'action.reject' => _l10n.actionReject,
       'action.restore' => _l10n.actionRestore,
       'action.save' => _l10n.actionSave,
+      'action.skip' => _l10n.actionSkip,
       'agent.config.default.badge' => _l10n.agentConfigDefaultBadge,
       'agent.config.delete' => _l10n.agentConfigDelete,
       'agent.config.delete.confirm.title' => _l10n.agentConfigDeleteConfirmTitle,
@@ -126,6 +127,7 @@ class L10nKeyResolver {
       'chat.thinking.live' => _l10n.chatThinkingLive,
       'chat.thinking.role' => _l10n.chatThinkingRole,
       'chat.thought' => _l10n.chatThought,
+      'chat.tool.call.fallback' => _l10n.chatToolCallFallback,
       'chat.use.global.default' => _l10n.chatUseGlobalDefault,
       'choose.provider.coming.soon' => _l10n.chooseProviderComingSoon,
       'choose.provider.pro.badge' => _l10n.chooseProviderProBadge,
@@ -247,6 +249,7 @@ class L10nKeyResolver {
       'deployment.step.create.installer.disk' => _l10n.deploymentStepCreateInstallerDisk,
       'deployment.step.create.instance' => _l10n.deploymentStepCreateInstance,
       'deployment.step.create.target.disk' => _l10n.deploymentStepCreateTargetDisk,
+      'deployment.step.enable.watchdog' => _l10n.deploymentStepEnableWatchdog,
       'deployment.step.fetching.release' => _l10n.deploymentStepFetchingRelease,
       'deployment.step.final.instance.fetch' => _l10n.deploymentStepFinalInstanceFetch,
       'deployment.step.loading.images' => _l10n.deploymentStepLoadingImages,
@@ -364,6 +367,21 @@ class L10nKeyResolver {
       'initialization.status.schema' => _l10n.initializationStatusSchema,
       'initialization.technical.details.toggle' => _l10n.initializationTechnicalDetailsToggle,
       'initialization.unknown' => _l10n.initializationUnknown,
+      'instance.gone.body' => _l10n.instanceGoneBody,
+      'instance.gone.reset.action' => _l10n.instanceGoneResetAction,
+      'instance.gone.reset.cancel' => _l10n.instanceGoneResetCancel,
+      'instance.gone.reset.confirm' => _l10n.instanceGoneResetConfirm,
+      'instance.gone.reset.confirmation.body' => _l10n.instanceGoneResetConfirmationBody,
+      'instance.gone.reset.confirmation.title' => _l10n.instanceGoneResetConfirmationTitle,
+      'instance.gone.title' => _l10n.instanceGoneTitle,
+      'instance.verification.body' => _l10n.instanceVerificationBody,
+      'instance.verification.check.failed.message' => _l10n.instanceVerificationCheckFailedMessage,
+      'instance.verification.reset.action' => _l10n.instanceVerificationResetAction,
+      'instance.verification.reset.cancel' => _l10n.instanceVerificationResetCancel,
+      'instance.verification.reset.confirm' => _l10n.instanceVerificationResetConfirm,
+      'instance.verification.reset.confirmation.body' => _l10n.instanceVerificationResetConfirmationBody,
+      'instance.verification.reset.confirmation.title' => _l10n.instanceVerificationResetConfirmationTitle,
+      'instance.verification.title' => _l10n.instanceVerificationTitle,
       'llm.active.model.section' => _l10n.llmActiveModelSection,
       'llm.add.key' => _l10n.llmAddKey,
       'llm.add.key.hint' => _l10n.llmAddKeyHint,
@@ -925,6 +943,7 @@ class L10nKeyResolver {
       'initialization.ready' => _l10n.initializationReady(args?['ipAddress'] as String? ?? ''),
       'initialization.status.prefix' => _l10n.initializationStatusPrefix(args?['status'] as String? ?? ''),
       'initialization.sync.attempt' => _l10n.initializationSyncAttempt(args?['attempt'] as String? ?? ''),
+      'instance.verification.check.action' => _l10n.instanceVerificationCheckAction(args?['provider'] as String? ?? ''),
       'llm.api.key.dialog.title' => _l10n.llmApiKeyDialogTitle(args?['provider'] as String? ?? ''),
       'llm.enter.credentials' => _l10n.llmEnterCredentials(args?['provider'] as String? ?? ''),
       'llm.models.available' => _l10n.llmModelsAvailable(args?['count'] as int? ?? 0),
@@ -997,6 +1016,7 @@ class L10nKeyResolver {
     'action.reject',
     'action.restore',
     'action.save',
+    'action.skip',
     'agent.config.default.badge',
     'agent.config.delete',
     'agent.config.delete.confirm.body',
@@ -1090,6 +1110,7 @@ class L10nKeyResolver {
     'chat.thinking.live',
     'chat.thinking.role',
     'chat.thought',
+    'chat.tool.call.fallback',
     'chat.use.global.default',
     'choose.provider.coming.soon',
     'choose.provider.pro.badge',
@@ -1218,6 +1239,7 @@ class L10nKeyResolver {
     'deployment.step.create.installer.disk',
     'deployment.step.create.instance',
     'deployment.step.create.target.disk',
+    'deployment.step.enable.watchdog',
     'deployment.step.fetching.release',
     'deployment.step.final.instance.fetch',
     'deployment.step.loading.images',
@@ -1351,6 +1373,22 @@ class L10nKeyResolver {
     'initialization.sync.attempt',
     'initialization.technical.details.toggle',
     'initialization.unknown',
+    'instance.gone.body',
+    'instance.gone.reset.action',
+    'instance.gone.reset.cancel',
+    'instance.gone.reset.confirm',
+    'instance.gone.reset.confirmation.body',
+    'instance.gone.reset.confirmation.title',
+    'instance.gone.title',
+    'instance.verification.body',
+    'instance.verification.check.action',
+    'instance.verification.check.failed.message',
+    'instance.verification.reset.action',
+    'instance.verification.reset.cancel',
+    'instance.verification.reset.confirm',
+    'instance.verification.reset.confirmation.body',
+    'instance.verification.reset.confirmation.title',
+    'instance.verification.title',
     'llm.active.model.section',
     'llm.add.key',
     'llm.add.key.hint',
@@ -1951,6 +1989,7 @@ class L10nKeyResolver {
     'actionReject': 'action.reject',
     'actionRestore': 'action.restore',
     'actionSave': 'action.save',
+    'actionSkip': 'action.skip',
     'agentConfigDefaultBadge': 'agent.config.default.badge',
     'agentConfigDelete': 'agent.config.delete',
     'agentConfigDeleteConfirmBody': 'agent.config.delete.confirm.body',
@@ -2044,6 +2083,7 @@ class L10nKeyResolver {
     'chatThinkingLive': 'chat.thinking.live',
     'chatThinkingRole': 'chat.thinking.role',
     'chatThought': 'chat.thought',
+    'chatToolCallFallback': 'chat.tool.call.fallback',
     'chatUseGlobalDefault': 'chat.use.global.default',
     'chooseProviderComingSoon': 'choose.provider.coming.soon',
     'chooseProviderProBadge': 'choose.provider.pro.badge',
@@ -2172,6 +2212,7 @@ class L10nKeyResolver {
     'deploymentStepCreateInstallerDisk': 'deployment.step.create.installer.disk',
     'deploymentStepCreateInstance': 'deployment.step.create.instance',
     'deploymentStepCreateTargetDisk': 'deployment.step.create.target.disk',
+    'deploymentStepEnableWatchdog': 'deployment.step.enable.watchdog',
     'deploymentStepFetchingRelease': 'deployment.step.fetching.release',
     'deploymentStepFinalInstanceFetch': 'deployment.step.final.instance.fetch',
     'deploymentStepLoadingImages': 'deployment.step.loading.images',
@@ -2305,6 +2346,22 @@ class L10nKeyResolver {
     'initializationSyncAttempt': 'initialization.sync.attempt',
     'initializationTechnicalDetailsToggle': 'initialization.technical.details.toggle',
     'initializationUnknown': 'initialization.unknown',
+    'instanceGoneBody': 'instance.gone.body',
+    'instanceGoneResetAction': 'instance.gone.reset.action',
+    'instanceGoneResetCancel': 'instance.gone.reset.cancel',
+    'instanceGoneResetConfirm': 'instance.gone.reset.confirm',
+    'instanceGoneResetConfirmationBody': 'instance.gone.reset.confirmation.body',
+    'instanceGoneResetConfirmationTitle': 'instance.gone.reset.confirmation.title',
+    'instanceGoneTitle': 'instance.gone.title',
+    'instanceVerificationBody': 'instance.verification.body',
+    'instanceVerificationCheckAction': 'instance.verification.check.action',
+    'instanceVerificationCheckFailedMessage': 'instance.verification.check.failed.message',
+    'instanceVerificationResetAction': 'instance.verification.reset.action',
+    'instanceVerificationResetCancel': 'instance.verification.reset.cancel',
+    'instanceVerificationResetConfirm': 'instance.verification.reset.confirm',
+    'instanceVerificationResetConfirmationBody': 'instance.verification.reset.confirmation.body',
+    'instanceVerificationResetConfirmationTitle': 'instance.verification.reset.confirmation.title',
+    'instanceVerificationTitle': 'instance.verification.title',
     'llmActiveModelSection': 'llm.active.model.section',
     'llmAddKey': 'llm.add.key',
     'llmAddKeyHint': 'llm.add.key.hint',
@@ -2902,6 +2959,7 @@ class L10nKeyResolver {
     'action.reject': 'actionReject',
     'action.restore': 'actionRestore',
     'action.save': 'actionSave',
+    'action.skip': 'actionSkip',
     'agent.config.default.badge': 'agentConfigDefaultBadge',
     'agent.config.delete': 'agentConfigDelete',
     'agent.config.delete.confirm.body': 'agentConfigDeleteConfirmBody',
@@ -2995,6 +3053,7 @@ class L10nKeyResolver {
     'chat.thinking.live': 'chatThinkingLive',
     'chat.thinking.role': 'chatThinkingRole',
     'chat.thought': 'chatThought',
+    'chat.tool.call.fallback': 'chatToolCallFallback',
     'chat.use.global.default': 'chatUseGlobalDefault',
     'choose.provider.coming.soon': 'chooseProviderComingSoon',
     'choose.provider.pro.badge': 'chooseProviderProBadge',
@@ -3123,6 +3182,7 @@ class L10nKeyResolver {
     'deployment.step.create.installer.disk': 'deploymentStepCreateInstallerDisk',
     'deployment.step.create.instance': 'deploymentStepCreateInstance',
     'deployment.step.create.target.disk': 'deploymentStepCreateTargetDisk',
+    'deployment.step.enable.watchdog': 'deploymentStepEnableWatchdog',
     'deployment.step.fetching.release': 'deploymentStepFetchingRelease',
     'deployment.step.final.instance.fetch': 'deploymentStepFinalInstanceFetch',
     'deployment.step.loading.images': 'deploymentStepLoadingImages',
@@ -3256,6 +3316,22 @@ class L10nKeyResolver {
     'initialization.sync.attempt': 'initializationSyncAttempt',
     'initialization.technical.details.toggle': 'initializationTechnicalDetailsToggle',
     'initialization.unknown': 'initializationUnknown',
+    'instance.gone.body': 'instanceGoneBody',
+    'instance.gone.reset.action': 'instanceGoneResetAction',
+    'instance.gone.reset.cancel': 'instanceGoneResetCancel',
+    'instance.gone.reset.confirm': 'instanceGoneResetConfirm',
+    'instance.gone.reset.confirmation.body': 'instanceGoneResetConfirmationBody',
+    'instance.gone.reset.confirmation.title': 'instanceGoneResetConfirmationTitle',
+    'instance.gone.title': 'instanceGoneTitle',
+    'instance.verification.body': 'instanceVerificationBody',
+    'instance.verification.check.action': 'instanceVerificationCheckAction',
+    'instance.verification.check.failed.message': 'instanceVerificationCheckFailedMessage',
+    'instance.verification.reset.action': 'instanceVerificationResetAction',
+    'instance.verification.reset.cancel': 'instanceVerificationResetCancel',
+    'instance.verification.reset.confirm': 'instanceVerificationResetConfirm',
+    'instance.verification.reset.confirmation.body': 'instanceVerificationResetConfirmationBody',
+    'instance.verification.reset.confirmation.title': 'instanceVerificationResetConfirmationTitle',
+    'instance.verification.title': 'instanceVerificationTitle',
     'llm.active.model.section': 'llmActiveModelSection',
     'llm.add.key': 'llmAddKey',
     'llm.add.key.hint': 'llmAddKeyHint',
@@ -3860,6 +3936,7 @@ abstract class L10nKeys {
   static const actionReject = 'action.reject';
   static const actionRestore = 'action.restore';
   static const actionSave = 'action.save';
+  static const actionSkip = 'action.skip';
   static const agentConfigDefaultBadge = 'agent.config.default.badge';
   static const agentConfigDelete = 'agent.config.delete';
   static (String, Map<String, dynamic>) agentConfigDeleteConfirmBody(String name) => ('agent.config.delete.confirm.body', {'name': name});
@@ -3953,6 +4030,7 @@ abstract class L10nKeys {
   static const chatThinkingLive = 'chat.thinking.live';
   static const chatThinkingRole = 'chat.thinking.role';
   static const chatThought = 'chat.thought';
+  static const chatToolCallFallback = 'chat.tool.call.fallback';
   static const chatUseGlobalDefault = 'chat.use.global.default';
   static const chooseProviderComingSoon = 'choose.provider.coming.soon';
   static const chooseProviderProBadge = 'choose.provider.pro.badge';
@@ -4081,6 +4159,7 @@ abstract class L10nKeys {
   static const deploymentStepCreateInstallerDisk = 'deployment.step.create.installer.disk';
   static const deploymentStepCreateInstance = 'deployment.step.create.instance';
   static const deploymentStepCreateTargetDisk = 'deployment.step.create.target.disk';
+  static const deploymentStepEnableWatchdog = 'deployment.step.enable.watchdog';
   static const deploymentStepFetchingRelease = 'deployment.step.fetching.release';
   static const deploymentStepFinalInstanceFetch = 'deployment.step.final.instance.fetch';
   static const deploymentStepLoadingImages = 'deployment.step.loading.images';
@@ -4214,6 +4293,22 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) initializationSyncAttempt(String attempt) => ('initialization.sync.attempt', {'attempt': attempt});
   static const initializationTechnicalDetailsToggle = 'initialization.technical.details.toggle';
   static const initializationUnknown = 'initialization.unknown';
+  static const instanceGoneBody = 'instance.gone.body';
+  static const instanceGoneResetAction = 'instance.gone.reset.action';
+  static const instanceGoneResetCancel = 'instance.gone.reset.cancel';
+  static const instanceGoneResetConfirm = 'instance.gone.reset.confirm';
+  static const instanceGoneResetConfirmationBody = 'instance.gone.reset.confirmation.body';
+  static const instanceGoneResetConfirmationTitle = 'instance.gone.reset.confirmation.title';
+  static const instanceGoneTitle = 'instance.gone.title';
+  static const instanceVerificationBody = 'instance.verification.body';
+  static (String, Map<String, dynamic>) instanceVerificationCheckAction(String provider) => ('instance.verification.check.action', {'provider': provider});
+  static const instanceVerificationCheckFailedMessage = 'instance.verification.check.failed.message';
+  static const instanceVerificationResetAction = 'instance.verification.reset.action';
+  static const instanceVerificationResetCancel = 'instance.verification.reset.cancel';
+  static const instanceVerificationResetConfirm = 'instance.verification.reset.confirm';
+  static const instanceVerificationResetConfirmationBody = 'instance.verification.reset.confirmation.body';
+  static const instanceVerificationResetConfirmationTitle = 'instance.verification.reset.confirmation.title';
+  static const instanceVerificationTitle = 'instance.verification.title';
   static const llmActiveModelSection = 'llm.active.model.section';
   static const llmAddKey = 'llm.add.key';
   static const llmAddKeyHint = 'llm.add.key.hint';

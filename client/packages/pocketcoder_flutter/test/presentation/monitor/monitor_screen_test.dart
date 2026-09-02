@@ -25,7 +25,6 @@ void main() {
           ContainerInfo(name: 'pocketcoder-ollama', state: 'exited', status: 'Exited (0)'),
         ],
       ),
-      onRefresh: () {},
       onSelectContainer: (_) {},
     )));
 
@@ -43,7 +42,6 @@ void main() {
       state: const ObservabilityState(
         containers: [ContainerInfo(name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h')],
       ),
-      onRefresh: () {},
       onSelectContainer: (c) => selected = c,
     )));
 
@@ -61,7 +59,6 @@ void main() {
           LogEntry(timestamp: null, message: 'line two'),
         ],
       ),
-      onRefresh: () {},
       onSelectContainer: (_) {},
     )));
 
@@ -78,7 +75,6 @@ void main() {
       state: const ObservabilityState(
         containers: [ContainerInfo(name: 'custom-service', state: 'running', status: 'Up 1h')],
       ),
-      onRefresh: () {},
       onSelectContainer: (_) {},
     )));
 
@@ -91,7 +87,6 @@ void main() {
       state: const ObservabilityState(
         stats: SystemStats(tokenUsage: [TokenUsage(model: 'gpt-4', tokens: 1)]),
       ),
-      onRefresh: () {},
       onSelectContainer: (_) {},
     )));
 

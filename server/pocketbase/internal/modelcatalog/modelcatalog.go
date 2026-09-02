@@ -201,33 +201,42 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 				providerIDs = append(providerIDs, providerRec.GetString("provider_id"))
 			}
 		}
-		for _, pid := range providerIDs {
-			p, ok := providers[pid]
-			if !ok {
-				continue
-			}
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-			providerRec, err := app.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": pid})
-			if err != nil {
-				continue
-			}
-			if h.GetBool("provider_fanout") {
-				if err := upsertHarnessProviderEdge(app, h, providerRec); err != nil {
-					log.Printf("[ModelCatalog] skipping harness_providers edge %s/%s: %v", h.GetString("cli_id"), pid, err)
-				}
-			}
-			for _, m := range p.Models {
-				modelRec, err := upsertModel(app, providerRec, p, m)
-				if err != nil {
-					log.Printf("[ModelCatalog] skipping model %s/%s: %v", p.ID, m.ID, err)
+		// One transaction per harness, not one commit per row -- avoids
+		// thousands of individual SQLite single-writer commits. Row errors
+		// are only logged/skipped, never returned, so one bad row can't
+		// roll back the rest of the harness's batch.
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			for _, pid := range providerIDs {
+				p, ok := providers[pid]
+				if !ok {
 					continue
 				}
-				if err := upsertHarnessModel(app, h, modelRec, m.ID); err != nil {
-					log.Printf("[ModelCatalog] skipping harness_model %s/%s/%s: %v", h.GetString("cli_id"), p.ID, m.ID, err)
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				providerRec, err := txApp.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": pid})
+				if err != nil {
+					continue
+				}
+				if h.GetBool("provider_fanout") {
+					if err := upsertHarnessProviderEdge(txApp, h, providerRec); err != nil {
+						log.Printf("[ModelCatalog] skipping harness_providers edge %s/%s: %v", h.GetString("cli_id"), pid, err)
+					}
+				}
+				for _, m := range p.Models {
+					modelRec, err := upsertModel(txApp, providerRec, p, m)
+					if err != nil {
+						log.Printf("[ModelCatalog] skipping model %s/%s: %v", p.ID, m.ID, err)
+						continue
+					}
+					if err := upsertHarnessModel(txApp, h, modelRec, m.ID); err != nil {
+						log.Printf("[ModelCatalog] skipping harness_model %s/%s/%s: %v", h.GetString("cli_id"), p.ID, m.ID, err)
+					}
 				}
 			}
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
 	return nil

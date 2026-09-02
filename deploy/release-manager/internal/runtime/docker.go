@@ -102,6 +102,9 @@ func (docker Docker) ComposeUp(composeFile, environmentFile string, profiles []s
 	}
 	arguments = append(arguments, "up", "-d", "--no-build", "--remove-orphans")
 	if err := docker.runCompose(arguments); err != nil {
+		// Best-effort; must never mask the original `up` error.
+		logsArguments := []string{"compose", "--project-name", docker.projectName(), "--env-file", environmentFile, "-f", composeFile, "logs", "--no-color", "--tail=500"}
+		_ = docker.runCompose(logsArguments)
 		return fmt.Errorf("docker compose up: %w", err)
 	}
 	return nil

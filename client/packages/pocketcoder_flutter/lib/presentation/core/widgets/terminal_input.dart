@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
-/// Keeps a fixed prompt prefix (e.g. "root@device $ ") as real text content,
+/// Keeps a fixed prompt prefix (e.g. "commander@pc $ ") as real text content,
 /// not an overlay, so wrapped continuation lines return to the left margin
 /// instead of hanging-indenting under the prompt.
 class _PromptController extends TextEditingController {

@@ -26,7 +26,7 @@ class AuthSessionSnapshot {
 class AuthSessionCoordinator {
   AuthSessionCoordinator(
     this._authRepository, {
-    this.refreshTimeout = const Duration(seconds: 8),
+    this.refreshTimeout = const Duration(seconds: 3),
   }) {
     // Subscribe before taking the initial snapshot. This prevents a change
     // between subscription and the first replay from being missed.
@@ -50,6 +50,8 @@ class AuthSessionCoordinator {
   late AuthSessionSnapshot _latestSnapshot;
   final StreamController<AuthSessionSnapshot> _liveChanges =
       StreamController<AuthSessionSnapshot>.broadcast();
+
+  AuthSessionSnapshot get current => _latestSnapshot;
 
   /// A broadcast stream replaying the latest snapshot to each listener.
   Stream<AuthSessionSnapshot> get sessionChanges => Stream.multi(
