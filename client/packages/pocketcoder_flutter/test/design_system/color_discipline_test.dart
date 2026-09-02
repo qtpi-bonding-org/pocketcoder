@@ -6,6 +6,8 @@ const _allowedDangerSites = {
   'lib/presentation/core/widgets/terminal_confirm_dialog.dart',
   'lib/presentation/provider/adapters/provider_adapter.dart',
   'lib/presentation/mcp/widgets/mcp_management_view.dart',
+  'lib/presentation/settings/adapters/settings_adapter.dart',
+  'lib/presentation/errors/error_inbox_screen.dart',
 };
 
 void main() {
