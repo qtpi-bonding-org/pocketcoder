@@ -5435,6 +5435,66 @@ abstract class AppLocalizations {
   /// **'CANCEL'**
   String get deploymentDisconnectCancel;
 
+  /// Title of the screen shown when the app can't reach the server and can't confirm with the cloud provider whether the instance still exists
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t verify your deployment'**
+  String get instanceVerificationTitle;
+
+  /// Body text explaining why the instance-verification screen is showing
+  ///
+  /// In en, this message translates to:
+  /// **'PocketCoder couldn\'t reach your server, and couldn\'t confirm with your cloud provider whether the instance still exists.'**
+  String get instanceVerificationBody;
+
+  /// Shown after a retry via Linode still couldn't get a definitive answer
+  ///
+  /// In en, this message translates to:
+  /// **'Still couldn\'t confirm. Try again, or choose an option below.'**
+  String get instanceVerificationCheckFailedMessage;
+
+  /// Button label to sign in to (or re-verify via) the cloud provider and retry the existence check
+  ///
+  /// In en, this message translates to:
+  /// **'CHECK VIA LINODE'**
+  String get instanceVerificationCheckAction;
+
+  /// Button label for the non-destructive option that just returns to onboarding without changing any local state
+  ///
+  /// In en, this message translates to:
+  /// **'GO BACK'**
+  String get instanceVerificationBackAction;
+
+  /// Button label for the destructive option that clears local deployment state
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get instanceVerificationResetAction;
+
+  /// Title of the confirmation dialog for the destructive reset option
+  ///
+  /// In en, this message translates to:
+  /// **'Reset and start over?'**
+  String get instanceVerificationResetConfirmationTitle;
+
+  /// Body of the reset confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'This clears the saved session and local deployment state on this device. It does not delete your cloud server.'**
+  String get instanceVerificationResetConfirmationBody;
+
+  /// Confirm button label on the reset confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get instanceVerificationResetConfirm;
+
+  /// Cancel button label on the reset confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get instanceVerificationResetCancel;
+
   /// Title of the confirmation dialog for discarding a stuck local deployment record
   ///
   /// In en, this message translates to:

@@ -367,6 +367,16 @@ class L10nKeyResolver {
       'initialization.status.schema' => _l10n.initializationStatusSchema,
       'initialization.technical.details.toggle' => _l10n.initializationTechnicalDetailsToggle,
       'initialization.unknown' => _l10n.initializationUnknown,
+      'instance.verification.back.action' => _l10n.instanceVerificationBackAction,
+      'instance.verification.body' => _l10n.instanceVerificationBody,
+      'instance.verification.check.action' => _l10n.instanceVerificationCheckAction,
+      'instance.verification.check.failed.message' => _l10n.instanceVerificationCheckFailedMessage,
+      'instance.verification.reset.action' => _l10n.instanceVerificationResetAction,
+      'instance.verification.reset.cancel' => _l10n.instanceVerificationResetCancel,
+      'instance.verification.reset.confirm' => _l10n.instanceVerificationResetConfirm,
+      'instance.verification.reset.confirmation.body' => _l10n.instanceVerificationResetConfirmationBody,
+      'instance.verification.reset.confirmation.title' => _l10n.instanceVerificationResetConfirmationTitle,
+      'instance.verification.title' => _l10n.instanceVerificationTitle,
       'llm.active.model.section' => _l10n.llmActiveModelSection,
       'llm.add.key' => _l10n.llmAddKey,
       'llm.add.key.hint' => _l10n.llmAddKeyHint,
@@ -1357,6 +1367,16 @@ class L10nKeyResolver {
     'initialization.sync.attempt',
     'initialization.technical.details.toggle',
     'initialization.unknown',
+    'instance.verification.back.action',
+    'instance.verification.body',
+    'instance.verification.check.action',
+    'instance.verification.check.failed.message',
+    'instance.verification.reset.action',
+    'instance.verification.reset.cancel',
+    'instance.verification.reset.confirm',
+    'instance.verification.reset.confirmation.body',
+    'instance.verification.reset.confirmation.title',
+    'instance.verification.title',
     'llm.active.model.section',
     'llm.add.key',
     'llm.add.key.hint',
@@ -2314,6 +2334,16 @@ class L10nKeyResolver {
     'initializationSyncAttempt': 'initialization.sync.attempt',
     'initializationTechnicalDetailsToggle': 'initialization.technical.details.toggle',
     'initializationUnknown': 'initialization.unknown',
+    'instanceVerificationBackAction': 'instance.verification.back.action',
+    'instanceVerificationBody': 'instance.verification.body',
+    'instanceVerificationCheckAction': 'instance.verification.check.action',
+    'instanceVerificationCheckFailedMessage': 'instance.verification.check.failed.message',
+    'instanceVerificationResetAction': 'instance.verification.reset.action',
+    'instanceVerificationResetCancel': 'instance.verification.reset.cancel',
+    'instanceVerificationResetConfirm': 'instance.verification.reset.confirm',
+    'instanceVerificationResetConfirmationBody': 'instance.verification.reset.confirmation.body',
+    'instanceVerificationResetConfirmationTitle': 'instance.verification.reset.confirmation.title',
+    'instanceVerificationTitle': 'instance.verification.title',
     'llmActiveModelSection': 'llm.active.model.section',
     'llmAddKey': 'llm.add.key',
     'llmAddKeyHint': 'llm.add.key.hint',
@@ -3268,6 +3298,16 @@ class L10nKeyResolver {
     'initialization.sync.attempt': 'initializationSyncAttempt',
     'initialization.technical.details.toggle': 'initializationTechnicalDetailsToggle',
     'initialization.unknown': 'initializationUnknown',
+    'instance.verification.back.action': 'instanceVerificationBackAction',
+    'instance.verification.body': 'instanceVerificationBody',
+    'instance.verification.check.action': 'instanceVerificationCheckAction',
+    'instance.verification.check.failed.message': 'instanceVerificationCheckFailedMessage',
+    'instance.verification.reset.action': 'instanceVerificationResetAction',
+    'instance.verification.reset.cancel': 'instanceVerificationResetCancel',
+    'instance.verification.reset.confirm': 'instanceVerificationResetConfirm',
+    'instance.verification.reset.confirmation.body': 'instanceVerificationResetConfirmationBody',
+    'instance.verification.reset.confirmation.title': 'instanceVerificationResetConfirmationTitle',
+    'instance.verification.title': 'instanceVerificationTitle',
     'llm.active.model.section': 'llmActiveModelSection',
     'llm.add.key': 'llmAddKey',
     'llm.add.key.hint': 'llmAddKeyHint',
@@ -4229,6 +4269,16 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) initializationSyncAttempt(String attempt) => ('initialization.sync.attempt', {'attempt': attempt});
   static const initializationTechnicalDetailsToggle = 'initialization.technical.details.toggle';
   static const initializationUnknown = 'initialization.unknown';
+  static const instanceVerificationBackAction = 'instance.verification.back.action';
+  static const instanceVerificationBody = 'instance.verification.body';
+  static const instanceVerificationCheckAction = 'instance.verification.check.action';
+  static const instanceVerificationCheckFailedMessage = 'instance.verification.check.failed.message';
+  static const instanceVerificationResetAction = 'instance.verification.reset.action';
+  static const instanceVerificationResetCancel = 'instance.verification.reset.cancel';
+  static const instanceVerificationResetConfirm = 'instance.verification.reset.confirm';
+  static const instanceVerificationResetConfirmationBody = 'instance.verification.reset.confirmation.body';
+  static const instanceVerificationResetConfirmationTitle = 'instance.verification.reset.confirmation.title';
+  static const instanceVerificationTitle = 'instance.verification.title';
   static const llmActiveModelSection = 'llm.active.model.section';
   static const llmAddKey = 'llm.add.key';
   static const llmAddKeyHint = 'llm.add.key.hint';

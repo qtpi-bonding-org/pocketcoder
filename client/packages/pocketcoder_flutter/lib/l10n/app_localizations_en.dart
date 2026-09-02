@@ -3012,6 +3012,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentDisconnectCancel => 'CANCEL';
 
   @override
+  String get instanceVerificationTitle => 'Can\'t verify your deployment';
+
+  @override
+  String get instanceVerificationBody =>
+      'PocketCoder couldn\'t reach your server, and couldn\'t confirm with your cloud provider whether the instance still exists.';
+
+  @override
+  String get instanceVerificationCheckFailedMessage =>
+      'Still couldn\'t confirm. Try again, or choose an option below.';
+
+  @override
+  String get instanceVerificationCheckAction => 'CHECK VIA LINODE';
+
+  @override
+  String get instanceVerificationBackAction => 'GO BACK';
+
+  @override
+  String get instanceVerificationResetAction => 'RESET';
+
+  @override
+  String get instanceVerificationResetConfirmationTitle =>
+      'Reset and start over?';
+
+  @override
+  String get instanceVerificationResetConfirmationBody =>
+      'This clears the saved session and local deployment state on this device. It does not delete your cloud server.';
+
+  @override
+  String get instanceVerificationResetConfirm => 'RESET';
+
+  @override
+  String get instanceVerificationResetCancel => 'CANCEL';
+
+  @override
   String get deploymentDiscardAttemptTitle => 'DISCARD THIS DEPLOYMENT RECORD?';
 
   @override
