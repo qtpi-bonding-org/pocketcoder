@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/skill.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -40,7 +41,6 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final editing = widget.skill != null;
     final skillName = widget.skill?.name ?? '';
     return TerminalDialog(
@@ -55,12 +55,12 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
               controller: _name,
               label: context.l10n.skillsNameLabel,
               obscureText: false),
-          const SizedBox(height: 16),
+          VSpace.x2,
           TerminalTextField(
               controller: _description,
               label: context.l10n.skillsDescriptionLabel,
               obscureText: false),
-          const SizedBox(height: 16),
+          VSpace.x2,
           TerminalTextField(
               controller: _content,
               label: context.l10n.skillsContentLabel,
@@ -69,13 +69,10 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
         ],
       ),
       actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.of(context).pop(),
-          style: OutlinedButton.styleFrom(foregroundColor: colors.onSurface),
-          child: Text(context.l10n.actionCancel),
-        ),
-        OutlinedButton(
-          onPressed: () {
+        TerminalDialogActions(
+          confirmLabel:
+              editing ? context.l10n.skillsSaveButton : context.l10n.actionAdd,
+          onConfirm: () {
             final name = _name.text.trim();
             final description = _description.text.trim();
             final content = _content.text.trim();
@@ -83,9 +80,8 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
             widget.onSubmit(name, description, content);
             Navigator.of(context).pop();
           },
-          style: OutlinedButton.styleFrom(foregroundColor: colors.primary),
-          child: Text(
-              editing ? context.l10n.skillsSaveButton : context.l10n.actionAdd),
+          cancelLabel: context.l10n.actionCancel,
+          onCancel: () => Navigator.of(context).pop(),
         ),
       ],
     );
@@ -121,7 +117,6 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final configs = widget.configs
         .where((config) =>
             config.workspaceFolders is List &&
@@ -138,18 +133,18 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
                 controller: _name,
                 label: context.l10n.skillsNameLabel,
                 obscureText: false),
-            const SizedBox(height: 16),
+            VSpace.x2,
             TerminalTextField(
                 controller: _description,
                 label: context.l10n.skillsDescriptionLabel,
                 obscureText: false),
-            const SizedBox(height: 16),
+            VSpace.x2,
             TerminalTextField(
                 controller: _content,
                 label: context.l10n.skillsContentLabel,
                 obscureText: false,
                 maxLines: 8),
-            const SizedBox(height: 16),
+            VSpace.x2,
             Row(children: [
               Expanded(
                   child: TerminalButton(
@@ -159,7 +154,7 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
                             _global = true;
                             _selectedConfig = null;
                           }))),
-              const SizedBox(width: 16),
+              HSpace.x2,
               Expanded(
                   child: TerminalButton(
                       label: context.l10n.skillsProjectLabel,
@@ -172,11 +167,11 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
                               }))),
             ]),
             if (!_global && configs.isEmpty) ...[
-              const SizedBox(height: 8),
+              VSpace.x1,
               Text(context.l10n.skillsNoEligibleConfig)
             ],
             if (!_global && configs.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              VSpace.x1,
               DropdownButton<PocoConfig>(
                   isExpanded: true,
                   value: selected,
@@ -190,12 +185,9 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
             ],
           ]),
       actions: [
-        OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: OutlinedButton.styleFrom(foregroundColor: colors.onSurface),
-            child: Text(context.l10n.actionCancel)),
-        OutlinedButton(
-            onPressed: () {
+        TerminalDialogActions(
+            confirmLabel: context.l10n.actionAdd,
+            onConfirm: () {
               final name = _name.text.trim();
               final description = _description.text.trim();
               final content = _content.text.trim();
@@ -211,8 +203,8 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
               widget.onSubmit(name, description, content, _global, projectDir);
               Navigator.of(context).pop();
             },
-            style: OutlinedButton.styleFrom(foregroundColor: colors.primary),
-            child: Text(context.l10n.actionAdd)),
+            cancelLabel: context.l10n.actionCancel,
+            onCancel: () => Navigator.of(context).pop()),
       ],
     );
   }
