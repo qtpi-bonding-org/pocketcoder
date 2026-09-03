@@ -1119,6 +1119,8 @@
   "@harnessAuthMode": {"placeholders": {"mode": {"type": "String"}}},
   "harnessAuthAccount": "Account: {account} ({visibility})",
   "@harnessAuthAccount": {"placeholders": {"account": {"type": "String"}, "visibility": {"type": "String"}}},
+  "harnessAuthApiKeyConfigured": "API key: {provider}",
+  "@harnessAuthApiKeyConfigured": {"placeholders": {"provider": {"type": "String"}}},
   "harnessAuthShared": "shared",
   "harnessAuthPersonal": "personal",
   "harnessAuthOneTimeCode": "One-time code",

@@ -17,6 +17,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
+import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/chat/i_chat_list_repository.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
@@ -113,6 +114,10 @@ void main() {
           user: 'admin',
         ));
     final chatListCubit = ChatListCubit(chatRepo);
+    // HarnessAuthAdapter reads ProviderCubit for the API-key fallback path
+    // (harnesses with no oauth-capable provider) -- not exercised by this
+    // oauth-focused test, so no watchAll() call is needed here.
+    final providerCubit = ProviderCubit(providerRepo);
 
     // Establish status:success/error:null as the baseline BEFORE the
     // widget mounts -- matching production, where HarnessAuthCubit is
@@ -131,6 +136,7 @@ void main() {
             providers: [
               BlocProvider<HarnessAuthCubit>.value(value: harnessAuthCubit),
               BlocProvider<ChatListCubit>.value(value: chatListCubit),
+              BlocProvider<ProviderCubit>.value(value: providerCubit),
             ],
             child: HarnessAuthAdapter(
               onboarding: true,
@@ -191,5 +197,6 @@ void main() {
 
     await harnessAuthCubit.close();
     await chatListCubit.close();
+    await providerCubit.close();
   });
 }

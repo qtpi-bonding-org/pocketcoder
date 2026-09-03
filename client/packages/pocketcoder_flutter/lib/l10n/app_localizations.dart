@@ -5014,6 +5014,12 @@ abstract class AppLocalizations {
   /// **'Account: {account} ({visibility})'**
   String harnessAuthAccount(String account, String visibility);
 
+  /// No description provided for @harnessAuthApiKeyConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'API key: {provider}'**
+  String harnessAuthApiKeyConfigured(String provider);
+
   /// No description provided for @harnessAuthShared.
   ///
   /// In en, this message translates to:

@@ -928,6 +928,7 @@ class L10nKeyResolver {
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'external.auth.connecting' => _l10n.externalAuthConnecting(args?['label'] as String? ?? ''),
       'harness.auth.account' => _l10n.harnessAuthAccount(args?['account'] as String? ?? '', args?['visibility'] as String? ?? ''),
+      'harness.auth.api.key.configured' => _l10n.harnessAuthApiKeyConfigured(args?['provider'] as String? ?? ''),
       'harness.auth.attempt' => _l10n.harnessAuthAttempt(args?['id'] as String? ?? ''),
       'harness.auth.details' => _l10n.harnessAuthDetails(args?['details'] as String? ?? ''),
       'harness.auth.mode' => _l10n.harnessAuthMode(args?['mode'] as String? ?? ''),
@@ -1294,6 +1295,7 @@ class L10nKeyResolver {
     'harness.auth.account',
     'harness.auth.account.login',
     'harness.auth.api.key',
+    'harness.auth.api.key.configured',
     'harness.auth.attempt',
     'harness.auth.cancel',
     'harness.auth.challenge',
@@ -2265,6 +2267,7 @@ class L10nKeyResolver {
     'harnessAuthAccount': 'harness.auth.account',
     'harnessAuthAccountLogin': 'harness.auth.account.login',
     'harnessAuthApiKey': 'harness.auth.api.key',
+    'harnessAuthApiKeyConfigured': 'harness.auth.api.key.configured',
     'harnessAuthAttempt': 'harness.auth.attempt',
     'harnessAuthCancel': 'harness.auth.cancel',
     'harnessAuthChallenge': 'harness.auth.challenge',
@@ -3233,6 +3236,7 @@ class L10nKeyResolver {
     'harness.auth.account': 'harnessAuthAccount',
     'harness.auth.account.login': 'harnessAuthAccountLogin',
     'harness.auth.api.key': 'harnessAuthApiKey',
+    'harness.auth.api.key.configured': 'harnessAuthApiKeyConfigured',
     'harness.auth.attempt': 'harnessAuthAttempt',
     'harness.auth.cancel': 'harnessAuthCancel',
     'harness.auth.challenge': 'harnessAuthChallenge',
@@ -4208,6 +4212,7 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) harnessAuthAccount(String account, String visibility) => ('harness.auth.account', {'account': account, 'visibility': visibility});
   static const harnessAuthAccountLogin = 'harness.auth.account.login';
   static const harnessAuthApiKey = 'harness.auth.api.key';
+  static (String, Map<String, dynamic>) harnessAuthApiKeyConfigured(String provider) => ('harness.auth.api.key.configured', {'provider': provider});
   static (String, Map<String, dynamic>) harnessAuthAttempt(String id) => ('harness.auth.attempt', {'id': id});
   static const harnessAuthCancel = 'harness.auth.cancel';
   static const harnessAuthChallenge = 'harness.auth.challenge';

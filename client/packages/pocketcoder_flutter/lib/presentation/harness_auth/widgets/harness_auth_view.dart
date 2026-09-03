@@ -3,6 +3,8 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -23,7 +25,10 @@ class HarnessAuthScreenView extends StatelessWidget {
     required this.error,
     required this.isLoading,
     required this.isHarnessBusy,
+    required this.providerCatalog,
+    required this.providerAPIKeys,
     required this.onStartAccount,
+    required this.onUseApiKey,
     required this.onSubmit,
     required this.onCancel,
     required this.onDisconnect,
@@ -38,7 +43,10 @@ class HarnessAuthScreenView extends StatelessWidget {
   final Object? error;
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
+  final List<domain.Provider> providerCatalog;
+  final List<ProviderApiKey> providerAPIKeys;
   final Future<void> Function(Harnesse, String) onStartAccount;
+  final Future<void> Function(Harnesse) onUseApiKey;
   final Future<void> Function(Harnesse, String) onSubmit;
   final void Function(Harnesse) onCancel;
   final void Function(Harnesse) onDisconnect;
@@ -60,7 +68,10 @@ class HarnessAuthScreenView extends StatelessWidget {
           error: error,
           isLoading: isLoading,
           isHarnessBusy: isHarnessBusy,
+          providerCatalog: providerCatalog,
+          providerAPIKeys: providerAPIKeys,
           onStartAccount: onStartAccount,
+          onUseApiKey: onUseApiKey,
           onSubmit: onSubmit,
           onCancel: onCancel,
           onDisconnect: onDisconnect,
@@ -80,7 +91,10 @@ class HarnessAuthView extends StatefulWidget {
     required this.error,
     required this.isLoading,
     required this.isHarnessBusy,
+    required this.providerCatalog,
+    required this.providerAPIKeys,
     required this.onStartAccount,
+    required this.onUseApiKey,
     required this.onSubmit,
     required this.onCancel,
     required this.onDisconnect,
@@ -94,7 +108,10 @@ class HarnessAuthView extends StatefulWidget {
   final Object? error;
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
+  final List<domain.Provider> providerCatalog;
+  final List<ProviderApiKey> providerAPIKeys;
   final Future<void> Function(Harnesse, String) onStartAccount;
+  final Future<void> Function(Harnesse) onUseApiKey;
   final Future<void> Function(Harnesse, String) onSubmit;
   final void Function(Harnesse) onCancel;
   final void Function(Harnesse) onDisconnect;
@@ -132,6 +149,21 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
         : widget.statuses[HarnessProviderKey(harness.id, provider)];
   }
 
+  domain.Provider? _configuredApiKeyProviderFor(Harnesse harness) {
+    final providerIds = widget.harnessProviders
+        .where((edge) => edge.harness == harness.id)
+        .map((edge) => edge.provider)
+        .toSet();
+    final matchingProviderId = widget.providerAPIKeys
+        .where((key) => providerIds.contains(key.provider))
+        .firstOrNull
+        ?.provider;
+    if (matchingProviderId == null) return null;
+    return widget.providerCatalog
+        .where((p) => p.id == matchingProviderId)
+        .firstOrNull;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.isLoading && widget.harnesses.isEmpty) {
@@ -159,9 +191,11 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
             harness: h,
             harnessProviders: widget.harnessProviders,
             status: _statusFor(h),
+            configuredApiKeyProvider: _configuredApiKeyProviderFor(h),
             codeController: _controller(h.id),
             isBusy: widget.isHarnessBusy(h.id),
             onStartAccount: (provider) => widget.onStartAccount(h, provider),
+            onUseApiKey: () => widget.onUseApiKey(h),
             onSubmit: (code) => widget.onSubmit(h, code),
             onCancel: () => widget.onCancel(h),
             onDisconnect: () => widget.onDisconnect(h),
@@ -179,9 +213,11 @@ class HarnessAuthCard extends StatelessWidget {
       required this.harness,
       required this.harnessProviders,
       required this.status,
+      required this.configuredApiKeyProvider,
       required this.codeController,
       required this.isBusy,
       required this.onStartAccount,
+      required this.onUseApiKey,
       required this.onSubmit,
       required this.onCancel,
       required this.onDisconnect,
@@ -190,6 +226,8 @@ class HarnessAuthCard extends StatelessWidget {
       required this.onCopyCode});
   final Harnesse harness;
   final List<HarnessProvider> harnessProviders;
+  final domain.Provider? configuredApiKeyProvider;
+  final VoidCallback onUseApiKey;
   final HarnessAuthStatus? status;
   final TextEditingController codeController;
   final bool isBusy;
@@ -245,6 +283,11 @@ class HarnessAuthCard extends StatelessWidget {
                         ? l10n.harnessAuthShared
                         : l10n.harnessAuthPersonal))
               ],
+              if (configuredApiKeyProvider case final provider?) ...[
+                VSpace.x1,
+                TerminalText(
+                    l10n.harnessAuthApiKeyConfigured(provider.name.toUpperCase()))
+              ],
               VSpace.x2,
               if (s.challenge case final challenge?)
                 _connectionView(context, s, challenge),
@@ -292,21 +335,34 @@ class HarnessAuthCard extends StatelessWidget {
   Widget _actions(
       BuildContext context, HarnessAuthStatus s, List<HarnessProvider> edges) {
     if (s.isDisconnected) {
-      final loginButtons = [
-        for (final edge in edges)
-          if (edge.supportsOauth == true)
-            TerminalButton(
-                label: context.l10n.harnessAuthAccountLogin,
-                onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
-                filled: false,
-                isLoading: isBusy),
-      ];
+      final oauthEdges =
+          edges.where((edge) => edge.supportsOauth == true).toList();
+      final actionButtons = oauthEdges.isNotEmpty
+          ? [
+              for (final edge in oauthEdges)
+                TerminalButton(
+                    label: context.l10n.harnessAuthAccountLogin,
+                    onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
+                    filled: false,
+                    isLoading: isBusy),
+            ]
+          : edges.isNotEmpty
+              // No oauth-capable provider for this harness (e.g. Goose,
+              // OpenCode) -- it authenticates via a plain API key instead.
+              ? [
+                  TerminalButton(
+                      label: context.l10n.providerScreenAddKey,
+                      onTap: isBusy ? () {} : onUseApiKey,
+                      filled: false,
+                      isLoading: isBusy),
+                ]
+              : const <Widget>[];
       return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (var i = 0; i < loginButtons.length; i++) ...[
+            for (var i = 0; i < actionButtons.length; i++) ...[
               if (i > 0) VSpace.x1,
-              loginButtons[i],
+              actionButtons[i],
             ],
           ]);
     }

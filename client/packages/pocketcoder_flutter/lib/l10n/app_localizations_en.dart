@@ -2769,6 +2769,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String harnessAuthApiKeyConfigured(String provider) {
+    return 'API key: $provider';
+  }
+
+  @override
   String get harnessAuthShared => 'shared';
 
   @override
