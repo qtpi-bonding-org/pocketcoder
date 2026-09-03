@@ -9,20 +9,24 @@ class SettingsView extends StatelessWidget {
     super.key,
     required this.hasPendingMcp,
     required this.isPro,
+    required this.hapticsEnabled,
     required this.onNavigate,
     required this.onLogout,
     required this.onFactoryReset,
     required this.onDeleteProData,
     required this.onReportAiContent,
+    required this.onHapticsChanged,
   });
 
   final bool hasPendingMcp;
   final bool isPro;
+  final bool hapticsEnabled;
   final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
   final VoidCallback onFactoryReset;
   final VoidCallback onDeleteProData;
   final VoidCallback onReportAiContent;
+  final ValueChanged<bool> onHapticsChanged;
 
   List<(String, List<(String, String)>)> _sections(
       BuildContext context) {
@@ -91,6 +95,13 @@ class SettingsView extends StatelessWidget {
                         'reportAiContent' => onReportAiContent(),
                         _ => onNavigate(item.$2),
                       },
+                    ),
+                  if (section.$1 == context.l10n.settingsSystemSection)
+                    BiosRow(
+                      label: 'HAPTIC FEEDBACK',
+                      variant: BiosRowVariant.toggle,
+                      toggleValue: hapticsEnabled,
+                      onToggleChanged: onHapticsChanged,
                     ),
                 ],
               ),

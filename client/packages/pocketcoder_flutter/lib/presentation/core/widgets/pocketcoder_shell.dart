@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
+
+void _navHaptic() {
+  if (GetIt.instance<ILocalSettingsService>().hapticsEnabledSync) {
+    HapticFeedback.selectionClick();
+  }
+}
 
 /// The three navigation pillars of PocketCoder.
 enum NavPillar { chats, monitor, configure, manage }
@@ -121,6 +129,7 @@ class PocketCoderShell extends StatelessWidget {
         isActive: activePillar == NavPillar.chats,
         onTap: () {
           if (activePillar != NavPillar.chats) {
+            _navHaptic();
             context.go(AppRoutes.chats);
           }
         },
@@ -130,6 +139,7 @@ class PocketCoderShell extends StatelessWidget {
         isActive: activePillar == NavPillar.monitor,
         onTap: () {
           if (activePillar != NavPillar.monitor) {
+            _navHaptic();
             context.go(AppRoutes.monitor);
           }
         },
@@ -140,6 +150,7 @@ class PocketCoderShell extends StatelessWidget {
         hasBadge: configureBadge || hasReleaseNotice,
         onTap: () {
           if (activePillar != NavPillar.configure) {
+            _navHaptic();
             context.go(AppRoutes.configure);
           }
         },
@@ -150,6 +161,7 @@ class PocketCoderShell extends StatelessWidget {
           isActive: activePillar == NavPillar.manage,
           onTap: () {
             if (activePillar != NavPillar.manage) {
+              _navHaptic();
               context.go(AppRoutes.serverControls);
             }
           },

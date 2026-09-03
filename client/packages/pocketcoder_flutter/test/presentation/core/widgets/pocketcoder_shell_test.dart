@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +8,25 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/server_control_result.dart';
+import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+
+class _FakeLocalSettingsService implements ILocalSettingsService {
+  _FakeLocalSettingsService({this.hapticsEnabledSync = true});
+
+  @override
+  bool hapticsEnabledSync;
+
+  @override
+  Stream<bool> watchHapticsEnabled() => Stream.value(hapticsEnabledSync);
+
+  @override
+  Future<void> setHapticsEnabled(bool enabled) async {
+    hapticsEnabledSync = enabled;
+  }
+}
 
 class _FakeServerControlService implements IServerControlService {
   @override
@@ -172,5 +189,93 @@ void main() {
       body: const SizedBox.shrink(),
     )));
     expect(find.text('MANAGE'), findsOneWidget);
+  });
+
+  group('nav-tap haptics', () {
+    final haptics = <MethodCall>[];
+
+    setUp(() {
+      haptics.clear();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+        if (call.method == 'HapticFeedback.vibrate') haptics.add(call);
+        return null;
+      });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+      GetIt.instance.reset();
+    });
+
+    Future<void> pumpPillarRouter(WidgetTester tester) async {
+      final router = GoRouter(
+        initialLocation: AppRoutes.chats,
+        routes: [
+          GoRoute(
+            path: AppRoutes.chats,
+            name: RouteNames.chats,
+            builder: (_, __) => PocketCoderShell(
+              title: 'CHATS',
+              activePillar: NavPillar.chats,
+              body: const SizedBox.shrink(),
+            ),
+          ),
+          GoRoute(
+            path: AppRoutes.monitor,
+            name: RouteNames.monitor,
+            builder: (_, __) => PocketCoderShell(
+              title: 'MONITOR',
+              activePillar: NavPillar.monitor,
+              body: const SizedBox.shrink(),
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(MaterialApp.router(
+        theme: AppTheme.darkTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ));
+      await tester.pump();
+    }
+
+    testWidgets('fires when switching pillars and the setting is enabled',
+        (tester) async {
+      GetIt.instance.registerSingleton<ILocalSettingsService>(
+          _FakeLocalSettingsService(hapticsEnabledSync: true));
+      await pumpPillarRouter(tester);
+
+      await tester.tap(find.text('MONITOR'));
+      await tester.pumpAndSettle();
+
+      expect(haptics, hasLength(1));
+    });
+
+    testWidgets('does not fire when the setting is disabled', (tester) async {
+      GetIt.instance.registerSingleton<ILocalSettingsService>(
+          _FakeLocalSettingsService(hapticsEnabledSync: false));
+      await pumpPillarRouter(tester);
+
+      await tester.tap(find.text('MONITOR'));
+      await tester.pumpAndSettle();
+
+      expect(haptics, isEmpty);
+    });
+
+    testWidgets('does not fire when re-tapping the already-active pillar',
+        (tester) async {
+      GetIt.instance.registerSingleton<ILocalSettingsService>(
+          _FakeLocalSettingsService(hapticsEnabledSync: true));
+      await pumpPillarRouter(tester);
+
+      await tester.tap(find.descendant(
+          of: find.byType(TerminalFooter), matching: find.text('CHATS')));
+      await tester.pumpAndSettle();
+
+      expect(haptics, isEmpty);
+    });
   });
 }

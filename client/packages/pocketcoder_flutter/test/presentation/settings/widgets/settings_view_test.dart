@@ -26,6 +26,8 @@ void main() {
         onFactoryReset: () {},
         onDeleteProData: () {},
         onReportAiContent: () {},
+        hapticsEnabled: true,
+        onHapticsChanged: (_) {},
       ),
     ));
 
@@ -39,8 +41,7 @@ void main() {
             'screen) and is redundant now');
   });
 
-  testWidgets(
-      'REPORT AI CONTENT row is present and invokes onReportAiContent',
+  testWidgets('REPORT AI CONTENT row is present and invokes onReportAiContent',
       (tester) async {
     var tapped = false;
     await tester.pumpWidget(MaterialApp(
@@ -60,6 +61,8 @@ void main() {
         onFactoryReset: () {},
         onDeleteProData: () {},
         onReportAiContent: () => tapped = true,
+        hapticsEnabled: true,
+        onHapticsChanged: (_) {},
       ),
     ));
 
@@ -67,8 +70,7 @@ void main() {
     expect(tapped, isTrue);
   });
 
-  testWidgets('Pro Settings row is hidden when isPro is false',
-      (tester) async {
+  testWidgets('Pro Settings row is hidden when isPro is false', (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.darkTheme,
       localizationsDelegates: const [
@@ -86,13 +88,16 @@ void main() {
         onFactoryReset: () {},
         onDeleteProData: () {},
         onReportAiContent: () {},
+        hapticsEnabled: true,
+        onHapticsChanged: (_) {},
       ),
     ));
 
     expect(find.textContaining('PRO'), findsNothing);
   });
 
-  testWidgets('BiosSection centers its title with a divider on both sides '
+  testWidgets(
+      'BiosSection centers its title with a divider on both sides '
       'when centerTitle is true', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
@@ -113,7 +118,8 @@ void main() {
             'centered title needs a divider on both sides, not just trailing');
   });
 
-  testWidgets('BiosSection stays left-aligned with a trailing divider only '
+  testWidgets(
+      'BiosSection stays left-aligned with a trailing divider only '
       'by default', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(

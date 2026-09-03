@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
+import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/foss/foss_app_edition.dart';
@@ -48,6 +49,17 @@ class _NoopServerReadinessCheck implements IServerReadinessCheck {
   Future<void> retry() async {}
 }
 
+class _FakeLocalSettingsService implements ILocalSettingsService {
+  @override
+  bool hapticsEnabledSync = true;
+  @override
+  Stream<bool> watchHapticsEnabled() => Stream.value(hapticsEnabledSync);
+  @override
+  Future<void> setHapticsEnabled(bool enabled) async {
+    hapticsEnabledSync = enabled;
+  }
+}
+
 void main() {
   late MockAuthRepository authRepo;
   late MockMcpCubit mcpCubit;
@@ -80,6 +92,8 @@ void main() {
           const _NoopServerReadinessCheck(),
         ));
     getIt.registerSingleton<IAppEdition>(const FossAppEdition());
+    getIt.registerSingleton<ILocalSettingsService>(
+        _FakeLocalSettingsService());
   });
 
   tearDown(() {

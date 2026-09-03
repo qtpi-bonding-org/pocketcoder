@@ -10,6 +10,7 @@ import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
+import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -38,6 +39,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     final state = adapter.cubitField(_selectState);
     final authCubit = context.read<AuthCubit>();
     final mcpCubit = context.read<McpCubit>();
+    final localSettings = GetIt.instance<ILocalSettingsService>();
     return UiFlowListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state.isSuccess &&
@@ -51,14 +53,23 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
         builder: (context, _, __) => StreamBuilder<McpState>(
           initialData: mcpCubit.state,
           stream: mcpCubit.stream,
-          builder: (context, snapshot) => SettingsView(
-            hasPendingMcp: _hasPendingMcp(snapshot.data ?? mcpCubit.state),
-            isPro: GetIt.instance<IAppEdition>().isPro,
-            onNavigate: (routeKey) => _navigateTo(context, routeKey),
-            onLogout: () => _confirmLogout(context, authCubit),
-            onFactoryReset: () => _confirmFactoryReset(context, authCubit),
-            onDeleteProData: () => _confirmDeleteProData(context, authCubit),
-            onReportAiContent: () => launchUrl(_reportAiContentUri),
+          builder: (context, mcpSnapshot) => StreamBuilder<bool>(
+            initialData: localSettings.hapticsEnabledSync,
+            stream: localSettings.watchHapticsEnabled(),
+            builder: (context, hapticsSnapshot) => SettingsView(
+              hasPendingMcp:
+                  _hasPendingMcp(mcpSnapshot.data ?? mcpCubit.state),
+              isPro: GetIt.instance<IAppEdition>().isPro,
+              hapticsEnabled:
+                  hapticsSnapshot.data ?? localSettings.hapticsEnabledSync,
+              onNavigate: (routeKey) => _navigateTo(context, routeKey),
+              onLogout: () => _confirmLogout(context, authCubit),
+              onFactoryReset: () => _confirmFactoryReset(context, authCubit),
+              onDeleteProData: () =>
+                  _confirmDeleteProData(context, authCubit),
+              onReportAiContent: () => launchUrl(_reportAiContentUri),
+              onHapticsChanged: localSettings.setHapticsEnabled,
+            ),
           ),
         ),
       ),
