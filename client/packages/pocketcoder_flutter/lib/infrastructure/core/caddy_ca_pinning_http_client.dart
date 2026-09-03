@@ -141,14 +141,11 @@ final class CaddyCaPinningHttpClient extends http.BaseClient {
 
   @override
   void close() {
-    // Deliberately not closing _delegate either -- see class doc. Logging
-    // the caller's stack so a future spurious close() attempt is
-    // identifiable instead of silent.
-    logWarning(
+    // PocketBase calls close() after every request; this is routine, not
+    // spurious, so it's never actually closed.
+    logDebug(
       'CaddyCaPinningHttpClient: close() called on the shared singleton '
       '-- ignoring (this client is never meant to be closed)',
     );
-    logDebug('CaddyCaPinningHttpClient: close() call site',
-        {'stack': StackTrace.current.toString()});
   }
 }
