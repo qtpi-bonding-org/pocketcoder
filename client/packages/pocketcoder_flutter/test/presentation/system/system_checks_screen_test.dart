@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/healthcheck.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
-import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
+import 'package:pocketcoder_flutter/presentation/system/widgets/system_checks_view.dart';
 
 Widget _app(Widget child) => MaterialApp(
       theme: AppTheme.lightTheme,
