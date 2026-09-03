@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
-import 'package:intl/intl.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/errors/widgets/error_tile.dart';
 
 class ErrorInboxScreen extends StatelessWidget {
   const ErrorInboxScreen({
@@ -82,7 +79,7 @@ class ErrorInboxScreen extends StatelessWidget {
                   child: ListView(
                     children: [
                       for (final entry in errors)
-                        _ErrorTile(
+                        ErrorTile(
                           entry: entry,
                           onCopy: onCopy,
                           onReportOnGithub: onReportOnGithub,
@@ -95,87 +92,6 @@ class ErrorInboxScreen extends StatelessWidget {
             );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorTile extends StatefulWidget {
-  final ErrorBoxEntry entry;
-  final Future<void> Function(ErrorEntry) onCopy;
-  final Future<void> Function(ErrorEntry) onReportOnGithub;
-  final Future<void> Function(String id) onDelete;
-
-  const _ErrorTile({
-    required this.entry,
-    required this.onCopy,
-    required this.onReportOnGithub,
-    required this.onDelete,
-  });
-
-  @override
-  State<_ErrorTile> createState() => _ErrorTileState();
-}
-
-class _ErrorTileState extends State<_ErrorTile> {
-  bool _isExpanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final entry = widget.entry;
-    return BiosCard(
-      header: [
-        BiosRow(
-          label: entry.errorData.source,
-          value:
-              '${entry.errorData.errorCode} · ${DateFormat.yMd().add_Hm().format(entry.lastOccurred)} · '
-              '${context.l10n.errorsOccurred(entry.occurrenceCount)}',
-          variant: BiosRowVariant.expand,
-          isExpanded: _isExpanded,
-          labelFontSize: AppSizes.fontSmall,
-          onTap: () => setState(() => _isExpanded = !_isExpanded),
-        ),
-      ],
-      body: _isExpanded
-          ? Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: AppSizes.space,
-                    children: [
-                      TerminalButton(
-                        label: context.l10n.errorsReportOnGithub,
-                        isPrimary: false,
-                        onTap: () => widget.onReportOnGithub(entry.errorData),
-                      ),
-                      TerminalButton(
-                        label: context.l10n.errorsCopy,
-                        isPrimary: true,
-                        onTap: () => widget.onCopy(entry.errorData),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(AppSizes.space),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: SelectableText(entry.errorData.stackTrace),
-                  ),
-                ),
-              ],
-            )
-          : null,
-      footer: BiosActionStrip(
-        actions: [
-          BiosActionStripItem(
-            label: 'DELETE',
-            color: context.terminalColors.danger,
-            onTap: () => widget.onDelete(entry.id),
-          ),
-        ],
       ),
     );
   }

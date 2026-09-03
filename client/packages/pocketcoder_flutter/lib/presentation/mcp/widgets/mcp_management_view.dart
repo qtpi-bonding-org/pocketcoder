@@ -96,6 +96,7 @@ class McpManagementView extends StatelessWidget {
 
   Widget _server(BuildContext context, McpServer server) {
     final pending = server.status == McpServerStatus.pending;
+    final schema = _resolveConfigSchema(server);
     final image = server.image;
     final reason = server.reason;
     return BiosCard(
@@ -127,9 +128,7 @@ class McpManagementView extends StatelessWidget {
               alpha: .8,
             ),
             VSpace.x1,
-            for (final key in Map<String, dynamic>.from(
-              server.configSchema as Map,
-            ).keys)
+            for (final key in schema.keys)
               BiosRow(label: key, value: null),
           ],
           if (server.oauthProvider?.isNotEmpty == true) _oauth(context, server),
@@ -233,9 +232,7 @@ class McpManagementView extends StatelessWidget {
 
   void _configDialog(BuildContext context, McpServer server) {
     final controllers = <String, TextEditingController>{};
-    final schema = server.configSchema is Map
-        ? Map<String, dynamic>.from(server.configSchema as Map)
-        : <String, dynamic>{};
+    final schema = _resolveConfigSchema(server);
     final existing = server.config is Map
         ? Map<String, dynamic>.from(server.config as Map)
         : <String, dynamic>{};
@@ -365,6 +362,11 @@ class McpManagementView extends StatelessWidget {
     ),
   );
 }
+
+Map<String, dynamic> _resolveConfigSchema(McpServer server) =>
+    server.configSchema is Map
+        ? Map<String, dynamic>.from(server.configSchema as Map)
+        : <String, dynamic>{};
 
 extension on McpServerStatus {
   bool get isPending => this == McpServerStatus.pending;

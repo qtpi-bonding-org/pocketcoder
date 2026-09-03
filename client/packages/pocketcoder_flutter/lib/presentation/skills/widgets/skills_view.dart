@@ -4,10 +4,10 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/domain/models/skill.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
+import 'skill_card.dart';
 
 class SkillsViewData {
   const SkillsViewData({
@@ -80,14 +80,24 @@ class SkillsView extends StatelessWidget {
             title: context.l10n.skillsGlobalSection,
             child: Column(
                 children:
-                    global.map((skill) => _skillItem(context, skill)).toList()),
+                    global
+                        .map((skill) => SkillCard(
+                              skill: skill,
+                              onEdit: onEdit,
+                              onDelete: onDelete,
+                            ))
+                        .toList()),
           ),
         if (project.isNotEmpty)
           BiosSection(
             title: context.l10n.skillsProjectSection,
             child: Column(
                 children: project
-                    .map((skill) => _skillItem(context, skill))
+                    .map((skill) => SkillCard(
+                          skill: skill,
+                          onEdit: onEdit,
+                          onDelete: onDelete,
+                        ))
                     .toList()),
           ),
         if (data.skills.isEmpty)
@@ -98,43 +108,6 @@ class SkillsView extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-
-  Widget _skillItem(BuildContext context, Skill skill) {
-    return TerminalCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TerminalText(skill.name.toUpperCase(),
-              weight: TerminalTextWeight.heavy),
-          VSpace.x1,
-          TerminalText.mini(skill.description, alpha: 0.6),
-          VSpace.x1,
-          if (skill.isSystem ?? false)
-            const TerminalText.mini('BUILT-IN', alpha: 0.5)
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: TerminalButton(
-                    label: context.l10n.skillsEditButton,
-                    isPrimary: false,
-                    onTap: () => onEdit(skill),
-                  ),
-                ),
-                HSpace.x2,
-                Expanded(
-                  child: TerminalButton(
-                    label: context.l10n.skillsDeleteButton,
-                    color: context.terminalColors.warning,
-                    onTap: () => onDelete(skill.id),
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
     );
   }
 
