@@ -6,14 +6,12 @@ import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
-import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
+import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/harness_auth_actions_block.dart';
+import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/harness_auth_status_block.dart';
 
 class HarnessAuthScreenView extends StatelessWidget {
   const HarnessAuthScreenView({
@@ -241,7 +239,6 @@ class HarnessAuthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
     final edges =
         harnessProviders.where((p) => p.harness == harness.id).toList();
     final s = status ??
@@ -257,135 +254,25 @@ class HarnessAuthCard extends StatelessWidget {
             visibility: harnessAccountVisibilityPersonal,
             credentialMode: 'none',
             status: 'disconnected');
-    return BiosSection(
-        title: '${harness.name} [${harness.cliId}]',
-        child: TerminalCard(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-              TerminalText(l10n.harnessAuthStatus(s.status.toUpperCase()),
-                  weight: TerminalTextWeight.heavy),
-              if (s.lastError case final lastError?
-                  when lastError.isNotEmpty) ...[
-                VSpace.x1,
-                TerminalText(lastError, color: context.terminalColors.warning)
-              ],
-              if (s.credentialMode.isNotEmpty) ...[
-                VSpace.x1,
-                TerminalText(
-                    l10n.harnessAuthMode(s.credentialMode.toUpperCase()))
-              ],
-              if (s.accountId.isNotEmpty) ...[
-                VSpace.x1,
-                TerminalText(l10n.harnessAuthAccount(
-                    s.accountName.isEmpty ? s.accountId : s.accountName,
-                    s.isDeploymentVisible
-                        ? l10n.harnessAuthShared
-                        : l10n.harnessAuthPersonal))
-              ],
-              if (configuredApiKeyProvider case final provider?) ...[
-                VSpace.x1,
-                TerminalText(
-                    l10n.harnessAuthApiKeyConfigured(provider.name.toUpperCase()))
-              ],
-              VSpace.x2,
-              if (s.challenge case final challenge?)
-                _connectionView(context, s, challenge),
-              VSpace.x2,
-              _actions(context, s, edges),
-              VSpace.x2,
-              TerminalButton(
-                  label: l10n.harnessAuthRefresh,
-                  isPrimary: false,
-                  filled: false,
-                  isLoading: isBusy,
-                  onTap: isBusy ? () {} : onRefresh),
-              if (s.attempt case final attempt?)
-                Padding(
-                    padding: EdgeInsets.only(top: AppSizes.space),
-                    child: TerminalText(l10n.harnessAuthAttempt(attempt.id),
-                        alpha: .5)),
-            ])));
-  }
-
-  Widget _connectionView(
-      BuildContext context, HarnessAuthStatus s, HarnessAuthChallenge challenge) {
-    final uri = challenge.verificationUri;
-    final destination = challenge.codeDestination;
-    if (uri == null ||
-        (destination != HarnessAuthCodeDestination.browser &&
-            destination != HarnessAuthCodeDestination.app)) {
-      return TerminalText(challenge.legacyText ?? challenge.text);
-    }
-    return CredentialConnectionView(
-      step: BrowserVerificationConnectionStep(
-        verificationUri: uri,
-        codeDestination: destination,
-        userCode: challenge.userCode,
-        expiresAt: challenge.expiresAt,
+    return HarnessAuthStatusBlock(
+      harness: harness,
+      status: status,
+      configuredApiKeyProvider: configuredApiKeyProvider,
+      child: HarnessAuthActionsBlock(
+        harness: harness,
+        status: s,
+        edges: edges,
+        codeController: codeController,
+        isBusy: isBusy,
+        onStartAccount: onStartAccount,
+        onUseApiKey: onUseApiKey,
+        onSubmit: onSubmit,
+        onCancel: onCancel,
+        onDisconnect: onDisconnect,
+        onRefresh: onRefresh,
+        onOpenAuthorizationPage: onOpenAuthorizationPage,
+        onCopyCode: onCopyCode,
       ),
-      onOpenAuthorizationPage: () => onOpenAuthorizationPage(uri),
-      onCopyCode: onCopyCode,
-      onSubmitCode: _submit,
-      onCancel: onCancel,
-      onRetry: () => onStartAccount(s.provider),
     );
-  }
-
-  Widget _actions(
-      BuildContext context, HarnessAuthStatus s, List<HarnessProvider> edges) {
-    if (s.isDisconnected) {
-      final oauthEdges =
-          edges.where((edge) => edge.supportsOauth == true).toList();
-      final actionButtons = oauthEdges.isNotEmpty
-          ? [
-              for (final edge in oauthEdges)
-                TerminalButton(
-                    label: context.l10n.harnessAuthAccountLogin,
-                    onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
-                    filled: false,
-                    isLoading: isBusy),
-            ]
-          : edges.isNotEmpty
-              // No oauth-capable provider for this harness (e.g. Goose,
-              // OpenCode) -- it authenticates via a plain API key instead.
-              ? [
-                  TerminalButton(
-                      label: context.l10n.providerScreenAddKey,
-                      onTap: isBusy ? () {} : onUseApiKey,
-                      filled: false,
-                      isLoading: isBusy),
-                ]
-              : const <Widget>[];
-      return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < actionButtons.length; i++) ...[
-              if (i > 0) VSpace.x1,
-              actionButtons[i],
-            ],
-          ]);
-    }
-    if (s.isConnected) {
-      return TerminalButton(
-          label: context.l10n.harnessAuthDisconnect,
-          onTap: isBusy ? () {} : onDisconnect,
-          filled: false,
-          isLoading: isBusy);
-    }
-    return TerminalButton(
-        label: context.l10n.harnessAuthCancel,
-        onTap: isBusy ? () {} : onCancel,
-        filled: false,
-        isLoading: isBusy);
-  }
-
-  Future<void> _submit(String code) async {
-    final value = code.trim();
-    if (value.isEmpty || isBusy) {
-      return;
-    }
-    await onSubmit(value);
-    codeController.clear();
   }
 }
