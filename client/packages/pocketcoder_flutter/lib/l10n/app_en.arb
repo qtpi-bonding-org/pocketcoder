@@ -1129,8 +1129,6 @@
   "@harnessAuthAttempt": {"placeholders": {"id": {"type": "String"}}},
   "harnessAuthAccountLogin": "Account login",
   "harnessAuthApiKey": "API key",
-  "harnessAuthNone": "None",
-  "harnessAuthPoll": "Poll",
   "harnessAuthDisconnect": "Disconnect",
   "harnessAuthCancel": "Cancel",
   "harnessAuthNoApiKeyTitle": "No API key",

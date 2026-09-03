@@ -5068,18 +5068,6 @@ abstract class AppLocalizations {
   /// **'API key'**
   String get harnessAuthApiKey;
 
-  /// No description provided for @harnessAuthNone.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get harnessAuthNone;
-
-  /// No description provided for @harnessAuthPoll.
-  ///
-  /// In en, this message translates to:
-  /// **'Poll'**
-  String get harnessAuthPoll;
-
   /// No description provided for @harnessAuthDisconnect.
   ///
   /// In en, this message translates to:

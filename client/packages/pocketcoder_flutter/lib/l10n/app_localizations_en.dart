@@ -2798,12 +2798,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get harnessAuthApiKey => 'API key';
 
   @override
-  String get harnessAuthNone => 'None';
-
-  @override
-  String get harnessAuthPoll => 'Poll';
-
-  @override
   String get harnessAuthDisconnect => 'Disconnect';
 
   @override

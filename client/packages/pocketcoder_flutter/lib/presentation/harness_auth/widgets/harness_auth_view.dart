@@ -24,8 +24,6 @@ class HarnessAuthScreenView extends StatelessWidget {
     required this.isLoading,
     required this.isHarnessBusy,
     required this.onStartAccount,
-    required this.onStartNone,
-    required this.onPoll,
     required this.onSubmit,
     required this.onCancel,
     required this.onDisconnect,
@@ -41,8 +39,6 @@ class HarnessAuthScreenView extends StatelessWidget {
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
   final Future<void> Function(Harnesse, String) onStartAccount;
-  final Future<void> Function(Harnesse) onStartNone;
-  final void Function(Harnesse) onPoll;
   final Future<void> Function(Harnesse, String) onSubmit;
   final void Function(Harnesse) onCancel;
   final void Function(Harnesse) onDisconnect;
@@ -65,8 +61,6 @@ class HarnessAuthScreenView extends StatelessWidget {
           isLoading: isLoading,
           isHarnessBusy: isHarnessBusy,
           onStartAccount: onStartAccount,
-          onStartNone: onStartNone,
-          onPoll: onPoll,
           onSubmit: onSubmit,
           onCancel: onCancel,
           onDisconnect: onDisconnect,
@@ -87,8 +81,6 @@ class HarnessAuthView extends StatefulWidget {
     required this.isLoading,
     required this.isHarnessBusy,
     required this.onStartAccount,
-    required this.onStartNone,
-    required this.onPoll,
     required this.onSubmit,
     required this.onCancel,
     required this.onDisconnect,
@@ -103,8 +95,6 @@ class HarnessAuthView extends StatefulWidget {
   final bool isLoading;
   final bool Function(String) isHarnessBusy;
   final Future<void> Function(Harnesse, String) onStartAccount;
-  final Future<void> Function(Harnesse) onStartNone;
-  final void Function(Harnesse) onPoll;
   final Future<void> Function(Harnesse, String) onSubmit;
   final void Function(Harnesse) onCancel;
   final void Function(Harnesse) onDisconnect;
@@ -172,16 +162,13 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
             codeController: _controller(h.id),
             isBusy: widget.isHarnessBusy(h.id),
             onStartAccount: (provider) => widget.onStartAccount(h, provider),
-            onStartNone: () => widget.onStartNone(h),
-            onPoll: () => widget.onPoll(h),
             onSubmit: (code) => widget.onSubmit(h, code),
             onCancel: () => widget.onCancel(h),
             onDisconnect: () => widget.onDisconnect(h),
             onRefresh: () => widget.onRefresh(h),
             onOpenAuthorizationPage: (uri) =>
                 widget.onOpenAuthorizationPage(h, uri),
-            onCopyCode: (_) {},
-            onRetry: () => widget.onPoll(h)),
+            onCopyCode: (_) {}),
     ]);
   }
 }
@@ -195,30 +182,24 @@ class HarnessAuthCard extends StatelessWidget {
       required this.codeController,
       required this.isBusy,
       required this.onStartAccount,
-      required this.onStartNone,
-      required this.onPoll,
       required this.onSubmit,
       required this.onCancel,
       required this.onDisconnect,
       required this.onRefresh,
       required this.onOpenAuthorizationPage,
-      required this.onCopyCode,
-      required this.onRetry});
+      required this.onCopyCode});
   final Harnesse harness;
   final List<HarnessProvider> harnessProviders;
   final HarnessAuthStatus? status;
   final TextEditingController codeController;
   final bool isBusy;
   final void Function(String) onStartAccount;
-  final VoidCallback onStartNone;
-  final VoidCallback onPoll;
   final Future<void> Function(String) onSubmit;
   final VoidCallback onCancel;
   final VoidCallback onDisconnect;
   final VoidCallback onRefresh;
   final void Function(Uri) onOpenAuthorizationPage;
   final ValueChanged<String> onCopyCode;
-  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -266,7 +247,7 @@ class HarnessAuthCard extends StatelessWidget {
               ],
               VSpace.x2,
               if (s.challenge case final challenge?)
-                _connectionView(context, challenge),
+                _connectionView(context, s, challenge),
               VSpace.x2,
               _actions(context, s, edges),
               VSpace.x2,
@@ -285,7 +266,8 @@ class HarnessAuthCard extends StatelessWidget {
             ])));
   }
 
-  Widget _connectionView(BuildContext context, HarnessAuthChallenge challenge) {
+  Widget _connectionView(
+      BuildContext context, HarnessAuthStatus s, HarnessAuthChallenge challenge) {
     final uri = challenge.verificationUri;
     final destination = challenge.codeDestination;
     if (uri == null ||
@@ -304,7 +286,7 @@ class HarnessAuthCard extends StatelessWidget {
       onCopyCode: onCopyCode,
       onSubmitCode: _submit,
       onCancel: onCancel,
-      onRetry: onRetry,
+      onRetry: () => onStartAccount(s.provider),
     );
   }
 
@@ -321,16 +303,6 @@ class HarnessAuthCard extends StatelessWidget {
                     label: context.l10n.harnessAuthAccountLogin,
                     onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
                     isLoading: isBusy),
-            TerminalButton(
-                label: context.l10n.harnessAuthNone,
-                onTap: isBusy ? () {} : onStartNone,
-                isLoading: isBusy,
-                isPrimary: false),
-            TerminalButton(
-                label: context.l10n.harnessAuthPoll,
-                onTap: isBusy ? () {} : onPoll,
-                isLoading: isBusy,
-                isPrimary: false),
           ]);
     }
     if (s.isConnected) {
@@ -339,17 +311,10 @@ class HarnessAuthCard extends StatelessWidget {
           onTap: isBusy ? () {} : onDisconnect,
           isLoading: isBusy);
     }
-    return Wrap(spacing: AppSizes.space, runSpacing: AppSizes.space, children: [
-      TerminalButton(
-          label: context.l10n.harnessAuthPoll,
-          onTap: isBusy ? () {} : onPoll,
-          isLoading: isBusy,
-          isPrimary: false),
-      TerminalButton(
-          label: context.l10n.harnessAuthCancel,
-          onTap: isBusy ? () {} : onCancel,
-          isLoading: isBusy)
-    ]);
+    return TerminalButton(
+        label: context.l10n.harnessAuthCancel,
+        onTap: isBusy ? () {} : onCancel,
+        isLoading: isBusy);
   }
 
   Future<void> _submit(String code) async {

@@ -116,13 +116,6 @@ class HarnessAuthAdapter
                   harnessId: h.id, provider: provider, visibility: visibility);
             }
           },
-          onStartNone: (h) async {
-            final visibility = await _chooseVisibility(context);
-            if (visibility != null) {
-              cubit.startWithNone(h.id, visibility: visibility);
-            }
-          },
-          onPoll: (h) => cubit.poll(h.id),
           onSubmit: (h, code) => cubit.submitCode(harnessId: h.id, code: code),
           onCancel: (h) => cubit.cancel(h.id),
           onDisconnect: (h) => cubit.disconnect(h.id),

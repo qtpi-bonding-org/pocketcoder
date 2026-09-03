@@ -315,11 +315,9 @@ class L10nKeyResolver {
       'harness.auth.loading' => _l10n.harnessAuthLoading,
       'harness.auth.no.api.key.body' => _l10n.harnessAuthNoApiKeyBody,
       'harness.auth.no.api.key.title' => _l10n.harnessAuthNoApiKeyTitle,
-      'harness.auth.none' => _l10n.harnessAuthNone,
       'harness.auth.one.time.code' => _l10n.harnessAuthOneTimeCode,
       'harness.auth.paste.code' => _l10n.harnessAuthPasteCode,
       'harness.auth.personal' => _l10n.harnessAuthPersonal,
-      'harness.auth.poll' => _l10n.harnessAuthPoll,
       'harness.auth.refresh' => _l10n.harnessAuthRefresh,
       'harness.auth.shared' => _l10n.harnessAuthShared,
       'harness.auth.submit' => _l10n.harnessAuthSubmit,
@@ -1311,11 +1309,9 @@ class L10nKeyResolver {
     'harness.auth.mode',
     'harness.auth.no.api.key.body',
     'harness.auth.no.api.key.title',
-    'harness.auth.none',
     'harness.auth.one.time.code',
     'harness.auth.paste.code',
     'harness.auth.personal',
-    'harness.auth.poll',
     'harness.auth.provider.key.missing',
     'harness.auth.refresh',
     'harness.auth.shared',
@@ -2284,11 +2280,9 @@ class L10nKeyResolver {
     'harnessAuthMode': 'harness.auth.mode',
     'harnessAuthNoApiKeyBody': 'harness.auth.no.api.key.body',
     'harnessAuthNoApiKeyTitle': 'harness.auth.no.api.key.title',
-    'harnessAuthNone': 'harness.auth.none',
     'harnessAuthOneTimeCode': 'harness.auth.one.time.code',
     'harnessAuthPasteCode': 'harness.auth.paste.code',
     'harnessAuthPersonal': 'harness.auth.personal',
-    'harnessAuthPoll': 'harness.auth.poll',
     'harnessAuthProviderKeyMissing': 'harness.auth.provider.key.missing',
     'harnessAuthRefresh': 'harness.auth.refresh',
     'harnessAuthShared': 'harness.auth.shared',
@@ -3254,11 +3248,9 @@ class L10nKeyResolver {
     'harness.auth.mode': 'harnessAuthMode',
     'harness.auth.no.api.key.body': 'harnessAuthNoApiKeyBody',
     'harness.auth.no.api.key.title': 'harnessAuthNoApiKeyTitle',
-    'harness.auth.none': 'harnessAuthNone',
     'harness.auth.one.time.code': 'harnessAuthOneTimeCode',
     'harness.auth.paste.code': 'harnessAuthPasteCode',
     'harness.auth.personal': 'harnessAuthPersonal',
-    'harness.auth.poll': 'harnessAuthPoll',
     'harness.auth.provider.key.missing': 'harnessAuthProviderKeyMissing',
     'harness.auth.refresh': 'harnessAuthRefresh',
     'harness.auth.shared': 'harnessAuthShared',
@@ -4231,11 +4223,9 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) harnessAuthMode(String mode) => ('harness.auth.mode', {'mode': mode});
   static const harnessAuthNoApiKeyBody = 'harness.auth.no.api.key.body';
   static const harnessAuthNoApiKeyTitle = 'harness.auth.no.api.key.title';
-  static const harnessAuthNone = 'harness.auth.none';
   static const harnessAuthOneTimeCode = 'harness.auth.one.time.code';
   static const harnessAuthPasteCode = 'harness.auth.paste.code';
   static const harnessAuthPersonal = 'harness.auth.personal';
-  static const harnessAuthPoll = 'harness.auth.poll';
   static (String, Map<String, dynamic>) harnessAuthProviderKeyMissing(String harness) => ('harness.auth.provider.key.missing', {'harness': harness});
   static const harnessAuthRefresh = 'harness.auth.refresh';
   static const harnessAuthShared = 'harness.auth.shared';
