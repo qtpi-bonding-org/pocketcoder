@@ -521,6 +521,102 @@ func TestBridgeUnknownVariantRaw(t *testing.T) {
 	}
 }
 
+func TestBridgeDefersResultUntilTerminal(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	inProgress := acpsdk.ToolCallStatusInProgress
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call", ToolCallId: "tc-defer", Title: "Bash", Status: inProgress,
+		Content: []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{
+			Type: "content", Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "Sleeping..."}},
+		}}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	types := eventTypes(evs)
+	if !contains(types, "TOOL_CALL_START") || contains(types, "TOOL_CALL_RESULT") || contains(types, "TOOL_CALL_END") {
+		t.Fatalf("unexpected in-progress events: %v", types)
+	}
+}
+
+func TestBridgeEmitsDeferredResultOnceTerminal(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	inProgress := acpsdk.ToolCallStatusInProgress
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call", ToolCallId: "tc-defer2", Title: "Bash", Status: inProgress,
+		Content: []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{Type: "content", Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "Sleeping_Close"}}}}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	done := acpsdk.ToolCallStatusCompleted
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ToolCallUpdate: &acpsdk.SessionToolCallUpdate{SessionUpdate: "tool_call_update", ToolCallId: "tc-defer2", Status: &done}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	types := eventTypes(evs)
+	if !contains(types, "TOOL_CALL_RESULT") || !contains(types, "TOOL_CALL_END") {
+		t.Fatalf("expected result and end: %v", types)
+	}
+	var resultEvent events.Event
+	for _, e := range evs {
+		if e.Type() == "TOOL_CALL_RESULT" {
+			resultEvent = e
+		}
+	}
+	b, err := json.Marshal(resultEvent)
+	if err != nil || !strings.Contains(string(b), "Sleeping_Close") {
+		t.Fatalf("deferred result: %s", b)
+	}
+}
+
+func TestBridgeNewerContentOverridesPendingResult(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	inProgress := acpsdk.ToolCallStatusInProgress
+	start := acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{SessionUpdate: "tool_call", ToolCallId: "tc-defer3", Title: "Bash", Status: inProgress, Content: []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{Type: "content", Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "first chunk"}}}}}}}
+	if _, err := bridge.Update(start); err != nil {
+		t.Fatal(err)
+	}
+	stillGoing := acpsdk.ToolCallStatusInProgress
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCallUpdate: &acpsdk.SessionToolCallUpdate{SessionUpdate: "tool_call_update", ToolCallId: "tc-defer3", Status: &stillGoing, Content: []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{Type: "content", Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "final chunk"}}}}}}}); err != nil {
+		t.Fatal(err)
+	}
+	done := acpsdk.ToolCallStatusCompleted
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ToolCallUpdate: &acpsdk.SessionToolCallUpdate{SessionUpdate: "tool_call_update", ToolCallId: "tc-defer3", Status: &done}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var resultEvent events.Event
+	for _, e := range evs {
+		if e.Type() == "TOOL_CALL_RESULT" {
+			resultEvent = e
+		}
+	}
+	if resultEvent == nil {
+		t.Fatalf("expected deferred result: %v", eventTypes(evs))
+	}
+	b, _ := json.Marshal(resultEvent)
+	if strings.Contains(string(b), "first chunk") || !strings.Contains(string(b), "final chunk") {
+		t.Fatalf("wrong result: %s", b)
+	}
+}
+
+func TestBridgeProgressDiffsStillEmitImmediately(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{SessionUpdate: "tool_call", ToolCallId: "tc-defer4", Title: "Edit", Kind: acpsdk.ToolKindEdit}}); err != nil {
+		t.Fatal(err)
+	}
+	inProgress := acpsdk.ToolCallStatusInProgress
+	old := "a\n"
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ToolCallUpdate: &acpsdk.SessionToolCallUpdate{SessionUpdate: "tool_call_update", ToolCallId: "tc-defer4", Status: &inProgress, Content: []acpsdk.ToolCallContent{{Diff: &acpsdk.ToolCallContentDiff{Path: "/f.go", OldText: &old, NewText: "b\n"}}}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	types := eventTypes(evs)
+	if !contains(types, "CUSTOM") || contains(types, "TOOL_CALL_END") || contains(types, "TOOL_CALL_RESULT") {
+		t.Fatalf("unexpected progress: %v", types)
+	}
+}
+
 // helpers
 
 // eventTypes flattens an event slice to its Type() strings for easy
