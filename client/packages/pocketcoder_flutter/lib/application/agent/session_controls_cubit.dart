@@ -7,14 +7,24 @@ import 'package:injectable/injectable.dart';
 import "package:pocketcoder_flutter/infrastructure/core/logger.dart";
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
+import 'package:pocketcoder_flutter/infrastructure/chat/chat_dao.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'session_controls_state.dart';
 
 @injectable
 class SessionControlsCubit extends AppCubit<SessionControlsState> {
-  SessionControlsCubit(this._repository) : super(const SessionControlsState());
+  SessionControlsCubit(
+    this._repository,
+    this._chatDao,
+    this._pocoConfigDao,
+    this._permissionModeDao,
+  ) : super(const SessionControlsState());
 
   final AgentChatRepository _repository;
+  final ChatDao _chatDao;
+  final PocoConfigDao _pocoConfigDao;
+  final PermissionModeDao _permissionModeDao;
 
   StreamSubscription? _watchSub;
   String? _chatId;
@@ -65,7 +75,25 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
       return;
     }
     await tryOperation(() async {
-      await _repository.setMode(chatId, modeId);
+      if (state.sessionState.isRunning) {
+        await _repository.setMode(chatId, modeId);
+      } else {
+        final chat = await _chatDao.getOne(chatId);
+        final profileId = chat.agentProfile;
+        if (profileId == null || profileId.isEmpty) {
+          throw StateError(
+              'Chat $chatId has no agent_profile to persist a mode change onto');
+        }
+        final modes = await _permissionModeDao.getFullList(
+            filter: 'base_session_mode = "$modeId"');
+        if (modes.isEmpty) {
+          throw StateError(
+              'No permission_modes record has base_session_mode "$modeId"');
+        }
+        await _pocoConfigDao.save(profileId, {
+          'permission_mode': modes.first.id,
+        });
+      }
       return state.copyWith(
         status: UiFlowStatus.success,
         lastOperation: SessionControlsOperation.selectMode,
@@ -81,8 +109,27 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
       logWarning('🤖 [SessionControlsCubit] setOption called before open()');
       return;
     }
+    const persistedFields = <String, String>{
+      'harnessModelOverride': 'harness_model_override',
+      'ollamaModelOverride': 'ollama_model_override',
+      'workspaceOverride': 'workspace_override',
+    };
+    if (!state.sessionState.isRunning &&
+        !persistedFields.containsKey(req.configId)) {
+      throw UnsupportedError(
+          'Config option "${req.configId}" can only be changed while a session is running');
+    }
     await tryOperation(() async {
-      await _repository.setConfigOption(chatId, req);
+      if (state.sessionState.isRunning) {
+        await _repository.setConfigOption(chatId, req);
+      } else {
+        final field = persistedFields[req.configId];
+        if (field == null) {
+          throw UnsupportedError(
+              'Config option "${req.configId}" can only be changed while a session is running');
+        }
+        await _chatDao.save(chatId, {field: req.value});
+      }
       return state.copyWith(
         status: UiFlowStatus.success,
         lastOperation: SessionControlsOperation.setOption,
