@@ -11,18 +11,29 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 
 class AgentConfigView extends StatelessWidget {
-  const AgentConfigView({super.key, required this.state, required this.onSave, required this.onDelete});
+  const AgentConfigView(
+      {super.key,
+      required this.state,
+      required this.onSave,
+      required this.onDelete});
   final AgentConfigState state;
   final Future<void> Function(PocoConfig) onSave;
   final Future<void> Function(String) onDelete;
 
   @override
   Widget build(BuildContext context) {
-    return PocketCoderShell(title: context.l10n.agentConfigTitle, activePillar: NavPillar.configure, showBack: true, body: BiosFrame(title: context.l10n.agentConfigRegistry, child: _buildBody(context, state)));
+    return PocketCoderShell(
+        title: context.l10n.agentConfigTitle,
+        activePillar: NavPillar.configure,
+        showBack: true,
+        body: BiosFrame(
+            title: context.l10n.agentConfigRegistry,
+            child: _buildBody(context, state)));
   }
 
   Widget _buildBody(BuildContext context, AgentConfigState state) {
@@ -81,7 +92,8 @@ class AgentConfigView extends StatelessWidget {
     );
   }
 
-  String _permissionModeLabelFor(PocoConfig config) => state.permissionModes
+  String _permissionModeLabelFor(PocoConfig config) =>
+      state.permissionModes
           .where((m) => m.id == config.permissionMode)
           .firstOrNull
           ?.name
@@ -93,27 +105,27 @@ class AgentConfigView extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return _AgentConfigEditorDialog(
-            existing: existing,
-            prompts: state.prompts,
-            permissionModes: state.permissionModes,
-            onSave: (updated) {
-              onSave(updated);
-              Navigator.of(dialogContext).pop();
-            },
-            onDelete: existing != null && existing.id.isNotEmpty
-                ? () async {
-                    final confirmed = await _confirmDelete(
-                      dialogContext,
-                      existing,
-                    );
-                    if (confirmed == true) {
-                      onDelete(existing.id);
-                      if (dialogContext.mounted) {
-                        Navigator.of(dialogContext).pop();
-                      }
+          existing: existing,
+          prompts: state.prompts,
+          permissionModes: state.permissionModes,
+          onSave: (updated) {
+            onSave(updated);
+            Navigator.of(dialogContext).pop();
+          },
+          onDelete: existing != null && existing.id.isNotEmpty
+              ? () async {
+                  final confirmed = await _confirmDelete(
+                    dialogContext,
+                    existing,
+                  );
+                  if (confirmed == true) {
+                    onDelete(existing.id);
+                    if (dialogContext.mounted) {
+                      Navigator.of(dialogContext).pop();
                     }
                   }
-                : null,
+                }
+              : null,
         );
       },
     );
@@ -220,7 +232,7 @@ class _AgentConfigEditorDialogState extends State<_AgentConfigEditorDialog> {
           : context.l10n.agentConfigDialogTitle(existing.name.toUpperCase()),
       content: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: 300,
+          maxHeight: AppSizes.pickerHeight,
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -304,14 +316,35 @@ class _IsDefaultToggle extends StatelessWidget {
 }
 
 class _PromptPicker extends StatelessWidget {
-  const _PromptPicker({required this.prompts, required this.selectedPromptId, required this.onSelected});
-  final List<Prompt> prompts; final String? selectedPromptId; final ValueChanged<String?> onSelected;
-  @override Widget build(BuildContext context) {
+  const _PromptPicker(
+      {required this.prompts,
+      required this.selectedPromptId,
+      required this.onSelected});
+  final List<Prompt> prompts;
+  final String? selectedPromptId;
+  final ValueChanged<String?> onSelected;
+  @override
+  Widget build(BuildContext context) {
     final selected = prompts.where((p) => p.id == selectedPromptId).firstOrNull;
-    return _SelectionField(label: context.l10n.agentConfigPromptLabel, currentValue: selected?.name.toUpperCase() ?? context.l10n.agentConfigSelectPrompt.toUpperCase(), onTap: () async {
-      final picked = await _showListDialog<String>(context, title: context.l10n.agentConfigSelectPrompt, emptyLabel: context.l10n.agentConfigNoPrompts, items: prompts.map((p)=>(id:p.id,label:p.name)).toList(), initialValue:selectedPromptId);
-      if (picked != null) onSelected(picked);
-    });
+    return _SelectionField(
+        label: context.l10n.agentConfigPromptLabel,
+        currentValue: selected?.name.toUpperCase() ??
+            context.l10n.agentConfigSelectPrompt.toUpperCase(),
+        onTap: () async {
+          final picked = await showTerminalListPicker<Prompt>(
+            context: context,
+            title: context.l10n.agentConfigSelectPrompt,
+            emptyLabel: context.l10n.agentConfigNoPrompts,
+            items: prompts,
+            selected: selected,
+            cancelLabel: context.l10n.actionCancel,
+            itemBuilder: (_, prompt) => BiosRow(
+              label: prompt.name,
+              isSelected: selected == prompt,
+            ),
+          );
+          if (picked != null) onSelected(picked.id);
+        });
   }
 }
 
@@ -336,14 +369,19 @@ class _PermissionModePicker extends StatelessWidget {
       currentValue: selected?.name.toUpperCase() ??
           context.l10n.agentConfigSelectMode.toUpperCase(),
       onTap: () async {
-        final picked = await _showListDialog<String>(
-          context,
+        final picked = await showTerminalListPicker<PermissionMode>(
+          context: context,
           title: context.l10n.agentConfigSelectMode,
           emptyLabel: context.l10n.agentConfigNoModes,
-          items: permissionModes.map((m) => (id: m.id, label: m.name)).toList(),
-          initialValue: selectedPermissionModeId,
+          items: permissionModes,
+          selected: selected,
+          cancelLabel: context.l10n.actionCancel,
+          itemBuilder: (_, mode) => BiosRow(
+            label: mode.name,
+            isSelected: selected == mode,
+          ),
         );
-        if (picked != null) onSelected(picked);
+        if (picked != null) onSelected(picked.id);
       },
     );
   }
@@ -369,48 +407,4 @@ class _SelectionField extends StatelessWidget {
       onTap: onTap,
     );
   }
-}
-
-Future<T?> _showListDialog<T extends Object>(
-  BuildContext context, {
-  required String title,
-  required String emptyLabel,
-  required List<({T id, String label})> items,
-  required T? initialValue,
-}) {
-  return showDialog<T>(
-    context: context,
-    builder: (dialogContext) => TerminalDialog(
-      title: title,
-      content: SizedBox(
-        width: double.maxFinite,
-        height: 300,
-        child: items.isEmpty
-            ? Center(
-                child: TerminalText(
-                  emptyLabel,
-                  alpha: 0.5,
-                ),
-              )
-            : ListView(
-                children: [
-                  for (final item in items)
-                    BiosRow(
-                      label: item.label,
-                      isSelected:
-                          initialValue != null && initialValue == item.id,
-                      onTap: () => Navigator.of(dialogContext).pop(item.id),
-                    ),
-                ],
-              ),
-      ),
-      actions: [
-        TerminalButton(
-          label: context.l10n.actionCancel,
-          isPrimary: false,
-          onTap: () => Navigator.of(dialogContext).pop(),
-        ),
-      ],
-    ),
-  );
 }
