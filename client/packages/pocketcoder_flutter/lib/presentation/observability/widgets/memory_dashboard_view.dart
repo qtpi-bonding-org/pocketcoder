@@ -1,0 +1,109 @@
+import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/memory/i_memory_repository.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/observability/widgets/count_card.dart';
+import 'package:pocketcoder_flutter/presentation/observability/widgets/empty_label.dart';
+import 'package:pocketcoder_flutter/presentation/observability/widgets/memory_record_row.dart';
+
+class MemoryDashboardView extends StatelessWidget {
+  const MemoryDashboardView({super.key, required this.stats});
+
+  final MemoryStats stats;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                  child: CountCard(
+                      label: 'OBSERVATIONS', value: stats.observations)),
+              HSpace.x1,
+              Expanded(
+                  child: CountCard(
+                      label: 'INTERPRETATIONS', value: stats.interpretations)),
+              HSpace.x1,
+              Expanded(child: CountCard(label: 'LINKS', value: stats.links)),
+            ],
+          ),
+          VSpace.x2,
+          BiosSection(
+            title: 'Memory by Account',
+            child: stats.byAccount.isEmpty
+                ? const EmptyLabel('No memory recorded yet')
+                : Column(
+                    children: stats.byAccount
+                        .map((account) => _AccountRow(account: account))
+                        .toList(),
+                  ),
+          ),
+          BiosSection(
+            title: 'Recent Observations',
+            child: stats.recentObservations.isEmpty
+                ? const EmptyLabel('No observations yet')
+                : Column(
+                    children: stats.recentObservations
+                        .map(
+                          (observation) => MemoryRecordRow(
+                            author: observation.author,
+                            createdAt: observation.createdAt,
+                            body: observation.body,
+                          ),
+                        )
+                        .toList(),
+                  ),
+          ),
+          BiosSection(
+            title: 'Recent Interpretations',
+            child: stats.recentInterpretations.isEmpty
+                ? const EmptyLabel('No interpretations yet')
+                : Column(
+                    children: stats.recentInterpretations
+                        .map(
+                          (interpretation) => MemoryRecordRow(
+                            author: interpretation.author,
+                            createdAt: interpretation.createdAt,
+                            body: interpretation.body,
+                            linkedObservations:
+                                interpretation.linkedObservations,
+                          ),
+                        )
+                        .toList(),
+                  ),
+          ),
+        ],
+      );
+}
+
+class _AccountRow extends StatelessWidget {
+  const _AccountRow({required this.account});
+
+  final MemoryAccountSummary account;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: AppSizes.space),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                account.agentName,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
+                  fontFamily: AppFonts.bodyFamily,
+                ),
+              ),
+            ),
+            Text(
+              '${account.observations} obs / ${account.interpretations} int',
+              style: TextStyle(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                fontFamily: AppFonts.bodyFamily,
+                fontSize: AppSizes.fontSmall,
+              ),
+            ),
+          ],
+        ),
+      );
+}
