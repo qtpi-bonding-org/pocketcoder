@@ -310,7 +310,7 @@ class _ChatViewState extends State<ChatView> {
                     conversation: widget.conversation,
                     currentUserId: 'user',
                     placement: ag_ui_widgets.ComposerPlacement.inline,
-                    onTapEmptySpace: _inputFocusNode.requestFocus,
+                    onTapEmptySpace: _inputFocusNode.unfocus,
                     theme: ag_ui_widgets.ChatTheme.fromThemeData(
                         Theme.of(context)),
                     textMessageBuilder: builders.textMessageBuilder,
