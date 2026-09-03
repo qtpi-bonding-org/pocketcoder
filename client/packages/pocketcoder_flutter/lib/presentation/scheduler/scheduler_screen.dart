@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -152,7 +153,6 @@ class SchedulerView extends StatelessWidget {
   }
 
   void _showEditScheduleDialog(BuildContext context, ScheduleOwner schedule) {
-    final colors = Theme.of(context).colorScheme;
     final nameController = TextEditingController(text: schedule.displayName);
     final cronController = TextEditingController(text: schedule.cron ?? '');
 
@@ -180,20 +180,9 @@ class SchedulerView extends StatelessWidget {
           ],
         ),
         actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: colors.onSurface,
-              side: BorderSide(color: colors.onSurface.withValues(alpha: 0.3)),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
-            child: Text(context.l10n.actionCancel),
-          ),
-          HSpace.x2,
-          OutlinedButton(
-            onPressed: () {
+          TerminalDialogActions(
+            confirmLabel: context.l10n.schedulerSaveButton,
+            onConfirm: () {
               final name = nameController.text.trim();
               final cron = cronController.text.trim();
               if (name.isEmpty || cron.isEmpty) {
@@ -207,14 +196,8 @@ class SchedulerView extends StatelessWidget {
               }
               Navigator.of(dialogContext).pop();
             },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: colors.primary,
-              side: BorderSide(color: colors.primary),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
-            child: Text(context.l10n.schedulerSaveButton),
+            cancelLabel: context.l10n.actionCancel,
+            onCancel: () => Navigator.of(dialogContext).pop(),
           ),
         ],
       ),
@@ -222,7 +205,6 @@ class SchedulerView extends StatelessWidget {
   }
 
   void _showAddScheduleDialog(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final nameController = TextEditingController();
     final cronController = TextEditingController();
     final promptController = TextEditingController();
@@ -256,20 +238,9 @@ class SchedulerView extends StatelessWidget {
           ],
         ),
         actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: colors.onSurface,
-              side: BorderSide(color: colors.onSurface.withValues(alpha: 0.3)),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
-            child: Text(context.l10n.actionCancel),
-          ),
-          HSpace.x2,
-          OutlinedButton(
-            onPressed: () {
+          TerminalDialogActions(
+            confirmLabel: context.l10n.actionAdd,
+            onConfirm: () {
               final name = nameController.text.trim();
               final cron = cronController.text.trim();
               final prompt = promptController.text.trim();
@@ -279,14 +250,8 @@ class SchedulerView extends StatelessWidget {
               onCreate(displayName: name, cron: cron, prompt: prompt);
               Navigator.of(dialogContext).pop();
             },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: colors.primary,
-              side: BorderSide(color: colors.primary),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
-            child: Text(context.l10n.actionAdd),
+            cancelLabel: context.l10n.actionCancel,
+            onCancel: () => Navigator.of(dialogContext).pop(),
           ),
         ],
       ),

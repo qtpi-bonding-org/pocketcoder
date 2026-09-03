@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -139,7 +140,6 @@ class ToolPermissionsView extends StatelessWidget {
   }
 
   void _showAddRuleDialog(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final toolController = TextEditingController();
     String selectedAction = 'allow';
 
@@ -181,32 +181,16 @@ class ToolPermissionsView extends StatelessWidget {
             ],
           ),
           actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: colors.onSurface,
-                side:
-                    BorderSide(color: colors.onSurface.withValues(alpha: 0.3)),
-                shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero),
-              ),
-              child: Text(context.l10n.actionCancel),
-            ),
-            HSpace.x2,
-            OutlinedButton(
-              onPressed: () {
+            TerminalDialogActions(
+              confirmLabel: context.l10n.actionAdd,
+              onConfirm: () {
                 final tool = toolController.text.trim();
                 if (tool.isEmpty) return;
                 onCreateRule(tool, selectedAction);
                 Navigator.of(dialogContext).pop();
               },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: colors.primary,
-                side: BorderSide(color: colors.primary),
-                shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero),
-              ),
-              child: Text(context.l10n.actionAdd),
+              cancelLabel: context.l10n.actionCancel,
+              onCancel: () => Navigator.of(dialogContext).pop(),
             ),
           ],
         ),
