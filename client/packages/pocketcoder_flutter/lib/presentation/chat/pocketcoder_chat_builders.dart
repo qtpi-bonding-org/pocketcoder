@@ -14,6 +14,7 @@ import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
 import 'package:flyer_chat_text_stream_message/flyer_chat_text_stream_message.dart'
     as chat_stream;
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
@@ -114,6 +115,12 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           toolKind: toolKind,
           fallback: context.l10n.chatToolCallFallback,
         );
+        logDebug('🤖 [toolCallBuilder] building', {
+          'messageId': message.id,
+          'name': name,
+          'hasResult': result != null,
+          'wallClock': DateTime.now().toIso8601String(),
+        });
         return TerminalCommandCard(
           command: command,
           status:

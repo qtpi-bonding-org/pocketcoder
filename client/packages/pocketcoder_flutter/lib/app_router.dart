@@ -374,7 +374,7 @@ class AppRouter {
           context: context,
           state: state,
           child: BlocProvider(
-            create: (_) => getIt<FileBrowserCubit>()..open(''),
+            create: (_) => getIt<FileBrowserCubit>()..open('', refresh: true),
             child: FileBrowserScreen(
               onOpenFile: (context, path) =>
                   AppNavigation.toFileViewer(context, path),

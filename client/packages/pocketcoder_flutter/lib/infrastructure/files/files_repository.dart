@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/file_tree_entry.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 
 @LazySingleton(as: IFilesRepository)
@@ -16,9 +17,16 @@ class FilesRepository implements IFilesRepository {
   Future<List<FileTreeEntry>> listFileTree(String path) async {
     return tryMethod(
       () async {
+        logDebug('FilesRepository: listFileTree(path: "$path") requesting');
         final response = await _api.files.listWorkspaceFileTree(path: path);
         final entries = response.data?.entries;
-        if (entries == null) throw const FormatException('Missing file tree');
+        if (entries == null) {
+          logWarning('FilesRepository: listFileTree(path: "$path") got a '
+              'response with no entries field (status ${response.statusCode})');
+          throw const FormatException('Missing file tree');
+        }
+        logDebug('FilesRepository: listFileTree(path: "$path") got '
+            '${entries.length} top-level entries');
         return entries.map(_convertTreeEntry).toList(growable: false);
       },
       FilesException.new,

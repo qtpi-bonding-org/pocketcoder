@@ -91,6 +91,21 @@ class ChatCubit extends AppCubit<ChatState> {
     _eventSub = transport.events.listen(
       (event) {
         if (myGeneration != _generation) return;
+        if (event is ToolCallStartEvent ||
+            event is ToolCallEndEvent ||
+            event is ToolCallResultEvent) {
+          logDebug('🤖 [ChatCubit] tool-call event', {
+            'type': event.runtimeType.toString(),
+            'toolCallId': switch (event) {
+              ToolCallStartEvent(:final toolCallId) => toolCallId,
+              ToolCallEndEvent(:final toolCallId) => toolCallId,
+              ToolCallResultEvent(:final toolCallId) => toolCallId,
+              _ => null,
+            },
+            'eventTimestamp': event.timestamp,
+            'wallClock': DateTime.now().toIso8601String(),
+          });
+        }
         final reducer = _reducer;
         if (reducer == null) return;
         reducer.apply(event);

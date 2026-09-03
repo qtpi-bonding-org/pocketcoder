@@ -100,6 +100,28 @@ void main() {
       expect(cubit.state.status, UiFlowStatus.success);
       expect(cubit.state.entries, isEmpty);
     });
+
+    test('refresh: true re-fetches instead of reusing the cached tree',
+        () async {
+      var callCount = 0;
+      when(() => repo.listFileTree('')).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) return _tree;
+        return const [
+          FileTreeEntry(
+              name: 'new_file.go', isDir: false, size: 1, modTime: '2026-01-02'),
+        ];
+      });
+      final cubit = buildCubit();
+
+      await cubit.open('');
+      expect(cubit.state.entries.map((e) => e.name), ['main.go', 'src']);
+
+      await cubit.open('', refresh: true);
+
+      expect(cubit.state.entries.map((e) => e.name), ['new_file.go']);
+      verify(() => repo.listFileTree('')).called(2);
+    });
   });
 
   group('FileBrowserCubit.navigateInto', () {
