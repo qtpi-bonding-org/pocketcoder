@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 String _buttonLabel(BuildContext context, ServerControlOperation operation) =>
     switch (operation) {
@@ -38,13 +39,9 @@ class ControlGroupRow extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            TerminalText(
               groupLabel,
-              style: TextStyle(
-                color: context.colorScheme.primary,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontSmall,
-              ),
+              color: context.colorScheme.primary,
             ),
             VSpace.x1,
             IgnorePointer(

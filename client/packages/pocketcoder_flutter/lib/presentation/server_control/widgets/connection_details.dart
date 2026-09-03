@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/copy_button.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class ConnectionDetails extends StatefulWidget {
   const ConnectionDetails({super.key, required this.details});
@@ -36,12 +37,8 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(context.l10n.serverControlConnectionDetails,
-            style: TextStyle(
-              color: context.colorScheme.primary,
-              fontFamily: AppFonts.bodyFamily,
-              fontSize: AppSizes.fontSmall,
-            )),
+        TerminalText(context.l10n.serverControlConnectionDetails,
+            color: context.colorScheme.primary),
         VSpace.x1,
         if (details.ipAddress case final value?)
           DetailRow(label: context.l10n.serverControlIpAddress, value: value),

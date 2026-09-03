@@ -70,9 +70,9 @@ class NotificationSettingsView extends StatelessWidget {
           UiFlowStatus.loading =>
             const Center(child: CircularProgressIndicator()),
           UiFlowStatus.failure => Center(
-              child: Text(
+              child: TerminalText(
                 safeErrorMessage(state.error),
-                style: TextStyle(color: context.terminalColors.warning),
+                color: context.terminalColors.warning,
               ),
             ),
           UiFlowStatus.success => ListView(

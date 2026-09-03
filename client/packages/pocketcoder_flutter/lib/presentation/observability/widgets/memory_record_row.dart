@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class MemoryRecordRow extends StatelessWidget {
   const MemoryRecordRow({
@@ -23,29 +24,19 @@ class MemoryRecordRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          TerminalText.mini(
             '$author · $createdAt',
-            style: TextStyle(
-              color: context.colorScheme.primary,
-              fontFamily: AppFonts.bodyFamily,
-              fontSize: AppSizes.fontMini,
-            ),
+            color: context.colorScheme.primary,
           ),
-          Text(
+          TerminalText(
             body,
-            style: TextStyle(
-              color: context.colorScheme.onSurface,
-              fontFamily: AppFonts.bodyFamily,
-            ),
+            color: context.colorScheme.onSurface,
           ),
           if (linked.isNotEmpty)
-            Text(
+            TerminalText.mini(
               'Linked: ${linked.join(' | ')}',
-              style: TextStyle(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontMini,
-              ),
+              color: context.colorScheme.onSurface,
+              alpha: 0.6,
             ),
         ],
       ),

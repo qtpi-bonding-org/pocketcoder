@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/pocketbase_inspector/i_pocketbase_inspector_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/pocketbase_inspector/widgets/pocketbase_inspector_view.dart';
 
 class PocketbaseInspectorScreen extends StatefulWidget {
@@ -36,9 +37,9 @@ class _PocketbaseInspectorScreenState extends State<PocketbaseInspectorScreen> {
             UiFlowStatus.idle =>
               const Center(child: TerminalLoadingIndicator()),
             UiFlowStatus.failure => Center(
-                child: Text(
+                child: TerminalText(
                   'DATABASE UNAVAILABLE',
-                  style: TextStyle(color: context.terminalColors.warning),
+                  color: context.terminalColors.warning,
                 ),
               ),
             UiFlowStatus.success => PocketbaseInspectorView(

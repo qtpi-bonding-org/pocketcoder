@@ -8,6 +8,8 @@ const _allowedDangerSites = {
   'lib/presentation/mcp/widgets/mcp_management_view.dart',
   'lib/presentation/settings/adapters/settings_adapter.dart',
   'lib/presentation/errors/error_inbox_screen.dart',
+  'lib/presentation/errors/widgets/error_tile.dart',
+  'lib/design_system/storybook/tinted_alert_card.stories.dart',
 };
 
 void main() {

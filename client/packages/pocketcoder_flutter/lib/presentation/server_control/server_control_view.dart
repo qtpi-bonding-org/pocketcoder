@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_confirm_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/connection_details.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/private_key_section.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/copy_button.dart';
@@ -131,9 +132,9 @@ class ServerControlView extends StatelessWidget {
               ),
             ),
             if (state.error case final error?)
-              Text(
+              TerminalText(
                 'ERROR: $error',
-                style: TextStyle(color: context.terminalColors.warning),
+                color: context.terminalColors.warning,
               ),
             if (state.result case final result?) ...[
               VSpace.x2,

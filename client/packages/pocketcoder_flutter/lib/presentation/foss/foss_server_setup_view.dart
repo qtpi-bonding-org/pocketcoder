@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/application/foss/foss_server_setup_cubit.dar
 import 'package:pocketcoder_flutter/application/foss/foss_server_setup_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class FossServerSetupView extends StatelessWidget {
   const FossServerSetupView({super.key, required this.onSetupComplete});
@@ -22,13 +23,10 @@ class FossServerSetupView extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.all(AppSizes.space * 2),
             children: [
-            Text(
+            TerminalText(
               context.l10n.fossServerSetupTitle,
-              style: TextStyle(
-                color: context.colorScheme.primary,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontLarge,
-              ),
+              size: TerminalTextSize.large,
+              color: context.colorScheme.primary,
             ),
             VSpace.x1,
             Text(context.l10n.fossServerSetupIntro),
@@ -70,9 +68,9 @@ class FossServerSetupView extends StatelessWidget {
             ],
             if (state.error case final error?) ...[
               VSpace.x1,
-              Text(
+              TerminalText(
                 'ERROR: $error',
-                style: TextStyle(color: context.terminalColors.warning),
+                color: context.terminalColors.warning,
               ),
             ],
             if (state.phase == FossServerSetupPhase.connected) ...[

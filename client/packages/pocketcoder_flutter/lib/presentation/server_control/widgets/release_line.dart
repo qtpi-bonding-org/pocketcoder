@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class ReleaseLine extends StatelessWidget {
   const ReleaseLine({super.key, required this.state});
@@ -11,13 +12,9 @@ class ReleaseLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final release = state.release;
-    return Text(
+    return TerminalText(
       release == null ? context.l10n.serverControlReleaseChecking : _lines(context, release),
-      style: TextStyle(
-        color: context.colorScheme.primary,
-        fontFamily: AppFonts.bodyFamily,
-        fontSize: AppSizes.fontSmall,
-      ),
+      color: context.colorScheme.primary,
     );
   }
 

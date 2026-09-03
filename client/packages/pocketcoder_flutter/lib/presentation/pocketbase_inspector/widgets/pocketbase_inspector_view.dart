@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/pocketbase_inspector/i_pocketbase_inspector_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class PocketbaseInspectorView extends StatelessWidget {
   const PocketbaseInspectorView({super.key, required this.stats});
@@ -62,22 +63,15 @@ class _CountCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            TerminalText(
               '$value',
-              style: TextStyle(
-                color: context.colorScheme.primary,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontLarge,
-                fontWeight: AppFonts.heavy,
-              ),
+              size: TerminalTextSize.large,
+              weight: TerminalTextWeight.heavy,
+              color: context.colorScheme.primary,
             ),
-            Text(
+            TerminalText.mini(
               label,
-              style: TextStyle(
-                color: context.colorScheme.onSurface,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontMini,
-              ),
+              color: context.colorScheme.onSurface,
             ),
           ],
         ),
@@ -92,13 +86,10 @@ class _EmptyLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.symmetric(vertical: AppSizes.space),
-        child: Text(
+        child: TerminalText(
           label,
-          style: TextStyle(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontSmall,
-          ),
+          color: context.colorScheme.onSurface,
+          alpha: 0.6,
         ),
       );
 }
@@ -114,21 +105,15 @@ class _ChatRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
+              child: TerminalText(
                 chat.archived ? '${chat.title} (archived)' : chat.title,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontFamily: AppFonts.bodyFamily,
-                ),
+                color: context.colorScheme.onSurface,
               ),
             ),
-            Text(
+            TerminalText(
               chat.lastActive,
-              style: TextStyle(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.7),
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontSmall,
-              ),
+              color: context.colorScheme.onSurface,
+              alpha: 0.7,
             ),
           ],
         ),

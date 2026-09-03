@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart'
 import 'package:pocketcoder_flutter/presentation/observability/widgets/count_card.dart';
 import 'package:pocketcoder_flutter/presentation/observability/widgets/empty_label.dart';
 import 'package:pocketcoder_flutter/presentation/observability/widgets/memory_record_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class MemoryDashboardView extends StatelessWidget {
   const MemoryDashboardView({super.key, required this.stats});
@@ -87,21 +88,15 @@ class _AccountRow extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Text(
+              child: TerminalText(
                 account.agentName,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontFamily: AppFonts.bodyFamily,
-                ),
+                color: context.colorScheme.onSurface,
               ),
             ),
-            Text(
+            TerminalText(
               '${account.observations} obs / ${account.interpretations} int',
-              style: TextStyle(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.7),
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontSmall,
-              ),
+              color: context.colorScheme.onSurface,
+              alpha: 0.7,
             ),
           ],
         ),

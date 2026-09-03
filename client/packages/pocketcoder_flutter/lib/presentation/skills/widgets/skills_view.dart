@@ -63,8 +63,8 @@ class SkillsView extends StatelessWidget {
     }
     if (data.error != null) {
       return Center(
-        child: Text(safeErrorMessage(data.error),
-            style: TextStyle(color: context.terminalColors.warning)),
+        child: TerminalText(safeErrorMessage(data.error),
+            color: context.terminalColors.warning),
       );
     }
 

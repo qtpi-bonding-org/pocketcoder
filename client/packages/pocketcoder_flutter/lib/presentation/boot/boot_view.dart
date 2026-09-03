@@ -54,7 +54,7 @@ class BootView extends StatelessWidget {
             if (pocoVisible)
               Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 500),
+                  constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,

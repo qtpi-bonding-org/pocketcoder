@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/memory/i_memory_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/observability/widgets/memory_dashboard_view.dart';
 
 class MemoryDashboardScreen extends StatefulWidget {
@@ -34,9 +35,9 @@ class _MemoryDashboardScreenState extends State<MemoryDashboardScreen> {
             UiFlowStatus.idle =>
               const Center(child: TerminalLoadingIndicator()),
             UiFlowStatus.failure => Center(
-                child: Text(
+                child: TerminalText(
                   'MEMORY UNAVAILABLE',
-                  style: TextStyle(color: context.terminalColors.warning),
+                  color: context.terminalColors.warning,
                 ),
               ),
             UiFlowStatus.success =>

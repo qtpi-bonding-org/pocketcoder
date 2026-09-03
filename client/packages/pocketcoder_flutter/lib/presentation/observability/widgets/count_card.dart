@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class CountCard extends StatelessWidget {
   const CountCard({super.key, required this.label, required this.value});
@@ -16,22 +17,15 @@ class CountCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            TerminalText(
               '$value',
-              style: TextStyle(
-                color: context.colorScheme.primary,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontLarge,
-                fontWeight: AppFonts.heavy,
-              ),
+              size: TerminalTextSize.large,
+              weight: TerminalTextWeight.heavy,
+              color: context.colorScheme.primary,
             ),
-            Text(
+            TerminalText.mini(
               label,
-              style: TextStyle(
-                color: context.colorScheme.onSurface,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontMini,
-              ),
+              color: context.colorScheme.onSurface,
             ),
           ],
         ),

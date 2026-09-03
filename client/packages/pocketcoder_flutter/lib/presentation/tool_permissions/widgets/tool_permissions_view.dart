@@ -44,9 +44,9 @@ class ToolPermissionsView extends StatelessWidget {
             }
             if (state.status == UiFlowStatus.failure) {
               return Center(
-                child: Text(
+                child: TerminalText(
                   safeErrorMessage(state.error),
-                  style: TextStyle(color: context.terminalColors.warning),
+                  color: context.terminalColors.warning,
                 ),
               );
             }
