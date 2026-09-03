@@ -32,6 +32,8 @@ import 'package:pocketcoder_flutter/design_system/storybook/skills_view.stories.
     as _pocketcoder_flutter_design_system_storybook_skills_view_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/terminal_conversation.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories;
+import 'package:pocketcoder_flutter/design_system/storybook/terminal_dialog_actions.stories.dart'
+    as _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/tool_permissions_view.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
@@ -231,6 +233,35 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories
                             .terminalUserTurn,
+                  ),
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'TerminalDialogActions',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'confirm only',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
+                            .confirmOnly,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'confirm and cancel',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
+                            .confirmAndCancel,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'disabled confirm',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
+                            .disabledConfirm,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'destructive',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
+                            .destructive,
                   ),
                 ],
               ),
