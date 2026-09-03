@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_cubit.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
+import 'package:pocketcoder_flutter/presentation/scheduler/widgets/scheduler_view.dart';
 
 class SchedulerAdapter extends CubitAdapter<SchedulerCubit, SchedulerState> {
   const SchedulerAdapter({super.key});

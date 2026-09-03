@@ -7,7 +7,7 @@ import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
-import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
+import 'package:pocketcoder_flutter/presentation/scheduler/widgets/scheduler_view.dart';
 
 Widget _app(Widget child) => MaterialApp(
   theme: AppTheme.lightTheme,
