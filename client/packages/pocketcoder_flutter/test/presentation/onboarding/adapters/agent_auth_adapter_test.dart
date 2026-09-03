@@ -28,6 +28,7 @@ import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/adapters/agent_auth_adapter.dart';
 
@@ -477,6 +478,102 @@ void main() {
     expect(find.byType(SnackBar), findsOneWidget);
     expect(find.text('CANCEL'), findsOneWidget);
 
+    await tester.tap(find.text('CANCEL'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+  });
+
+  testWidgets(
+      'a cancellation whose response is already connected does not crash '
+      'the dialog with a double pop', (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => _awaitingChallenge());
+    when(() => authRepo.cancel(
+          harnessId: _codexId,
+          provider: _providerId,
+          accountId: any(named: 'accountId'),
+          attemptId: any(named: 'attemptId'),
+        )).thenAnswer((_) async => _connected());
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+    await tester.tap(find.text('CANCEL'));
+    for (var i = 0; i < 8; i++) {
+      await tester.pump();
+    }
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'a status with a real error stops the loading glyph from claiming '
+      'the connection is still running', (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => const HarnessAuthStatus(
+          harness: _codexId,
+          provider: _providerId,
+          accountId: '',
+          accountName: '',
+          visibility: harnessAccountVisibilityPersonal,
+          credentialMode: 'account',
+          status: 'error',
+          lastError: 'invalid_grant',
+        ));
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
+    final glyph =
+        tester.widget<TerminalStatusGlyph>(find.byType(TerminalStatusGlyph));
+    expect(glyph.status, isNot(TerminalStatus.running));
+    expect(find.text('invalid_grant'), findsOneWidget);
+  });
+
+  testWidgets('tapping COPY on a device code shows a confirmation snackbar',
+      (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => _awaitingChallenge());
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+    await tester.tap(find.text('[COPY]'));
+    await tester.pump();
+
+    expect(find.byType(SnackBar), findsOneWidget);
     await tester.tap(find.text('CANCEL'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();

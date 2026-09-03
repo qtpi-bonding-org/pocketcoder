@@ -4,10 +4,12 @@ import 'terminal_status_glyph.dart';
 
 class TerminalLoadingIndicator extends StatelessWidget {
   final String? label;
+  final TerminalStatus status;
 
   const TerminalLoadingIndicator({
     super.key,
     this.label,
+    this.status = TerminalStatus.running,
   });
 
   @override
@@ -17,7 +19,7 @@ class TerminalLoadingIndicator extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         TerminalStatusGlyph(
-          status: TerminalStatus.running,
+          status: status,
           fontSize: AppSizes.fontLarge,
         ),
         if (label != null) ...[

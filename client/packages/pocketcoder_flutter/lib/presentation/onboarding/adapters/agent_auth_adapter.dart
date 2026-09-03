@@ -17,6 +17,7 @@ import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
@@ -209,7 +210,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   ) async {
     Timer? timer;
     int? timerInterval;
-    var closedDialog = false;
+    var dialogClosing = false;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -238,11 +239,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             timer = null;
             timerInterval = null;
           }
-          if (status?.isConnected == true && !closedDialog) {
+          if (status?.isConnected == true && !dialogClosing) {
             timer?.cancel();
             timer = null;
             timerInterval = null;
-            closedDialog = true;
+            dialogClosing = true;
             // Deferred: connected has its own ValueListenableBuilder
             // listener elsewhere, which cannot rebuild while this
             // BlocBuilder is still mid-build.
@@ -274,7 +275,14 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TerminalLoadingIndicator(label: harness.name),
+                TerminalLoadingIndicator(
+                  label: harness.name,
+                  status: status?.isConnecting == true
+                      ? TerminalStatus.running
+                      : errorMessage != null
+                          ? TerminalStatus.failure
+                          : TerminalStatus.running,
+                ),
                 TerminalText(
                   context.l10n.externalAuthConnecting(harness.name),
                   alpha: status?.isConnecting == true ? 1 : .6,
@@ -289,7 +297,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                   onOpenAuthorizationPage: () {
                     if (uri != null) unawaited(_openChallenge(context, uri));
                   },
-                  onCopyCode: (code) {},
+                  onCopyCode: (code) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(context.l10n.serverControlCopied)),
+                    );
+                  },
                   onSubmitCode: (code) => auth.submitCode(
                       harnessId: harness.id, code: code, provider: provider),
                   onCancel: () async {
@@ -297,7 +309,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                     timer = null;
                     timerInterval = null;
                     await auth.cancel(harness.id, provider);
-                    if (dialogContext.mounted) {
+                    if (dialogContext.mounted && !dialogClosing) {
+                      dialogClosing = true;
                       Navigator.of(dialogContext).pop();
                     }
                   },
