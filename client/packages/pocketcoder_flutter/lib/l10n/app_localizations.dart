@@ -946,6 +946,18 @@ abstract class AppLocalizations {
   /// **'THOUGHT'**
   String get chatThought;
 
+  /// No description provided for @chatAwaitingHarnessStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting the harness -- this can take a minute or two on a fresh container.'**
+  String get chatAwaitingHarnessStart;
+
+  /// No description provided for @chatWorkingThroughRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Working through the request.'**
+  String get chatWorkingThroughRequest;
+
   /// No description provided for @chatCommandOutput.
   ///
   /// In en, this message translates to:

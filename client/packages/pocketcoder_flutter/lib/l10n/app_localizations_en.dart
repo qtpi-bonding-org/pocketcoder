@@ -464,6 +464,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatThought => 'THOUGHT';
 
   @override
+  String get chatAwaitingHarnessStart =>
+      'Starting the harness -- this can take a minute or two on a fresh container.';
+
+  @override
+  String get chatWorkingThroughRequest => 'Working through the request.';
+
+  @override
   String get chatCommandOutput => 'OUTPUT';
 
   @override

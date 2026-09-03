@@ -187,6 +187,8 @@
   "chatThinking": "THINKING",
   "chatThinkingLive": "THINKING...",
   "chatThought": "THOUGHT",
+  "chatAwaitingHarnessStart": "Starting the harness -- this can take a minute or two on a fresh container.",
+  "chatWorkingThroughRequest": "Working through the request.",
   "chatCommandOutput": "OUTPUT",
   "chatToolCallFallback": "Tool call",
   "chatSessionAction": "SESSION",

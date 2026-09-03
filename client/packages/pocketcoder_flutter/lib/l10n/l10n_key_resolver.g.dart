@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-09-03T15:31:26.852984
+// Generated at: 2026-09-03T15:41:44.702090
 
 import 'app_localizations.dart';
 
@@ -88,6 +88,7 @@ class L10nKeyResolver {
       'boot.poco.intro' => _l10n.bootPocoIntro,
       'boot.systems.nominal' => _l10n.bootSystemsNominal,
       'boot.welcome.back' => _l10n.bootWelcomeBack,
+      'chat.awaiting.harness.start' => _l10n.chatAwaitingHarnessStart,
       'chat.command.output' => _l10n.chatCommandOutput,
       'chat.commander.role' => _l10n.chatCommanderRole,
       'chat.created' => _l10n.chatCreated,
@@ -130,6 +131,7 @@ class L10nKeyResolver {
       'chat.thought' => _l10n.chatThought,
       'chat.tool.call.fallback' => _l10n.chatToolCallFallback,
       'chat.use.global.default' => _l10n.chatUseGlobalDefault,
+      'chat.working.through.request' => _l10n.chatWorkingThroughRequest,
       'choose.provider.coming.soon' => _l10n.chooseProviderComingSoon,
       'choose.provider.pro.badge' => _l10n.chooseProviderProBadge,
       'choose.provider.title' => _l10n.chooseProviderTitle,
@@ -1070,6 +1072,7 @@ class L10nKeyResolver {
     'boot.systems.nominal',
     'boot.welcome.back',
     'brief.label',
+    'chat.awaiting.harness.start',
     'chat.command.output',
     'chat.commander.role',
     'chat.created',
@@ -1115,6 +1118,7 @@ class L10nKeyResolver {
     'chat.thought',
     'chat.tool.call.fallback',
     'chat.use.global.default',
+    'chat.working.through.request',
     'choose.provider.coming.soon',
     'choose.provider.pro.badge',
     'choose.provider.title',
@@ -2045,6 +2049,7 @@ class L10nKeyResolver {
     'bootSystemsNominal': 'boot.systems.nominal',
     'bootWelcomeBack': 'boot.welcome.back',
     'briefLabel': 'brief.label',
+    'chatAwaitingHarnessStart': 'chat.awaiting.harness.start',
     'chatCommandOutput': 'chat.command.output',
     'chatCommanderRole': 'chat.commander.role',
     'chatCreated': 'chat.created',
@@ -2090,6 +2095,7 @@ class L10nKeyResolver {
     'chatThought': 'chat.thought',
     'chatToolCallFallback': 'chat.tool.call.fallback',
     'chatUseGlobalDefault': 'chat.use.global.default',
+    'chatWorkingThroughRequest': 'chat.working.through.request',
     'chooseProviderComingSoon': 'choose.provider.coming.soon',
     'chooseProviderProBadge': 'choose.provider.pro.badge',
     'chooseProviderTitle': 'choose.provider.title',
@@ -3017,6 +3023,7 @@ class L10nKeyResolver {
     'boot.systems.nominal': 'bootSystemsNominal',
     'boot.welcome.back': 'bootWelcomeBack',
     'brief.label': 'briefLabel',
+    'chat.awaiting.harness.start': 'chatAwaitingHarnessStart',
     'chat.command.output': 'chatCommandOutput',
     'chat.commander.role': 'chatCommanderRole',
     'chat.created': 'chatCreated',
@@ -3062,6 +3069,7 @@ class L10nKeyResolver {
     'chat.thought': 'chatThought',
     'chat.tool.call.fallback': 'chatToolCallFallback',
     'chat.use.global.default': 'chatUseGlobalDefault',
+    'chat.working.through.request': 'chatWorkingThroughRequest',
     'choose.provider.coming.soon': 'chooseProviderComingSoon',
     'choose.provider.pro.badge': 'chooseProviderProBadge',
     'choose.provider.title': 'chooseProviderTitle',
@@ -3996,6 +4004,7 @@ abstract class L10nKeys {
   static const bootSystemsNominal = 'boot.systems.nominal';
   static const bootWelcomeBack = 'boot.welcome.back';
   static (String, Map<String, dynamic>) briefLabel(int current, int total) => ('brief.label', {'current': current, 'total': total});
+  static const chatAwaitingHarnessStart = 'chat.awaiting.harness.start';
   static const chatCommandOutput = 'chat.command.output';
   static const chatCommanderRole = 'chat.commander.role';
   static const chatCreated = 'chat.created';
@@ -4041,6 +4050,7 @@ abstract class L10nKeys {
   static const chatThought = 'chat.thought';
   static const chatToolCallFallback = 'chat.tool.call.fallback';
   static const chatUseGlobalDefault = 'chat.use.global.default';
+  static const chatWorkingThroughRequest = 'chat.working.through.request';
   static const chooseProviderComingSoon = 'choose.provider.coming.soon';
   static const chooseProviderProBadge = 'choose.provider.pro.badge';
   static const chooseProviderTitle = 'choose.provider.title';

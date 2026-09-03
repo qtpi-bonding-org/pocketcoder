@@ -11,7 +11,7 @@ import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dar
 import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
-import 'package:pocketcoder_flutter/presentation/chat/thinking_block.dart';
+import 'package:pocketcoder_flutter/presentation/chat/widgets/reasoning_caption.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -270,32 +270,17 @@ class _ChatViewState extends State<ChatView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.isLoading && latestReasoningId == null)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: AppSizes.space,
-                      right: AppSizes.space,
-                      top: AppSizes.space * 0.5,
-                    ),
-                    child: ThinkingBlock(
-                      text: widget.awaitingHarnessStart
-                          ? 'Starting the harness -- this can take a '
-                              'minute or two on a fresh container.'
-                          : 'Working through the request.',
-                      isStreaming: true,
-                    ),
+                  ReasoningCaption(
+                    text: widget.awaitingHarnessStart
+                        ? context.l10n.chatAwaitingHarnessStart
+                        : context.l10n.chatWorkingThroughRequest,
+                    isStreaming: true,
                   )
                 else if (latestReasoningText != null)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: AppSizes.space,
-                      right: AppSizes.space,
-                      top: AppSizes.space * 0.5,
-                    ),
-                    child: ThinkingBlock(
-                      key: ValueKey(latestReasoningId),
-                      text: latestReasoningText.trim(),
-                      isStreaming: widget.isLoading,
-                    ),
+                  ReasoningCaption(
+                    key: ValueKey(latestReasoningId),
+                    text: latestReasoningText.trim(),
+                    isStreaming: widget.isLoading,
                   ),
                 if (widget.conversation.timeline.isNotEmpty)
                   Padding(
