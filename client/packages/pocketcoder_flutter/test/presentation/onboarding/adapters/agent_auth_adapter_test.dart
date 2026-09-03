@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
@@ -24,6 +25,7 @@ import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repositor
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
@@ -44,6 +46,8 @@ class MockChatListRepository extends Mock implements IChatListRepository {
       required ChatTurn turn,
       required bool isFirst}) async {}
 }
+
+class MockPushService extends Mock implements PushService {}
 
 class _RecordingLauncher implements InAppBrowserLauncher {
   _RecordingLauncher({this.result = true});
@@ -168,11 +172,21 @@ void main() {
   late MockProviderRepository providerRepo;
   late MockHarnessAuthRepository authRepo;
   late MockChatListRepository chatRepo;
+  late MockPushService pushService;
 
   setUp(() {
     providerRepo = MockProviderRepository();
     authRepo = MockHarnessAuthRepository();
     chatRepo = MockChatListRepository();
+    pushService = MockPushService();
+    when(() => pushService.requestPermissions())
+        .thenAnswer((_) async => true);
+    GetIt.instance.registerSingleton<PushService>(pushService);
+    addTearDown(() {
+      if (GetIt.instance.isRegistered<PushService>()) {
+        GetIt.instance.unregister<PushService>();
+      }
+    });
 
     when(() => providerRepo.watchHarnesses())
         .thenAnswer((_) => Stream.value([_codex()]));
@@ -223,6 +237,34 @@ void main() {
           credentialMode: 'account',
           status: 'disconnected',
         ));
+  });
+
+  testWidgets(
+      'connecting a harness and landing on its new chat asks for '
+      'notification permission', (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => _connected());
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+    await tester.tap(find.text('NEXT'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
+    verify(() => pushService.requestPermissions()).called(1);
   });
 
   testWidgets(

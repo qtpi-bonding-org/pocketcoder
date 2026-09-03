@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
@@ -14,6 +15,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -194,10 +196,20 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
       final chatId = chats.state.lastCreatedChatId;
       if (context.mounted && chatId != null && chatId.isNotEmpty) {
         context.go('/chat/$chatId');
+        unawaited(_requestPushPermissionSilently());
       }
     } catch (error) {
       OnboardingLogger.event(
           'first chat creation failed', {'error': error.toString()});
+    }
+  }
+
+  Future<void> _requestPushPermissionSilently() async {
+    try {
+      await getIt<PushService>().requestPermissions();
+    } catch (error) {
+      OnboardingLogger.event(
+          'push_permission_request_failed', {'error': '$error'});
     }
   }
 
