@@ -251,13 +251,12 @@ class HarnessAuthCard extends StatelessWidget {
               VSpace.x2,
               _actions(context, s, edges),
               VSpace.x2,
-              Align(
-                  alignment: Alignment.centerLeft,
-                  child: TerminalButton(
-                      label: l10n.harnessAuthRefresh,
-                      isPrimary: false,
-                      isLoading: isBusy,
-                      onTap: isBusy ? () {} : onRefresh)),
+              TerminalButton(
+                  label: l10n.harnessAuthRefresh,
+                  isPrimary: false,
+                  filled: false,
+                  isLoading: isBusy,
+                  onTap: isBusy ? () {} : onRefresh),
               if (s.attempt case final attempt?)
                 Padding(
                     padding: EdgeInsets.only(top: AppSizes.space),
@@ -293,27 +292,35 @@ class HarnessAuthCard extends StatelessWidget {
   Widget _actions(
       BuildContext context, HarnessAuthStatus s, List<HarnessProvider> edges) {
     if (s.isDisconnected) {
-      return Wrap(
-          spacing: AppSizes.space,
-          runSpacing: AppSizes.space,
+      final loginButtons = [
+        for (final edge in edges)
+          if (edge.supportsOauth == true)
+            TerminalButton(
+                label: context.l10n.harnessAuthAccountLogin,
+                onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
+                filled: false,
+                isLoading: isBusy),
+      ];
+      return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (final edge in edges)
-              if (edge.supportsOauth == true)
-                TerminalButton(
-                    label: context.l10n.harnessAuthAccountLogin,
-                    onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
-                    isLoading: isBusy),
+            for (var i = 0; i < loginButtons.length; i++) ...[
+              if (i > 0) VSpace.x1,
+              loginButtons[i],
+            ],
           ]);
     }
     if (s.isConnected) {
       return TerminalButton(
           label: context.l10n.harnessAuthDisconnect,
           onTap: isBusy ? () {} : onDisconnect,
+          filled: false,
           isLoading: isBusy);
     }
     return TerminalButton(
         label: context.l10n.harnessAuthCancel,
         onTap: isBusy ? () {} : onCancel,
+        filled: false,
         isLoading: isBusy);
   }
 
