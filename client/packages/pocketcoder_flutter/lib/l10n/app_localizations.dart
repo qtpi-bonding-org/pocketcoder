@@ -3331,7 +3331,7 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentLinuxSystemTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE LINUX SYSTEM'**
+  /// **'LINUX SYSTEM'**
   String get deploymentLinuxSystemTitle;
 
   /// No description provided for @deploymentReviewTitle.
@@ -3391,7 +3391,7 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentLinuxPoco.
   ///
   /// In en, this message translates to:
-  /// **'Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.'**
+  /// **'PocketCoder deploys on NixOS -- chosen for reproducible, deterministic builds.'**
   String get deploymentLinuxPoco;
 
   /// No description provided for @deploymentReviewPoco.

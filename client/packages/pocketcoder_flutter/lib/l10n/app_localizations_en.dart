@@ -1775,7 +1775,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentCodingAgentsTitle => 'CHOOSE CODING AGENTS';
 
   @override
-  String get deploymentLinuxSystemTitle => 'CHOOSE LINUX SYSTEM';
+  String get deploymentLinuxSystemTitle => 'LINUX SYSTEM';
 
   @override
   String get deploymentReviewTitle => 'REVIEW YOUR SERVER';
@@ -1813,7 +1813,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentLinuxPoco =>
-      'Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.';
+      'PocketCoder deploys on NixOS -- chosen for reproducible, deterministic builds.';
 
   @override
   String get deploymentReviewPoco =>
