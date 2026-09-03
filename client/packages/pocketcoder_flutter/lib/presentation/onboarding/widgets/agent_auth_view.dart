@@ -140,46 +140,54 @@ class _HarnessChoiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    return InkWell(
-      onTap: onTap,
-      child: TerminalCard(
-        child: Row(
-          children: [
-            TerminalText.label(r'$', color: colors.primary),
-            HSpace.x2,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    harness.name,
-                    style: TextStyle(
-                      color: colors.onSurface,
-                      fontFamily: AppFonts.headerFamily,
-                      fontSize: AppSizes.fontStandard,
-                      fontWeight: AppFonts.heavy,
-                    ),
+    return Opacity(
+      key: ValueKey('harness-card-opacity-${harness.cliId}'),
+      opacity: onTap == null ? 0.4 : 1.0,
+      child: IgnorePointer(
+        ignoring: onTap == null,
+        child: InkWell(
+          onTap: onTap,
+          child: TerminalCard(
+            child: Row(
+              children: [
+                TerminalText.label(r'$', color: colors.primary),
+                HSpace.x2,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        harness.name,
+                        style: TextStyle(
+                          color: colors.onSurface,
+                          fontFamily: AppFonts.headerFamily,
+                          fontSize: AppSizes.fontStandard,
+                          fontWeight: AppFonts.heavy,
+                        ),
+                      ),
+                      VSpace.x1,
+                      TerminalText(
+                        connected
+                            ? context.l10n.onboardingConnected
+                            : switch (harness.cliId.trim().toLowerCase()) {
+                                'codex' =>
+                                  context.l10n.onboardingCodexAccountLogin,
+                                'claude-code' =>
+                                  context.l10n.onboardingClaudeAccountLogin,
+                                _ => context.l10n.onboardingHarnessAccountLogin(
+                                    harness.name),
+                              },
+                        alpha: 0.6,
+                        color: connected ? colors.primary : null,
+                      ),
+                    ],
                   ),
-                  VSpace.x1,
-                  TerminalText(
-                    connected
-                        ? context.l10n.onboardingConnected
-                        : switch (harness.cliId.trim().toLowerCase()) {
-                            'codex' => context.l10n.onboardingCodexAccountLogin,
-                            'claude-code' =>
-                              context.l10n.onboardingClaudeAccountLogin,
-                            _ => context.l10n
-                                .onboardingHarnessAccountLogin(harness.name),
-                          },
-                    alpha: 0.6,
-                    color: connected ? colors.primary : null,
-                  ),
-                ],
-              ),
+                ),
+                Text(connected ? '[x]' : '[>]',
+                    style: TextStyle(color: colors.primary)),
+              ],
             ),
-            Text(connected ? '[x]' : '[>]',
-                style: TextStyle(color: colors.primary)),
-          ],
+          ),
         ),
       ),
     );
