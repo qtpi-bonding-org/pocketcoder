@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/harness_choice_card.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 
 class AgentAuthView extends StatelessWidget {
   const AgentAuthView({
@@ -95,100 +96,29 @@ class AgentAuthView extends StatelessWidget {
       return Center(child: TerminalText(context.l10n.errorGeneric));
     }
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-        child: ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.all(AppSizes.space * 2),
-          children: [
-            TerminalText(
-              context.l10n.onboardingChooseHarnessBody,
-              alpha: 0.7,
-            ),
-            VSpace.x3,
-            if (!harnessProvidersLoaded)
-              const TerminalText('Loading provider connections…'),
-            for (final harness in supported)
-              Padding(
-                padding: EdgeInsets.only(bottom: AppSizes.space),
-                child: _HarnessChoiceCard(
-                  harness: harness,
-                  connected: connectedHarnessIds.contains(harness.id),
-                  onTap:
-                      harnessProvidersLoaded ? () => onSelected(harness) : null,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _HarnessChoiceCard extends StatelessWidget {
-  const _HarnessChoiceCard({
-    required this.harness,
-    required this.connected,
-    required this.onTap,
-  });
-
-  final Harnesse harness;
-  final bool connected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return Opacity(
-      key: ValueKey('harness-card-opacity-${harness.cliId}'),
-      opacity: onTap == null ? 0.4 : 1.0,
-      child: IgnorePointer(
-        ignoring: onTap == null,
-        child: InkWell(
-          onTap: onTap,
-          child: TerminalCard(
-            child: Row(
-              children: [
-                TerminalText.label(r'$', color: colors.primary),
-                HSpace.x2,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        harness.name,
-                        style: TextStyle(
-                          color: colors.onSurface,
-                          fontFamily: AppFonts.headerFamily,
-                          fontSize: AppSizes.fontStandard,
-                          fontWeight: AppFonts.heavy,
-                        ),
-                      ),
-                      VSpace.x1,
-                      TerminalText(
-                        connected
-                            ? context.l10n.onboardingConnected
-                            : switch (harness.cliId.trim().toLowerCase()) {
-                                'codex' =>
-                                  context.l10n.onboardingCodexAccountLogin,
-                                'claude-code' =>
-                                  context.l10n.onboardingClaudeAccountLogin,
-                                _ => context.l10n.onboardingHarnessAccountLogin(
-                                    harness.name),
-                              },
-                        alpha: 0.6,
-                        color: connected ? colors.primary : null,
-                      ),
-                    ],
-                  ),
-                ),
-                Text(connected ? '[x]' : '[>]',
-                    style: TextStyle(color: colors.primary)),
-              ],
-            ),
+    return OnboardingContentShell(
+      listBuilder: (context) => ListView(
+        shrinkWrap: true,
+        padding: EdgeInsets.all(AppSizes.space * 2),
+        children: [
+          TerminalText(
+            context.l10n.onboardingChooseHarnessBody,
+            alpha: 0.7,
           ),
-        ),
+          VSpace.x3,
+          if (!harnessProvidersLoaded)
+            TerminalText(context.l10n.onboardingChooseHarnessLoadingProviders),
+          for (final harness in supported)
+            Padding(
+              padding: EdgeInsets.only(bottom: AppSizes.space),
+              child: HarnessChoiceCard(
+                harness: harness,
+                connected: connectedHarnessIds.contains(harness.id),
+                onTap:
+                    harnessProvidersLoaded ? () => onSelected(harness) : null,
+              ),
+            ),
+        ],
       ),
     );
   }

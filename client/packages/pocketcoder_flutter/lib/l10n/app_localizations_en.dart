@@ -279,6 +279,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'CHOOSE THE ACCOUNT-BASED AGENT TO CONNECT.';
 
   @override
+  String get onboardingChooseHarnessLoadingProviders =>
+      'Loading provider connections…';
+
+  @override
+  String get onboardingHarnessProvidersLoading => 'Loading harness providers…';
+
+  @override
   String get onboardingHarnessNotFound => 'HARNESS NOT FOUND';
 
   @override
@@ -2678,6 +2685,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkthroughServicesSqlPageChipStartOrder =>
       'WHY DOES IT START AFTER POCKETBASE?';
+
+  @override
+  String get permissionSecurityTitle => 'SECURITY';
 
   @override
   String get permissionSignoffTitle => 'COMMANDER\'S SIGNOFF';

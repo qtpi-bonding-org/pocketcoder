@@ -610,6 +610,18 @@ abstract class AppLocalizations {
   /// **'CHOOSE THE ACCOUNT-BASED AGENT TO CONNECT.'**
   String get onboardingChooseHarnessBody;
 
+  /// No description provided for @onboardingChooseHarnessLoadingProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading provider connections…'**
+  String get onboardingChooseHarnessLoadingProviders;
+
+  /// No description provided for @onboardingHarnessProvidersLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading harness providers…'**
+  String get onboardingHarnessProvidersLoading;
+
   /// No description provided for @onboardingHarnessNotFound.
   ///
   /// In en, this message translates to:
@@ -4857,6 +4869,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'WHY DOES IT START AFTER POCKETBASE?'**
   String get walkthroughServicesSqlPageChipStartOrder;
+
+  /// No description provided for @permissionSecurityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SECURITY'**
+  String get permissionSecurityTitle;
 
   /// No description provided for @permissionSignoffTitle.
   ///

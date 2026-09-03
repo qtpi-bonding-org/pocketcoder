@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-09-03T05:37:31.931984
+// Generated at: 2026-09-03T15:31:26.852984
 
 import 'app_localizations.dart';
 
@@ -456,6 +456,7 @@ class L10nKeyResolver {
       'onboarding.authorization.code.hint' => _l10n.onboardingAuthorizationCodeHint,
       'onboarding.check.status' => _l10n.onboardingCheckStatus,
       'onboarding.choose.harness.body' => _l10n.onboardingChooseHarnessBody,
+      'onboarding.choose.harness.loading.providers' => _l10n.onboardingChooseHarnessLoadingProviders,
       'onboarding.choose.harness.title' => _l10n.onboardingChooseHarnessTitle,
       'onboarding.claude.account.login' => _l10n.onboardingClaudeAccountLogin,
       'onboarding.codex.account.login' => _l10n.onboardingCodexAccountLogin,
@@ -487,6 +488,7 @@ class L10nKeyResolver {
       'onboarding.harness.account.visibility.title' => _l10n.onboardingHarnessAccountVisibilityTitle,
       'onboarding.harness.not.found' => _l10n.onboardingHarnessNotFound,
       'onboarding.harness.poco' => _l10n.onboardingHarnessPoco,
+      'onboarding.harness.providers.loading' => _l10n.onboardingHarnessProvidersLoading,
       'onboarding.harness.title' => _l10n.onboardingHarnessTitle,
       'onboarding.home.server' => _l10n.onboardingHomeServer,
       'onboarding.identity.label' => _l10n.onboardingIdentityLabel,
@@ -1475,6 +1477,7 @@ class L10nKeyResolver {
     'onboarding.authorization.code.hint',
     'onboarding.check.status',
     'onboarding.choose.harness.body',
+    'onboarding.choose.harness.loading.providers',
     'onboarding.choose.harness.title',
     'onboarding.claude.account.login',
     'onboarding.codex.account.login',
@@ -1509,6 +1512,7 @@ class L10nKeyResolver {
     'onboarding.harness.login.title',
     'onboarding.harness.not.found',
     'onboarding.harness.poco',
+    'onboarding.harness.providers.loading',
     'onboarding.harness.title',
     'onboarding.home.server',
     'onboarding.identity.label',
@@ -2448,6 +2452,7 @@ class L10nKeyResolver {
     'onboardingAuthorizationCodeHint': 'onboarding.authorization.code.hint',
     'onboardingCheckStatus': 'onboarding.check.status',
     'onboardingChooseHarnessBody': 'onboarding.choose.harness.body',
+    'onboardingChooseHarnessLoadingProviders': 'onboarding.choose.harness.loading.providers',
     'onboardingChooseHarnessTitle': 'onboarding.choose.harness.title',
     'onboardingClaudeAccountLogin': 'onboarding.claude.account.login',
     'onboardingCodexAccountLogin': 'onboarding.codex.account.login',
@@ -2482,6 +2487,7 @@ class L10nKeyResolver {
     'onboardingHarnessLoginTitle': 'onboarding.harness.login.title',
     'onboardingHarnessNotFound': 'onboarding.harness.not.found',
     'onboardingHarnessPoco': 'onboarding.harness.poco',
+    'onboardingHarnessProvidersLoading': 'onboarding.harness.providers.loading',
     'onboardingHarnessTitle': 'onboarding.harness.title',
     'onboardingHomeServer': 'onboarding.home.server',
     'onboardingIdentityLabel': 'onboarding.identity.label',
@@ -3418,6 +3424,7 @@ class L10nKeyResolver {
     'onboarding.authorization.code.hint': 'onboardingAuthorizationCodeHint',
     'onboarding.check.status': 'onboardingCheckStatus',
     'onboarding.choose.harness.body': 'onboardingChooseHarnessBody',
+    'onboarding.choose.harness.loading.providers': 'onboardingChooseHarnessLoadingProviders',
     'onboarding.choose.harness.title': 'onboardingChooseHarnessTitle',
     'onboarding.claude.account.login': 'onboardingClaudeAccountLogin',
     'onboarding.codex.account.login': 'onboardingCodexAccountLogin',
@@ -3452,6 +3459,7 @@ class L10nKeyResolver {
     'onboarding.harness.login.title': 'onboardingHarnessLoginTitle',
     'onboarding.harness.not.found': 'onboardingHarnessNotFound',
     'onboarding.harness.poco': 'onboardingHarnessPoco',
+    'onboarding.harness.providers.loading': 'onboardingHarnessProvidersLoading',
     'onboarding.harness.title': 'onboardingHarnessTitle',
     'onboarding.home.server': 'onboardingHomeServer',
     'onboarding.identity.label': 'onboardingIdentityLabel',
@@ -4395,6 +4403,7 @@ abstract class L10nKeys {
   static const onboardingAuthorizationCodeHint = 'onboarding.authorization.code.hint';
   static const onboardingCheckStatus = 'onboarding.check.status';
   static const onboardingChooseHarnessBody = 'onboarding.choose.harness.body';
+  static const onboardingChooseHarnessLoadingProviders = 'onboarding.choose.harness.loading.providers';
   static const onboardingChooseHarnessTitle = 'onboarding.choose.harness.title';
   static const onboardingClaudeAccountLogin = 'onboarding.claude.account.login';
   static const onboardingCodexAccountLogin = 'onboarding.codex.account.login';
@@ -4429,6 +4438,7 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) onboardingHarnessLoginTitle(String provider) => ('onboarding.harness.login.title', {'provider': provider});
   static const onboardingHarnessNotFound = 'onboarding.harness.not.found';
   static const onboardingHarnessPoco = 'onboarding.harness.poco';
+  static const onboardingHarnessProvidersLoading = 'onboarding.harness.providers.loading';
   static const onboardingHarnessTitle = 'onboarding.harness.title';
   static const onboardingHomeServer = 'onboarding.home.server';
   static const onboardingIdentityLabel = 'onboarding.identity.label';

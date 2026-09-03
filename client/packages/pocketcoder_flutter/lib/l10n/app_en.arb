@@ -103,6 +103,8 @@
   "onboardingRequiredFields": "ENTER ALL REQUIRED FIELDS",
   "onboardingChooseHarnessTitle": "CHOOSE YOUR HARNESS",
   "onboardingChooseHarnessBody": "CHOOSE THE ACCOUNT-BASED AGENT TO CONNECT.",
+  "onboardingChooseHarnessLoadingProviders": "Loading provider connections…",
+  "onboardingHarnessProvidersLoading": "Loading harness providers…",
   "onboardingHarnessNotFound": "HARNESS NOT FOUND",
   "onboardingClaudeAccountLogin": "CLAUDE ACCOUNT LOGIN",
   "onboardingCodexAccountLogin": "CHATGPT ACCOUNT LOGIN",
@@ -1079,6 +1081,7 @@
   "walkthroughServicesSqlPageChipContents": "WHAT CAN THIS DASHBOARD SHOW?",
   "walkthroughServicesSqlPageChipStartOrder": "WHY DOES IT START AFTER POCKETBASE?",
 
+  "permissionSecurityTitle": "SECURITY",
   "permissionSignoffTitle": "COMMANDER'S SIGNOFF",
   "permissionRequestedFallback": "Permission requested",
   "permissionRequestingLabel": "{source} IS REQUESTING PERMISSION:",

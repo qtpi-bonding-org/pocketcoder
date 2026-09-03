@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
@@ -78,12 +79,9 @@ class _Requirement extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => GlyphLabelRow(
+        glyph: '[+]',
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TerminalText.label('[+]'),
-          HSpace.x1,
-          Expanded(child: TerminalText(label)),
-        ],
+        child: TerminalText(label),
       );
 }

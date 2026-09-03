@@ -21,6 +21,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/agent_auth_view.dart';
@@ -104,8 +105,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   ) async {
     final auth = context.read<HarnessAuthCubit>();
     if (!auth.state.harnessProvidersLoaded) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Loading harness providers…')));
+      VimToast.show(context, context.l10n.onboardingHarnessProvidersLoading);
       return;
     }
     final provider = _oauthProviderFor(auth.state, harness.id);
