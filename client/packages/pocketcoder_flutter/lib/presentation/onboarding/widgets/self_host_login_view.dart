@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 
@@ -75,12 +76,8 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
           emphasis: Emphasis.outlined,
         ),
       ],
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-            child: Column(
+      body: OnboardingContentShell(
+        child: Column(
               children: [
                 TerminalConversationTurn(
                   speaker: TerminalConversationSpeaker.poco,
@@ -113,9 +110,7 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
                     label: context.l10n.onboardingAuthenticating,
                   ),
                 ],
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );

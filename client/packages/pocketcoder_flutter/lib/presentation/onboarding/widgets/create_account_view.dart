@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 
 class CreateAccountView extends StatefulWidget {
   const CreateAccountView({
@@ -60,12 +61,8 @@ class _CreateAccountViewState extends State<CreateAccountView> {
               onTap: widget.isValid ? widget.onContinue : () {},
               emphasis: widget.isValid ? Emphasis.outlined : null),
         ],
-        body: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-              child: Column(
+        body: OnboardingContentShell(
+          child: Column(
                 children: [
                   PocoBubble(
                     message: context.l10n.onboardingServerCredentialsPoco,
@@ -87,8 +84,6 @@ class _CreateAccountViewState extends State<CreateAccountView> {
                     errorText: widget.passwordErrorText,
                   ),
                 ],
-              ),
-            ),
           ),
         ),
       );

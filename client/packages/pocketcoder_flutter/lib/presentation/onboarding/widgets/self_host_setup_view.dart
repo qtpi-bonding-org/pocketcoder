@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
@@ -34,12 +35,8 @@ class SelfHostSetupView extends StatelessWidget {
             emphasis: Emphasis.outlined,
           ),
         ],
-        body: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-              child: Column(
+        body: OnboardingContentShell(
+          child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   TerminalConversationTurn(
@@ -70,8 +67,6 @@ class SelfHostSetupView extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-            ),
           ),
         ),
       );
