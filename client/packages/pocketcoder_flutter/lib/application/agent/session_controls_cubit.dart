@@ -85,7 +85,8 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
               'Chat $chatId has no agent_profile to persist a mode change onto');
         }
         final modes = await _permissionModeDao.getFullList(
-            filter: 'base_session_mode = "$modeId"');
+            filter: _permissionModeDao.pb
+                .filter('base_session_mode = {:mode}', {'mode': modeId}));
         if (modes.isEmpty) {
           throw StateError(
               'No permission_modes record has base_session_mode "$modeId"');
@@ -128,7 +129,15 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
           throw UnsupportedError(
               'Config option "${req.configId}" can only be changed while a session is running');
         }
-        await _chatDao.save(chatId, {field: req.value});
+        // workspace_override is a PocketBase JSON field the server unmarshals
+        // into []string (sessionprofile.go), using element 0 as cwd -- it is
+        // NOT a plain text field like the other two, so it must be written
+        // as a JSON array, not the raw scalar value. An empty value clears
+        // the override entirely rather than persisting a single empty path.
+        final value = field == 'workspace_override'
+            ? (req.value.isEmpty ? const <String>[] : [req.value])
+            : req.value;
+        await _chatDao.save(chatId, {field: value});
       }
       return state.copyWith(
         status: UiFlowStatus.success,

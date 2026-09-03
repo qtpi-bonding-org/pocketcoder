@@ -10,6 +10,7 @@ import 'package:acp_dart/acp_dart.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
@@ -107,6 +108,10 @@ void main() {
     chatDao = MockChatDao();
     pocoConfigDao = MockPocoConfigDao();
     permissionModeDao = MockPermissionModeDao();
+    // .pb is used purely for its .filter() string helper (no network) --
+    // stub it with a real, unconnected PocketBase instance so selectMode's
+    // idle path can build a parameterized filter safely.
+    when(() => permissionModeDao.pb).thenReturn(PocketBase('http://localhost'));
     cubit =
         SessionControlsCubit(repo, chatDao, pocoConfigDao, permissionModeDao);
   });
@@ -221,8 +226,13 @@ void main() {
     expect(repo.setModeCalls, isEmpty);
   });
 
-  test('idle setOption persists a known chat override', () async {
-    when(() => chatDao.save('chat-1', {'workspace_override': '/tmp/workspace'}))
+  test('idle setOption persists a known chat override as a JSON array',
+      () async {
+    // workspace_override is a PocketBase JSON field the server unmarshals
+    // into []string (sessionprofile.go, using element 0 as cwd) -- writing
+    // the raw scalar value there is silently ignored server-side.
+    when(() => chatDao
+            .save('chat-1', {'workspace_override': ['/tmp/workspace']}))
         .thenAnswer(
       (_) async => throw UnimplementedError(),
     );
@@ -235,10 +245,30 @@ void main() {
       value: '/tmp/workspace',
     ));
 
-    verify(() =>
-            chatDao.save('chat-1', {'workspace_override': '/tmp/workspace'}))
+    verify(() => chatDao
+            .save('chat-1', {'workspace_override': ['/tmp/workspace']}))
         .called(1);
     expect(repo.setConfigOptionCalls, isEmpty);
+  });
+
+  test('idle setOption clears the workspace override on an empty value',
+      () async {
+    when(() =>
+            chatDao.save('chat-1', {'workspace_override': <String>[]}))
+        .thenAnswer(
+      (_) async => throw UnimplementedError(),
+    );
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'workspaceOverride',
+      value: '',
+    ));
+
+    verify(() => chatDao.save('chat-1', {'workspace_override': <String>[]}))
+        .called(1);
   });
 
   test('idle unknown config option throws UnsupportedError', () async {
