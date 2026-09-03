@@ -24,8 +24,8 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
   final HarnessOAuthAccountDao? _oauthAccountDao;
   final CredentialSelectionDao? _credentialSelectionDao;
 
-  static const _retries = 8;
-  static const _retryDelay = Duration(milliseconds: 600);
+  static const _retries = 2;
+  static const _retryDelay = Duration(milliseconds: 300);
 
   @override
   Stream<List<HarnessOauthAccount>> watchHarnessOAuthAccounts() =>

@@ -131,7 +131,7 @@ void main() {
     expect(await repository.hasEffectiveHarnessConnection(), isFalse);
   });
 
-  test('retries an empty/failed result up to 8 times before returning false',
+  test('retries an empty/failed result up to 2 times before returning false',
       () async {
     var calls = 0;
     when(() => oauthAccountDao.getFullList(
@@ -142,6 +142,6 @@ void main() {
     when(() => credentialSelectionDao.getFullList(
         requestPolicy: RequestPolicy.networkOnly)).thenAnswer((_) async => []);
     expect(await repository.hasEffectiveHarnessConnection(), isFalse);
-    expect(calls, 8);
+    expect(calls, 2);
   });
 }
