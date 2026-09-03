@@ -7,7 +7,7 @@ import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
-import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
+import 'package:pocketcoder_flutter/presentation/tool_permissions/widgets/tool_permissions_view.dart';
 
 Widget _app(Widget child) => MaterialApp(
       theme: AppTheme.lightTheme,
