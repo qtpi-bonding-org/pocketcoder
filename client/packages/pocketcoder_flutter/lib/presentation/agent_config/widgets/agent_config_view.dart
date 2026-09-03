@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
-import 'package:pocketcoder_flutter/domain/models/prompt.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_editor_dialog.dart';
 
 class AgentConfigView extends StatelessWidget {
   const AgentConfigView(
@@ -104,7 +100,7 @@ class AgentConfigView extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
-        return _AgentConfigEditorDialog(
+        return AgentConfigEditorDialog(
           existing: existing,
           prompts: state.prompts,
           permissionModes: state.permissionModes,
@@ -157,254 +153,6 @@ class AgentConfigView extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Edit dialog body for a single PocoConfig.
-///
-/// Stateful so the local edits (text field value, picker selections,
-/// isDefault toggle, mode) re-render the dialog in-place without
-/// round-tripping through the cubit. The save callback receives a fully
-/// constructed [PocoConfig] with the user's selections applied.
-class _AgentConfigEditorDialog extends StatefulWidget {
-  const _AgentConfigEditorDialog({
-    required this.existing,
-    required this.prompts,
-    required this.permissionModes,
-    required this.onSave,
-    this.onDelete,
-  });
-
-  final PocoConfig? existing;
-  final List<Prompt> prompts;
-  final List<PermissionMode> permissionModes;
-  final void Function(PocoConfig updated) onSave;
-  final VoidCallback? onDelete;
-
-  @override
-  State<_AgentConfigEditorDialog> createState() =>
-      _AgentConfigEditorDialogState();
-}
-
-class _AgentConfigEditorDialogState extends State<_AgentConfigEditorDialog> {
-  late final TextEditingController _nameController;
-  String? _systemPromptId;
-  String? _permissionModeId;
-  bool _isDefault = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final existing = widget.existing;
-    _nameController = TextEditingController(text: existing?.name ?? '');
-    _systemPromptId = existing?.systemPrompt;
-    _permissionModeId = existing?.permissionMode;
-    _isDefault = existing?.isDefault ?? false;
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  void _handleSave() {
-    if (_nameController.text.trim().isEmpty) return;
-    final existing = widget.existing;
-    widget.onSave(PocoConfig(
-      id: existing?.id ?? '',
-      name: _nameController.text.trim(),
-      systemPrompt: _systemPromptId,
-      workspaceFolders: existing?.workspaceFolders,
-      acpMcpServers: existing?.acpMcpServers,
-      isDefault: _isDefault,
-      permissionMode: _permissionModeId,
-    ));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final existing = widget.existing;
-    return TerminalDialog(
-      title: existing == null
-          ? context.l10n.agentConfigTitle
-          : context.l10n.agentConfigDialogTitle(existing.name.toUpperCase()),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: AppSizes.pickerHeight,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TerminalTextField(
-                controller: _nameController,
-                label: context.l10n.agentConfigNameLabel,
-              ),
-              VSpace.x2,
-              _PromptPicker(
-                prompts: widget.prompts,
-                selectedPromptId: _systemPromptId,
-                onSelected: (id) => setState(() => _systemPromptId = id),
-              ),
-              VSpace.x2,
-              _PermissionModePicker(
-                permissionModes: widget.permissionModes,
-                selectedPermissionModeId: _permissionModeId,
-                onSelected: (id) => setState(() => _permissionModeId = id),
-              ),
-              VSpace.x2,
-              _IsDefaultToggle(
-                value: _isDefault,
-                onChanged: (v) => setState(() => _isDefault = v),
-              ),
-              if (widget.onDelete case final onDelete?) ...[
-                VSpace.x2,
-                TerminalButton(
-                  label: context.l10n.agentConfigDelete,
-                  isPrimary: false,
-                  onTap: onDelete,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TerminalButton(
-          label: context.l10n.actionCancel,
-          isPrimary: false,
-          onTap: () => Navigator.of(context).pop(),
-        ),
-        HSpace.x2,
-        TerminalButton(
-          label: context.l10n.actionSave,
-          onTap: _handleSave,
-        ),
-      ],
-    );
-  }
-}
-
-class _IsDefaultToggle extends StatelessWidget {
-  const _IsDefaultToggle({required this.value, required this.onChanged});
-
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return Row(
-      children: [
-        TerminalCheckbox(
-          value: value,
-          onChanged: onChanged,
-        ),
-        HSpace.x2,
-        Expanded(
-          child: TerminalText(
-            context.l10n.agentConfigIsDefaultLabel,
-            color: colors.onSurface,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PromptPicker extends StatelessWidget {
-  const _PromptPicker(
-      {required this.prompts,
-      required this.selectedPromptId,
-      required this.onSelected});
-  final List<Prompt> prompts;
-  final String? selectedPromptId;
-  final ValueChanged<String?> onSelected;
-  @override
-  Widget build(BuildContext context) {
-    final selected = prompts.where((p) => p.id == selectedPromptId).firstOrNull;
-    return _SelectionField(
-        label: context.l10n.agentConfigPromptLabel,
-        currentValue: selected?.name.toUpperCase() ??
-            context.l10n.agentConfigSelectPrompt.toUpperCase(),
-        onTap: () async {
-          final picked = await showTerminalListPicker<Prompt>(
-            context: context,
-            title: context.l10n.agentConfigSelectPrompt,
-            emptyLabel: context.l10n.agentConfigNoPrompts,
-            items: prompts,
-            selected: selected,
-            cancelLabel: context.l10n.actionCancel,
-            itemBuilder: (_, prompt) => BiosRow(
-              label: prompt.name,
-              isSelected: selected == prompt,
-            ),
-          );
-          if (picked != null) onSelected(picked.id);
-        });
-  }
-}
-
-class _PermissionModePicker extends StatelessWidget {
-  const _PermissionModePicker({
-    required this.permissionModes,
-    required this.selectedPermissionModeId,
-    required this.onSelected,
-  });
-
-  final List<PermissionMode> permissionModes;
-  final String? selectedPermissionModeId;
-  final ValueChanged<String?> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = permissionModes
-        .where((m) => m.id == selectedPermissionModeId)
-        .firstOrNull;
-    return _SelectionField(
-      label: context.l10n.agentConfigModeLabel,
-      currentValue: selected?.name.toUpperCase() ??
-          context.l10n.agentConfigSelectMode.toUpperCase(),
-      onTap: () async {
-        final picked = await showTerminalListPicker<PermissionMode>(
-          context: context,
-          title: context.l10n.agentConfigSelectMode,
-          emptyLabel: context.l10n.agentConfigNoModes,
-          items: permissionModes,
-          selected: selected,
-          cancelLabel: context.l10n.actionCancel,
-          itemBuilder: (_, mode) => BiosRow(
-            label: mode.name,
-            isSelected: selected == mode,
-          ),
-        );
-        if (picked != null) onSelected(picked.id);
-      },
-    );
-  }
-}
-
-class _SelectionField extends StatelessWidget {
-  const _SelectionField({
-    required this.label,
-    required this.currentValue,
-    required this.onTap,
-  });
-
-  final String label;
-  final String currentValue;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return BiosRow(
-      label: label,
-      value: currentValue,
-      variant: BiosRowVariant.expand,
-      onTap: onTap,
     );
   }
 }
