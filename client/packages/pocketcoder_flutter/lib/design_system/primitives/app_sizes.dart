@@ -15,6 +15,8 @@ class AppSizes {
   static double get fontLarge => UiScaler.instance.sp(24.0);
   static double get fontMassive => UiScaler.instance.sp(36.0);
 
+  static double get letterSpacingWide => 2.0;
+
   static double get iconTiny => UiScaler.instance.sp(8.0);
   static double get iconSmall => UiScaler.instance.sp(16.0);
   static double get iconMedium => UiScaler.instance.sp(24.0);
