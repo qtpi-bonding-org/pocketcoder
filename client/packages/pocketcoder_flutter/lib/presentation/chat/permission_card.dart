@@ -5,6 +5,7 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/tinted_alert_card.dart';
 import 'tool_command.dart';
 
 class PermissionCard extends StatelessWidget {
@@ -36,46 +37,14 @@ class PermissionCard extends StatelessWidget {
           permission.description ?? context.l10n.permissionRequestedFallback,
     );
 
-    return Container(
-      margin: EdgeInsets.all(AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space * 2),
-      decoration: BoxDecoration(
-        color: terminalColors.warning.withValues(alpha: 0.05),
-        border: Border.all(
-          color: terminalColors.warning.withValues(alpha: 0.3),
-          width: AppSizes.borderWidth,
-        ),
-      ),
+    return TintedAlertCard(
+      eyebrowLeft: context.l10n.permissionSecurityTitle,
+      eyebrowRight: context.l10n.permissionSignoffTitle,
+      tint: terminalColors.warning,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'SECURITY',
-                style: TextStyle(
-                  color: terminalColors.warning,
-                  fontSize: AppSizes.fontTiny,
-                  fontWeight: AppFonts.heavy,
-                  letterSpacing: 2,
-                ),
-              ),
-              HSpace.x1,
-              Expanded(
-                child: Text(
-                  context.l10n.permissionSignoffTitle,
-                  style: TextStyle(
-                    color: terminalColors.warning,
-                    fontSize: AppSizes.fontTiny,
-                    fontWeight: AppFonts.heavy,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          VSpace.x2,
           if (toolTitle.isNotEmpty) ...[
             VSpace.x1,
             Container(

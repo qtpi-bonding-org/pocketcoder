@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/tinted_alert_card.dart';
 
 class ElicitationCard extends StatefulWidget {
   const ElicitationCard({
@@ -83,47 +84,15 @@ class _ElicitationCardState extends State<ElicitationCard> {
     final elicitationId = widget.item.requestId;
     final fields = properties?.entries.toList() ?? const [];
 
-    return Container(
-      margin: EdgeInsets.all(AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space * 2),
-      decoration: BoxDecoration(
-        color: colors.secondary.withValues(alpha: 0.05),
-        border: Border.all(
-          color: colors.secondary.withValues(alpha: 0.3),
-          width: AppSizes.borderWidth,
-        ),
-      ),
+    return TintedAlertCard(
+      eyebrowLeft: 'FORM',
+      eyebrowRight: context.l10n.chatElicitationRequest,
+      tint: colors.secondary,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'FORM',
-                style: TextStyle(
-                  color: colors.secondary,
-                  fontSize: AppSizes.fontTiny,
-                  fontWeight: AppFonts.heavy,
-                  letterSpacing: 2,
-                ),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: Text(
-                  context.l10n.chatElicitationRequest,
-                  style: TextStyle(
-                    color: colors.secondary,
-                    fontSize: AppSizes.fontTiny,
-                    fontWeight: AppFonts.heavy,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (message != null && message.isNotEmpty) ...[
-            VSpace.x2,
+          if (message != null && message.isNotEmpty)
             Text(
               message,
               style: TextStyle(
@@ -132,7 +101,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
                 fontSize: AppSizes.fontStandard,
               ),
             ),
-          ],
           if (elicitationId.isNotEmpty) ...[
             VSpace.x1,
             Text(
