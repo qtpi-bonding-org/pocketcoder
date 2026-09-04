@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -14,8 +15,7 @@ class ChatPickerField<T> extends StatelessWidget {
     required this.selected,
     required this.optionLabel,
     required this.onSelected,
-    this.noOptionsLabel,
-  });
+    this.noOptionsLabel});
 
   final String label;
   final String dialogTitle;
@@ -37,9 +37,7 @@ class ChatPickerField<T> extends StatelessWidget {
       children: [
         Semantics(
           label: label,
-          child: TerminalText.tiny(label.toUpperCase(),
-              color: context.colorScheme.onSurface),
-        ),
+          child: TerminalText(label.toUpperCase()), role: TextRole.body)
         VSpace.x1,
         InkWell(
           onTap: () => _openPicker(context),
@@ -48,27 +46,18 @@ class ChatPickerField<T> extends StatelessWidget {
             padding: EdgeInsets.all(AppSizes.space),
             decoration: BoxDecoration(
               border: Border.all(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.3),
-              ),
-            ),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.3))),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: TerminalText(
                     currentLabel,
-                    color: context.colorScheme.onSurface,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+                    overflow: TextOverflow.ellipsis)),
                 Text(context.l10n.chatPickerFieldIndicator,
                     style: TextStyle(color: context.colorScheme.onSurface)),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+              ]))),
+      ]);
   }
 
   Future<void> _openPicker(BuildContext context) async {
@@ -80,9 +69,7 @@ class ChatPickerField<T> extends StatelessWidget {
       cancelLabel: context.l10n.newChatCancel,
       itemBuilder: (_, option) => Padding(
         padding: EdgeInsets.all(AppSizes.space),
-        child: TerminalText(optionLabel(option)),
-      ),
-    );
+        child: TerminalText(optionLabel(option))), role: TextRole.body)
 
     if (picked != null) {
       onSelected(picked);

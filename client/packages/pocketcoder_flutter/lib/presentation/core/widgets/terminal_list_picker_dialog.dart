@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/app_sizes.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -12,8 +13,7 @@ Future<T?> showTerminalListPicker<T>({
   T? selected,
   String? emptyLabel,
   double? height,
-  String? cancelLabel,
-}) {
+  String? cancelLabel}) {
   assert(selected == null || items.contains(selected));
   return showDialog<T>(
     context: context,
@@ -23,26 +23,20 @@ Future<T?> showTerminalListPicker<T>({
         width: double.maxFinite,
         height: height ?? AppSizes.pickerHeight,
         child: items.isEmpty
-            ? Center(child: TerminalText(emptyLabel ?? '', alpha: 0.5))
+            ? Center(child: TerminalText(emptyLabel ?? ''), role: TextRole.body)
             : ListView(
                 children: [
                   for (final item in items)
                     InkWell(
                       onTap: () => Navigator.of(dialogContext).pop(item),
-                      child: itemBuilder(dialogContext, item),
-                    ),
-                ],
-              ),
-      ),
+                      child: itemBuilder(dialogContext, item)),
+                ])),
       actions: cancelLabel == null
           ? const []
           : [
               TerminalButton(
                 label: cancelLabel,
                 isPrimary: false,
-                onTap: () => Navigator.of(dialogContext).pop(),
-              ),
-            ],
-    ),
-  );
+                onTap: () => Navigator.of(dialogContext).pop()),
+            ]));
 }

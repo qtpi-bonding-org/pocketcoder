@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -13,9 +14,7 @@ class ReleaseLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final release = state.release;
     return TerminalText(
-      release == null ? context.l10n.serverControlReleaseChecking : _lines(context, release),
-      color: context.colorScheme.primary,
-    );
+      release == null ? context.l10n.serverControlReleaseChecking : _lines(context, release));
   }
 
   String _lines(BuildContext context, ServerReleaseStatusSnapshot release) {
@@ -30,8 +29,7 @@ class ReleaseLine extends StatelessWidget {
             context.l10n.serverControlReleaseContracts(
               app.toString(),
               server.toString(),
-              deployment.toString(),
-            ),
+              deployment.toString()),
       if (release.nixosVersion case final nixos?)
         context.l10n.serverControlReleaseNixos(nixos),
     ];

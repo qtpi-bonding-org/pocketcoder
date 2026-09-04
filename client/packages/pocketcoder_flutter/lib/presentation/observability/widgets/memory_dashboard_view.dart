@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/memory/i_memory_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
@@ -31,8 +32,7 @@ class MemoryDashboardView extends StatelessWidget {
                   child: CountCard(
                       label: context.l10n.memoryDashboardLinks,
                       value: stats.links)),
-            ],
-          ),
+            ]),
           VSpace.x2,
           BiosSection(
             title: context.l10n.memoryDashboardByAccount,
@@ -41,9 +41,7 @@ class MemoryDashboardView extends StatelessWidget {
                 : Column(
                     children: stats.byAccount
                         .map((account) => _AccountRow(account: account))
-                        .toList(),
-                  ),
-          ),
+                        .toList())),
           BiosSection(
             title: context.l10n.memoryDashboardRecentObservations,
             child: stats.recentObservations.isEmpty
@@ -54,12 +52,8 @@ class MemoryDashboardView extends StatelessWidget {
                           (observation) => MemoryRecordRow(
                             author: observation.author,
                             createdAt: observation.createdAt,
-                            body: observation.body,
-                          ),
-                        )
-                        .toList(),
-                  ),
-          ),
+                            body: observation.body))
+                        .toList())),
           BiosSection(
             title: context.l10n.memoryDashboardRecentInterpretations,
             child: stats.recentInterpretations.isEmpty
@@ -72,14 +66,9 @@ class MemoryDashboardView extends StatelessWidget {
                             createdAt: interpretation.createdAt,
                             body: interpretation.body,
                             linkedObservations:
-                                interpretation.linkedObservations,
-                          ),
-                        )
-                        .toList(),
-                  ),
-          ),
-        ],
-      );
+                                interpretation.linkedObservations))
+                        .toList())),
+        ]);
 }
 
 class _AccountRow extends StatelessWidget {
@@ -94,17 +83,9 @@ class _AccountRow extends StatelessWidget {
           children: [
             Expanded(
               child: TerminalText(
-                account.agentName,
-                color: context.colorScheme.onSurface,
-              ),
-            ),
+                account.agentName)),
             TerminalText(
               context.l10n.memoryDashboardAccountSummary(
-                  account.observations, account.interpretations),
-              color: context.colorScheme.onSurface,
-              alpha: 0.7,
-            ),
-          ],
-        ),
-      );
+                  account.observations, account.interpretations)),
+          ]));
 }

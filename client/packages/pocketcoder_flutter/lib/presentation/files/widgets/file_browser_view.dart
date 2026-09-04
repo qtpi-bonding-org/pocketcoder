@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/application/files/file_browser_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/file_entry.dart';
@@ -15,8 +16,7 @@ class FileBrowserView extends StatelessWidget {
     super.key,
     required this.onOpenFile,
     required this.onNavigateInto,
-    required this.state,
-  });
+    required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -32,27 +32,22 @@ class FileBrowserView extends StatelessWidget {
             return Center(
               child: Padding(
                 padding: EdgeInsets.all(AppSizes.space * 4),
-                child: TerminalText(context.l10n.filesEmpty, alpha: 0.5),
-              ),
-            );
+                child: TerminalText(context.l10n.filesEmpty)), role: TextRole.body)
           }
           return ListView(
             children: [
               Padding(
                 padding: EdgeInsets.all(AppSizes.space),
-                child: TerminalText.mini('/${state.path}', alpha: 0.6),
-              ),
+                child: TerminalText('/${state.path}'), role: TextRole.body)
               ...state.entries.map((entry) => _entryRow(context, state, entry)),
-            ],
-          );
-        }),
-    );
+            ]);
+        }));
   }
 
   Widget _entryRow(BuildContext context, FileBrowserState state, FileEntry entry) {
     return ListTile(
-      leading: TerminalText(entry.isDir ? '[DIR]' : '[FILE]'),
-      title: TerminalText(entry.name),
+      leading: TerminalText(entry.isDir ? '[DIR]' : '[FILE]', role: TextRole.body)
+      title: TerminalText(entry.name, role: TextRole.body)
       onTap: () {
         if (entry.isDir) {
           onNavigateInto(entry.name);
@@ -60,7 +55,6 @@ class FileBrowserView extends StatelessWidget {
           final fullPath = state.path.isEmpty ? entry.name : '${state.path}/${entry.name}';
           onOpenFile(context, fullPath);
         }
-      },
-    );
+      });
   }
 }

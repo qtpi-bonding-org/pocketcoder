@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -23,8 +24,7 @@ class McpManagementView extends StatelessWidget {
     required this.onConnectOAuth,
     required this.onRetryOAuth,
     required this.onCreateServer,
-    super.key,
-  });
+    super.key});
 
   final List<McpServer> servers;
   final Future<List<McpOAuthProvider>> oauthProviders;
@@ -37,8 +37,7 @@ class McpManagementView extends StatelessWidget {
     required String name,
     String? image,
     String? oauthProvider,
-    String? oauthTokenEnvVar,
-  })
+    String? oauthTokenEnvVar})
   onCreateServer;
 
   @override
@@ -61,37 +60,24 @@ class McpManagementView extends StatelessWidget {
               padding: EdgeInsets.all(AppSizes.space),
               child: TerminalButton(
                 label: context.l10n.mcpAddNew,
-                onTap: () => _addDialog(context),
-              ),
-            ),
+                onTap: () => _addDialog(context))),
             if (pending.isNotEmpty)
               BiosSection(
                 title: context.l10n.mcpPendingApproval,
                 child: Column(
-                  children: pending.map((s) => _server(context, s)).toList(),
-                ),
-              ),
+                  children: pending.map((s) => _server(context, s)).toList())),
             if (active.isNotEmpty)
               BiosSection(
                 title: context.l10n.mcpActiveCapabilities,
                 child: Column(
-                  children: active.map((s) => _server(context, s)).toList(),
-                ),
-              ),
+                  children: active.map((s) => _server(context, s)).toList())),
             if (servers.isEmpty)
               Center(
                 child: Padding(
                   padding: EdgeInsets.all(AppSizes.space * 4),
                   child: TerminalText(
-                    context.l10n.mcpNoCapabilities,
-                    alpha: .5,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
+                    context.l10n.mcpNoCapabilities))),
+          ])));
   }
 
   Widget _server(BuildContext context, McpServer server) {
@@ -106,34 +92,26 @@ class McpManagementView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (image?.isNotEmpty == true) ...[
-            TerminalText.mini(
-              context.l10n.mcpImageLabel(image ?? ''),
-              alpha: .5,
-            ),
+            TerminalText(
+              context.l10n.mcpImageLabel(image ?? '')),
             VSpace.x1,
           ],
           if (reason?.isNotEmpty == true) ...[
-            TerminalText.mini(
-              context.l10n.mcpPurposeLabel(reason ?? ''),
-              alpha: .5,
-            ),
+            TerminalText(
+              context.l10n.mcpPurposeLabel(reason ?? '')),
             VSpace.x1,
           ],
           if (pending &&
               server.oauthProvider?.isEmpty != false &&
               server.configSchema is Map) ...[
-            TerminalText.label(
-              context.l10n.mcpRequiredConfig,
-              color: context.colorScheme.primary,
-              alpha: .8,
-            ),
+            TerminalText(
+              context.l10n.mcpRequiredConfig),
             VSpace.x1,
             for (final key in schema.keys)
               BiosRow(label: key, value: null),
           ],
           if (server.oauthProvider?.isNotEmpty == true) _oauth(context, server),
-        ],
-      ),
+        ]),
       footer: server.oauthProvider?.isNotEmpty == true
           ? null
           : pending
@@ -142,31 +120,24 @@ class McpManagementView extends StatelessWidget {
                 BiosActionStripItem(
                   label: context.l10n.mcpAuthorizeCap,
                   isActive: true,
-                  onTap: () => _configDialog(context, server),
-                ),
+                  onTap: () => _configDialog(context, server)),
                 BiosActionStripItem(
                   label: context.l10n.mcpDeny,
-                  color: context.terminalColors.warning,
-                  onTap: () => onDeny(server.id),
-                ),
-              ],
-            )
+                  role: TextRole.warn,
+                  onTap: () => onDeny(server.id)),
+              ])
           : server.status == McpServerStatus.approved
           ? BiosActionStrip(
               actions: [
                 BiosActionStripItem(
                   label: context.l10n.mcpEditConfig,
-                  onTap: () => _configDialog(context, server),
-                ),
+                  onTap: () => _configDialog(context, server)),
                 BiosActionStripItem(
                   label: context.l10n.mcpRevoke,
-                  color: context.terminalColors.danger,
-                  onTap: () => onDeny(server.id),
-                ),
-              ],
-            )
-          : null,
-    );
+                  role: TextRole.fail,
+                  onTap: () => onDeny(server.id)),
+              ])
+          : null);
   }
 
   Widget _oauth(BuildContext context, McpServer server) =>
@@ -184,22 +155,15 @@ class McpManagementView extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TerminalText.mini(
+              TerminalText(
                 context.l10n.mcpOauthRequiredLabel(
-                  matched?.displayName ?? oauthProvider ?? '',
-                ),
-                color: context.colorScheme.primary,
-                alpha: .8,
-              ),
+                  matched?.displayName ?? oauthProvider ?? '')),
               VSpace.x1,
               if (unsupported)
-                TerminalText.mini(
+                TerminalText(
                   context.l10n.mcpOauthProviderNotConfiguredLabel(
-                    oauthProvider ?? '',
-                  ),
-                  color: context.terminalColors.warning,
-                  alpha: .8,
-                )
+                    oauthProvider ?? ''),
+                  role: TextRole.warn)
               else
                 Row(
                   children: [
@@ -210,25 +174,17 @@ class McpManagementView extends StatelessWidget {
                             : context.l10n.mcpConnectCap,
                         onTap: () => hasPendingDelivery(server.id)
                             ? onRetryOAuth(server.id)
-                            : onConnectOAuth(server),
-                      ),
-                    ),
+                            : onConnectOAuth(server))),
                     if (!server.status.isPending) ...[
                       HSpace.x2,
                       Expanded(
                         child: TerminalButton(
                           label: context.l10n.mcpRevoke,
-                          onTap: () => onDeny(server.id),
-                          color: context.colorScheme.error,
-                        ),
-                      ),
+                          onTap: () => onDeny(server.id))),
                     ],
-                  ],
-                ),
-            ],
-          );
-        },
-      );
+                  ]),
+            ]);
+        });
 
   void _configDialog(BuildContext context, McpServer server) {
     final controllers = <String, TextEditingController>{};
@@ -238,8 +194,7 @@ class McpManagementView extends StatelessWidget {
         : <String, dynamic>{};
     for (final key in schema.keys) {
       controllers[key] = TextEditingController(
-        text: existing[key]?.toString() ?? '',
-      );
+        text: existing[key]?.toString() ?? '');
     }
     final image = server.image;
     _show(
@@ -250,24 +205,20 @@ class McpManagementView extends StatelessWidget {
       Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (image?.isNotEmpty == true) TerminalText(image ?? '', alpha: .7),
+          if (image?.isNotEmpty == true) TerminalText(image ?? '', role: TextRole.body)
           if (controllers.isEmpty)
-            TerminalText(context.l10n.mcpNoConfigRequired, alpha: .7)
+            TerminalText(context.l10n.mcpNoConfigRequired, role: TextRole.body)
           else ...[
-            TerminalText(context.l10n.mcpEnterSecrets, alpha: .7),
+            TerminalText(context.l10n.mcpEnterSecrets, role: TextRole.body)
             ...controllers.entries.map(
               (e) => Padding(
                 padding: EdgeInsets.only(bottom: AppSizes.space),
                 child: TerminalTextField(
                   controller: e.value,
                   label: e.key.toUpperCase(),
-                  obscureText: false,
-                ),
-              ),
-            ),
+                  obscureText: false))),
           ],
-        ],
-      ),
+        ]),
       context.l10n.actionCancel,
       server.status == McpServerStatus.pending
           ? context.l10n.mcpAuthorize
@@ -278,8 +229,7 @@ class McpManagementView extends StatelessWidget {
           if (e.value.text.isNotEmpty) config[e.key] = e.value.text;
         }
         onAuthorize(server.id, config.isEmpty ? null : config);
-      },
-    );
+      });
   }
 
   void _addDialog(BuildContext context) {
@@ -296,28 +246,23 @@ class McpManagementView extends StatelessWidget {
           TerminalTextField(
             controller: n,
             label: context.l10n.mcpServerNameLabel,
-            obscureText: false,
-          ),
+            obscureText: false),
           VSpace.x2,
           TerminalTextField(
             controller: i,
             label: context.l10n.mcpImageOptionalLabel,
-            obscureText: false,
-          ),
+            obscureText: false),
           VSpace.x2,
           TerminalTextField(
             controller: p,
             label: context.l10n.mcpOauthProviderOptionalLabel,
-            obscureText: false,
-          ),
+            obscureText: false),
           VSpace.x2,
           TerminalTextField(
             controller: t,
             label: context.l10n.mcpOauthTokenEnvVarOptionalLabel,
-            obscureText: false,
-          ),
-        ],
-      ),
+            obscureText: false),
+        ]),
       context.l10n.actionCancel,
       context.l10n.actionAdd,
       () {
@@ -326,11 +271,9 @@ class McpManagementView extends StatelessWidget {
             name: n.text.trim(),
             image: i.text.trim().isEmpty ? null : i.text.trim(),
             oauthProvider: p.text.trim().isEmpty ? null : p.text.trim(),
-            oauthTokenEnvVar: t.text.trim().isEmpty ? null : t.text.trim(),
-          );
+            oauthTokenEnvVar: t.text.trim().isEmpty ? null : t.text.trim());
         }
-      },
-    );
+      });
   }
 
   void _show(
@@ -339,8 +282,7 @@ class McpManagementView extends StatelessWidget {
     Widget content,
     String cancel,
     String submitLabel,
-    VoidCallback submit,
-  ) => showDialog<void>(
+    VoidCallback submit) => showDialog<void>(
     context: context,
     builder: (dialogContext) => TerminalDialog(
       title: title,
@@ -348,19 +290,15 @@ class McpManagementView extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext),
-          child: Text(cancel),
-        ),
+          child: Text(cancel)),
         HSpace.x2,
         TextButton(
           onPressed: () {
             submit();
             Navigator.pop(dialogContext);
           },
-          child: Text(submitLabel),
-        ),
-      ],
-    ),
-  );
+          child: Text(submitLabel)),
+      ]));
 }
 
 Map<String, dynamic> _resolveConfigSchema(McpServer server) =>

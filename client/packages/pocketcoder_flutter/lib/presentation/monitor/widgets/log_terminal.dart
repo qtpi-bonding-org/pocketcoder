@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -7,8 +8,7 @@ class MonitorLogTerminal extends StatelessWidget {
   const MonitorLogTerminal({
     super.key,
     required this.state,
-    required this.getLogColor,
-  });
+    required this.getLogColor});
 
   final ObservabilityState state;
   final Color Function(String) getLogColor;
@@ -19,10 +19,7 @@ class MonitorLogTerminal extends StatelessWidget {
       return Center(
         child: TerminalText(
           context.l10n.observabilitySelectContainer,
-          textAlign: TextAlign.center,
-          alpha: 0.3,
-        ),
-      );
+          textAlign: TextAlign.center));
     }
     return ListView.builder(
       reverse: true,
@@ -30,11 +27,9 @@ class MonitorLogTerminal extends StatelessWidget {
       itemCount: state.logs.length,
       itemBuilder: (context, index) {
         final logLine = state.logs[state.logs.length - 1 - index];
-        return TerminalText.mini(
+        return TerminalText(
           '${logLine.timestamp?.toLocal().toIso8601String() ?? 'unknown'} ${logLine.message}',
-          color: getLogColor(logLine.message),
-        );
-      },
-    );
+          color: getLogColor(logLine.message));
+      });
   }
 }

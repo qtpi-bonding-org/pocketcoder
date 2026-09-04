@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
@@ -35,20 +36,16 @@ class AgentConfigView extends StatelessWidget {
   Widget _buildBody(BuildContext context, AgentConfigState state) {
     if (state.isLoading && state.configs.isEmpty) {
       return Center(
-        child: TerminalLoadingIndicator(label: context.l10n.agentSearching),
-      );
+        child: TerminalLoadingIndicator(label: context.l10n.agentSearching));
     }
 
     if (state.isFailure && state.configs.isEmpty) {
       return Center(
         child: TerminalText(
           context.l10n.agentConfigErrorPrefix(
-            state.error?.toString() ?? context.l10n.errorGeneric,
-          ),
-          color: context.terminalColors.warning,
-          textAlign: TextAlign.center,
-        ),
-      );
+            state.error?.toString() ?? context.l10n.errorGeneric),
+          role: TextRole.warn,
+          textAlign: TextAlign.center));
     }
 
     return Column(
@@ -57,17 +54,12 @@ class AgentConfigView extends StatelessWidget {
           padding: EdgeInsets.all(AppSizes.space),
           child: TerminalButton(
             label: context.l10n.actionAddNew,
-            onTap: () => _openEditor(context, null),
-          ),
-        ),
+            onTap: () => _openEditor(context, null))),
         Expanded(
           child: state.configs.isEmpty
               ? Center(
                   child: TerminalText(
-                    context.l10n.agentConfigEmpty,
-                    alpha: 0.5,
-                  ),
-                )
+                    context.l10n.agentConfigEmpty))
               : ListView.builder(
                   itemCount: state.configs.length,
                   itemBuilder: (context, index) {
@@ -79,13 +71,9 @@ class AgentConfigView extends StatelessWidget {
                           ? context.l10n.agentConfigDefaultBadge
                           : _permissionModeLabelFor(config),
                       hasBadge: isDefault,
-                      onTap: () => _openEditor(context, config),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
+                      onTap: () => _openEditor(context, config));
+                  })),
+      ]);
   }
 
   String _permissionModeLabelFor(PocoConfig config) =>
@@ -112,8 +100,7 @@ class AgentConfigView extends StatelessWidget {
               ? () async {
                   final confirmed = await _confirmDelete(
                     dialogContext,
-                    existing,
-                  );
+                    existing);
                   if (confirmed == true) {
                     onDelete(existing.id);
                     if (dialogContext.mounted) {
@@ -121,38 +108,29 @@ class AgentConfigView extends StatelessWidget {
                     }
                   }
                 }
-              : null,
-        );
-      },
-    );
+              : null);
+      });
   }
 
   Future<bool?> _confirmDelete(
     BuildContext dialogContext,
-    PocoConfig existing,
-  ) {
+    PocoConfig existing) {
     return showDialog<bool>(
       context: dialogContext,
       builder: (confirmContext) => TerminalDialog(
         title: dialogContext.l10n.agentConfigDeleteConfirmTitle,
         content: TerminalText(
           dialogContext.l10n.agentConfigDeleteConfirmBody(
-            existing.name.toUpperCase(),
-          ),
-        ),
+            existing.name.toUpperCase())),
         actions: [
           TerminalButton(
             label: dialogContext.l10n.actionCancel,
             isPrimary: false,
-            onTap: () => Navigator.of(confirmContext).pop(false),
-          ),
+            onTap: () => Navigator.of(confirmContext).pop(false)),
           HSpace.x2,
           TerminalButton(
             label: dialogContext.l10n.agentConfigDelete,
-            onTap: () => Navigator.of(confirmContext).pop(true),
-          ),
-        ],
-      ),
-    );
+            onTap: () => Navigator.of(confirmContext).pop(true)),
+        ]));
   }
 }

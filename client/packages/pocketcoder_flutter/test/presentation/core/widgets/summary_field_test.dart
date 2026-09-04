@@ -34,7 +34,18 @@ void main() {
     final label = tester.widget<TerminalText>(find.byType(TerminalText).at(0));
     final value = tester.widget<TerminalText>(find.byType(TerminalText).at(1));
 
-    expect(label.alpha, lessThan(1.0));
-    expect(value.weight, TerminalTextWeight.heavy);
+    // The label should use TextRole.label style (dim color, w400)
+    final labelText = tester.widget<Text>(
+      find.descendant(of: find.byWidget(label), matching: find.byType(Text)),
+    );
+    expect(labelText.style?.color, TextRole.label.color);
+    expect(labelText.style?.fontWeight, TextRole.label.weight);
+
+    // The value should use TextRole.value style (bright color, w700)
+    final valueText = tester.widget<Text>(
+      find.descendant(of: find.byWidget(value), matching: find.byType(Text)),
+    );
+    expect(valueText.style?.color, TextRole.value.color);
+    expect(valueText.style?.fontWeight, TextRole.value.weight);
   });
 }

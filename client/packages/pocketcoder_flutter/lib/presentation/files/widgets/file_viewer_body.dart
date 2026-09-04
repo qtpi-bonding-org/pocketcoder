@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -16,8 +17,7 @@ class FileViewerBody extends StatelessWidget {
     required this.path,
     required this.loading,
     required this.bytes,
-    required this.error,
-  });
+    required this.error});
 
   final String path;
   final bool loading;
@@ -29,8 +29,7 @@ class FileViewerBody extends StatelessWidget {
     if (loading) return const Center(child: TerminalLoadingIndicator());
     if (error != null) {
       return Center(
-          child: TerminalText(safeErrorMessage(error),
-              alpha: 0.8));
+          child: TerminalText(safeErrorMessage(error)), role: TextRole.body)
     }
     final value = bytes;
     if (value == null) return const SizedBox.shrink();
@@ -39,7 +38,7 @@ class FileViewerBody extends StatelessWidget {
     }
     if (value.length > _maxPreviewBytes) {
       return Center(
-          child: TerminalText(context.l10n.filesTooLargeToPreview, alpha: 0.5));
+          child: TerminalText(context.l10n.filesTooLargeToPreview), role: TextRole.body)
     }
     try {
       return SingleChildScrollView(
@@ -48,12 +47,10 @@ class FileViewerBody extends StatelessWidget {
           utf8.decode(value),
           style: TextStyle(
               fontFamily: AppFonts.family,
-              package: 'pocketcoder_flutter'),
-        ),
-      );
+              package: 'pocketcoder_flutter')));
     } on FormatException {
       return Center(
-          child: TerminalText(context.l10n.filesCantPreviewType, alpha: 0.5));
+          child: TerminalText(context.l10n.filesCantPreviewType), role: TextRole.body)
     }
   }
 }

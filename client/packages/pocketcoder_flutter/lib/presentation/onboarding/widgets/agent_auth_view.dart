@@ -1,5 +1,6 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -20,8 +21,7 @@ class AgentAuthView extends StatelessWidget {
     required this.onSkip,
     this.onContinue,
     this.connectedHarnessIds = const {},
-    this.selectedHarnesses = const [],
-  });
+    this.selectedHarnesses = const []});
 
   final UiFlowStatus status;
   final List<Harnesse> harnesses;
@@ -69,11 +69,9 @@ class AgentAuthView extends StatelessWidget {
           TerminalAction(
             label: context.l10n.actionContinue,
             onTap: continueTap,
-            emphasis: Emphasis.outlined,
-          ),
+            emphasis: Emphasis.outlined),
       ],
-      body: _buildBody(context, supported),
-    );
+      body: _buildBody(context, supported));
   }
 
   Widget _buildBody(BuildContext context, List<Harnesse> supported) {
@@ -87,13 +85,11 @@ class AgentAuthView extends StatelessWidget {
       return Center(
         child: TerminalText(
           context.l10n.errorGeneric,
-          color: context.terminalColors.warning,
-          textAlign: TextAlign.center,
-        ),
-      );
+          role: TextRole.warn,
+          textAlign: TextAlign.center));
     }
     if (supported.isEmpty) {
-      return Center(child: TerminalText(context.l10n.errorGeneric));
+      return Center(child: TerminalText(context.l10n.errorGeneric), role: TextRole.body)
     }
 
     return OnboardingContentShell(
@@ -102,12 +98,10 @@ class AgentAuthView extends StatelessWidget {
         padding: EdgeInsets.all(AppSizes.space * 2),
         children: [
           TerminalText(
-            context.l10n.onboardingChooseHarnessBody,
-            alpha: 0.7,
-          ),
+            context.l10n.onboardingChooseHarnessBody),
           VSpace.x3,
           if (!harnessProvidersLoaded)
-            TerminalText(context.l10n.onboardingChooseHarnessLoadingProviders),
+            TerminalText(context.l10n.onboardingChooseHarnessLoadingProviders, role: TextRole.body)
           for (final harness in supported)
             Padding(
               padding: EdgeInsets.only(bottom: AppSizes.space),
@@ -115,11 +109,7 @@ class AgentAuthView extends StatelessWidget {
                 harness: harness,
                 connected: connectedHarnessIds.contains(harness.id),
                 onTap:
-                    harnessProvidersLoaded ? () => onSelected(harness) : null,
-              ),
-            ),
-        ],
-      ),
-    );
+                    harnessProvidersLoaded ? () => onSelected(harness) : null)),
+        ]));
   }
 }

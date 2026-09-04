@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -7,8 +8,7 @@ class IsDefaultToggle extends StatelessWidget {
   const IsDefaultToggle({
     super.key,
     required this.value,
-    required this.onChanged,
-  });
+    required this.onChanged});
 
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -20,16 +20,11 @@ class IsDefaultToggle extends StatelessWidget {
       children: [
         TerminalCheckbox(
           value: value,
-          onChanged: onChanged,
-        ),
+          onChanged: onChanged),
         HSpace.x2,
         Expanded(
           child: TerminalText(
-            context.l10n.agentConfigIsDefaultLabel,
-            color: colors.onSurface,
-          ),
-        ),
-      ],
-    );
+            context.l10n.agentConfigIsDefaultLabel)),
+      ]);
   }
 }

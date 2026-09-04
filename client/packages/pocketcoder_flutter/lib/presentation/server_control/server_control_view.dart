@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
@@ -20,8 +21,7 @@ import 'package:pocketcoder_flutter/presentation/server_control/widgets/release_
 /// Confirm-dialog body text only; buttons use [_buttonLabel] instead.
 String _localizedOperationLabel(
   BuildContext context,
-  ServerControlOperation operation,
-) =>
+  ServerControlOperation operation) =>
     switch (operation) {
       ServerControlOperation.restartPocketCoder =>
         context.l10n.serverControlOperationRestartPocketCoder,
@@ -34,8 +34,7 @@ String _localizedOperationLabel(
       ServerControlOperation.saveBackup =>
         context.l10n.serverControlOperationSaveBackup,
       ServerControlOperation.restoreBackup =>
-        context.l10n.serverControlOperationRestoreBackup,
-    };
+        context.l10n.serverControlOperationRestoreBackup};
 
 class _ControlGrid extends StatelessWidget {
   const _ControlGrid({required this.state, required this.onRun});
@@ -52,26 +51,22 @@ class _ControlGrid extends StatelessWidget {
             left: ServerControlOperation.restartPocketCoder,
             right: ServerControlOperation.updatePocketCoder,
             disabled: state.isBusy,
-            onRun: onRun,
-          ),
+            onRun: onRun),
           VSpace.x1,
           ControlGroupRow(
             groupLabel: context.l10n.serverControlGroupNixOs,
             left: ServerControlOperation.restartNixOs,
             right: ServerControlOperation.updateNixOs,
             disabled: state.isBusy,
-            onRun: onRun,
-          ),
+            onRun: onRun),
           VSpace.x1,
           ControlGroupRow(
             groupLabel: context.l10n.serverControlGroupData,
             left: ServerControlOperation.saveBackup,
             right: ServerControlOperation.restoreBackup,
             disabled: state.isBusy,
-            onRun: onRun,
-          ),
-        ],
-      );
+            onRun: onRun),
+        ]);
 }
 
 class ServerControlView extends StatelessWidget {
@@ -79,8 +74,7 @@ class ServerControlView extends StatelessWidget {
     super.key,
     required this.instanceId,
     required this.inAppBrowserLauncher,
-    this.providerConsoleLink,
-  });
+    this.providerConsoleLink});
 
   final String instanceId;
   final InAppBrowserLauncher inAppBrowserLauncher;
@@ -117,8 +111,7 @@ class ServerControlView extends StatelessWidget {
                 children: [
                   Expanded(child: SelectableText(publicKey)),
                   CopyButton(value: publicKey),
-                ],
-              ),
+                ]),
               VSpace.x2,
               PrivateKeySection(instanceId: instanceId, state: state),
               VSpace.x2,
@@ -128,14 +121,11 @@ class ServerControlView extends StatelessWidget {
               onRun: (operation) => _confirm(
                 context,
                 operation,
-                () => cubit.run(operation: operation, instanceId: instanceId),
-              ),
-            ),
+                () => cubit.run(operation: operation, instanceId: instanceId))),
             if (state.error case final error?)
               TerminalText(
                 context.l10n.serverControlErrorPrefix(error.toString()),
-                color: context.terminalColors.warning,
-              ),
+                role: TextRole.warn),
             if (state.result case final result?) ...[
               VSpace.x2,
               TerminalCommandCard(
@@ -144,20 +134,15 @@ class ServerControlView extends StatelessWidget {
                     ? TerminalStatus.success
                     : TerminalStatus.failure,
                 outputLabel: context.l10n.serverControlOutputLabel,
-                output: _output(result.stdout, result.stderr),
-              ),
+                output: _output(result.stdout, result.stderr)),
             ],
-          ],
-        ),
-      ),
-    );
+          ])));
   }
 
   Future<void> _confirm(
     BuildContext context,
     ServerControlOperation operation,
-    VoidCallback onConfirm,
-  ) async {
+    VoidCallback onConfirm) async {
     final isRestore = operation == ServerControlOperation.restoreBackup;
     final confirmed = await showTerminalConfirmDialog(
       context,
@@ -167,12 +152,10 @@ class ServerControlView extends StatelessWidget {
       body: isRestore
           ? context.l10n.serverControlConfirmRestoreBody
           : context.l10n.serverControlConfirmBody(
-              _localizedOperationLabel(context, operation),
-            ),
+              _localizedOperationLabel(context, operation)),
       cancelLabel: context.l10n.serverControlConfirmCancel,
       confirmLabel: context.l10n.serverControlConfirmConfirm,
-      danger: isRestore,
-    );
+      danger: isRestore);
     if (confirmed == true && context.mounted) onConfirm();
   }
 

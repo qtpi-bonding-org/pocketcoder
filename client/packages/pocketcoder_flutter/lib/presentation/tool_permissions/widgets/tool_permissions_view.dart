@@ -1,5 +1,6 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -21,8 +22,7 @@ class ToolPermissionsView extends StatelessWidget {
     required this.state,
     required this.onSetActive,
     required this.onUpdateAction,
-    required this.onCreateRule,
-  });
+    required this.onCreateRule});
 
   final ToolPermissionsState state;
   final Future<void> Function(String id, bool active) onSetActive;
@@ -46,9 +46,7 @@ class ToolPermissionsView extends StatelessWidget {
               return Center(
                 child: TerminalText(
                   safeErrorMessage(state.error),
-                  color: context.terminalColors.warning,
-                ),
-              );
+                  role: TextRole.warn));
             }
             if (state.status != UiFlowStatus.success) {
               return const SizedBox.shrink();
@@ -62,34 +60,21 @@ class ToolPermissionsView extends StatelessWidget {
                     label: context.l10n.toolPermissionsAddRuleButton,
                     onTap: () => showAddRuleDialog(
                       context,
-                      onCreateRule,
-                    ),
-                  ),
-                ),
+                      onCreateRule))),
                 if (rules.isNotEmpty)
                   BiosSection(
                     title: context.l10n.toolPermissionsRulesRegistry,
                     child: Column(
                       children:
-                          rules.map((r) => _buildRuleItem(context, r)).toList(),
-                    ),
-                  ),
+                          rules.map((r) => _buildRuleItem(context, r)).toList())),
                 if (rules.isEmpty)
                   Center(
                     child: Padding(
                       padding: EdgeInsets.all(AppSizes.space * 4),
                       child: TerminalText(
-                        context.l10n.toolPermissionsNoRules,
-                        alpha: 0.5,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
+                        context.l10n.toolPermissionsNoRules))),
+              ]);
+          })));
   }
 
   Widget _buildRuleItem(BuildContext context, ToolPermission rule) {
@@ -102,26 +87,21 @@ class ToolPermissionsView extends StatelessWidget {
           label: rule.tool,
           variant: BiosRowVariant.toggle,
           toggleValue: isActive,
-          onToggleChanged: (value) => onSetActive(rule.id, value),
-        ),
+          onToggleChanged: (value) => onSetActive(rule.id, value)),
       ],
       footer: BiosActionStrip(actions: [
         BiosActionStripItem(
           label: context.l10n.toolPermissionsAllowLabel,
           isActive: rule.action == ToolPermissionAction.allow,
-          onTap: () => onUpdateAction(rule.id, 'allow'),
-        ),
+          onTap: () => onUpdateAction(rule.id, 'allow')),
         BiosActionStripItem(
           label: context.l10n.toolPermissionsAskLabel,
           isActive: rule.action == ToolPermissionAction.ask,
-          onTap: () => onUpdateAction(rule.id, 'ask'),
-        ),
+          onTap: () => onUpdateAction(rule.id, 'ask')),
         BiosActionStripItem(
           label: context.l10n.toolPermissionsDenyLabel,
           isActive: rule.action == ToolPermissionAction.deny,
-          onTap: () => onUpdateAction(rule.id, 'deny'),
-        ),
-      ]),
-    );
+          onTap: () => onUpdateAction(rule.id, 'deny')),
+      ]));
   }
 }

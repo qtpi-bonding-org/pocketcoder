@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
@@ -22,8 +23,7 @@ class HarnessAuthActionsBlock extends StatelessWidget {
     required this.onDisconnect,
     required this.onRefresh,
     required this.onOpenAuthorizationPage,
-    required this.onCopyCode,
-  });
+    required this.onCopyCode});
 
   final Harnesse harness;
   final HarnessAuthStatus status;
@@ -59,7 +59,7 @@ class HarnessAuthActionsBlock extends StatelessWidget {
       if (status.attempt case final attempt?)
         Padding(
             padding: EdgeInsets.only(top: AppSizes.space),
-            child: TerminalText(l10n.harnessAuthAttempt(attempt.id), alpha: .5)),
+            child: TerminalText(l10n.harnessAuthAttempt(attempt.id)), role: TextRole.body)
     ]);
   }
 
@@ -70,21 +70,19 @@ class HarnessAuthActionsBlock extends StatelessWidget {
     if (uri == null ||
         (destination != HarnessAuthCodeDestination.browser &&
             destination != HarnessAuthCodeDestination.app)) {
-      return TerminalText(challenge.legacyText ?? challenge.text);
+      return TerminalText(challenge.legacyText ?? challenge.text, role: TextRole.body)
     }
     return CredentialConnectionView(
       step: BrowserVerificationConnectionStep(
         verificationUri: uri,
         codeDestination: destination,
         userCode: challenge.userCode,
-        expiresAt: challenge.expiresAt,
-      ),
+        expiresAt: challenge.expiresAt),
       onOpenAuthorizationPage: () => onOpenAuthorizationPage(uri),
       onCopyCode: onCopyCode,
       onSubmitCode: _submit,
       onCancel: onCancel,
-      onRetry: () => onStartAccount(status.provider),
-    );
+      onRetry: () => onStartAccount(status.provider));
   }
 
   Widget _actions(BuildContext context) {

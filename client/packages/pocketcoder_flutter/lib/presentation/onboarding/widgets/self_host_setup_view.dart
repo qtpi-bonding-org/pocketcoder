@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -13,8 +14,7 @@ class SelfHostSetupView extends StatelessWidget {
   const SelfHostSetupView({
     super.key,
     required this.onOpenGuide,
-    required this.onConnect,
-  });
+    required this.onConnect});
 
   final VoidCallback onOpenGuide;
   final VoidCallback onConnect;
@@ -28,13 +28,11 @@ class SelfHostSetupView extends StatelessWidget {
         actions: [
           TerminalAction(
             label: context.l10n.onboardingSelfHostActionGuide,
-            onTap: onOpenGuide,
-          ),
+            onTap: onOpenGuide),
           TerminalAction(
             label: context.l10n.onboardingSelfHostActionConnect,
             onTap: onConnect,
-            emphasis: Emphasis.outlined,
-          ),
+            emphasis: Emphasis.outlined),
         ],
         body: OnboardingContentShell(
           child: Column(
@@ -42,8 +40,7 @@ class SelfHostSetupView extends StatelessWidget {
                 children: [
                   TerminalConversationTurn(
                     speaker: TerminalConversationSpeaker.poco,
-                    message: context.l10n.onboardingSelfHostPoco,
-                  ),
+                    message: context.l10n.onboardingSelfHostPoco),
                   VSpace.x3,
                   BiosFrame(
                     title: context.l10n.onboardingSelfHostRequirementsTitle,
@@ -52,25 +49,17 @@ class SelfHostSetupView extends StatelessWidget {
                       children: [
                         _Requirement(
                           label:
-                              context.l10n.onboardingSelfHostRequirementServer,
-                        ),
+                              context.l10n.onboardingSelfHostRequirementServer),
                         VSpace.x1,
                         _Requirement(
                           label:
-                              context.l10n.onboardingSelfHostRequirementDocker,
-                        ),
+                              context.l10n.onboardingSelfHostRequirementDocker),
                         VSpace.x1,
                         _Requirement(
                           label:
-                              context.l10n.onboardingSelfHostRequirementAccess,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-          ),
-        ),
-      );
+                              context.l10n.onboardingSelfHostRequirementAccess),
+                      ])),
+                ])));
 }
 
 class _Requirement extends StatelessWidget {
@@ -82,6 +71,5 @@ class _Requirement extends StatelessWidget {
   Widget build(BuildContext context) => GlyphLabelRow(
         glyph: '[+]',
         crossAxisAlignment: CrossAxisAlignment.start,
-        child: TerminalText(label),
-      );
+        child: TerminalText(label), role: TextRole.body)
 }

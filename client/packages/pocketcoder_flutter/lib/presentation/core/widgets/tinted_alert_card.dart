@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'terminal_text.dart';
 
@@ -8,8 +9,7 @@ class TintedAlertCard extends StatelessWidget {
     required this.eyebrowLeft,
     required this.eyebrowRight,
     required this.tint,
-    required this.child,
-  });
+    required this.child});
 
   final String eyebrowLeft;
   final String eyebrowRight;
@@ -25,9 +25,7 @@ class TintedAlertCard extends StatelessWidget {
         color: tint.withValues(alpha: 0.05),
         border: Border.all(
           color: tint.withValues(alpha: 0.3),
-          width: AppSizes.borderWidth,
-        ),
-      ),
+          width: AppSizes.borderWidth)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,26 +33,14 @@ class TintedAlertCard extends StatelessWidget {
           Row(
             children: [
               TerminalText(
-                eyebrowLeft,
-                size: TerminalTextSize.tiny,
-                weight: TerminalTextWeight.heavy,
-                color: tint,
-              ),
+                eyebrowLeft),
               HSpace.x1,
               Expanded(
                 child: TerminalText(
-                  eyebrowRight,
-                  size: TerminalTextSize.tiny,
-                  weight: TerminalTextWeight.heavy,
-                  color: tint,
-                ),
-              ),
-            ],
-          ),
+                  eyebrowRight)),
+            ]),
           VSpace.x2,
           child,
-        ],
-      ),
-    );
+        ]));
   }
 }

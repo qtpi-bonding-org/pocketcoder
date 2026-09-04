@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
@@ -19,8 +20,7 @@ class BrowserVerificationConnectionStep extends CredentialConnectionStep {
     required this.verificationUri,
     required this.codeDestination,
     this.userCode,
-    this.expiresAt,
-  });
+    this.expiresAt});
 
   final Uri verificationUri;
   final HarnessAuthCodeDestination codeDestination;
@@ -38,8 +38,7 @@ class CredentialConnectionView extends StatelessWidget {
     required this.onCopyCode,
     required this.onSubmitCode,
     required this.onCancel,
-    required this.onRetry,
-  });
+    required this.onRetry});
 
   final CredentialConnectionStep step;
   final VoidCallback onOpenAuthorizationPage;
@@ -55,26 +54,22 @@ class CredentialConnectionView extends StatelessWidget {
       BrowserVerificationConnectionStep(
         codeDestination: HarnessAuthCodeDestination.browser,
         userCode: final code?,
-        expiresAt: final expiresAt,
-      ) =>
+        expiresAt: final expiresAt) =>
         _deviceCode(context, code, expiresAt),
       BrowserVerificationConnectionStep(
         codeDestination: HarnessAuthCodeDestination.app,
-        expiresAt: final expiresAt,
-      ) =>
+        expiresAt: final expiresAt) =>
         _browserCode(context, expiresAt),
       BrowserVerificationConnectionStep(
         codeDestination: HarnessAuthCodeDestination.browser,
-        expiresAt: final expiresAt,
-      ) =>
+        expiresAt: final expiresAt) =>
         _browserOnly(context, expiresAt),
-      BrowserVerificationConnectionStep() => _actions(context),
-    };
+      BrowserVerificationConnectionStep() => _actions(context)};
   }
 
   Widget _expiryNotice(BuildContext context, DateTime? expiresAt) {
     if (expiresAt == null) return const SizedBox.shrink();
-    return TerminalText(context.l10n.credentialConnectionExpiresAt(expiresAt));
+    return TerminalText(context.l10n.credentialConnectionExpiresAt(expiresAt), role: TextRole.body)
   }
 
   Widget _deviceCode(BuildContext context, String code, DateTime? expiresAt) {
@@ -82,25 +77,21 @@ class CredentialConnectionView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _expiryNotice(context, expiresAt),
-        TerminalText(code),
+        TerminalText(code, role: TextRole.body)
         TerminalButton(
           label: context.l10n.credentialConnectionCopy,
           onTap: () {
             onCopyCode(code);
             SystemChannels.platform.invokeMethod<void>(
               'Clipboard.setData',
-              <String, dynamic>{'text': code},
-            );
-          },
-        ),
+              <String, dynamic>{'text': code});
+          }),
         TerminalButton(
           label: context.l10n.credentialConnectionOpenAuthorizationPage,
-          onTap: onOpenAuthorizationPage,
-        ),
-        TerminalText(context.l10n.credentialConnectionPasteCode),
+          onTap: onOpenAuthorizationPage),
+        TerminalText(context.l10n.credentialConnectionPasteCode, role: TextRole.body)
         _actions(context),
-      ],
-    );
+      ]);
   }
 
   Widget _browserCode(BuildContext context, DateTime? expiresAt) {
@@ -108,8 +99,7 @@ class CredentialConnectionView extends StatelessWidget {
       onSubmitCode: onSubmitCode,
       openPage: onOpenAuthorizationPage,
       actions: _actions(context),
-      expiryNotice: _expiryNotice(context, expiresAt),
-    );
+      expiryNotice: _expiryNotice(context, expiresAt));
   }
 
   Widget _browserOnly(BuildContext context, DateTime? expiresAt) => Column(
@@ -118,11 +108,9 @@ class CredentialConnectionView extends StatelessWidget {
           _expiryNotice(context, expiresAt),
           TerminalButton(
             label: context.l10n.credentialConnectionOpenAuthorizationPage,
-            onTap: onOpenAuthorizationPage,
-          ),
+            onTap: onOpenAuthorizationPage),
           _actions(context),
-        ],
-      );
+        ]);
 
   Widget _actions(BuildContext context) {
     return Row(
@@ -131,15 +119,12 @@ class CredentialConnectionView extends StatelessWidget {
         TerminalButton(
           label: context.l10n.credentialConnectionCancel,
           isPrimary: false,
-          onTap: onCancel,
-        ),
+          onTap: onCancel),
         TerminalButton(
           label: context.l10n.credentialConnectionRetry,
           isPrimary: false,
-          onTap: onRetry,
-        ),
-      ],
-    );
+          onTap: onRetry),
+      ]);
   }
 }
 
@@ -148,8 +133,7 @@ class _BrowserCodeForm extends StatefulWidget {
     required this.onSubmitCode,
     required this.openPage,
     required this.actions,
-    required this.expiryNotice,
-  });
+    required this.expiryNotice});
 
   final ValueChanged<String> onSubmitCode;
   final VoidCallback openPage;
@@ -182,20 +166,16 @@ class _BrowserCodeFormState extends State<_BrowserCodeForm> {
         widget.expiryNotice,
         TerminalButton(
           label: context.l10n.credentialConnectionOpenAuthorizationPage,
-          onTap: widget.openPage,
-        ),
-        TerminalText(context.l10n.credentialConnectionEnterCode),
+          onTap: widget.openPage),
+        TerminalText(context.l10n.credentialConnectionEnterCode, role: TextRole.body)
         TerminalTextField(
           controller: _controller,
           label: context.l10n.harnessAuthOneTimeCode,
-          onSubmitted: (_) => _submit(),
-        ),
+          onSubmitted: (_) => _submit()),
         TerminalButton(
           label: context.l10n.credentialConnectionSubmit,
-          onTap: _submit,
-        ),
+          onTap: _submit),
         widget.actions,
-      ],
-    );
+      ]);
   }
 }

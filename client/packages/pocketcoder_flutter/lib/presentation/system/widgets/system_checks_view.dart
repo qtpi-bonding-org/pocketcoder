@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -12,8 +13,7 @@ class SystemChecksView extends StatelessWidget {
   const SystemChecksView({
     super.key,
     required this.state,
-    required this.onRefresh,
-  });
+    required this.onRefresh});
 
   final HealthState state;
   final VoidCallback onRefresh;
@@ -36,18 +36,12 @@ class SystemChecksView extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: TerminalButton(
                       label: context.l10n.actionRefresh,
-                      onTap: onRefresh,
-                    ),
-                  ),
-                ),
+                      onTap: onRefresh))),
                 Expanded(
                   child: state.checks.isEmpty && !state.isLoading
                       ? Center(
                           child: TerminalText(
-                            context.l10n.systemChecksEmpty,
-                            alpha: 0.5,
-                          ),
-                        )
+                            context.l10n.systemChecksEmpty))
                       : ListView.builder(
                           itemCount: state.checks.length,
                           itemBuilder: (context, index) {
@@ -56,29 +50,20 @@ class SystemChecksView extends StatelessWidget {
                               context,
                               check.name.toUpperCase(),
                               check.status.name.toUpperCase(),
-                              check.status == HealthcheckStatus.ready,
-                            );
-                          },
-                        ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
+                              check.status == HealthcheckStatus.ready);
+                          })),
+              ]);
+          })));
   }
 
   Widget _buildCheckRow(
     BuildContext context,
     String component,
     String status,
-    bool isOk,
-  ) {
+    bool isOk) {
     return BiosRow(
       label: component,
       value: '[$status]',
-      isDestructive: !isOk,
-    );
+      isDestructive: !isOk);
   }
 }

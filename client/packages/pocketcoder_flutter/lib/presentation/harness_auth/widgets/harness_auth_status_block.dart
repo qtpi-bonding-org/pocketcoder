@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
@@ -13,8 +14,7 @@ class HarnessAuthStatusBlock extends StatelessWidget {
     required this.harness,
     required this.status,
     required this.configuredApiKeyProvider,
-    required this.child,
-  });
+    required this.child});
 
   final Harnesse harness;
   final HarnessAuthStatus? status;
@@ -39,12 +39,11 @@ class HarnessAuthStatusBlock extends StatelessWidget {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-              TerminalText(l10n.harnessAuthStatus(s.status.toUpperCase()),
-                  weight: TerminalTextWeight.heavy),
+              TerminalText(l10n.harnessAuthStatus(s.status.toUpperCase()), role: TextRole.body)
               if (s.lastError case final lastError?
                   when lastError.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText(lastError, color: context.terminalColors.warning)
+                TerminalText(lastError, role: TextRole.warn)
               ],
               if (s.credentialMode.isNotEmpty) ...[
                 VSpace.x1,

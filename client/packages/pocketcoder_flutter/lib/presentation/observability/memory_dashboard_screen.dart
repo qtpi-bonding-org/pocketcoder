@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/memory/memory_cubit.dart';
@@ -37,12 +38,7 @@ class _MemoryDashboardScreenState extends State<MemoryDashboardScreen> {
             UiFlowStatus.failure => Center(
                 child: TerminalText(
                   context.l10n.memoryDashboardUnavailable,
-                  color: context.terminalColors.warning,
-                ),
-              ),
+                  role: TextRole.warn)),
             UiFlowStatus.success =>
-              MemoryDashboardView(stats: state.stats ?? const MemoryStats()),
-          },
-        ),
-      );
+              MemoryDashboardView(stats: state.stats ?? const MemoryStats())}));
 }

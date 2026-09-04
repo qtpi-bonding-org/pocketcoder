@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
@@ -31,8 +32,7 @@ class HarnessAuthScreenView extends StatelessWidget {
     required this.onCancel,
     required this.onDisconnect,
     required this.onRefresh,
-    required this.onOpenAuthorizationPage,
-  });
+    required this.onOpenAuthorizationPage});
 
   final bool onboarding;
   final List<Harnesse> harnesses;
@@ -74,9 +74,7 @@ class HarnessAuthScreenView extends StatelessWidget {
           onCancel: onCancel,
           onDisconnect: onDisconnect,
           onRefresh: onRefresh,
-          onOpenAuthorizationPage: onOpenAuthorizationPage,
-        ),
-      );
+          onOpenAuthorizationPage: onOpenAuthorizationPage));
 }
 
 class HarnessAuthView extends StatefulWidget {
@@ -97,8 +95,7 @@ class HarnessAuthView extends StatefulWidget {
     required this.onCancel,
     required this.onDisconnect,
     required this.onRefresh,
-    required this.onOpenAuthorizationPage,
-  });
+    required this.onOpenAuthorizationPage});
   final bool onboarding;
   final List<Harnesse> harnesses;
   final List<HarnessProvider> harnessProviders;
@@ -175,15 +172,14 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
           child: TerminalText(
               widget.onboarding
                   ? context.l10n.harnessAuthUnavailable
-                  : context.l10n.harnessAuthEmpty,
-              alpha: .6));
+                  : context.l10n.harnessAuthEmpty));
     }
     return ListView(padding: EdgeInsets.all(AppSizes.space), children: [
       if (widget.error != null)
         Padding(
             padding: EdgeInsets.only(bottom: AppSizes.space),
             child: TerminalText(safeErrorMessage(widget.error),
-                color: context.terminalColors.warning, alpha: .9)),
+                role: TextRole.warn)),
       for (final h in harnesses)
         HarnessAuthCard(
             harness: h,
@@ -271,8 +267,6 @@ class HarnessAuthCard extends StatelessWidget {
         onDisconnect: onDisconnect,
         onRefresh: onRefresh,
         onOpenAuthorizationPage: onOpenAuthorizationPage,
-        onCopyCode: onCopyCode,
-      ),
-    );
+        onCopyCode: onCopyCode));
   }
 }

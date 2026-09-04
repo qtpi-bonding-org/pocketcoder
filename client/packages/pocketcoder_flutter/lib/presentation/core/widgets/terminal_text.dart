@@ -1,152 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
-/// Semantic size tokens for terminal text.
-enum TerminalTextSize {
-  /// 10sp — timestamps, footnotes
-  tiny,
-
-  /// 12sp — captions, secondary info
-  mini,
-
-  /// 14sp — default body text
-  small,
-
-  /// 16sp — emphasized body text
-  base,
-
-  /// 24sp — section headings
-  large,
-}
-
-/// Semantic weight tokens for terminal text.
-enum TerminalTextWeight {
-  /// w200 — subtle / de-emphasized
-  light,
-
-  /// w400 — standard reading weight
-  medium,
-
-  /// w800 — labels, headings, emphasis
-  heavy,
-}
-
-/// A standardised text widget that maps semantic size/weight enums
-/// to the design-system tokens in [AppSizes] and [AppFonts].
+/// A standardised text widget that renders text with semantic roles.
 ///
-/// Replaces ad-hoc `TextStyle(fontFamily: AppFonts.family, …)` patterns.
+/// Roles define both color and weight; the theme supplies size.
+/// This replaces ad-hoc `TextStyle(…)` patterns.
 class TerminalText extends StatelessWidget {
-  final String text;
-  final TerminalTextSize size;
-  final TerminalTextWeight weight;
-  final Color? color;
-
-  /// Quick opacity shortcut — applied to [color] (or `onSurface` fallback).
-  final double? alpha;
-  final double? letterSpacing;
-  final double? height;
-  final FontStyle? fontStyle;
-  final TextOverflow? overflow;
-  final int? maxLines;
-  final TextAlign? textAlign;
-
   const TerminalText(
     this.text, {
     super.key,
-    this.size = TerminalTextSize.small,
-    this.weight = TerminalTextWeight.medium,
-    this.color,
-    this.alpha,
-    this.letterSpacing,
-    this.height,
-    this.fontStyle,
-    this.overflow,
-    this.maxLines,
+    required this.role,
     this.textAlign,
+    this.maxLines,
+    this.overflow,
   });
 
-  /// 10sp, medium weight — timestamps, fine-print.
-  const TerminalText.tiny(
-    this.text, {
-    super.key,
-    this.color,
-    this.alpha,
-    this.letterSpacing,
-    this.height,
-    this.fontStyle,
-    this.overflow,
-    this.maxLines,
-    this.textAlign,
-  })  : size = TerminalTextSize.tiny,
-        weight = TerminalTextWeight.medium;
-
-  /// 12sp, medium weight — captions, secondary info.
-  const TerminalText.mini(
-    this.text, {
-    super.key,
-    this.color,
-    this.alpha,
-    this.letterSpacing,
-    this.height,
-    this.fontStyle,
-    this.overflow,
-    this.maxLines,
-    this.textAlign,
-  })  : size = TerminalTextSize.mini,
-        weight = TerminalTextWeight.medium;
-
-  /// 12sp, heavy weight — section headers, status labels.
-  const TerminalText.label(
-    this.text, {
-    super.key,
-    this.color,
-    this.alpha,
-    this.letterSpacing,
-    this.height,
-    this.fontStyle,
-    this.overflow,
-    this.maxLines,
-    this.textAlign,
-  })  : size = TerminalTextSize.mini,
-        weight = TerminalTextWeight.heavy;
-
-
-  double _resolveSize() => switch (size) {
-        TerminalTextSize.tiny => AppSizes.fontBody,
-        TerminalTextSize.mini => AppSizes.fontBody,
-        TerminalTextSize.small => AppSizes.fontBody,
-        TerminalTextSize.base => AppSizes.fontBody,
-        TerminalTextSize.large => AppSizes.fontBody,
-      };
-
-  FontWeight _resolveWeight() => switch (weight) {
-        TerminalTextWeight.light => AppFonts.light,
-        TerminalTextWeight.medium => AppFonts.medium,
-        TerminalTextWeight.heavy => AppFonts.heavy,
-      };
-
+  final String text;
+  final TextRole role;
+  final TextAlign? textAlign;
+  final int? maxLines;
+  final TextOverflow? overflow;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final baseColor = color ?? colors.onSurface;
-    final effectiveColor =
-        alpha != null ? baseColor.withValues(alpha: alpha ?? 1.0) : baseColor;
-
-    return Text(
-      text,
-      textAlign: textAlign,
-      maxLines: maxLines,
-      overflow: overflow,
-      style: TextStyle(
-        fontFamily: AppFonts.family,
-        fontSize: _resolveSize(),
-        fontWeight: _resolveWeight(),
-        color: effectiveColor,
-        letterSpacing: letterSpacing,
-        height: height,
-        fontStyle: fontStyle,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Text(
+        text,
+        textAlign: textAlign,
+        maxLines: maxLines,
+        overflow: overflow,
+        style: role.style,
+      );
 }

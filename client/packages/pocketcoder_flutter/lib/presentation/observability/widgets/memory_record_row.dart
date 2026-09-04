@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
@@ -8,8 +9,7 @@ class MemoryRecordRow extends StatelessWidget {
     required this.author,
     required this.createdAt,
     required this.body,
-    this.linkedObservations,
-  });
+    this.linkedObservations});
 
   final String author;
   final String createdAt;
@@ -24,22 +24,13 @@ class MemoryRecordRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TerminalText.mini(
-            '$author · $createdAt',
-            color: context.colorScheme.primary,
-          ),
           TerminalText(
-            body,
-            color: context.colorScheme.onSurface,
-          ),
+            '$author · $createdAt'),
+          TerminalText(
+            body),
           if (linked.isNotEmpty)
-            TerminalText.mini(
-              context.l10n.memoryDashboardLinkedPrefix(linked.join(' | ')),
-              color: context.colorScheme.onSurface,
-              alpha: 0.6,
-            ),
-        ],
-      ),
-    );
+            TerminalText(
+              context.l10n.memoryDashboardLinkedPrefix(linked.join(' | '))),
+        ]));
   }
 }

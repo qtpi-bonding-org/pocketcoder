@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
@@ -13,8 +14,7 @@ class SkillsViewData {
   const SkillsViewData({
     this.skills = const [],
     this.isLoading = false,
-    this.error,
-  });
+    this.error});
 
   final List<Skill> skills;
   final bool isLoading;
@@ -27,8 +27,7 @@ class SkillsView extends StatelessWidget {
     required this.data,
     required this.onAdd,
     required this.onEdit,
-    required this.onDelete,
-  });
+    required this.onDelete});
 
   final SkillsViewData data;
   final VoidCallback onAdd;
@@ -47,25 +46,21 @@ class SkillsView extends StatelessWidget {
       showBack: true,
       body: BiosFrame(
         title: context.l10n.skillsRegistryTitle,
-        child: _buildBody(context, colors, global, project),
-      ),
-    );
+        child: _buildBody(context, colors, global, project)));
   }
 
   Widget _buildBody(
     BuildContext context,
     ColorScheme colors,
     List<Skill> global,
-    List<Skill> project,
-  ) {
+    List<Skill> project) {
     if (data.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (data.error != null) {
       return Center(
         child: TerminalText(safeErrorMessage(data.error),
-            color: context.terminalColors.warning),
-      );
+            role: TextRole.warn));
     }
 
     return ListView(
@@ -73,8 +68,7 @@ class SkillsView extends StatelessWidget {
         Padding(
           padding: EdgeInsets.all(AppSizes.space),
           child:
-              TerminalButton(label: context.l10n.skillsAddButton, onTap: onAdd),
-        ),
+              TerminalButton(label: context.l10n.skillsAddButton, onTap: onAdd)),
         if (global.isNotEmpty)
           BiosSection(
             title: context.l10n.skillsGlobalSection,
@@ -84,10 +78,8 @@ class SkillsView extends StatelessWidget {
                         .map((skill) => SkillCard(
                               skill: skill,
                               onEdit: onEdit,
-                              onDelete: onDelete,
-                            ))
-                        .toList()),
-          ),
+                              onDelete: onDelete))
+                        .toList())),
         if (project.isNotEmpty)
           BiosSection(
             title: context.l10n.skillsProjectSection,
@@ -96,19 +88,14 @@ class SkillsView extends StatelessWidget {
                     .map((skill) => SkillCard(
                           skill: skill,
                           onEdit: onEdit,
-                          onDelete: onDelete,
-                        ))
-                    .toList()),
-          ),
+                          onDelete: onDelete))
+                    .toList())),
         if (data.skills.isEmpty)
           Center(
             child: Padding(
               padding: EdgeInsets.all(AppSizes.space * 4),
-              child: TerminalText(context.l10n.skillsNoSkills, alpha: 0.5),
-            ),
-          ),
-      ],
-    );
+              child: TerminalText(context.l10n.skillsNoSkills)), role: TextRole.body)
+      ]);
   }
 
   bool _isGlobal(Skill skill) {

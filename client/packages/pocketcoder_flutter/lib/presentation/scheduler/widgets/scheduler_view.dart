@@ -1,5 +1,6 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -24,8 +25,7 @@ class SchedulerView extends StatelessWidget {
     required this.onDelete,
     required this.onRename,
     required this.onUpdateCron,
-    required this.onCreate,
-  });
+    required this.onCreate});
 
   final SchedulerState state;
   final ValueChanged<String> onPause;
@@ -39,8 +39,7 @@ class SchedulerView extends StatelessWidget {
   final Future<void> Function({
     required String displayName,
     required String cron,
-    required String prompt,
-  })
+    required String prompt})
   onCreate;
 
   @override
@@ -60,9 +59,7 @@ class SchedulerView extends StatelessWidget {
               return Center(
                 child: TerminalText(
                   safeErrorMessage(state.error),
-                  color: context.terminalColors.warning,
-                ),
-              );
+                  role: TextRole.warn));
             }
             if (state.status != UiFlowStatus.success) {
               return const SizedBox.shrink();
@@ -74,9 +71,7 @@ class SchedulerView extends StatelessWidget {
                   padding: EdgeInsets.all(AppSizes.space),
                   child: TerminalButton(
                     label: context.l10n.schedulerAddButton,
-                    onTap: () => showAddScheduleDialog(context, onCreate),
-                  ),
-                ),
+                    onTap: () => showAddScheduleDialog(context, onCreate))),
                 for (final schedule in schedules)
                   _buildScheduleItem(context, schedule),
                 if (schedules.isEmpty)
@@ -84,17 +79,9 @@ class SchedulerView extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.all(AppSizes.space * 4),
                       child: TerminalText(
-                        context.l10n.schedulerNoSchedules,
-                        alpha: 0.5,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
+                        context.l10n.schedulerNoSchedules))),
+              ]);
+          })));
   }
 
   Widget _buildScheduleItem(BuildContext context, ScheduleOwner schedule) {
@@ -104,8 +91,7 @@ class SchedulerView extends StatelessWidget {
         BiosRow(
           label: schedule.displayName,
           value: schedule.cron ?? '',
-          hasBadge: paused,
-        ),
+          hasBadge: paused),
       ],
       footer: BiosActionStrip(
         actions: [
@@ -113,29 +99,22 @@ class SchedulerView extends StatelessWidget {
             label: paused
                 ? context.l10n.schedulerResumeButton
                 : context.l10n.schedulerPauseButton,
-            onTap: () => paused ? onUnpause(schedule.id) : onPause(schedule.id),
-          ),
+            onTap: () => paused ? onUnpause(schedule.id) : onPause(schedule.id)),
           BiosActionStripItem(
             label: context.l10n.schedulerRunNowButton,
-            onTap: () => onRunNow(schedule.id),
-          ),
+            onTap: () => onRunNow(schedule.id)),
           BiosActionStripItem(
             label: context.l10n.schedulerEditButton,
             onTap: () => showEditScheduleDialog(
               context,
               schedule,
               onRename,
-              onUpdateCron,
-            ),
-          ),
+              onUpdateCron)),
           BiosActionStripItem(
             label: context.l10n.schedulerDeleteButton,
             // Schedules can be recreated, so deletion is warning-level here.
-            color: context.terminalColors.warning,
-            onTap: () => onDelete(schedule.id),
-          ),
-        ],
-      ),
-    );
+            role: TextRole.warn,
+            onTap: () => onDelete(schedule.id)),
+        ]));
   }
 }

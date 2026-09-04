@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/foss/foss_server_setup_cubit.dart';
@@ -24,10 +25,7 @@ class FossServerSetupView extends StatelessWidget {
             padding: EdgeInsets.all(AppSizes.space * 2),
             children: [
             TerminalText(
-              context.l10n.fossServerSetupTitle,
-              size: TerminalTextSize.large,
-              color: context.colorScheme.primary,
-            ),
+              context.l10n.fossServerSetupTitle),
             VSpace.x1,
             Text(context.l10n.fossServerSetupIntro),
             VSpace.x2,
@@ -35,8 +33,7 @@ class FossServerSetupView extends StatelessWidget {
               TerminalButton(
                 label: context.l10n.fossServerSetupGenerateKey,
                 isPrimary: true,
-                onTap: () => context.read<FossServerSetupCubit>().generateKey(),
-              ),
+                onTap: () => context.read<FossServerSetupCubit>().generateKey()),
             if (state.publicKey case final publicKey?) ...[
               Text(context.l10n.fossServerSetupPublicKeyLabel),
               VSpace.x1,
@@ -46,16 +43,12 @@ class FossServerSetupView extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.copy),
                     onPressed: () => Clipboard.setData(
-                      ClipboardData(text: publicKey),
-                    ),
-                  ),
-                ],
-              ),
+                      ClipboardData(text: publicKey))),
+                ]),
               VSpace.x2,
               Text(
                 '${context.l10n.fossServerSetupHostLabel} '
-                '${context.read<FossServerSetupCubit>().host}',
-              ),
+                '${context.read<FossServerSetupCubit>().host}'),
               VSpace.x2,
               if (state.phase != FossServerSetupPhase.connected)
                 TerminalButton(
@@ -63,22 +56,17 @@ class FossServerSetupView extends StatelessWidget {
                   isPrimary: true,
                   isLoading: state.phase == FossServerSetupPhase.testing,
                   onTap: () =>
-                      context.read<FossServerSetupCubit>().testAndSave(),
-                ),
+                      context.read<FossServerSetupCubit>().testAndSave()),
             ],
             if (state.error case final error?) ...[
               VSpace.x1,
               TerminalText(
                 context.l10n.fossServerSetupErrorPrefix(error),
-                color: context.terminalColors.warning,
-              ),
+                role: TextRole.warn),
             ],
             if (state.phase == FossServerSetupPhase.connected) ...[
               VSpace.x2,
               Text(context.l10n.fossServerSetupConnected),
             ],
-            ],
-          ),
-        ),
-      );
+            ])));
 }

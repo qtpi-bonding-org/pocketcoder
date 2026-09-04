@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
@@ -26,8 +27,7 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
       return;
     }
     final approved = await context.read<ServerControlCubit>().confirmLocalAuth(
-          reason: context.l10n.serverControlLocalAuthReason,
-        );
+          reason: context.l10n.serverControlLocalAuthReason);
     if (approved && mounted) setState(() => _showPassword = true);
   }
 
@@ -37,8 +37,7 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TerminalText(context.l10n.serverControlConnectionDetails,
-            color: context.colorScheme.primary),
+        TerminalText(context.l10n.serverControlConnectionDetails, role: TextRole.body)
         VSpace.x1,
         if (details.ipAddress case final value?)
           DetailRow(label: context.l10n.serverControlIpAddress, value: value),
@@ -61,15 +60,10 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
                         ? context.l10n.serverControlHide
                         : context.l10n.serverControlShow,
                     emphasis: Emphasis.outlined,
-                    onTap: () => _toggleShowPassword(context),
-                  ),
-                ),
+                    onTap: () => _toggleShowPassword(context))),
                 HSpace.x1,
                 CopyButton(value: value),
-              ],
-            ),
-          ),
-      ],
-    );
+              ])),
+      ]);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_cubit.dart';
@@ -24,9 +25,7 @@ class NotificationSettingsScreen extends StatelessWidget {
         create: (_) => getIt<NotificationRuleCubit>()..watchRules(),
         child: NotificationSettingsAdapter(
           onEnableDevice: getIt<PushService>().requestPermissions,
-          onConfigureSelfHostedPush: getIt<PushService>().configure,
-        ),
-      );
+          onConfigureSelfHostedPush: getIt<PushService>().configure));
 }
 
 class NotificationSettingsView extends StatelessWidget {
@@ -35,8 +34,7 @@ class NotificationSettingsView extends StatelessWidget {
     required this.state,
     required this.onChanged,
     required this.onEnableDevice,
-    required this.onConfigureSelfHostedPush,
-  });
+    required this.onConfigureSelfHostedPush});
 
   static const List<(String, String)> types = [
     ('chat_reply', 'chatReply'),
@@ -55,8 +53,7 @@ class NotificationSettingsView extends StatelessWidget {
         'schedule' => context.l10n.notificationSettingsScheduleLabel,
         'taskComplete' => context.l10n.notificationSettingsTaskCompleteLabel,
         'taskError' => context.l10n.notificationSettingsTaskErrorLabel,
-        _ => key,
-      };
+        _ => key};
 
   @override
   Widget build(BuildContext context) {
@@ -72,15 +69,12 @@ class NotificationSettingsView extends StatelessWidget {
           UiFlowStatus.failure => Center(
               child: TerminalText(
                 safeErrorMessage(state.error),
-                color: context.terminalColors.warning,
-              ),
-            ),
+                role: TextRole.warn)),
           UiFlowStatus.success => ListView(
               children: [
                 TerminalButton(
                   label: context.l10n.notificationSettingsEnableDevice,
-                  onTap: onEnableDevice,
-                ),
+                  onTap: onEnableDevice),
                 VSpace.x3,
                 BiosSection(
                   title: context.l10n.notificationSettingsScreenTitle,
@@ -91,19 +85,12 @@ class NotificationSettingsView extends StatelessWidget {
                           label: _labelFor(context, key),
                           variant: BiosRowVariant.toggle,
                           toggleValue: state.rules[type] ?? true,
-                          onToggleChanged: (value) => onChanged(type, value),
-                        ),
-                    ],
-                  ),
-                ),
+                          onToggleChanged: (value) => onChanged(type, value)),
+                    ])),
                 VSpace.x3,
                 _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
-              ],
-            ),
-          UiFlowStatus.idle => const SizedBox.shrink(),
-        },
-      ),
-    );
+              ]),
+          UiFlowStatus.idle => const SizedBox.shrink()}));
   }
 }
 
@@ -119,20 +106,15 @@ class _SelfHostedPushOption extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TerminalText.label(context.l10n.proSelfHostedPushTitle),
+          TerminalText(context.l10n.proSelfHostedPushTitle, role: TextRole.body)
           VSpace.x1,
-          TerminalText.mini(
-            context.l10n.proSelfHostedPushBody,
-            alpha: 0.75,
-          ),
+          TerminalText(
+            context.l10n.proSelfHostedPushBody),
           VSpace.x2,
           TerminalButton(
             label: context.l10n.proConfigureSelfHostedPush,
             onTap: onConfigure,
-            isPrimary: false,
-          ),
-        ],
-      ),
-    );
+            isPrimary: false),
+        ]));
   }
 }

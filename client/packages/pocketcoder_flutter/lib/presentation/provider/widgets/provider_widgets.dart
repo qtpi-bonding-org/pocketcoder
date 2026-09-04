@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
@@ -57,9 +58,7 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
         id: existing?.id ?? '',
         owner: existing?.owner ?? '',
         provider: selectedProvider.id,
-        apiKey: typed.isEmpty ? (existing?.apiKey ?? '') : typed,
-      ),
-    );
+        apiKey: typed.isEmpty ? (existing?.apiKey ?? '') : typed));
   }
 
   @override
@@ -79,8 +78,7 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
                   selected == null
                       ? context.l10n.providerScreenAddKey
                       : context.l10n.providerScreenAddKeyBody(
-                          selected.name.toUpperCase()),
-                  alpha: 0.7),
+                          selected.name.toUpperCase())),
               VSpace.x2,
               ProviderTargetPicker(
                   targets: _targets,
@@ -98,10 +96,8 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
               TerminalText(
                   widget.existing == null
                       ? context.l10n.providerScreenApiKeyNotSet
-                      : context.l10n.providerScreenApiKeyStoredSecurely,
-                  alpha: 0.5),
-            ]),
-      ),
+                      : context.l10n.providerScreenApiKeyStoredSecurely),
+            ])),
       actions: [
         TerminalButton(
             label: context.l10n.actionCancel,
@@ -109,8 +105,7 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
             onTap: () => Navigator.of(context).pop()),
         HSpace.x2,
         TerminalButton(label: context.l10n.actionSave, onTap: _handleSave),
-      ],
-    );
+      ]);
   }
 }
 
@@ -148,19 +143,15 @@ class ProviderTargetPicker extends StatelessWidget {
                   ProviderTargetOption(
                 provider: p,
                 isSelected: isSelected,
-                onTap: onTap,
-              ),
+                onTap: onTap),
               selectedItem: selectedProvider,
               searchLabel: dialogContext.l10n.providerScreenSearchLabel,
               searchHint: dialogContext.l10n.providerScreenSearchHint,
               emptyLabel: dialogContext.l10n.providerScreenNoProviders,
               noMatchesLabel:
-                  dialogContext.l10n.providerScreenSearchNoMatches,
-            ),
-          );
+                  dialogContext.l10n.providerScreenSearchNoMatches));
           if (picked != null) onSelected(picked);
-        },
-      );
+        });
 }
 
 class ProviderTargetOption extends StatelessWidget {
@@ -188,10 +179,8 @@ class ProviderTargetOption extends StatelessWidget {
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Expanded(
                 child: TerminalText(provider.name.toUpperCase(),
-                    weight: TerminalTextWeight.heavy,
                     overflow: TextOverflow.ellipsis)),
-            TerminalText.mini(provider.providerId, alpha: 0.5)
-          ]),
-        ));
+            TerminalText(provider.providerId, role: TextRole.body)
+          ])));
   }
 }

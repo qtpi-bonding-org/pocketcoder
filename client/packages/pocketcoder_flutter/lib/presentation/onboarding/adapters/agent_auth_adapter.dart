@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
@@ -38,8 +39,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   @override
   Widget buildAdapter(
     BuildContext context,
-    CubitAdapterState<ProviderCubit, ProviderState> adapter,
-  ) {
+    CubitAdapterState<ProviderCubit, ProviderState> adapter) {
     final harnesses = adapter.cubitField(selectHarnesses);
     final auth = context.read<HarnessAuthCubit>();
     final status = adapter.cubitStatus();
@@ -51,8 +51,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     final connected = adapter.keep<ValueNotifier<Set<String>>>(
       'connectedHarnessIds',
       () => ValueNotifier(<String>{}),
-      dispose: (notifier) => notifier.dispose(),
-    );
+      dispose: (notifier) => notifier.dispose());
     return ValueListenableBuilder<UiFlowStatus>(
       valueListenable: status,
       builder: (context, status, _) => ValueListenableBuilder<List<Harnesse>>(
@@ -76,12 +75,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
               onSkip: () => context.go(AppRoutes.chats),
               onContinue: connectedHarness == null
                   ? null
-                  : () => _openChat(context, connectedHarness),
-            );
-          },
-        ),
-      ),
-    );
+                  : () => _openChat(context, connectedHarness));
+          })));
   }
 
   /// The one harness_providers edge this harness supports account login for
@@ -101,8 +96,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   Future<void> _select(
     BuildContext context,
     Harnesse harness,
-    ValueNotifier<Set<String>> connected,
-  ) async {
+    ValueNotifier<Set<String>> connected) async {
     final auth = context.read<HarnessAuthCubit>();
     if (!auth.state.harnessProvidersLoaded) {
       VimToast.show(context, context.l10n.onboardingHarnessProvidersLoading);
@@ -125,8 +119,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     unawaited(auth.startWithAccount(
       harnessId: harness.id,
       provider: provider,
-      visibility: harnessAccountVisibilityPersonal,
-    ));
+      visibility: harnessAccountVisibilityPersonal));
     if (!context.mounted) return;
     await _showAuthDialog(context, auth, harness, provider, connected);
   }
@@ -136,8 +129,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   Future<void> _selectWithApiKey(
     BuildContext context,
     Harnesse harness,
-    ValueNotifier<Set<String>> connected,
-  ) async {
+    ValueNotifier<Set<String>> connected) async {
     final auth = context.read<HarnessAuthCubit>();
     final providerCubit = context.read<ProviderCubit>();
     final providerIds = auth.state.harnessProviders
@@ -160,9 +152,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
         context: context,
         builder: (dialogContext) => ProviderKeyEditorDialog(
           providerCatalog: catalog,
-          onSave: (key) => Navigator.of(dialogContext).pop(key),
-        ),
-      );
+          onSave: (key) => Navigator.of(dialogContext).pop(key)));
       if (saved == null) return; // user cancelled
       await providerCubit.saveProviderAPIKey(saved);
       // saveProviderAPIKey goes through tryOperation, which records a
@@ -218,8 +208,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     HarnessAuthCubit auth,
     Harnesse harness,
     String provider,
-    ValueNotifier<Set<String>> connected,
-  ) async {
+    ValueNotifier<Set<String>> connected) async {
     Timer? timer;
     int? timerInterval;
     var dialogClosing = false;
@@ -275,8 +264,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                   codeDestination:
                       destination ?? HarnessAuthCodeDestination.unknown,
                   userCode: challenge?.userCode,
-                  expiresAt: challenge?.expiresAt,
-                )
+                  expiresAt: challenge?.expiresAt)
               : const ApiKeyConnectionStep();
           final errorMessage = status?.lastError ??
               (state.status == UiFlowStatus.failure
@@ -293,17 +281,15 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                       ? TerminalStatus.running
                       : errorMessage != null
                           ? TerminalStatus.failure
-                          : TerminalStatus.running,
-                ),
+                          : TerminalStatus.running),
                 TerminalText(
                   context.l10n.externalAuthConnecting(harness.name),
-                  alpha: status?.isConnecting == true ? 1 : .6,
-                ),
-                if (errorMessage case final message?) TerminalText(message),
+                  alpha: status?.isConnecting == true ? 1 : .6),
+                if (errorMessage case final message?) TerminalText(message, role: TextRole.body)
                 if (step is ApiKeyConnectionStep && challenge != null)
                   if (challenge.legacyText case final legacyText?
                       when legacyText.isNotEmpty)
-                    TerminalText(legacyText),
+                    TerminalText(legacyText, role: TextRole.body)
                 CredentialConnectionView(
                   step: step,
                   onOpenAuthorizationPage: () {
@@ -311,8 +297,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                   },
                   onCopyCode: (code) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(context.l10n.serverControlCopied)),
-                    );
+                      SnackBar(content: Text(context.l10n.serverControlCopied)));
                   },
                   onSubmitCode: (code) => auth.submitCode(
                       harnessId: harness.id, code: code, provider: provider),
@@ -329,16 +314,10 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                   onRetry: () => auth.startWithAccount(
                     harnessId: harness.id,
                     provider: provider,
-                    visibility: harnessAccountVisibilityPersonal,
-                  ),
-                ),
-              ],
-            ),
-            actions: const [],
-          );
-        },
-      ),
-    );
+                    visibility: harnessAccountVisibilityPersonal)),
+              ]),
+            actions: const []);
+        }));
     timer?.cancel();
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/pocketbase_inspector/pocketbase_inspector_cubit.dart';
@@ -39,13 +40,7 @@ class _PocketbaseInspectorScreenState extends State<PocketbaseInspectorScreen> {
             UiFlowStatus.failure => Center(
                 child: TerminalText(
                   context.l10n.pocketbaseInspectorUnavailable,
-                  color: context.terminalColors.warning,
-                ),
-              ),
+                  role: TextRole.warn)),
             UiFlowStatus.success => PocketbaseInspectorView(
-                stats: state.stats ?? const PocketbaseInspectorStats(),
-              ),
-          },
-        ),
-      );
+                stats: state.stats ?? const PocketbaseInspectorStats())}));
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
@@ -10,8 +11,7 @@ class SkillCard extends StatelessWidget {
     super.key,
     required this.skill,
     required this.onEdit,
-    required this.onDelete,
-  });
+    required this.onDelete});
 
   final Skill skill;
   final ValueChanged<Skill> onEdit;
@@ -23,13 +23,12 @@ class SkillCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TerminalText(skill.name.toUpperCase(),
-              weight: TerminalTextWeight.heavy),
+          TerminalText(skill.name.toUpperCase(), role: TextRole.body)
           VSpace.x1,
-          TerminalText.mini(skill.description, alpha: 0.6),
+          TerminalText(skill.description, role: TextRole.body)
           VSpace.x1,
           if (skill.isSystem ?? false)
-            TerminalText.mini(context.l10n.skillsBuiltInLabel, alpha: 0.5)
+            TerminalText(context.l10n.skillsBuiltInLabel, role: TextRole.body)
           else
             Row(
               children: [
@@ -37,21 +36,14 @@ class SkillCard extends StatelessWidget {
                   child: TerminalButton(
                     label: context.l10n.skillsEditButton,
                     isPrimary: false,
-                    onTap: () => onEdit(skill),
-                  ),
-                ),
+                    onTap: () => onEdit(skill))),
                 HSpace.x2,
                 Expanded(
                   child: TerminalButton(
                     label: context.l10n.skillsDeleteButton,
-                    color: context.terminalColors.warning,
-                    onTap: () => onDelete(skill.id),
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
+                    role: TextRole.warn,
+                    onTap: () => onDelete(skill.id))),
+              ]),
+        ]));
   }
 }

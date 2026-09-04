@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
@@ -10,8 +11,7 @@ class HarnessChoiceCard extends StatelessWidget {
     super.key,
     required this.harness,
     required this.connected,
-    required this.onTap,
-  });
+    required this.onTap});
 
   final Harnesse harness;
   final bool connected;
@@ -33,7 +33,6 @@ class HarnessChoiceCard extends StatelessWidget {
                 Expanded(
                   child: GlyphLabelRow(
                     glyph: r'$',
-                    color: colors.primary,
                     spacing: HSpace.x2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,9 +42,7 @@ class HarnessChoiceCard extends StatelessWidget {
                           style: TextStyle(
                             color: colors.onSurface,
                             fontFamily: AppFonts.family,
-                            fontWeight: AppFonts.heavy,
-                          ),
-                        ),
+                            fontWeight: AppFonts.heavy)),
                         VSpace.x1,
                         TerminalText(
                           connected
@@ -57,24 +54,11 @@ class HarnessChoiceCard extends StatelessWidget {
                                     context.l10n.onboardingClaudeAccountLogin,
                                   _ => context.l10n
                                       .onboardingHarnessAccountLogin(
-                                          harness.name),
-                                },
-                          alpha: 0.6,
-                          color: connected ? colors.primary : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                                          harness.name)},
+                          color: connected ? colors.primary : null),
+                      ]))),
                 TerminalText(
-                  connected ? '[x]' : '[>]',
-                  color: colors.primary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+                  connected ? '[x]' : '[>]'),
+              ])))));
   }
 }

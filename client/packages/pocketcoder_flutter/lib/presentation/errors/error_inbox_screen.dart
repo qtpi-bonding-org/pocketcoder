@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -15,8 +16,7 @@ class ErrorInboxScreen extends StatelessWidget {
     required this.onClearAll,
     required this.onCopy,
     required this.onReportOnGithub,
-    required this.onDelete,
-  });
+    required this.onDelete});
 
   final List<ErrorBoxEntry> errors;
   final VoidCallback onCopyAll;
@@ -39,10 +39,7 @@ class ErrorInboxScreen extends StatelessWidget {
               return Padding(
                 padding: EdgeInsets.all(AppSizes.space * 2),
                 child: TerminalText(
-                  context.l10n.errorsEmpty,
-                  size: TerminalTextSize.small,
-                ),
-              );
+                  context.l10n.errorsEmpty));
             }
             return Column(
               children: [
@@ -55,22 +52,15 @@ class ErrorInboxScreen extends StatelessWidget {
                       BiosActionButton(
                         action: BiosActionStripItem(
                           label: context.l10n.errorsCopyAll,
-                          color: context.colorScheme.primary,
                           emphasis: Emphasis.outlined,
-                          onTap: onCopyAll,
-                        ),
-                      ),
+                          onTap: onCopyAll)),
                       BiosActionButton(
                         action: BiosActionStripItem(
                           label: context.l10n.errorsClearAll,
-                          color: context.terminalColors.danger,
+                          role: TextRole.fail,
                           emphasis: Emphasis.outlined,
-                          onTap: onClearAll,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                          onTap: onClearAll)),
+                    ])),
                 // A plain Column here overflows once the tiles' combined
                 // height (an expanded tile's full stack trace especially)
                 // exceeds the frame's bounded height -- this list needs to
@@ -83,16 +73,9 @@ class ErrorInboxScreen extends StatelessWidget {
                           entry: entry,
                           onCopy: onCopy,
                           onReportOnGithub: onReportOnGithub,
-                          onDelete: onDelete,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
+                          onDelete: onDelete),
+                    ])),
+              ]);
+          })));
   }
 }

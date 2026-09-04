@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
@@ -14,8 +15,7 @@ String _buttonLabel(BuildContext context, ServerControlOperation operation) =>
         context.l10n.serverControlActionUpdate,
       ServerControlOperation.saveBackup => context.l10n.serverControlActionSave,
       ServerControlOperation.restoreBackup =>
-        context.l10n.serverControlActionRestore,
-    };
+        context.l10n.serverControlActionRestore};
 
 class ControlGroupRow extends StatelessWidget {
   const ControlGroupRow({
@@ -24,8 +24,7 @@ class ControlGroupRow extends StatelessWidget {
     required this.left,
     required this.right,
     required this.disabled,
-    required this.onRun,
-  });
+    required this.onRun});
 
   final String groupLabel;
   final ServerControlOperation left;
@@ -40,9 +39,7 @@ class ControlGroupRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TerminalText(
-              groupLabel,
-              color: context.colorScheme.primary,
-            ),
+              groupLabel),
             VSpace.x1,
             IgnorePointer(
               ignoring: disabled,
@@ -53,18 +50,11 @@ class ControlGroupRow extends StatelessWidget {
                     BiosActionStripItem(
                       label: _buttonLabel(context, left),
                       emphasis: Emphasis.outlined,
-                      onTap: () => onRun(left),
-                    ),
+                      onTap: () => onRun(left)),
                     BiosActionStripItem(
                       label: _buttonLabel(context, right),
                       emphasis: Emphasis.outlined,
-                      onTap: () => onRun(right),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+                      onTap: () => onRun(right)),
+                  ]))),
+          ]));
 }

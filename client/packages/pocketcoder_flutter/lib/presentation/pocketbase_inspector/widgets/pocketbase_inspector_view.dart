@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/pocketbase_inspector/i_pocketbase_inspector_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
@@ -42,8 +43,7 @@ class PocketbaseInspectorView extends StatelessWidget {
               _CountCard(
                   label: context.l10n.pocketbaseInspectorSkills,
                   value: stats.skills),
-            ],
-          ),
+            ]),
           VSpace.x2,
           BiosSection(
             title: context.l10n.pocketbaseInspectorRecentChats,
@@ -52,11 +52,8 @@ class PocketbaseInspectorView extends StatelessWidget {
                 : Column(
                     children: stats.recentChats
                         .map((chat) => _ChatRow(chat: chat))
-                        .toList(),
-                  ),
-          ),
-        ],
-      );
+                        .toList())),
+        ]);
 }
 
 class _CountCard extends StatelessWidget {
@@ -69,25 +66,16 @@ class _CountCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: EdgeInsets.symmetric(horizontal: AppSizes.space / 2, vertical: AppSizes.space / 4),
         decoration: BoxDecoration(
-          border: Border.all(color: context.colorScheme.primary),
-        ),
+          border: Border.all(color: context.colorScheme.primary)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TerminalText(
-              '$value',
-              size: TerminalTextSize.large,
-              weight: TerminalTextWeight.heavy,
-              color: context.colorScheme.primary,
-            ),
-            TerminalText.mini(
-              label,
-              color: context.colorScheme.onSurface,
-            ),
-          ],
-        ),
-      );
+              '$value'),
+            TerminalText(
+              label),
+          ]));
 }
 
 class _EmptyLabel extends StatelessWidget {
@@ -99,11 +87,7 @@ class _EmptyLabel extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.symmetric(vertical: AppSizes.space),
         child: TerminalText(
-          label,
-          color: context.colorScheme.onSurface,
-          alpha: 0.6,
-        ),
-      );
+          label));
 }
 
 class _ChatRow extends StatelessWidget {
@@ -121,16 +105,8 @@ class _ChatRow extends StatelessWidget {
                 chat.archived
                     ? context.l10n.pocketbaseInspectorChatArchivedTitle(
                         chat.title)
-                    : chat.title,
-                color: context.colorScheme.onSurface,
-              ),
-            ),
+                    : chat.title)),
             TerminalText(
-              chat.lastActive,
-              color: context.colorScheme.onSurface,
-              alpha: 0.7,
-            ),
-          ],
-        ),
-      );
+              chat.lastActive),
+          ]));
 }

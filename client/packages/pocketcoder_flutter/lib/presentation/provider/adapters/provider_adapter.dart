@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
@@ -25,8 +26,7 @@ class ProviderAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   @override
   Widget buildAdapter(
     BuildContext context,
-    CubitAdapterState<ProviderCubit, ProviderState> adapter,
-  ) {
+    CubitAdapterState<ProviderCubit, ProviderState> adapter) {
     final state = adapter.cubitField(_selectState);
     final cubit = context.read<ProviderCubit>();
     return UiFlowListener<ProviderCubit, ProviderState>(
@@ -35,10 +35,7 @@ class ProviderAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
         builder: (context, value, _) => ProviderView(
           state: value,
           onDelete: cubit.deleteProviderAPIKey,
-          onSave: cubit.saveProviderAPIKey,
-        ),
-      ),
-    );
+          onSave: cubit.saveProviderAPIKey)));
   }
 }
 
@@ -57,8 +54,7 @@ class ProviderView extends StatelessWidget {
     super.key,
     required this.state,
     required this.onDelete,
-    required this.onSave,
-  });
+    required this.onSave});
 
   final ProviderState state;
   final Future<void> Function(String id) onDelete;
@@ -70,8 +66,7 @@ class ProviderView extends StatelessWidget {
       title: context.l10n.providerScreenTitle,
       activePillar: NavPillar.configure,
       showBack: true,
-      body: _buildBody(context, state),
-    );
+      body: _buildBody(context, state));
   }
 
   Widget _buildBody(BuildContext context, ProviderState state) {
@@ -81,9 +76,7 @@ class ProviderView extends StatelessWidget {
         state.providerAPIKeys.isEmpty) {
       return Center(
         child: TerminalLoadingIndicator(
-          label: context.l10n.providerScreenLoading,
-        ),
-      );
+          label: context.l10n.providerScreenLoading));
     }
 
     if (state.isFailure &&
@@ -93,12 +86,9 @@ class ProviderView extends StatelessWidget {
       return Center(
         child: TerminalText(
           context.l10n.providerScreenErrorPrefix(
-            state.error?.toString() ?? context.l10n.errorGeneric,
-          ),
-          color: context.terminalColors.warning,
-          textAlign: TextAlign.center,
-        ),
-      );
+            state.error?.toString() ?? context.l10n.errorGeneric),
+          role: TextRole.warn,
+          textAlign: TextAlign.center));
     }
 
     final showEmptyHint = state.harnessModels.isEmpty &&
@@ -110,24 +100,17 @@ class ProviderView extends StatelessWidget {
       children: [
         BiosSection(
           title: context.l10n.providerScreenHarnessModelsSection,
-          child: _buildHarnessModelList(context, state),
-        ),
+          child: _buildHarnessModelList(context, state)),
         BiosSection(
           title: context.l10n.providerScreenApiKeysSection,
-          child: _buildProviderKeyList(context, state),
-        ),
+          child: _buildProviderKeyList(context, state)),
         if (showEmptyHint)
           Center(
             child: Padding(
               padding: EdgeInsets.all(AppSizes.space * 2),
               child: TerminalText(
-                context.l10n.providerScreenEmptyHint,
-                alpha: 0.5,
-              ),
-            ),
-          ),
-      ],
-    );
+                context.l10n.providerScreenEmptyHint))),
+      ]);
   }
 
   Widget _buildHarnessModelList(BuildContext context, ProviderState state) {
@@ -136,11 +119,7 @@ class ProviderView extends StatelessWidget {
         padding: EdgeInsets.all(AppSizes.space * 2),
         child: Center(
           child: TerminalText(
-            context.l10n.providerScreenNoHarnessModels,
-            alpha: 0.5,
-          ),
-        ),
-      );
+            context.l10n.providerScreenNoHarnessModels)));
     }
 
     final byHarness = <String, List<HarnessModel>>{};
@@ -149,8 +128,7 @@ class ProviderView extends StatelessWidget {
     }
     final harnessIds = byHarness.keys.toList()
       ..sort((a, b) => _harnessNameFor(state, a).compareTo(
-            _harnessNameFor(state, b),
-          ));
+            _harnessNameFor(state, b)));
 
     return Column(
       children: [
@@ -158,10 +136,8 @@ class ProviderView extends StatelessWidget {
           _HarnessGroupSection(
             harnessName: _harnessNameFor(state, harnessId),
             models: byHarness[harnessId]!,
-            modelNameFor: (hm) => _modelNameFor(state, hm),
-          ),
-      ],
-    );
+            modelNameFor: (hm) => _modelNameFor(state, hm)),
+      ]);
   }
 
   String _harnessNameFor(ProviderState state, String harnessId) {
@@ -192,15 +168,10 @@ class ProviderView extends StatelessWidget {
           children: [
             Center(
               child: TerminalText(
-                context.l10n.providerScreenNoApiKeys,
-                alpha: 0.5,
-              ),
-            ),
+                context.l10n.providerScreenNoApiKeys)),
             VSpace.x2,
             _buildAddKeyButton(context, state),
-          ],
-        ),
-      );
+          ]));
     }
 
     return Column(
@@ -209,8 +180,7 @@ class ProviderView extends StatelessWidget {
           _buildProviderKeyTile(context, state, key),
         VSpace.x2,
         _buildAddKeyButton(context, state),
-      ],
-    );
+      ]);
   }
 
   Widget _buildAddKeyButton(BuildContext context, ProviderState state) {
@@ -218,15 +188,13 @@ class ProviderView extends StatelessWidget {
       label: context.l10n.providerScreenAddKey,
       onTap: state.providerCatalog.isEmpty
           ? () {}
-          : () => _openKeyEditor(context, state, null),
-    );
+          : () => _openKeyEditor(context, state, null));
   }
 
   Widget _buildProviderKeyTile(
     BuildContext context,
     ProviderState state,
-    ProviderApiKey key,
-  ) {
+    ProviderApiKey key) {
     final colors = context.colorScheme;
 
     final providerLabel =
@@ -240,36 +208,24 @@ class ProviderView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TerminalText(
-                  providerLabel.toUpperCase(),
-                  weight: TerminalTextWeight.heavy,
-                ),
-                TerminalText.mini(
-                  _maskKeyPreview(key.apiKey),
-                  alpha: 0.5,
-                ),
-              ],
-            ),
-          ),
+                  providerLabel.toUpperCase()),
+                TerminalText(
+                  _maskKeyPreview(key.apiKey)),
+              ])),
           TextButton(
             child: Text(
               context.l10n.providerScreenDeleteKeyAction,
               style: TextStyle(
                 color: colors.error,
-                fontWeight: AppFonts.heavy,
-              ),
-            ),
-            onPressed: () => onDelete(key.id),
-          ),
-        ],
-      ),
-    );
+                fontWeight: AppFonts.heavy)),
+            onPressed: () => onDelete(key.id)),
+        ]));
   }
 
   void _openKeyEditor(
     BuildContext context,
     ProviderState state,
-    ProviderApiKey? existing,
-  ) {
+    ProviderApiKey? existing) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -279,10 +235,8 @@ class ProviderView extends StatelessWidget {
           onSave: (key) {
             onSave(key);
             Navigator.of(dialogContext).pop();
-          },
-        );
-      },
-    );
+          });
+      });
   }
 
   /// Shows a short prefix and suffix of the provider API key.
@@ -299,8 +253,7 @@ class _HarnessGroupSection extends StatefulWidget {
   const _HarnessGroupSection({
     required this.harnessName,
     required this.models,
-    required this.modelNameFor,
-  });
+    required this.modelNameFor});
 
   final String harnessName;
   final List<HarnessModel> models;
@@ -317,8 +270,7 @@ class _HarnessGroupSectionState extends State<_HarnessGroupSection> {
 
   Widget _tile(HarnessModel hm) => BiosRow(
         label: widget.modelNameFor(hm),
-        hasBadge: hm.isDefault ?? false,
-      );
+        hasBadge: hm.isDefault ?? false);
 
   Future<void> _browseAll(BuildContext context) async {
     await showDialog<HarnessModel>(
@@ -332,9 +284,7 @@ class _HarnessGroupSectionState extends State<_HarnessGroupSection> {
         searchLabel: dialogContext.l10n.providerScreenSearchLabel,
         searchHint: dialogContext.l10n.providerScreenSearchHint,
         emptyLabel: dialogContext.l10n.providerScreenNoHarnessModels,
-        noMatchesLabel: dialogContext.l10n.providerScreenSearchNoMatches,
-      ),
-    );
+        noMatchesLabel: dialogContext.l10n.providerScreenSearchNoMatches));
   }
 
   @override
@@ -347,12 +297,10 @@ class _HarnessGroupSectionState extends State<_HarnessGroupSection> {
         BiosRow(
           label: widget.harnessName,
           value: context.l10n.providerScreenHarnessModelCount(
-            widget.models.length,
-          ),
+            widget.models.length),
           variant: BiosRowVariant.expand,
           isExpanded: _expanded,
-          onTap: () => setState(() => _expanded = !_expanded),
-        ),
+          onTap: () => setState(() => _expanded = !_expanded)),
         if (_expanded && !overLimit)
           for (final hm in widget.models) _tile(hm),
         if (_expanded && overLimit)
@@ -360,12 +308,8 @@ class _HarnessGroupSectionState extends State<_HarnessGroupSection> {
             padding: EdgeInsets.symmetric(vertical: AppSizes.space),
             child: TerminalButton(
               label: context.l10n.providerScreenBrowseAllModels(
-                widget.models.length,
-              ),
-              onTap: () => _browseAll(context),
-            ),
-          ),
-      ],
-    );
+                widget.models.length),
+              onTap: () => _browseAll(context))),
+      ]);
   }
 }
