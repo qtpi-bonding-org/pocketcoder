@@ -5,7 +5,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/application/system/health_state.dart';
 import "package:pocketcoder_flutter/domain/models/healthcheck.dart";
 
@@ -57,6 +58,6 @@ class SystemChecksView extends StatelessWidget {
 
   Widget _buildCheckRow(
       BuildContext context, String component, String status, bool isOk) {
-    return BiosRow(label: component, value: '[$status]', isDestructive: !isOk);
+    return DetailRow(label: component, value: '[$status]', destructive: !isOk);
   }
 }

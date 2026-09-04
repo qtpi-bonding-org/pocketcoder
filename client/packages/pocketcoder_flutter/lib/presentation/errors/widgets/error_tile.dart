@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 class ErrorTile extends StatefulWidget {
@@ -33,14 +34,13 @@ class _ErrorTileState extends State<ErrorTile> {
     final entry = widget.entry;
     return BiosCard(
       header: [
-        BiosRow(
+        DetailRow(
           label: entry.errorData.source,
           value:
               '${entry.errorData.errorCode} · ${DateFormat.yMd().add_Hm().format(entry.lastOccurred)} · '
               '${context.l10n.errorsOccurred(entry.occurrenceCount)}',
-          variant: BiosRowVariant.expand,
-          isExpanded: _isExpanded,
-          labelFontSize: AppSizes.fontBody,
+          affordance:
+              _isExpanded ? RowAffordance.collapse : RowAffordance.expand,
           onTap: () => setState(() => _isExpanded = !_isExpanded),
         ),
       ],

@@ -20,6 +20,11 @@ const _colorExemptions = {
   'lib/presentation/core/widgets/bios_action_strip.dart',
   'lib/presentation/core/widgets/bios_frame.dart',
   'lib/presentation/core/widgets/bios_row.dart',
+  // Reverse-video press state needs a raw ground color to swap onto; no
+  // role-based background-color primitive exists yet (TextRole only
+  // defines foreground colors). Same underlying gap bios_row.dart above
+  // has always had -- DetailRow is its structural replacement (task 9).
+  'lib/presentation/core/widgets/detail_row.dart',
   'lib/presentation/core/widgets/release_status_banner.dart',
   'lib/presentation/core/widgets/terminal_button.dart',
   'lib/presentation/core/widgets/terminal_confirm_dialog.dart',

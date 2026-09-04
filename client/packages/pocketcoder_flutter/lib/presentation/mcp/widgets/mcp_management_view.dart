@@ -6,7 +6,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
@@ -89,7 +90,7 @@ class McpManagementView extends StatelessWidget {
     final reason = server.reason;
     return BiosCard(
         isActive: pending,
-        header: [BiosRow(label: server.name, value: server.status.name)],
+        header: [DetailRow(label: server.name, value: server.status.name)],
         body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (image?.isNotEmpty == true) ...[
             TerminalText(
@@ -113,7 +114,7 @@ class McpManagementView extends StatelessWidget {
               role: TextRole.label,
             ),
             VSpace.x1,
-            for (final key in schema.keys) BiosRow(label: key, value: null),
+            for (final key in schema.keys) DetailRow(label: key, value: null),
           ],
           if (server.oauthProvider?.isNotEmpty == true) _oauth(context, server),
         ]),

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 
 Widget _app(Widget child) => MaterialApp(
@@ -14,7 +14,7 @@ Widget _app(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('renders as an expand-variant BiosRow', (tester) async {
+  testWidgets('renders as an expand-variant DetailRow', (tester) async {
     const provider =
         domain.Provider(id: 'p1', providerId: 'claude', name: 'Claude');
     await tester.pumpWidget(_app(ProviderTargetPicker(
@@ -23,7 +23,7 @@ void main() {
       onSelected: (_) {},
     )));
 
-    expect(find.byType(BiosRow), findsOneWidget);
+    expect(find.byType(DetailRow), findsOneWidget);
     expect(find.text('CLAUDE'), findsOneWidget);
   });
 
@@ -57,7 +57,7 @@ void main() {
       onSelected: (t) => picked = t,
     )));
 
-    await tester.tap(find.byType(BiosRow));
+    await tester.tap(find.byType(DetailRow));
     await tester.pumpAndSettle();
 
     expect(find.text('ANTHROPIC'), findsOneWidget);
@@ -87,7 +87,7 @@ void main() {
       onSelected: (_) {},
     )));
 
-    await tester.tap(find.byType(BiosRow));
+    await tester.tap(find.byType(DetailRow));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'nonexistent-xyz');

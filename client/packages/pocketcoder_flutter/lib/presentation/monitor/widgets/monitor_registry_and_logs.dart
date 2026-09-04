@@ -4,7 +4,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/widgets/log_terminal.dart';
 
@@ -115,11 +115,10 @@ class MonitorContainerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BiosRow(
+    return DetailRow(
       label: displayName(container.name),
       value: container.state.toUpperCase(),
-      isSelected: isSelected,
-      labelFontSize: AppSizes.fontBody,
+      trailingDetail: isSelected ? '✓' : null,
       onTap: () => onSelectContainer(isSelected ? null : container.name),
     );
   }

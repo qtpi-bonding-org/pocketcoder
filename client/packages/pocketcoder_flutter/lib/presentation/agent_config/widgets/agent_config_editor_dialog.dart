@@ -3,7 +3,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
@@ -96,9 +96,9 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
                 emptyLabel: context.l10n.agentConfigNoPrompts,
                 itemId: (prompt) => prompt.id,
                 itemLabel: (prompt) => prompt.name,
-                itemBuilder: (_, prompt, selected) => BiosRow(
+                itemBuilder: (_, prompt, selected) => DetailRow(
                   label: prompt.name,
-                  isSelected: selected == prompt,
+                  trailingDetail: selected?.id == prompt.id ? '✓' : null,
                 ),
                 onSelected: (id) => setState(() => _systemPromptId = id),
               ),
@@ -111,9 +111,9 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
                 emptyLabel: context.l10n.agentConfigNoModes,
                 itemId: (mode) => mode.id,
                 itemLabel: (mode) => mode.name,
-                itemBuilder: (_, mode, selected) => BiosRow(
+                itemBuilder: (_, mode, selected) => DetailRow(
                   label: mode.name,
-                  isSelected: selected == mode,
+                  trailingDetail: selected?.id == mode.id ? '✓' : null,
                 ),
                 onSelected: (id) => setState(() => _permissionModeId = id),
               ),

@@ -3,7 +3,8 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -125,11 +126,11 @@ class ProviderTargetPicker extends StatelessWidget {
   final ValueChanged<domain.Provider> onSelected;
 
   @override
-  Widget build(BuildContext context) => BiosRow(
+  Widget build(BuildContext context) => DetailRow(
       label: context.l10n.providerScreenProviderLabel,
       value: selectedProvider?.name.toUpperCase() ??
           context.l10n.providerScreenSelectProvider.toUpperCase(),
-      variant: BiosRowVariant.expand,
+      affordance: RowAffordance.navigate,
       onTap: () async {
         final picked = await showDialog<domain.Provider>(
             context: context,

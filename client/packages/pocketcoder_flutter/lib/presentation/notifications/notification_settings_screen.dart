@@ -9,7 +9,8 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
@@ -80,11 +81,10 @@ class NotificationSettingsView extends StatelessWidget {
                           .toLowerCase()),
                   Column(children: [
                     for (final (type, key) in types)
-                      BiosRow(
+                      DetailRow.toggle(
                           label: _labelFor(context, key),
-                          variant: BiosRowVariant.toggle,
-                          toggleValue: state.rules[type] ?? true,
-                          onToggleChanged: (value) => onChanged(type, value)),
+                          value: state.rules[type] ?? true,
+                          onChanged: (value) => onChanged(type, value)),
                   ]),
                   VSpace.x3,
                   _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),

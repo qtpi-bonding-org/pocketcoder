@@ -14,7 +14,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 
@@ -272,8 +273,8 @@ class _HarnessGroupSection extends StatefulWidget {
 class _HarnessGroupSectionState extends State<_HarnessGroupSection> {
   bool _expanded = false;
 
-  Widget _tile(HarnessModel hm) =>
-      BiosRow(label: widget.modelNameFor(hm), hasBadge: hm.isDefault ?? false);
+  Widget _tile(HarnessModel hm) => DetailRow(
+      label: widget.modelNameFor(hm), hasBadge: hm.isDefault ?? false);
 
   Future<void> _browseAll(BuildContext context) async {
     await showDialog<HarnessModel>(
@@ -295,12 +296,11 @@ class _HarnessGroupSectionState extends State<_HarnessGroupSection> {
     final overLimit =
         widget.models.length > _HarnessGroupSection._inlineTileLimit;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      BiosRow(
+      DetailRow(
           label: widget.harnessName,
           value: context.l10n
               .providerScreenHarnessModelCount(widget.models.length),
-          variant: BiosRowVariant.expand,
-          isExpanded: _expanded,
+          affordance: _expanded ? RowAffordance.collapse : RowAffordance.expand,
           onTap: () => setState(() => _expanded = !_expanded)),
       if (_expanded && !overLimit)
         for (final hm in widget.models) _tile(hm),

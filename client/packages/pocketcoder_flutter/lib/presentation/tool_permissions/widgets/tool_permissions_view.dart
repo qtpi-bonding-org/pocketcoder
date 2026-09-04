@@ -6,7 +6,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -85,11 +86,10 @@ class ToolPermissionsView extends StatelessWidget {
     return BiosCard(
         isActive: isActive,
         header: [
-          BiosRow(
+          DetailRow.toggle(
               label: rule.tool,
-              variant: BiosRowVariant.toggle,
-              toggleValue: isActive,
-              onToggleChanged: (value) => onSetActive(rule.id, value)),
+              value: isActive,
+              onChanged: (value) => onSetActive(rule.id, value)),
         ],
         footer: BiosActionStrip(actions: [
           BiosActionStripItem(

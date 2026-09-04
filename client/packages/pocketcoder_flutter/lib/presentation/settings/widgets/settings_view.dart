@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 
@@ -81,12 +82,13 @@ class SettingsView extends StatelessWidget {
             Column(
               children: [
                 for (final item in section.$2)
-                  BiosRow(
+                  DetailRow(
                     label: item.$1,
                     hasBadge: item.$2 == 'configureMcp' && hasPendingMcp,
-                    isDestructive:
+                    destructive:
                         item.$2 == 'factoryReset' || item.$2 == 'deleteProData',
-                    isWarning: item.$2 == 'logout',
+                    warning: item.$2 == 'logout',
+                    affordance: RowAffordance.navigate,
                     onTap: () => switch (item.$2) {
                       'logout' => onLogout(),
                       'factoryReset' => onFactoryReset(),
@@ -96,11 +98,10 @@ class SettingsView extends StatelessWidget {
                     },
                   ),
                 if (section.$1 == context.l10n.settingsSystemSection)
-                  BiosRow(
+                  DetailRow.toggle(
                     label: context.l10n.settingsMenuHapticFeedback,
-                    variant: BiosRowVariant.toggle,
-                    toggleValue: hapticsEnabled,
-                    onToggleChanged: onHapticsChanged,
+                    value: hapticsEnabled,
+                    onChanged: onHapticsChanged,
                   ),
               ],
             ),

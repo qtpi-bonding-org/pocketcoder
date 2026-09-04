@@ -4,7 +4,8 @@ import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -66,7 +67,7 @@ class AgentConfigView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final config = state.configs[index];
                     final isDefault = config.isDefault ?? false;
-                    return BiosRow(
+                    return DetailRow(
                         label: config.name.toUpperCase(),
                         value: isDefault
                             ? context.l10n.agentConfigDefaultBadge

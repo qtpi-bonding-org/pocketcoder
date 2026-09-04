@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 
 class AgentConfigSelectionField extends StatelessWidget {
   const AgentConfigSelectionField({
@@ -15,10 +16,10 @@ class AgentConfigSelectionField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BiosRow(
+    return DetailRow(
       label: label,
       value: currentValue,
-      variant: BiosRowVariant.expand,
+      affordance: RowAffordance.expand,
       onTap: onTap,
     );
   }

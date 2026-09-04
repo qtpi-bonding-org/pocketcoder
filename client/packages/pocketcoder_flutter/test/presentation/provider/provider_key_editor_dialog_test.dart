@@ -4,7 +4,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 
 Widget _app(Widget child) => MaterialApp(
@@ -29,7 +29,7 @@ void main() {
       providerCatalog: const [_anthropic],
       onSave: (key) => saved = key,
     )));
-    await tester.tap(find.byType(BiosRow));
+    await tester.tap(find.byType(DetailRow));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ANTHROPIC'));
     await tester.pumpAndSettle();
@@ -60,7 +60,7 @@ void main() {
       providerCatalog: const [_anthropic],
       onSave: (_) => called = true,
     )));
-    await tester.tap(find.byType(BiosRow));
+    await tester.tap(find.byType(DetailRow));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ANTHROPIC'));
     await tester.pumpAndSettle();
