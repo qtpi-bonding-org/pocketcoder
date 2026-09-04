@@ -39,10 +39,14 @@ class ProOffer extends StatelessWidget {
         VSpace.x3,
         if (trialDays != null) ...[
           TerminalText(
-            context.l10n.proTrialNoPaymentInfo),
+            context.l10n.proTrialNoPaymentInfo,
+            role: TextRole.body,
+          ),
           VSpace.x1,
           TerminalText(
-            context.l10n.proTrialLapseExplainer),
+            context.l10n.proTrialLapseExplainer,
+            role: TextRole.body,
+          ),
         ],
         VSpace.x3,
         TerminalButton(
@@ -59,7 +63,9 @@ class ProOffer extends StatelessWidget {
           trialDays == null
               ? context.l10n.proTerms(recurringPrice)
               : context.l10n.proTrialTerms(trialDays, recurringPrice),
-          textAlign: TextAlign.center),
+          role: TextRole.label,
+          textAlign: TextAlign.center,
+        ),
         Wrap(
           alignment: WrapAlignment.center,
           children: [

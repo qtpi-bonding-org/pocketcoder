@@ -37,7 +37,7 @@ class ChatPickerField<T> extends StatelessWidget {
       children: [
         Semantics(
           label: label,
-          child: TerminalText(label.toUpperCase()), role: TextRole.body)
+          child: TerminalText(label.toUpperCase(), role: TextRole.label))
         VSpace.x1,
         InkWell(
           onTap: () => _openPicker(context),
@@ -53,6 +53,7 @@ class ChatPickerField<T> extends StatelessWidget {
                 Expanded(
                   child: TerminalText(
                     currentLabel,
+                    role: TextRole.body,
                     overflow: TextOverflow.ellipsis)),
                 Text(context.l10n.chatPickerFieldIndicator,
                     style: TextStyle(color: context.colorScheme.onSurface)),
@@ -69,7 +70,8 @@ class ChatPickerField<T> extends StatelessWidget {
       cancelLabel: context.l10n.newChatCancel,
       itemBuilder: (_, option) => Padding(
         padding: EdgeInsets.all(AppSizes.space),
-        child: TerminalText(optionLabel(option))), role: TextRole.body)
+        child: TerminalText(optionLabel(option), role: TextRole.body)),
+    );
 
     if (picked != null) {
       onSelected(picked);

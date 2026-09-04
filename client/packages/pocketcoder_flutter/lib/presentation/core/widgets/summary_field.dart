@@ -14,10 +14,12 @@ class SummaryField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TerminalText(label.toUpperCase(), role: TextRole.body)
+        TerminalText(label.toUpperCase(), role: TextRole.label),
         VSpace.x0_5,
         TerminalText(
-          value.toUpperCase()),
+          value.toUpperCase(),
+          role: TextRole.value,
+        ),
       ]);
   }
 }

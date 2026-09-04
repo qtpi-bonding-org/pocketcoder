@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -47,22 +48,23 @@ class ChatListTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TerminalText.label(
+              TerminalText(
                 headline,
+                role: TextRole.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               if (previewLine != null)
-                TerminalText.mini(
+                TerminalText(
                   previewLine,
-                  alpha: 0.6,
+                  role: TextRole.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               if (chat.lastActive != null)
-                TerminalText.mini(
+                TerminalText(
                   _formatRelativeTime(context, chat.lastActive),
-                  alpha: 0.4,
+                  role: TextRole.label,
                 ),
             ],
           ),

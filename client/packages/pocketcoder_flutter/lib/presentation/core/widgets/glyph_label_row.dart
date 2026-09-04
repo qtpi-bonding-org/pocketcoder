@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
@@ -22,7 +23,7 @@ class GlyphLabelRow extends StatelessWidget {
   Widget build(BuildContext context) => Row(
         crossAxisAlignment: crossAxisAlignment,
         children: [
-          TerminalText.label(glyph, color: color),
+          TerminalText(glyph, role: TextRole.label),
           spacing ?? HSpace.x1,
           Expanded(child: child),
         ],

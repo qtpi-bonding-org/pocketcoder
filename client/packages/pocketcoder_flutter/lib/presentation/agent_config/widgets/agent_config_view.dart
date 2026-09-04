@@ -59,7 +59,9 @@ class AgentConfigView extends StatelessWidget {
           child: state.configs.isEmpty
               ? Center(
                   child: TerminalText(
-                    context.l10n.agentConfigEmpty))
+                    context.l10n.agentConfigEmpty,
+                    role: TextRole.label,
+                  ))
               : ListView.builder(
                   itemCount: state.configs.length,
                   itemBuilder: (context, index) {
@@ -121,7 +123,9 @@ class AgentConfigView extends StatelessWidget {
         title: dialogContext.l10n.agentConfigDeleteConfirmTitle,
         content: TerminalText(
           dialogContext.l10n.agentConfigDeleteConfirmBody(
-            existing.name.toUpperCase())),
+            existing.name.toUpperCase()),
+          role: TextRole.body,
+        ),
         actions: [
           TerminalButton(
             label: dialogContext.l10n.actionCancel,

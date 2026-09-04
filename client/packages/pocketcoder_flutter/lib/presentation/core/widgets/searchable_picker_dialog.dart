@@ -119,7 +119,7 @@ class _SearchablePickerDialogState<T>
         width: double.maxFinite,
         child: widget.items.isEmpty
             ? Center(
-                child: TerminalText(widget.emptyLabel ?? ''), role: TextRole.body)
+                child: TerminalText(widget.emptyLabel ?? '', role: TextRole.body))
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -133,7 +133,9 @@ class _SearchablePickerDialogState<T>
                     child: rows.isEmpty
                         ? Center(
                             child: TerminalText(
-                              widget.noMatchesLabel ?? ''))
+                              widget.noMatchesLabel ?? '',
+                              role: TextRole.label,
+                            ))
                         : ListView.builder(
                             itemCount: rows.length,
                             itemBuilder: (context, index) {

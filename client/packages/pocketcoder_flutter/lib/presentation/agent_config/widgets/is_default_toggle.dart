@@ -24,7 +24,9 @@ class IsDefaultToggle extends StatelessWidget {
         HSpace.x2,
         Expanded(
           child: TerminalText(
-            context.l10n.agentConfigIsDefaultLabel)),
+            context.l10n.agentConfigIsDefaultLabel,
+            role: TextRole.body,
+          )),
       ]);
   }
 }

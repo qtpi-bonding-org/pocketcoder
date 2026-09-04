@@ -19,9 +19,11 @@ class ActiveProStatus extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TerminalText(
-          context.l10n.proActive),
+          context.l10n.proActive,
+          role: TextRole.label,
+        ),
         VSpace.x2,
-        TerminalText(context.l10n.proActiveBody, role: TextRole.body)
+        TerminalText(context.l10n.proActiveBody, role: TextRole.body),
         VSpace.x3,
         TerminalButton(
           label: context.l10n.proManageSubscription,
