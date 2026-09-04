@@ -21,7 +21,6 @@ class TerminalRoleLabel extends StatelessWidget {
       style: TextStyle(
         color: color,
         fontFamily: AppFonts.family,
-        fontSize: AppSizes.fontBody,
         fontWeight: AppFonts.heavy,
         letterSpacing: 2,
       ),
@@ -53,7 +52,6 @@ class TerminalTranscriptLine extends StatelessWidget {
             color: color,
             fontFamily: AppFonts.family,
             package: 'pocketcoder_flutter',
-            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.medium,
           ),
         ),
@@ -175,7 +173,6 @@ class TerminalConversationTurn extends StatelessWidget {
         style: TextStyle(
           color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
           fontFamily: AppFonts.family,
-          fontSize: AppSizes.fontBody,
         ),
       ),
     );
@@ -229,7 +226,6 @@ class TerminalPromptSuggestion extends StatelessWidget {
           style: TextStyle(
             color: textColor,
             fontFamily: AppFonts.family,
-            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.heavy,
           ),
         ),

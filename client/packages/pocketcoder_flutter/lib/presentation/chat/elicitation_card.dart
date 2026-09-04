@@ -98,7 +98,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
               style: TextStyle(
                 color: colors.secondary,
                 fontFamily: AppFonts.family,
-                fontSize: AppSizes.fontBody,
               ),
             ),
           if (elicitationId.isNotEmpty) ...[
@@ -107,7 +106,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
               '[$elicitationId]',
               style: TextStyle(
                 color: colors.secondary.withValues(alpha: 0.5),
-                fontSize: AppSizes.fontBody,
               ),
             ),
           ],
@@ -127,7 +125,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
               context.l10n.chatNoFieldsRequested,
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.4),
-                fontSize: AppSizes.fontBody,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -197,7 +194,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
                 style: TextStyle(
                   color: colors.onSurface,
                   fontFamily: AppFonts.family,
-                  fontSize: AppSizes.fontBody,
                 ),
               ),
             ),
@@ -223,7 +219,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
           style: TextStyle(
             color: colors.onSurface,
             fontFamily: AppFonts.family,
-            fontSize: AppSizes.fontBody,
           ),
         );
       case 'string':
@@ -242,7 +237,6 @@ class _ElicitationCardState extends State<ElicitationCard> {
           style: TextStyle(
             color: colors.onSurface,
             fontFamily: AppFonts.family,
-            fontSize: AppSizes.fontBody,
           ),
         );
     }

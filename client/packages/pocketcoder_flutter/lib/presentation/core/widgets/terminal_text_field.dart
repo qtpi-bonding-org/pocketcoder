@@ -36,7 +36,6 @@ class TerminalTextField extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppFonts.family,
             color: colors.onSurface,
-            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.heavy,
             package: 'pocketcoder_flutter',
           ),
@@ -53,7 +52,6 @@ class TerminalTextField extends StatelessWidget {
             fontFamily: AppFonts.family,
             package: 'pocketcoder_flutter',
             color: colors.onSurface,
-            fontSize: AppSizes.fontBody,
           ),
           cursorColor: colors.onSurface,
           decoration: InputDecoration(
@@ -62,7 +60,6 @@ class TerminalTextField extends StatelessWidget {
               color: colors.onSurface.withValues(alpha: 0.3),
               fontFamily: AppFonts.family,
               package: 'pocketcoder_flutter',
-              fontSize: AppSizes.fontBody,
             ),
             fillColor: colors.surface,
             filled: true,
@@ -91,7 +88,6 @@ class TerminalTextField extends StatelessWidget {
               color: context.terminalColors.warning,
               fontFamily: AppFonts.family,
               package: 'pocketcoder_flutter',
-              fontSize: AppSizes.fontBody,
             ),
             contentPadding: EdgeInsets.all(AppSizes.space * 2),
             isDense: true,

@@ -36,7 +36,6 @@ class ModeSwitcher extends StatelessWidget {
             style: TextStyle(
                 color: colors.onSurface.withValues(alpha: .5),
                 fontFamily: AppFonts.family,
-                fontSize: AppSizes.fontBody,
                 fontWeight: AppFonts.heavy,
                 letterSpacing: 2)),
         HSpace.x1,
@@ -51,7 +50,6 @@ class ModeSwitcher extends StatelessWidget {
                   ((m['name'] as String?) ?? m['id'] as String).toUpperCase(),
                   style: TextStyle(
                       fontFamily: AppFonts.family,
-                      fontSize: AppSizes.fontBody,
                       fontWeight: AppFonts.heavy),
                 ),
               ),
@@ -61,7 +59,6 @@ class ModeSwitcher extends StatelessWidget {
                 style: TextStyle(
                     color: colors.primary,
                     fontFamily: AppFonts.family,
-                    fontSize: AppSizes.fontBody,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 1)),
             HSpace.x1,

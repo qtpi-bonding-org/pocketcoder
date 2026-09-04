@@ -64,7 +64,7 @@ class BootView extends StatelessWidget {
                       Center(
                         child: Container(
                           color: colors.surface,
-                          child: PocoFace(fontSize: AppSizes.fontBody, sequence: pocoState.sequence),
+                          child: PocoFace(sequence: pocoState.sequence),
                         ),
                       ),
                       VSpace.x4,

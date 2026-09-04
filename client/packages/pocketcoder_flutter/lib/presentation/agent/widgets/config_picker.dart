@@ -42,13 +42,11 @@ class _ConfigPickerState extends State<ConfigPicker> {
                         _expanded ? '[v]' : '[>]',
                         style: TextStyle(
                             color: colors.onSurface.withValues(alpha: .5),
-                            fontFamily: AppFonts.family,
-                            fontSize: AppSizes.fontBody)),
+                            fontFamily: AppFonts.family)),
                     Text(context.l10n.agentConfigLabel,
                         style: TextStyle(
                             color: colors.onSurface.withValues(alpha: .5),
                             fontFamily: AppFonts.family,
-                            fontSize: AppSizes.fontBody,
                             fontWeight: AppFonts.heavy,
                             letterSpacing: 2))
                   ]))),
@@ -65,8 +63,7 @@ class _ConfigPickerState extends State<ConfigPicker> {
     final label = Text(name.toUpperCase(),
         style: TextStyle(
             color: context.colorScheme.onSurface,
-            fontFamily: AppFonts.family,
-            fontSize: AppSizes.fontBody));
+            fontFamily: AppFonts.family));
     void submit(String v) => widget.onSetOption(
         SetSessionConfigOptionRequest(sessionId: '', configId: id, value: v));
     if (kind == 'boolean') {

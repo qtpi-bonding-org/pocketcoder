@@ -150,7 +150,6 @@ class _TerminalInputState extends State<TerminalInput> {
           : colors.onSurface.withValues(alpha: 0.3),
       fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
-      fontSize: AppSizes.fontBody,
       fontWeight: AppFonts.heavy,
     );
     return Container(
@@ -181,7 +180,6 @@ class _TerminalInputState extends State<TerminalInput> {
           color: colors.secondary,
           fontFamily: AppFonts.family,
           package: 'pocketcoder_flutter',
-          fontSize: AppSizes.fontBody,
         ),
         // We simulate the terminal block cursor by using a custom color toggle
         // and a wider cursor width.

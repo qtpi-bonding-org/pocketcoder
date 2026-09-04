@@ -63,7 +63,6 @@ class ReleaseStatusBanner extends StatelessWidget {
               style: TextStyle(
                 color: color,
                 fontFamily: AppFonts.family,
-                fontSize: AppSizes.fontBody,
                 fontWeight: AppFonts.heavy,
               ),
             ),

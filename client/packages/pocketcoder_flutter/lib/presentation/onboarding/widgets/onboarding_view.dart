@@ -31,8 +31,7 @@ class OnboardingView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AsciiLogo(
-                      text: AppAscii.pocketCoderLogo,
-                      fontSize: AppSizes.fontBody),
+                      text: AppAscii.pocketCoderLogo),
                   VSpace.x6,
                   TerminalConversationTurn(
                     speaker: TerminalConversationSpeaker.poco,

@@ -46,7 +46,6 @@ class PlanPanel extends StatelessWidget {
                 context.l10n.agentPlanPanelBadge,
                 style: TextStyle(
                   color: colors.primary,
-                  fontSize: AppSizes.fontBody,
                   fontWeight: AppFonts.heavy,
                 ),
               ),
@@ -56,7 +55,6 @@ class PlanPanel extends StatelessWidget {
                   context.l10n.agentPlanPanelLabel,
                   style: TextStyle(
                     color: colors.primary,
-                    fontSize: AppSizes.fontBody,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
                   ),
@@ -115,7 +113,6 @@ class PlanPanel extends StatelessWidget {
                       ? colors.onSurface.withValues(alpha: 0.4)
                       : colors.onSurface,
                   fontFamily: AppFonts.family,
-                  fontSize: AppSizes.fontBody,
                   decoration:
                       isDone ? TextDecoration.lineThrough : TextDecoration.none,
                 ),
@@ -126,7 +123,6 @@ class PlanPanel extends StatelessWidget {
                   style: TextStyle(
                     color: accent,
                     fontFamily: AppFonts.family,
-                    fontSize: AppSizes.fontBody,
                     letterSpacing: 1,
                   ),
                 ),

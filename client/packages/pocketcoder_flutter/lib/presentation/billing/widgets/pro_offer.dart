@@ -34,7 +34,6 @@ class ProOffer extends StatelessWidget {
         AsciiLogo(
           text: AppAscii.pocketCoderProLogo,
           color: context.colorScheme.primary,
-          fontSize: AppSizes.fontBody,
           alignment: Alignment.center,
         ),
         VSpace.x3,

@@ -43,7 +43,6 @@ class HarnessChoiceCard extends StatelessWidget {
                           style: TextStyle(
                             color: colors.onSurface,
                             fontFamily: AppFonts.family,
-                            fontSize: AppSizes.fontBody,
                             fontWeight: AppFonts.heavy,
                           ),
                         ),

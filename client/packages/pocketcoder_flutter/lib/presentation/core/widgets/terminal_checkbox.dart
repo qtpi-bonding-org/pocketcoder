@@ -28,7 +28,6 @@ class TerminalCheckbox extends StatelessWidget {
           style: TextStyle(
             fontFamily: AppFonts.family,
             color: color ?? context.colorScheme.onSurface,
-            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.heavy,
           ),
         ),

@@ -39,7 +39,6 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
                   style: TextStyle(
                     color: colors.primary,
                     fontFamily: AppFonts.family,
-                    fontSize: AppSizes.fontBody,
                     fontWeight: AppFonts.heavy,
                   ),
                 ),
@@ -48,7 +47,6 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
                   status: widget.isStreaming
                       ? TerminalStatus.running
                       : TerminalStatus.success,
-                  fontSize: AppSizes.fontBody,
                 ),
               ],
             ),
@@ -62,7 +60,6 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.7),
                 fontFamily: AppFonts.family,
-                fontSize: AppSizes.fontBody,
                 fontStyle: FontStyle.italic,
                 height: 1.4,
               ),

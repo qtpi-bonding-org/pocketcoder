@@ -48,7 +48,6 @@ class FileViewerBody extends StatelessWidget {
           utf8.decode(value),
           style: TextStyle(
               fontFamily: AppFonts.family,
-              fontSize: AppSizes.fontBody,
               package: 'pocketcoder_flutter'),
         ),
       );

@@ -170,7 +170,6 @@ class _SearchablePickerDialogState<T>
                                             .colorScheme
                                             .primary,
                                         fontWeight: AppFonts.heavy,
-                                        fontSize: AppSizes.fontBody,
                                         letterSpacing: 1.2,
                                         package: 'pocketcoder_flutter',
                                       ),
