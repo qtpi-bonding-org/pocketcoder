@@ -116,7 +116,7 @@ void main() {
           builder: (context, state) => const SizedBox(),
         ),
         GoRoute(
-          path: AppRoutes.configureErrors,
+          path: AppRoutes.statusErrors,
           builder: (context, state) => const Text('errors-placeholder'),
         ),
       ],

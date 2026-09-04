@@ -3364,13 +3364,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlActionRestore => 'RESTORE';
 
   @override
-  String get serverControlGroupPocketCoder => 'POCKETCODER';
+  String get serverControlGroupPocketCoder => 'app';
 
   @override
-  String get serverControlGroupNixOs => 'NIXOS';
+  String get serverControlGroupNixOs => 'system';
 
   @override
-  String get serverControlGroupData => 'DATA';
+  String get serverControlGroupData => 'data';
 
   @override
   String get serverControlPublicKeyLabel => 'SSH PUBLIC KEY ON FILE';

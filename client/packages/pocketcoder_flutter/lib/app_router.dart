@@ -77,7 +77,7 @@ class AppRouter {
       if (loc == '/settings') return AppRoutes.configure;
       if (loc == '/settings/ai') return AppRoutes.configureAi;
       if (loc == '/mcp') return AppRoutes.configureMcp;
-      if (loc == '/system-checks') return AppRoutes.configureSystemChecks;
+      if (loc == '/system-checks') return AppRoutes.statusSystemChecks;
       if (loc == '/paywall') return AppRoutes.configurePaywall;
       return null;
     },
@@ -254,8 +254,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.configureSystemChecks,
-        name: RouteNames.configureSystemChecks,
+        path: AppRoutes.statusSystemChecks,
+        name: RouteNames.statusSystemChecks,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -288,8 +288,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.configureMemory,
-        name: RouteNames.configureMemory,
+        path: AppRoutes.statusMemory,
+        name: RouteNames.statusMemory,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -300,8 +300,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.configurePocketbase,
-        name: RouteNames.configurePocketbase,
+        path: AppRoutes.statusPocketbase,
+        name: RouteNames.statusPocketbase,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -321,8 +321,8 @@ class AppRouter {
         ),
       ),
       GoRoute(
-        path: AppRoutes.configureErrors,
-        name: RouteNames.configureErrors,
+        path: AppRoutes.statusErrors,
+        name: RouteNames.statusErrors,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
@@ -434,12 +434,12 @@ class AppRoutes {
   static const String configureSkills = '/configure/skills';
   static const String configureScheduler = '/configure/scheduler';
   static const String configureMcp = '/configure/mcp';
-  static const String configureSystemChecks = '/configure/system-checks';
+  static const String statusSystemChecks = '/status/system-checks';
   static const String configurePaywall = '/configure/paywall';
-  static const String configureMemory = '/configure/memory';
-  static const String configurePocketbase = '/configure/pocketbase';
+  static const String statusMemory = '/status/memory';
+  static const String statusPocketbase = '/status/pocketbase';
   static const String configureLlm = '/configure/llm';
-  static const String configureErrors = '/configure/errors';
+  static const String statusErrors = '/status/errors';
   static const String configureHarnessAuth = '/configure/harness-auth';
   // Legacy aliases (redirected)
   static const String settings = '/settings';
@@ -485,18 +485,18 @@ class RouteNames {
   static const String configureSkills = 'configureSkills';
   static const String configureScheduler = 'configureScheduler';
   static const String configureMcp = 'configureMcp';
-  static const String configureSystemChecks = 'configureSystemChecks';
+  static const String statusSystemChecks = 'statusSystemChecks';
   static const String configurePaywall = 'configurePaywall';
-  static const String configureMemory = 'configureMemory';
-  static const String configurePocketbase = 'configurePocketbase';
+  static const String statusMemory = 'statusMemory';
+  static const String statusPocketbase = 'statusPocketbase';
   static const String configureLlm = 'configureLlm';
-  static const String configureErrors = 'configureErrors';
+  static const String statusErrors = 'statusErrors';
   static const String configureHarnessAuth = 'configureHarnessAuth';
   // Legacy aliases
   static const String aiRegistry = 'configureAi';
   static const String toolPermissions = 'configureToolPermissions';
   static const String mcpManagement = 'configureMcp';
-  static const String systemChecks = 'configureSystemChecks';
+  static const String systemChecks = 'statusSystemChecks';
   static const String paywall = 'configurePaywall';
   // Deploy picker
   static const String deploy = 'deploy';

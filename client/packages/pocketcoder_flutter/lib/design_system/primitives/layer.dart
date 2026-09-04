@@ -17,4 +17,6 @@ enum Layer {
 
   /// Backups and restore. Irreversible.
   data;
+
+  String get label => name;
 }

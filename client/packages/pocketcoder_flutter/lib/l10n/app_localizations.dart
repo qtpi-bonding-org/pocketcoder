@@ -6063,19 +6063,19 @@ abstract class AppLocalizations {
   /// No description provided for @serverControlGroupPocketCoder.
   ///
   /// In en, this message translates to:
-  /// **'POCKETCODER'**
+  /// **'app'**
   String get serverControlGroupPocketCoder;
 
   /// No description provided for @serverControlGroupNixOs.
   ///
   /// In en, this message translates to:
-  /// **'NIXOS'**
+  /// **'system'**
   String get serverControlGroupNixOs;
 
   /// No description provided for @serverControlGroupData.
   ///
   /// In en, this message translates to:
-  /// **'DATA'**
+  /// **'data'**
   String get serverControlGroupData;
 
   /// No description provided for @serverControlPublicKeyLabel.

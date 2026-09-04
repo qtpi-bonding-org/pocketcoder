@@ -52,11 +52,11 @@ class SettingsView extends StatelessWidget {
       (
         context.l10n.settingsSystemSection,
         [
-          (context.l10n.settingsMenuSystemChecks, 'configureSystemChecks'),
-          (context.l10n.settingsMenuPocketMemory, 'configureMemory'),
-          (context.l10n.settingsMenuPocketbase, 'configurePocketbase'),
+          (context.l10n.settingsMenuSystemChecks, 'statusSystemChecks'),
+          (context.l10n.settingsMenuPocketMemory, 'statusMemory'),
+          (context.l10n.settingsMenuPocketbase, 'statusPocketbase'),
           (context.l10n.settingsMenuScheduler, 'configureScheduler'),
-          (context.l10n.errorsTitle, 'configureErrors'),
+          (context.l10n.errorsTitle, 'statusErrors'),
         ]
       ),
       (
