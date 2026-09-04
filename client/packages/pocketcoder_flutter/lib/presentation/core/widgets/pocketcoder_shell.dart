@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
@@ -16,9 +17,6 @@ void _navHaptic() {
     HapticFeedback.selectionClick();
   }
 }
-
-/// The three navigation pillars of PocketCoder.
-enum NavPillar { chats, monitor, configure, manage }
 
 /// Reusable layout shell that wraps every screen.
 ///
