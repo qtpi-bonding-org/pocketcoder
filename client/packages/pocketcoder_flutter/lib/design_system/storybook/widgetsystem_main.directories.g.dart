@@ -399,14 +399,19 @@ final directories = <_widgetbook.WidgetbookNode>[
       _widgetbook.WidgetbookFolder(
         name: 'system',
         children: [
-          _widgetbook.WidgetbookComponent(
-            name: 'SystemChecksView',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'empty checks',
-                builder:
-                    _pocketcoder_flutter_design_system_storybook_notification_and_system_stories
-                        .systemChecksEmpty,
+          _widgetbook.WidgetbookFolder(
+            name: 'widgets',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'SystemChecksView',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'empty checks',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_notification_and_system_stories
+                            .systemChecksEmpty,
+                  )
+                ],
               )
             ],
           )
@@ -415,21 +420,26 @@ final directories = <_widgetbook.WidgetbookNode>[
       _widgetbook.WidgetbookFolder(
         name: 'tool_permissions',
         children: [
-          _widgetbook.WidgetbookComponent(
-            name: 'ToolPermissionsView',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'no rules',
-                builder:
-                    _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
-                        .toolPermissionsViewEmpty,
-              ),
-              _widgetbook.WidgetbookUseCase(
-                name: 'populated rules',
-                builder:
-                    _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
-                        .toolPermissionsViewPopulated,
-              ),
+          _widgetbook.WidgetbookFolder(
+            name: 'widgets',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'ToolPermissionsView',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'no rules',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
+                            .toolPermissionsViewEmpty,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'populated rules',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
+                            .toolPermissionsViewPopulated,
+                  ),
+                ],
+              )
             ],
           )
         ],
