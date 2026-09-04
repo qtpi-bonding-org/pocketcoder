@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'ui_scaler.dart';
 
 /// Design tokens for all scalable dimensions.
@@ -11,7 +12,45 @@ class AppSizes {
 
   static List<double> get textSizes => [fontBody];
 
-  static double get letterSpacingWide => 2.0;
+  /// Measured character advance width of the monospace body font.
+  /// Cached after first access to avoid repeated TextPainter measurements.
+  static late final double ch = _measureCh();
+
+  /// Declared line height factor for vertical grid alignment.
+  static const double lineHeightFactor = 1.3;
+
+  /// Derived line height from body font size and line height factor.
+  static double get line => fontBody * lineHeightFactor;
+
+  /// Measure the advance width of a single character 'M' in the body style.
+  /// Noto Sans Mono is the body font; measured directly to avoid circular imports.
+  /// Uses a base font size of 1.0 to avoid issues with font loading in tests.
+  static double _measureCh() {
+    const fontFamily = 'Noto Sans Mono';
+    const baseFontSize = 1.0;
+    final painter = TextPainter(
+      text: const TextSpan(
+        text: 'M',
+        style: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    double charWidth = painter.width;
+
+    // If font isn't loaded, TextPainter returns width equal to font size (1.0).
+    // Use 0.5 as the advance ratio (design requirement: 36 columns at 320pt minimum).
+    if (charWidth >= baseFontSize * 0.8) {
+      charWidth = baseFontSize * 0.5;
+    }
+
+    // Scale to actual font size
+    return charWidth * fontBody;
+  }
 
   static double get iconTiny => UiScaler.instance.sp(8.0);
   static double get iconSmall => UiScaler.instance.sp(16.0);
@@ -28,8 +67,8 @@ class AppSizes {
   static double get inputHeight => space * 7;
   static double get appBarHeight => space * 7;
   static double get bottomBarHeight => space * 10;
-  static double get contentMaxWidth => 500;
-  static double get pickerHeight => 300;
+  static double get contentMaxWidth => ch * 44;
+  static double get pickerHeight => line * 12;
   static double get progressIndicatorSize => space * 1.5;
   static double get progressBarHeight => UiScaler.instance.px(4.0);
   static double get provisioningSnippetPreviewMaxHeight => 176;

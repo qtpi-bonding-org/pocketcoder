@@ -39,7 +39,6 @@ class TintedAlertCard extends StatelessWidget {
                 size: TerminalTextSize.tiny,
                 weight: TerminalTextWeight.heavy,
                 color: tint,
-                letterSpacing: AppSizes.letterSpacingWide,
               ),
               HSpace.x1,
               Expanded(
@@ -48,7 +47,6 @@ class TintedAlertCard extends StatelessWidget {
                   size: TerminalTextSize.tiny,
                   weight: TerminalTextWeight.heavy,
                   color: tint,
-                  letterSpacing: AppSizes.letterSpacingWide,
                 ),
               ),
             ],

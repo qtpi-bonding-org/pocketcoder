@@ -20,78 +20,93 @@ class AppFonts {
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
         displayMedium: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
         displaySmall: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
         headlineLarge: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
         headlineMedium: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
         headlineSmall: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
         titleLarge: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
         titleMedium: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
         titleSmall: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: 1.3,
         ),
 
         bodyLarge: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: 1.3,
         ),
         bodyMedium: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: 1.3,
         ),
         bodySmall: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: 1.3,
         ),
 
         labelLarge: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: 1.3,
         ),
         labelMedium: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: 1.3,
         ),
         labelSmall: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: 1.3,
         ),
       );
 

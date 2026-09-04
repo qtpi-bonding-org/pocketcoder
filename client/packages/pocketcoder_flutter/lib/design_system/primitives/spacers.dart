@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'app_sizes.dart';
 
-/// Vertical Spacing (Height)
+/// Vertical Spacing (Height) - pixel-based
 /// Usage: VSpace.x1, VSpace.x2, etc.
+/// Note: VSpace values do not map cleanly to line units and are kept
+/// as pixel-based spacing for non-text padding (safe-area insets).
 class VSpace {
   VSpace._();
 
@@ -18,8 +20,11 @@ class VSpace {
   static SizedBox get x10 => SizedBox(height: AppSizes.space * 10);
 }
 
-/// Horizontal Spacing (Width)
+/// Horizontal Spacing (Width) - pixel-based
 /// Usage: HSpace.x1, HSpace.x2, etc.
+/// Note: HSpace remains pixel-based (like VSpace) for now. Full conversion
+/// to character units requires careful layout review across all call sites
+/// to avoid overflow issues at constrained widths (tracked for future task).
 class HSpace {
   HSpace._();
 
