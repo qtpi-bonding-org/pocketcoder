@@ -55,21 +55,30 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
             label: context.l10n.serverControlAdminIdentity,
             value: value,
             trailing: CopyButton(value: value)),
-      if (details.adminPassword case final value?)
+      if (details.adminPassword case final value?) ...[
+        // The show/hide toggle plus copy button together are too wide to
+        // sit as DetailRow's trailing slot at narrow device widths (that
+        // slot has no way to measure or shrink an arbitrary widget) -- own
+        // row below the value instead of squeezed alongside it.
         DetailRow(
-            label: context.l10n.serverControlAdminPassword,
-            value: _showPassword ? value : '•' * value.length,
-            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              BiosActionButton(
-                  action: BiosActionStripItem(
-                      label: _showPassword
-                          ? context.l10n.serverControlHide
-                          : context.l10n.serverControlShow,
-                      kind: ActionKind.primary,
-                      onTap: () => _toggleShowPassword(context))),
-              HSpace.x1,
-              CopyButton(value: value),
-            ])),
+          label: context.l10n.serverControlAdminPassword,
+          value: _showPassword ? value : '•' * value.length,
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            BiosActionButton(
+                action: BiosActionStripItem(
+                    label: _showPassword
+                        ? context.l10n.serverControlHide
+                        : context.l10n.serverControlShow,
+                    kind: ActionKind.primary,
+                    onTap: () => _toggleShowPassword(context))),
+            HSpace.x1,
+            CopyButton(value: value),
+          ]),
+        ),
+      ],
     ]);
   }
 }

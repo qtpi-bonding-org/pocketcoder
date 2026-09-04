@@ -104,7 +104,7 @@ void main() {
     )));
     await tester.pump();
 
-    expect(find.text('WELCOME'), findsOneWidget);
+    expect(find.text('welcome'), findsOneWidget);
     final welcome = tester.widget<PocoBubble>(find.byType(PocoBubble));
     expect(welcome.message, contains('a server—a computer that stays online'));
     expect(welcome.message, contains('accessible and ready'));
@@ -120,11 +120,11 @@ void main() {
     )));
     await tester.pump();
 
-    expect(find.text('SELF-HOST SETUP'), findsOneWidget);
+    expect(find.text('self-host setup'), findsOneWidget);
     expect(find.text('A LINUX SERVER OR VPS YOU CONTROL'), findsOneWidget);
     expect(find.text('DOCKER COMPOSE V2'), findsOneWidget);
-    expect(find.text('GUIDE'), findsOneWidget);
-    expect(find.text('CONNECT'), findsOneWidget);
+    expect(find.text('<GUIDE>'), findsOneWidget);
+    expect(find.text('<next>'), findsOneWidget);
   });
 
   testWidgets('login adapter renders the challenge and form without a server',
@@ -134,7 +134,7 @@ void main() {
 
     expect(find.byType(PocoBubble), findsOneWidget);
     expect(find.byType(TextField), findsNWidgets(3));
-    expect(find.text('CONNECT'), findsOneWidget);
+    expect(find.text('<next>'), findsOneWidget);
   });
 
   testWidgets('prefilled login page shows server credentials', (tester) async {
@@ -187,7 +187,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
     await tester.pump();
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('<next>'));
     await tester.pumpAndSettle();
 
     expect(captured, isNotNull);
@@ -232,7 +232,7 @@ void main() {
 
     expect(find.text('Must be at least 8 characters'), findsOneWidget);
 
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('<next>'));
     await tester.pumpAndSettle();
 
     expect(captured, isNull,
@@ -278,7 +278,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
     await tester.pump();
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('<next>'));
     await tester.pumpAndSettle();
 
     expect(captured?.email, 'admin@example.com');
@@ -319,7 +319,7 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.text('BACK'));
+    await tester.tap(find.text('<back>'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
@@ -27,12 +28,19 @@ class AgentConfigView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.agentConfigTitle.toLowerCase(),
-        activePillar: NavPillar.configure,
+        footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
-        body: DecisionFrame(
-            title: context.l10n.agentConfigRegistry.toLowerCase(),
-            child: _buildBody(context, state)));
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionHeader(name: context.l10n.agentConfigTitle.toLowerCase()),
+            Expanded(
+              child: DecisionFrame(
+                  title: context.l10n.agentConfigRegistry.toLowerCase(),
+                  child: _buildBody(context, state)),
+            ),
+          ],
+        ));
   }
 
   Widget _buildBody(BuildContext context, AgentConfigState state) {

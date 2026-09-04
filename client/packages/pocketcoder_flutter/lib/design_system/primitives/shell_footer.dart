@@ -22,8 +22,16 @@ sealed class ShellFooter {
 
 /// Inside the app. You are somewhere.
 final class PillarFooter extends ShellFooter {
-  const PillarFooter(this.active);
+  const PillarFooter({
+    required this.active,
+    required this.onSelect,
+    this.available = NavPillar.values,
+    this.configureBadge = false,
+  });
   final NavPillar active;
+  final ValueChanged<NavPillar> onSelect;
+  final List<NavPillar> available;
+  final bool configureBadge;
   // Deliberately carries no step position. A destination is not a step.
 }
 

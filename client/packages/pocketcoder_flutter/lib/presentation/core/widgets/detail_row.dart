@@ -185,7 +185,11 @@ class _DetailRowState extends State<DetailRow> {
     if (widget.affordance != null && widget.affordance != RowAffordance.none) {
       needed += AppSizes.ch + _measure(widget.affordance!.glyph, valueStyle);
     }
-    if (widget.trailing != null) needed += AppSizes.ch * 2;
+    // `trailing` is an arbitrary widget we cannot measure via TextPainter.
+    // A `<copy>`-style bracket button is the common case and is wider than
+    // a couple of characters -- estimate generously so a real trailing
+    // button doesn't get judged as fitting when it won't.
+    if (widget.trailing != null) needed += AppSizes.ch * 8;
     return needed <= width;
   }
 
@@ -251,7 +255,7 @@ class _DetailRowState extends State<DetailRow> {
                     ])
               : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
-                    _label(),
+                    Flexible(child: _label()),
                     if (widget.hasBadge) ...[
                       SizedBox(width: AppSizes.ch),
                       _badge()

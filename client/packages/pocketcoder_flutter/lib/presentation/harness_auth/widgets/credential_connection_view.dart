@@ -116,16 +116,19 @@ class CredentialConnectionView extends StatelessWidget {
       ]);
 
   Widget _actions(BuildContext context) {
-    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-      TerminalButton(
-          label: context.l10n.credentialConnectionCancel,
-          kind: ActionKind.neutral,
-          onTap: onCancel),
-      TerminalButton(
-          label: context.l10n.credentialConnectionRetry,
-          kind: ActionKind.neutral,
-          onTap: onRetry),
-    ]);
+    return Wrap(
+        alignment: WrapAlignment.end,
+        spacing: AppSizes.space,
+        children: [
+          TerminalButton(
+              label: context.l10n.credentialConnectionCancel,
+              kind: ActionKind.neutral,
+              onTap: onCancel),
+          TerminalButton(
+              label: context.l10n.credentialConnectionRetry,
+              kind: ActionKind.neutral,
+              onTap: onRetry),
+        ]);
   }
 }
 

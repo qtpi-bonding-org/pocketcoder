@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart';
@@ -64,8 +65,7 @@ class PaywallView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: context.l10n.proTitle.toLowerCase(),
-      activePillar: NavPillar.configure,
+      footer: buildPillarFooter(context, NavPillar.config),
       showBack: true,
       body: Center(
         child: SingleChildScrollView(

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 
 class WelcomeView extends StatelessWidget {
@@ -19,14 +21,15 @@ class WelcomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: context.l10n.onboardingWelcomeTitle,
-        activePillar: NavPillar.configure,
-        showBack: true,
+        footer: WizardFooter(step: 1, totalSteps: 6, onNext: onGuidedSetup),
+        showBack: false,
         backFallbackRoute: AppRoutes.onboarding,
         body: OnboardingContentShell(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              SectionHeader(
+                  name: context.l10n.onboardingWelcomeTitle.toLowerCase()),
               TerminalConversationTurn(
                 speaker: TerminalConversationSpeaker.poco,
                 message: context.l10n.onboardingWelcomePoco,

@@ -4,6 +4,8 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
     as ag_ui_widgets;
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
@@ -14,7 +16,7 @@ import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart
 import 'package:pocketcoder_flutter/presentation/chat/widgets/reasoning_caption.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 class ChatView extends StatefulWidget {
@@ -243,25 +245,42 @@ class _ChatViewState extends State<ChatView> {
       onMessageAnimated: widget.onMessageAnimated,
     );
     return PocketCoderShell(
-      title: widget.title,
-      activePillar: NavPillar.chats,
+      footer: buildPillarFooter(context, NavPillar.chat),
       showBack: true,
-      actions: [
-        TerminalAction(
-            label: context.l10n.chatFilesAction, onTap: widget.onFiles),
-        if (widget.showMonitorAction)
-          TerminalAction(
-            label: context.l10n.chatMonitorAction,
-            isActive: widget.monitored,
-            onTap: widget.onToggleMonitored,
-          ),
-        if (widget.isRunning)
-          TerminalAction(
-              label: context.l10n.actionCancel, onTap: widget.onCancel),
-      ],
       padding: EdgeInsets.zero,
       body: Column(
         children: [
+          // The footer is navigation-only now (Task 17) -- these contextual,
+          // per-chat actions moved from chrome into the body's own header row.
+          Padding(
+            padding: EdgeInsets.symmetric(
+                horizontal: AppSizes.space * 2, vertical: AppSizes.space),
+            child: Wrap(
+              spacing: AppSizes.space,
+              runSpacing: AppSizes.space,
+              children: [
+                TerminalButton(
+                  label: context.l10n.chatFilesAction,
+                  kind: ActionKind.neutral,
+                  onTap: widget.onFiles,
+                ),
+                if (widget.showMonitorAction)
+                  TerminalButton(
+                    label: context.l10n.chatMonitorAction,
+                    kind: widget.monitored
+                        ? ActionKind.primary
+                        : ActionKind.neutral,
+                    onTap: widget.onToggleMonitored,
+                  ),
+                if (widget.isRunning)
+                  TerminalButton(
+                    label: context.l10n.actionCancel,
+                    kind: ActionKind.refusal,
+                    onTap: widget.onCancel,
+                  ),
+              ],
+            ),
+          ),
           PlanPanel(plan: widget.conversation.sessionState.plan),
           ModeSwitcher(modes: widget.modes, onSelectMode: widget.onSelectMode),
           ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),

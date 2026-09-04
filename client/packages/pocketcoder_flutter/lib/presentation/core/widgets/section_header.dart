@@ -33,7 +33,7 @@ class SectionHeader extends StatelessWidget {
           children: [
             TerminalText('●', role: state.role),
             HSpace.x1,
-            TerminalText(name, role: TextRole.value),
+            Expanded(child: TerminalText(name, role: TextRole.value)),
           ],
         ),
       );

@@ -53,9 +53,9 @@ void main() {
 
   testWidgets('ADD NEW opens the editor dialog', (tester) async {
     await pumpView(tester);
-    await tester.tap(find.text('ADD NEW'));
+    await tester.tap(find.text('<ADD NEW>'));
     await tester.pumpAndSettle();
-    expect(find.text('AGENT CONFIGURATION'), findsWidgets);
+    expect(find.text('agent configuration'), findsWidgets);
     expect(find.byType(TextField), findsOneWidget);
     expect(find.byType(DetailRow), findsWidgets);
   });
@@ -71,10 +71,10 @@ void main() {
   testWidgets('saving calls the supplied callback', (tester) async {
     PocoConfig? saved;
     await pumpView(tester, onSave: (value) async => saved = value);
-    await tester.tap(find.text('ADD NEW'));
+    await tester.tap(find.text('<ADD NEW>'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'My New Agent');
-    await tester.tap(find.text('SAVE').last);
+    await tester.tap(find.text('<SAVE>').last);
     await tester.pumpAndSettle();
     expect(saved?.name, 'My New Agent');
     expect(saved?.id, '');
@@ -86,12 +86,12 @@ void main() {
           prompt,
           Prompt(id: 'prompt-2', name: 'Second Prompt', body: 'b')
         ]));
-    await tester.tap(find.text('ADD NEW'));
+    await tester.tap(find.text('<ADD NEW>'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('SYSTEM PROMPT'));
     await tester.pumpAndSettle();
     expect(find.text('SELECT PROMPT'), findsOneWidget);
-    expect(find.text('SECOND PROMPT'), findsOneWidget);
+    expect(find.text('Second Prompt'), findsOneWidget);
   });
 
   testWidgets('mode picker lists live permission modes and selects one',
@@ -107,18 +107,18 @@ void main() {
         ),
       ]),
     );
-    await tester.tap(find.text('ADD NEW'));
+    await tester.tap(find.text('<ADD NEW>'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('MODE'));
     await tester.pumpAndSettle();
     expect(find.text('SELECT MODE'), findsOneWidget);
-    expect(find.text('BALANCED'), findsOneWidget);
-    expect(find.text('AUTONOMOUS'), findsOneWidget);
+    expect(find.text('Balanced'), findsOneWidget);
+    expect(find.text('Autonomous'), findsOneWidget);
   });
 
   testWidgets('is_default toggle works', (tester) async {
     await pumpView(tester);
-    await tester.tap(find.text('ADD NEW'));
+    await tester.tap(find.text('<ADD NEW>'));
     await tester.pumpAndSettle();
     final toggle = find.byType(TerminalCheckbox);
     await tester.ensureVisible(toggle);
@@ -136,12 +136,12 @@ void main() {
         onDelete: (id) async => deleted = id);
     await tester.tap(find.text('TEST CONFIG'));
     await tester.pumpAndSettle();
-    final deleteButton = find.text('DELETE').last;
+    final deleteButton = find.text('<DELETE>').last;
     await tester.ensureVisible(deleteButton);
     await tester.pumpAndSettle();
     await tester.tap(deleteButton);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DELETE').last);
+    await tester.tap(find.text('<DELETE>').last);
     await tester.pumpAndSettle();
     expect(deleted, 'config-1');
   });

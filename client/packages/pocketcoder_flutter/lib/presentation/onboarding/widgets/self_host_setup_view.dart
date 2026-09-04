@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -20,22 +22,13 @@ class SelfHostSetupView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-      title: context.l10n.onboardingSelfHostTitle.toLowerCase(),
-      activePillar: NavPillar.configure,
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
-      actions: [
-        TerminalAction(
-            label: context.l10n.onboardingSelfHostActionGuide,
-            onTap: onOpenGuide),
-        TerminalAction(
-            label: context.l10n.onboardingSelfHostActionConnect,
-            onTap: onConnect,
-            kind: ActionKind.primary),
-      ],
+      footer: WizardFooter(step: 5, totalSteps: 6, onNext: onConnect),
       body: OnboardingContentShell(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        SectionHeader(name: context.l10n.onboardingSelfHostTitle.toLowerCase()),
         TerminalConversationTurn(
             speaker: TerminalConversationSpeaker.poco,
             message: context.l10n.onboardingSelfHostPoco),
@@ -55,6 +48,11 @@ class SelfHostSetupView extends StatelessWidget {
                   _Requirement(
                       label: context.l10n.onboardingSelfHostRequirementAccess),
                 ])),
+        VSpace.x3,
+        TerminalButton(
+            label: context.l10n.onboardingSelfHostActionGuide,
+            kind: ActionKind.neutral,
+            onTap: onOpenGuide),
       ])));
 }
 

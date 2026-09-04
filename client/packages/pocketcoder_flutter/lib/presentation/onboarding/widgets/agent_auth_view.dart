@@ -1,11 +1,12 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/harness_choice_card.dart';
@@ -60,18 +61,13 @@ class AgentAuthView extends StatelessWidget {
     }).toList();
 
     return PocketCoderShell(
-        title: context.l10n.onboardingChooseHarnessTitle,
-        activePillar: NavPillar.configure,
         showBack: false,
-        showNavigation: false,
-        actions: [
-          TerminalAction(label: context.l10n.actionSkip, onTap: onSkip),
-          if (onContinue case final continueTap?)
-            TerminalAction(
-                label: context.l10n.actionContinue,
-                onTap: continueTap,
-                kind: ActionKind.primary),
-        ],
+        // onContinue (once at least one harness is connected) takes over
+        // as the forward action; onSkip stays reachable via its own body
+        // button below rather than disappearing from the footer's single
+        // onNext slot.
+        footer:
+            WizardFooter(step: 6, totalSteps: 6, onNext: onContinue ?? onSkip),
         body: _buildBody(context, supported));
   }
 
@@ -122,6 +118,16 @@ class AgentAuthView extends StatelessWidget {
                             onTap: harnessProvidersLoaded
                                 ? () => onSelected(harness)
                                 : null)),
+                  // onContinue occupies the footer's onNext slot once it's
+                  // available, so skip needs its own reachable affordance
+                  // here rather than vanishing.
+                  if (onContinue != null) ...[
+                    VSpace.x2,
+                    TerminalButton(
+                        label: context.l10n.actionSkip,
+                        kind: ActionKind.neutral,
+                        onTap: onSkip),
+                  ],
                 ]));
   }
 }

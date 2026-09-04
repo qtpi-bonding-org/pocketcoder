@@ -89,10 +89,11 @@ class ServerControlView extends StatelessWidget {
     final cubit = context.read<ServerControlCubit>();
     return BlocBuilder<ServerControlCubit, ServerControlState>(
         builder: (context, state) => PocketCoderShell(
-            title: context.l10n.serverControlTitle,
-            activePillar: NavPillar.control,
+            footer: buildPillarFooter(context, NavPillar.control),
             showBack: false,
             body: ListView(children: [
+              // TODO(task 19): ASCII banner art replaces this placeholder
+              TerminalText('control', role: TextRole.label),
               if (state.connectionDetails case final details?
                   when details.isAvailable) ...[
                 ConnectionDetails(details: details),

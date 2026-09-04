@@ -13,7 +13,6 @@ class IsDefaultToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
     return Row(children: [
       TerminalCheckbox(value: value, onChanged: onChanged),
       HSpace.x2,

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'file_viewer_body.dart';
 
@@ -27,8 +28,7 @@ class FileViewerView extends StatelessWidget {
       error: error,
     );
     return PocketCoderShell(
-      title: path,
-      activePillar: NavPillar.chats,
+      footer: buildPillarFooter(context, NavPillar.chat),
       showBack: true,
       body: body,
     );

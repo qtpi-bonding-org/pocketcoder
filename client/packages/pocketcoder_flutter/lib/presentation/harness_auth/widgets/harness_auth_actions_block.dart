@@ -95,14 +95,14 @@ class HarnessAuthActionsBlock extends StatelessWidget {
           ? [
               for (final edge in oauthEdges)
                 TerminalButton(
-                    label: context.l10n.harnessAuthAccountLogin,
+                    label: context.l10n.harnessAuthAccountLogin.toUpperCase(),
                     onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
                     isLoading: isBusy),
             ]
           : edges.isNotEmpty
               ? [
                   TerminalButton(
-                      label: context.l10n.providerScreenAddKey,
+                      label: context.l10n.providerScreenAddKey.toUpperCase(),
                       onTap: isBusy ? () {} : onUseApiKey,
                       isLoading: isBusy),
                 ]

@@ -2,8 +2,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
@@ -64,19 +63,10 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
   Widget build(BuildContext context) {
     final loading = widget.status == UiFlowStatus.loading;
     return PocketCoderShell(
-      title: context.l10n.onboardingServerLoginTitle,
-      activePillar: NavPillar.configure,
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
-      actions: [
-        TerminalAction(
-          label: loading
-              ? context.l10n.onboardingServerConnecting
-              : context.l10n.onboardingLogin,
-          onTap: loading ? () {} : _login,
-          kind: ActionKind.primary,
-        ),
-      ],
+      footer: WizardFooter(
+          step: 4, totalSteps: 6, onNext: loading ? () {} : _login),
       body: OnboardingContentShell(
         child: Column(
           children: [

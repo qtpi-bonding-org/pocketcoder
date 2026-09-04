@@ -21,8 +21,7 @@ class SystemChecksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.systemChecksTitle.toLowerCase(),
-        activePillar: NavPillar.config,
+        footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
         body: DecisionFrame(
             title: context.l10n.systemChecksDiagnostics.toLowerCase(),

@@ -67,10 +67,10 @@ void main() {
       onUseApiKey: () => tapped = true,
     );
 
-    expect(find.text('ACCOUNT LOGIN'), findsNothing);
-    expect(find.text('ADD KEY'), findsOneWidget);
+    expect(find.text('<ACCOUNT LOGIN>'), findsNothing);
+    expect(find.text('<ADD KEY>'), findsOneWidget);
 
-    await tester.tap(find.text('ADD KEY'));
+    await tester.tap(find.text('<ADD KEY>'));
     expect(tapped, isTrue);
   });
 
@@ -85,7 +85,7 @@ void main() {
     );
 
     expect(find.textContaining('ANTHROPIC'), findsOneWidget);
-    expect(find.text('ADD KEY'), findsOneWidget);
+    expect(find.text('<ADD KEY>'), findsOneWidget);
   });
 
   testWidgets(
@@ -103,7 +103,7 @@ void main() {
       ],
     );
 
-    expect(find.text('ACCOUNT LOGIN'), findsOneWidget);
-    expect(find.text('ADD KEY'), findsNothing);
+    expect(find.text('<ACCOUNT LOGIN>'), findsOneWidget);
+    expect(find.text('<ADD KEY>'), findsNothing);
   });
 }

@@ -33,7 +33,7 @@ void main() {
     final footer = tester.widget<TerminalFooter>(find.byType(TerminalFooter));
     expect(footer.actions.map((a) => a.label), isNot(contains('NEW')));
 
-    await tester.tap(find.text('NEW'));
+    await tester.tap(find.text('<NEW>'));
     await tester.pump();
     expect(tapped, isTrue);
   });

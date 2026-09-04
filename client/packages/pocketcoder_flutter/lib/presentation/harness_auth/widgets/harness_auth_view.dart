@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
@@ -8,6 +10,7 @@ import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
@@ -51,12 +54,16 @@ class HarnessAuthScreenView extends StatelessWidget {
   final void Function(Harnesse) onRefresh;
   final void Function(Harnesse, Uri) onOpenAuthorizationPage;
 
+  // This step auto-advances once a harness connects (see
+  // harness_auth_adapter.dart's onboarding listener) -- there is no
+  // separate manual "continue" action, so onNext is a no-op.
+  static void _noAdvance() {}
+
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-      title: onboarding
-          ? context.l10n.onboardingChooseHarnessTitle
-          : context.l10n.harnessAuthConnections,
-      activePillar: NavPillar.configure,
+      footer: onboarding
+          ? WizardFooter(step: 6, totalSteps: 6, onNext: _noAdvance)
+          : buildPillarFooter(context, NavPillar.config),
       showBack: true,
       body: HarnessAuthView(
           onboarding: onboarding,
@@ -177,6 +184,12 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
       ));
     }
     return ListView(padding: EdgeInsets.all(AppSizes.space), children: [
+      SectionHeader(
+        name: (widget.onboarding
+                ? context.l10n.onboardingChooseHarnessTitle
+                : context.l10n.harnessAuthConnections)
+            .toLowerCase(),
+      ),
       if (widget.error != null)
         Padding(
             padding: EdgeInsets.only(bottom: AppSizes.space),

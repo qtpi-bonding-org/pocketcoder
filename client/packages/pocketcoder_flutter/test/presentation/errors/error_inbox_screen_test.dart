@@ -161,7 +161,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('DELETE'));
+    await tester.tap(find.text('<DELETE>'));
     await tester.pumpAndSettle();
 
     verify(() => storage.deleteError('e1')).called(1);
@@ -198,7 +198,7 @@ void main() {
 
     await tester.tap(find.byType(DetailRow).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('REPORT ON GITHUB'));
+    await tester.tap(find.text('<REPORT ON GITHUB>'));
     await tester.pumpAndSettle();
 
     expect(clipboardText, contains('App version: 1.2.3+45'));

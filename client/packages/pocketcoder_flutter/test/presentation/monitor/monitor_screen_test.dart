@@ -51,7 +51,7 @@ void main() {
       onSelectContainer: (c) => selected = c,
     )));
 
-    await tester.tap(find.text('SQLPAGE'));
+    await tester.tap(find.text('sqlpage'));
     expect(selected, 'pocketcoder-sqlpage');
   });
 
@@ -88,7 +88,7 @@ void main() {
       onSelectContainer: (_) {},
     )));
 
-    expect(find.text('CUSTOM-SERVICE'), findsOneWidget);
+    expect(find.text('custom-service'), findsOneWidget);
   });
 
   testWidgets('no key metrics, token usage, or agent activity sections remain',

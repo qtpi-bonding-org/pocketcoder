@@ -4,12 +4,13 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
-import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/shell_footer_view.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 
 void _navHaptic() {
@@ -18,152 +19,85 @@ void _navHaptic() {
   }
 }
 
-/// Reusable layout shell that wraps every screen.
-///
-/// Screens never touch [TerminalScaffold], [TerminalFooter], or nav logic
-/// directly. Instead they declare their title, active pillar, and body content.
+PillarFooter buildPillarFooter(BuildContext context, NavPillar active,
+    {bool configureBadge = false}) {
+  return PillarFooter(
+    active: active,
+    onSelect: (pillar) {
+      if (pillar == active) return;
+      _navHaptic();
+      context.go(switch (pillar) {
+        NavPillar.chat => AppRoutes.chats,
+        NavPillar.config => AppRoutes.configure,
+        NavPillar.status => AppRoutes.monitor,
+        NavPillar.control => AppRoutes.serverControls,
+      });
+    },
+    available: [
+      NavPillar.chat,
+      NavPillar.config,
+      NavPillar.status,
+      if (GetIt.instance.isRegistered<IServerControlService>())
+        NavPillar.control,
+    ],
+    configureBadge: configureBadge,
+  );
+}
+
 class PocketCoderShell extends StatelessWidget {
-  final String? title;
-  final NavPillar activePillar;
+  // footer: is deliberately present on every route-owned shell.
+  final ShellFooter footer;
   final Widget body;
   final bool showBack;
   final String? backLabel;
-
-  /// Passed to AppNavigation.back's `fallback` -- must be set on a
-  /// pre-auth screen, whose default (authenticated home) would be wrong.
   final String? backFallbackRoute;
-
-  /// Null defers to [showBack]: a screen reached via Back is a sub-screen
-  /// of whichever pillar it lives under, so the pillar row would just be
-  /// redundant chrome next to Back -- and pushes the footer past the
-  /// 4-button budget. Pass this explicitly only for the rare screen that is both
-  /// a back-target and wants the pillar row anyway.
-  final bool? showNavigation;
-  final bool configureBadge;
   final EdgeInsets? padding;
-  final List<TerminalAction>? actions;
 
   const PocketCoderShell({
     super.key,
-    required this.title,
-    required this.activePillar,
+    required this.footer,
     required this.body,
     this.showBack = false,
     this.backLabel,
     this.backFallbackRoute,
-    this.showNavigation,
-    this.configureBadge = false,
     this.padding,
-    this.actions,
   });
-
-  bool get _effectiveShowNavigation => showNavigation ?? !showBack;
 
   @override
   Widget build(BuildContext context) {
-    // Back is always the leftmost button -- it is the one constant escape
-    // hatch, so it belongs in the one constant position.
+    final releaseScope = ReleaseStatusScope.maybeOf(context);
+    final releaseState = releaseScope?.state ?? const ReleaseStatusState();
+    // A screen reached via Back is a sub-screen of whichever pillar it
+    // lives under, so the pillar row would just be redundant chrome next
+    // to Back -- suppress it here rather than at each of the ~20 call
+    // sites that rely on this.
+    final currentFooter = footer;
+    final effectiveFooter = showBack && currentFooter is PillarFooter
+        ? PillarFooter(
+            active: currentFooter.active,
+            onSelect: currentFooter.onSelect,
+            available: const [],
+          )
+        : footer;
     final footerActions = <TerminalAction>[
       if (showBack)
         TerminalAction(
-          label: backLabel ?? context.l10n.actionBack,
+          label: backLabel ?? 'back',
           onTap: () => backFallbackRoute == null
               ? AppNavigation.back(context)
               : AppNavigation.back(context, fallback: backFallbackRoute!),
         ),
-      ...?actions,
-    ];
-
-    final releaseScope = ReleaseStatusScope.maybeOf(context);
-    return _buildScaffold(
-      context,
-      releaseScope?.state ?? const ReleaseStatusState(),
-      footerActions,
-      releaseScope?.onDismiss,
-    );
-  }
-
-  Widget _buildScaffold(
-    BuildContext context,
-    ReleaseStatusState releaseState,
-    List<TerminalAction> originalFooterActions,
-    VoidCallback? onDismiss,
-  ) {
-    final footerActions = <TerminalAction>[
-      for (final action in originalFooterActions) action,
-      if (_effectiveShowNavigation)
-        ..._buildPillarActions(context, releaseState.shouldShowNotice),
+      ...ShellFooterView.actionsFor(effectiveFooter,
+          configureBadge: releaseState.shouldShowNotice),
     ];
     return TerminalScaffold(
-      title: title,
       padding: padding,
-      actions: footerActions.isNotEmpty ? footerActions : null,
-      body: Column(
-        children: [
-          // This is the banner slot:
-          // persistent, app-level, dismissible notices only. It is
-          // deliberately NOT exposed as a per-screen constructor parameter
-          // -- ReleaseStatusBanner is the only thing that has ever earned
-          // this slot. A screen-local, transient notice (an error, a
-          // status change, a one-off announcement) belongs in VimToast
-          // (lib/presentation/core/widgets/vim_toast.dart), not here.
-          ReleaseStatusBanner(
-            state: releaseState,
-            onDismiss: onDismiss ?? () {},
-          ),
-          Expanded(child: body),
-        ],
-      ),
+      actions: footerActions,
+      body: Column(children: [
+        ReleaseStatusBanner(
+            state: releaseState, onDismiss: releaseScope?.onDismiss ?? () {}),
+        Expanded(child: body),
+      ]),
     );
-  }
-
-  List<TerminalAction> _buildPillarActions(
-    BuildContext context,
-    bool hasReleaseNotice,
-  ) {
-    return [
-      TerminalAction(
-        label: context.l10n.navChats,
-        isActive: activePillar == NavPillar.chats,
-        onTap: () {
-          if (activePillar != NavPillar.chats) {
-            _navHaptic();
-            context.go(AppRoutes.chats);
-          }
-        },
-      ),
-      TerminalAction(
-        label: context.l10n.navMonitor,
-        isActive: activePillar == NavPillar.monitor,
-        onTap: () {
-          if (activePillar != NavPillar.monitor) {
-            _navHaptic();
-            context.go(AppRoutes.monitor);
-          }
-        },
-      ),
-      TerminalAction(
-        label: context.l10n.navConfigure,
-        isActive: activePillar == NavPillar.configure,
-        hasBadge: configureBadge || hasReleaseNotice,
-        onTap: () {
-          if (activePillar != NavPillar.configure) {
-            _navHaptic();
-            context.go(AppRoutes.configure);
-          }
-        },
-      ),
-      if (GetIt.instance.isRegistered<IServerControlService>())
-        TerminalAction(
-          label: context.l10n.navManage,
-          isActive: activePillar == NavPillar.manage,
-          onTap: () {
-            if (activePillar != NavPillar.manage) {
-              _navHaptic();
-              context.go(AppRoutes.serverControls);
-            }
-          },
-        ),
-    ];
   }
 }

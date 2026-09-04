@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/application/files/file_browser_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -21,8 +22,7 @@ class FileBrowserView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.filesTitle,
-        activePillar: NavPillar.chats,
+        footer: buildPillarFooter(context, NavPillar.chat),
         showBack: true,
         body: Builder(builder: (context) {
           if (state.isLoading) {

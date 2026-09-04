@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
@@ -20,9 +21,7 @@ class OnboardingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: null,
-        activePillar: NavPillar.chats,
-        showNavigation: false,
+        footer: WizardFooter(step: 2, totalSteps: 6, onNext: onDeploy),
         body: OnboardingContentShell(
           paddingMultiplier: 4,
           mainAxisAlignment: MainAxisAlignment.center,

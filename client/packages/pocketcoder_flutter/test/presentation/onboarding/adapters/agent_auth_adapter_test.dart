@@ -258,7 +258,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('<next>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -296,7 +296,7 @@ void main() {
     await tester.pump();
     expect(launcher.opened, [_verificationUri]);
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<CANCEL>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -361,7 +361,7 @@ void main() {
 
     // Close the dialog so the timer is cancelled and no pending Timer trips
     // flutter_test's teardown invariant check.
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<CANCEL>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -416,7 +416,7 @@ void main() {
     await tester.pump();
     expect(pollCount, greaterThanOrEqualTo(1));
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<CANCEL>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -517,9 +517,9 @@ void main() {
     }
 
     expect(find.byType(SnackBar), findsOneWidget);
-    expect(find.text('CANCEL'), findsOneWidget);
+    expect(find.text('<CANCEL>'), findsOneWidget);
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<CANCEL>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -550,7 +550,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<CANCEL>'));
     for (var i = 0; i < 8; i++) {
       await tester.pump();
     }
@@ -613,7 +613,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(SnackBar), findsOneWidget);
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<CANCEL>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }

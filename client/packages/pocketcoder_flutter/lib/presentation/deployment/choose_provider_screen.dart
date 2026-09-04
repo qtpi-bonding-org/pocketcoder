@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
@@ -43,8 +44,7 @@ class ChooseProviderView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-      title: context.l10n.chooseProviderTitle,
-      activePillar: NavPillar.configure,
+      footer: buildPillarFooter(context, NavPillar.config),
       showBack: true,
       body: Center(
           child: ConstrainedBox(

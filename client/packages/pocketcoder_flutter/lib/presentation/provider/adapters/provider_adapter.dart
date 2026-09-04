@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
@@ -62,8 +63,7 @@ class ProviderView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.providerScreenTitle,
-        activePillar: NavPillar.configure,
+        footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
         body: _buildBody(context, state));
   }

@@ -56,13 +56,13 @@ void main() {
 
     // Collapsed by default: the harness section header is visible, but its
     // model tile is not built yet.
-    expect(find.text('CLAUDE'), findsOneWidget);
-    expect(find.text('SONNET'), findsNothing);
+    expect(find.text('Claude'), findsOneWidget);
+    expect(find.text('Sonnet'), findsNothing);
 
-    await tester.tap(find.text('CLAUDE'));
+    await tester.tap(find.text('Claude'));
     await tester.pumpAndSettle();
 
-    expect(find.text('SONNET'), findsOneWidget);
+    expect(find.text('Sonnet'), findsOneWidget);
   });
 
   testWidgets(
@@ -96,17 +96,17 @@ void main() {
       onSave: (_) async {},
     )));
 
-    await tester.tap(find.text('CLAUDE'));
+    await tester.tap(find.text('Claude'));
     await tester.pumpAndSettle();
 
-    expect(find.text('MODEL-0'), findsNothing);
-    expect(find.text('MODEL-50'), findsNothing);
-    expect(find.text('BROWSE ALL 51 MODELS'), findsOneWidget);
+    expect(find.text('model-0'), findsNothing);
+    expect(find.text('model-50'), findsNothing);
+    expect(find.text('<BROWSE ALL 51 MODELS>'), findsOneWidget);
 
-    await tester.tap(find.text('BROWSE ALL 51 MODELS'));
+    await tester.tap(find.text('<BROWSE ALL 51 MODELS>'));
     await tester.pumpAndSettle();
 
-    expect(find.text('MODEL-0'), findsOneWidget);
+    expect(find.text('model-0'), findsOneWidget);
   });
 
   testWidgets(
@@ -141,7 +141,7 @@ void main() {
       onSave: (_) async {},
     )));
 
-    expect(find.text('TOTALLY DIFFERENT DISPLAY NAME'), findsOneWidget);
+    expect(find.text('Totally Different Display Name'), findsOneWidget);
     expect(find.text('OPENAI-COMPAT-XYZ'), findsNothing);
   });
 }

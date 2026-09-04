@@ -21,7 +21,7 @@ void main() {
   test('a pillar footer has no concept of a step', () {
     // A destination is not a step. There must be no way to put a (3/7)
     // counter inside the app.
-    const footer = PillarFooter(NavPillar.chat);
+    final footer = PillarFooter(active: NavPillar.chat, onSelect: (_) {});
     expect(footer.toString(), isNot(contains('step')));
   });
 }

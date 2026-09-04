@@ -52,7 +52,7 @@ void main() {
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(find.text(l10n.proTrialNoPaymentInfo), findsOneWidget);
     expect(find.text(l10n.proTrialLapseExplainer), findsOneWidget);
-    expect(find.text(l10n.proStartTrial(7)), findsOneWidget);
+    expect(find.text('<${l10n.proStartTrial(7)}>'), findsOneWidget);
     expect(find.text(l10n.proRestore), findsOneWidget);
     // Apple requires the auto-renewal disclosure visible for a trial offer
     // too, not just a plain subscription -- the trial-specific wording,
@@ -94,8 +94,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('START 7-DAY FREE TRIAL'));
-    await tester.tap(find.text('START 7-DAY FREE TRIAL'));
+    await tester.ensureVisible(find.text('<START 7-DAY FREE TRIAL>'));
+    await tester.tap(find.text('<START 7-DAY FREE TRIAL>'));
     await tester.ensureVisible(find.text('RESTORE PURCHASES'));
     await tester.tap(find.text('RESTORE PURCHASES'));
 
@@ -112,8 +112,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('MANAGE SUBSCRIPTION'), findsOneWidget);
-    await tester.tap(find.text('MANAGE SUBSCRIPTION'));
+    expect(find.text('<MANAGE SUBSCRIPTION>'), findsOneWidget);
+    await tester.tap(find.text('<MANAGE SUBSCRIPTION>'));
 
     expect(manageCalls, 1);
   });
@@ -125,10 +125,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TerminalFooter), findsOneWidget);
-    expect(find.text('BACK'), findsOneWidget);
-    expect(find.text('CHATS'), findsNothing);
-    expect(find.text('MONITOR'), findsNothing);
-    expect(find.text('CONFIGURE'), findsNothing);
-    expect(find.text('MANAGE'), findsNothing);
+    expect(find.text('<back>'), findsOneWidget);
+    expect(find.text('<chat>'), findsNothing);
+    expect(find.text('<status>'), findsNothing);
+    expect(find.text('<config>'), findsNothing);
+    expect(find.text('<control>'), findsNothing);
   });
 }

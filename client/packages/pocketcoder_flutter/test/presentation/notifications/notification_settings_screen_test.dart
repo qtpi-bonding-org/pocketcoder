@@ -185,9 +185,10 @@ void main() {
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(find.text(l10n.proSelfHostedPushTitle), findsOneWidget);
 
-    await tester.ensureVisible(find.text(l10n.proConfigureSelfHostedPush));
+    await tester
+        .ensureVisible(find.text('<${l10n.proConfigureSelfHostedPush}>'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.proConfigureSelfHostedPush));
+    await tester.tap(find.text('<${l10n.proConfigureSelfHostedPush}>'));
     await tester.pumpAndSettle();
 
     expect(pushService.configureCalls, 1);

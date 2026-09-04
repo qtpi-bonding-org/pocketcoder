@@ -17,7 +17,6 @@ const _deferredExemptions = {
   'lib/presentation/core/widgets/bios_action_strip.dart', // Task 14: Dialog actions and action strips to angle brackets
   'lib/presentation/core/widgets/terminal_status_glyph.dart', // Task 10: Markers and loader split
   'lib/presentation/core/widgets/terminal_loading_indicator.dart', // Task 10: Markers and loader split
-  'lib/presentation/core/widgets/terminal_header.dart', // Task 17: Shell chrome and the two footers
 };
 
 void main() {

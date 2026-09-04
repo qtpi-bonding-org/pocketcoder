@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
@@ -39,8 +40,7 @@ class SkillsView extends StatelessWidget {
     final project = data.skills.where((skill) => !_isGlobal(skill)).toList();
 
     return PocketCoderShell(
-        title: context.l10n.skillsTitle.toLowerCase(),
-        activePillar: NavPillar.configure,
+        footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
         body: DecisionFrame(
             title: context.l10n.skillsRegistryTitle.toLowerCase(),

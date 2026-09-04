@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
@@ -30,8 +31,7 @@ class _PocketbaseInspectorScreenState extends State<PocketbaseInspectorScreen> {
   Widget build(BuildContext context) =>
       BlocBuilder<PocketbaseInspectorCubit, PocketbaseInspectorState>(
           builder: (context, state) => PocketCoderShell(
-              title: context.l10n.pocketbaseInspectorTitle,
-              activePillar: NavPillar.configure,
+              footer: buildPillarFooter(context, NavPillar.config),
               showBack: true,
               body: switch (state.status) {
                 UiFlowStatus.loading ||

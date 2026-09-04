@@ -227,7 +227,7 @@ void main() {
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
 
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('<next>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -297,7 +297,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'sk-test-key');
-    await tester.tap(find.text('SAVE'));
+    await tester.tap(find.text('<SAVE>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -314,7 +314,7 @@ void main() {
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
 
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('<next>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }

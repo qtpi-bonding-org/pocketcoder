@@ -10,6 +10,7 @@ class TerminalAction {
   final bool hasBadge;
   final bool isActive;
   final ActionKind kind;
+  final bool isLabel;
 
   TerminalAction({
     required this.label,
@@ -17,6 +18,7 @@ class TerminalAction {
     this.hasBadge = false,
     this.isActive = false,
     this.kind = ActionKind.neutral,
+    this.isLabel = false,
   });
 
   BiosActionStripItem get _asStripItem => BiosActionStripItem(
@@ -57,6 +59,12 @@ class TerminalFooter extends StatelessWidget {
               children: actions.map((action) {
                 final stripItem = action._asStripItem;
                 final showDivider = stripItem.kind != ActionKind.primary;
+                if (action.isLabel)
+                  return Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: AppSizes.space * 2),
+                    child: Center(child: Text(action.label)),
+                  );
                 return Container(
                   decoration: BoxDecoration(
                     border: showDivider
