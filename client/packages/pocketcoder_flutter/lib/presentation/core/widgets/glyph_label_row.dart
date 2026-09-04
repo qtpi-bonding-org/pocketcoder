@@ -8,14 +8,12 @@ class GlyphLabelRow extends StatelessWidget {
     super.key,
     required this.glyph,
     required this.child,
-    this.color,
     this.spacing,
     this.crossAxisAlignment = CrossAxisAlignment.center,
   });
 
   final String glyph;
   final Widget child;
-  final Color? color;
   final SizedBox? spacing;
   final CrossAxisAlignment crossAxisAlignment;
 

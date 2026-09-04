@@ -117,6 +117,7 @@ class _SearchablePickerDialogState<T>
       title: widget.title,
       content: SizedBox(
         width: double.maxFinite,
+        height: 360,
         child: widget.items.isEmpty
             ? Center(
                 child: TerminalText(widget.emptyLabel ?? '', role: TextRole.body))

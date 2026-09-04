@@ -19,15 +19,14 @@ void main() {
     expect(find.text('some requirement'), findsOneWidget);
   });
 
-  testWidgets('applies the given glyph color', (tester) async {
+  testWidgets('glyph renders in the label role', (tester) async {
     await tester.pumpWidget(_app(GlyphLabelRow(
       glyph: r'$',
-      color: Colors.red,
       child: const TerminalText('harness', role: TextRole.body),
     )));
 
     final glyphText = tester.widget<Text>(find.text(r'$'));
-    expect(glyphText.style?.color, Colors.red);
+    expect(glyphText.style?.color, TextRole.label.color);
   });
 
   testWidgets('defaults to HSpace.x1 when no spacing is given',

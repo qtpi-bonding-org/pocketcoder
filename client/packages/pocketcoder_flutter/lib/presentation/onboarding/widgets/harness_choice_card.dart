@@ -19,7 +19,6 @@ class HarnessChoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
     return Opacity(
       key: ValueKey('harness-card-opacity-${harness.cliId}'),
       opacity: onTap == null ? 0.4 : 1.0,

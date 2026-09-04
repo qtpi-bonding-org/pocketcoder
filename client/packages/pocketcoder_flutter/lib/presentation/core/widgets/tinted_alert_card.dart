@@ -34,13 +34,13 @@ class TintedAlertCard extends StatelessWidget {
             children: [
               TerminalText(
                 eyebrowLeft,
-                role: TextRole.value,
+                role: TextRole.body,
               ),
               HSpace.x1,
               Expanded(
                 child: TerminalText(
                   eyebrowRight,
-                  role: TextRole.value,
+                  role: TextRole.body,
                 )),
             ]),
           VSpace.x2,

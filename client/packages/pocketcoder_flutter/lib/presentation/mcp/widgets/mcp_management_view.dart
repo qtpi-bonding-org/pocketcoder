@@ -133,7 +133,7 @@ class McpManagementView extends StatelessWidget {
                   onTap: () => _configDialog(context, server)),
                 BiosActionStripItem(
                   label: context.l10n.mcpDeny,
-                  role: TextRole.warn,
+                  color: context.terminalColors.warning,
                   onTap: () => onDeny(server.id)),
               ])
           : server.status == McpServerStatus.approved
@@ -144,7 +144,7 @@ class McpManagementView extends StatelessWidget {
                   onTap: () => _configDialog(context, server)),
                 BiosActionStripItem(
                   label: context.l10n.mcpRevoke,
-                  role: TextRole.fail,
+                  color: context.terminalColors.danger,
                   onTap: () => onDeny(server.id)),
               ])
           : null);
