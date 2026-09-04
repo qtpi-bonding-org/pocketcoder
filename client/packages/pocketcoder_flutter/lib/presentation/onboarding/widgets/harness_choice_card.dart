@@ -40,7 +40,7 @@ class HarnessChoiceCard extends StatelessWidget {
                         Text(
                           harness.name,
                           style: TextStyle(
-                            color: colors.onSurface,
+                            ,
                             fontFamily: AppFonts.family,
                             fontWeight: AppFonts.heavy)),
                         VSpace.x1,
@@ -55,7 +55,7 @@ class HarnessChoiceCard extends StatelessWidget {
                                   _ => context.l10n
                                       .onboardingHarnessAccountLogin(
                                           harness.name)},
-                          color: connected ? colors.primary : null),
+                          ),
                       ]))),
                 TerminalText(
                   connected ? '[x]' : '[>]'),

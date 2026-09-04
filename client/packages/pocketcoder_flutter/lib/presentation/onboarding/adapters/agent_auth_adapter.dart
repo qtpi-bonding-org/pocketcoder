@@ -284,7 +284,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                           : TerminalStatus.running),
                 TerminalText(
                   context.l10n.externalAuthConnecting(harness.name),
-                  alpha: status?.isConnecting == true ? 1 : .6),
+                  ),
                 if (errorMessage case final message?) TerminalText(message, role: TextRole.body)
                 if (step is ApiKeyConnectionStep && challenge != null)
                   if (challenge.legacyText case final legacyText?
