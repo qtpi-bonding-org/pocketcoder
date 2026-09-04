@@ -19,7 +19,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 
 class MockNotificationRuleCubit extends Mock implements NotificationRuleCubit {}
@@ -112,9 +112,8 @@ void main() {
     expect(find.text('TASK COMPLETE'), findsOneWidget);
     expect(find.text('TASK ERRORS'), findsOneWidget);
 
-    final rows = tester.widgetList<BiosRow>(find.byType(BiosRow)).toList();
-    expect(rows, hasLength(4));
-    expect(rows.every((row) => row.toggleValue), isTrue);
+    expect(find.byType(DetailRow), findsNWidgets(4));
+    expect(find.text('on'), findsNWidgets(4));
     expect(find.byType(Switch), findsNothing);
   });
 
@@ -133,12 +132,19 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    final rows = tester.widgetList<BiosRow>(find.byType(BiosRow)).toList();
-    expect(rows, hasLength(4));
-    expect(rows[0].toggleValue, isFalse); // chat_reply
-    expect(rows[1].toggleValue, isTrue); // schedule
-    expect(rows[2].toggleValue, isTrue); // task_complete
-    expect(rows[3].toggleValue, isFalse); // task_error
+    bool isOn(String label) {
+      final row = find.ancestor(
+          of: find.text(label), matching: find.byType(DetailRow));
+      return find
+          .descendant(of: row, matching: find.text('on'))
+          .evaluate()
+          .isNotEmpty;
+    }
+
+    expect(isOn('CHAT REPLIES'), isFalse);
+    expect(isOn('SCHEDULED TASKS'), isTrue);
+    expect(isOn('TASK COMPLETE'), isTrue);
+    expect(isOn('TASK ERRORS'), isFalse);
   });
 
   testWidgets('tapping a toggle calls cubit.setTypeEnabled with the right args',
@@ -150,7 +156,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Tap the first toggle (chat_reply) — flips it off.
-    await tester.tap(find.text('[X]').first);
+    await tester.tap(find.text('on').first);
     await tester.pumpAndSettle();
 
     verify(() => cubit.setTypeEnabled('chat_reply', false)).called(1);

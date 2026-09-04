@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_de
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/copy_button.dart';
-import 'package:pocketcoder_flutter/presentation/server_control/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class ConnectionDetails extends StatefulWidget {
@@ -40,16 +40,25 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
           role: TextRole.body),
       VSpace.x1,
       if (details.ipAddress case final value?)
-        DetailRow(label: context.l10n.serverControlIpAddress, value: value),
+        DetailRow(
+            label: context.l10n.serverControlIpAddress,
+            value: value,
+            trailing: CopyButton(value: value)),
       if (details.httpsEndpoint case final value?)
-        DetailRow(label: context.l10n.serverControlHttpsEndpoint, value: value),
+        DetailRow(
+            label: context.l10n.serverControlHttpsEndpoint,
+            value: value,
+            trailing: CopyButton(value: value)),
       if (details.adminIdentity case final value?)
-        DetailRow(label: context.l10n.serverControlAdminIdentity, value: value),
+        DetailRow(
+            label: context.l10n.serverControlAdminIdentity,
+            value: value,
+            trailing: CopyButton(value: value)),
       if (details.adminPassword case final value?)
         DetailRow(
             label: context.l10n.serverControlAdminPassword,
             value: _showPassword ? value : '•' * value.length,
-            action: Row(mainAxisSize: MainAxisSize.min, children: [
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               BiosActionButton(
                   action: BiosActionStripItem(
                       label: _showPassword

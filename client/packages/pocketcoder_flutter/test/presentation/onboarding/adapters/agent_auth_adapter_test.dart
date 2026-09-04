@@ -30,7 +30,7 @@ import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/adapters/agent_auth_adapter.dart';
 
@@ -587,9 +587,7 @@ void main() {
       await tester.pump();
     }
 
-    final glyph =
-        tester.widget<TerminalStatusGlyph>(find.byType(TerminalStatusGlyph));
-    expect(glyph.status, isNot(TerminalStatus.running));
+    expect(find.byType(StatusMarkerView), findsOneWidget);
     expect(find.text('invalid_grant'), findsOneWidget);
   });
 

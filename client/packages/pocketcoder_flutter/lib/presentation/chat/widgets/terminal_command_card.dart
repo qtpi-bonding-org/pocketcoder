@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 /// A read-only terminal transcript for a command Poco ran.
 ///
@@ -19,7 +18,7 @@ class TerminalCommandCard extends StatefulWidget {
   });
 
   final String command;
-  final TerminalStatus status;
+  final Widget status;
   final String outputLabel;
   final String? output;
   final List<dynamic> diffs;
@@ -87,7 +86,7 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TerminalStatusGlyph(status: widget.status),
+              widget.status,
               HSpace.x1,
               Expanded(
                 child: Text(

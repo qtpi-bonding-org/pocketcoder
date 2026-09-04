@@ -19,8 +19,9 @@ import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
@@ -271,13 +272,10 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
               return TerminalDialog(
                   title: context.l10n.externalAuthTitle,
                   content: Column(mainAxisSize: MainAxisSize.min, children: [
-                    TerminalLoadingIndicator(
-                        label: harness.name,
-                        status: status?.isConnecting == true
-                            ? TerminalStatus.running
-                            : errorMessage != null
-                                ? TerminalStatus.failure
-                                : TerminalStatus.running),
+                    if (errorMessage != null)
+                      const StatusMarkerView(marker: StatusMarker.failed)
+                    else
+                      TerminalLoadingIndicator(label: harness.name),
                     TerminalText(
                       context.l10n.externalAuthConnecting(harness.name),
                       role: TextRole.body,

@@ -3,8 +3,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
@@ -24,28 +26,28 @@ void main() {
   testWidgets('keeps the spinner static when reduced motion is enabled',
       (tester) async {
     await tester.pumpWidget(_wrap(
-      MediaQuery(
-        data: const MediaQueryData(disableAnimations: true),
-        child: const TerminalStatusGlyph(status: TerminalStatus.running),
+      const MediaQuery(
+        data: MediaQueryData(disableAnimations: true),
+        child: TerminalSpinner(),
       ),
     ));
-    expect(find.text('|'), findsOneWidget);
+    expect(find.text('⠋'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('|'), findsOneWidget);
+    expect(find.text('⠋'), findsOneWidget);
   });
 
   testWidgets('shows a running command without output', (tester) async {
     await tester.pumpWidget(_wrap(
       const TerminalCommandCard(
         command: 'flutter test',
-        status: TerminalStatus.running,
+        status: TerminalSpinner(),
         outputLabel: 'OUTPUT',
       ),
     ));
 
     expect(find.text(r'$ flutter test'), findsOneWidget);
-    expect(find.byType(TerminalStatusGlyph), findsOneWidget);
+    expect(find.byType(TerminalSpinner), findsOneWidget);
     expect(find.text('OUTPUT'), findsNothing);
   });
 
@@ -55,7 +57,7 @@ void main() {
     await tester.pumpWidget(_wrap(
       const TerminalCommandCard(
         command: 'flutter test',
-        status: TerminalStatus.success,
+        status: StatusMarkerView(marker: StatusMarker.ok),
         outputLabel: 'OUTPUT',
         output: 'All tests passed!',
       ),
@@ -80,7 +82,7 @@ void main() {
   testWidgets('renders flush, with no bordered container', (tester) async {
     await tester.pumpWidget(_wrap(const TerminalCommandCard(
       command: 'ls -la',
-      status: TerminalStatus.success,
+      status: StatusMarkerView(marker: StatusMarker.ok),
       outputLabel: 'OUTPUT',
       output: 'a\nb',
     )));
@@ -100,7 +102,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_wrap(const TerminalCommandCard(
       command: 'ls -la',
-      status: TerminalStatus.success,
+      status: StatusMarkerView(marker: StatusMarker.ok),
       outputLabel: 'OUTPUT',
       output: 'a\nb\nc',
     )));

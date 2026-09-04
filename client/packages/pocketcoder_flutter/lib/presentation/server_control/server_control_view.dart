@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
@@ -9,7 +12,6 @@ import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_c
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_confirm_dialog.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/connection_details.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/private_key_section.dart';
@@ -88,7 +90,7 @@ class ServerControlView extends StatelessWidget {
     return BlocBuilder<ServerControlCubit, ServerControlState>(
         builder: (context, state) => PocketCoderShell(
             title: context.l10n.serverControlTitle,
-            activePillar: NavPillar.manage,
+            activePillar: NavPillar.control,
             showBack: false,
             body: ListView(children: [
               if (state.connectionDetails case final details?
@@ -129,9 +131,10 @@ class ServerControlView extends StatelessWidget {
                 VSpace.x2,
                 TerminalCommandCard(
                     command: state.operation?.name ?? 'server-control',
-                    status: result.succeeded
-                        ? TerminalStatus.success
-                        : TerminalStatus.failure,
+                    status: StatusMarkerView(
+                        marker: result.succeeded
+                            ? StatusMarker.ok
+                            : StatusMarker.failed),
                     outputLabel: context.l10n.serverControlOutputLabel,
                     output: _output(result.stdout, result.stderr)),
               ],
