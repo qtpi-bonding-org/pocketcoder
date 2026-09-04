@@ -5,7 +5,14 @@ import 'package:flutter_color_palette/flutter_color_palette.dart';
 class AppPalette {
   // The six roles -- the source of truth from this task onward.
   static const Color ground = Color(0xFF050505);
+
+  /// Non-text token only (1.58:1 against [ground]). The code-surface gutter
+  /// is the one place this may be used; no [TextRole] may resolve to it.
   static const Color trace = Color(0xFF003B00);
+
+  /// Non-text token only (3.23:1 against [ground] -- fails WCAG AA for text).
+  /// The decision-dialog border is the one place this may be used; no
+  /// [TextRole] may resolve to it.
   static const Color dim = Color(0xFF00701A);
   static const Color body = Color(0xFF00B82A);
   static const Color bright = Color(0xFF00FF41);

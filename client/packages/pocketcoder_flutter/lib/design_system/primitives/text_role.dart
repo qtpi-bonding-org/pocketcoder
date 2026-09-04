@@ -10,8 +10,10 @@ import 'app_palette.dart';
 ///
 /// Notably, roles never carry a size. The theme supplies size; roles cannot override it.
 enum TextRole {
-  /// Secondary/de-emphasized text (e.g., helper text, hints).
-  label(AppPalette.dim, FontWeight.w400),
+  /// Colour matches [body] -- the label/value distinction rides on weight,
+  /// not hue. `dim` fails WCAG AA contrast (3.23:1) as text and may never be
+  /// used for a glyph; it survives only as the decision-dialog border.
+  label(AppPalette.body, FontWeight.w400),
 
   /// Regular body text (e.g., descriptions, instructions).
   body(AppPalette.body, FontWeight.w400),

@@ -5,7 +5,9 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
 void main() {
   test('roles map to the specified colors', () {
-    expect(TextRole.label.color, AppPalette.dim);
+    // label shares body's colour -- the label/value distinction rides on
+    // weight, not hue. `dim` fails WCAG AA contrast (3.23:1) as text.
+    expect(TextRole.label.color, AppPalette.body);
     expect(TextRole.body.color, AppPalette.body);
     expect(TextRole.value.color, AppPalette.bright);
     expect(TextRole.ok.color, AppPalette.bright);

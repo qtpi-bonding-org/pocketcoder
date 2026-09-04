@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/app_palette.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
 void main() {
   test('palette is exactly the six specified values', () {
@@ -22,9 +23,40 @@ void main() {
     expect(ratio, greaterThan(6.0));
   });
 
-  test('dim is legible as secondary text and trace is not text', () {
+  test('dim and trace are usable as non-text tokens but not text', () {
+    // dim: the decision-dialog border. trace: the code-surface gutter.
+    // Neither clears the 4.5:1 AA floor for text.
     expect(_contrast(AppPalette.dim, AppPalette.ground), greaterThan(2.5));
+    expect(_contrast(AppPalette.dim, AppPalette.ground), lessThan(4.5));
     expect(_contrast(AppPalette.trace, AppPalette.ground), lessThan(2.0));
+  });
+
+  test('every TextRole colour clears 4.5:1 AA contrast against ground', () {
+    for (final role in TextRole.values) {
+      final ratio = _contrast(role.color, AppPalette.ground);
+      expect(
+        ratio,
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'TextRole.${role.name} (${role.color}) is ${ratio.toStringAsFixed(2)}:1 '
+            'against ground -- below the 4.5:1 AA floor for text',
+      );
+    }
+  });
+
+  test('no TextRole resolves to dim or trace', () {
+    for (final role in TextRole.values) {
+      expect(
+        role.color,
+        isNot(AppPalette.dim),
+        reason: 'TextRole.${role.name} must not resolve to dim (non-text token only)',
+      );
+      expect(
+        role.color,
+        isNot(AppPalette.trace),
+        reason: 'TextRole.${role.name} must not resolve to trace (non-text token only)',
+      );
+    }
   });
 }
 
