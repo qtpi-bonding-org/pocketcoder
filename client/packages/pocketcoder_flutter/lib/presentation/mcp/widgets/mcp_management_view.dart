@@ -5,7 +5,6 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -88,60 +87,64 @@ class McpManagementView extends StatelessWidget {
     final schema = _resolveConfigSchema(server);
     final image = server.image;
     final reason = server.reason;
-    return BiosCard(
-        isActive: pending,
-        header: [DetailRow(label: server.name, value: server.status.name)],
-        body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          if (image?.isNotEmpty == true) ...[
-            TerminalText(
-              context.l10n.mcpImageLabel(image ?? ''),
-              role: TextRole.body,
-            ),
-            VSpace.x1,
-          ],
-          if (reason?.isNotEmpty == true) ...[
-            TerminalText(
-              context.l10n.mcpPurposeLabel(reason ?? ''),
-              role: TextRole.body,
-            ),
-            VSpace.x1,
-          ],
-          if (pending &&
-              server.oauthProvider?.isEmpty != false &&
-              server.configSchema is Map) ...[
-            TerminalText(
-              context.l10n.mcpRequiredConfig,
-              role: TextRole.label,
-            ),
-            VSpace.x1,
-            for (final key in schema.keys) DetailRow(label: key, value: null),
-          ],
-          if (server.oauthProvider?.isNotEmpty == true) _oauth(context, server),
-        ]),
-        footer: server.oauthProvider?.isNotEmpty == true
-            ? null
-            : pending
+    final footer = server.oauthProvider?.isNotEmpty == true
+        ? null
+        : pending
+            ? BiosActionStrip(actions: [
+                BiosActionStripItem(
+                    label: context.l10n.mcpAuthorizeCap,
+                    isActive: true,
+                    onTap: () => _configDialog(context, server)),
+                BiosActionStripItem(
+                    label: context.l10n.mcpDeny,
+                    color: context.terminalColors.warning,
+                    onTap: () => onDeny(server.id)),
+              ])
+            : server.status == McpServerStatus.approved
                 ? BiosActionStrip(actions: [
                     BiosActionStripItem(
-                        label: context.l10n.mcpAuthorizeCap,
-                        isActive: true,
+                        label: context.l10n.mcpEditConfig,
                         onTap: () => _configDialog(context, server)),
                     BiosActionStripItem(
-                        label: context.l10n.mcpDeny,
-                        color: context.terminalColors.warning,
+                        label: context.l10n.mcpRevoke,
+                        color: context.terminalColors.danger,
                         onTap: () => onDeny(server.id)),
                   ])
-                : server.status == McpServerStatus.approved
-                    ? BiosActionStrip(actions: [
-                        BiosActionStripItem(
-                            label: context.l10n.mcpEditConfig,
-                            onTap: () => _configDialog(context, server)),
-                        BiosActionStripItem(
-                            label: context.l10n.mcpRevoke,
-                            color: context.terminalColors.danger,
-                            onTap: () => onDeny(server.id)),
-                      ])
-                    : null);
+                : null;
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      DetailRow(
+          label: server.name, value: server.status.name, warning: pending),
+      VSpace.x1,
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (image?.isNotEmpty == true) ...[
+          TerminalText(
+            context.l10n.mcpImageLabel(image ?? ''),
+            role: TextRole.body,
+          ),
+          VSpace.x1,
+        ],
+        if (reason?.isNotEmpty == true) ...[
+          TerminalText(
+            context.l10n.mcpPurposeLabel(reason ?? ''),
+            role: TextRole.body,
+          ),
+          VSpace.x1,
+        ],
+        if (pending &&
+            server.oauthProvider?.isEmpty != false &&
+            server.configSchema is Map) ...[
+          TerminalText(
+            context.l10n.mcpRequiredConfig,
+            role: TextRole.label,
+          ),
+          VSpace.x1,
+          for (final key in schema.keys) DetailRow(label: key, value: null),
+        ],
+        if (server.oauthProvider?.isNotEmpty == true) _oauth(context, server),
+      ]),
+      if (footer != null) ...[VSpace.x1, footer],
+      VSpace.x2,
+    ]);
   }
 
   Widget _oauth(BuildContext context, McpServer server) =>

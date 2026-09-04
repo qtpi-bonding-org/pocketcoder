@@ -3,7 +3,6 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class HarnessChoiceCard extends StatelessWidget {
@@ -26,7 +25,8 @@ class HarnessChoiceCard extends StatelessWidget {
             ignoring: onTap == null,
             child: InkWell(
                 onTap: onTap,
-                child: TerminalCard(
+                child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSizes.space),
                     child: Row(children: [
                   Expanded(
                     child: GlyphLabelRow(

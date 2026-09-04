@@ -5,7 +5,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
@@ -83,27 +82,27 @@ class ToolPermissionsView extends StatelessWidget {
   Widget _buildRuleItem(BuildContext context, ToolPermission rule) {
     final isActive = rule.active == true;
 
-    return BiosCard(
-        isActive: isActive,
-        header: [
-          DetailRow.toggle(
-              label: rule.tool,
-              value: isActive,
-              onChanged: (value) => onSetActive(rule.id, value)),
-        ],
-        footer: BiosActionStrip(actions: [
-          BiosActionStripItem(
-              label: context.l10n.toolPermissionsAllowLabel,
-              isActive: rule.action == ToolPermissionAction.allow,
-              onTap: () => onUpdateAction(rule.id, 'allow')),
-          BiosActionStripItem(
-              label: context.l10n.toolPermissionsAskLabel,
-              isActive: rule.action == ToolPermissionAction.ask,
-              onTap: () => onUpdateAction(rule.id, 'ask')),
-          BiosActionStripItem(
-              label: context.l10n.toolPermissionsDenyLabel,
-              isActive: rule.action == ToolPermissionAction.deny,
-              onTap: () => onUpdateAction(rule.id, 'deny')),
-        ]));
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      DetailRow.toggle(
+          label: rule.tool,
+          value: isActive,
+          onChanged: (value) => onSetActive(rule.id, value)),
+      VSpace.x1,
+      BiosActionStrip(actions: [
+        BiosActionStripItem(
+            label: context.l10n.toolPermissionsAllowLabel,
+            isActive: rule.action == ToolPermissionAction.allow,
+            onTap: () => onUpdateAction(rule.id, 'allow')),
+        BiosActionStripItem(
+            label: context.l10n.toolPermissionsAskLabel,
+            isActive: rule.action == ToolPermissionAction.ask,
+            onTap: () => onUpdateAction(rule.id, 'ask')),
+        BiosActionStripItem(
+            label: context.l10n.toolPermissionsDenyLabel,
+            isActive: rule.action == ToolPermissionAction.deny,
+            onTap: () => onUpdateAction(rule.id, 'deny')),
+      ]),
+      VSpace.x2,
+    ]);
   }
 }

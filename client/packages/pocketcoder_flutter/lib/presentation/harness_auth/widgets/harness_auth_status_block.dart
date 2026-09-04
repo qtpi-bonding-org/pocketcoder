@@ -5,7 +5,6 @@ import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class HarnessAuthStatusBlock extends StatelessWidget {
@@ -35,9 +34,7 @@ class HarnessAuthStatusBlock extends StatelessWidget {
             status: 'disconnected');
     return Column(children: [
       SectionHeader(name: '${harness.name} [${harness.cliId}]'.toLowerCase()),
-      TerminalCard(
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         TerminalText(l10n.harnessAuthStatus(s.status.toUpperCase()),
             role: TextRole.body),
         if (s.lastError case final lastError? when lastError.isNotEmpty) ...[
@@ -72,7 +69,7 @@ class HarnessAuthStatusBlock extends StatelessWidget {
         ],
         VSpace.x2,
         child,
-      ])),
+      ]),
     ]);
   }
 }

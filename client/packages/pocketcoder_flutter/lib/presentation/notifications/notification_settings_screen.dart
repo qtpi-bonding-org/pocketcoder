@@ -13,7 +13,6 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'adapters/notification_settings_adapter.dart';
@@ -101,22 +100,18 @@ class _SelfHostedPushOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TerminalCard(
-        padding: EdgeInsets.all(AppSizes.space * 1.5),
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          TerminalText(context.l10n.proSelfHostedPushTitle,
-              role: TextRole.body),
-          VSpace.x1,
-          TerminalText(
-            context.l10n.proSelfHostedPushBody,
-            role: TextRole.body,
-          ),
-          VSpace.x2,
-          TerminalButton(
-              label: context.l10n.proConfigureSelfHostedPush,
-              onTap: onConfigure,
-              isPrimary: false),
-        ]));
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      TerminalText(context.l10n.proSelfHostedPushTitle, role: TextRole.body),
+      VSpace.x1,
+      TerminalText(
+        context.l10n.proSelfHostedPushBody,
+        role: TextRole.body,
+      ),
+      VSpace.x2,
+      TerminalButton(
+          label: context.l10n.proConfigureSelfHostedPush,
+          onTap: onConfigure,
+          isPrimary: false),
+    ]);
   }
 }

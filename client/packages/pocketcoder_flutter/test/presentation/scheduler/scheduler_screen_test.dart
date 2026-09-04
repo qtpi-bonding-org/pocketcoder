@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/scheduler/widgets/scheduler_view.dart';
 
 Widget _app(Widget child) => MaterialApp(
@@ -18,7 +18,7 @@ Widget _app(Widget child) => MaterialApp(
 
 void main() {
   testWidgets(
-    'renders a schedule as a BiosCard with a 4-action BiosActionStrip',
+    'renders a schedule as a DetailRow with a 4-action BiosActionStrip',
     (tester) async {
       await tester.pumpWidget(
         _app(
@@ -50,7 +50,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(BiosCard), findsOneWidget);
+      expect(find.byType(DetailRow), findsWidgets);
       final strip = tester.widget<BiosActionStrip>(
         find.byType(BiosActionStrip),
       );

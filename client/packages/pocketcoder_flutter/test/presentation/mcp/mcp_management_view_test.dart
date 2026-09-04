@@ -6,8 +6,7 @@ import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/widgets/mcp_management_view.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
@@ -81,7 +80,8 @@ void main() {
     expect(revoke.action.color, AppPalette.red);
   });
 
-  testWidgets('renders a pending server as a BiosCard with a BiosActionStrip', (
+  testWidgets(
+      'renders a pending server as a DetailRow with a BiosActionStrip', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -97,9 +97,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(BiosCard), findsOneWidget);
-    expect(find.byType(BiosRow), findsWidgets);
+    expect(find.byType(DetailRow), findsWidgets);
     expect(find.byType(BiosActionStrip), findsOneWidget);
-    expect(find.text('FILESYSTEM'), findsOneWidget);
+    expect(find.text('filesystem'), findsOneWidget);
   });
 }

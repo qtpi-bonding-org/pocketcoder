@@ -11,7 +11,6 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
@@ -204,29 +203,15 @@ class ProviderView extends StatelessWidget {
     final providerLabel =
         state.providerCatalog.firstWhere((p) => p.id == key.provider).name;
 
-    return TerminalCard(
-        child: Row(children: [
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TerminalText(
-              providerLabel.toUpperCase(),
-              role: TextRole.label,
-            ),
-            TerminalText(
-              _maskKeyPreview(key.apiKey),
-              role: TextRole.body,
-            ),
-          ],
-        ),
-      ),
-      TextButton(
+    return DetailRow(
+      label: providerLabel,
+      value: _maskKeyPreview(key.apiKey),
+      trailing: TextButton(
           child: Text(context.l10n.providerScreenDeleteKeyAction,
               style:
                   TextStyle(color: colors.error, fontWeight: AppFonts.heavy)),
           onPressed: () => onDelete(key.id)),
-    ]));
+    );
   }
 
   void _openKeyEditor(

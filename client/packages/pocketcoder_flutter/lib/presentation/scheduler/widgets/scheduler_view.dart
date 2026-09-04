@@ -5,7 +5,6 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -87,32 +86,33 @@ class SchedulerView extends StatelessWidget {
 
   Widget _buildScheduleItem(BuildContext context, ScheduleOwner schedule) {
     final paused = schedule.paused ?? false;
-    return BiosCard(
-        header: [
-          DetailRow(
-              label: schedule.displayName,
-              value: schedule.cron ?? '',
-              hasBadge: paused),
-        ],
-        footer: BiosActionStrip(actions: [
-          BiosActionStripItem(
-              label: paused
-                  ? context.l10n.schedulerResumeButton
-                  : context.l10n.schedulerPauseButton,
-              onTap: () =>
-                  paused ? onUnpause(schedule.id) : onPause(schedule.id)),
-          BiosActionStripItem(
-              label: context.l10n.schedulerRunNowButton,
-              onTap: () => onRunNow(schedule.id)),
-          BiosActionStripItem(
-              label: context.l10n.schedulerEditButton,
-              onTap: () => showEditScheduleDialog(
-                  context, schedule, onRename, onUpdateCron)),
-          BiosActionStripItem(
-              label: context.l10n.schedulerDeleteButton,
-              // Schedules can be recreated, so deletion is warning-level here.
-              color: context.terminalColors.warning,
-              onTap: () => onDelete(schedule.id)),
-        ]));
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      DetailRow(
+          label: schedule.displayName,
+          value: schedule.cron ?? '',
+          hasBadge: paused),
+      VSpace.x1,
+      BiosActionStrip(actions: [
+        BiosActionStripItem(
+            label: paused
+                ? context.l10n.schedulerResumeButton
+                : context.l10n.schedulerPauseButton,
+            onTap: () =>
+                paused ? onUnpause(schedule.id) : onPause(schedule.id)),
+        BiosActionStripItem(
+            label: context.l10n.schedulerRunNowButton,
+            onTap: () => onRunNow(schedule.id)),
+        BiosActionStripItem(
+            label: context.l10n.schedulerEditButton,
+            onTap: () => showEditScheduleDialog(
+                context, schedule, onRename, onUpdateCron)),
+        BiosActionStripItem(
+            label: context.l10n.schedulerDeleteButton,
+            // Schedules can be recreated, so deletion is warning-level here.
+            color: context.terminalColors.warning,
+            onTap: () => onDelete(schedule.id)),
+      ]),
+      VSpace.x2,
+    ]);
   }
 }
