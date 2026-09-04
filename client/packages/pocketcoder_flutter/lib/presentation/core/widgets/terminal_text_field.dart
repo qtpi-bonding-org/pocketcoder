@@ -32,7 +32,7 @@ class TerminalTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          label.toLowerCase(),
           style: TextStyle(
             fontFamily: AppFonts.family,
             color: colors.onSurface,
