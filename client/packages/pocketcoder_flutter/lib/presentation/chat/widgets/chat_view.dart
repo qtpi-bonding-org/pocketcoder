@@ -6,6 +6,7 @@ import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
@@ -305,7 +306,7 @@ class _ChatViewState extends State<ChatView> {
                   Padding(
                     padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
                     child: Center(
-                      child: PocoFace(),
+                      child: PocoFace(posture: PocoPosture.fortified),
                     ),
                   ),
                 Expanded(

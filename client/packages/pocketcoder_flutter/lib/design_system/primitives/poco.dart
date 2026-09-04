@@ -43,12 +43,6 @@ enum PocoMood {
 
 /// Armor is a location signal, independent of mood.
 enum PocoPosture {
-  /// No frame. Boot, login, onboarding, provisioning, disconnected.
-  exposed,
-
-  /// `┌─┐` frame. Logged in and connected.
   armored,
-
-  /// `╔═╗` frame. Connected, but blocked on something risky right now.
   fortified,
 }

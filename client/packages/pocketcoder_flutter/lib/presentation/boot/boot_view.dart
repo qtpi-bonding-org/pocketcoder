@@ -77,13 +77,13 @@ class BootView extends StatelessWidget {
                           color: colors.surface,
                           child: PocoFace(
                             sequence: pocoState.sequence,
-                            posture: PocoPosture.exposed,
+                            posture: PocoPosture.armored,
                           ),
                         ),
                       ),
                       VSpace.x4,
                       PocoBubble(
-                          posture: PocoPosture.exposed,
+                          posture: PocoPosture.armored,
                           message: pocoState.message,
                           history: pocoState.history,
                           showFace: false),

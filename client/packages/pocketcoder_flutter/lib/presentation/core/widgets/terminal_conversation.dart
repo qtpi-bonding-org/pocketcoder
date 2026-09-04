@@ -157,7 +157,7 @@ class TerminalConversationTurn extends StatelessWidget {
       return TerminalConversationFrame(
         speaker: speaker,
         child: PocoBubble(
-          posture: PocoPosture.exposed,
+          posture: PocoPosture.armored,
           message: message,
           sequence: sequence,
           history: history,

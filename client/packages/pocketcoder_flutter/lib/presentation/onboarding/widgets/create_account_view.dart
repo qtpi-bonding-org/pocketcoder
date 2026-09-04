@@ -62,7 +62,7 @@ class _CreateAccountViewState extends State<CreateAccountView> {
           child: Column(
             children: [
               PocoBubble(
-                posture: PocoPosture.exposed,
+                posture: PocoPosture.armored,
                 message: context.l10n.onboardingServerCredentialsPoco,
               ),
               VSpace.x3,

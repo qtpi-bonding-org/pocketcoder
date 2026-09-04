@@ -95,8 +95,6 @@ class AppAscii {
   static String build(String expression,
       [PocoPosture posture = PocoPosture.armored]) {
     switch (posture) {
-      case PocoPosture.exposed:
-        return expression;
       case PocoPosture.armored:
         return '\n┌─────┐\n│ $expression │\n└─────┘';
       case PocoPosture.fortified:
@@ -138,9 +136,6 @@ class AsciiFace extends StatelessWidget {
     final frame = posture == PocoPosture.armored
         ? '┌─────┐\n│     │\n└─────┘'
         : '╔═════╗\n║     ║\n╚═════╝';
-    if (posture == PocoPosture.exposed) {
-      return Text(expression, key: const ValueKey('poco-face'), style: style);
-    }
     return Stack(
       alignment: Alignment.center,
       children: [

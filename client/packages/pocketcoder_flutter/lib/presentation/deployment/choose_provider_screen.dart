@@ -56,7 +56,7 @@ class ChooseProviderView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         PocoBubble(
-                            posture: PocoPosture.exposed,
+                            posture: PocoPosture.armored,
                             message: context.l10n.onboardingProviderPoco,
                             pocoSize: AppSizes.fontBody),
                         VSpace.x3,
