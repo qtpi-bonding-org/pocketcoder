@@ -24,9 +24,11 @@ class FossServerSetupView extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.all(AppSizes.space * 2),
             children: [
-            TerminalText(
-              context.l10n.fossServerSetupTitle),
-            VSpace.x1,
+              TerminalText(
+                context.l10n.fossServerSetupTitle,
+                role: TextRole.label,
+              ),
+              VSpace.x1,
             Text(context.l10n.fossServerSetupIntro),
             VSpace.x2,
             if (state.phase == FossServerSetupPhase.idle)

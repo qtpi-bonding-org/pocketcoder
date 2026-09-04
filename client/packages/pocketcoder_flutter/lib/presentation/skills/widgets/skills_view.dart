@@ -94,7 +94,12 @@ class SkillsView extends StatelessWidget {
           Center(
             child: Padding(
               padding: EdgeInsets.all(AppSizes.space * 4),
-              child: TerminalText(context.l10n.skillsNoSkills)), role: TextRole.body)
+              child: TerminalText(
+                context.l10n.skillsNoSkills,
+                role: TextRole.body,
+              ),
+            ),
+          ),
       ]);
   }
 

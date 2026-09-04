@@ -14,7 +14,9 @@ class ReleaseLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final release = state.release;
     return TerminalText(
-      release == null ? context.l10n.serverControlReleaseChecking : _lines(context, release));
+      release == null ? context.l10n.serverControlReleaseChecking : _lines(context, release),
+      role: TextRole.body,
+    );
   }
 
   String _lines(BuildContext context, ServerReleaseStatusSnapshot release) {

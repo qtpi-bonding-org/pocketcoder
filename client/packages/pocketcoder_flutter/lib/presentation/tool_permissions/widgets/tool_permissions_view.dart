@@ -72,7 +72,11 @@ class ToolPermissionsView extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.all(AppSizes.space * 4),
                       child: TerminalText(
-                        context.l10n.toolPermissionsNoRules))),
+                        context.l10n.toolPermissionsNoRules,
+                        role: TextRole.body,
+                      ),
+                    ),
+                  ),
               ]);
           })));
   }

@@ -76,7 +76,11 @@ class McpManagementView extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.all(AppSizes.space * 4),
                   child: TerminalText(
-                    context.l10n.mcpNoCapabilities))),
+                    context.l10n.mcpNoCapabilities,
+                    role: TextRole.body,
+                  ),
+                ),
+              ),
           ])));
   }
 
@@ -93,19 +97,25 @@ class McpManagementView extends StatelessWidget {
         children: [
           if (image?.isNotEmpty == true) ...[
             TerminalText(
-              context.l10n.mcpImageLabel(image ?? '')),
+              context.l10n.mcpImageLabel(image ?? ''),
+              role: TextRole.body,
+            ),
             VSpace.x1,
           ],
           if (reason?.isNotEmpty == true) ...[
             TerminalText(
-              context.l10n.mcpPurposeLabel(reason ?? '')),
+              context.l10n.mcpPurposeLabel(reason ?? ''),
+              role: TextRole.body,
+            ),
             VSpace.x1,
           ],
           if (pending &&
               server.oauthProvider?.isEmpty != false &&
               server.configSchema is Map) ...[
             TerminalText(
-              context.l10n.mcpRequiredConfig),
+              context.l10n.mcpRequiredConfig,
+              role: TextRole.label,
+            ),
             VSpace.x1,
             for (final key in schema.keys)
               BiosRow(label: key, value: null),
@@ -157,7 +167,9 @@ class McpManagementView extends StatelessWidget {
             children: [
               TerminalText(
                 context.l10n.mcpOauthRequiredLabel(
-                  matched?.displayName ?? oauthProvider ?? '')),
+                  matched?.displayName ?? oauthProvider ?? ''),
+                role: TextRole.body,
+              ),
               VSpace.x1,
               if (unsupported)
                 TerminalText(
@@ -205,11 +217,11 @@ class McpManagementView extends StatelessWidget {
       Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (image?.isNotEmpty == true) TerminalText(image ?? '', role: TextRole.body)
+          if (image?.isNotEmpty == true) TerminalText(image ?? '', role: TextRole.body),
           if (controllers.isEmpty)
-            TerminalText(context.l10n.mcpNoConfigRequired, role: TextRole.body)
-          else ...[
-            TerminalText(context.l10n.mcpEnterSecrets, role: TextRole.body)
+            TerminalText(context.l10n.mcpNoConfigRequired, role: TextRole.body),
+          if (controllers.isNotEmpty) ...[
+            TerminalText(context.l10n.mcpEnterSecrets, role: TextRole.body),
             ...controllers.entries.map(
               (e) => Padding(
                 padding: EdgeInsets.only(bottom: AppSizes.space),

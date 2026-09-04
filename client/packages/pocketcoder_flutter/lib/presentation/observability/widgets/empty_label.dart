@@ -12,5 +12,8 @@ class EmptyLabel extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.symmetric(vertical: AppSizes.space),
         child: TerminalText(
-          label));
+          label,
+          role: TextRole.body,
+        ),
+      );
 }

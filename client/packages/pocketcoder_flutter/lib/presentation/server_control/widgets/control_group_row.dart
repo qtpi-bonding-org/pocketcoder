@@ -39,7 +39,9 @@ class ControlGroupRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TerminalText(
-              groupLabel),
+              groupLabel,
+              role: TextRole.label,
+            ),
             VSpace.x1,
             IgnorePointer(
               ignoring: disabled,

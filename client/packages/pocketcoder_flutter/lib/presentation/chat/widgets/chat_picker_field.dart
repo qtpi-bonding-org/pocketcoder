@@ -37,7 +37,8 @@ class ChatPickerField<T> extends StatelessWidget {
       children: [
         Semantics(
           label: label,
-          child: TerminalText(label.toUpperCase(), role: TextRole.label))
+          child: TerminalText(label.toUpperCase(), role: TextRole.label),
+        ),
         VSpace.x1,
         InkWell(
           onTap: () => _openPicker(context),

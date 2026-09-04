@@ -39,29 +39,37 @@ class HarnessAuthStatusBlock extends StatelessWidget {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-              TerminalText(l10n.harnessAuthStatus(s.status.toUpperCase()), role: TextRole.body)
+              TerminalText(l10n.harnessAuthStatus(s.status.toUpperCase()), role: TextRole.body),
               if (s.lastError case final lastError?
                   when lastError.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText(lastError, role: TextRole.warn)
+                TerminalText(lastError, role: TextRole.warn),
               ],
               if (s.credentialMode.isNotEmpty) ...[
                 VSpace.x1,
                 TerminalText(
-                    l10n.harnessAuthMode(s.credentialMode.toUpperCase()))
+                  l10n.harnessAuthMode(s.credentialMode.toUpperCase()),
+                  role: TextRole.body,
+                ),
               ],
               if (s.accountId.isNotEmpty) ...[
                 VSpace.x1,
-                TerminalText(l10n.harnessAuthAccount(
+                TerminalText(
+                  l10n.harnessAuthAccount(
                     s.accountName.isEmpty ? s.accountId : s.accountName,
                     s.isDeploymentVisible
                         ? l10n.harnessAuthShared
-                        : l10n.harnessAuthPersonal))
+                        : l10n.harnessAuthPersonal,
+                  ),
+                  role: TextRole.body,
+                ),
               ],
               if (configuredApiKeyProvider case final provider?) ...[
                 VSpace.x1,
                 TerminalText(
-                    l10n.harnessAuthApiKeyConfigured(provider.name.toUpperCase()))
+                  l10n.harnessAuthApiKeyConfigured(provider.name.toUpperCase()),
+                  role: TextRole.body,
+                ),
               ],
               VSpace.x2,
               child,

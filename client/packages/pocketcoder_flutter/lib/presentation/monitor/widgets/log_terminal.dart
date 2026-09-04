@@ -19,7 +19,9 @@ class MonitorLogTerminal extends StatelessWidget {
       return Center(
         child: TerminalText(
           context.l10n.observabilitySelectContainer,
-          textAlign: TextAlign.center));
+          role: TextRole.body,
+        ),
+      );
     }
     return ListView.builder(
       reverse: true,
@@ -29,7 +31,8 @@ class MonitorLogTerminal extends StatelessWidget {
         final logLine = state.logs[state.logs.length - 1 - index];
         return TerminalText(
           '${logLine.timestamp?.toLocal().toIso8601String() ?? 'unknown'} ${logLine.message}',
-          ));
+          role: TextRole.body,
+        );
       });
   }
 }

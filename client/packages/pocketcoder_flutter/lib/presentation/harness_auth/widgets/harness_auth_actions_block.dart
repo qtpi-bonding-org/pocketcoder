@@ -58,8 +58,12 @@ class HarnessAuthActionsBlock extends StatelessWidget {
           onTap: isBusy ? () {} : onRefresh),
       if (status.attempt case final attempt?)
         Padding(
-            padding: EdgeInsets.only(top: AppSizes.space),
-            child: TerminalText(l10n.harnessAuthAttempt(attempt.id)), role: TextRole.body)
+          padding: EdgeInsets.only(top: AppSizes.space),
+          child: TerminalText(
+            l10n.harnessAuthAttempt(attempt.id),
+            role: TextRole.body,
+          ),
+        ),
     ]);
   }
 

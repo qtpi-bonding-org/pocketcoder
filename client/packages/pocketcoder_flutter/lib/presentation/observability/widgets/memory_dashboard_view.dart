@@ -83,9 +83,14 @@ class _AccountRow extends StatelessWidget {
           children: [
             Expanded(
               child: TerminalText(
-                account.agentName)),
+                account.agentName,
+                role: TextRole.body,
+              ),
+            ),
             TerminalText(
               context.l10n.memoryDashboardAccountSummary(
-                  account.observations, account.interpretations)),
+                  account.observations, account.interpretations),
+              role: TextRole.body,
+            ),
           ]));
 }

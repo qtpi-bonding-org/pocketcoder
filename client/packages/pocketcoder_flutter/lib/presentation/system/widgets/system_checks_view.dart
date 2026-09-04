@@ -41,7 +41,10 @@ class SystemChecksView extends StatelessWidget {
                   child: state.checks.isEmpty && !state.isLoading
                       ? Center(
                           child: TerminalText(
-                            context.l10n.systemChecksEmpty))
+                            context.l10n.systemChecksEmpty,
+                            role: TextRole.body,
+                          ),
+                        )
                       : ListView.builder(
                           itemCount: state.checks.length,
                           itemBuilder: (context, index) {

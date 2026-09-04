@@ -72,10 +72,16 @@ class _CountCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             TerminalText(
-              '$value'),
+              '$value',
+              role: TextRole.value,
+            ),
             TerminalText(
-              label),
-          ]));
+              label,
+              role: TextRole.label,
+            ),
+          ],
+        ),
+      );;
 }
 
 class _EmptyLabel extends StatelessWidget {
@@ -87,7 +93,10 @@ class _EmptyLabel extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: EdgeInsets.symmetric(vertical: AppSizes.space),
         child: TerminalText(
-          label));
+          label,
+          role: TextRole.body,
+        ),
+      );
 }
 
 class _ChatRow extends StatelessWidget {
@@ -105,8 +114,15 @@ class _ChatRow extends StatelessWidget {
                 chat.archived
                     ? context.l10n.pocketbaseInspectorChatArchivedTitle(
                         chat.title)
-                    : chat.title)),
+                    : chat.title,
+                role: TextRole.body,
+              ),
+            ),
             TerminalText(
-              chat.lastActive),
-          ]));
+              chat.lastActive,
+              role: TextRole.label,
+            ),
+          ],
+        ),
+      );;
 }

@@ -37,7 +37,7 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TerminalText(context.l10n.serverControlConnectionDetails, role: TextRole.body)
+        TerminalText(context.l10n.serverControlConnectionDetails, role: TextRole.body),
         VSpace.x1,
         if (details.ipAddress case final value?)
           DetailRow(label: context.l10n.serverControlIpAddress, value: value),

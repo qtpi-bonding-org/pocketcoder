@@ -109,7 +109,11 @@ class ProviderView extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.all(AppSizes.space * 2),
               child: TerminalText(
-                context.l10n.providerScreenEmptyHint))),
+                context.l10n.providerScreenEmptyHint,
+                role: TextRole.body,
+              ),
+            ),
+          ),
       ]);
   }
 
@@ -119,7 +123,11 @@ class ProviderView extends StatelessWidget {
         padding: EdgeInsets.all(AppSizes.space * 2),
         child: Center(
           child: TerminalText(
-            context.l10n.providerScreenNoHarnessModels)));
+            context.l10n.providerScreenNoHarnessModels,
+            role: TextRole.body,
+          ),
+        ),
+      );
     }
 
     final byHarness = <String, List<HarnessModel>>{};
@@ -168,7 +176,10 @@ class ProviderView extends StatelessWidget {
           children: [
             Center(
               child: TerminalText(
-                context.l10n.providerScreenNoApiKeys)),
+                context.l10n.providerScreenNoApiKeys,
+                role: TextRole.body,
+              ),
+            ),
             VSpace.x2,
             _buildAddKeyButton(context, state),
           ]));
@@ -208,10 +219,16 @@ class ProviderView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TerminalText(
-                  providerLabel.toUpperCase()),
+                  providerLabel.toUpperCase(),
+                  role: TextRole.label,
+                ),
                 TerminalText(
-                  _maskKeyPreview(key.apiKey)),
-              ])),
+                  _maskKeyPreview(key.apiKey),
+                  role: TextRole.body,
+                ),
+              ],
+            ),
+          ),
           TextButton(
             child: Text(
               context.l10n.providerScreenDeleteKeyAction,

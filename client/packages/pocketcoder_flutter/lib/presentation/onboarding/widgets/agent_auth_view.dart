@@ -86,10 +86,16 @@ class AgentAuthView extends StatelessWidget {
         child: TerminalText(
           context.l10n.errorGeneric,
           role: TextRole.warn,
-          textAlign: TextAlign.center));
+        ),
+      );
     }
     if (supported.isEmpty) {
-      return Center(child: TerminalText(context.l10n.errorGeneric), role: TextRole.body)
+      return Center(
+        child: TerminalText(
+          context.l10n.errorGeneric,
+          role: TextRole.body,
+        ),
+      );
     }
 
     return OnboardingContentShell(
@@ -98,10 +104,12 @@ class AgentAuthView extends StatelessWidget {
         padding: EdgeInsets.all(AppSizes.space * 2),
         children: [
           TerminalText(
-            context.l10n.onboardingChooseHarnessBody),
+            context.l10n.onboardingChooseHarnessBody,
+            role: TextRole.body,
+          ),
           VSpace.x3,
           if (!harnessProvidersLoaded)
-            TerminalText(context.l10n.onboardingChooseHarnessLoadingProviders, role: TextRole.body)
+            TerminalText(context.l10n.onboardingChooseHarnessLoadingProviders, role: TextRole.body),
           for (final harness in supported)
             Padding(
               padding: EdgeInsets.only(bottom: AppSizes.space),

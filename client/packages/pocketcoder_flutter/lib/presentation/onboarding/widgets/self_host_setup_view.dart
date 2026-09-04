@@ -71,5 +71,9 @@ class _Requirement extends StatelessWidget {
   Widget build(BuildContext context) => GlyphLabelRow(
         glyph: '[+]',
         crossAxisAlignment: CrossAxisAlignment.start,
-        child: TerminalText(label), role: TextRole.body)
+        child: TerminalText(
+          label,
+          role: TextRole.body,
+        ),
+      );
 }

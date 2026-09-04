@@ -18,8 +18,12 @@ class CountCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TerminalText(
-              '$value'),
+              '$value',
+              role: TextRole.value,
+            ),
             TerminalText(
-              label),
+              label,
+              role: TextRole.label,
+            ),
           ]));
 }

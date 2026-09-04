@@ -23,13 +23,13 @@ class SkillCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TerminalText(skill.name.toUpperCase(), role: TextRole.body)
+          TerminalText(skill.name.toUpperCase(), role: TextRole.body),
           VSpace.x1,
-          TerminalText(skill.description, role: TextRole.body)
+          TerminalText(skill.description, role: TextRole.body),
           VSpace.x1,
           if (skill.isSystem ?? false)
-            TerminalText(context.l10n.skillsBuiltInLabel, role: TextRole.body)
-          else
+            TerminalText(context.l10n.skillsBuiltInLabel, role: TextRole.body),
+          if (!(skill.isSystem ?? false))
             Row(
               children: [
                 Expanded(
@@ -41,8 +41,8 @@ class SkillCard extends StatelessWidget {
                 Expanded(
                   child: TerminalButton(
                     label: context.l10n.skillsDeleteButton,
-                    role: TextRole.warn,
-                    onTap: () => onDelete(skill.id))),
+                    onTap: () => onDelete(skill.id)),
+                ),
               ]),
         ]));
   }

@@ -106,10 +106,12 @@ class _SelfHostedPushOption extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TerminalText(context.l10n.proSelfHostedPushTitle, role: TextRole.body)
+          TerminalText(context.l10n.proSelfHostedPushTitle, role: TextRole.body),
           VSpace.x1,
           TerminalText(
-            context.l10n.proSelfHostedPushBody),
+            context.l10n.proSelfHostedPushBody,
+            role: TextRole.body,
+          ),
           VSpace.x2,
           TerminalButton(
             label: context.l10n.proConfigureSelfHostedPush,

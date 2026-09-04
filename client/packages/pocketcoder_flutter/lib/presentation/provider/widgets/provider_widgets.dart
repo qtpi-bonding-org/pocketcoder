@@ -78,7 +78,9 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
                   selected == null
                       ? context.l10n.providerScreenAddKey
                       : context.l10n.providerScreenAddKeyBody(
-                          selected.name.toUpperCase())),
+                          selected.name.toUpperCase()),
+                  role: TextRole.body,
+              ),
               VSpace.x2,
               ProviderTargetPicker(
                   targets: _targets,
@@ -96,8 +98,12 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
               TerminalText(
                   widget.existing == null
                       ? context.l10n.providerScreenApiKeyNotSet
-                      : context.l10n.providerScreenApiKeyStoredSecurely),
-            ])),
+                      : context.l10n.providerScreenApiKeyStoredSecurely,
+                  role: TextRole.body,
+              ),
+            ],
+          ),
+        ),
       actions: [
         TerminalButton(
             label: context.l10n.actionCancel,
@@ -178,9 +184,16 @@ class ProviderTargetOption extends StatelessWidget {
           child:
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Expanded(
-                child: TerminalText(provider.name.toUpperCase(),
-                    overflow: TextOverflow.ellipsis)),
-            TerminalText(provider.providerId, role: TextRole.body)
+                child: TerminalText(
+                  provider.name.toUpperCase(),
+                  role: TextRole.label,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ),
+            TerminalText(
+              provider.providerId,
+              role: TextRole.body,
+            ),
           ])));
   }
 }

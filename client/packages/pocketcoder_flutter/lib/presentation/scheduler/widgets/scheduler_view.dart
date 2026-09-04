@@ -79,7 +79,11 @@ class SchedulerView extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.all(AppSizes.space * 4),
                       child: TerminalText(
-                        context.l10n.schedulerNoSchedules))),
+                        context.l10n.schedulerNoSchedules,
+                        role: TextRole.body,
+                      ),
+                    ),
+                  ),
               ]);
           })));
   }
@@ -113,7 +117,6 @@ class SchedulerView extends StatelessWidget {
           BiosActionStripItem(
             label: context.l10n.schedulerDeleteButton,
             // Schedules can be recreated, so deletion is warning-level here.
-            role: TextRole.warn,
             onTap: () => onDelete(schedule.id)),
         ]));
   }

@@ -25,12 +25,18 @@ class MemoryRecordRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TerminalText(
-            '$author · $createdAt'),
+            '$author · $createdAt',
+            role: TextRole.label,
+          ),
           TerminalText(
-            body),
+            body,
+            role: TextRole.body,
+          ),
           if (linked.isNotEmpty)
             TerminalText(
-              context.l10n.memoryDashboardLinkedPrefix(linked.join(' | '))),
+              context.l10n.memoryDashboardLinkedPrefix(linked.join(' | ')),
+              role: TextRole.label,
+            ),
         ]));
   }
 }

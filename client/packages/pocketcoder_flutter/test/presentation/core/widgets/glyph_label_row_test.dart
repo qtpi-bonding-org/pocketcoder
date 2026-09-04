@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -11,7 +12,7 @@ void main() {
   testWidgets('renders the glyph and the child label', (tester) async {
     await tester.pumpWidget(_app(const GlyphLabelRow(
       glyph: '[+]',
-      child: TerminalText('some requirement'),
+      child: TerminalText('some requirement', role: TextRole.body),
     )));
 
     expect(find.text('[+]'), findsOneWidget);
@@ -22,7 +23,7 @@ void main() {
     await tester.pumpWidget(_app(GlyphLabelRow(
       glyph: r'$',
       color: Colors.red,
-      child: const TerminalText('harness'),
+      child: const TerminalText('harness', role: TextRole.body),
     )));
 
     final glyphText = tester.widget<Text>(find.text(r'$'));
@@ -33,7 +34,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_app(const GlyphLabelRow(
       glyph: '[+]',
-      child: TerminalText('label'),
+      child: TerminalText('label', role: TextRole.body),
     )));
 
     final sizedBox = tester.widget<SizedBox>(find.byType(SizedBox).first);
@@ -44,7 +45,7 @@ void main() {
     await tester.pumpWidget(_app(GlyphLabelRow(
       glyph: r'$',
       spacing: HSpace.x2,
-      child: const TerminalText('harness'),
+      child: const TerminalText('harness', role: TextRole.body),
     )));
 
     final sizedBox = tester.widget<SizedBox>(find.byType(SizedBox).first);
@@ -55,7 +56,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_app(const GlyphLabelRow(
       glyph: '[+]',
-      child: TerminalText('label'),
+      child: TerminalText('label', role: TextRole.body),
     )));
 
     expect(find.byType(Expanded), findsOneWidget);
