@@ -17,11 +17,8 @@ const _bracketExemptions = {
   'lib/presentation/core/widgets/terminal_checkbox.dart', // Task 10: Checkbox glyph to proper widget
   'lib/presentation/chat/thinking_block.dart', // Task 7: Thinking block bracket to marker
   'lib/presentation/chat/permission_card.dart', // Task 14: Dialog actions ownership
-  'lib/presentation/agent/widgets/plan_panel.dart', // Task TBD: Plan panel bracket ownership
-  'lib/presentation/agent/widgets/config_picker.dart', // Awaiting bracket detection false positive fix (dict access)
-  'lib/presentation/agent/widgets/mode_switcher.dart', // Awaiting bracket detection false positive fix (dict access)
-  'lib/presentation/foss/foss_server_setup_view.dart', // Awaiting bracket detection false positive fix (interpolation)
-  'lib/presentation/onboarding/widgets/harness_choice_card.dart', // Task TBD: Choice card bracket ownership
+  'lib/presentation/agent/widgets/plan_panel.dart', // No task in this plan currently owns this — flagged as a known gap, not silently hidden
+  'lib/presentation/onboarding/widgets/harness_choice_card.dart', // No task in this plan currently owns this — flagged as a known gap, not silently hidden
 };
 
 void main() {
@@ -43,8 +40,8 @@ void main() {
           // Look for brackets on this line or the next few lines
           for (var j = i; j < (i + 3).clamp(0, lines.length); j++) {
             final searchLine = lines[j];
-            // Skip lines with ${} (false positives from interpolation/dict access)
-            if (searchLine.contains(r'${')) continue;
+            // Skip lines with ${} or [' (false positives from interpolation/dict access)
+            if (searchLine.contains(r'${') || searchLine.contains(r"['")) continue;
             // Match string literals containing [ or <
             if (searchLine.contains(RegExp(r'"[^"]*[\[<][^"]*"')) ||
                 searchLine.contains(RegExp(r"'[^']*[\[<][^']*'"))) {
