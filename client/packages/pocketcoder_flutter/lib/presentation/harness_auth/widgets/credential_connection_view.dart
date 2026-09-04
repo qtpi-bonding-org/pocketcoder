@@ -69,7 +69,7 @@ class CredentialConnectionView extends StatelessWidget {
 
   Widget _expiryNotice(BuildContext context, DateTime? expiresAt) {
     if (expiresAt == null) return const SizedBox.shrink();
-    return TerminalText(context.l10n.credentialConnectionExpiresAt(expiresAt), role: TextRole.body)
+    return TerminalText(context.l10n.credentialConnectionExpiresAt(expiresAt), role: TextRole.body);
   }
 
   Widget _deviceCode(BuildContext context, String code, DateTime? expiresAt) {
@@ -77,7 +77,7 @@ class CredentialConnectionView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _expiryNotice(context, expiresAt),
-        TerminalText(code, role: TextRole.body)
+        TerminalText(code, role: TextRole.body),
         TerminalButton(
           label: context.l10n.credentialConnectionCopy,
           onTap: () {
@@ -89,7 +89,7 @@ class CredentialConnectionView extends StatelessWidget {
         TerminalButton(
           label: context.l10n.credentialConnectionOpenAuthorizationPage,
           onTap: onOpenAuthorizationPage),
-        TerminalText(context.l10n.credentialConnectionPasteCode, role: TextRole.body)
+        TerminalText(context.l10n.credentialConnectionPasteCode, role: TextRole.body),
         _actions(context),
       ]);
   }

@@ -74,7 +74,7 @@ class HarnessAuthActionsBlock extends StatelessWidget {
     if (uri == null ||
         (destination != HarnessAuthCodeDestination.browser &&
             destination != HarnessAuthCodeDestination.app)) {
-      return TerminalText(challenge.legacyText ?? challenge.text, role: TextRole.body)
+      return TerminalText(challenge.legacyText ?? challenge.text, role: TextRole.body);
     }
     return CredentialConnectionView(
       step: BrowserVerificationConnectionStep(

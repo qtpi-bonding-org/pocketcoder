@@ -59,7 +59,6 @@ class ErrorInboxScreen extends StatelessWidget {
                       BiosActionButton(
                         action: BiosActionStripItem(
                           label: context.l10n.errorsClearAll,
-                          role: TextRole.fail,
                           emphasis: Emphasis.outlined,
                           onTap: onClearAll)),
                     ])),
