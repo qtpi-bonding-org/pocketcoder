@@ -68,7 +68,7 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
         ? context.l10n.providerScreenSelectProvider
         : context.l10n.providerScreenAddKeyTitle(selected.name.toUpperCase());
     return TerminalDialog(
-        title: title,
+        title: title.toLowerCase(),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -135,7 +135,7 @@ class ProviderTargetPicker extends StatelessWidget {
         final picked = await showDialog<domain.Provider>(
             context: context,
             builder: (dialogContext) => SearchablePickerDialog<domain.Provider>(
-                title: dialogContext.l10n.providerScreenSelectProvider,
+                title: dialogContext.l10n.providerScreenSelectProvider.toLowerCase(),
                 items: targets,
                 itemLabel: (p) => p.name,
                 matches: (p, query) {

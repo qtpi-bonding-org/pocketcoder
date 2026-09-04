@@ -77,7 +77,7 @@ class ChatListTile extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: chat.title,
+        title: chat.title.toLowerCase(),
         content: const SizedBox.shrink(),
         actions: [
           TerminalButton(

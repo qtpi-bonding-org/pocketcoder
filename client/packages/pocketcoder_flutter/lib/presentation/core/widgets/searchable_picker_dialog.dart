@@ -108,7 +108,7 @@ class _SearchablePickerDialogState<T> extends State<SearchablePickerDialog<T>> {
     }
 
     return TerminalDialog(
-        title: widget.title,
+        title: widget.title.toLowerCase(),
         content: SizedBox(
             width: double.maxFinite,
             height: 360,

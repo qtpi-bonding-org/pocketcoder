@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
@@ -32,11 +32,11 @@ class ToolPermissionsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.toolPermissionsScreenTitle,
+        title: context.l10n.toolPermissionsScreenTitle.toLowerCase(),
         activePillar: NavPillar.configure,
         showBack: true,
-        body: BiosFrame(
-            title: context.l10n.toolPermissionsRulesRegistry,
+        body: DecisionFrame(
+            title: context.l10n.toolPermissionsRulesRegistry.toLowerCase(),
             child: Builder(builder: (context) {
               if (state.status == UiFlowStatus.loading) {
                 return const Center(child: CircularProgressIndicator());

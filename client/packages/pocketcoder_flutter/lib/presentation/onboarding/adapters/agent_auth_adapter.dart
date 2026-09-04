@@ -270,7 +270,7 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                       ? context.l10n.errorGeneric
                       : null);
               return TerminalDialog(
-                  title: context.l10n.externalAuthTitle,
+                  title: context.l10n.externalAuthTitle.toLowerCase(),
                   content: Column(mainAxisSize: MainAxisSize.min, children: [
                     if (errorMessage != null)
                       const StatusMarkerView(marker: StatusMarker.failed)

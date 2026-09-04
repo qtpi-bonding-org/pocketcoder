@@ -45,8 +45,8 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
     final skillName = widget.skill?.name ?? '';
     return TerminalDialog(
       title: editing
-          ? context.l10n.skillsEditDialogTitle(skillName.toUpperCase())
-          : context.l10n.skillsAddDialogTitle,
+          ? context.l10n.skillsEditDialogTitle(skillName.toUpperCase()).toLowerCase()
+          : context.l10n.skillsAddDialogTitle.toLowerCase(),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -124,7 +124,7 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
         .toList();
     final selected = configs.contains(_selectedConfig) ? _selectedConfig : null;
     return TerminalDialog(
-      title: context.l10n.skillsAddDialogTitle,
+      title: context.l10n.skillsAddDialogTitle.toLowerCase(),
       content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

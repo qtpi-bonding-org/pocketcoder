@@ -3,7 +3,7 @@ import 'package:pocketcoder_flutter/application/observability/observability_stat
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/widgets/log_terminal.dart';
@@ -32,8 +32,8 @@ class MonitorRegistryAndLogs extends StatelessWidget {
         ),
       );
     }
-    final registry = BiosFrame(
-      title: context.l10n.observabilityRegistry,
+    final registry = DecisionFrame(
+      title: context.l10n.observabilityRegistry.toLowerCase(),
       child: ListView(
         padding: EdgeInsets.all(AppSizes.space),
         children: state.containers

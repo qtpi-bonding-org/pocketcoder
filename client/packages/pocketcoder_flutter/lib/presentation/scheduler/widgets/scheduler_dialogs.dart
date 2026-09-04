@@ -21,7 +21,7 @@ void showEditScheduleDialog(
     builder: (dialogContext) => TerminalDialog(
       title: context.l10n.schedulerEditDialogTitle(
         schedule.displayName.toUpperCase(),
-      ),
+      ).toLowerCase(),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -79,7 +79,7 @@ void showAddScheduleDialog(
   showDialog(
     context: context,
     builder: (dialogContext) => TerminalDialog(
-      title: context.l10n.schedulerAddDialogTitle,
+      title: context.l10n.schedulerAddDialogTitle.toLowerCase(),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

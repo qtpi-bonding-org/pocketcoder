@@ -143,7 +143,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
         for (final model in ollamaModels) _ModelChoice.ollama(model.name),
     ];
     return TerminalDialog(
-      title: context.l10n.newChatTitle,
+      title: context.l10n.newChatTitle.toLowerCase(),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,

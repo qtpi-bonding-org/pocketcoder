@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
@@ -46,11 +46,11 @@ class McpManagementView extends StatelessWidget {
     final active =
         servers.where((s) => s.status != McpServerStatus.pending).toList();
     return PocketCoderShell(
-        title: context.l10n.mcpTitle,
+        title: context.l10n.mcpTitle.toLowerCase(),
         activePillar: NavPillar.configure,
         showBack: true,
-        body: BiosFrame(
-            title: context.l10n.mcpCapabilitiesRegistry,
+        body: DecisionFrame(
+            title: context.l10n.mcpCapabilitiesRegistry.toLowerCase(),
             child: ListView(children: [
               Padding(
                   padding: EdgeInsets.all(AppSizes.space),
@@ -285,7 +285,7 @@ class McpManagementView extends StatelessWidget {
       showDialog<void>(
           context: context,
           builder: (dialogContext) =>
-              TerminalDialog(title: title, content: content, actions: [
+              TerminalDialog(title: title.toLowerCase(), content: content, actions: [
                 TextButton(
                     onPressed: () => Navigator.pop(dialogContext),
                     child: Text(cancel)),

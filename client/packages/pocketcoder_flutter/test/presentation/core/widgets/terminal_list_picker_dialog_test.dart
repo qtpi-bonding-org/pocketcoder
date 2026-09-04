@@ -27,7 +27,7 @@ void main() {
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    expect(find.text('[ PICK ]'), findsOneWidget);
+    expect(find.text('pick'), findsOneWidget);
 
     await tester.tap(find.text('beta'));
     await tester.pumpAndSettle();
@@ -57,7 +57,7 @@ void main() {
 
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    Navigator.of(tester.element(find.text('[ PICK ]'))).pop();
+    Navigator.of(tester.element(find.text('pick'))).pop();
     await tester.pumpAndSettle();
     expect(picked, isNull);
   });

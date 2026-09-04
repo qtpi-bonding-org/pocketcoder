@@ -3,7 +3,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -26,11 +26,11 @@ class AgentConfigView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.agentConfigTitle,
+        title: context.l10n.agentConfigTitle.toLowerCase(),
         activePillar: NavPillar.configure,
         showBack: true,
-        body: BiosFrame(
-            title: context.l10n.agentConfigRegistry,
+        body: DecisionFrame(
+            title: context.l10n.agentConfigRegistry.toLowerCase(),
             child: _buildBody(context, state)));
   }
 
@@ -118,7 +118,7 @@ class AgentConfigView extends StatelessWidget {
     return showDialog<bool>(
         context: dialogContext,
         builder: (confirmContext) => TerminalDialog(
-                title: dialogContext.l10n.agentConfigDeleteConfirmTitle,
+                title: dialogContext.l10n.agentConfigDeleteConfirmTitle.toLowerCase(),
                 content: TerminalText(
                   dialogContext.l10n.agentConfigDeleteConfirmBody(
                       existing.name.toUpperCase()),

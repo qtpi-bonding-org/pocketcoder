@@ -232,7 +232,7 @@ class HarnessAuthAdapter
   Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
         context: context,
         builder: (dialogContext) => TerminalDialog(
-          title: context.l10n.harnessAuthVisibilityTitle,
+          title: context.l10n.harnessAuthVisibilityTitle.toLowerCase(),
           content: Text(context.l10n.harnessAuthVisibilityBody),
           actions: [
             TextButton(

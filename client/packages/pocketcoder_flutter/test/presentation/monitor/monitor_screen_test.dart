@@ -4,7 +4,7 @@ import 'package:pocketcoder_flutter/application/observability/observability_stat
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 
@@ -70,9 +70,9 @@ void main() {
 
     expect(find.textContaining('line one'), findsOneWidget);
     expect(find.textContaining('line two'), findsOneWidget);
-    // Logs render plainly -- the only BiosFrame left on screen is the
+    // Logs render plainly -- the only DecisionFrame left on screen is the
     // Registry list; the log terminal is no longer boxed.
-    expect(find.byType(BiosFrame), findsOneWidget);
+    expect(find.byType(DecisionFrame), findsOneWidget);
   });
 
   testWidgets(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -19,7 +19,7 @@ class SelfHostSetupView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-      title: context.l10n.onboardingSelfHostTitle,
+      title: context.l10n.onboardingSelfHostTitle.toLowerCase(),
       activePillar: NavPillar.configure,
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
@@ -39,8 +39,8 @@ class SelfHostSetupView extends StatelessWidget {
             speaker: TerminalConversationSpeaker.poco,
             message: context.l10n.onboardingSelfHostPoco),
         VSpace.x3,
-        BiosFrame(
-            title: context.l10n.onboardingSelfHostRequirementsTitle,
+        DecisionFrame(
+            title: context.l10n.onboardingSelfHostRequirementsTitle.toLowerCase(),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

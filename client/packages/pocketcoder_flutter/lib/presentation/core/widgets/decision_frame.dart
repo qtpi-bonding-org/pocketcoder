@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
-class BiosFrame extends StatelessWidget {
+class DecisionFrame extends StatelessWidget {
   final Widget child;
   final String? title;
 
-  const BiosFrame({
+  const DecisionFrame({
     super.key,
     required this.child,
     this.title,
@@ -14,8 +16,7 @@ class BiosFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-    final borderColor = colors.onSurface;
+    final borderColor = AppPalette.dim;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -26,6 +27,7 @@ class BiosFrame extends StatelessWidget {
           child: Stack(
             children: [
               Container(
+                key: const ValueKey('decision-frame-border'),
                 margin: EdgeInsets.only(
                     top: AppSizes.space * 1.25), // Space for title
                 padding: EdgeInsets.all(AppSizes.space * 2),
@@ -33,13 +35,6 @@ class BiosFrame extends StatelessWidget {
                   color: colors.surface,
                   border: Border.all(
                       color: borderColor, width: AppSizes.borderWidthThick),
-                  boxShadow: [
-                    BoxShadow(
-                      color: terminalColors.glow,
-                      blurRadius: AppSizes.radiusSmall + 2,
-                      spreadRadius: AppSizes.borderWidthThick,
-                    ),
-                  ],
                 ),
                 child: child,
               ),
@@ -52,16 +47,7 @@ class BiosFrame extends StatelessWidget {
                     child: Container(
                       color: colors.surface,
                       padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-                      child: Text(
-                        '[ $title ]',
-                        style: TextStyle(
-                          fontFamily: AppFonts.family,
-                          package: 'pocketcoder_flutter',
-                          color: borderColor,
-                          fontWeight: AppFonts.heavy,
-                          backgroundColor: colors.surface,
-                        ),
-                      ),
+                      child: TerminalText(title!, role: TextRole.label),
                     ),
                   ),
                 ),

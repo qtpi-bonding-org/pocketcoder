@@ -16,7 +16,7 @@ void showAddRuleDialog(
     context: context,
     builder: (_) => StatefulBuilder(
       builder: (dialogContext, setState) => TerminalDialog(
-        title: context.l10n.toolPermissionsAddRuleTitle,
+        title: context.l10n.toolPermissionsAddRuleTitle.toLowerCase(),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

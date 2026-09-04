@@ -72,8 +72,8 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
     final existing = widget.existing;
     return TerminalDialog(
       title: existing == null
-          ? context.l10n.agentConfigTitle
-          : context.l10n.agentConfigDialogTitle(existing.name.toUpperCase()),
+          ? context.l10n.agentConfigTitle.toLowerCase()
+          : context.l10n.agentConfigDialogTitle(existing.name.toUpperCase()).toLowerCase(),
       content: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: AppSizes.pickerHeight,

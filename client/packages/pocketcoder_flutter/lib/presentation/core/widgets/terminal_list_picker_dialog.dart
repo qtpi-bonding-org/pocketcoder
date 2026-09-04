@@ -18,7 +18,7 @@ Future<T?> showTerminalListPicker<T>(
   return showDialog<T>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-          title: title,
+          title: title.toLowerCase(),
           content: SizedBox(
               width: double.maxFinite,
               height: height ?? AppSizes.pickerHeight,

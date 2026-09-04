@@ -7,7 +7,7 @@ import 'package:pocketcoder_flutter/application/notifications/notification_rule_
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
@@ -59,11 +59,11 @@ class NotificationSettingsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.notificationSettingsScreenTitle,
+        title: context.l10n.notificationSettingsScreenTitle.toLowerCase(),
         activePillar: NavPillar.configure,
         showBack: true,
-        body: BiosFrame(
-            title: context.l10n.notificationSettingsScreenTitle,
+        body: DecisionFrame(
+            title: context.l10n.notificationSettingsScreenTitle.toLowerCase(),
             child: switch (state.status) {
               UiFlowStatus.loading =>
                 const Center(child: CircularProgressIndicator()),

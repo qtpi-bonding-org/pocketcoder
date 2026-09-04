@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -28,11 +28,11 @@ class ErrorInboxScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.errorsTitle,
+        title: context.l10n.errorsTitle.toLowerCase(),
         activePillar: NavPillar.configure,
         showBack: true,
-        body: BiosFrame(
-            title: context.l10n.errorsTitle,
+        body: DecisionFrame(
+            title: context.l10n.errorsTitle.toLowerCase(),
             child: Builder(builder: (context) {
               if (errors.isEmpty) {
                 return Padding(

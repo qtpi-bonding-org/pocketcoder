@@ -3,7 +3,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/service_line.dart';
@@ -21,11 +21,11 @@ class SystemChecksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        title: context.l10n.systemChecksTitle,
+        title: context.l10n.systemChecksTitle.toLowerCase(),
         activePillar: NavPillar.config,
         showBack: true,
-        body: BiosFrame(
-            title: context.l10n.systemChecksDiagnostics,
+        body: DecisionFrame(
+            title: context.l10n.systemChecksDiagnostics.toLowerCase(),
             child: Builder(builder: (context) {
               return Column(children: [
                 Padding(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -39,11 +39,11 @@ class SkillsView extends StatelessWidget {
     final project = data.skills.where((skill) => !_isGlobal(skill)).toList();
 
     return PocketCoderShell(
-        title: context.l10n.skillsTitle,
+        title: context.l10n.skillsTitle.toLowerCase(),
         activePillar: NavPillar.configure,
         showBack: true,
-        body: BiosFrame(
-            title: context.l10n.skillsRegistryTitle,
+        body: DecisionFrame(
+            title: context.l10n.skillsRegistryTitle.toLowerCase(),
             child: _buildBody(context, colors, global, project)));
   }
 

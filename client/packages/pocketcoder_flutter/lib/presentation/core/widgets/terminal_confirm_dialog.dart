@@ -15,7 +15,7 @@ Future<bool?> showTerminalConfirmDialog(
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) => TerminalDialog(
-      title: title,
+      title: title.toLowerCase(),
       content: Text(body),
       actions: [
         TextButton(

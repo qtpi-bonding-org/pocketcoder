@@ -12,7 +12,6 @@ const _bracketExemptions = {
   'lib/presentation/core/widgets/bios_action_strip.dart', // Task 14: Dialog actions and action strips to angle brackets
   'lib/presentation/files/widgets/file_browser_view.dart', // Task 10: [DIR]/[FILE] markers to proper marker widget
   'lib/presentation/chat/elicitation_card.dart', // No task in this plan currently owns bracket fixes here — flagged as a known gap
-  'lib/presentation/core/widgets/bios_frame.dart', // Task 8: Section header replaces BiosSection
   'lib/presentation/core/widgets/bios_row.dart', // Task 9: DetailRow replaces BiosRow
   'lib/presentation/core/widgets/terminal_checkbox.dart', // Task 10: Checkbox glyph to proper widget
   'lib/presentation/chat/thinking_block.dart', // Task 7: Thinking block bracket to marker

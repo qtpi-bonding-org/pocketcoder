@@ -78,7 +78,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: context.l10n.settingsLogoutConfirmTitle,
+        title: context.l10n.settingsLogoutConfirmTitle.toLowerCase(),
         content: Text(context.l10n.settingsLogoutConfirmBody),
         actions: [
           TextButton(
@@ -104,7 +104,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: context.l10n.settingsFactoryResetConfirmTitle,
+        title: context.l10n.settingsFactoryResetConfirmTitle.toLowerCase(),
         content: Text(context.l10n.settingsFactoryResetConfirmBody),
         actions: [
           TextButton(
@@ -130,7 +130,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: context.l10n.settingsDeleteProDataConfirmTitle,
+        title: context.l10n.settingsDeleteProDataConfirmTitle.toLowerCase(),
         content: Text(context.l10n.settingsDeleteProDataConfirmBody),
         actions: [
           TextButton(

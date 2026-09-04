@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/billing/adapters/paywall_adapter.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/billing/widgets/active_pro_status.dart';
@@ -64,7 +64,7 @@ class PaywallView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: context.l10n.proTitle,
+      title: context.l10n.proTitle.toLowerCase(),
       activePillar: NavPillar.configure,
       showBack: true,
       body: Center(
@@ -72,8 +72,8 @@ class PaywallView extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-            child: BiosFrame(
-              title: context.l10n.proPlanTitle,
+            child: DecisionFrame(
+              title: context.l10n.proPlanTitle.toLowerCase(),
               child: _buildContent(context),
             ),
           ),
