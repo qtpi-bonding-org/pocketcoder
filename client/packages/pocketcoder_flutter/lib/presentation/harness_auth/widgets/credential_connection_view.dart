@@ -167,7 +167,10 @@ class _BrowserCodeFormState extends State<_BrowserCodeForm> {
         TerminalButton(
           label: context.l10n.credentialConnectionOpenAuthorizationPage,
           onTap: widget.openPage),
-        TerminalText(context.l10n.credentialConnectionEnterCode, role: TextRole.body)
+        TerminalText(
+          context.l10n.credentialConnectionEnterCode,
+          role: TextRole.body,
+        ),
         TerminalTextField(
           controller: _controller,
           label: context.l10n.harnessAuthOneTimeCode,

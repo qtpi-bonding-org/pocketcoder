@@ -60,7 +60,10 @@ class ChooseProviderView extends StatelessWidget {
                     message: context.l10n.onboardingProviderPoco,
                     pocoSize: AppSizes.fontBody),
                   VSpace.x3,
-                  TerminalText(context.l10n.onboardingProviderTitle, role: TextRole.body)
+                  TerminalText(
+                    context.l10n.onboardingProviderTitle,
+                    role: TextRole.body,
+                  ),
                   VSpace.x2,
                   for (final option in options)
                     Padding(

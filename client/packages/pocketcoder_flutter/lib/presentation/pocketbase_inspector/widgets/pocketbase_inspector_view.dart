@@ -81,7 +81,7 @@ class _CountCard extends StatelessWidget {
             ),
           ],
         ),
-      );;
+      );
 }
 
 class _EmptyLabel extends StatelessWidget {
@@ -124,5 +124,5 @@ class _ChatRow extends StatelessWidget {
             ),
           ],
         ),
-      );;
+      );
 }

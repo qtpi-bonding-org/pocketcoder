@@ -34,7 +34,7 @@ class FileBrowserView extends StatelessWidget {
                 padding: EdgeInsets.all(AppSizes.space * 4),
                 child: TerminalText(context.l10n.filesEmpty, role: TextRole.label),
               ),
-            )
+            );
           }
           return ListView(
             children: [
