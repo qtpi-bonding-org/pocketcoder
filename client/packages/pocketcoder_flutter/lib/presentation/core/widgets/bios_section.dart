@@ -39,12 +39,24 @@ class BiosSection extends StatelessWidget {
               ? [
                   Expanded(child: divider()),
                   HSpace.x1,
-                  titleText,
+                  Flexible(
+                    child: DefaultTextStyle.merge(
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      child: titleText,
+                    ),
+                  ),
                   HSpace.x1,
                   Expanded(child: divider()),
                 ]
               : [
-                  titleText,
+                  Flexible(
+                    child: DefaultTextStyle.merge(
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      child: titleText,
+                    ),
+                  ),
                   HSpace.x1,
                   Expanded(child: divider()),
                 ],
