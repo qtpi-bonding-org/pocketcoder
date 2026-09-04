@@ -172,7 +172,9 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
           child: TerminalText(
               widget.onboarding
                   ? context.l10n.harnessAuthUnavailable
-                  : context.l10n.harnessAuthEmpty));
+                  : context.l10n.harnessAuthEmpty,
+              role: TextRole.label,
+          ));
     }
     return ListView(padding: EdgeInsets.all(AppSizes.space), children: [
       if (widget.error != null)

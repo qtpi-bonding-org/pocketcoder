@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
@@ -25,9 +26,9 @@ class MonitorRegistryAndLogs extends StatelessWidget {
   Widget build(BuildContext context) {
     if (state.hasError && state.containers.isEmpty) {
       return Center(
-        child: TerminalText.label(
+        child: TerminalText(
           context.l10n.monitorTelemetryUnavailable,
-          color: context.terminalColors.warning,
+          role: TextRole.warn,
         ),
       );
     }
@@ -51,10 +52,11 @@ class MonitorRegistryAndLogs extends StatelessWidget {
     final logs = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TerminalText.label(
+        TerminalText(
           currentContainer != null
               ? displayName(currentContainer)
               : context.l10n.observabilityLogTerminal,
+          role: TextRole.label,
         ),
         VSpace.x1,
         Expanded(
