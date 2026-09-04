@@ -45,9 +45,9 @@ void main() {
 
   group('RowAffordance', () {
     test('navigate and expand are different glyphs', () {
-      // An arrow means "go there"; a triangle means "open this". Using one for
-      // the other is an error, not a stylistic choice.
-      expect(RowAffordance.navigate.glyph, '→');
+      // Right means "go there"; down means "open this". Using one for the
+      // other is an error, not a stylistic choice.
+      expect(RowAffordance.navigate.glyph, '▸');
       expect(RowAffordance.expand.glyph, '▾');
       expect(RowAffordance.collapse.glyph, '▴');
       expect(RowAffordance.navigate.glyph, isNot(RowAffordance.expand.glyph));

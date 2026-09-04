@@ -46,8 +46,9 @@ void main() {
     expect(find.text('<back>'), findsOneWidget);
     expect(find.text('(3/7)'), findsOneWidget);
     expect(find.text('<next>'), findsOneWidget);
-    expect(find.textContaining('→'), findsNothing,
-        reason: 'the arrow means navigate-to-a-screen and nothing else');
+    expect(find.textContaining('▸'), findsNothing,
+        reason: 'the navigate glyph means navigate-to-a-screen and nothing '
+            'else');
   });
 
   test('a wizard footer cannot be stepless', () {

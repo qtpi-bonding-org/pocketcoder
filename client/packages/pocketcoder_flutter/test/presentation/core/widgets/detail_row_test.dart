@@ -36,7 +36,7 @@ void main() {
             onTap: () {}),
       ])),
     ));
-    expect(find.text('→'), findsOneWidget); // navigate
+    expect(find.text('▸'), findsOneWidget); // navigate
     expect(find.text('▾'), findsOneWidget); // expand
     expect(find.textContaining('[>]'), findsNothing);
     expect(find.textContaining('[v]'), findsNothing);
