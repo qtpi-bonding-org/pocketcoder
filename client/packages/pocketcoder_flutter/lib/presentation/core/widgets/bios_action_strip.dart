@@ -5,7 +5,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 /// A single bracket-style action -- pulled out of TerminalFooter's
-/// TerminalAction/_buildActionButton so BiosCard footers and TerminalFooter
+/// TerminalAction/_buildActionButton so other action rows and TerminalFooter
 /// share one invert-on-active mechanic instead of each reinventing it.
 class BiosActionStripItem {
   const BiosActionStripItem({
