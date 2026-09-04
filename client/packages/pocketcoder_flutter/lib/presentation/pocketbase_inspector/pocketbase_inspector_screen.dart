@@ -29,7 +29,7 @@ class _PocketbaseInspectorScreenState extends State<PocketbaseInspectorScreen> {
   Widget build(BuildContext context) =>
       BlocBuilder<PocketbaseInspectorCubit, PocketbaseInspectorState>(
         builder: (context, state) => PocketCoderShell(
-          title: 'POCKETBASE',
+          title: context.l10n.pocketbaseInspectorTitle,
           activePillar: NavPillar.configure,
           showBack: true,
           body: switch (state.status) {
@@ -38,7 +38,7 @@ class _PocketbaseInspectorScreenState extends State<PocketbaseInspectorScreen> {
               const Center(child: TerminalLoadingIndicator()),
             UiFlowStatus.failure => Center(
                 child: TerminalText(
-                  'DATABASE UNAVAILABLE',
+                  context.l10n.pocketbaseInspectorUnavailable,
                   color: context.terminalColors.warning,
                 ),
               ),

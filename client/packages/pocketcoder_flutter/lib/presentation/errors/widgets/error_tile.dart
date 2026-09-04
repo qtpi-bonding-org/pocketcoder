@@ -79,7 +79,7 @@ class _ErrorTileState extends State<ErrorTile> {
       footer: BiosActionStrip(
         actions: [
           BiosActionStripItem(
-            label: 'DELETE',
+            label: context.l10n.errorsDeleteAction,
             color: context.terminalColors.danger,
             onTap: () => widget.onDelete(entry.id),
           ),

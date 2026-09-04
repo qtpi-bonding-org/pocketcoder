@@ -24,19 +24,31 @@ class PocketbaseInspectorView extends StatelessWidget {
             // within the padded content area.
             childAspectRatio: 1.15,
             children: [
-              _CountCard(label: 'USERS', value: stats.users),
-              _CountCard(label: 'CHATS', value: stats.chats),
-              _CountCard(label: 'AGENT PROFILES', value: stats.agentProfiles),
-              _CountCard(label: 'HARNESSES', value: stats.harnesses),
-              _CountCard(label: 'MCP SERVERS', value: stats.mcpServers),
-              _CountCard(label: 'SKILLS', value: stats.skills),
+              _CountCard(
+                  label: context.l10n.pocketbaseInspectorUsers,
+                  value: stats.users),
+              _CountCard(
+                  label: context.l10n.pocketbaseInspectorChats,
+                  value: stats.chats),
+              _CountCard(
+                  label: context.l10n.pocketbaseInspectorAgentProfiles,
+                  value: stats.agentProfiles),
+              _CountCard(
+                  label: context.l10n.pocketbaseInspectorHarnesses,
+                  value: stats.harnesses),
+              _CountCard(
+                  label: context.l10n.pocketbaseInspectorMcpServers,
+                  value: stats.mcpServers),
+              _CountCard(
+                  label: context.l10n.pocketbaseInspectorSkills,
+                  value: stats.skills),
             ],
           ),
           VSpace.x2,
           BiosSection(
-            title: 'Recent Chats',
+            title: context.l10n.pocketbaseInspectorRecentChats,
             child: stats.recentChats.isEmpty
-                ? const _EmptyLabel('No chats yet')
+                ? _EmptyLabel(context.l10n.pocketbaseInspectorNoChatsYet)
                 : Column(
                     children: stats.recentChats
                         .map((chat) => _ChatRow(chat: chat))
@@ -106,7 +118,10 @@ class _ChatRow extends StatelessWidget {
           children: [
             Expanded(
               child: TerminalText(
-                chat.archived ? '${chat.title} (archived)' : chat.title,
+                chat.archived
+                    ? context.l10n.pocketbaseInspectorChatArchivedTitle(
+                        chat.title)
+                    : chat.title,
                 color: context.colorScheme.onSurface,
               ),
             ),

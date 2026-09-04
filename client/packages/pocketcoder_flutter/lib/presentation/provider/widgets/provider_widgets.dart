@@ -89,16 +89,16 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
               VSpace.x2,
               TerminalTextField(
                   controller: _controller,
-                  label: 'API key',
+                  label: context.l10n.providerScreenApiKeyLabel,
                   hint: widget.existing == null
-                      ? 'API key'
-                      : 'Leave blank to keep the existing key',
+                      ? context.l10n.providerScreenApiKeyLabel
+                      : context.l10n.providerScreenApiKeyLeaveBlankHint,
                   obscureText: true),
               VSpace.x2,
               TerminalText(
                   widget.existing == null
-                      ? '(not set)'
-                      : 'Existing key is stored securely; enter a new key to replace it.',
+                      ? context.l10n.providerScreenApiKeyNotSet
+                      : context.l10n.providerScreenApiKeyStoredSecurely,
                   alpha: 0.5),
             ]),
       ),
@@ -126,7 +126,7 @@ class ProviderTargetPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BiosRow(
-        label: 'PROVIDER',
+        label: context.l10n.providerScreenProviderLabel,
         value: selectedProvider?.name.toUpperCase() ??
             context.l10n.providerScreenSelectProvider.toUpperCase(),
         variant: BiosRowVariant.expand,

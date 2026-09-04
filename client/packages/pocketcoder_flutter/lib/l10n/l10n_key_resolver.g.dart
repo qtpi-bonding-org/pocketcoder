@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-09-03T15:41:44.702090
+// Generated at: 2026-09-03T16:39:54.756262
 
 import 'app_localizations.dart';
 
@@ -67,6 +67,8 @@ class L10nKeyResolver {
       'agent.none' => _l10n.agentNone,
       'agent.none.selected' => _l10n.agentNoneSelected,
       'agent.parameters.label' => _l10n.agentParametersLabel,
+      'agent.plan.panel.badge' => _l10n.agentPlanPanelBadge,
+      'agent.plan.panel.label' => _l10n.agentPlanPanelLabel,
       'agent.prompts.label' => _l10n.agentPromptsLabel,
       'agent.registry.empty' => _l10n.agentRegistryEmpty,
       'agent.searching' => _l10n.agentSearching,
@@ -85,14 +87,22 @@ class L10nKeyResolver {
       'boot.checking.connection' => _l10n.bootCheckingConnection,
       'boot.connection.failed' => _l10n.bootConnectionFailed,
       'boot.load.error' => _l10n.bootLoadError,
+      'boot.noise.context.switch' => _l10n.bootNoiseContextSwitch,
+      'boot.noise.gc.minor' => _l10n.bootNoiseGcMinor,
+      'boot.noise.heartbeat' => _l10n.bootNoiseHeartbeat,
+      'boot.noise.keepalive' => _l10n.bootNoiseKeepalive,
+      'boot.noise.reasoning.engine' => _l10n.bootNoiseReasoningEngine,
       'boot.poco.intro' => _l10n.bootPocoIntro,
       'boot.systems.nominal' => _l10n.bootSystemsNominal,
       'boot.welcome.back' => _l10n.bootWelcomeBack,
       'chat.awaiting.harness.start' => _l10n.chatAwaitingHarnessStart,
       'chat.command.output' => _l10n.chatCommandOutput,
+      'chat.commander.prompt' => _l10n.chatCommanderPrompt,
       'chat.commander.role' => _l10n.chatCommanderRole,
+      'chat.composer.prompt' => _l10n.chatComposerPrompt,
       'chat.created' => _l10n.chatCreated,
       'chat.decline' => _l10n.chatDecline,
+      'chat.elicitation.form.label' => _l10n.chatElicitationFormLabel,
       'chat.elicitation.request' => _l10n.chatElicitationRequest,
       'chat.error' => _l10n.chatError,
       'chat.fetch.failed' => _l10n.chatFetchFailed,
@@ -111,6 +121,8 @@ class L10nKeyResolver {
       'chat.new.capability.request' => _l10n.chatNewCapabilityRequest,
       'chat.no.fields.requested' => _l10n.chatNoFieldsRequested,
       'chat.not.found' => _l10n.chatNotFound,
+      'chat.picker.field.indicator' => _l10n.chatPickerFieldIndicator,
+      'chat.poco.prompt' => _l10n.chatPocoPrompt,
       'chat.poco.role' => _l10n.chatPocoRole,
       'chat.run.outcome.cancelled.body' => _l10n.chatRunOutcomeCancelledBody,
       'chat.run.outcome.cancelled.title' => _l10n.chatRunOutcomeCancelledTitle,
@@ -159,6 +171,7 @@ class L10nKeyResolver {
       'deployment.cleanup.succeeded' => _l10n.deploymentCleanupSucceeded,
       'deployment.coding.agents.title' => _l10n.deploymentCodingAgentsTitle,
       'deployment.coding.harnesses' => _l10n.deploymentCodingHarnesses,
+      'deployment.config.not.ready.error' => _l10n.deploymentConfigNotReadyError,
       'deployment.debian' => _l10n.deploymentDebian,
       'deployment.debian.description' => _l10n.deploymentDebianDescription,
       'deployment.default.agent' => _l10n.deploymentDefaultAgent,
@@ -204,6 +217,7 @@ class L10nKeyResolver {
       'deployment.nixos.description' => _l10n.deploymentNixosDescription,
       'deployment.no.suitable.plans' => _l10n.deploymentNoSuitablePlans,
       'deployment.operating.system' => _l10n.deploymentOperatingSystem,
+      'deployment.provider.fake' => _l10n.deploymentProviderFake,
       'deployment.provider.linode' => _l10n.deploymentProviderLinode,
       'deployment.provisioned' => _l10n.deploymentProvisioned,
       'deployment.provisioning.summary' => _l10n.deploymentProvisioningSummary,
@@ -280,6 +294,7 @@ class L10nKeyResolver {
       'errors.copied' => _l10n.errorsCopied,
       'errors.copy' => _l10n.errorsCopy,
       'errors.copy.all' => _l10n.errorsCopyAll,
+      'errors.delete.action' => _l10n.errorsDeleteAction,
       'errors.empty' => _l10n.errorsEmpty,
       'errors.report.on.github' => _l10n.errorsReportOnGithub,
       'errors.title' => _l10n.errorsTitle,
@@ -338,6 +353,7 @@ class L10nKeyResolver {
       'initialization.admin.password' => _l10n.initializationAdminPassword,
       'initialization.cloud.region' => _l10n.initializationCloudRegion,
       'initialization.connection.parameters' => _l10n.initializationConnectionParameters,
+      'initialization.copy.action' => _l10n.initializationCopyAction,
       'initialization.current.operation' => _l10n.initializationCurrentOperation,
       'initialization.description.initializing' => _l10n.initializationDescriptionInitializing,
       'initialization.error.code' => _l10n.initializationErrorCode,
@@ -350,6 +366,7 @@ class L10nKeyResolver {
       'initialization.fault.resource.already.exists' => _l10n.initializationFaultResourceAlreadyExists,
       'initialization.geo.grid' => _l10n.initializationGeoGrid,
       'initialization.hardware.plan' => _l10n.initializationHardwarePlan,
+      'initialization.hide.action' => _l10n.initializationHideAction,
       'initialization.https.endpoint' => _l10n.initializationHttpsEndpoint,
       'initialization.in.progress' => _l10n.initializationInProgress,
       'initialization.instance.id' => _l10n.initializationInstanceId,
@@ -358,11 +375,13 @@ class L10nKeyResolver {
       'initialization.last.signal' => _l10n.initializationLastSignal,
       'initialization.metadata.registry' => _l10n.initializationMetadataRegistry,
       'initialization.network.ip' => _l10n.initializationNetworkIp,
+      'initialization.not.available' => _l10n.initializationNotAvailable,
       'initialization.retry.attempt' => _l10n.initializationRetryAttempt,
       'initialization.run.id' => _l10n.initializationRunId,
       'initialization.screen.title' => _l10n.initializationScreenTitle,
       'initialization.secure' => _l10n.initializationSecure,
       'initialization.security.notice' => _l10n.initializationSecurityNotice,
+      'initialization.show.action' => _l10n.initializationShowAction,
       'initialization.source.commit' => _l10n.initializationSourceCommit,
       'initialization.status.initializing' => _l10n.initializationStatusInitializing,
       'initialization.status.schema' => _l10n.initializationStatusSchema,
@@ -422,6 +441,17 @@ class L10nKeyResolver {
       'mcp.revoke' => _l10n.mcpRevoke,
       'mcp.server.name.label' => _l10n.mcpServerNameLabel,
       'mcp.title' => _l10n.mcpTitle,
+      'memory.dashboard.by.account' => _l10n.memoryDashboardByAccount,
+      'memory.dashboard.interpretations' => _l10n.memoryDashboardInterpretations,
+      'memory.dashboard.links' => _l10n.memoryDashboardLinks,
+      'memory.dashboard.no.interpretations.yet' => _l10n.memoryDashboardNoInterpretationsYet,
+      'memory.dashboard.no.memory.recorded' => _l10n.memoryDashboardNoMemoryRecorded,
+      'memory.dashboard.no.observations.yet' => _l10n.memoryDashboardNoObservationsYet,
+      'memory.dashboard.observations' => _l10n.memoryDashboardObservations,
+      'memory.dashboard.recent.interpretations' => _l10n.memoryDashboardRecentInterpretations,
+      'memory.dashboard.recent.observations' => _l10n.memoryDashboardRecentObservations,
+      'memory.dashboard.title' => _l10n.memoryDashboardTitle,
+      'memory.dashboard.unavailable' => _l10n.memoryDashboardUnavailable,
       'monitor.telemetry.unavailable' => _l10n.monitorTelemetryUnavailable,
       'monitor.title' => _l10n.monitorTitle,
       'nav.chats' => _l10n.navChats,
@@ -602,6 +632,16 @@ class L10nKeyResolver {
       'pocket.coder.update.unknown.status' => _l10n.pocketCoderUpdateUnknownStatus,
       'pocket.coder.update.upgrade' => _l10n.pocketCoderUpdateUpgrade,
       'pocket.coder.update.working' => _l10n.pocketCoderUpdateWorking,
+      'pocketbase.inspector.agent.profiles' => _l10n.pocketbaseInspectorAgentProfiles,
+      'pocketbase.inspector.chats' => _l10n.pocketbaseInspectorChats,
+      'pocketbase.inspector.harnesses' => _l10n.pocketbaseInspectorHarnesses,
+      'pocketbase.inspector.mcp.servers' => _l10n.pocketbaseInspectorMcpServers,
+      'pocketbase.inspector.no.chats.yet' => _l10n.pocketbaseInspectorNoChatsYet,
+      'pocketbase.inspector.recent.chats' => _l10n.pocketbaseInspectorRecentChats,
+      'pocketbase.inspector.skills' => _l10n.pocketbaseInspectorSkills,
+      'pocketbase.inspector.title' => _l10n.pocketbaseInspectorTitle,
+      'pocketbase.inspector.unavailable' => _l10n.pocketbaseInspectorUnavailable,
+      'pocketbase.inspector.users' => _l10n.pocketbaseInspectorUsers,
       'poco.lesson.agent.explanation' => _l10n.pocoLessonAgentExplanation,
       'poco.lesson.agent.title' => _l10n.pocoLessonAgentTitle,
       'poco.lesson.compose.start.explanation' => _l10n.pocoLessonComposeStartExplanation,
@@ -687,14 +727,20 @@ class L10nKeyResolver {
       'pro.unlock.command' => _l10n.proUnlockCommand,
       'provider.reauthentication.required' => _l10n.providerReauthenticationRequired,
       'provider.screen.add.key' => _l10n.providerScreenAddKey,
+      'provider.screen.api.key.label' => _l10n.providerScreenApiKeyLabel,
+      'provider.screen.api.key.leave.blank.hint' => _l10n.providerScreenApiKeyLeaveBlankHint,
+      'provider.screen.api.key.not.set' => _l10n.providerScreenApiKeyNotSet,
+      'provider.screen.api.key.stored.securely' => _l10n.providerScreenApiKeyStoredSecurely,
       'provider.screen.api.keys.section' => _l10n.providerScreenApiKeysSection,
       'provider.screen.default.badge' => _l10n.providerScreenDefaultBadge,
+      'provider.screen.delete.key.action' => _l10n.providerScreenDeleteKeyAction,
       'provider.screen.empty.hint' => _l10n.providerScreenEmptyHint,
       'provider.screen.harness.models.section' => _l10n.providerScreenHarnessModelsSection,
       'provider.screen.loading' => _l10n.providerScreenLoading,
       'provider.screen.no.api.keys' => _l10n.providerScreenNoApiKeys,
       'provider.screen.no.harness.models' => _l10n.providerScreenNoHarnessModels,
       'provider.screen.no.providers' => _l10n.providerScreenNoProviders,
+      'provider.screen.provider.label' => _l10n.providerScreenProviderLabel,
       'provider.screen.search.hint' => _l10n.providerScreenSearchHint,
       'provider.screen.search.label' => _l10n.providerScreenSearchLabel,
       'provider.screen.search.no.matches' => _l10n.providerScreenSearchNoMatches,
@@ -747,11 +793,13 @@ class L10nKeyResolver {
       'server.control.operation.save.backup' => _l10n.serverControlOperationSaveBackup,
       'server.control.operation.update.nix.os' => _l10n.serverControlOperationUpdateNixOs,
       'server.control.operation.update.pocket.coder' => _l10n.serverControlOperationUpdatePocketCoder,
+      'server.control.output.label' => _l10n.serverControlOutputLabel,
       'server.control.private.key.label' => _l10n.serverControlPrivateKeyLabel,
       'server.control.provider.console' => _l10n.serverControlProviderConsole,
       'server.control.provider.console.unavailable' => _l10n.serverControlProviderConsoleUnavailable,
       'server.control.public.key.label' => _l10n.serverControlPublicKeyLabel,
       'server.control.release.checking' => _l10n.serverControlReleaseChecking,
+      'server.control.retry.action' => _l10n.serverControlRetryAction,
       'server.control.show' => _l10n.serverControlShow,
       'server.control.title' => _l10n.serverControlTitle,
       'settings.account.section' => _l10n.settingsAccountSection,
@@ -769,11 +817,26 @@ class L10nKeyResolver {
       'settings.logout.confirm' => _l10n.settingsLogoutConfirm,
       'settings.logout.confirm.body' => _l10n.settingsLogoutConfirmBody,
       'settings.logout.confirm.title' => _l10n.settingsLogoutConfirmTitle,
+      'settings.menu.agent.registry' => _l10n.settingsMenuAgentRegistry,
+      'settings.menu.haptic.feedback' => _l10n.settingsMenuHapticFeedback,
+      'settings.menu.harness.connections' => _l10n.settingsMenuHarnessConnections,
+      'settings.menu.llm.management' => _l10n.settingsMenuLlmManagement,
+      'settings.menu.logout' => _l10n.settingsMenuLogout,
+      'settings.menu.mcp.management' => _l10n.settingsMenuMcpManagement,
+      'settings.menu.notifications' => _l10n.settingsMenuNotifications,
+      'settings.menu.pocket.memory' => _l10n.settingsMenuPocketMemory,
+      'settings.menu.pocketbase' => _l10n.settingsMenuPocketbase,
+      'settings.menu.reset' => _l10n.settingsMenuReset,
+      'settings.menu.scheduler' => _l10n.settingsMenuScheduler,
+      'settings.menu.skills' => _l10n.settingsMenuSkills,
+      'settings.menu.system.checks' => _l10n.settingsMenuSystemChecks,
+      'settings.menu.tool.permissions' => _l10n.settingsMenuToolPermissions,
       'settings.report.ai.content.label' => _l10n.settingsReportAiContentLabel,
       'settings.system.section' => _l10n.settingsSystemSection,
       'settings.title' => _l10n.settingsTitle,
       'skills.add.button' => _l10n.skillsAddButton,
       'skills.add.dialog.title' => _l10n.skillsAddDialogTitle,
+      'skills.built.in.label' => _l10n.skillsBuiltInLabel,
       'skills.content.label' => _l10n.skillsContentLabel,
       'skills.delete.button' => _l10n.skillsDeleteButton,
       'skills.description.label' => _l10n.skillsDescriptionLabel,
@@ -806,6 +869,7 @@ class L10nKeyResolver {
       'thoughts.waiting' => _l10n.thoughtsWaiting,
       'tool.permissions.action.label' => _l10n.toolPermissionsActionLabel,
       'tool.permissions.add' => _l10n.toolPermissionsAdd,
+      'tool.permissions.add.rule.button' => _l10n.toolPermissionsAddRuleButton,
       'tool.permissions.add.rule.title' => _l10n.toolPermissionsAddRuleTitle,
       'tool.permissions.add.title' => _l10n.toolPermissionsAddTitle,
       'tool.permissions.allow.label' => _l10n.toolPermissionsAllowLabel,
@@ -925,6 +989,7 @@ class L10nKeyResolver {
       'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
       'credential.connection.expires.at' => _l10n.credentialConnectionExpiresAt(args?['expiresAt'] as DateTime? ?? DateTime.now()),
+      'deployment.admin.password.too.short' => _l10n.deploymentAdminPasswordTooShort(args?['minLength'] as int? ?? 0),
       'deployment.discard.attempt.resource.id' => _l10n.deploymentDiscardAttemptResourceId(args?['resourceId'] as String? ?? ''),
       'deployment.memory.gb' => _l10n.deploymentMemoryGb(args?['value'] as int? ?? 0),
       'deployment.memory.mb' => _l10n.deploymentMemoryMb(args?['value'] as int? ?? 0),
@@ -933,6 +998,7 @@ class L10nKeyResolver {
       'deployment.plan.specs' => _l10n.deploymentPlanSpecs(args?['vcpus'] as int? ?? 0, args?['memory'] as String? ?? '', args?['diskGb'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'external.auth.connecting' => _l10n.externalAuthConnecting(args?['label'] as String? ?? ''),
+      'foss.server.setup.error.prefix' => _l10n.fossServerSetupErrorPrefix(args?['error'] as String? ?? ''),
       'harness.auth.account' => _l10n.harnessAuthAccount(args?['account'] as String? ?? '', args?['visibility'] as String? ?? ''),
       'harness.auth.api.key.configured' => _l10n.harnessAuthApiKeyConfigured(args?['provider'] as String? ?? ''),
       'harness.auth.attempt' => _l10n.harnessAuthAttempt(args?['id'] as String? ?? ''),
@@ -959,6 +1025,8 @@ class L10nKeyResolver {
       'mcp.oauth.required.label' => _l10n.mcpOauthRequiredLabel(args?['provider'] as String? ?? ''),
       'mcp.purpose.label' => _l10n.mcpPurposeLabel(args?['reason'] as String? ?? ''),
       'mcp.update.config.dialog.title' => _l10n.mcpUpdateConfigDialogTitle(args?['name'] as String? ?? ''),
+      'memory.dashboard.account.summary' => _l10n.memoryDashboardAccountSummary(args?['observations'] as int? ?? 0, args?['interpretations'] as int? ?? 0),
+      'memory.dashboard.linked.prefix' => _l10n.memoryDashboardLinkedPrefix(args?['links'] as String? ?? ''),
       'notification.signal.received' => _l10n.notificationSignalReceived(args?['title'] as String? ?? ''),
       'onboarding.failure.connection.poco' => _l10n.onboardingFailureConnectionPoco(args?['providerName'] as String? ?? ''),
       'onboarding.harness.account.login' => _l10n.onboardingHarnessAccountLogin(args?['harness'] as String? ?? ''),
@@ -971,6 +1039,7 @@ class L10nKeyResolver {
       'permission.requesting.label' => _l10n.permissionRequestingLabel(args?['source'] as String? ?? ''),
       'pocket.coder.update.data.boundary' => _l10n.pocketCoderUpdateDataBoundary(args?['currentVersion'] as int? ?? 0, args?['availableVersion'] as int? ?? 0),
       'pocket.coder.update.failed' => _l10n.pocketCoderUpdateFailed(args?['exitCode'] as int? ?? 0),
+      'pocketbase.inspector.chat.archived.title' => _l10n.pocketbaseInspectorChatArchivedTitle(args?['title'] as String? ?? ''),
       'pro.price' => _l10n.proPrice(args?['price'] as String? ?? ''),
       'pro.price.after.trial' => _l10n.proPriceAfterTrial(args?['price'] as String? ?? ''),
       'pro.price.per.month' => _l10n.proPricePerMonth(args?['price'] as String? ?? ''),
@@ -987,6 +1056,7 @@ class L10nKeyResolver {
       'provider.screen.harness.model.count' => _l10n.providerScreenHarnessModelCount(args?['count'] as int? ?? 0),
       'scheduler.edit.dialog.title' => _l10n.schedulerEditDialogTitle(args?['name'] as String? ?? ''),
       'server.control.confirm.body' => _l10n.serverControlConfirmBody(args?['operation'] as String? ?? ''),
+      'server.control.error.prefix' => _l10n.serverControlErrorPrefix(args?['error'] as String? ?? ''),
       'server.control.release.available' => _l10n.serverControlReleaseAvailable(args?['version'] as String? ?? ''),
       'server.control.release.contracts' => _l10n.serverControlReleaseContracts(args?['app'] as String? ?? '', args?['server'] as String? ?? '', args?['deployment'] as String? ?? ''),
       'server.control.release.current' => _l10n.serverControlReleaseCurrent(args?['version'] as String? ?? ''),
@@ -1050,6 +1120,8 @@ class L10nKeyResolver {
     'agent.none',
     'agent.none.selected',
     'agent.parameters.label',
+    'agent.plan.panel.badge',
+    'agent.plan.panel.label',
     'agent.prompts.label',
     'agent.registry.empty',
     'agent.searching',
@@ -1068,15 +1140,23 @@ class L10nKeyResolver {
     'boot.checking.connection',
     'boot.connection.failed',
     'boot.load.error',
+    'boot.noise.context.switch',
+    'boot.noise.gc.minor',
+    'boot.noise.heartbeat',
+    'boot.noise.keepalive',
+    'boot.noise.reasoning.engine',
     'boot.poco.intro',
     'boot.systems.nominal',
     'boot.welcome.back',
     'brief.label',
     'chat.awaiting.harness.start',
     'chat.command.output',
+    'chat.commander.prompt',
     'chat.commander.role',
+    'chat.composer.prompt',
     'chat.created',
     'chat.decline',
+    'chat.elicitation.form.label',
     'chat.elicitation.request',
     'chat.error',
     'chat.fetch.failed',
@@ -1098,6 +1178,8 @@ class L10nKeyResolver {
     'chat.new.capability.request',
     'chat.no.fields.requested',
     'chat.not.found',
+    'chat.picker.field.indicator',
+    'chat.poco.prompt',
     'chat.poco.role',
     'chat.run.outcome.cancelled.body',
     'chat.run.outcome.cancelled.title',
@@ -1140,6 +1222,7 @@ class L10nKeyResolver {
     'deployment.action.initialize',
     'deployment.action.refresh',
     'deployment.action.update',
+    'deployment.admin.password.too.short',
     'deployment.backend',
     'deployment.cleanup.failed',
     'deployment.cleanup.not.needed',
@@ -1147,6 +1230,7 @@ class L10nKeyResolver {
     'deployment.cleanup.succeeded',
     'deployment.coding.agents.title',
     'deployment.coding.harnesses',
+    'deployment.config.not.ready.error',
     'deployment.debian',
     'deployment.debian.description',
     'deployment.default.agent',
@@ -1198,6 +1282,7 @@ class L10nKeyResolver {
     'deployment.operating.system',
     'deployment.plan.poco',
     'deployment.plan.specs',
+    'deployment.provider.fake',
     'deployment.provider.linode',
     'deployment.provisioned',
     'deployment.provisioning.summary',
@@ -1274,6 +1359,7 @@ class L10nKeyResolver {
     'errors.copied',
     'errors.copy',
     'errors.copy.all',
+    'errors.delete.action',
     'errors.empty',
     'errors.occurred',
     'errors.report.on.github',
@@ -1294,6 +1380,7 @@ class L10nKeyResolver {
     'files.title',
     'files.too.large.to.preview',
     'foss.server.setup.connected',
+    'foss.server.setup.error.prefix',
     'foss.server.setup.generate.key',
     'foss.server.setup.host.label',
     'foss.server.setup.intro',
@@ -1343,6 +1430,7 @@ class L10nKeyResolver {
     'initialization.cloud.region',
     'initialization.connection.parameters',
     'initialization.copied.to.buffer',
+    'initialization.copy.action',
     'initialization.copy.label',
     'initialization.current.operation',
     'initialization.description.initializing',
@@ -1358,6 +1446,7 @@ class L10nKeyResolver {
     'initialization.fault.resource.already.exists',
     'initialization.geo.grid',
     'initialization.hardware.plan',
+    'initialization.hide.action',
     'initialization.https.endpoint',
     'initialization.in.progress',
     'initialization.instance.id',
@@ -1366,12 +1455,14 @@ class L10nKeyResolver {
     'initialization.last.signal',
     'initialization.metadata.registry',
     'initialization.network.ip',
+    'initialization.not.available',
     'initialization.ready',
     'initialization.retry.attempt',
     'initialization.run.id',
     'initialization.screen.title',
     'initialization.secure',
     'initialization.security.notice',
+    'initialization.show.action',
     'initialization.source.commit',
     'initialization.status.initializing',
     'initialization.status.prefix',
@@ -1444,6 +1535,19 @@ class L10nKeyResolver {
     'mcp.server.name.label',
     'mcp.title',
     'mcp.update.config.dialog.title',
+    'memory.dashboard.account.summary',
+    'memory.dashboard.by.account',
+    'memory.dashboard.interpretations',
+    'memory.dashboard.linked.prefix',
+    'memory.dashboard.links',
+    'memory.dashboard.no.interpretations.yet',
+    'memory.dashboard.no.memory.recorded',
+    'memory.dashboard.no.observations.yet',
+    'memory.dashboard.observations',
+    'memory.dashboard.recent.interpretations',
+    'memory.dashboard.recent.observations',
+    'memory.dashboard.title',
+    'memory.dashboard.unavailable',
     'monitor.telemetry.unavailable',
     'monitor.title',
     'nav.chats',
@@ -1636,6 +1740,17 @@ class L10nKeyResolver {
     'pocket.coder.update.unknown.status',
     'pocket.coder.update.upgrade',
     'pocket.coder.update.working',
+    'pocketbase.inspector.agent.profiles',
+    'pocketbase.inspector.chat.archived.title',
+    'pocketbase.inspector.chats',
+    'pocketbase.inspector.harnesses',
+    'pocketbase.inspector.mcp.servers',
+    'pocketbase.inspector.no.chats.yet',
+    'pocketbase.inspector.recent.chats',
+    'pocketbase.inspector.skills',
+    'pocketbase.inspector.title',
+    'pocketbase.inspector.unavailable',
+    'pocketbase.inspector.users',
     'poco.lesson.agent.explanation',
     'poco.lesson.agent.title',
     'poco.lesson.compose.start.explanation',
@@ -1732,9 +1847,14 @@ class L10nKeyResolver {
     'provider.screen.add.key',
     'provider.screen.add.key.body',
     'provider.screen.add.key.title',
+    'provider.screen.api.key.label',
+    'provider.screen.api.key.leave.blank.hint',
+    'provider.screen.api.key.not.set',
+    'provider.screen.api.key.stored.securely',
     'provider.screen.api.keys.section',
     'provider.screen.browse.all.models',
     'provider.screen.default.badge',
+    'provider.screen.delete.key.action',
     'provider.screen.empty.hint',
     'provider.screen.error.prefix',
     'provider.screen.harness.model.count',
@@ -1743,6 +1863,7 @@ class L10nKeyResolver {
     'provider.screen.no.api.keys',
     'provider.screen.no.harness.models',
     'provider.screen.no.providers',
+    'provider.screen.provider.label',
     'provider.screen.search.hint',
     'provider.screen.search.label',
     'provider.screen.search.no.matches',
@@ -1784,6 +1905,7 @@ class L10nKeyResolver {
     'server.control.connection.details',
     'server.control.copied',
     'server.control.copy',
+    'server.control.error.prefix',
     'server.control.group.data',
     'server.control.group.nix.os',
     'server.control.group.pocket.coder',
@@ -1797,6 +1919,7 @@ class L10nKeyResolver {
     'server.control.operation.save.backup',
     'server.control.operation.update.nix.os',
     'server.control.operation.update.pocket.coder',
+    'server.control.output.label',
     'server.control.private.key.label',
     'server.control.provider.console',
     'server.control.provider.console.unavailable',
@@ -1807,6 +1930,7 @@ class L10nKeyResolver {
     'server.control.release.current',
     'server.control.release.nixos',
     'server.control.release.status',
+    'server.control.retry.action',
     'server.control.show',
     'server.control.title',
     'settings.account.section',
@@ -1824,11 +1948,26 @@ class L10nKeyResolver {
     'settings.logout.confirm',
     'settings.logout.confirm.body',
     'settings.logout.confirm.title',
+    'settings.menu.agent.registry',
+    'settings.menu.haptic.feedback',
+    'settings.menu.harness.connections',
+    'settings.menu.llm.management',
+    'settings.menu.logout',
+    'settings.menu.mcp.management',
+    'settings.menu.notifications',
+    'settings.menu.pocket.memory',
+    'settings.menu.pocketbase',
+    'settings.menu.reset',
+    'settings.menu.scheduler',
+    'settings.menu.skills',
+    'settings.menu.system.checks',
+    'settings.menu.tool.permissions',
     'settings.report.ai.content.label',
     'settings.system.section',
     'settings.title',
     'skills.add.button',
     'skills.add.dialog.title',
+    'skills.built.in.label',
     'skills.content.label',
     'skills.delete.button',
     'skills.description.label',
@@ -1863,6 +2002,7 @@ class L10nKeyResolver {
     'thoughts.waiting',
     'tool.permissions.action.label',
     'tool.permissions.add',
+    'tool.permissions.add.rule.button',
     'tool.permissions.add.rule.title',
     'tool.permissions.add.title',
     'tool.permissions.allow.label',
@@ -2027,6 +2167,8 @@ class L10nKeyResolver {
     'agentNone': 'agent.none',
     'agentNoneSelected': 'agent.none.selected',
     'agentParametersLabel': 'agent.parameters.label',
+    'agentPlanPanelBadge': 'agent.plan.panel.badge',
+    'agentPlanPanelLabel': 'agent.plan.panel.label',
     'agentPromptsLabel': 'agent.prompts.label',
     'agentRegistryEmpty': 'agent.registry.empty',
     'agentSearching': 'agent.searching',
@@ -2045,15 +2187,23 @@ class L10nKeyResolver {
     'bootCheckingConnection': 'boot.checking.connection',
     'bootConnectionFailed': 'boot.connection.failed',
     'bootLoadError': 'boot.load.error',
+    'bootNoiseContextSwitch': 'boot.noise.context.switch',
+    'bootNoiseGcMinor': 'boot.noise.gc.minor',
+    'bootNoiseHeartbeat': 'boot.noise.heartbeat',
+    'bootNoiseKeepalive': 'boot.noise.keepalive',
+    'bootNoiseReasoningEngine': 'boot.noise.reasoning.engine',
     'bootPocoIntro': 'boot.poco.intro',
     'bootSystemsNominal': 'boot.systems.nominal',
     'bootWelcomeBack': 'boot.welcome.back',
     'briefLabel': 'brief.label',
     'chatAwaitingHarnessStart': 'chat.awaiting.harness.start',
     'chatCommandOutput': 'chat.command.output',
+    'chatCommanderPrompt': 'chat.commander.prompt',
     'chatCommanderRole': 'chat.commander.role',
+    'chatComposerPrompt': 'chat.composer.prompt',
     'chatCreated': 'chat.created',
     'chatDecline': 'chat.decline',
+    'chatElicitationFormLabel': 'chat.elicitation.form.label',
     'chatElicitationRequest': 'chat.elicitation.request',
     'chatError': 'chat.error',
     'chatFetchFailed': 'chat.fetch.failed',
@@ -2075,6 +2225,8 @@ class L10nKeyResolver {
     'chatNewCapabilityRequest': 'chat.new.capability.request',
     'chatNoFieldsRequested': 'chat.no.fields.requested',
     'chatNotFound': 'chat.not.found',
+    'chatPickerFieldIndicator': 'chat.picker.field.indicator',
+    'chatPocoPrompt': 'chat.poco.prompt',
     'chatPocoRole': 'chat.poco.role',
     'chatRunOutcomeCancelledBody': 'chat.run.outcome.cancelled.body',
     'chatRunOutcomeCancelledTitle': 'chat.run.outcome.cancelled.title',
@@ -2117,6 +2269,7 @@ class L10nKeyResolver {
     'deploymentActionInitialize': 'deployment.action.initialize',
     'deploymentActionRefresh': 'deployment.action.refresh',
     'deploymentActionUpdate': 'deployment.action.update',
+    'deploymentAdminPasswordTooShort': 'deployment.admin.password.too.short',
     'deploymentBackend': 'deployment.backend',
     'deploymentCleanupFailed': 'deployment.cleanup.failed',
     'deploymentCleanupNotNeeded': 'deployment.cleanup.not.needed',
@@ -2124,6 +2277,7 @@ class L10nKeyResolver {
     'deploymentCleanupSucceeded': 'deployment.cleanup.succeeded',
     'deploymentCodingAgentsTitle': 'deployment.coding.agents.title',
     'deploymentCodingHarnesses': 'deployment.coding.harnesses',
+    'deploymentConfigNotReadyError': 'deployment.config.not.ready.error',
     'deploymentDebian': 'deployment.debian',
     'deploymentDebianDescription': 'deployment.debian.description',
     'deploymentDefaultAgent': 'deployment.default.agent',
@@ -2175,6 +2329,7 @@ class L10nKeyResolver {
     'deploymentOperatingSystem': 'deployment.operating.system',
     'deploymentPlanPoco': 'deployment.plan.poco',
     'deploymentPlanSpecs': 'deployment.plan.specs',
+    'deploymentProviderFake': 'deployment.provider.fake',
     'deploymentProviderLinode': 'deployment.provider.linode',
     'deploymentProvisioned': 'deployment.provisioned',
     'deploymentProvisioningSummary': 'deployment.provisioning.summary',
@@ -2251,6 +2406,7 @@ class L10nKeyResolver {
     'errorsCopied': 'errors.copied',
     'errorsCopy': 'errors.copy',
     'errorsCopyAll': 'errors.copy.all',
+    'errorsDeleteAction': 'errors.delete.action',
     'errorsEmpty': 'errors.empty',
     'errorsOccurred': 'errors.occurred',
     'errorsReportOnGithub': 'errors.report.on.github',
@@ -2271,6 +2427,7 @@ class L10nKeyResolver {
     'filesTitle': 'files.title',
     'filesTooLargeToPreview': 'files.too.large.to.preview',
     'fossServerSetupConnected': 'foss.server.setup.connected',
+    'fossServerSetupErrorPrefix': 'foss.server.setup.error.prefix',
     'fossServerSetupGenerateKey': 'foss.server.setup.generate.key',
     'fossServerSetupHostLabel': 'foss.server.setup.host.label',
     'fossServerSetupIntro': 'foss.server.setup.intro',
@@ -2320,6 +2477,7 @@ class L10nKeyResolver {
     'initializationCloudRegion': 'initialization.cloud.region',
     'initializationConnectionParameters': 'initialization.connection.parameters',
     'initializationCopiedToBuffer': 'initialization.copied.to.buffer',
+    'initializationCopyAction': 'initialization.copy.action',
     'initializationCopyLabel': 'initialization.copy.label',
     'initializationCurrentOperation': 'initialization.current.operation',
     'initializationDescriptionInitializing': 'initialization.description.initializing',
@@ -2335,6 +2493,7 @@ class L10nKeyResolver {
     'initializationFaultResourceAlreadyExists': 'initialization.fault.resource.already.exists',
     'initializationGeoGrid': 'initialization.geo.grid',
     'initializationHardwarePlan': 'initialization.hardware.plan',
+    'initializationHideAction': 'initialization.hide.action',
     'initializationHttpsEndpoint': 'initialization.https.endpoint',
     'initializationInProgress': 'initialization.in.progress',
     'initializationInstanceId': 'initialization.instance.id',
@@ -2343,12 +2502,14 @@ class L10nKeyResolver {
     'initializationLastSignal': 'initialization.last.signal',
     'initializationMetadataRegistry': 'initialization.metadata.registry',
     'initializationNetworkIp': 'initialization.network.ip',
+    'initializationNotAvailable': 'initialization.not.available',
     'initializationReady': 'initialization.ready',
     'initializationRetryAttempt': 'initialization.retry.attempt',
     'initializationRunId': 'initialization.run.id',
     'initializationScreenTitle': 'initialization.screen.title',
     'initializationSecure': 'initialization.secure',
     'initializationSecurityNotice': 'initialization.security.notice',
+    'initializationShowAction': 'initialization.show.action',
     'initializationSourceCommit': 'initialization.source.commit',
     'initializationStatusInitializing': 'initialization.status.initializing',
     'initializationStatusPrefix': 'initialization.status.prefix',
@@ -2421,6 +2582,19 @@ class L10nKeyResolver {
     'mcpServerNameLabel': 'mcp.server.name.label',
     'mcpTitle': 'mcp.title',
     'mcpUpdateConfigDialogTitle': 'mcp.update.config.dialog.title',
+    'memoryDashboardAccountSummary': 'memory.dashboard.account.summary',
+    'memoryDashboardByAccount': 'memory.dashboard.by.account',
+    'memoryDashboardInterpretations': 'memory.dashboard.interpretations',
+    'memoryDashboardLinkedPrefix': 'memory.dashboard.linked.prefix',
+    'memoryDashboardLinks': 'memory.dashboard.links',
+    'memoryDashboardNoInterpretationsYet': 'memory.dashboard.no.interpretations.yet',
+    'memoryDashboardNoMemoryRecorded': 'memory.dashboard.no.memory.recorded',
+    'memoryDashboardNoObservationsYet': 'memory.dashboard.no.observations.yet',
+    'memoryDashboardObservations': 'memory.dashboard.observations',
+    'memoryDashboardRecentInterpretations': 'memory.dashboard.recent.interpretations',
+    'memoryDashboardRecentObservations': 'memory.dashboard.recent.observations',
+    'memoryDashboardTitle': 'memory.dashboard.title',
+    'memoryDashboardUnavailable': 'memory.dashboard.unavailable',
     'monitorTelemetryUnavailable': 'monitor.telemetry.unavailable',
     'monitorTitle': 'monitor.title',
     'navChats': 'nav.chats',
@@ -2613,6 +2787,17 @@ class L10nKeyResolver {
     'pocketCoderUpdateUnknownStatus': 'pocket.coder.update.unknown.status',
     'pocketCoderUpdateUpgrade': 'pocket.coder.update.upgrade',
     'pocketCoderUpdateWorking': 'pocket.coder.update.working',
+    'pocketbaseInspectorAgentProfiles': 'pocketbase.inspector.agent.profiles',
+    'pocketbaseInspectorChatArchivedTitle': 'pocketbase.inspector.chat.archived.title',
+    'pocketbaseInspectorChats': 'pocketbase.inspector.chats',
+    'pocketbaseInspectorHarnesses': 'pocketbase.inspector.harnesses',
+    'pocketbaseInspectorMcpServers': 'pocketbase.inspector.mcp.servers',
+    'pocketbaseInspectorNoChatsYet': 'pocketbase.inspector.no.chats.yet',
+    'pocketbaseInspectorRecentChats': 'pocketbase.inspector.recent.chats',
+    'pocketbaseInspectorSkills': 'pocketbase.inspector.skills',
+    'pocketbaseInspectorTitle': 'pocketbase.inspector.title',
+    'pocketbaseInspectorUnavailable': 'pocketbase.inspector.unavailable',
+    'pocketbaseInspectorUsers': 'pocketbase.inspector.users',
     'pocoLessonAgentExplanation': 'poco.lesson.agent.explanation',
     'pocoLessonAgentTitle': 'poco.lesson.agent.title',
     'pocoLessonComposeStartExplanation': 'poco.lesson.compose.start.explanation',
@@ -2709,9 +2894,14 @@ class L10nKeyResolver {
     'providerScreenAddKey': 'provider.screen.add.key',
     'providerScreenAddKeyBody': 'provider.screen.add.key.body',
     'providerScreenAddKeyTitle': 'provider.screen.add.key.title',
+    'providerScreenApiKeyLabel': 'provider.screen.api.key.label',
+    'providerScreenApiKeyLeaveBlankHint': 'provider.screen.api.key.leave.blank.hint',
+    'providerScreenApiKeyNotSet': 'provider.screen.api.key.not.set',
+    'providerScreenApiKeyStoredSecurely': 'provider.screen.api.key.stored.securely',
     'providerScreenApiKeysSection': 'provider.screen.api.keys.section',
     'providerScreenBrowseAllModels': 'provider.screen.browse.all.models',
     'providerScreenDefaultBadge': 'provider.screen.default.badge',
+    'providerScreenDeleteKeyAction': 'provider.screen.delete.key.action',
     'providerScreenEmptyHint': 'provider.screen.empty.hint',
     'providerScreenErrorPrefix': 'provider.screen.error.prefix',
     'providerScreenHarnessModelCount': 'provider.screen.harness.model.count',
@@ -2720,6 +2910,7 @@ class L10nKeyResolver {
     'providerScreenNoApiKeys': 'provider.screen.no.api.keys',
     'providerScreenNoHarnessModels': 'provider.screen.no.harness.models',
     'providerScreenNoProviders': 'provider.screen.no.providers',
+    'providerScreenProviderLabel': 'provider.screen.provider.label',
     'providerScreenSearchHint': 'provider.screen.search.hint',
     'providerScreenSearchLabel': 'provider.screen.search.label',
     'providerScreenSearchNoMatches': 'provider.screen.search.no.matches',
@@ -2761,6 +2952,7 @@ class L10nKeyResolver {
     'serverControlConnectionDetails': 'server.control.connection.details',
     'serverControlCopied': 'server.control.copied',
     'serverControlCopy': 'server.control.copy',
+    'serverControlErrorPrefix': 'server.control.error.prefix',
     'serverControlGroupData': 'server.control.group.data',
     'serverControlGroupNixOs': 'server.control.group.nix.os',
     'serverControlGroupPocketCoder': 'server.control.group.pocket.coder',
@@ -2774,6 +2966,7 @@ class L10nKeyResolver {
     'serverControlOperationSaveBackup': 'server.control.operation.save.backup',
     'serverControlOperationUpdateNixOs': 'server.control.operation.update.nix.os',
     'serverControlOperationUpdatePocketCoder': 'server.control.operation.update.pocket.coder',
+    'serverControlOutputLabel': 'server.control.output.label',
     'serverControlPrivateKeyLabel': 'server.control.private.key.label',
     'serverControlProviderConsole': 'server.control.provider.console',
     'serverControlProviderConsoleUnavailable': 'server.control.provider.console.unavailable',
@@ -2784,6 +2977,7 @@ class L10nKeyResolver {
     'serverControlReleaseCurrent': 'server.control.release.current',
     'serverControlReleaseNixos': 'server.control.release.nixos',
     'serverControlReleaseStatus': 'server.control.release.status',
+    'serverControlRetryAction': 'server.control.retry.action',
     'serverControlShow': 'server.control.show',
     'serverControlTitle': 'server.control.title',
     'settingsAccountSection': 'settings.account.section',
@@ -2801,11 +2995,26 @@ class L10nKeyResolver {
     'settingsLogoutConfirm': 'settings.logout.confirm',
     'settingsLogoutConfirmBody': 'settings.logout.confirm.body',
     'settingsLogoutConfirmTitle': 'settings.logout.confirm.title',
+    'settingsMenuAgentRegistry': 'settings.menu.agent.registry',
+    'settingsMenuHapticFeedback': 'settings.menu.haptic.feedback',
+    'settingsMenuHarnessConnections': 'settings.menu.harness.connections',
+    'settingsMenuLlmManagement': 'settings.menu.llm.management',
+    'settingsMenuLogout': 'settings.menu.logout',
+    'settingsMenuMcpManagement': 'settings.menu.mcp.management',
+    'settingsMenuNotifications': 'settings.menu.notifications',
+    'settingsMenuPocketMemory': 'settings.menu.pocket.memory',
+    'settingsMenuPocketbase': 'settings.menu.pocketbase',
+    'settingsMenuReset': 'settings.menu.reset',
+    'settingsMenuScheduler': 'settings.menu.scheduler',
+    'settingsMenuSkills': 'settings.menu.skills',
+    'settingsMenuSystemChecks': 'settings.menu.system.checks',
+    'settingsMenuToolPermissions': 'settings.menu.tool.permissions',
     'settingsReportAiContentLabel': 'settings.report.ai.content.label',
     'settingsSystemSection': 'settings.system.section',
     'settingsTitle': 'settings.title',
     'skillsAddButton': 'skills.add.button',
     'skillsAddDialogTitle': 'skills.add.dialog.title',
+    'skillsBuiltInLabel': 'skills.built.in.label',
     'skillsContentLabel': 'skills.content.label',
     'skillsDeleteButton': 'skills.delete.button',
     'skillsDescriptionLabel': 'skills.description.label',
@@ -2840,6 +3049,7 @@ class L10nKeyResolver {
     'thoughtsWaiting': 'thoughts.waiting',
     'toolPermissionsActionLabel': 'tool.permissions.action.label',
     'toolPermissionsAdd': 'tool.permissions.add',
+    'toolPermissionsAddRuleButton': 'tool.permissions.add.rule.button',
     'toolPermissionsAddRuleTitle': 'tool.permissions.add.rule.title',
     'toolPermissionsAddTitle': 'tool.permissions.add.title',
     'toolPermissionsAllowLabel': 'tool.permissions.allow.label',
@@ -3001,6 +3211,8 @@ class L10nKeyResolver {
     'agent.none': 'agentNone',
     'agent.none.selected': 'agentNoneSelected',
     'agent.parameters.label': 'agentParametersLabel',
+    'agent.plan.panel.badge': 'agentPlanPanelBadge',
+    'agent.plan.panel.label': 'agentPlanPanelLabel',
     'agent.prompts.label': 'agentPromptsLabel',
     'agent.registry.empty': 'agentRegistryEmpty',
     'agent.searching': 'agentSearching',
@@ -3019,15 +3231,23 @@ class L10nKeyResolver {
     'boot.checking.connection': 'bootCheckingConnection',
     'boot.connection.failed': 'bootConnectionFailed',
     'boot.load.error': 'bootLoadError',
+    'boot.noise.context.switch': 'bootNoiseContextSwitch',
+    'boot.noise.gc.minor': 'bootNoiseGcMinor',
+    'boot.noise.heartbeat': 'bootNoiseHeartbeat',
+    'boot.noise.keepalive': 'bootNoiseKeepalive',
+    'boot.noise.reasoning.engine': 'bootNoiseReasoningEngine',
     'boot.poco.intro': 'bootPocoIntro',
     'boot.systems.nominal': 'bootSystemsNominal',
     'boot.welcome.back': 'bootWelcomeBack',
     'brief.label': 'briefLabel',
     'chat.awaiting.harness.start': 'chatAwaitingHarnessStart',
     'chat.command.output': 'chatCommandOutput',
+    'chat.commander.prompt': 'chatCommanderPrompt',
     'chat.commander.role': 'chatCommanderRole',
+    'chat.composer.prompt': 'chatComposerPrompt',
     'chat.created': 'chatCreated',
     'chat.decline': 'chatDecline',
+    'chat.elicitation.form.label': 'chatElicitationFormLabel',
     'chat.elicitation.request': 'chatElicitationRequest',
     'chat.error': 'chatError',
     'chat.fetch.failed': 'chatFetchFailed',
@@ -3049,6 +3269,8 @@ class L10nKeyResolver {
     'chat.new.capability.request': 'chatNewCapabilityRequest',
     'chat.no.fields.requested': 'chatNoFieldsRequested',
     'chat.not.found': 'chatNotFound',
+    'chat.picker.field.indicator': 'chatPickerFieldIndicator',
+    'chat.poco.prompt': 'chatPocoPrompt',
     'chat.poco.role': 'chatPocoRole',
     'chat.run.outcome.cancelled.body': 'chatRunOutcomeCancelledBody',
     'chat.run.outcome.cancelled.title': 'chatRunOutcomeCancelledTitle',
@@ -3091,6 +3313,7 @@ class L10nKeyResolver {
     'deployment.action.initialize': 'deploymentActionInitialize',
     'deployment.action.refresh': 'deploymentActionRefresh',
     'deployment.action.update': 'deploymentActionUpdate',
+    'deployment.admin.password.too.short': 'deploymentAdminPasswordTooShort',
     'deployment.backend': 'deploymentBackend',
     'deployment.cleanup.failed': 'deploymentCleanupFailed',
     'deployment.cleanup.not.needed': 'deploymentCleanupNotNeeded',
@@ -3098,6 +3321,7 @@ class L10nKeyResolver {
     'deployment.cleanup.succeeded': 'deploymentCleanupSucceeded',
     'deployment.coding.agents.title': 'deploymentCodingAgentsTitle',
     'deployment.coding.harnesses': 'deploymentCodingHarnesses',
+    'deployment.config.not.ready.error': 'deploymentConfigNotReadyError',
     'deployment.debian': 'deploymentDebian',
     'deployment.debian.description': 'deploymentDebianDescription',
     'deployment.default.agent': 'deploymentDefaultAgent',
@@ -3149,6 +3373,7 @@ class L10nKeyResolver {
     'deployment.operating.system': 'deploymentOperatingSystem',
     'deployment.plan.poco': 'deploymentPlanPoco',
     'deployment.plan.specs': 'deploymentPlanSpecs',
+    'deployment.provider.fake': 'deploymentProviderFake',
     'deployment.provider.linode': 'deploymentProviderLinode',
     'deployment.provisioned': 'deploymentProvisioned',
     'deployment.provisioning.summary': 'deploymentProvisioningSummary',
@@ -3225,6 +3450,7 @@ class L10nKeyResolver {
     'errors.copied': 'errorsCopied',
     'errors.copy': 'errorsCopy',
     'errors.copy.all': 'errorsCopyAll',
+    'errors.delete.action': 'errorsDeleteAction',
     'errors.empty': 'errorsEmpty',
     'errors.occurred': 'errorsOccurred',
     'errors.report.on.github': 'errorsReportOnGithub',
@@ -3245,6 +3471,7 @@ class L10nKeyResolver {
     'files.title': 'filesTitle',
     'files.too.large.to.preview': 'filesTooLargeToPreview',
     'foss.server.setup.connected': 'fossServerSetupConnected',
+    'foss.server.setup.error.prefix': 'fossServerSetupErrorPrefix',
     'foss.server.setup.generate.key': 'fossServerSetupGenerateKey',
     'foss.server.setup.host.label': 'fossServerSetupHostLabel',
     'foss.server.setup.intro': 'fossServerSetupIntro',
@@ -3294,6 +3521,7 @@ class L10nKeyResolver {
     'initialization.cloud.region': 'initializationCloudRegion',
     'initialization.connection.parameters': 'initializationConnectionParameters',
     'initialization.copied.to.buffer': 'initializationCopiedToBuffer',
+    'initialization.copy.action': 'initializationCopyAction',
     'initialization.copy.label': 'initializationCopyLabel',
     'initialization.current.operation': 'initializationCurrentOperation',
     'initialization.description.initializing': 'initializationDescriptionInitializing',
@@ -3309,6 +3537,7 @@ class L10nKeyResolver {
     'initialization.fault.resource.already.exists': 'initializationFaultResourceAlreadyExists',
     'initialization.geo.grid': 'initializationGeoGrid',
     'initialization.hardware.plan': 'initializationHardwarePlan',
+    'initialization.hide.action': 'initializationHideAction',
     'initialization.https.endpoint': 'initializationHttpsEndpoint',
     'initialization.in.progress': 'initializationInProgress',
     'initialization.instance.id': 'initializationInstanceId',
@@ -3317,12 +3546,14 @@ class L10nKeyResolver {
     'initialization.last.signal': 'initializationLastSignal',
     'initialization.metadata.registry': 'initializationMetadataRegistry',
     'initialization.network.ip': 'initializationNetworkIp',
+    'initialization.not.available': 'initializationNotAvailable',
     'initialization.ready': 'initializationReady',
     'initialization.retry.attempt': 'initializationRetryAttempt',
     'initialization.run.id': 'initializationRunId',
     'initialization.screen.title': 'initializationScreenTitle',
     'initialization.secure': 'initializationSecure',
     'initialization.security.notice': 'initializationSecurityNotice',
+    'initialization.show.action': 'initializationShowAction',
     'initialization.source.commit': 'initializationSourceCommit',
     'initialization.status.initializing': 'initializationStatusInitializing',
     'initialization.status.prefix': 'initializationStatusPrefix',
@@ -3395,6 +3626,19 @@ class L10nKeyResolver {
     'mcp.server.name.label': 'mcpServerNameLabel',
     'mcp.title': 'mcpTitle',
     'mcp.update.config.dialog.title': 'mcpUpdateConfigDialogTitle',
+    'memory.dashboard.account.summary': 'memoryDashboardAccountSummary',
+    'memory.dashboard.by.account': 'memoryDashboardByAccount',
+    'memory.dashboard.interpretations': 'memoryDashboardInterpretations',
+    'memory.dashboard.linked.prefix': 'memoryDashboardLinkedPrefix',
+    'memory.dashboard.links': 'memoryDashboardLinks',
+    'memory.dashboard.no.interpretations.yet': 'memoryDashboardNoInterpretationsYet',
+    'memory.dashboard.no.memory.recorded': 'memoryDashboardNoMemoryRecorded',
+    'memory.dashboard.no.observations.yet': 'memoryDashboardNoObservationsYet',
+    'memory.dashboard.observations': 'memoryDashboardObservations',
+    'memory.dashboard.recent.interpretations': 'memoryDashboardRecentInterpretations',
+    'memory.dashboard.recent.observations': 'memoryDashboardRecentObservations',
+    'memory.dashboard.title': 'memoryDashboardTitle',
+    'memory.dashboard.unavailable': 'memoryDashboardUnavailable',
     'monitor.telemetry.unavailable': 'monitorTelemetryUnavailable',
     'monitor.title': 'monitorTitle',
     'nav.chats': 'navChats',
@@ -3587,6 +3831,17 @@ class L10nKeyResolver {
     'pocket.coder.update.unknown.status': 'pocketCoderUpdateUnknownStatus',
     'pocket.coder.update.upgrade': 'pocketCoderUpdateUpgrade',
     'pocket.coder.update.working': 'pocketCoderUpdateWorking',
+    'pocketbase.inspector.agent.profiles': 'pocketbaseInspectorAgentProfiles',
+    'pocketbase.inspector.chat.archived.title': 'pocketbaseInspectorChatArchivedTitle',
+    'pocketbase.inspector.chats': 'pocketbaseInspectorChats',
+    'pocketbase.inspector.harnesses': 'pocketbaseInspectorHarnesses',
+    'pocketbase.inspector.mcp.servers': 'pocketbaseInspectorMcpServers',
+    'pocketbase.inspector.no.chats.yet': 'pocketbaseInspectorNoChatsYet',
+    'pocketbase.inspector.recent.chats': 'pocketbaseInspectorRecentChats',
+    'pocketbase.inspector.skills': 'pocketbaseInspectorSkills',
+    'pocketbase.inspector.title': 'pocketbaseInspectorTitle',
+    'pocketbase.inspector.unavailable': 'pocketbaseInspectorUnavailable',
+    'pocketbase.inspector.users': 'pocketbaseInspectorUsers',
     'poco.lesson.agent.explanation': 'pocoLessonAgentExplanation',
     'poco.lesson.agent.title': 'pocoLessonAgentTitle',
     'poco.lesson.compose.start.explanation': 'pocoLessonComposeStartExplanation',
@@ -3683,9 +3938,14 @@ class L10nKeyResolver {
     'provider.screen.add.key': 'providerScreenAddKey',
     'provider.screen.add.key.body': 'providerScreenAddKeyBody',
     'provider.screen.add.key.title': 'providerScreenAddKeyTitle',
+    'provider.screen.api.key.label': 'providerScreenApiKeyLabel',
+    'provider.screen.api.key.leave.blank.hint': 'providerScreenApiKeyLeaveBlankHint',
+    'provider.screen.api.key.not.set': 'providerScreenApiKeyNotSet',
+    'provider.screen.api.key.stored.securely': 'providerScreenApiKeyStoredSecurely',
     'provider.screen.api.keys.section': 'providerScreenApiKeysSection',
     'provider.screen.browse.all.models': 'providerScreenBrowseAllModels',
     'provider.screen.default.badge': 'providerScreenDefaultBadge',
+    'provider.screen.delete.key.action': 'providerScreenDeleteKeyAction',
     'provider.screen.empty.hint': 'providerScreenEmptyHint',
     'provider.screen.error.prefix': 'providerScreenErrorPrefix',
     'provider.screen.harness.model.count': 'providerScreenHarnessModelCount',
@@ -3694,6 +3954,7 @@ class L10nKeyResolver {
     'provider.screen.no.api.keys': 'providerScreenNoApiKeys',
     'provider.screen.no.harness.models': 'providerScreenNoHarnessModels',
     'provider.screen.no.providers': 'providerScreenNoProviders',
+    'provider.screen.provider.label': 'providerScreenProviderLabel',
     'provider.screen.search.hint': 'providerScreenSearchHint',
     'provider.screen.search.label': 'providerScreenSearchLabel',
     'provider.screen.search.no.matches': 'providerScreenSearchNoMatches',
@@ -3735,6 +3996,7 @@ class L10nKeyResolver {
     'server.control.connection.details': 'serverControlConnectionDetails',
     'server.control.copied': 'serverControlCopied',
     'server.control.copy': 'serverControlCopy',
+    'server.control.error.prefix': 'serverControlErrorPrefix',
     'server.control.group.data': 'serverControlGroupData',
     'server.control.group.nix.os': 'serverControlGroupNixOs',
     'server.control.group.pocket.coder': 'serverControlGroupPocketCoder',
@@ -3748,6 +4010,7 @@ class L10nKeyResolver {
     'server.control.operation.save.backup': 'serverControlOperationSaveBackup',
     'server.control.operation.update.nix.os': 'serverControlOperationUpdateNixOs',
     'server.control.operation.update.pocket.coder': 'serverControlOperationUpdatePocketCoder',
+    'server.control.output.label': 'serverControlOutputLabel',
     'server.control.private.key.label': 'serverControlPrivateKeyLabel',
     'server.control.provider.console': 'serverControlProviderConsole',
     'server.control.provider.console.unavailable': 'serverControlProviderConsoleUnavailable',
@@ -3758,6 +4021,7 @@ class L10nKeyResolver {
     'server.control.release.current': 'serverControlReleaseCurrent',
     'server.control.release.nixos': 'serverControlReleaseNixos',
     'server.control.release.status': 'serverControlReleaseStatus',
+    'server.control.retry.action': 'serverControlRetryAction',
     'server.control.show': 'serverControlShow',
     'server.control.title': 'serverControlTitle',
     'settings.account.section': 'settingsAccountSection',
@@ -3775,11 +4039,26 @@ class L10nKeyResolver {
     'settings.logout.confirm': 'settingsLogoutConfirm',
     'settings.logout.confirm.body': 'settingsLogoutConfirmBody',
     'settings.logout.confirm.title': 'settingsLogoutConfirmTitle',
+    'settings.menu.agent.registry': 'settingsMenuAgentRegistry',
+    'settings.menu.haptic.feedback': 'settingsMenuHapticFeedback',
+    'settings.menu.harness.connections': 'settingsMenuHarnessConnections',
+    'settings.menu.llm.management': 'settingsMenuLlmManagement',
+    'settings.menu.logout': 'settingsMenuLogout',
+    'settings.menu.mcp.management': 'settingsMenuMcpManagement',
+    'settings.menu.notifications': 'settingsMenuNotifications',
+    'settings.menu.pocket.memory': 'settingsMenuPocketMemory',
+    'settings.menu.pocketbase': 'settingsMenuPocketbase',
+    'settings.menu.reset': 'settingsMenuReset',
+    'settings.menu.scheduler': 'settingsMenuScheduler',
+    'settings.menu.skills': 'settingsMenuSkills',
+    'settings.menu.system.checks': 'settingsMenuSystemChecks',
+    'settings.menu.tool.permissions': 'settingsMenuToolPermissions',
     'settings.report.ai.content.label': 'settingsReportAiContentLabel',
     'settings.system.section': 'settingsSystemSection',
     'settings.title': 'settingsTitle',
     'skills.add.button': 'skillsAddButton',
     'skills.add.dialog.title': 'skillsAddDialogTitle',
+    'skills.built.in.label': 'skillsBuiltInLabel',
     'skills.content.label': 'skillsContentLabel',
     'skills.delete.button': 'skillsDeleteButton',
     'skills.description.label': 'skillsDescriptionLabel',
@@ -3814,6 +4093,7 @@ class L10nKeyResolver {
     'thoughts.waiting': 'thoughtsWaiting',
     'tool.permissions.action.label': 'toolPermissionsActionLabel',
     'tool.permissions.add': 'toolPermissionsAdd',
+    'tool.permissions.add.rule.button': 'toolPermissionsAddRuleButton',
     'tool.permissions.add.rule.title': 'toolPermissionsAddRuleTitle',
     'tool.permissions.add.title': 'toolPermissionsAddTitle',
     'tool.permissions.allow.label': 'toolPermissionsAllowLabel',
@@ -3982,6 +4262,8 @@ abstract class L10nKeys {
   static const agentNone = 'agent.none';
   static const agentNoneSelected = 'agent.none.selected';
   static const agentParametersLabel = 'agent.parameters.label';
+  static const agentPlanPanelBadge = 'agent.plan.panel.badge';
+  static const agentPlanPanelLabel = 'agent.plan.panel.label';
   static const agentPromptsLabel = 'agent.prompts.label';
   static const agentRegistryEmpty = 'agent.registry.empty';
   static const agentSearching = 'agent.searching';
@@ -4000,15 +4282,23 @@ abstract class L10nKeys {
   static const bootCheckingConnection = 'boot.checking.connection';
   static const bootConnectionFailed = 'boot.connection.failed';
   static const bootLoadError = 'boot.load.error';
+  static const bootNoiseContextSwitch = 'boot.noise.context.switch';
+  static const bootNoiseGcMinor = 'boot.noise.gc.minor';
+  static const bootNoiseHeartbeat = 'boot.noise.heartbeat';
+  static const bootNoiseKeepalive = 'boot.noise.keepalive';
+  static const bootNoiseReasoningEngine = 'boot.noise.reasoning.engine';
   static const bootPocoIntro = 'boot.poco.intro';
   static const bootSystemsNominal = 'boot.systems.nominal';
   static const bootWelcomeBack = 'boot.welcome.back';
   static (String, Map<String, dynamic>) briefLabel(int current, int total) => ('brief.label', {'current': current, 'total': total});
   static const chatAwaitingHarnessStart = 'chat.awaiting.harness.start';
   static const chatCommandOutput = 'chat.command.output';
+  static const chatCommanderPrompt = 'chat.commander.prompt';
   static const chatCommanderRole = 'chat.commander.role';
+  static const chatComposerPrompt = 'chat.composer.prompt';
   static const chatCreated = 'chat.created';
   static const chatDecline = 'chat.decline';
+  static const chatElicitationFormLabel = 'chat.elicitation.form.label';
   static const chatElicitationRequest = 'chat.elicitation.request';
   static const chatError = 'chat.error';
   static const chatFetchFailed = 'chat.fetch.failed';
@@ -4030,6 +4320,8 @@ abstract class L10nKeys {
   static const chatNewCapabilityRequest = 'chat.new.capability.request';
   static const chatNoFieldsRequested = 'chat.no.fields.requested';
   static const chatNotFound = 'chat.not.found';
+  static const chatPickerFieldIndicator = 'chat.picker.field.indicator';
+  static const chatPocoPrompt = 'chat.poco.prompt';
   static const chatPocoRole = 'chat.poco.role';
   static const chatRunOutcomeCancelledBody = 'chat.run.outcome.cancelled.body';
   static const chatRunOutcomeCancelledTitle = 'chat.run.outcome.cancelled.title';
@@ -4072,6 +4364,7 @@ abstract class L10nKeys {
   static const deploymentActionInitialize = 'deployment.action.initialize';
   static const deploymentActionRefresh = 'deployment.action.refresh';
   static const deploymentActionUpdate = 'deployment.action.update';
+  static (String, Map<String, dynamic>) deploymentAdminPasswordTooShort(int minLength) => ('deployment.admin.password.too.short', {'minLength': minLength});
   static const deploymentBackend = 'deployment.backend';
   static const deploymentCleanupFailed = 'deployment.cleanup.failed';
   static const deploymentCleanupNotNeeded = 'deployment.cleanup.not.needed';
@@ -4079,6 +4372,7 @@ abstract class L10nKeys {
   static const deploymentCleanupSucceeded = 'deployment.cleanup.succeeded';
   static const deploymentCodingAgentsTitle = 'deployment.coding.agents.title';
   static const deploymentCodingHarnesses = 'deployment.coding.harnesses';
+  static const deploymentConfigNotReadyError = 'deployment.config.not.ready.error';
   static const deploymentDebian = 'deployment.debian';
   static const deploymentDebianDescription = 'deployment.debian.description';
   static const deploymentDefaultAgent = 'deployment.default.agent';
@@ -4130,6 +4424,7 @@ abstract class L10nKeys {
   static const deploymentOperatingSystem = 'deployment.operating.system';
   static (String, Map<String, dynamic>) deploymentPlanPoco(String minimumMemory) => ('deployment.plan.poco', {'minimumMemory': minimumMemory});
   static (String, Map<String, dynamic>) deploymentPlanSpecs(int vcpus, String memory, int diskGb) => ('deployment.plan.specs', {'vcpus': vcpus, 'memory': memory, 'diskGb': diskGb});
+  static const deploymentProviderFake = 'deployment.provider.fake';
   static const deploymentProviderLinode = 'deployment.provider.linode';
   static const deploymentProvisioned = 'deployment.provisioned';
   static const deploymentProvisioningSummary = 'deployment.provisioning.summary';
@@ -4206,6 +4501,7 @@ abstract class L10nKeys {
   static const errorsCopied = 'errors.copied';
   static const errorsCopy = 'errors.copy';
   static const errorsCopyAll = 'errors.copy.all';
+  static const errorsDeleteAction = 'errors.delete.action';
   static const errorsEmpty = 'errors.empty';
   static (String, Map<String, dynamic>) errorsOccurred(int count) => ('errors.occurred', {'count': count});
   static const errorsReportOnGithub = 'errors.report.on.github';
@@ -4226,6 +4522,7 @@ abstract class L10nKeys {
   static const filesTitle = 'files.title';
   static const filesTooLargeToPreview = 'files.too.large.to.preview';
   static const fossServerSetupConnected = 'foss.server.setup.connected';
+  static (String, Map<String, dynamic>) fossServerSetupErrorPrefix(String error) => ('foss.server.setup.error.prefix', {'error': error});
   static const fossServerSetupGenerateKey = 'foss.server.setup.generate.key';
   static const fossServerSetupHostLabel = 'foss.server.setup.host.label';
   static const fossServerSetupIntro = 'foss.server.setup.intro';
@@ -4275,6 +4572,7 @@ abstract class L10nKeys {
   static const initializationCloudRegion = 'initialization.cloud.region';
   static const initializationConnectionParameters = 'initialization.connection.parameters';
   static (String, Map<String, dynamic>) initializationCopiedToBuffer(String label) => ('initialization.copied.to.buffer', {'label': label});
+  static const initializationCopyAction = 'initialization.copy.action';
   static (String, Map<String, dynamic>) initializationCopyLabel(String label) => ('initialization.copy.label', {'label': label});
   static const initializationCurrentOperation = 'initialization.current.operation';
   static const initializationDescriptionInitializing = 'initialization.description.initializing';
@@ -4290,6 +4588,7 @@ abstract class L10nKeys {
   static const initializationFaultResourceAlreadyExists = 'initialization.fault.resource.already.exists';
   static const initializationGeoGrid = 'initialization.geo.grid';
   static const initializationHardwarePlan = 'initialization.hardware.plan';
+  static const initializationHideAction = 'initialization.hide.action';
   static const initializationHttpsEndpoint = 'initialization.https.endpoint';
   static const initializationInProgress = 'initialization.in.progress';
   static const initializationInstanceId = 'initialization.instance.id';
@@ -4298,12 +4597,14 @@ abstract class L10nKeys {
   static const initializationLastSignal = 'initialization.last.signal';
   static const initializationMetadataRegistry = 'initialization.metadata.registry';
   static const initializationNetworkIp = 'initialization.network.ip';
+  static const initializationNotAvailable = 'initialization.not.available';
   static (String, Map<String, dynamic>) initializationReady(String ipAddress) => ('initialization.ready', {'ipAddress': ipAddress});
   static const initializationRetryAttempt = 'initialization.retry.attempt';
   static const initializationRunId = 'initialization.run.id';
   static const initializationScreenTitle = 'initialization.screen.title';
   static const initializationSecure = 'initialization.secure';
   static const initializationSecurityNotice = 'initialization.security.notice';
+  static const initializationShowAction = 'initialization.show.action';
   static const initializationSourceCommit = 'initialization.source.commit';
   static const initializationStatusInitializing = 'initialization.status.initializing';
   static (String, Map<String, dynamic>) initializationStatusPrefix(String status) => ('initialization.status.prefix', {'status': status});
@@ -4376,6 +4677,19 @@ abstract class L10nKeys {
   static const mcpServerNameLabel = 'mcp.server.name.label';
   static const mcpTitle = 'mcp.title';
   static (String, Map<String, dynamic>) mcpUpdateConfigDialogTitle(String name) => ('mcp.update.config.dialog.title', {'name': name});
+  static (String, Map<String, dynamic>) memoryDashboardAccountSummary(int observations, int interpretations) => ('memory.dashboard.account.summary', {'observations': observations, 'interpretations': interpretations});
+  static const memoryDashboardByAccount = 'memory.dashboard.by.account';
+  static const memoryDashboardInterpretations = 'memory.dashboard.interpretations';
+  static (String, Map<String, dynamic>) memoryDashboardLinkedPrefix(String links) => ('memory.dashboard.linked.prefix', {'links': links});
+  static const memoryDashboardLinks = 'memory.dashboard.links';
+  static const memoryDashboardNoInterpretationsYet = 'memory.dashboard.no.interpretations.yet';
+  static const memoryDashboardNoMemoryRecorded = 'memory.dashboard.no.memory.recorded';
+  static const memoryDashboardNoObservationsYet = 'memory.dashboard.no.observations.yet';
+  static const memoryDashboardObservations = 'memory.dashboard.observations';
+  static const memoryDashboardRecentInterpretations = 'memory.dashboard.recent.interpretations';
+  static const memoryDashboardRecentObservations = 'memory.dashboard.recent.observations';
+  static const memoryDashboardTitle = 'memory.dashboard.title';
+  static const memoryDashboardUnavailable = 'memory.dashboard.unavailable';
   static const monitorTelemetryUnavailable = 'monitor.telemetry.unavailable';
   static const monitorTitle = 'monitor.title';
   static const navChats = 'nav.chats';
@@ -4568,6 +4882,17 @@ abstract class L10nKeys {
   static const pocketCoderUpdateUnknownStatus = 'pocket.coder.update.unknown.status';
   static const pocketCoderUpdateUpgrade = 'pocket.coder.update.upgrade';
   static const pocketCoderUpdateWorking = 'pocket.coder.update.working';
+  static const pocketbaseInspectorAgentProfiles = 'pocketbase.inspector.agent.profiles';
+  static (String, Map<String, dynamic>) pocketbaseInspectorChatArchivedTitle(String title) => ('pocketbase.inspector.chat.archived.title', {'title': title});
+  static const pocketbaseInspectorChats = 'pocketbase.inspector.chats';
+  static const pocketbaseInspectorHarnesses = 'pocketbase.inspector.harnesses';
+  static const pocketbaseInspectorMcpServers = 'pocketbase.inspector.mcp.servers';
+  static const pocketbaseInspectorNoChatsYet = 'pocketbase.inspector.no.chats.yet';
+  static const pocketbaseInspectorRecentChats = 'pocketbase.inspector.recent.chats';
+  static const pocketbaseInspectorSkills = 'pocketbase.inspector.skills';
+  static const pocketbaseInspectorTitle = 'pocketbase.inspector.title';
+  static const pocketbaseInspectorUnavailable = 'pocketbase.inspector.unavailable';
+  static const pocketbaseInspectorUsers = 'pocketbase.inspector.users';
   static const pocoLessonAgentExplanation = 'poco.lesson.agent.explanation';
   static const pocoLessonAgentTitle = 'poco.lesson.agent.title';
   static const pocoLessonComposeStartExplanation = 'poco.lesson.compose.start.explanation';
@@ -4664,9 +4989,14 @@ abstract class L10nKeys {
   static const providerScreenAddKey = 'provider.screen.add.key';
   static (String, Map<String, dynamic>) providerScreenAddKeyBody(String provider) => ('provider.screen.add.key.body', {'provider': provider});
   static (String, Map<String, dynamic>) providerScreenAddKeyTitle(String provider) => ('provider.screen.add.key.title', {'provider': provider});
+  static const providerScreenApiKeyLabel = 'provider.screen.api.key.label';
+  static const providerScreenApiKeyLeaveBlankHint = 'provider.screen.api.key.leave.blank.hint';
+  static const providerScreenApiKeyNotSet = 'provider.screen.api.key.not.set';
+  static const providerScreenApiKeyStoredSecurely = 'provider.screen.api.key.stored.securely';
   static const providerScreenApiKeysSection = 'provider.screen.api.keys.section';
   static (String, Map<String, dynamic>) providerScreenBrowseAllModels(int count) => ('provider.screen.browse.all.models', {'count': count});
   static const providerScreenDefaultBadge = 'provider.screen.default.badge';
+  static const providerScreenDeleteKeyAction = 'provider.screen.delete.key.action';
   static const providerScreenEmptyHint = 'provider.screen.empty.hint';
   static (String, Map<String, dynamic>) providerScreenErrorPrefix(String error) => ('provider.screen.error.prefix', {'error': error});
   static (String, Map<String, dynamic>) providerScreenHarnessModelCount(int count) => ('provider.screen.harness.model.count', {'count': count});
@@ -4675,6 +5005,7 @@ abstract class L10nKeys {
   static const providerScreenNoApiKeys = 'provider.screen.no.api.keys';
   static const providerScreenNoHarnessModels = 'provider.screen.no.harness.models';
   static const providerScreenNoProviders = 'provider.screen.no.providers';
+  static const providerScreenProviderLabel = 'provider.screen.provider.label';
   static const providerScreenSearchHint = 'provider.screen.search.hint';
   static const providerScreenSearchLabel = 'provider.screen.search.label';
   static const providerScreenSearchNoMatches = 'provider.screen.search.no.matches';
@@ -4716,6 +5047,7 @@ abstract class L10nKeys {
   static const serverControlConnectionDetails = 'server.control.connection.details';
   static const serverControlCopied = 'server.control.copied';
   static const serverControlCopy = 'server.control.copy';
+  static (String, Map<String, dynamic>) serverControlErrorPrefix(String error) => ('server.control.error.prefix', {'error': error});
   static const serverControlGroupData = 'server.control.group.data';
   static const serverControlGroupNixOs = 'server.control.group.nix.os';
   static const serverControlGroupPocketCoder = 'server.control.group.pocket.coder';
@@ -4729,6 +5061,7 @@ abstract class L10nKeys {
   static const serverControlOperationSaveBackup = 'server.control.operation.save.backup';
   static const serverControlOperationUpdateNixOs = 'server.control.operation.update.nix.os';
   static const serverControlOperationUpdatePocketCoder = 'server.control.operation.update.pocket.coder';
+  static const serverControlOutputLabel = 'server.control.output.label';
   static const serverControlPrivateKeyLabel = 'server.control.private.key.label';
   static const serverControlProviderConsole = 'server.control.provider.console';
   static const serverControlProviderConsoleUnavailable = 'server.control.provider.console.unavailable';
@@ -4739,6 +5072,7 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) serverControlReleaseCurrent(String version) => ('server.control.release.current', {'version': version});
   static (String, Map<String, dynamic>) serverControlReleaseNixos(String version) => ('server.control.release.nixos', {'version': version});
   static (String, Map<String, dynamic>) serverControlReleaseStatus(String status) => ('server.control.release.status', {'status': status});
+  static const serverControlRetryAction = 'server.control.retry.action';
   static const serverControlShow = 'server.control.show';
   static const serverControlTitle = 'server.control.title';
   static const settingsAccountSection = 'settings.account.section';
@@ -4756,11 +5090,26 @@ abstract class L10nKeys {
   static const settingsLogoutConfirm = 'settings.logout.confirm';
   static const settingsLogoutConfirmBody = 'settings.logout.confirm.body';
   static const settingsLogoutConfirmTitle = 'settings.logout.confirm.title';
+  static const settingsMenuAgentRegistry = 'settings.menu.agent.registry';
+  static const settingsMenuHapticFeedback = 'settings.menu.haptic.feedback';
+  static const settingsMenuHarnessConnections = 'settings.menu.harness.connections';
+  static const settingsMenuLlmManagement = 'settings.menu.llm.management';
+  static const settingsMenuLogout = 'settings.menu.logout';
+  static const settingsMenuMcpManagement = 'settings.menu.mcp.management';
+  static const settingsMenuNotifications = 'settings.menu.notifications';
+  static const settingsMenuPocketMemory = 'settings.menu.pocket.memory';
+  static const settingsMenuPocketbase = 'settings.menu.pocketbase';
+  static const settingsMenuReset = 'settings.menu.reset';
+  static const settingsMenuScheduler = 'settings.menu.scheduler';
+  static const settingsMenuSkills = 'settings.menu.skills';
+  static const settingsMenuSystemChecks = 'settings.menu.system.checks';
+  static const settingsMenuToolPermissions = 'settings.menu.tool.permissions';
   static const settingsReportAiContentLabel = 'settings.report.ai.content.label';
   static const settingsSystemSection = 'settings.system.section';
   static const settingsTitle = 'settings.title';
   static const skillsAddButton = 'skills.add.button';
   static const skillsAddDialogTitle = 'skills.add.dialog.title';
+  static const skillsBuiltInLabel = 'skills.built.in.label';
   static const skillsContentLabel = 'skills.content.label';
   static const skillsDeleteButton = 'skills.delete.button';
   static const skillsDescriptionLabel = 'skills.description.label';
@@ -4795,6 +5144,7 @@ abstract class L10nKeys {
   static const thoughtsWaiting = 'thoughts.waiting';
   static const toolPermissionsActionLabel = 'tool.permissions.action.label';
   static const toolPermissionsAdd = 'tool.permissions.add';
+  static const toolPermissionsAddRuleButton = 'tool.permissions.add.rule.button';
   static const toolPermissionsAddRuleTitle = 'tool.permissions.add.rule.title';
   static const toolPermissionsAddTitle = 'tool.permissions.add.title';
   static const toolPermissionsAllowLabel = 'tool.permissions.allow.label';

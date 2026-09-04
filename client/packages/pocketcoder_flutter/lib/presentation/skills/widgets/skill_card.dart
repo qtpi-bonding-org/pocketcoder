@@ -29,7 +29,7 @@ class SkillCard extends StatelessWidget {
           TerminalText.mini(skill.description, alpha: 0.6),
           VSpace.x1,
           if (skill.isSystem ?? false)
-            const TerminalText.mini('BUILT-IN', alpha: 0.5)
+            TerminalText.mini(context.l10n.skillsBuiltInLabel, alpha: 0.5)
           else
             Row(
               children: [

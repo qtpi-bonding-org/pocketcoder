@@ -448,6 +448,36 @@ abstract class AppLocalizations {
   /// **'Connection failed. I\'ll take you back to the setup screen so we can check the server settings.'**
   String get bootConnectionFailed;
 
+  /// No description provided for @bootNoiseHeartbeat.
+  ///
+  /// In en, this message translates to:
+  /// **'[sys] heartbeat: ok'**
+  String get bootNoiseHeartbeat;
+
+  /// No description provided for @bootNoiseKeepalive.
+  ///
+  /// In en, this message translates to:
+  /// **'[net] keepalive sent'**
+  String get bootNoiseKeepalive;
+
+  /// No description provided for @bootNoiseGcMinor.
+  ///
+  /// In en, this message translates to:
+  /// **'[mem] gc_minor completed'**
+  String get bootNoiseGcMinor;
+
+  /// No description provided for @bootNoiseContextSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'[proc] context_switch: 1241'**
+  String get bootNoiseContextSwitch;
+
+  /// No description provided for @bootNoiseReasoningEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'[agent] reasoning_engine: idle'**
+  String get bootNoiseReasoningEngine;
+
   /// No description provided for @onboardingTitle.
   ///
   /// In en, this message translates to:
@@ -1012,6 +1042,36 @@ abstract class AppLocalizations {
   /// **'ELICITATION REQUEST'**
   String get chatElicitationRequest;
 
+  /// No description provided for @chatElicitationFormLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FORM'**
+  String get chatElicitationFormLabel;
+
+  /// No description provided for @chatCommanderPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'commander@pc \$ '**
+  String get chatCommanderPrompt;
+
+  /// No description provided for @chatComposerPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'commander@pc \$'**
+  String get chatComposerPrompt;
+
+  /// No description provided for @chatPocoPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'[poco] '**
+  String get chatPocoPrompt;
+
+  /// No description provided for @chatPickerFieldIndicator.
+  ///
+  /// In en, this message translates to:
+  /// **'[v]'**
+  String get chatPickerFieldIndicator;
+
   /// No description provided for @chatDecline.
   ///
   /// In en, this message translates to:
@@ -1468,6 +1528,12 @@ abstract class AppLocalizations {
   /// **'DENY'**
   String get toolPermissionsDenyLabel;
 
+  /// No description provided for @toolPermissionsAddRuleButton.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD RULE'**
+  String get toolPermissionsAddRuleButton;
+
   /// No description provided for @notificationSettingsScreenTitle.
   ///
   /// In en, this message translates to:
@@ -1612,6 +1678,12 @@ abstract class AppLocalizations {
   /// **'No agent config has a workspace folder configured.'**
   String get skillsNoEligibleConfig;
 
+  /// No description provided for @skillsBuiltInLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'BUILT-IN'**
+  String get skillsBuiltInLabel;
+
   /// No description provided for @schedulerTitle.
   ///
   /// In en, this message translates to:
@@ -1743,6 +1815,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ACCOUNT'**
   String get settingsAccountSection;
+
+  /// No description provided for @settingsMenuLlmManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'LLM MANAGEMENT'**
+  String get settingsMenuLlmManagement;
+
+  /// No description provided for @settingsMenuAgentRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'AGENT REGISTRY'**
+  String get settingsMenuAgentRegistry;
+
+  /// No description provided for @settingsMenuMcpManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP MANAGEMENT'**
+  String get settingsMenuMcpManagement;
+
+  /// No description provided for @settingsMenuSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'SKILLS'**
+  String get settingsMenuSkills;
+
+  /// No description provided for @settingsMenuToolPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'TOOL PERMISSIONS'**
+  String get settingsMenuToolPermissions;
+
+  /// No description provided for @settingsMenuHarnessConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'HARNESS CONNECTIONS'**
+  String get settingsMenuHarnessConnections;
+
+  /// No description provided for @settingsMenuSystemChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'SYSTEM CHECKS'**
+  String get settingsMenuSystemChecks;
+
+  /// No description provided for @settingsMenuPocketMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKET MEMORY'**
+  String get settingsMenuPocketMemory;
+
+  /// No description provided for @settingsMenuPocketbase.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETBASE'**
+  String get settingsMenuPocketbase;
+
+  /// No description provided for @settingsMenuScheduler.
+  ///
+  /// In en, this message translates to:
+  /// **'SCHEDULER'**
+  String get settingsMenuScheduler;
+
+  /// No description provided for @settingsMenuNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'NOTIFICATIONS'**
+  String get settingsMenuNotifications;
+
+  /// No description provided for @settingsMenuLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'LOGOUT'**
+  String get settingsMenuLogout;
+
+  /// No description provided for @settingsMenuReset.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get settingsMenuReset;
+
+  /// No description provided for @settingsMenuHapticFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'HAPTIC FEEDBACK'**
+  String get settingsMenuHapticFeedback;
 
   /// No description provided for @settingsLogoutConfirmTitle.
   ///
@@ -1905,6 +2061,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'DEFAULT [TUNED]'**
   String get agentDefaultTuned;
+
+  /// No description provided for @agentPlanPanelBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'[PLAN]'**
+  String get agentPlanPanelBadge;
+
+  /// No description provided for @agentPlanPanelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PLAN'**
+  String get agentPlanPanelLabel;
 
   /// No description provided for @agentConfigTitle.
   ///
@@ -2127,6 +2295,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'ERROR: {error}'**
   String providerScreenErrorPrefix(String error);
+
+  /// No description provided for @providerScreenApiKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get providerScreenApiKeyLabel;
+
+  /// No description provided for @providerScreenApiKeyLeaveBlankHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to keep the existing key'**
+  String get providerScreenApiKeyLeaveBlankHint;
+
+  /// No description provided for @providerScreenApiKeyNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'(not set)'**
+  String get providerScreenApiKeyNotSet;
+
+  /// No description provided for @providerScreenApiKeyStoredSecurely.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing key is stored securely; enter a new key to replace it.'**
+  String get providerScreenApiKeyStoredSecurely;
+
+  /// No description provided for @providerScreenProviderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PROVIDER'**
+  String get providerScreenProviderLabel;
+
+  /// No description provided for @providerScreenDeleteKeyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get providerScreenDeleteKeyAction;
 
   /// No description provided for @toolPermissionsTitle.
   ///
@@ -3172,6 +3376,30 @@ abstract class AppLocalizations {
   /// **'ADMIN PASSWORD'**
   String get initializationAdminPassword;
 
+  /// No description provided for @initializationNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'N/A'**
+  String get initializationNotAvailable;
+
+  /// No description provided for @initializationCopyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'COPY'**
+  String get initializationCopyAction;
+
+  /// No description provided for @initializationHideAction.
+  ///
+  /// In en, this message translates to:
+  /// **'HIDE'**
+  String get initializationHideAction;
+
+  /// No description provided for @initializationShowAction.
+  ///
+  /// In en, this message translates to:
+  /// **'SHOW'**
+  String get initializationShowAction;
+
   /// No description provided for @deploymentProvisioned.
   ///
   /// In en, this message translates to:
@@ -3501,6 +3729,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'LINODE'**
   String get deploymentProviderLinode;
+
+  /// No description provided for @deploymentProviderFake.
+  ///
+  /// In en, this message translates to:
+  /// **'FAKE'**
+  String get deploymentProviderFake;
+
+  /// No description provided for @deploymentConfigNotReadyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Deployment is not ready yet — configuration is still loading.'**
+  String get deploymentConfigNotReadyError;
+
+  /// No description provided for @deploymentAdminPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'The admin password must be at least {minLength} characters.'**
+  String deploymentAdminPasswordTooShort(int minLength);
 
   /// No description provided for @walkthroughLabel.
   ///
@@ -5381,6 +5627,12 @@ abstract class AppLocalizations {
   /// **'Occurred {count}x'**
   String errorsOccurred(int count);
 
+  /// No description provided for @errorsDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'DELETE'**
+  String get errorsDeleteAction;
+
   /// Label for the reset deployment state action on the config screen recovery section
   ///
   /// In en, this message translates to:
@@ -5862,6 +6114,24 @@ abstract class AppLocalizations {
   /// **'No active provider-managed instance found.'**
   String get serverControlProviderConsoleUnavailable;
 
+  /// No description provided for @serverControlErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'ERROR: {error}'**
+  String serverControlErrorPrefix(String error);
+
+  /// No description provided for @serverControlRetryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get serverControlRetryAction;
+
+  /// No description provided for @serverControlOutputLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OUTPUT'**
+  String get serverControlOutputLabel;
+
   /// No description provided for @fossServerSetupTitle.
   ///
   /// In en, this message translates to:
@@ -5904,6 +6174,12 @@ abstract class AppLocalizations {
   /// **'CONNECTED -- YOUR SERVER IS NOW MANAGED'**
   String get fossServerSetupConnected;
 
+  /// No description provided for @fossServerSetupErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'ERROR: {error}'**
+  String fossServerSetupErrorPrefix(String error);
+
   /// No description provided for @initializationInstanceId.
   ///
   /// In en, this message translates to:
@@ -5915,6 +6191,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'RETRY ATTEMPT'**
   String get initializationRetryAttempt;
+
+  /// No description provided for @memoryDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKET MEMORY'**
+  String get memoryDashboardTitle;
+
+  /// No description provided for @memoryDashboardUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'MEMORY UNAVAILABLE'**
+  String get memoryDashboardUnavailable;
+
+  /// No description provided for @memoryDashboardObservations.
+  ///
+  /// In en, this message translates to:
+  /// **'OBSERVATIONS'**
+  String get memoryDashboardObservations;
+
+  /// No description provided for @memoryDashboardInterpretations.
+  ///
+  /// In en, this message translates to:
+  /// **'INTERPRETATIONS'**
+  String get memoryDashboardInterpretations;
+
+  /// No description provided for @memoryDashboardLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'LINKS'**
+  String get memoryDashboardLinks;
+
+  /// No description provided for @memoryDashboardByAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory by Account'**
+  String get memoryDashboardByAccount;
+
+  /// No description provided for @memoryDashboardNoMemoryRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'No memory recorded yet'**
+  String get memoryDashboardNoMemoryRecorded;
+
+  /// No description provided for @memoryDashboardRecentObservations.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Observations'**
+  String get memoryDashboardRecentObservations;
+
+  /// No description provided for @memoryDashboardNoObservationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No observations yet'**
+  String get memoryDashboardNoObservationsYet;
+
+  /// No description provided for @memoryDashboardRecentInterpretations.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Interpretations'**
+  String get memoryDashboardRecentInterpretations;
+
+  /// No description provided for @memoryDashboardNoInterpretationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No interpretations yet'**
+  String get memoryDashboardNoInterpretationsYet;
+
+  /// No description provided for @memoryDashboardAccountSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{observations} obs / {interpretations} int'**
+  String memoryDashboardAccountSummary(int observations, int interpretations);
+
+  /// No description provided for @memoryDashboardLinkedPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked: {links}'**
+  String memoryDashboardLinkedPrefix(String links);
+
+  /// No description provided for @pocketbaseInspectorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'POCKETBASE'**
+  String get pocketbaseInspectorTitle;
+
+  /// No description provided for @pocketbaseInspectorUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'DATABASE UNAVAILABLE'**
+  String get pocketbaseInspectorUnavailable;
+
+  /// No description provided for @pocketbaseInspectorUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'USERS'**
+  String get pocketbaseInspectorUsers;
+
+  /// No description provided for @pocketbaseInspectorChats.
+  ///
+  /// In en, this message translates to:
+  /// **'CHATS'**
+  String get pocketbaseInspectorChats;
+
+  /// No description provided for @pocketbaseInspectorAgentProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'AGENT PROFILES'**
+  String get pocketbaseInspectorAgentProfiles;
+
+  /// No description provided for @pocketbaseInspectorHarnesses.
+  ///
+  /// In en, this message translates to:
+  /// **'HARNESSES'**
+  String get pocketbaseInspectorHarnesses;
+
+  /// No description provided for @pocketbaseInspectorMcpServers.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP SERVERS'**
+  String get pocketbaseInspectorMcpServers;
+
+  /// No description provided for @pocketbaseInspectorSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'SKILLS'**
+  String get pocketbaseInspectorSkills;
+
+  /// No description provided for @pocketbaseInspectorRecentChats.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Chats'**
+  String get pocketbaseInspectorRecentChats;
+
+  /// No description provided for @pocketbaseInspectorNoChatsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No chats yet'**
+  String get pocketbaseInspectorNoChatsYet;
+
+  /// No description provided for @pocketbaseInspectorChatArchivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} (archived)'**
+  String pocketbaseInspectorChatArchivedTitle(String title);
 }
 
 class _AppLocalizationsDelegate

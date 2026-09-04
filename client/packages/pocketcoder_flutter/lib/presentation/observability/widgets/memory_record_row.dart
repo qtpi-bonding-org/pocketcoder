@@ -34,7 +34,7 @@ class MemoryRecordRow extends StatelessWidget {
           ),
           if (linked.isNotEmpty)
             TerminalText.mini(
-              'Linked: ${linked.join(' | ')}',
+              context.l10n.memoryDashboardLinkedPrefix(linked.join(' | ')),
               color: context.colorScheme.onSurface,
               alpha: 0.6,
             ),

@@ -133,7 +133,7 @@ class ServerControlView extends StatelessWidget {
             ),
             if (state.error case final error?)
               TerminalText(
-                'ERROR: $error',
+                context.l10n.serverControlErrorPrefix(error.toString()),
                 color: context.terminalColors.warning,
               ),
             if (state.result case final result?) ...[
@@ -143,7 +143,7 @@ class ServerControlView extends StatelessWidget {
                 status: result.succeeded
                     ? TerminalStatus.success
                     : TerminalStatus.failure,
-                outputLabel: 'OUTPUT',
+                outputLabel: context.l10n.serverControlOutputLabel,
                 output: _output(result.stdout, result.stderr),
               ),
             ],

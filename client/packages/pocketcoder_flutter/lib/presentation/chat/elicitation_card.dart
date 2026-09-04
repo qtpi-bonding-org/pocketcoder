@@ -85,7 +85,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
     final fields = properties?.entries.toList() ?? const [];
 
     return TintedAlertCard(
-      eyebrowLeft: 'FORM',
+      eyebrowLeft: context.l10n.chatElicitationFormLabel,
       eyebrowRight: context.l10n.chatElicitationRequest,
       tint: colors.secondary,
       child: Column(

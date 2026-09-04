@@ -101,11 +101,11 @@ class _BootScreenState extends State<BootScreen> {
 
   void _startBackgroundLogs() {
     final noise = [
-      '[sys] heartbeat: ok',
-      '[net] keepalive sent',
-      '[mem] gc_minor completed',
-      '[proc] context_switch: 1241',
-      '[agent] reasoning_engine: idle',
+      context.l10n.bootNoiseHeartbeat,
+      context.l10n.bootNoiseKeepalive,
+      context.l10n.bootNoiseGcMinor,
+      context.l10n.bootNoiseContextSwitch,
+      context.l10n.bootNoiseReasoningEngine,
     ];
 
     var i = 0;

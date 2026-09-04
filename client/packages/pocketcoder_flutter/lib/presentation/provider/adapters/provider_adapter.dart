@@ -252,7 +252,7 @@ class ProviderView extends StatelessWidget {
           ),
           TextButton(
             child: Text(
-              'DELETE',
+              context.l10n.providerScreenDeleteKeyAction,
               style: TextStyle(
                 color: colors.error,
                 fontWeight: AppFonts.heavy,

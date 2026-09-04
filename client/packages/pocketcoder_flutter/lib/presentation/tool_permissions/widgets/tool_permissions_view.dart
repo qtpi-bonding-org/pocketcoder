@@ -59,7 +59,7 @@ class ToolPermissionsView extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.all(AppSizes.space),
                   child: TerminalButton(
-                    label: 'ADD RULE',
+                    label: context.l10n.toolPermissionsAddRuleButton,
                     onTap: () => showAddRuleDialog(
                       context,
                       onCreateRule,

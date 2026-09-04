@@ -43,7 +43,7 @@ class PlanPanel extends StatelessWidget {
           Row(
             children: [
               Text(
-                '[PLAN]',
+                context.l10n.agentPlanPanelBadge,
                 style: TextStyle(
                   color: colors.primary,
                   fontSize: AppSizes.fontTiny,
@@ -53,7 +53,7 @@ class PlanPanel extends StatelessWidget {
               HSpace.x2,
               Expanded(
                 child: Text(
-                  'PLAN',
+                  context.l10n.agentPlanPanelLabel,
                   style: TextStyle(
                     color: colors.primary,
                     fontSize: AppSizes.fontTiny,

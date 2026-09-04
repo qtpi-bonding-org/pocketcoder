@@ -34,32 +34,32 @@ class SettingsView extends StatelessWidget {
       (
         context.l10n.settingsAiAgentsSection,
         [
-          ('LLM MANAGEMENT', 'configureLlm'),
-          ('AGENT REGISTRY', 'configureAi'),
-          ('MCP MANAGEMENT', 'configureMcp'),
-          ('SKILLS', 'configureSkills'),
-          ('TOOL PERMISSIONS', 'configureToolPermissions'),
-          ('HARNESS CONNECTIONS', 'configureHarnessAuth'),
+          (context.l10n.settingsMenuLlmManagement, 'configureLlm'),
+          (context.l10n.settingsMenuAgentRegistry, 'configureAi'),
+          (context.l10n.settingsMenuMcpManagement, 'configureMcp'),
+          (context.l10n.settingsMenuSkills, 'configureSkills'),
+          (context.l10n.settingsMenuToolPermissions, 'configureToolPermissions'),
+          (context.l10n.settingsMenuHarnessConnections, 'configureHarnessAuth'),
           (context.l10n.settingsReportAiContentLabel, 'reportAiContent'),
         ]
       ),
       (
         context.l10n.settingsSystemSection,
         [
-          ('SYSTEM CHECKS', 'configureSystemChecks'),
-          ('POCKET MEMORY', 'configureMemory'),
-          ('POCKETBASE', 'configurePocketbase'),
-          ('SCHEDULER', 'configureScheduler'),
+          (context.l10n.settingsMenuSystemChecks, 'configureSystemChecks'),
+          (context.l10n.settingsMenuPocketMemory, 'configureMemory'),
+          (context.l10n.settingsMenuPocketbase, 'configurePocketbase'),
+          (context.l10n.settingsMenuScheduler, 'configureScheduler'),
           (context.l10n.errorsTitle, 'configureErrors'),
         ]
       ),
       (
         context.l10n.settingsAccountSection,
         [
-          ('NOTIFICATIONS', 'configureNotifications'),
+          (context.l10n.settingsMenuNotifications, 'configureNotifications'),
           if (isPro) (context.l10n.proSettingsLabel, 'configurePaywall'),
-          ('LOGOUT', 'logout'),
-          ('RESET', 'factoryReset'),
+          (context.l10n.settingsMenuLogout, 'logout'),
+          (context.l10n.settingsMenuReset, 'factoryReset'),
           if (isPro)
             (context.l10n.settingsDeleteProDataLabel, 'deleteProData'),
         ]
@@ -98,7 +98,7 @@ class SettingsView extends StatelessWidget {
                     ),
                   if (section.$1 == context.l10n.settingsSystemSection)
                     BiosRow(
-                      label: 'HAPTIC FEEDBACK',
+                      label: context.l10n.settingsMenuHapticFeedback,
                       variant: BiosRowVariant.toggle,
                       toggleValue: hapticsEnabled,
                       onToggleChanged: onHapticsChanged,

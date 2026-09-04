@@ -69,7 +69,7 @@ class FossServerSetupView extends StatelessWidget {
             if (state.error case final error?) ...[
               VSpace.x1,
               TerminalText(
-                'ERROR: $error',
+                context.l10n.fossServerSetupErrorPrefix(error),
                 color: context.terminalColors.warning,
               ),
             ],

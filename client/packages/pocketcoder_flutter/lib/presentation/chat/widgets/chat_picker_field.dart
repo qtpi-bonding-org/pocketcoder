@@ -61,7 +61,7 @@ class ChatPickerField<T> extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Text('[v]',
+                Text(context.l10n.chatPickerFieldIndicator,
                     style: TextStyle(color: context.colorScheme.onSurface)),
               ],
             ),

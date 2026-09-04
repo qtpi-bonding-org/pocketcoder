@@ -194,6 +194,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Connection failed. I\'ll take you back to the setup screen so we can check the server settings.';
 
   @override
+  String get bootNoiseHeartbeat => '[sys] heartbeat: ok';
+
+  @override
+  String get bootNoiseKeepalive => '[net] keepalive sent';
+
+  @override
+  String get bootNoiseGcMinor => '[mem] gc_minor completed';
+
+  @override
+  String get bootNoiseContextSwitch => '[proc] context_switch: 1241';
+
+  @override
+  String get bootNoiseReasoningEngine => '[agent] reasoning_engine: idle';
+
+  @override
   String get onboardingTitle => 'IDENTIFICATION UNLOCK';
 
   @override
@@ -498,6 +513,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatElicitationRequest => 'ELICITATION REQUEST';
 
   @override
+  String get chatElicitationFormLabel => 'FORM';
+
+  @override
+  String get chatCommanderPrompt => 'commander@pc \$ ';
+
+  @override
+  String get chatComposerPrompt => 'commander@pc \$';
+
+  @override
+  String get chatPocoPrompt => '[poco] ';
+
+  @override
+  String get chatPickerFieldIndicator => '[v]';
+
+  @override
   String get chatDecline => 'DECLINE';
 
   @override
@@ -750,6 +780,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolPermissionsDenyLabel => 'DENY';
 
   @override
+  String get toolPermissionsAddRuleButton => 'ADD RULE';
+
+  @override
   String get notificationSettingsScreenTitle => 'NOTIFICATIONS';
 
   @override
@@ -826,6 +859,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'No agent config has a workspace folder configured.';
 
   @override
+  String get skillsBuiltInLabel => 'BUILT-IN';
+
+  @override
   String get schedulerTitle => 'SCHEDULER';
 
   @override
@@ -892,6 +928,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAccountSection => 'ACCOUNT';
+
+  @override
+  String get settingsMenuLlmManagement => 'LLM MANAGEMENT';
+
+  @override
+  String get settingsMenuAgentRegistry => 'AGENT REGISTRY';
+
+  @override
+  String get settingsMenuMcpManagement => 'MCP MANAGEMENT';
+
+  @override
+  String get settingsMenuSkills => 'SKILLS';
+
+  @override
+  String get settingsMenuToolPermissions => 'TOOL PERMISSIONS';
+
+  @override
+  String get settingsMenuHarnessConnections => 'HARNESS CONNECTIONS';
+
+  @override
+  String get settingsMenuSystemChecks => 'SYSTEM CHECKS';
+
+  @override
+  String get settingsMenuPocketMemory => 'POCKET MEMORY';
+
+  @override
+  String get settingsMenuPocketbase => 'POCKETBASE';
+
+  @override
+  String get settingsMenuScheduler => 'SCHEDULER';
+
+  @override
+  String get settingsMenuNotifications => 'NOTIFICATIONS';
+
+  @override
+  String get settingsMenuLogout => 'LOGOUT';
+
+  @override
+  String get settingsMenuReset => 'RESET';
+
+  @override
+  String get settingsMenuHapticFeedback => 'HAPTIC FEEDBACK';
 
   @override
   String get settingsLogoutConfirmTitle => 'SIGN OUT';
@@ -978,6 +1056,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentDefaultTuned => 'DEFAULT [TUNED]';
+
+  @override
+  String get agentPlanPanelBadge => '[PLAN]';
+
+  @override
+  String get agentPlanPanelLabel => 'PLAN';
 
   @override
   String get agentConfigTitle => 'AGENT CONFIGURATION';
@@ -1105,6 +1189,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String providerScreenErrorPrefix(String error) {
     return 'ERROR: $error';
   }
+
+  @override
+  String get providerScreenApiKeyLabel => 'API key';
+
+  @override
+  String get providerScreenApiKeyLeaveBlankHint =>
+      'Leave blank to keep the existing key';
+
+  @override
+  String get providerScreenApiKeyNotSet => '(not set)';
+
+  @override
+  String get providerScreenApiKeyStoredSecurely =>
+      'Existing key is stored securely; enter a new key to replace it.';
+
+  @override
+  String get providerScreenProviderLabel => 'PROVIDER';
+
+  @override
+  String get providerScreenDeleteKeyAction => 'DELETE';
 
   @override
   String get toolPermissionsTitle => 'GATEKEEPER CONFIGURATION';
@@ -1691,6 +1795,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get initializationAdminPassword => 'ADMIN PASSWORD';
 
   @override
+  String get initializationNotAvailable => 'N/A';
+
+  @override
+  String get initializationCopyAction => 'COPY';
+
+  @override
+  String get initializationHideAction => 'HIDE';
+
+  @override
+  String get initializationShowAction => 'SHOW';
+
+  @override
   String get deploymentProvisioned => 'PROVISIONED';
 
   @override
@@ -1880,6 +1996,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentProviderLinode => 'LINODE';
+
+  @override
+  String get deploymentProviderFake => 'FAKE';
+
+  @override
+  String get deploymentConfigNotReadyError =>
+      'Deployment is not ready yet — configuration is still loading.';
+
+  @override
+  String deploymentAdminPasswordTooShort(int minLength) {
+    return 'The admin password must be at least $minLength characters.';
+  }
 
   @override
   String walkthroughLabel(int current, int total) {
@@ -2983,6 +3111,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get errorsDeleteAction => 'DELETE';
+
+  @override
   String get deploymentResetAction => 'RESET';
 
   @override
@@ -3261,6 +3392,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'No active provider-managed instance found.';
 
   @override
+  String serverControlErrorPrefix(String error) {
+    return 'ERROR: $error';
+  }
+
+  @override
+  String get serverControlRetryAction => 'RETRY';
+
+  @override
+  String get serverControlOutputLabel => 'OUTPUT';
+
+  @override
   String get fossServerSetupTitle => 'CONNECT YOUR SERVER';
 
   @override
@@ -3285,8 +3427,91 @@ class AppLocalizationsEn extends AppLocalizations {
       'CONNECTED -- YOUR SERVER IS NOW MANAGED';
 
   @override
+  String fossServerSetupErrorPrefix(String error) {
+    return 'ERROR: $error';
+  }
+
+  @override
   String get initializationInstanceId => 'INSTANCE ID';
 
   @override
   String get initializationRetryAttempt => 'RETRY ATTEMPT';
+
+  @override
+  String get memoryDashboardTitle => 'POCKET MEMORY';
+
+  @override
+  String get memoryDashboardUnavailable => 'MEMORY UNAVAILABLE';
+
+  @override
+  String get memoryDashboardObservations => 'OBSERVATIONS';
+
+  @override
+  String get memoryDashboardInterpretations => 'INTERPRETATIONS';
+
+  @override
+  String get memoryDashboardLinks => 'LINKS';
+
+  @override
+  String get memoryDashboardByAccount => 'Memory by Account';
+
+  @override
+  String get memoryDashboardNoMemoryRecorded => 'No memory recorded yet';
+
+  @override
+  String get memoryDashboardRecentObservations => 'Recent Observations';
+
+  @override
+  String get memoryDashboardNoObservationsYet => 'No observations yet';
+
+  @override
+  String get memoryDashboardRecentInterpretations => 'Recent Interpretations';
+
+  @override
+  String get memoryDashboardNoInterpretationsYet => 'No interpretations yet';
+
+  @override
+  String memoryDashboardAccountSummary(int observations, int interpretations) {
+    return '$observations obs / $interpretations int';
+  }
+
+  @override
+  String memoryDashboardLinkedPrefix(String links) {
+    return 'Linked: $links';
+  }
+
+  @override
+  String get pocketbaseInspectorTitle => 'POCKETBASE';
+
+  @override
+  String get pocketbaseInspectorUnavailable => 'DATABASE UNAVAILABLE';
+
+  @override
+  String get pocketbaseInspectorUsers => 'USERS';
+
+  @override
+  String get pocketbaseInspectorChats => 'CHATS';
+
+  @override
+  String get pocketbaseInspectorAgentProfiles => 'AGENT PROFILES';
+
+  @override
+  String get pocketbaseInspectorHarnesses => 'HARNESSES';
+
+  @override
+  String get pocketbaseInspectorMcpServers => 'MCP SERVERS';
+
+  @override
+  String get pocketbaseInspectorSkills => 'SKILLS';
+
+  @override
+  String get pocketbaseInspectorRecentChats => 'Recent Chats';
+
+  @override
+  String get pocketbaseInspectorNoChatsYet => 'No chats yet';
+
+  @override
+  String pocketbaseInspectorChatArchivedTitle(String title) {
+    return '$title (archived)';
+  }
 }

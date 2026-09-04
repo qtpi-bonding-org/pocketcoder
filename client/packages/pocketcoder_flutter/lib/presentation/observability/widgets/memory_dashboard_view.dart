@@ -19,20 +19,25 @@ class MemoryDashboardView extends StatelessWidget {
             children: [
               Expanded(
                   child: CountCard(
-                      label: 'OBSERVATIONS', value: stats.observations)),
+                      label: context.l10n.memoryDashboardObservations,
+                      value: stats.observations)),
               HSpace.x1,
               Expanded(
                   child: CountCard(
-                      label: 'INTERPRETATIONS', value: stats.interpretations)),
+                      label: context.l10n.memoryDashboardInterpretations,
+                      value: stats.interpretations)),
               HSpace.x1,
-              Expanded(child: CountCard(label: 'LINKS', value: stats.links)),
+              Expanded(
+                  child: CountCard(
+                      label: context.l10n.memoryDashboardLinks,
+                      value: stats.links)),
             ],
           ),
           VSpace.x2,
           BiosSection(
-            title: 'Memory by Account',
+            title: context.l10n.memoryDashboardByAccount,
             child: stats.byAccount.isEmpty
-                ? const EmptyLabel('No memory recorded yet')
+                ? EmptyLabel(context.l10n.memoryDashboardNoMemoryRecorded)
                 : Column(
                     children: stats.byAccount
                         .map((account) => _AccountRow(account: account))
@@ -40,9 +45,9 @@ class MemoryDashboardView extends StatelessWidget {
                   ),
           ),
           BiosSection(
-            title: 'Recent Observations',
+            title: context.l10n.memoryDashboardRecentObservations,
             child: stats.recentObservations.isEmpty
-                ? const EmptyLabel('No observations yet')
+                ? EmptyLabel(context.l10n.memoryDashboardNoObservationsYet)
                 : Column(
                     children: stats.recentObservations
                         .map(
@@ -56,9 +61,9 @@ class MemoryDashboardView extends StatelessWidget {
                   ),
           ),
           BiosSection(
-            title: 'Recent Interpretations',
+            title: context.l10n.memoryDashboardRecentInterpretations,
             child: stats.recentInterpretations.isEmpty
-                ? const EmptyLabel('No interpretations yet')
+                ? EmptyLabel(context.l10n.memoryDashboardNoInterpretationsYet)
                 : Column(
                     children: stats.recentInterpretations
                         .map(
@@ -94,7 +99,8 @@ class _AccountRow extends StatelessWidget {
               ),
             ),
             TerminalText(
-              '${account.observations} obs / ${account.interpretations} int',
+              context.l10n.memoryDashboardAccountSummary(
+                  account.observations, account.interpretations),
               color: context.colorScheme.onSurface,
               alpha: 0.7,
             ),

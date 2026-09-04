@@ -30,7 +30,7 @@ class PocoTerminalResponse extends StatelessWidget {
       speaker: TerminalConversationSpeaker.poco,
       child: TypewriterText(
         key: ValueKey(messageId),
-        prefix: '[poco] ',
+        prefix: context.l10n.chatPocoPrompt,
         prefixStyle: TextStyle(
           color: context.colorScheme.primary,
           fontFamily: AppFonts.bodyFamily,

@@ -75,6 +75,11 @@
   "bootWelcomeBack": "Welcome back.",
   "bootSystemsNominal": "Systems nominal. I'm ready.",
   "bootConnectionFailed": "Connection failed. I'll take you back to the setup screen so we can check the server settings.",
+  "bootNoiseHeartbeat": "[sys] heartbeat: ok",
+  "bootNoiseKeepalive": "[net] keepalive sent",
+  "bootNoiseGcMinor": "[mem] gc_minor completed",
+  "bootNoiseContextSwitch": "[proc] context_switch: 1241",
+  "bootNoiseReasoningEngine": "[agent] reasoning_engine: idle",
 
   "onboardingTitle": "IDENTIFICATION UNLOCK",
   "onboardingPocoChallengeMessage": "WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.",
@@ -198,6 +203,11 @@
   "chatThinkingRole": "THINKING",
   "chatPocoRole": "POCO",
   "chatElicitationRequest": "ELICITATION REQUEST",
+  "chatElicitationFormLabel": "FORM",
+  "chatCommanderPrompt": "commander@pc $ ",
+  "chatComposerPrompt": "commander@pc $",
+  "chatPocoPrompt": "[poco] ",
+  "chatPickerFieldIndicator": "[v]",
   "chatDecline": "DECLINE",
   "chatSubmit": "SUBMIT",
   "chatNoFieldsRequested": "(no fields requested)",
@@ -327,6 +337,7 @@
   "toolPermissionsAllowLabel": "ALLOW",
   "toolPermissionsAskLabel": "ASK",
   "toolPermissionsDenyLabel": "DENY",
+  "toolPermissionsAddRuleButton": "ADD RULE",
 
   "notificationSettingsScreenTitle": "NOTIFICATIONS",
   "notificationSettingsChatReplyLabel": "CHAT REPLIES",
@@ -358,6 +369,7 @@
     }
   },
   "skillsNoEligibleConfig": "No agent config has a workspace folder configured.",
+  "skillsBuiltInLabel": "BUILT-IN",
 
   "schedulerTitle": "SCHEDULER",
   "schedulerRegistryTitle": "SCHEDULED TASKS",
@@ -387,6 +399,20 @@
   "settingsReportAiContentLabel": "REPORT AI CONTENT",
   "settingsSystemSection": "SYSTEM",
   "settingsAccountSection": "ACCOUNT",
+  "settingsMenuLlmManagement": "LLM MANAGEMENT",
+  "settingsMenuAgentRegistry": "AGENT REGISTRY",
+  "settingsMenuMcpManagement": "MCP MANAGEMENT",
+  "settingsMenuSkills": "SKILLS",
+  "settingsMenuToolPermissions": "TOOL PERMISSIONS",
+  "settingsMenuHarnessConnections": "HARNESS CONNECTIONS",
+  "settingsMenuSystemChecks": "SYSTEM CHECKS",
+  "settingsMenuPocketMemory": "POCKET MEMORY",
+  "settingsMenuPocketbase": "POCKETBASE",
+  "settingsMenuScheduler": "SCHEDULER",
+  "settingsMenuNotifications": "NOTIFICATIONS",
+  "settingsMenuLogout": "LOGOUT",
+  "settingsMenuReset": "RESET",
+  "settingsMenuHapticFeedback": "HAPTIC FEEDBACK",
   "settingsLogoutConfirmTitle": "SIGN OUT",
   "settingsLogoutConfirmBody": "This will end your current session. You will need to log in again to continue.",
   "settingsLogoutCancel": "CANCEL",
@@ -420,6 +446,8 @@
   "agentNone": "NONE",
   "agentNoneSelected": "NONE SELECTED",
   "agentDefaultTuned": "DEFAULT [TUNED]",
+  "agentPlanPanelBadge": "[PLAN]",
+  "agentPlanPanelLabel": "PLAN",
 
   "agentConfigTitle": "AGENT CONFIGURATION",
   "agentConfigRegistry": "AGENT CONFIGS",
@@ -499,6 +527,12 @@
       "error": { "type": "String" }
     }
   },
+  "providerScreenApiKeyLabel": "API key",
+  "providerScreenApiKeyLeaveBlankHint": "Leave blank to keep the existing key",
+  "providerScreenApiKeyNotSet": "(not set)",
+  "providerScreenApiKeyStoredSecurely": "Existing key is stored securely; enter a new key to replace it.",
+  "providerScreenProviderLabel": "PROVIDER",
+  "providerScreenDeleteKeyAction": "DELETE",
 
   "toolPermissionsTitle": "GATEKEEPER CONFIGURATION",
   "toolPermissionsFrameTitle": "TOOL PERMISSIONS",
@@ -721,6 +755,10 @@
   "initializationHttpsEndpoint": "HTTPS ENDPOINT",
   "initializationAdminIdentity": "ADMIN IDENTITY",
   "initializationAdminPassword": "ADMIN PASSWORD",
+  "initializationNotAvailable": "N/A",
+  "initializationCopyAction": "COPY",
+  "initializationHideAction": "HIDE",
+  "initializationShowAction": "SHOW",
   "deploymentProvisioned": "PROVISIONED",
   "initializationCloudRegion": "CLOUD REGION",
   "initializationHardwarePlan": "HARDWARE PLAN",
@@ -795,6 +833,14 @@
   "deploymentProvisioningSummary": "PROVISIONING SUMMARY",
   "deploymentServerProvider": "SERVER PROVIDER",
   "deploymentProviderLinode": "LINODE",
+  "deploymentProviderFake": "FAKE",
+  "deploymentConfigNotReadyError": "Deployment is not ready yet — configuration is still loading.",
+  "deploymentAdminPasswordTooShort": "The admin password must be at least {minLength} characters.",
+  "@deploymentAdminPasswordTooShort": {
+    "placeholders": {
+      "minLength": { "type": "int" }
+    }
+  },
   "@deploymentCopiedToBuffer": {"placeholders": {"label": {"type": "String"}}},
   "@deploymentMonthlyPrice": {"placeholders": {"price": {"type": "String"}}},
   "@deploymentFaultDetected": {"placeholders": {"error": {"type": "String"}}},
@@ -1208,6 +1254,7 @@
       "count": { "type": "int" }
     }
   },
+  "errorsDeleteAction": "DELETE",
   "deploymentResetAction": "RESET",
   "@deploymentResetAction": { "description": "Label for the reset deployment state action on the config screen recovery section" },
   "deploymentResetConfirmationTitle": "Reset local deployment state?",
@@ -1339,6 +1386,10 @@
   "serverControlPrivateKeyLabel": "SSH PRIVATE KEY",
   "serverControlProviderConsole": "PROVIDER WEB PORTAL",
   "serverControlProviderConsoleUnavailable": "No active provider-managed instance found.",
+  "serverControlErrorPrefix": "ERROR: {error}",
+  "@serverControlErrorPrefix": {"placeholders": {"error": {"type": "String"}}},
+  "serverControlRetryAction": "RETRY",
+  "serverControlOutputLabel": "OUTPUT",
   "fossServerSetupTitle": "CONNECT YOUR SERVER",
   "fossServerSetupIntro": "Generate a key, add it to your VPS, then verify the connection.",
   "fossServerSetupGenerateKey": "GENERATE KEY",
@@ -1346,7 +1397,51 @@
   "fossServerSetupHostLabel": "This will connect to:",
   "fossServerSetupTestAndSave": "TEST CONNECTION & SAVE",
   "fossServerSetupConnected": "CONNECTED -- YOUR SERVER IS NOW MANAGED",
+  "fossServerSetupErrorPrefix": "ERROR: {error}",
+  "@fossServerSetupErrorPrefix": {"placeholders": {"error": {"type": "String"}}},
   "initializationInstanceId": "INSTANCE ID",
   "initializationRetryAttempt": "RETRY ATTEMPT",
-  "@deploymentCleanupNotNeeded": { "description": "Cleanup outcome shown when no cloud server needed cleanup" }
+  "@deploymentCleanupNotNeeded": { "description": "Cleanup outcome shown when no cloud server needed cleanup" },
+
+  "memoryDashboardTitle": "POCKET MEMORY",
+  "memoryDashboardUnavailable": "MEMORY UNAVAILABLE",
+  "memoryDashboardObservations": "OBSERVATIONS",
+  "memoryDashboardInterpretations": "INTERPRETATIONS",
+  "memoryDashboardLinks": "LINKS",
+  "memoryDashboardByAccount": "Memory by Account",
+  "memoryDashboardNoMemoryRecorded": "No memory recorded yet",
+  "memoryDashboardRecentObservations": "Recent Observations",
+  "memoryDashboardNoObservationsYet": "No observations yet",
+  "memoryDashboardRecentInterpretations": "Recent Interpretations",
+  "memoryDashboardNoInterpretationsYet": "No interpretations yet",
+  "memoryDashboardAccountSummary": "{observations} obs / {interpretations} int",
+  "@memoryDashboardAccountSummary": {
+    "placeholders": {
+      "observations": { "type": "int" },
+      "interpretations": { "type": "int" }
+    }
+  },
+  "memoryDashboardLinkedPrefix": "Linked: {links}",
+  "@memoryDashboardLinkedPrefix": {
+    "placeholders": {
+      "links": { "type": "String" }
+    }
+  },
+
+  "pocketbaseInspectorTitle": "POCKETBASE",
+  "pocketbaseInspectorUnavailable": "DATABASE UNAVAILABLE",
+  "pocketbaseInspectorUsers": "USERS",
+  "pocketbaseInspectorChats": "CHATS",
+  "pocketbaseInspectorAgentProfiles": "AGENT PROFILES",
+  "pocketbaseInspectorHarnesses": "HARNESSES",
+  "pocketbaseInspectorMcpServers": "MCP SERVERS",
+  "pocketbaseInspectorSkills": "SKILLS",
+  "pocketbaseInspectorRecentChats": "Recent Chats",
+  "pocketbaseInspectorNoChatsYet": "No chats yet",
+  "pocketbaseInspectorChatArchivedTitle": "{title} (archived)",
+  "@pocketbaseInspectorChatArchivedTitle": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  }
 }

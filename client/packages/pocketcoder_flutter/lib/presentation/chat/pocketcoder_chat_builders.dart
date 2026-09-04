@@ -147,7 +147,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: 'commander@pc \$ ',
+                    text: context.l10n.chatCommanderPrompt,
                     style: TextStyle(
                       color: color,
                       fontFamily: AppFonts.bodyFamily,
@@ -204,7 +204,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
             child: TerminalTranscriptLine(
-              prefix: 'commander@pc \$ ',
+              prefix: context.l10n.chatCommanderPrompt,
               color: emphasize(context.colorScheme.secondary, Emphasis.selected)
                   .text,
               child: child,
@@ -214,7 +214,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         return TerminalConversationFrame(
           speaker: TerminalConversationSpeaker.poco,
           child: TerminalTranscriptLine(
-            prefix: '[poco] ',
+            prefix: context.l10n.chatPocoPrompt,
             color: context.colorScheme.primary,
             child: child,
           ),

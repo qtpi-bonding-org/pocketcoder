@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/domain/server_control/i_provider_console_lin
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_setup_gate.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/server_control_view.dart';
 
@@ -53,10 +54,11 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('ERROR: ${snapshot.error}'),
+                  Text(context.l10n
+                      .serverControlErrorPrefix(snapshot.error.toString())),
                   TextButton(
                     onPressed: _resolveSetupScreen,
-                    child: const Text('RETRY'),
+                    child: Text(context.l10n.serverControlRetryAction),
                   ),
                 ],
               ),
