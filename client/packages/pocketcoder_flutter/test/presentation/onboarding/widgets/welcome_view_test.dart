@@ -21,7 +21,8 @@ void main() {
       ),
     );
 
-    final colors = Theme.of(tester.element(find.byType(WelcomeView))).colorScheme;
+    final colors =
+        Theme.of(tester.element(find.byType(WelcomeView))).colorScheme;
 
     final guidedButton = tester.widget<TextButton>(
       find.ancestor(
@@ -29,7 +30,8 @@ void main() {
         matching: find.byType(TextButton),
       ),
     );
-    final guidedSide = (guidedButton.style?.shape?.resolve({}) as RoundedRectangleBorder).side;
+    final guidedSide =
+        (guidedButton.style?.shape?.resolve({}) as RoundedRectangleBorder).side;
     expect(guidedSide.color, colors.primary);
 
     final selfHostButton = tester.widget<TextButton>(
@@ -39,7 +41,8 @@ void main() {
       ),
     );
     final selfHostSide =
-        (selfHostButton.style?.shape?.resolve({}) as RoundedRectangleBorder).side;
+        (selfHostButton.style?.shape?.resolve({}) as RoundedRectangleBorder)
+            .side;
     expect(selfHostSide.color, colors.primary.withValues(alpha: 0.3));
   });
 }

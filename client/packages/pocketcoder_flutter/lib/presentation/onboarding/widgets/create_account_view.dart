@@ -63,27 +63,27 @@ class _CreateAccountViewState extends State<CreateAccountView> {
         ],
         body: OnboardingContentShell(
           child: Column(
-                children: [
-                  PocoBubble(
-                    message: context.l10n.onboardingServerCredentialsPoco,
-                  ),
-                  VSpace.x3,
-                  TerminalTextField(
-                    controller: _emailController,
-                    label: context.l10n.onboardingPocketbaseAdminEmail,
-                    hint: context.l10n.onboardingEmailHintShort,
-                    onChanged: widget.onEmailChanged,
-                  ),
-                  VSpace.x2,
-                  TerminalTextField(
-                    controller: _passwordController,
-                    label: context.l10n.onboardingPocketbaseAdminPassword,
-                    obscureText: true,
-                    onChanged: widget.onPasswordChanged,
-                    onSubmitted: (_) => widget.onContinue(),
-                    errorText: widget.passwordErrorText,
-                  ),
-                ],
+            children: [
+              PocoBubble(
+                message: context.l10n.onboardingServerCredentialsPoco,
+              ),
+              VSpace.x3,
+              TerminalTextField(
+                controller: _emailController,
+                label: context.l10n.onboardingPocketbaseAdminEmail,
+                hint: context.l10n.onboardingEmailHintShort,
+                onChanged: widget.onEmailChanged,
+              ),
+              VSpace.x2,
+              TerminalTextField(
+                controller: _passwordController,
+                label: context.l10n.onboardingPocketbaseAdminPassword,
+                obscureText: true,
+                onChanged: widget.onPasswordChanged,
+                onSubmitted: (_) => widget.onContinue(),
+                errorText: widget.passwordErrorText,
+              ),
+            ],
           ),
         ),
       );

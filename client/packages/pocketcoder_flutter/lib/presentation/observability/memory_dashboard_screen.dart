@@ -27,7 +27,7 @@ class _MemoryDashboardScreenState extends State<MemoryDashboardScreen> {
 
   @override
   Widget build(BuildContext context) => BlocBuilder<MemoryCubit, MemoryState>(
-        builder: (context, state) => PocketCoderShell(
+      builder: (context, state) => PocketCoderShell(
           title: context.l10n.memoryDashboardTitle,
           activePillar: NavPillar.configure,
           showBack: true,
@@ -36,9 +36,9 @@ class _MemoryDashboardScreenState extends State<MemoryDashboardScreen> {
             UiFlowStatus.idle =>
               const Center(child: TerminalLoadingIndicator()),
             UiFlowStatus.failure => Center(
-                child: TerminalText(
-                  context.l10n.memoryDashboardUnavailable,
-                  role: TextRole.warn)),
+                child: TerminalText(context.l10n.memoryDashboardUnavailable,
+                    role: TextRole.warn)),
             UiFlowStatus.success =>
-              MemoryDashboardView(stats: state.stats ?? const MemoryStats())}));
+              MemoryDashboardView(stats: state.stats ?? const MemoryStats())
+          }));
 }

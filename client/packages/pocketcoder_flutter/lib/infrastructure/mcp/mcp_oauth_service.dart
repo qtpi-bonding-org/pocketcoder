@@ -63,13 +63,17 @@ class McpOAuthService implements IMcpOAuthService {
 
       final resp = await _httpClient.get(Uri.parse('$_relayBaseUrl/providers'));
       if (resp.statusCode != 200) {
-        throw McpOAuthException('Failed to fetch supported providers: ${resp.statusCode}');
+        throw McpOAuthException(
+            'Failed to fetch supported providers: ${resp.statusCode}');
       }
       final body = jsonDecode(resp.body) as Map<String, dynamic>;
       final rawList = body['providers'] as List<dynamic>? ?? const [];
       final providers = rawList.map((raw) {
         final map = raw as Map<String, dynamic>;
-        return (id: map['id'] as String, displayName: map['displayName'] as String);
+        return (
+          id: map['id'] as String,
+          displayName: map['displayName'] as String
+        );
       }).toList();
 
       _cachedProviders = providers;
@@ -83,7 +87,8 @@ class McpOAuthService implements IMcpOAuthService {
       final codeVerifier = generateCodeVerifier();
       final codeChallenge = generateCodeChallenge(codeVerifier);
 
-      final authorizeUri = Uri.parse('$_relayBaseUrl/authorize').replace(queryParameters: {
+      final authorizeUri =
+          Uri.parse('$_relayBaseUrl/authorize').replace(queryParameters: {
         'provider': provider,
         'code_challenge': codeChallenge,
       });
@@ -149,9 +154,13 @@ class McpOAuthService implements IMcpOAuthService {
     }
     final accessToken = body['access_token'] as String?;
     if (accessToken == null || accessToken.isEmpty) {
-      throw McpOAuthException.claimFailed('missing access_token in /claim response');
+      throw McpOAuthException.claimFailed(
+          'missing access_token in /claim response');
     }
-    return (accessToken: accessToken, refreshToken: body['refresh_token'] as String?);
+    return (
+      accessToken: accessToken,
+      refreshToken: body['refresh_token'] as String?
+    );
   }
 
   /// PKCE code_verifier per RFC 7636: 43-128 chars, unreserved charset.
@@ -160,7 +169,8 @@ class McpOAuthService implements IMcpOAuthService {
     const charset =
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
     final random = Random.secure();
-    return List.generate(64, (_) => charset[random.nextInt(charset.length)]).join();
+    return List.generate(64, (_) => charset[random.nextInt(charset.length)])
+        .join();
   }
 
   /// S256 code_challenge: SHA-256 of the verifier, base64url without

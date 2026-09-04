@@ -7,11 +7,11 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class HarnessChoiceCard extends StatelessWidget {
-  const HarnessChoiceCard({
-    super.key,
-    required this.harness,
-    required this.connected,
-    required this.onTap});
+  const HarnessChoiceCard(
+      {super.key,
+      required this.harness,
+      required this.connected,
+      required this.onTap});
 
   final Harnesse harness;
   final bool connected;
@@ -20,50 +20,51 @@ class HarnessChoiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Opacity(
-      key: ValueKey('harness-card-opacity-${harness.cliId}'),
-      opacity: onTap == null ? 0.4 : 1.0,
-      child: IgnorePointer(
-        ignoring: onTap == null,
-        child: InkWell(
-          onTap: onTap,
-          child: TerminalCard(
-            child: Row(
-              children: [
-                Expanded(
-                  child: GlyphLabelRow(
-                    glyph: r'$',
-                    spacing: HSpace.x2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          harness.name,
-                          style: TextStyle(
-                            fontFamily: AppFonts.family,
-                            fontWeight: AppFonts.heavy),
-                        ),
-                        VSpace.x1,
-                        TerminalText(
-                          connected
-                              ? context.l10n.onboardingConnected
-                              : switch (harness.cliId.trim().toLowerCase()) {
-                                  'codex' =>
-                                    context.l10n.onboardingCodexAccountLogin,
-                                  'claude-code' =>
-                                    context.l10n.onboardingClaudeAccountLogin,
-                                  _ => context.l10n
-                                      .onboardingHarnessAccountLogin(
-                                          harness.name)},
-                          role: TextRole.body,
-                        ),
-                      ],
+        key: ValueKey('harness-card-opacity-${harness.cliId}'),
+        opacity: onTap == null ? 0.4 : 1.0,
+        child: IgnorePointer(
+            ignoring: onTap == null,
+            child: InkWell(
+                onTap: onTap,
+                child: TerminalCard(
+                    child: Row(children: [
+                  Expanded(
+                    child: GlyphLabelRow(
+                      glyph: r'$',
+                      spacing: HSpace.x2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            harness.name,
+                            style: TextStyle(
+                                fontFamily: AppFonts.family,
+                                fontWeight: AppFonts.heavy,
+                                color: context.colorScheme.onSurface),
+                          ),
+                          VSpace.x1,
+                          TerminalText(
+                            connected
+                                ? context.l10n.onboardingConnected
+                                : switch (harness.cliId.trim().toLowerCase()) {
+                                    'codex' =>
+                                      context.l10n.onboardingCodexAccountLogin,
+                                    'claude-code' =>
+                                      context.l10n.onboardingClaudeAccountLogin,
+                                    _ => context.l10n
+                                        .onboardingHarnessAccountLogin(
+                                            harness.name)
+                                  },
+                            role: TextRole.body,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                TerminalText(
-                  connected ? '[x]' : '[>]',
-                  role: TextRole.body,
-                ),
-              ])))));
+                  TerminalText(
+                    connected ? '[x]' : '[>]',
+                    role: TextRole.body,
+                  ),
+                ])))));
   }
 }

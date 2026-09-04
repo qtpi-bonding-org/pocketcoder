@@ -72,16 +72,20 @@ void main() {
     verify(() => cubit.navigateInto('internal')).called(1);
   });
 
-  testWidgets('tapping a file row invokes onOpenFile with the full path', (tester) async {
+  testWidgets('tapping a file row invokes onOpenFile with the full path',
+      (tester) async {
     when(() => cubit.state).thenReturn(const FileBrowserState(
       status: UiFlowStatus.success,
       path: 'src',
-      entries: [FileEntry(name: 'main.go', isDir: false, size: 10, modTime: '')],
+      entries: [
+        FileEntry(name: 'main.go', isDir: false, size: 10, modTime: '')
+      ],
     ));
     when(() => cubit.stream).thenAnswer((_) => const Stream.empty());
     String? openedPath;
 
-    await tester.pumpWidget(buildTestable(onOpenFile: (_, path) => openedPath = path));
+    await tester
+        .pumpWidget(buildTestable(onOpenFile: (_, path) => openedPath = path));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('main.go'));
@@ -90,8 +94,10 @@ void main() {
     expect(openedPath, 'src/main.go');
   });
 
-  testWidgets('shows an empty-state message when entries is empty', (tester) async {
-    when(() => cubit.state).thenReturn(const FileBrowserState(status: UiFlowStatus.success));
+  testWidgets('shows an empty-state message when entries is empty',
+      (tester) async {
+    when(() => cubit.state)
+        .thenReturn(const FileBrowserState(status: UiFlowStatus.success));
     when(() => cubit.stream).thenAnswer((_) => const Stream.empty());
 
     await tester.pumpWidget(buildTestable());

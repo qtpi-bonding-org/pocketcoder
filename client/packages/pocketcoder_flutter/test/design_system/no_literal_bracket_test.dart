@@ -41,7 +41,8 @@ void main() {
           for (var j = i; j < (i + 3).clamp(0, lines.length); j++) {
             final searchLine = lines[j];
             // Skip lines with ${} or [' (false positives from interpolation/dict access)
-            if (searchLine.contains(r'${') || searchLine.contains(r"['")) continue;
+            if (searchLine.contains(r'${') || searchLine.contains(r"['"))
+              continue;
             // Match string literals containing [ or <
             if (searchLine.contains(RegExp(r'"[^"]*[\[<][^"]*"')) ||
                 searchLine.contains(RegExp(r"'[^']*[\[<][^']*'"))) {

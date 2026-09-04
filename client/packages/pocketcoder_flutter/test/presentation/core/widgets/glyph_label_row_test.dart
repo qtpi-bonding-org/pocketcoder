@@ -29,8 +29,7 @@ void main() {
     expect(glyphText.style?.color, TextRole.label.color);
   });
 
-  testWidgets('defaults to HSpace.x1 when no spacing is given',
-      (tester) async {
+  testWidgets('defaults to HSpace.x1 when no spacing is given', (tester) async {
     await tester.pumpWidget(_app(const GlyphLabelRow(
       glyph: '[+]',
       child: TerminalText('label', role: TextRole.body),
@@ -51,8 +50,7 @@ void main() {
     expect(sizedBox.width, AppSizes.space * 2);
   });
 
-  testWidgets('expands the child to fill remaining row space',
-      (tester) async {
+  testWidgets('expands the child to fill remaining row space', (tester) async {
     await tester.pumpWidget(_app(const GlyphLabelRow(
       glyph: '[+]',
       child: TerminalText('label', role: TextRole.body),

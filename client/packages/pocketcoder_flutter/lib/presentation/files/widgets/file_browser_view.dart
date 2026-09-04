@@ -12,19 +12,19 @@ class FileBrowserView extends StatelessWidget {
   final ValueChanged<String> onNavigateInto;
   final FileBrowserState state;
 
-  const FileBrowserView({
-    super.key,
-    required this.onOpenFile,
-    required this.onNavigateInto,
-    required this.state});
+  const FileBrowserView(
+      {super.key,
+      required this.onOpenFile,
+      required this.onNavigateInto,
+      required this.state});
 
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: context.l10n.filesTitle,
-      activePillar: NavPillar.chats,
-      showBack: true,
-      body: Builder(builder: (context) {
+        title: context.l10n.filesTitle,
+        activePillar: NavPillar.chats,
+        showBack: true,
+        body: Builder(builder: (context) {
           if (state.isLoading) {
             return const Center(child: TerminalLoadingIndicator());
           }
@@ -32,32 +32,35 @@ class FileBrowserView extends StatelessWidget {
             return Center(
               child: Padding(
                 padding: EdgeInsets.all(AppSizes.space * 4),
-                child: TerminalText(context.l10n.filesEmpty, role: TextRole.label),
+                child:
+                    TerminalText(context.l10n.filesEmpty, role: TextRole.label),
               ),
             );
           }
-          return ListView(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(AppSizes.space),
-                child: TerminalText('/${state.path}', role: TextRole.label),
-              ),
-              ...state.entries.map((entry) => _entryRow(context, state, entry)),
-            ]);
+          return ListView(children: [
+            Padding(
+              padding: EdgeInsets.all(AppSizes.space),
+              child: TerminalText('/${state.path}', role: TextRole.label),
+            ),
+            ...state.entries.map((entry) => _entryRow(context, state, entry)),
+          ]);
         }));
   }
 
-  Widget _entryRow(BuildContext context, FileBrowserState state, FileEntry entry) {
+  Widget _entryRow(
+      BuildContext context, FileBrowserState state, FileEntry entry) {
     return ListTile(
-      leading: TerminalText(entry.isDir ? '[DIR]' : '[FILE]', role: TextRole.label),
-      title: TerminalText(entry.name, role: TextRole.label),
-      onTap: () {
-        if (entry.isDir) {
-          onNavigateInto(entry.name);
-        } else {
-          final fullPath = state.path.isEmpty ? entry.name : '${state.path}/${entry.name}';
-          onOpenFile(context, fullPath);
-        }
-      });
+        leading: TerminalText(entry.isDir ? '[DIR]' : '[FILE]',
+            role: TextRole.label),
+        title: TerminalText(entry.name, role: TextRole.label),
+        onTap: () {
+          if (entry.isDir) {
+            onNavigateInto(entry.name);
+          } else {
+            final fullPath =
+                state.path.isEmpty ? entry.name : '${state.path}/${entry.name}';
+            onOpenFile(context, fullPath);
+          }
+        });
   }
 }

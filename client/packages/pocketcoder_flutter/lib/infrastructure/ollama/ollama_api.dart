@@ -23,7 +23,8 @@ class OllamaApi {
 
   Future<List<OllamaModel>> listModels() async {
     final response = await _api.ollama.listOllamaModels();
-    final models = response.data?.models ?? const <BuiltMap<String, JsonObject?>>[];
+    final models =
+        response.data?.models ?? const <BuiltMap<String, JsonObject?>>[];
     return models
         .map((item) => OllamaModel.fromJson({
               for (final entry in item.entries) entry.key: entry.value?.value,

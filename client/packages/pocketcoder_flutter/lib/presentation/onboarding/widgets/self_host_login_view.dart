@@ -78,38 +78,38 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
       ],
       body: OnboardingContentShell(
         child: Column(
-              children: [
-                TerminalConversationTurn(
-                  speaker: TerminalConversationSpeaker.poco,
-                  message: widget.pocoMessage,
-                  sequence: widget.pocoSequence,
-                  history: widget.pocoHistory,
-                ),
-                VSpace.x4,
-                TerminalTextField(
-                  controller: _urlController,
-                  label: context.l10n.onboardingServerUrl,
-                  hint: context.l10n.onboardingServerUrlHint,
-                ),
-                VSpace.x2,
-                TerminalTextField(
-                  controller: _emailController,
-                  label: context.l10n.onboardingEmail,
-                  hint: context.l10n.onboardingEmailHintShort,
-                ),
-                VSpace.x2,
-                TerminalTextField(
-                  controller: _passwordController,
-                  label: context.l10n.onboardingPassword,
-                  obscureText: true,
-                  onSubmitted: (_) => loading ? null : _login(),
-                ),
-                if (loading) ...[
-                  VSpace.x2,
-                  TerminalLoadingIndicator(
-                    label: context.l10n.onboardingAuthenticating,
-                  ),
-                ],
+          children: [
+            TerminalConversationTurn(
+              speaker: TerminalConversationSpeaker.poco,
+              message: widget.pocoMessage,
+              sequence: widget.pocoSequence,
+              history: widget.pocoHistory,
+            ),
+            VSpace.x4,
+            TerminalTextField(
+              controller: _urlController,
+              label: context.l10n.onboardingServerUrl,
+              hint: context.l10n.onboardingServerUrlHint,
+            ),
+            VSpace.x2,
+            TerminalTextField(
+              controller: _emailController,
+              label: context.l10n.onboardingEmail,
+              hint: context.l10n.onboardingEmailHintShort,
+            ),
+            VSpace.x2,
+            TerminalTextField(
+              controller: _passwordController,
+              label: context.l10n.onboardingPassword,
+              obscureText: true,
+              onSubmitted: (_) => loading ? null : _login(),
+            ),
+            if (loading) ...[
+              VSpace.x2,
+              TerminalLoadingIndicator(
+                label: context.l10n.onboardingAuthenticating,
+              ),
+            ],
           ],
         ),
       ),

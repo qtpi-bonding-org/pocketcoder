@@ -20,6 +20,5 @@ abstract class Skill with _$Skill {
   factory Skill.fromRecord(RecordModel record) =>
       Skill.fromJson(record.toJson());
 
-  factory Skill.fromJson(Map<String, dynamic> json) =>
-      _$SkillFromJson(json);
+  factory Skill.fromJson(Map<String, dynamic> json) => _$SkillFromJson(json);
 }

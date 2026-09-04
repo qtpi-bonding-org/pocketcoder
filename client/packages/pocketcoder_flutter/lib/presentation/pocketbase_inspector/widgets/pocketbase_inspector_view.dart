@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/pocketbase_inspector/i_pocketbase_inspector_repository.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class PocketbaseInspectorView extends StatelessWidget {
@@ -11,9 +11,8 @@ class PocketbaseInspectorView extends StatelessWidget {
   final PocketbaseInspectorStats stats;
 
   @override
-  Widget build(BuildContext context) => ListView(
-        children: [
-          GridView.count(
+  Widget build(BuildContext context) => ListView(children: [
+        GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 3,
@@ -44,16 +43,16 @@ class PocketbaseInspectorView extends StatelessWidget {
                   label: context.l10n.pocketbaseInspectorSkills,
                   value: stats.skills),
             ]),
-          VSpace.x2,
-          BiosSection(
-            title: context.l10n.pocketbaseInspectorRecentChats,
-            child: stats.recentChats.isEmpty
-                ? _EmptyLabel(context.l10n.pocketbaseInspectorNoChatsYet)
-                : Column(
-                    children: stats.recentChats
-                        .map((chat) => _ChatRow(chat: chat))
-                        .toList())),
-        ]);
+        VSpace.x2,
+        SectionHeader(
+            name: context.l10n.pocketbaseInspectorRecentChats.toLowerCase()),
+        stats.recentChats.isEmpty
+            ? _EmptyLabel(context.l10n.pocketbaseInspectorNoChatsYet)
+            : Column(
+                children: stats.recentChats
+                    .map((chat) => _ChatRow(chat: chat))
+                    .toList()),
+      ]);
 }
 
 class _CountCard extends StatelessWidget {
@@ -64,9 +63,10 @@ class _CountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.symmetric(horizontal: AppSizes.space / 2, vertical: AppSizes.space / 4),
+        padding: EdgeInsets.symmetric(
+            horizontal: AppSizes.space / 2, vertical: AppSizes.space / 4),
         decoration: BoxDecoration(
-          border: Border.all(color: context.colorScheme.primary)),
+            border: Border.all(color: context.colorScheme.primary)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -112,8 +112,8 @@ class _ChatRow extends StatelessWidget {
             Expanded(
               child: TerminalText(
                 chat.archived
-                    ? context.l10n.pocketbaseInspectorChatArchivedTitle(
-                        chat.title)
+                    ? context.l10n
+                        .pocketbaseInspectorChatArchivedTitle(chat.title)
                     : chat.title,
                 role: TextRole.body,
               ),

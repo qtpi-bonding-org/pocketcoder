@@ -42,7 +42,8 @@ class _FakeServerControlService implements IServerControlService {
       throw UnimplementedError();
 
   @override
-  Future<ServerControlResult> restartPocketCoder({required String instanceId}) =>
+  Future<ServerControlResult> restartPocketCoder(
+          {required String instanceId}) =>
       throw UnimplementedError();
 
   @override
@@ -168,7 +169,8 @@ void main() {
     expect(find.text('ONBOARDING SCREEN'), findsOneWidget);
   });
 
-  testWidgets('MANAGE appears in the footer when IServerControlService is '
+  testWidgets(
+      'MANAGE appears in the footer when IServerControlService is '
       'registered, and is absent otherwise', (tester) async {
     final getIt = GetIt.instance;
     addTearDown(getIt.reset);

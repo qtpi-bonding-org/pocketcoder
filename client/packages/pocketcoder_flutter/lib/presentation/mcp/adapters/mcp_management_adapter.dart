@@ -23,9 +23,8 @@ class McpManagementAdapter extends CubitAdapter<McpCubit, McpState> {
         builder: (context, value, _) => switch (value.status) {
           UiFlowStatus.loading =>
             const Center(child: CircularProgressIndicator()),
-          UiFlowStatus.failure => Center(
-              child:
-                  Text(safeErrorMessage(value.error))),
+          UiFlowStatus.failure =>
+            Center(child: Text(safeErrorMessage(value.error))),
           UiFlowStatus.success => McpManagementView(
               servers: value.servers,
               oauthProviders: cubit.supportedOAuthProviders(),

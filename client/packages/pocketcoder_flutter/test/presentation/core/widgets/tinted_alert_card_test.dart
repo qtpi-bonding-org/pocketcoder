@@ -43,10 +43,12 @@ void main() {
     );
 
     final container = tester.widget<Container>(
-      find.descendant(
-        of: find.byType(TintedAlertCard),
-        matching: find.byType(Container),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(TintedAlertCard),
+            matching: find.byType(Container),
+          )
+          .first,
     );
     final decoration = container.decoration! as BoxDecoration;
     expect(decoration.border!.top.color.toARGB32() & 0x00FFFFFF,

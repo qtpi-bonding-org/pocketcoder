@@ -4,7 +4,8 @@ import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 
 /// A single action a dead-end footer can offer (e.g. "retry", "contact support").
 final class ShellAction {
-  const ShellAction({required this.label, required this.kind, required this.onTap});
+  const ShellAction(
+      {required this.label, required this.kind, required this.onTap});
   final String label;
   final ActionKind kind;
   final VoidCallback onTap;
@@ -43,7 +44,7 @@ final class WizardFooter extends ShellFooter {
   final int step;
   final int totalSteps;
   final VoidCallback onNext;
-  final VoidCallback? onBack;   // null on the first step
+  final VoidCallback? onBack; // null on the first step
 }
 
 /// A dead end: the flow cannot continue. `instance_gone`,

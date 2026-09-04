@@ -64,7 +64,8 @@ void main() {
 
     final container = tester.widget<Container>(
       find
-          .descendant(of: find.byType(InkWell), matching: find.byType(Container))
+          .descendant(
+              of: find.byType(InkWell), matching: find.byType(Container))
           .first,
     );
     final decoration = container.decoration as BoxDecoration;

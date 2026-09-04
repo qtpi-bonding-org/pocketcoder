@@ -63,13 +63,13 @@ class ServerControlCubit extends AppCubit<ServerControlState> {
     }
   }
 
-  static bool _refreshesRelease(ServerControlOperation operation) => switch (
-      operation) {
-    ServerControlOperation.saveBackup ||
-    ServerControlOperation.restoreBackup =>
-      false,
-    _ => true,
-  };
+  static bool _refreshesRelease(ServerControlOperation operation) =>
+      switch (operation) {
+        ServerControlOperation.saveBackup ||
+        ServerControlOperation.restoreBackup =>
+          false,
+        _ => true,
+      };
 
   /// Deliberately does not use [tryOperation] -- a failure here must not
   /// surface an error banner or clear [ServerControlState.release] for an

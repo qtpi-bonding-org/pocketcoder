@@ -24,7 +24,8 @@ const _tree = [
         name: 'internal',
         isDir: true,
         children: [
-          FileTreeEntry(name: 'b.go', isDir: false, size: 3, modTime: '2026-01-01'),
+          FileTreeEntry(
+              name: 'b.go', isDir: false, size: 3, modTime: '2026-01-01'),
         ],
       ),
     ],
@@ -67,7 +68,8 @@ void main() {
       verify(() => repo.listFileTree('')).called(1);
     });
 
-    test('reuses the already-fetched tree across a second open call -- '
+    test(
+        'reuses the already-fetched tree across a second open call -- '
         'exactly one network round trip covers every directory the user '
         'visits', () async {
       when(() => repo.listFileTree('')).thenAnswer((_) async => _tree);
@@ -109,7 +111,10 @@ void main() {
         if (callCount == 1) return _tree;
         return const [
           FileTreeEntry(
-              name: 'new_file.go', isDir: false, size: 1, modTime: '2026-01-02'),
+              name: 'new_file.go',
+              isDir: false,
+              size: 1,
+              modTime: '2026-01-02'),
         ];
       });
       final cubit = buildCubit();
@@ -137,7 +142,8 @@ void main() {
       verify(() => repo.listFileTree('')).called(1);
     });
 
-    test('does not prefix with a slash when the current path is empty', () async {
+    test('does not prefix with a slash when the current path is empty',
+        () async {
       when(() => repo.listFileTree('')).thenAnswer((_) async => _tree);
       final cubit = buildCubit();
 

@@ -83,7 +83,6 @@ class AsciiFace extends StatelessWidget {
     this.fontSize,
   });
 
-
   factory AsciiFace.sleepy(
           {PocoArmor armor = PocoArmor.standard,
           Color? color,

@@ -9,21 +9,21 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
 
 class HarnessAuthActionsBlock extends StatelessWidget {
-  const HarnessAuthActionsBlock({
-    super.key,
-    required this.harness,
-    required this.status,
-    required this.edges,
-    required this.codeController,
-    required this.isBusy,
-    required this.onStartAccount,
-    required this.onUseApiKey,
-    required this.onSubmit,
-    required this.onCancel,
-    required this.onDisconnect,
-    required this.onRefresh,
-    required this.onOpenAuthorizationPage,
-    required this.onCopyCode});
+  const HarnessAuthActionsBlock(
+      {super.key,
+      required this.harness,
+      required this.status,
+      required this.edges,
+      required this.codeController,
+      required this.isBusy,
+      required this.onStartAccount,
+      required this.onUseApiKey,
+      required this.onSubmit,
+      required this.onCancel,
+      required this.onDisconnect,
+      required this.onRefresh,
+      required this.onOpenAuthorizationPage,
+      required this.onCopyCode});
 
   final Harnesse harness;
   final HarnessAuthStatus status;
@@ -42,9 +42,7 @@ class HarnessAuthActionsBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       if (status.challenge case final challenge?)
         _connectionView(context, challenge),
       VSpace.x2,
@@ -67,26 +65,26 @@ class HarnessAuthActionsBlock extends StatelessWidget {
     ]);
   }
 
-  Widget _connectionView(
-      BuildContext context, HarnessAuthChallenge challenge) {
+  Widget _connectionView(BuildContext context, HarnessAuthChallenge challenge) {
     final uri = challenge.verificationUri;
     final destination = challenge.codeDestination;
     if (uri == null ||
         (destination != HarnessAuthCodeDestination.browser &&
             destination != HarnessAuthCodeDestination.app)) {
-      return TerminalText(challenge.legacyText ?? challenge.text, role: TextRole.body);
+      return TerminalText(challenge.legacyText ?? challenge.text,
+          role: TextRole.body);
     }
     return CredentialConnectionView(
-      step: BrowserVerificationConnectionStep(
-        verificationUri: uri,
-        codeDestination: destination,
-        userCode: challenge.userCode,
-        expiresAt: challenge.expiresAt),
-      onOpenAuthorizationPage: () => onOpenAuthorizationPage(uri),
-      onCopyCode: onCopyCode,
-      onSubmitCode: _submit,
-      onCancel: onCancel,
-      onRetry: () => onStartAccount(status.provider));
+        step: BrowserVerificationConnectionStep(
+            verificationUri: uri,
+            codeDestination: destination,
+            userCode: challenge.userCode,
+            expiresAt: challenge.expiresAt),
+        onOpenAuthorizationPage: () => onOpenAuthorizationPage(uri),
+        onCopyCode: onCopyCode,
+        onSubmitCode: _submit,
+        onCancel: onCancel,
+        onRetry: () => onStartAccount(status.provider));
   }
 
   Widget _actions(BuildContext context) {
@@ -111,14 +109,12 @@ class HarnessAuthActionsBlock extends StatelessWidget {
                       isLoading: isBusy),
                 ]
               : const <Widget>[];
-      return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < actionButtons.length; i++) ...[
-              if (i > 0) VSpace.x1,
-              actionButtons[i],
-            ],
-          ]);
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        for (var i = 0; i < actionButtons.length; i++) ...[
+          if (i > 0) VSpace.x1,
+          actionButtons[i],
+        ],
+      ]);
     }
     if (status.isConnected) {
       return TerminalButton(

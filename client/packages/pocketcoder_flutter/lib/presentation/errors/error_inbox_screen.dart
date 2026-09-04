@@ -9,14 +9,14 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/errors/widgets/error_tile.dart';
 
 class ErrorInboxScreen extends StatelessWidget {
-  const ErrorInboxScreen({
-    super.key,
-    required this.errors,
-    required this.onCopyAll,
-    required this.onClearAll,
-    required this.onCopy,
-    required this.onReportOnGithub,
-    required this.onDelete});
+  const ErrorInboxScreen(
+      {super.key,
+      required this.errors,
+      required this.onCopyAll,
+      required this.onClearAll,
+      required this.onCopy,
+      required this.onReportOnGithub,
+      required this.onDelete});
 
   final List<ErrorBoxEntry> errors;
   final VoidCallback onCopyAll;
@@ -28,55 +28,54 @@ class ErrorInboxScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: context.l10n.errorsTitle,
-      activePillar: NavPillar.configure,
-      showBack: true,
-      body: BiosFrame(
         title: context.l10n.errorsTitle,
-        child: Builder(
-          builder: (context) {
-            if (errors.isEmpty) {
-              return Padding(
-                padding: EdgeInsets.all(AppSizes.space * 2),
-                child: TerminalText(
-                  context.l10n.errorsEmpty,
-                  role: TextRole.body,
-                ));
-            }
-            return Column(
-              children: [
+        activePillar: NavPillar.configure,
+        showBack: true,
+        body: BiosFrame(
+            title: context.l10n.errorsTitle,
+            child: Builder(builder: (context) {
+              if (errors.isEmpty) {
+                return Padding(
+                    padding: EdgeInsets.all(AppSizes.space * 2),
+                    child: TerminalText(
+                      context.l10n.errorsEmpty,
+                      role: TextRole.body,
+                    ));
+              }
+              return Column(children: [
                 Padding(
-                  padding: EdgeInsets.all(AppSizes.space),
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: AppSizes.space,
-                    children: [
-                      BiosActionButton(
-                        action: BiosActionStripItem(
-                          label: context.l10n.errorsCopyAll,
-                          emphasis: Emphasis.outlined,
-                          onTap: onCopyAll)),
-                      BiosActionButton(
-                        action: BiosActionStripItem(
-                          label: context.l10n.errorsClearAll,
-                          emphasis: Emphasis.outlined,
-                          onTap: onClearAll)),
-                    ])),
+                    padding: EdgeInsets.all(AppSizes.space),
+                    child: Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: AppSizes.space,
+                        children: [
+                          BiosActionButton(
+                              action: BiosActionStripItem(
+                                  label: context.l10n.errorsCopyAll,
+                                  color: context.colorScheme.primary,
+                                  emphasis: Emphasis.outlined,
+                                  onTap: onCopyAll)),
+                          BiosActionButton(
+                              action: BiosActionStripItem(
+                                  label: context.l10n.errorsClearAll,
+                                  color: context.terminalColors.danger,
+                                  emphasis: Emphasis.outlined,
+                                  onTap: onClearAll)),
+                        ])),
                 // A plain Column here overflows once the tiles' combined
                 // height (an expanded tile's full stack trace especially)
                 // exceeds the frame's bounded height -- this list needs to
                 // scroll on its own rather than push past the frame.
                 Expanded(
-                  child: ListView(
-                    children: [
-                      for (final entry in errors)
-                        ErrorTile(
-                          entry: entry,
-                          onCopy: onCopy,
-                          onReportOnGithub: onReportOnGithub,
-                          onDelete: onDelete),
-                    ])),
+                    child: ListView(children: [
+                  for (final entry in errors)
+                    ErrorTile(
+                        entry: entry,
+                        onCopy: onCopy,
+                        onReportOnGithub: onReportOnGithub,
+                        onDelete: onDelete),
+                ])),
               ]);
-          })));
+            })));
   }
 }

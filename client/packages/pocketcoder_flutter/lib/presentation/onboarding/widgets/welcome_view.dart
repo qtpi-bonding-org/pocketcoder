@@ -25,26 +25,26 @@ class WelcomeView extends StatelessWidget {
         backFallbackRoute: AppRoutes.onboarding,
         body: OnboardingContentShell(
           child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TerminalConversationTurn(
-                    speaker: TerminalConversationSpeaker.poco,
-                    message: context.l10n.onboardingWelcomePoco,
-                  ),
-                  VSpace.x3,
-                  if (showGuidedSetup) ...[
-                    TerminalPromptSuggestion(
-                      label: context.l10n.onboardingWelcomeActionGuided,
-                      onSelected: onGuidedSetup,
-                      emphasis: Emphasis.outlined,
-                    ),
-                    VSpace.x1,
-                  ],
-                  TerminalPromptSuggestion(
-                    label: context.l10n.onboardingWelcomeActionSelfHost,
-                    onSelected: onSelfHost,
-                  ),
-                ],
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TerminalConversationTurn(
+                speaker: TerminalConversationSpeaker.poco,
+                message: context.l10n.onboardingWelcomePoco,
+              ),
+              VSpace.x3,
+              if (showGuidedSetup) ...[
+                TerminalPromptSuggestion(
+                  label: context.l10n.onboardingWelcomeActionGuided,
+                  onSelected: onGuidedSetup,
+                  emphasis: Emphasis.outlined,
+                ),
+                VSpace.x1,
+              ],
+              TerminalPromptSuggestion(
+                label: context.l10n.onboardingWelcomeActionSelfHost,
+                onSelected: onSelfHost,
+              ),
+            ],
           ),
         ),
       );

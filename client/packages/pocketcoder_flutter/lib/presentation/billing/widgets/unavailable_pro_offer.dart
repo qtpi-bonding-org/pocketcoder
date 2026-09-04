@@ -11,19 +11,13 @@ class UnavailableProOffer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TerminalText(
-          context.l10n.proUnavailable,
-          role: TextRole.warn),
-        VSpace.x2,
-        TerminalText(context.l10n.proUnavailableBody, role: TextRole.body),
-        VSpace.x3,
-        TerminalButton(
-          label: context.l10n.proRestore,
-          onTap: onRestore,
-          isPrimary: false),
-      ]);
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      TerminalText(context.l10n.proUnavailable, role: TextRole.warn),
+      VSpace.x2,
+      TerminalText(context.l10n.proUnavailableBody, role: TextRole.body),
+      VSpace.x3,
+      TerminalButton(
+          label: context.l10n.proRestore, onTap: onRestore, isPrimary: false),
+    ]);
   }
 }

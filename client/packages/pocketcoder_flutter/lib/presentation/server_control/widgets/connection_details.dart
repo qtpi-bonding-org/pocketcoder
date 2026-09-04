@@ -26,44 +26,40 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
       setState(() => _showPassword = false);
       return;
     }
-    final approved = await context.read<ServerControlCubit>().confirmLocalAuth(
-          reason: context.l10n.serverControlLocalAuthReason);
+    final approved = await context
+        .read<ServerControlCubit>()
+        .confirmLocalAuth(reason: context.l10n.serverControlLocalAuthReason);
     if (approved && mounted) setState(() => _showPassword = true);
   }
 
   @override
   Widget build(BuildContext context) {
     final details = widget.details;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TerminalText(context.l10n.serverControlConnectionDetails, role: TextRole.body),
-        VSpace.x1,
-        if (details.ipAddress case final value?)
-          DetailRow(label: context.l10n.serverControlIpAddress, value: value),
-        if (details.httpsEndpoint case final value?)
-          DetailRow(
-              label: context.l10n.serverControlHttpsEndpoint, value: value),
-        if (details.adminIdentity case final value?)
-          DetailRow(
-              label: context.l10n.serverControlAdminIdentity, value: value),
-        if (details.adminPassword case final value?)
-          DetailRow(
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      TerminalText(context.l10n.serverControlConnectionDetails,
+          role: TextRole.body),
+      VSpace.x1,
+      if (details.ipAddress case final value?)
+        DetailRow(label: context.l10n.serverControlIpAddress, value: value),
+      if (details.httpsEndpoint case final value?)
+        DetailRow(label: context.l10n.serverControlHttpsEndpoint, value: value),
+      if (details.adminIdentity case final value?)
+        DetailRow(label: context.l10n.serverControlAdminIdentity, value: value),
+      if (details.adminPassword case final value?)
+        DetailRow(
             label: context.l10n.serverControlAdminPassword,
             value: _showPassword ? value : '•' * value.length,
-            action: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                BiosActionButton(
+            action: Row(mainAxisSize: MainAxisSize.min, children: [
+              BiosActionButton(
                   action: BiosActionStripItem(
-                    label: _showPassword
-                        ? context.l10n.serverControlHide
-                        : context.l10n.serverControlShow,
-                    emphasis: Emphasis.outlined,
-                    onTap: () => _toggleShowPassword(context))),
-                HSpace.x1,
-                CopyButton(value: value),
-              ])),
-      ]);
+                      label: _showPassword
+                          ? context.l10n.serverControlHide
+                          : context.l10n.serverControlShow,
+                      emphasis: Emphasis.outlined,
+                      onTap: () => _toggleShowPassword(context))),
+              HSpace.x1,
+              CopyButton(value: value),
+            ])),
+    ]);
   }
 }

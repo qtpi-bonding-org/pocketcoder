@@ -70,7 +70,8 @@ void main() {
         ));
   }
 
-  test('re-fetches and reports true when the request is for the current '
+  test(
+      're-fetches and reports true when the request is for the current '
       "deployment's own host and the CA actually changed", () async {
     stubSsh('new', 'new-pem');
 
@@ -82,7 +83,8 @@ void main() {
     verify(() => pinningHttpClient.updatePin('new-pem')).called(1);
   });
 
-  test('does nothing for a request against an unrelated host -- must never '
+  test(
+      'does nothing for a request against an unrelated host -- must never '
       "SSH into the deployment over an OAuth relay or captive-portal "
       'failure', () async {
     final recovered = await recovery.recoverIfStale(
@@ -112,7 +114,8 @@ void main() {
         ));
   });
 
-  test('does nothing when nothing was ever pinned for this deployment yet '
+  test(
+      'does nothing when nothing was ever pinned for this deployment yet '
       "-- that's fetchAndPin's job, not recovery's", () async {
     await pinStore.clear('inst-1');
 
@@ -139,7 +142,8 @@ void main() {
       callCount++;
       return RootSshCommandResult(
         exitCode: 0,
-        stdout: '{"fingerprint":"new","certificatePemBase64":"${_b64('new-pem')}"}',
+        stdout:
+            '{"fingerprint":"new","certificatePemBase64":"${_b64('new-pem')}"}',
         stderr: '',
       );
     });

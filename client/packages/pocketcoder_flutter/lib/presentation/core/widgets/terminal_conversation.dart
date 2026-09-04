@@ -87,8 +87,8 @@ class TerminalConversationFrame extends StatelessWidget {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
     final isUser = speaker == TerminalConversationSpeaker.user;
-    final resolved =
-        emphasize(colors.secondary, isUser ? Emphasis.selected : Emphasis.plain);
+    final resolved = emphasize(
+        colors.secondary, isUser ? Emphasis.selected : Emphasis.plain);
     final accent = isReasoning ? terminalColors.warning : resolved.text;
 
     final content = Column(
@@ -106,9 +106,8 @@ class TerminalConversationFrame extends StatelessWidget {
     final frame = Container(
       constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
       padding: EdgeInsets.all(AppSizes.space),
-      decoration: isUser && showUserBorder
-          ? BoxDecoration(color: resolved.fill)
-          : null,
+      decoration:
+          isUser && showUserBorder ? BoxDecoration(color: resolved.fill) : null,
       child: content,
     );
 
@@ -171,7 +170,8 @@ class TerminalConversationTurn extends StatelessWidget {
       child: Text(
         '\$ $message',
         style: TextStyle(
-          color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
+          color:
+              emphasize(context.colorScheme.secondary, Emphasis.selected).text,
           fontFamily: AppFonts.family,
         ),
       ),
@@ -204,7 +204,8 @@ class TerminalPromptSuggestion extends StatelessWidget {
     final resolved = resolvedEmphasis == null
         ? null
         : emphasize(colors.primary, resolvedEmphasis);
-    final borderColor = resolved?.border ?? colors.primary.withValues(alpha: 0.3);
+    final borderColor =
+        resolved?.border ?? colors.primary.withValues(alpha: 0.3);
     final textColor = resolved?.text ?? colors.primary;
     return SizedBox(
       width: double.infinity,

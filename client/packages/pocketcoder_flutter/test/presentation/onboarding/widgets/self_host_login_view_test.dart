@@ -6,7 +6,8 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
 
 void main() {
-  testWidgets('CONNECT renders outlined: bordered in its own color, not filled/inverted',
+  testWidgets(
+      'CONNECT renders outlined: bordered in its own color, not filled/inverted',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(

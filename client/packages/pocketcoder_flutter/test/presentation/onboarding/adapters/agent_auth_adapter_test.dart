@@ -179,8 +179,7 @@ void main() {
     authRepo = MockHarnessAuthRepository();
     chatRepo = MockChatListRepository();
     pushService = MockPushService();
-    when(() => pushService.requestPermissions())
-        .thenAnswer((_) async => true);
+    when(() => pushService.requestPermissions()).thenAnswer((_) async => true);
     GetIt.instance.registerSingleton<PushService>(pushService);
     addTearDown(() {
       if (GetIt.instance.isRegistered<PushService>()) {

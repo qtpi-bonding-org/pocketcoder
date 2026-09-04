@@ -39,8 +39,8 @@ class _FakeProEdition implements IAppEdition {
 class _NoopServerReadinessCheck implements IServerReadinessCheck {
   const _NoopServerReadinessCheck();
   @override
-  ServerReadinessSnapshot get current =>
-      const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned);
+  ServerReadinessSnapshot get current => const ServerReadinessSnapshot(
+      status: ServerReadinessStatus.notProvisioned);
   @override
   Stream<ServerReadinessSnapshot> get readinessChanges => const Stream.empty();
   @override
@@ -92,8 +92,7 @@ void main() {
           const _NoopServerReadinessCheck(),
         ));
     getIt.registerSingleton<IAppEdition>(const FossAppEdition());
-    getIt.registerSingleton<ILocalSettingsService>(
-        _FakeLocalSettingsService());
+    getIt.registerSingleton<ILocalSettingsService>(_FakeLocalSettingsService());
   });
 
   tearDown(() {

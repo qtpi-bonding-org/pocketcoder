@@ -20,7 +20,8 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('ModeSwitcher renders modes and reports selection', (tester) async {
+  testWidgets('ModeSwitcher renders modes and reports selection',
+      (tester) async {
     String? selected;
     await tester.pumpWidget(_wrap(ModeSwitcher(
       modes: {
@@ -44,15 +45,27 @@ void main() {
     expect(selected, 'chat');
   });
 
-  testWidgets('ConfigPicker renders options and reports changes', (tester) async {
+  testWidgets('ConfigPicker renders options and reports changes',
+      (tester) async {
     SetSessionConfigOptionRequest? request;
     await tester.pumpWidget(_wrap(ConfigPicker(
       config: {
         'options': [
-          {'kind': 'boolean', 'id': 'auto-approve', 'name': 'Auto Approve', 'currentValue': false},
           {
-            'kind': 'select', 'id': 'preset', 'name': 'Preset', 'currentValue': 'safe',
-            'options': [{'value': 'safe', 'label': 'Safe'}, {'value': 'fast', 'label': 'Fast'}],
+            'kind': 'boolean',
+            'id': 'auto-approve',
+            'name': 'Auto Approve',
+            'currentValue': false
+          },
+          {
+            'kind': 'select',
+            'id': 'preset',
+            'name': 'Preset',
+            'currentValue': 'safe',
+            'options': [
+              {'value': 'safe', 'label': 'Safe'},
+              {'value': 'fast', 'label': 'Fast'}
+            ],
           },
         ],
       },

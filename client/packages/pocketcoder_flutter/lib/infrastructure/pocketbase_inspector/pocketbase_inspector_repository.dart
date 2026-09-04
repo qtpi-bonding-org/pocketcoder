@@ -15,8 +15,8 @@ class PocketbaseInspectorRepository implements IPocketbaseInspectorRepository {
     final response = await _pb
         .send(StreamingEndpoints.pocketbase, method: 'GET')
         .catchError((Object e, StackTrace stackTrace) {
-      logError('🗄️ [PocketbaseInspector] fetchStats request failed', e,
-          stackTrace);
+      logError(
+          '🗄️ [PocketbaseInspector] fetchStats request failed', e, stackTrace);
       throw e;
     });
 

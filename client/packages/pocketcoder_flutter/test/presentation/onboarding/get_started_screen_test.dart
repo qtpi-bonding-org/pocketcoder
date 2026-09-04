@@ -34,8 +34,8 @@ class MockAuthRepository extends Mock implements IAuthRepository {}
 class _NoopServerReadinessCheck implements IServerReadinessCheck {
   const _NoopServerReadinessCheck();
   @override
-  ServerReadinessSnapshot get current =>
-      const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned);
+  ServerReadinessSnapshot get current => const ServerReadinessSnapshot(
+      status: ServerReadinessStatus.notProvisioned);
   @override
   Stream<ServerReadinessSnapshot> get readinessChanges => const Stream.empty();
   @override
@@ -289,8 +289,7 @@ void main() {
       'BACK falls back to the onboarding (ascii-art home) screen, not '
       'chats, when login screen is the router root (reachable server, '
       'not authenticated boots straight here) -- landing in chats with '
-      'no session at all was a confirmed live auth-bypass',
-      (tester) async {
+      'no session at all was a confirmed live auth-bypass', (tester) async {
     // Boot reaches this screen via context.goNamed (a stack replace), so
     // there is no previous route to pop back to.
     final router = GoRouter(

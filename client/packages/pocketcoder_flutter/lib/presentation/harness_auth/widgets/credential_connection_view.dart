@@ -16,11 +16,11 @@ class ApiKeyConnectionStep extends CredentialConnectionStep {
 }
 
 class BrowserVerificationConnectionStep extends CredentialConnectionStep {
-  const BrowserVerificationConnectionStep({
-    required this.verificationUri,
-    required this.codeDestination,
-    this.userCode,
-    this.expiresAt});
+  const BrowserVerificationConnectionStep(
+      {required this.verificationUri,
+      required this.codeDestination,
+      this.userCode,
+      this.expiresAt});
 
   final Uri verificationUri;
   final HarnessAuthCodeDestination codeDestination;
@@ -31,14 +31,14 @@ class BrowserVerificationConnectionStep extends CredentialConnectionStep {
 /// A presentation-only credential connection panel. Orchestration belongs to
 /// the adapter that supplies these callbacks.
 class CredentialConnectionView extends StatelessWidget {
-  const CredentialConnectionView({
-    super.key,
-    required this.step,
-    required this.onOpenAuthorizationPage,
-    required this.onCopyCode,
-    required this.onSubmitCode,
-    required this.onCancel,
-    required this.onRetry});
+  const CredentialConnectionView(
+      {super.key,
+      required this.step,
+      required this.onOpenAuthorizationPage,
+      required this.onCopyCode,
+      required this.onSubmitCode,
+      required this.onCancel,
+      required this.onRetry});
 
   final CredentialConnectionStep step;
   final VoidCallback onOpenAuthorizationPage;
@@ -54,86 +54,86 @@ class CredentialConnectionView extends StatelessWidget {
       BrowserVerificationConnectionStep(
         codeDestination: HarnessAuthCodeDestination.browser,
         userCode: final code?,
-        expiresAt: final expiresAt) =>
+        expiresAt: final expiresAt
+      ) =>
         _deviceCode(context, code, expiresAt),
       BrowserVerificationConnectionStep(
         codeDestination: HarnessAuthCodeDestination.app,
-        expiresAt: final expiresAt) =>
+        expiresAt: final expiresAt
+      ) =>
         _browserCode(context, expiresAt),
       BrowserVerificationConnectionStep(
         codeDestination: HarnessAuthCodeDestination.browser,
-        expiresAt: final expiresAt) =>
+        expiresAt: final expiresAt
+      ) =>
         _browserOnly(context, expiresAt),
-      BrowserVerificationConnectionStep() => _actions(context)};
+      BrowserVerificationConnectionStep() => _actions(context)
+    };
   }
 
   Widget _expiryNotice(BuildContext context, DateTime? expiresAt) {
     if (expiresAt == null) return const SizedBox.shrink();
-    return TerminalText(context.l10n.credentialConnectionExpiresAt(expiresAt), role: TextRole.body);
+    return TerminalText(context.l10n.credentialConnectionExpiresAt(expiresAt),
+        role: TextRole.body);
   }
 
   Widget _deviceCode(BuildContext context, String code, DateTime? expiresAt) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _expiryNotice(context, expiresAt),
-        TerminalText(code, role: TextRole.body),
-        TerminalButton(
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _expiryNotice(context, expiresAt),
+      TerminalText(code, role: TextRole.body),
+      TerminalButton(
           label: context.l10n.credentialConnectionCopy,
           onTap: () {
             onCopyCode(code);
             SystemChannels.platform.invokeMethod<void>(
-              'Clipboard.setData',
-              <String, dynamic>{'text': code});
+                'Clipboard.setData', <String, dynamic>{'text': code});
           }),
-        TerminalButton(
+      TerminalButton(
           label: context.l10n.credentialConnectionOpenAuthorizationPage,
           onTap: onOpenAuthorizationPage),
-        TerminalText(context.l10n.credentialConnectionPasteCode, role: TextRole.body),
-        _actions(context),
-      ]);
+      TerminalText(context.l10n.credentialConnectionPasteCode,
+          role: TextRole.body),
+      _actions(context),
+    ]);
   }
 
   Widget _browserCode(BuildContext context, DateTime? expiresAt) {
     return _BrowserCodeForm(
-      onSubmitCode: onSubmitCode,
-      openPage: onOpenAuthorizationPage,
-      actions: _actions(context),
-      expiryNotice: _expiryNotice(context, expiresAt));
+        onSubmitCode: onSubmitCode,
+        openPage: onOpenAuthorizationPage,
+        actions: _actions(context),
+        expiryNotice: _expiryNotice(context, expiresAt));
   }
 
-  Widget _browserOnly(BuildContext context, DateTime? expiresAt) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _expiryNotice(context, expiresAt),
-          TerminalButton(
+  Widget _browserOnly(BuildContext context, DateTime? expiresAt) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _expiryNotice(context, expiresAt),
+        TerminalButton(
             label: context.l10n.credentialConnectionOpenAuthorizationPage,
             onTap: onOpenAuthorizationPage),
-          _actions(context),
-        ]);
+        _actions(context),
+      ]);
 
   Widget _actions(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        TerminalButton(
+    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+      TerminalButton(
           label: context.l10n.credentialConnectionCancel,
           isPrimary: false,
           onTap: onCancel),
-        TerminalButton(
+      TerminalButton(
           label: context.l10n.credentialConnectionRetry,
           isPrimary: false,
           onTap: onRetry),
-      ]);
+    ]);
   }
 }
 
 class _BrowserCodeForm extends StatefulWidget {
-  const _BrowserCodeForm({
-    required this.onSubmitCode,
-    required this.openPage,
-    required this.actions,
-    required this.expiryNotice});
+  const _BrowserCodeForm(
+      {required this.onSubmitCode,
+      required this.openPage,
+      required this.actions,
+      required this.expiryNotice});
 
   final ValueChanged<String> onSubmitCode;
   final VoidCallback openPage;
@@ -160,25 +160,22 @@ class _BrowserCodeFormState extends State<_BrowserCodeForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        widget.expiryNotice,
-        TerminalButton(
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      widget.expiryNotice,
+      TerminalButton(
           label: context.l10n.credentialConnectionOpenAuthorizationPage,
           onTap: widget.openPage),
-        TerminalText(
-          context.l10n.credentialConnectionEnterCode,
-          role: TextRole.body,
-        ),
-        TerminalTextField(
+      TerminalText(
+        context.l10n.credentialConnectionEnterCode,
+        role: TextRole.body,
+      ),
+      TerminalTextField(
           controller: _controller,
           label: context.l10n.harnessAuthOneTimeCode,
           onSubmitted: (_) => _submit()),
-        TerminalButton(
-          label: context.l10n.credentialConnectionSubmit,
-          onTap: _submit),
-        widget.actions,
-      ]);
+      TerminalButton(
+          label: context.l10n.credentialConnectionSubmit, onTap: _submit),
+      widget.actions,
+    ]);
   }
 }

@@ -237,7 +237,8 @@ void main() {
     await cubit.close();
   });
 
-  testWidgets('shows the SSH public key with copy when present, nothing '
+  testWidgets(
+      'shows the SSH public key with copy when present, nothing '
       'when absent', (tester) async {
     final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
@@ -467,7 +468,8 @@ void main() {
       await cubit.close();
     });
 
-    testWidgets('shows a snackbar instead of opening a browser when there '
+    testWidgets(
+        'shows a snackbar instead of opening a browser when there '
         'is no active instance', (tester) async {
       final service = _FakeService()..release = _release();
       final cubit = ServerControlCubit(service, _FakeLocalAuthGate());

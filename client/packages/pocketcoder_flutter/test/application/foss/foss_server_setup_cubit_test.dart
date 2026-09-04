@@ -37,7 +37,8 @@ void main() {
     );
   });
 
-  test('host is derived from the PocketBase URL, matching what '
+  test(
+      'host is derived from the PocketBase URL, matching what '
       'SshServerControlService will later connect to', () {
     expect(cubit.host, '203.0.113.10');
   });
@@ -53,15 +54,16 @@ void main() {
     expect(cubit.state.publicKey, 'ssh-ed25519 AAAA...');
   });
 
-  test('testAndSave tests and saves against the PocketBase-derived host, '
-      'not a caller-supplied one, and moves to connected on success',
-      () async {
+  test(
+      'testAndSave tests and saves against the PocketBase-derived host, '
+      'not a caller-supplied one, and moves to connected on success', () async {
     when(() => keyGenerator.generate()).thenAnswer(
       (_) async => (publicKey: 'PUB', privateKey: 'PRIV'),
     );
     await cubit.generateKey();
 
-    when(() => tester.testConnection(host: '203.0.113.10', privateKeyPem: 'PRIV'))
+    when(() =>
+            tester.testConnection(host: '203.0.113.10', privateKeyPem: 'PRIV'))
         .thenAnswer((_) async => const FossHostIdentity(
               hostKeyType: 'ssh-ed25519',
               hostKeyFingerprint: 'SHA256:abc',
@@ -71,8 +73,8 @@ void main() {
     await cubit.testAndSave();
 
     expect(cubit.state.phase, FossServerSetupPhase.connected);
-    final saved =
-        verify(() => store.save(captureAny())).captured.single as FossRootSshCredentials;
+    final saved = verify(() => store.save(captureAny())).captured.single
+        as FossRootSshCredentials;
     expect(saved.publicKey, 'PUB');
     expect(saved.privateKey, 'PRIV');
     expect(saved.hostKeyType, 'ssh-ed25519');
@@ -98,13 +100,16 @@ void main() {
     verifyNever(() => store.save(any()));
   });
 
-  test('testAndSave is a no-op once already connected -- the TOFU pin is '
+  test(
+      'testAndSave is a no-op once already connected -- the TOFU pin is '
       'never silently re-established after the fact', () async {
     when(() => keyGenerator.generate()).thenAnswer(
       (_) async => (publicKey: 'PUB', privateKey: 'PRIV'),
     );
     await cubit.generateKey();
-    when(() => tester.testConnection(host: any(named: 'host'), privateKeyPem: any(named: 'privateKeyPem')))
+    when(() => tester.testConnection(
+            host: any(named: 'host'),
+            privateKeyPem: any(named: 'privateKeyPem')))
         .thenAnswer((_) async => const FossHostIdentity(
               hostKeyType: 'ssh-ed25519',
               hostKeyFingerprint: 'SHA256:abc',

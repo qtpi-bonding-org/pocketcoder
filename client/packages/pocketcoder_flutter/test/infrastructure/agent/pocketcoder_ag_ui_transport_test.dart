@@ -5,7 +5,8 @@ import 'package:pocketcoder_flutter/infrastructure/agent/pocketcoder_ag_ui_trans
 import '../../fakes/fake_agent_chat_repository.dart';
 
 void main() {
-  test('events stream emits only new raw events since the last cache emission', () async {
+  test('events stream emits only new raw events since the last cache emission',
+      () async {
     final fakeRepo = FakeAgentChatRepository();
     final transport = PocketcoderAgUiTransport(fakeRepo, chatId: 'c1');
 
@@ -13,13 +14,15 @@ void main() {
     final sub = transport.events.listen(received.add);
 
     fakeRepo.emitRawEvents([
-      const TextMessageStartEvent(messageId: 'm1', role: TextMessageRole.assistant),
+      const TextMessageStartEvent(
+          messageId: 'm1', role: TextMessageRole.assistant),
     ]);
     await Future<void>.delayed(Duration.zero);
     expect(received, hasLength(1));
 
     fakeRepo.emitRawEvents([
-      const TextMessageStartEvent(messageId: 'm1', role: TextMessageRole.assistant),
+      const TextMessageStartEvent(
+          messageId: 'm1', role: TextMessageRole.assistant),
       const TextMessageContentEvent(messageId: 'm1', delta: 'hi'),
     ]);
     await Future<void>.delayed(Duration.zero);
@@ -32,7 +35,9 @@ void main() {
     await transport.dispose();
   });
 
-  test('a cache shrink (cold-replay reset) synthesizes a reset marker before replaying', () async {
+  test(
+      'a cache shrink (cold-replay reset) synthesizes a reset marker before replaying',
+      () async {
     final fakeRepo = FakeAgentChatRepository();
     final transport = PocketcoderAgUiTransport(fakeRepo, chatId: 'c1');
 
@@ -40,7 +45,8 @@ void main() {
     final sub = transport.events.listen(received.add);
 
     fakeRepo.emitRawEvents([
-      const TextMessageStartEvent(messageId: 'stale', role: TextMessageRole.assistant),
+      const TextMessageStartEvent(
+          messageId: 'stale', role: TextMessageRole.assistant),
       const TextMessageEndEvent(messageId: 'stale'),
     ]);
     await Future<void>.delayed(Duration.zero);
@@ -51,7 +57,8 @@ void main() {
     // (ingestOnce consumes the marker before it ever reaches the cache —
     // see Step 8's implementation comment for why).
     fakeRepo.emitRawEvents([
-      const TextMessageStartEvent(messageId: 'fresh', role: TextMessageRole.assistant),
+      const TextMessageStartEvent(
+          messageId: 'fresh', role: TextMessageRole.assistant),
     ]);
     await Future<void>.delayed(Duration.zero);
 
@@ -78,7 +85,8 @@ void main() {
     final sub = transport.events.listen(received.add);
 
     fakeRepo.emitRawEvents([
-      const TextMessageStartEvent(messageId: 'm1', role: TextMessageRole.assistant),
+      const TextMessageStartEvent(
+          messageId: 'm1', role: TextMessageRole.assistant),
       const TextMessageContentEvent(messageId: 'm1', delta: 'partial'),
     ]);
     await Future<void>.delayed(Duration.zero);
@@ -89,12 +97,15 @@ void main() {
     // exactly the "reconnect replays an existing sequence with a
     // corrected/finalized payload" scenario, not a shrink.
     fakeRepo.emitRawEvents([
-      const TextMessageStartEvent(messageId: 'm1', role: TextMessageRole.assistant),
-      const TextMessageContentEvent(messageId: 'm1', delta: 'final corrected text'),
+      const TextMessageStartEvent(
+          messageId: 'm1', role: TextMessageRole.assistant),
+      const TextMessageContentEvent(
+          messageId: 'm1', delta: 'final corrected text'),
     ]);
     await Future<void>.delayed(Duration.zero);
 
-    final contentEvents = received.whereType<TextMessageContentEvent>().toList();
+    final contentEvents =
+        received.whereType<TextMessageContentEvent>().toList();
     expect(
       contentEvents.any((e) => e.delta == 'final corrected text'),
       isTrue,
@@ -106,7 +117,8 @@ void main() {
     await transport.dispose();
   });
 
-  test('sendMessage/cancel/respondPermission delegate to the repository', () async {
+  test('sendMessage/cancel/respondPermission delegate to the repository',
+      () async {
     final fakeRepo = FakeAgentChatRepository();
     final transport = PocketcoderAgUiTransport(fakeRepo, chatId: 'c1');
 

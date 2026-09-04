@@ -13,12 +13,12 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'adapters/choose_provider_adapter.dart';
 
 class ChooseProviderScreen extends StatelessWidget {
-  const ChooseProviderScreen({
-    super.key,
-    this.credentials,
-    required this.deployOptionService,
-    required this.onHasProAccess,
-    this.onProviderSelected});
+  const ChooseProviderScreen(
+      {super.key,
+      this.credentials,
+      required this.deployOptionService,
+      required this.onHasProAccess,
+      this.onProviderSelected});
 
   final ServerCredentials? credentials;
   final IProviderOptionService deployOptionService;
@@ -27,55 +27,53 @@ class ChooseProviderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-        create: (_) => ChooseProviderCubit(deployOptionService),
-        child: ChooseProviderAdapter(
+      create: (_) => ChooseProviderCubit(deployOptionService),
+      child: ChooseProviderAdapter(
           credentials: credentials,
           onHasProAccess: onHasProAccess,
           onProviderSelected: onProviderSelected));
 }
 
 class ChooseProviderView extends StatelessWidget {
-  const ChooseProviderView({
-    super.key,
-    required this.options,
-    required this.onSelected});
+  const ChooseProviderView(
+      {super.key, required this.options, required this.onSelected});
 
   final List<ProviderOption> options;
   final Future<void> Function(ProviderOption option) onSelected;
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: context.l10n.chooseProviderTitle,
-        activePillar: NavPillar.configure,
-        showBack: true,
-        body: Center(
+      title: context.l10n.chooseProviderTitle,
+      activePillar: NavPillar.configure,
+      showBack: true,
+      body: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  PocoBubble(
-                    message: context.l10n.onboardingProviderPoco,
-                    pocoSize: AppSizes.fontBody),
-                  VSpace.x3,
-                  TerminalText(
-                    context.l10n.onboardingProviderTitle,
-                    role: TextRole.body,
-                  ),
-                  VSpace.x2,
-                  for (final option in options)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: AppSizes.space),
-                      child: option.isAvailable
-                          ? TerminalPromptSuggestion(
-                              label: option.requiresPro
-                                  ? '${option.name} · ${context.l10n.chooseProviderProBadge}'
-                                  : option.name,
-                              onSelected: () => onSelected(option))
-                          : _UnavailableProvider(option: option)),
-                ])))));
+              constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+              child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        PocoBubble(
+                            message: context.l10n.onboardingProviderPoco,
+                            pocoSize: AppSizes.fontBody),
+                        VSpace.x3,
+                        TerminalText(
+                          context.l10n.onboardingProviderTitle,
+                          role: TextRole.body,
+                        ),
+                        VSpace.x2,
+                        for (final option in options)
+                          Padding(
+                              padding: EdgeInsets.only(bottom: AppSizes.space),
+                              child: option.isAvailable
+                                  ? TerminalPromptSuggestion(
+                                      label: option.requiresPro
+                                          ? '${option.name} · ${context.l10n.chooseProviderProBadge}'
+                                          : option.name,
+                                      onSelected: () => onSelected(option))
+                                  : _UnavailableProvider(option: option)),
+                      ])))));
 }
 
 class _UnavailableProvider extends StatelessWidget {
@@ -87,17 +85,17 @@ class _UnavailableProvider extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
     return Semantics(
-      enabled: false,
-      button: true,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(AppSizes.space),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: colors.onSurface.withValues(alpha: 0.2))),
-        child: TerminalText(
-          '> ${option.name.toUpperCase()} · ${context.l10n.chooseProviderComingSoon}',
-          role: TextRole.label,
-        )));
+        enabled: false,
+        button: true,
+        child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(AppSizes.space),
+            decoration: BoxDecoration(
+                border:
+                    Border.all(color: colors.onSurface.withValues(alpha: 0.2))),
+            child: TerminalText(
+              '> ${option.name.toUpperCase()} · ${context.l10n.chooseProviderComingSoon}',
+              role: TextRole.label,
+            )));
   }
 }

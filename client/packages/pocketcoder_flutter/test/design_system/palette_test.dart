@@ -6,12 +6,12 @@ import 'package:pocketcoder_flutter/design_system/primitives/app_palette.dart';
 void main() {
   test('palette is exactly the six specified values', () {
     expect(AppPalette.ground, const Color(0xFF050505));
-    expect(AppPalette.trace,  const Color(0xFF003B00));
-    expect(AppPalette.dim,    const Color(0xFF00701A));
-    expect(AppPalette.body,   const Color(0xFF00B82A));
+    expect(AppPalette.trace, const Color(0xFF003B00));
+    expect(AppPalette.dim, const Color(0xFF00701A));
+    expect(AppPalette.body, const Color(0xFF00B82A));
     expect(AppPalette.bright, const Color(0xFF00FF41));
-    expect(AppPalette.amber,  const Color(0xFFFFB100));
-    expect(AppPalette.red,    const Color(0xFFFF5555));
+    expect(AppPalette.amber, const Color(0xFFFFB100));
+    expect(AppPalette.red, const Color(0xFFFF5555));
   });
 
   test('red clears 6:1 against the ground', () {
@@ -31,8 +31,11 @@ void main() {
 double _lum(Color c) {
   double ch(int v) {
     final s = v / 255.0;
-    return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4) as double;
+    return s <= 0.03928
+        ? s / 12.92
+        : math.pow((s + 0.055) / 1.055, 2.4) as double;
   }
+
   return 0.2126 * ch(c.red) + 0.7152 * ch(c.green) + 0.0722 * ch(c.blue);
 }
 

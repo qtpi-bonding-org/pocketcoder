@@ -9,14 +9,19 @@ abstract class GitRepositoryAccess with _$GitRepositoryAccess {
   const factory GitRepositoryAccess({
     required String id,
     required String user,
-    @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown) required GitRepositoryAccessProvider provider,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown)
+    required GitRepositoryAccessProvider provider,
     required String repository,
     required String purpose,
-    @JsonKey(unknownEnumValue: GitRepositoryAccessCredentialMode.unknown) required GitRepositoryAccessCredentialMode credentialMode,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessCredentialMode.unknown)
+    required GitRepositoryAccessCredentialMode credentialMode,
     String? credential,
-    @JsonKey(unknownEnumValue: GitRepositoryAccessRequestedAccess.unknown) required GitRepositoryAccessRequestedAccess requestedAccess,
-    @JsonKey(unknownEnumValue: GitRepositoryAccessRegistrationStatus.unknown) required GitRepositoryAccessRegistrationStatus registrationStatus,
-    @JsonKey(unknownEnumValue: GitRepositoryAccessStatus.unknown) required GitRepositoryAccessStatus status,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessRequestedAccess.unknown)
+    required GitRepositoryAccessRequestedAccess requestedAccess,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessRegistrationStatus.unknown)
+    required GitRepositoryAccessRegistrationStatus registrationStatus,
+    @JsonKey(unknownEnumValue: GitRepositoryAccessStatus.unknown)
+    required GitRepositoryAccessStatus status,
     String? lastError,
   }) = _GitRepositoryAccess;
 

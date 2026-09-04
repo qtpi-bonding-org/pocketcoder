@@ -29,7 +29,8 @@ void main() {
     expect(find.text('full stack trace here'), findsOneWidget);
   });
 
-  testWidgets('body is absent (collapsed) when null, matching the '
+  testWidgets(
+      'body is absent (collapsed) when null, matching the '
       'caller-owned expand/collapse pattern', (tester) async {
     await tester.pumpWidget(_app(const BiosCard(
       header: [Text('ERROR: CHAT_001')],

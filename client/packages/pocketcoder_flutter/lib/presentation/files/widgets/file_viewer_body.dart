@@ -12,12 +12,12 @@ const _imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
 const _maxPreviewBytes = 10 * 1024 * 1024;
 
 class FileViewerBody extends StatelessWidget {
-  const FileViewerBody({
-    super.key,
-    required this.path,
-    required this.loading,
-    required this.bytes,
-    required this.error});
+  const FileViewerBody(
+      {super.key,
+      required this.path,
+      required this.loading,
+      required this.bytes,
+      required this.error});
 
   final String path;
   final bool loading;
@@ -38,19 +38,20 @@ class FileViewerBody extends StatelessWidget {
     }
     if (value.length > _maxPreviewBytes) {
       return Center(
-          child: TerminalText(context.l10n.filesTooLargeToPreview, role: TextRole.label));
+          child: TerminalText(context.l10n.filesTooLargeToPreview,
+              role: TextRole.label));
     }
     try {
       return SingleChildScrollView(
-        padding: EdgeInsets.all(AppSizes.space * 2),
-        child: SelectableText(
-          utf8.decode(value),
-          style: TextStyle(
-              fontFamily: AppFonts.family,
-              package: 'pocketcoder_flutter')));
+          padding: EdgeInsets.all(AppSizes.space * 2),
+          child: SelectableText(utf8.decode(value),
+              style: TextStyle(
+                  fontFamily: AppFonts.family,
+                  package: 'pocketcoder_flutter')));
     } on FormatException {
       return Center(
-          child: TerminalText(context.l10n.filesCantPreviewType, role: TextRole.label));
+          child: TerminalText(context.l10n.filesCantPreviewType,
+              role: TextRole.label));
     }
   }
 }

@@ -72,8 +72,7 @@ class _NotificationWrapperState extends State<NotificationWrapper> {
         message: context.l10n.notificationSignalReceived(payload.title),
         type: MessageType.info,
       ));
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   @override

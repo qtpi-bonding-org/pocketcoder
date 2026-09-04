@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/memory/i_memory_repository.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/observability/widgets/count_card.dart';
 import 'package:pocketcoder_flutter/presentation/observability/widgets/empty_label.dart';
 import 'package:pocketcoder_flutter/presentation/observability/widgets/memory_record_row.dart';
@@ -14,61 +14,57 @@ class MemoryDashboardView extends StatelessWidget {
   final MemoryStats stats;
 
   @override
-  Widget build(BuildContext context) => ListView(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                  child: CountCard(
-                      label: context.l10n.memoryDashboardObservations,
-                      value: stats.observations)),
-              HSpace.x1,
-              Expanded(
-                  child: CountCard(
-                      label: context.l10n.memoryDashboardInterpretations,
-                      value: stats.interpretations)),
-              HSpace.x1,
-              Expanded(
-                  child: CountCard(
-                      label: context.l10n.memoryDashboardLinks,
-                      value: stats.links)),
-            ]),
-          VSpace.x2,
-          BiosSection(
-            title: context.l10n.memoryDashboardByAccount,
-            child: stats.byAccount.isEmpty
-                ? EmptyLabel(context.l10n.memoryDashboardNoMemoryRecorded)
-                : Column(
-                    children: stats.byAccount
-                        .map((account) => _AccountRow(account: account))
-                        .toList())),
-          BiosSection(
-            title: context.l10n.memoryDashboardRecentObservations,
-            child: stats.recentObservations.isEmpty
-                ? EmptyLabel(context.l10n.memoryDashboardNoObservationsYet)
-                : Column(
-                    children: stats.recentObservations
-                        .map(
-                          (observation) => MemoryRecordRow(
-                            author: observation.author,
-                            createdAt: observation.createdAt,
-                            body: observation.body))
-                        .toList())),
-          BiosSection(
-            title: context.l10n.memoryDashboardRecentInterpretations,
-            child: stats.recentInterpretations.isEmpty
-                ? EmptyLabel(context.l10n.memoryDashboardNoInterpretationsYet)
-                : Column(
-                    children: stats.recentInterpretations
-                        .map(
-                          (interpretation) => MemoryRecordRow(
-                            author: interpretation.author,
-                            createdAt: interpretation.createdAt,
-                            body: interpretation.body,
-                            linkedObservations:
-                                interpretation.linkedObservations))
-                        .toList())),
-        ]);
+  Widget build(BuildContext context) => ListView(children: [
+        Row(children: [
+          Expanded(
+              child: CountCard(
+                  label: context.l10n.memoryDashboardObservations,
+                  value: stats.observations)),
+          HSpace.x1,
+          Expanded(
+              child: CountCard(
+                  label: context.l10n.memoryDashboardInterpretations,
+                  value: stats.interpretations)),
+          HSpace.x1,
+          Expanded(
+              child: CountCard(
+                  label: context.l10n.memoryDashboardLinks,
+                  value: stats.links)),
+        ]),
+        VSpace.x2,
+        SectionHeader(
+            name: context.l10n.memoryDashboardByAccount.toLowerCase()),
+        stats.byAccount.isEmpty
+            ? EmptyLabel(context.l10n.memoryDashboardNoMemoryRecorded)
+            : Column(
+                children: stats.byAccount
+                    .map((account) => _AccountRow(account: account))
+                    .toList()),
+        SectionHeader(
+            name: context.l10n.memoryDashboardRecentObservations.toLowerCase()),
+        stats.recentObservations.isEmpty
+            ? EmptyLabel(context.l10n.memoryDashboardNoObservationsYet)
+            : Column(
+                children: stats.recentObservations
+                    .map((observation) => MemoryRecordRow(
+                        author: observation.author,
+                        createdAt: observation.createdAt,
+                        body: observation.body))
+                    .toList()),
+        SectionHeader(
+            name: context.l10n.memoryDashboardRecentInterpretations
+                .toLowerCase()),
+        stats.recentInterpretations.isEmpty
+            ? EmptyLabel(context.l10n.memoryDashboardNoInterpretationsYet)
+            : Column(
+                children: stats.recentInterpretations
+                    .map((interpretation) => MemoryRecordRow(
+                        author: interpretation.author,
+                        createdAt: interpretation.createdAt,
+                        body: interpretation.body,
+                        linkedObservations: interpretation.linkedObservations))
+                    .toList()),
+      ]);
 }
 
 class _AccountRow extends StatelessWidget {
@@ -78,19 +74,18 @@ class _AccountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.only(bottom: AppSizes.space),
-        child: Row(
-          children: [
-            Expanded(
-              child: TerminalText(
-                account.agentName,
-                role: TextRole.body,
-              ),
-            ),
-            TerminalText(
-              context.l10n.memoryDashboardAccountSummary(
-                  account.observations, account.interpretations),
-              role: TextRole.body,
-            ),
-          ]));
+      padding: EdgeInsets.only(bottom: AppSizes.space),
+      child: Row(children: [
+        Expanded(
+          child: TerminalText(
+            account.agentName,
+            role: TextRole.body,
+          ),
+        ),
+        TerminalText(
+          context.l10n.memoryDashboardAccountSummary(
+              account.observations, account.interpretations),
+          role: TextRole.body,
+        ),
+      ]));
 }

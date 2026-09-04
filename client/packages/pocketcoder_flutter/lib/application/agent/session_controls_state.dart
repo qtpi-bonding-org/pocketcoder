@@ -11,8 +11,8 @@ enum SessionControlsOperation {
 }
 
 @freezed
-sealed class SessionControlsState with _$SessionControlsState
-    , UiFlowStateMixin {
+sealed class SessionControlsState
+    with _$SessionControlsState, UiFlowStateMixin {
   const SessionControlsState._();
 
   const factory SessionControlsState({

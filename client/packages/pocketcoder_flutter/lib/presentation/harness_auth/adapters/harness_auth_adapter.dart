@@ -67,8 +67,7 @@ class HarnessAuthAdapter
         }
       }
       for (final id in pollTimers.keys.toList()) {
-        if (!awaiting.containsKey(id) ||
-            pollIntervals[id] != awaiting[id]) {
+        if (!awaiting.containsKey(id) || pollIntervals[id] != awaiting[id]) {
           pollTimers.remove(id)?.cancel();
           pollIntervals.remove(id);
         }
@@ -83,6 +82,7 @@ class HarnessAuthAdapter
         }
       }
     }
+
     syncPollTimers(state.value);
     // Whether a harness is connected lives in the per-harness `statuses`
     // map, not the cubit's top-level status/error -- those routinely stay

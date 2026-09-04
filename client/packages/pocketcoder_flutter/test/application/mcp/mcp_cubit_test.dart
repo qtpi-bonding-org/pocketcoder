@@ -44,7 +44,8 @@ void main() {
           )).thenAnswer((_) async {});
 
       final cubit = buildCubit();
-      await cubit.createServer(name: 'hello-world', image: 'mcp/hello-world:latest');
+      await cubit.createServer(
+          name: 'hello-world', image: 'mcp/hello-world:latest');
 
       verify(() => repo.createServer(
             name: 'hello-world',
@@ -82,18 +83,21 @@ void main() {
     test('delivers the token pair to the repository on success', () async {
       when(() => oauthService.authenticate('github'))
           .thenAnswer((_) async => (accessToken: 'tok', refreshToken: 'ref'));
-      when(() => repo.deliverOAuthToken(any(), accessToken: any(named: 'accessToken'), refreshToken: any(named: 'refreshToken')))
-          .thenAnswer((_) async {});
+      when(() => repo.deliverOAuthToken(any(),
+          accessToken: any(named: 'accessToken'),
+          refreshToken: any(named: 'refreshToken'))).thenAnswer((_) async {});
 
       final cubit = buildCubit();
       await cubit.connectOAuth(oauthServer());
 
-      verify(() => repo.deliverOAuthToken('github-mcp-server', accessToken: 'tok', refreshToken: 'ref')).called(1);
+      verify(() => repo.deliverOAuthToken('github-mcp-server',
+          accessToken: 'tok', refreshToken: 'ref')).called(1);
       expect(cubit.hasPendingOAuthDelivery('srv1'), isFalse);
     });
 
     test('cancelled auth does not emit an error state', () async {
-      when(() => oauthService.authenticate('github')).thenThrow(McpOAuthException.cancelled());
+      when(() => oauthService.authenticate('github'))
+          .thenThrow(McpOAuthException.cancelled());
 
       final cubit = buildCubit();
       await cubit.connectOAuth(oauthServer());
@@ -101,10 +105,14 @@ void main() {
       expect(cubit.state.hasError, isFalse);
     });
 
-    test('delivery failure after retries keeps the token pending for retryOAuthDelivery', () async {
+    test(
+        'delivery failure after retries keeps the token pending for retryOAuthDelivery',
+        () async {
       when(() => oauthService.authenticate('github'))
           .thenAnswer((_) async => (accessToken: 'tok', refreshToken: 'ref'));
-      when(() => repo.deliverOAuthToken(any(), accessToken: any(named: 'accessToken'), refreshToken: any(named: 'refreshToken')))
+      when(() => repo.deliverOAuthToken(any(),
+              accessToken: any(named: 'accessToken'),
+              refreshToken: any(named: 'refreshToken')))
           .thenThrow(Exception('pb unreachable'));
 
       final cubit = buildCubit();
@@ -114,11 +122,13 @@ void main() {
       expect(cubit.hasPendingOAuthDelivery('srv1'), isTrue);
 
       // retryOAuthDelivery re-delivers without calling authenticate again.
-      when(() => repo.deliverOAuthToken(any(), accessToken: any(named: 'accessToken'), refreshToken: any(named: 'refreshToken')))
-          .thenAnswer((_) async {});
+      when(() => repo.deliverOAuthToken(any(),
+          accessToken: any(named: 'accessToken'),
+          refreshToken: any(named: 'refreshToken'))).thenAnswer((_) async {});
       await cubit.retryOAuthDelivery('srv1');
 
-      verify(() => oauthService.authenticate('github')).called(1); // still only once
+      verify(() => oauthService.authenticate('github'))
+          .called(1); // still only once
       expect(cubit.hasPendingOAuthDelivery('srv1'), isFalse);
     }, timeout: const Timeout(Duration(seconds: 10)));
   });

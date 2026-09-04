@@ -35,14 +35,14 @@ void main() {
     final baselineDelta = metrics[1].baseline - metrics[0].baseline;
     expect(baselineDelta, closeTo(AppSizes.line, 0.5),
         reason: 'every text style must set an explicit height, or the '
-                'vertical grid silently stops being line-based');
+            'vertical grid silently stops being line-based');
   });
 
   test('the 36-column floor fits the smallest supported device', () {
     // UiScaler clamps at 0.85, so the narrowest realistic case is a 320pt
     // screen scaled to 0.85. Content must still clear 36 columns there.
     const narrowest = 320.0;
-    final margins = AppSizes.space * 4;   // two indents each side
+    final margins = AppSizes.space * 4; // two indents each side
     final columns = (narrowest - margins) / AppSizes.ch;
     expect(columns, greaterThanOrEqualTo(35.0));
   });
@@ -61,7 +61,8 @@ void main() {
   // The real guard is the compiler: deleting the getter makes every call
   // site a build error. Task 20's deletion sweep greps for it as well.
 
-  testWidgets('character advance is measured from real font when loaded', (tester) async {
+  testWidgets('character advance is measured from real font when loaded',
+      (tester) async {
     // Load Noto Sans Mono using the plain unqualified key (matching TextStyle
     // fontFamily lookup in _measureCh). The asset path still needs the package prefix.
     await (FontLoader('Noto Sans Mono')
@@ -77,10 +78,13 @@ void main() {
 
     // Verify we got real measurement, not fallback:
     // Real Noto Sans Mono measures ~0.6; fallback would be 0.5.
-    expect(ratio, greaterThan(0.45), reason: 'ratio too small; measurement may be broken');
-    expect(ratio, lessThan(0.75), reason: 'ratio too large; font loading may have failed');
+    expect(ratio, greaterThan(0.45),
+        reason: 'ratio too small; measurement may be broken');
+    expect(ratio, lessThan(0.75),
+        reason: 'ratio too large; font loading may have failed');
     // Key assertion: real font measurement (~0.6) differs meaningfully from fallback (0.5)
     expect(ratio, greaterThan(0.55),
-        reason: 'measured value too close to fallback (0.5); real font may not be loaded');
+        reason:
+            'measured value too close to fallback (0.5); real font may not be loaded');
   });
 }

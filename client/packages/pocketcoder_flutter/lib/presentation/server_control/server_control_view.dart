@@ -20,8 +20,7 @@ import 'package:pocketcoder_flutter/presentation/server_control/widgets/release_
 
 /// Confirm-dialog body text only; buttons use [_buttonLabel] instead.
 String _localizedOperationLabel(
-  BuildContext context,
-  ServerControlOperation operation) =>
+        BuildContext context, ServerControlOperation operation) =>
     switch (operation) {
       ServerControlOperation.restartPocketCoder =>
         context.l10n.serverControlOperationRestartPocketCoder,
@@ -34,7 +33,8 @@ String _localizedOperationLabel(
       ServerControlOperation.saveBackup =>
         context.l10n.serverControlOperationSaveBackup,
       ServerControlOperation.restoreBackup =>
-        context.l10n.serverControlOperationRestoreBackup};
+        context.l10n.serverControlOperationRestoreBackup
+    };
 
 class _ControlGrid extends StatelessWidget {
   const _ControlGrid({required this.state, required this.onRun});
@@ -43,38 +43,37 @@ class _ControlGrid extends StatelessWidget {
   final void Function(ServerControlOperation operation) onRun;
 
   @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ControlGroupRow(
+  Widget build(BuildContext context) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        ControlGroupRow(
             groupLabel: context.l10n.serverControlGroupPocketCoder,
             left: ServerControlOperation.restartPocketCoder,
             right: ServerControlOperation.updatePocketCoder,
             disabled: state.isBusy,
             onRun: onRun),
-          VSpace.x1,
-          ControlGroupRow(
+        VSpace.x1,
+        ControlGroupRow(
             groupLabel: context.l10n.serverControlGroupNixOs,
             left: ServerControlOperation.restartNixOs,
             right: ServerControlOperation.updateNixOs,
             disabled: state.isBusy,
             onRun: onRun),
-          VSpace.x1,
-          ControlGroupRow(
+        VSpace.x1,
+        ControlGroupRow(
             groupLabel: context.l10n.serverControlGroupData,
             left: ServerControlOperation.saveBackup,
             right: ServerControlOperation.restoreBackup,
             disabled: state.isBusy,
             onRun: onRun),
-        ]);
+      ]);
 }
 
 class ServerControlView extends StatelessWidget {
-  const ServerControlView({
-    super.key,
-    required this.instanceId,
-    required this.inAppBrowserLauncher,
-    this.providerConsoleLink});
+  const ServerControlView(
+      {super.key,
+      required this.instanceId,
+      required this.inAppBrowserLauncher,
+      this.providerConsoleLink});
 
   final String instanceId;
   final InAppBrowserLauncher inAppBrowserLauncher;
@@ -87,75 +86,72 @@ class ServerControlView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cubit = context.read<ServerControlCubit>();
     return BlocBuilder<ServerControlCubit, ServerControlState>(
-      builder: (context, state) => PocketCoderShell(
-        title: context.l10n.serverControlTitle,
-        activePillar: NavPillar.manage,
-        showBack: false,
-        body: ListView(
-          children: [
-            if (state.connectionDetails case final details?
-                when details.isAvailable) ...[
-              ConnectionDetails(details: details),
+        builder: (context, state) => PocketCoderShell(
+            title: context.l10n.serverControlTitle,
+            activePillar: NavPillar.manage,
+            showBack: false,
+            body: ListView(children: [
+              if (state.connectionDetails case final details?
+                  when details.isAvailable) ...[
+                ConnectionDetails(details: details),
+                VSpace.x2,
+              ],
+              ReleaseLine(state: state),
               VSpace.x2,
-            ],
-            ReleaseLine(state: state),
-            VSpace.x2,
-            if (providerConsoleLink case final link?) ...[
-              ProviderConsoleButton(link: link, launcher: inAppBrowserLauncher),
-              VSpace.x2,
-            ],
-            if (state.publicKey case final publicKey?) ...[
-              Text(context.l10n.serverControlPublicKeyLabel),
-              VSpace.x1,
-              Row(
-                children: [
+              if (providerConsoleLink case final link?) ...[
+                ProviderConsoleButton(
+                    link: link, launcher: inAppBrowserLauncher),
+                VSpace.x2,
+              ],
+              if (state.publicKey case final publicKey?) ...[
+                Text(context.l10n.serverControlPublicKeyLabel),
+                VSpace.x1,
+                Row(children: [
                   Expanded(child: SelectableText(publicKey)),
                   CopyButton(value: publicKey),
                 ]),
-              VSpace.x2,
-              PrivateKeySection(instanceId: instanceId, state: state),
-              VSpace.x2,
-            ],
-            _ControlGrid(
-              state: state,
-              onRun: (operation) => _confirm(
-                context,
-                operation,
-                () => cubit.run(operation: operation, instanceId: instanceId))),
-            if (state.error case final error?)
-              TerminalText(
-                context.l10n.serverControlErrorPrefix(error.toString()),
-                role: TextRole.warn),
-            if (state.result case final result?) ...[
-              VSpace.x2,
-              TerminalCommandCard(
-                command: state.operation?.name ?? 'server-control',
-                status: result.succeeded
-                    ? TerminalStatus.success
-                    : TerminalStatus.failure,
-                outputLabel: context.l10n.serverControlOutputLabel,
-                output: _output(result.stdout, result.stderr)),
-            ],
-          ])));
+                VSpace.x2,
+                PrivateKeySection(instanceId: instanceId, state: state),
+                VSpace.x2,
+              ],
+              _ControlGrid(
+                  state: state,
+                  onRun: (operation) => _confirm(
+                      context,
+                      operation,
+                      () => cubit.run(
+                          operation: operation, instanceId: instanceId))),
+              if (state.error case final error?)
+                TerminalText(
+                    context.l10n.serverControlErrorPrefix(error.toString()),
+                    role: TextRole.warn),
+              if (state.result case final result?) ...[
+                VSpace.x2,
+                TerminalCommandCard(
+                    command: state.operation?.name ?? 'server-control',
+                    status: result.succeeded
+                        ? TerminalStatus.success
+                        : TerminalStatus.failure,
+                    outputLabel: context.l10n.serverControlOutputLabel,
+                    output: _output(result.stdout, result.stderr)),
+              ],
+            ])));
   }
 
-  Future<void> _confirm(
-    BuildContext context,
-    ServerControlOperation operation,
-    VoidCallback onConfirm) async {
+  Future<void> _confirm(BuildContext context, ServerControlOperation operation,
+      VoidCallback onConfirm) async {
     final isRestore = operation == ServerControlOperation.restoreBackup;
-    final confirmed = await showTerminalConfirmDialog(
-      context,
-      title: isRestore
-          ? context.l10n.serverControlConfirmRestoreTitle
-          : context.l10n.serverControlConfirmTitle,
-      body: isRestore
-          ? context.l10n.serverControlConfirmRestoreBody
-          : context.l10n.serverControlConfirmBody(
-              _localizedOperationLabel(context, operation)),
-      cancelLabel: context.l10n.serverControlConfirmCancel,
-      confirmLabel: context.l10n.serverControlConfirmConfirm,
-      danger: isRestore);
+    final confirmed = await showTerminalConfirmDialog(context,
+        title: isRestore
+            ? context.l10n.serverControlConfirmRestoreTitle
+            : context.l10n.serverControlConfirmTitle,
+        body: isRestore
+            ? context.l10n.serverControlConfirmRestoreBody
+            : context.l10n.serverControlConfirmBody(
+                _localizedOperationLabel(context, operation)),
+        cancelLabel: context.l10n.serverControlConfirmCancel,
+        confirmLabel: context.l10n.serverControlConfirmConfirm,
+        danger: isRestore);
     if (confirmed == true && context.mounted) onConfirm();
   }
 

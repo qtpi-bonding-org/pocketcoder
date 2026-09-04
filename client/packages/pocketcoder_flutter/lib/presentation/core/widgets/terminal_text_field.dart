@@ -71,7 +71,9 @@ class TerminalTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: errorText != null ? context.terminalColors.warning : colors.onSurface,
+                color: errorText != null
+                    ? context.terminalColors.warning
+                    : colors.onSurface,
               ),
               borderRadius: BorderRadius.zero,
             ),

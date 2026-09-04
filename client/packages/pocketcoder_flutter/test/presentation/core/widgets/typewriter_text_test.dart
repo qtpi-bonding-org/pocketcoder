@@ -13,7 +13,8 @@ void main() {
           body: SizedBox(
             width: 200,
             child: TypewriterText(
-              text: 'a fairly long line of text that wraps onto more than one line',
+              text:
+                  'a fairly long line of text that wraps onto more than one line',
               prefix: '[poco] ',
               instant: true,
             ),
@@ -49,7 +50,8 @@ void main() {
             'indented under the prefix column');
   });
 
-  testWidgets('instant: true renders full text on the first frame, no animation',
+  testWidgets(
+      'instant: true renders full text on the first frame, no animation',
       (tester) async {
     var completed = false;
     await tester.pumpWidget(MaterialApp(

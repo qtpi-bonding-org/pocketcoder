@@ -31,8 +31,7 @@ Widget _app(MemoryCubit cubit) => MaterialApp(
     );
 
 void main() {
-  testWidgets('renders counts and recent entries once loaded',
-      (tester) async {
+  testWidgets('renders counts and recent entries once loaded', (tester) async {
     final cubit = MemoryCubit(_FakeMemoryRepository(
       stats: const MemoryStats(
         observations: 3,

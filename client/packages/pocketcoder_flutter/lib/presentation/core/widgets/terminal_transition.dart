@@ -12,15 +12,13 @@ class TerminalTransition {
     return CustomTransitionPage<void>(
       key: state.pageKey,
       child: child,
-      transitionDuration:
-          const Duration(milliseconds: 700),
+      transitionDuration: const Duration(milliseconds: 700),
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         final curve = CurvedAnimation(parent: animation, curve: Curves.linear);
 
         return Stack(
           children: [
             Container(color: colors.surface),
-
             AnimatedBuilder(
               animation: curve,
               builder: (context, child) {
@@ -30,7 +28,6 @@ class TerminalTransition {
                       clipper: _ScanlineClipper(curve.value),
                       child: child,
                     ),
-
                     if (curve.value < 1.0)
                       Positioned(
                         top: MediaQuery.of(context).size.height * curve.value,

@@ -15,7 +15,11 @@ class PlanPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final value = plan;
     if (value == null) return const SizedBox.shrink();
-    final entries = (value['entries'] as List?)?.whereType<Map>().map((e) => Map<String,dynamic>.from(e)).toList() ?? const <Map<String,dynamic>>[];
+    final entries = (value['entries'] as List?)
+            ?.whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList() ??
+        const <Map<String, dynamic>>[];
     if (entries.isEmpty) return const SizedBox.shrink();
     return _buildPanel(context, entries);
   }

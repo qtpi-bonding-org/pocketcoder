@@ -27,29 +27,28 @@ class OnboardingView extends StatelessWidget {
           paddingMultiplier: 4,
           mainAxisAlignment: MainAxisAlignment.center,
           child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AsciiLogo(
-                      text: AppAscii.pocketCoderLogo),
-                  VSpace.x6,
-                  TerminalConversationTurn(
-                    speaker: TerminalConversationSpeaker.poco,
-                    message: context.l10n.onboardingNoServerPoco,
-                    sequence: pocoState.sequence,
-                    history: pocoState.history,
-                  ),
-                  VSpace.x4,
-                  TerminalPromptSuggestion(
-                    label: context.l10n.onboardingNoServerChipExisting,
-                    onSelected: onLogin,
-                  ),
-                  VSpace.x1,
-                  TerminalPromptSuggestion(
-                    label: context.l10n.onboardingNoServerChipNew,
-                    onSelected: onDeploy,
-                  ),
-                ],
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AsciiLogo(text: AppAscii.pocketCoderLogo),
+              VSpace.x6,
+              TerminalConversationTurn(
+                speaker: TerminalConversationSpeaker.poco,
+                message: context.l10n.onboardingNoServerPoco,
+                sequence: pocoState.sequence,
+                history: pocoState.history,
+              ),
+              VSpace.x4,
+              TerminalPromptSuggestion(
+                label: context.l10n.onboardingNoServerChipExisting,
+                onSelected: onLogin,
+              ),
+              VSpace.x1,
+              TerminalPromptSuggestion(
+                label: context.l10n.onboardingNoServerChipNew,
+                onSelected: onDeploy,
+              ),
+            ],
           ),
         ),
       );

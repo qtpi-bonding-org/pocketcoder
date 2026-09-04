@@ -41,7 +41,7 @@ enum TextRole {
   /// Note: fontSize is intentionally omitted, allowing the theme to supply it.
   /// This enforces the "one size" rule: all text is scaled by the theme, not by role.
   TextStyle get style => TextStyle(
-    color: color,
-    fontWeight: weight,
-  );
+        color: color,
+        fontWeight: weight,
+      );
 }

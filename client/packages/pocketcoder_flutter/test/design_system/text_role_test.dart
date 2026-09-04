@@ -5,18 +5,23 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
 void main() {
   test('roles map to the specified colors', () {
-    expect(TextRole.label.color,  AppPalette.dim);
-    expect(TextRole.body.color,   AppPalette.body);
-    expect(TextRole.value.color,  AppPalette.bright);
-    expect(TextRole.ok.color,     AppPalette.bright);
-    expect(TextRole.warn.color,   AppPalette.amber);
-    expect(TextRole.fail.color,   AppPalette.red);
+    expect(TextRole.label.color, AppPalette.dim);
+    expect(TextRole.body.color, AppPalette.body);
+    expect(TextRole.value.color, AppPalette.bright);
+    expect(TextRole.ok.color, AppPalette.bright);
+    expect(TextRole.warn.color, AppPalette.amber);
+    expect(TextRole.fail.color, AppPalette.red);
   });
 
   test('emphasis roles are bold and reading roles are not', () {
     expect(TextRole.label.weight, FontWeight.w400);
-    expect(TextRole.body.weight,  FontWeight.w400);
-    for (final r in [TextRole.value, TextRole.ok, TextRole.warn, TextRole.fail]) {
+    expect(TextRole.body.weight, FontWeight.w400);
+    for (final r in [
+      TextRole.value,
+      TextRole.ok,
+      TextRole.warn,
+      TextRole.fail
+    ]) {
       expect(r.weight, FontWeight.w700, reason: '$r must be bold');
     }
   });

@@ -7,28 +7,25 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 
 class SearchablePickerDialog<T> extends StatefulWidget {
-  const SearchablePickerDialog({
-    super.key,
-    required this.title,
-    required this.items,
-    required this.itemLabel,
-    required this.itemBuilder,
-    this.matches,
-    this.groupLabel,
-    this.selectedItem,
-    this.searchLabel,
-    this.searchHint,
-    this.emptyLabel,
-    this.noMatchesLabel});
+  const SearchablePickerDialog(
+      {super.key,
+      required this.title,
+      required this.items,
+      required this.itemLabel,
+      required this.itemBuilder,
+      this.matches,
+      this.groupLabel,
+      this.selectedItem,
+      this.searchLabel,
+      this.searchHint,
+      this.emptyLabel,
+      this.noMatchesLabel});
 
   final String title;
   final List<T> items;
   final String Function(T item) itemLabel;
-  final Widget Function(
-    BuildContext context,
-    T item, {
-    required bool isSelected,
-    required VoidCallback onTap}) itemBuilder;
+  final Widget Function(BuildContext context, T item,
+      {required bool isSelected, required VoidCallback onTap}) itemBuilder;
 
   /// Defaults to a case-insensitive substring match on [itemLabel] when
   /// null. Kept independent of [itemLabel] so a caller can search a field
@@ -47,8 +44,7 @@ class SearchablePickerDialog<T> extends StatefulWidget {
       _SearchablePickerDialogState<T>();
 }
 
-class _SearchablePickerDialogState<T>
-    extends State<SearchablePickerDialog<T>> {
+class _SearchablePickerDialogState<T> extends State<SearchablePickerDialog<T>> {
   final _searchController = TextEditingController();
   String _query = '';
   late List<T> _sortedItems;
@@ -94,9 +90,7 @@ class _SearchablePickerDialogState<T>
     final matches = widget.matches ??
         (T item, String query) =>
             widget.itemLabel(item).toLowerCase().contains(query.toLowerCase());
-    return _sortedItems
-        .where((item) => matches(item, _query))
-        .toList();
+    return _sortedItems.where((item) => matches(item, _query)).toList();
   }
 
   @override
@@ -114,66 +108,71 @@ class _SearchablePickerDialogState<T>
     }
 
     return TerminalDialog(
-      title: widget.title,
-      content: SizedBox(
-        width: double.maxFinite,
-        height: 360,
-        child: widget.items.isEmpty
-            ? Center(
-                child: TerminalText(widget.emptyLabel ?? '', role: TextRole.body))
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TerminalTextField(
-                    controller: _searchController,
-                    label: widget.searchLabel ?? '',
-                    hint: widget.searchHint ?? '',
-                    onChanged: (v) => setState(() => _query = v)),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: rows.isEmpty
-                        ? Center(
-                            child: TerminalText(
-                              widget.noMatchesLabel ?? '',
-                              role: TextRole.label,
-                            ))
-                        : ListView.builder(
-                            itemCount: rows.length,
-                            itemBuilder: (context, index) {
-                              final row = rows[index];
-                              final tile = widget.itemBuilder(
-                                context,
-                                row.item,
-                                isSelected: widget.selectedItem != null &&
-                                    widget.selectedItem == row.item,
-                                onTap: () =>
-                                    Navigator.of(context).pop(row.item));
-                              if (row.header == null) return tile;
-                              return Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      vertical: AppSizes.space * 0.5),
-                                    child: Text(
-                                      row.header!.toUpperCase(),
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.family,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
-                                        fontWeight: AppFonts.heavy,
-                                        package: 'pocketcoder_flutter'))),
-                                  tile,
-                                ]);
-                            })),
-                ])),
-      actions: [
-        TerminalButton(
-          label: context.l10n.actionCancel,
-          isPrimary: false,
-          onTap: () => Navigator.of(context).pop()),
-      ]);
+        title: widget.title,
+        content: SizedBox(
+            width: double.maxFinite,
+            height: 360,
+            child: widget.items.isEmpty
+                ? Center(
+                    child: TerminalText(widget.emptyLabel ?? '',
+                        role: TextRole.body))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                        TerminalTextField(
+                            controller: _searchController,
+                            label: widget.searchLabel ?? '',
+                            hint: widget.searchHint ?? '',
+                            onChanged: (v) => setState(() => _query = v)),
+                        const SizedBox(height: 8),
+                        Expanded(
+                            child: rows.isEmpty
+                                ? Center(
+                                    child: TerminalText(
+                                    widget.noMatchesLabel ?? '',
+                                    role: TextRole.label,
+                                  ))
+                                : ListView.builder(
+                                    itemCount: rows.length,
+                                    itemBuilder: (context, index) {
+                                      final row = rows[index];
+                                      final tile = widget.itemBuilder(
+                                          context, row.item,
+                                          isSelected: widget.selectedItem !=
+                                                  null &&
+                                              widget.selectedItem == row.item,
+                                          onTap: () => Navigator.of(context)
+                                              .pop(row.item));
+                                      if (row.header == null) return tile;
+                                      return Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical:
+                                                        AppSizes.space * 0.5),
+                                                child: Text(
+                                                    row.header!.toUpperCase(),
+                                                    style: TextStyle(
+                                                        fontFamily:
+                                                            AppFonts.family,
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .primary,
+                                                        fontWeight:
+                                                            AppFonts.heavy,
+                                                        package:
+                                                            'pocketcoder_flutter'))),
+                                            tile,
+                                          ]);
+                                    })),
+                      ])),
+        actions: [
+          TerminalButton(
+              label: context.l10n.actionCancel,
+              isPrimary: false,
+              onTap: () => Navigator.of(context).pop()),
+        ]);
   }
 }

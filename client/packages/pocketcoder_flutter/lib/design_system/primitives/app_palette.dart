@@ -5,21 +5,28 @@ import 'package:flutter_color_palette/flutter_color_palette.dart';
 class AppPalette {
   // The six roles -- the source of truth from this task onward.
   static const Color ground = Color(0xFF050505);
-  static const Color trace  = Color(0xFF003B00);
-  static const Color dim    = Color(0xFF00701A);
-  static const Color body   = Color(0xFF00B82A);
+  static const Color trace = Color(0xFF003B00);
+  static const Color dim = Color(0xFF00701A);
+  static const Color body = Color(0xFF00B82A);
   static const Color bright = Color(0xFF00FF41);
-  static const Color amber  = Color(0xFFFFB100);
-  static const Color red    = Color(0xFFFF5555);
+  static const Color amber = Color(0xFFFFB100);
+  static const Color red = Color(0xFFFF5555);
 
   /// Retained so `_buildTheme` and `ThemeService` keep working. The map is
   /// now derived from the six roles rather than being the source of truth.
   static final IColorPalette primary = AppColorPalette(
     colors: const {
-      'color1': ground, 'color2': bright, 'color3': body,
-      'neutral1': trace, 'dangerRed': red, 'warningAmber': amber,
+      'color1': ground,
+      'color2': bright,
+      'color3': body,
+      'neutral1': trace,
+      'dangerRed': red,
+      'warningAmber': amber,
       'interactable': bright,
-      'info': body, 'success': bright, 'error': red, 'warning': amber,
+      'info': body,
+      'success': bright,
+      'error': red,
+      'warning': amber,
       'destructive': red,
     },
     name: 'PocketCoder Terminal',

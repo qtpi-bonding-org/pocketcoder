@@ -53,8 +53,7 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
     if (existing == null && typed.isEmpty) return;
     final selectedProvider = _selectedProvider;
     if (selectedProvider == null) return;
-    widget.onSave(
-      ProviderApiKey(
+    widget.onSave(ProviderApiKey(
         id: existing?.id ?? '',
         owner: existing?.owner ?? '',
         provider: selectedProvider.id,
@@ -68,18 +67,18 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
         ? context.l10n.providerScreenSelectProvider
         : context.l10n.providerScreenAddKeyTitle(selected.name.toUpperCase());
     return TerminalDialog(
-      title: title,
-      content: SingleChildScrollView(
-        child: Column(
+        title: title,
+        content: SingleChildScrollView(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TerminalText(
-                  selected == null
-                      ? context.l10n.providerScreenAddKey
-                      : context.l10n.providerScreenAddKeyBody(
-                          selected.name.toUpperCase()),
-                  role: TextRole.body,
+                selected == null
+                    ? context.l10n.providerScreenAddKey
+                    : context.l10n
+                        .providerScreenAddKeyBody(selected.name.toUpperCase()),
+                role: TextRole.body,
               ),
               VSpace.x2,
               ProviderTargetPicker(
@@ -96,22 +95,22 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
                   obscureText: true),
               VSpace.x2,
               TerminalText(
-                  widget.existing == null
-                      ? context.l10n.providerScreenApiKeyNotSet
-                      : context.l10n.providerScreenApiKeyStoredSecurely,
-                  role: TextRole.body,
+                widget.existing == null
+                    ? context.l10n.providerScreenApiKeyNotSet
+                    : context.l10n.providerScreenApiKeyStoredSecurely,
+                role: TextRole.body,
               ),
             ],
           ),
         ),
-      actions: [
-        TerminalButton(
-            label: context.l10n.actionCancel,
-            isPrimary: false,
-            onTap: () => Navigator.of(context).pop()),
-        HSpace.x2,
-        TerminalButton(label: context.l10n.actionSave, onTap: _handleSave),
-      ]);
+        actions: [
+          TerminalButton(
+              label: context.l10n.actionCancel,
+              isPrimary: false,
+              onTap: () => Navigator.of(context).pop()),
+          HSpace.x2,
+          TerminalButton(label: context.l10n.actionSave, onTap: _handleSave),
+        ]);
   }
 }
 
@@ -127,37 +126,34 @@ class ProviderTargetPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BiosRow(
-        label: context.l10n.providerScreenProviderLabel,
-        value: selectedProvider?.name.toUpperCase() ??
-            context.l10n.providerScreenSelectProvider.toUpperCase(),
-        variant: BiosRowVariant.expand,
-        onTap: () async {
-          final picked = await showDialog<domain.Provider>(
+      label: context.l10n.providerScreenProviderLabel,
+      value: selectedProvider?.name.toUpperCase() ??
+          context.l10n.providerScreenSelectProvider.toUpperCase(),
+      variant: BiosRowVariant.expand,
+      onTap: () async {
+        final picked = await showDialog<domain.Provider>(
             context: context,
-            builder: (dialogContext) =>
-                SearchablePickerDialog<domain.Provider>(
-              title: dialogContext.l10n.providerScreenSelectProvider,
-              items: targets,
-              itemLabel: (p) => p.name,
-              matches: (p, query) {
-                final q = query.toLowerCase();
-                return p.name.toLowerCase().contains(q) ||
-                    p.providerId.toLowerCase().contains(q);
-              },
-              itemBuilder: (context, p,
-                      {required isSelected, required onTap}) =>
-                  ProviderTargetOption(
-                provider: p,
-                isSelected: isSelected,
-                onTap: onTap),
-              selectedItem: selectedProvider,
-              searchLabel: dialogContext.l10n.providerScreenSearchLabel,
-              searchHint: dialogContext.l10n.providerScreenSearchHint,
-              emptyLabel: dialogContext.l10n.providerScreenNoProviders,
-              noMatchesLabel:
-                  dialogContext.l10n.providerScreenSearchNoMatches));
-          if (picked != null) onSelected(picked);
-        });
+            builder: (dialogContext) => SearchablePickerDialog<domain.Provider>(
+                title: dialogContext.l10n.providerScreenSelectProvider,
+                items: targets,
+                itemLabel: (p) => p.name,
+                matches: (p, query) {
+                  final q = query.toLowerCase();
+                  return p.name.toLowerCase().contains(q) ||
+                      p.providerId.toLowerCase().contains(q);
+                },
+                itemBuilder: (context, p,
+                        {required isSelected, required onTap}) =>
+                    ProviderTargetOption(
+                        provider: p, isSelected: isSelected, onTap: onTap),
+                selectedItem: selectedProvider,
+                searchLabel: dialogContext.l10n.providerScreenSearchLabel,
+                searchHint: dialogContext.l10n.providerScreenSearchHint,
+                emptyLabel: dialogContext.l10n.providerScreenNoProviders,
+                noMatchesLabel:
+                    dialogContext.l10n.providerScreenSearchNoMatches));
+        if (picked != null) onSelected(picked);
+      });
 }
 
 class ProviderTargetOption extends StatelessWidget {
@@ -175,25 +171,27 @@ class ProviderTargetOption extends StatelessWidget {
     return InkWell(
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.all(AppSizes.space),
-          margin: EdgeInsets.only(bottom: AppSizes.space * 0.5),
-          decoration: BoxDecoration(
-              border:
-                  Border.all(color: colors.onSurface.withValues(alpha: 0.2)),
-              color: isSelected ? colors.primary.withValues(alpha: 0.1) : null),
-          child:
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Expanded(
-                child: TerminalText(
-                  provider.name.toUpperCase(),
-                  role: TextRole.label,
-                  overflow: TextOverflow.ellipsis,
-                ),
-            ),
-            TerminalText(
-              provider.providerId,
-              role: TextRole.body,
-            ),
-          ])));
+            padding: EdgeInsets.all(AppSizes.space),
+            margin: EdgeInsets.only(bottom: AppSizes.space * 0.5),
+            decoration: BoxDecoration(
+                border:
+                    Border.all(color: colors.onSurface.withValues(alpha: 0.2)),
+                color:
+                    isSelected ? colors.primary.withValues(alpha: 0.1) : null),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: TerminalText(
+                      provider.name.toUpperCase(),
+                      role: TextRole.label,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  TerminalText(
+                    provider.providerId,
+                    role: TextRole.body,
+                  ),
+                ])));
   }
 }

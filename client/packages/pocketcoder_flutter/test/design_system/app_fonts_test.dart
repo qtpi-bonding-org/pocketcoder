@@ -18,11 +18,21 @@ void main() {
   test('every TextTheme slot uses the one size and the one family', () {
     final theme = AppFonts.textTheme;
     final styles = [
-      theme.displayLarge, theme.displayMedium, theme.displaySmall,
-      theme.headlineLarge, theme.headlineMedium, theme.headlineSmall,
-      theme.titleLarge, theme.titleMedium, theme.titleSmall,
-      theme.bodyLarge, theme.bodyMedium, theme.bodySmall,
-      theme.labelLarge, theme.labelMedium, theme.labelSmall,
+      theme.displayLarge,
+      theme.displayMedium,
+      theme.displaySmall,
+      theme.headlineLarge,
+      theme.headlineMedium,
+      theme.headlineSmall,
+      theme.titleLarge,
+      theme.titleMedium,
+      theme.titleSmall,
+      theme.bodyLarge,
+      theme.bodyMedium,
+      theme.bodySmall,
+      theme.labelLarge,
+      theme.labelMedium,
+      theme.labelSmall,
     ];
     for (final s in styles) {
       expect(s!.fontSize, AppSizes.fontBody);

@@ -49,8 +49,7 @@ class ModeSwitcher extends StatelessWidget {
                 child: Text(
                   ((m['name'] as String?) ?? m['id'] as String).toUpperCase(),
                   style: TextStyle(
-                      fontFamily: AppFonts.family,
-                      fontWeight: AppFonts.heavy),
+                      fontFamily: AppFonts.family, fontWeight: AppFonts.heavy),
                 ),
               ),
           ],

@@ -7,7 +7,8 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/copy_button.dart';
 
 class PrivateKeySection extends StatefulWidget {
-  const PrivateKeySection({super.key, required this.instanceId, required this.state});
+  const PrivateKeySection(
+      {super.key, required this.instanceId, required this.state});
 
   final String instanceId;
   final ServerControlState state;

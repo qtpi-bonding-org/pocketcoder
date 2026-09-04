@@ -90,7 +90,8 @@ void main() {
     expect(document?.maxAttempts, 3);
   });
 
-  test('defaults attempt and maxAttempts to 1 when the document omits them', () {
+  test('defaults attempt and maxAttempts to 1 when the document omits them',
+      () {
     final document = ServerStatusDocument.tryParse(jsonEncode({
       'schema': 3,
       'runId': 'run-1',

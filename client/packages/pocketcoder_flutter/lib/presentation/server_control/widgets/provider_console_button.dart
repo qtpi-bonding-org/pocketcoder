@@ -5,7 +5,8 @@ import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 
 class ProviderConsoleButton extends StatelessWidget {
-  const ProviderConsoleButton({super.key, required this.link, required this.launcher});
+  const ProviderConsoleButton(
+      {super.key, required this.link, required this.launcher});
 
   final IProviderConsoleLink link;
   final InAppBrowserLauncher launcher;

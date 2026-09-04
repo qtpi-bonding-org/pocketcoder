@@ -10,11 +10,11 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
 import 'package:pocketcoder_flutter/presentation/scheduler/widgets/scheduler_view.dart';
 
 Widget _app(Widget child) => MaterialApp(
-  theme: AppTheme.lightTheme,
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
-  supportedLocales: AppLocalizations.supportedLocales,
-  home: child,
-);
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: child,
+    );
 
 void main() {
   testWidgets(

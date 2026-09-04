@@ -132,7 +132,8 @@ void main() {
     expect(bubble.left, AppSizes.space);
   });
 
-  testWidgets('a user turn renders as a full-bleed phosphor fill with black text',
+  testWidgets(
+      'a user turn renders as a full-bleed phosphor fill with black text',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -152,10 +153,12 @@ void main() {
     expect(text.style?.color, Colors.black);
 
     final frame = tester.widget<Container>(
-      find.descendant(
-        of: find.byType(TerminalConversationFrame),
-        matching: find.byType(Container),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(TerminalConversationFrame),
+            matching: find.byType(Container),
+          )
+          .first,
     );
     final decoration = frame.decoration as BoxDecoration;
     expect(decoration.color, isNot(anyOf(isNull, Colors.transparent)));
@@ -176,10 +179,12 @@ void main() {
     );
 
     final frame = tester.widget<Container>(
-      find.descendant(
-        of: find.byType(TerminalConversationFrame),
-        matching: find.byType(Container),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(TerminalConversationFrame),
+            matching: find.byType(Container),
+          )
+          .first,
     );
     final decoration = frame.decoration as BoxDecoration?;
     expect(decoration?.color, anyOf(isNull, Colors.transparent));

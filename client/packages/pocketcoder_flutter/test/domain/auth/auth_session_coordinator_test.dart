@@ -22,7 +22,8 @@ void main() {
 
   tearDown(() => authChanges.close());
 
-  test('current returns the latest snapshot synchronously, without needing a listener',
+  test(
+      'current returns the latest snapshot synchronously, without needing a listener',
       () {
     when(() => repository.isAuthenticated).thenReturn(true);
     final coordinator = AuthSessionCoordinator(repository);
@@ -86,7 +87,8 @@ void main() {
     verify(() => repository.refreshToken()).called(1);
   });
 
-  test('a session change that happens before the first listener attaches is not lost',
+  test(
+      'a session change that happens before the first listener attaches is not lost',
       () async {
     var authenticated = false;
     when(() => repository.isAuthenticated).thenAnswer((_) => authenticated);
@@ -103,7 +105,8 @@ void main() {
     expect(snapshot.userId, isNotNull);
   });
 
-  test('subscribing then immediately logging in never yields only the pre-login snapshot',
+  test(
+      'subscribing then immediately logging in never yields only the pre-login snapshot',
       () async {
     var authenticated = false;
     when(() => repository.isAuthenticated).thenAnswer((_) => authenticated);
@@ -142,7 +145,8 @@ void main() {
     expect(snapshot.userId, isNot(firstUserId));
   });
 
-  test('baseUrl reflects the deployment the current session actually belongs to',
+  test(
+      'baseUrl reflects the deployment the current session actually belongs to',
       () async {
     var baseUrl = 'https://box-a';
     when(() => repository.isAuthenticated).thenReturn(true);

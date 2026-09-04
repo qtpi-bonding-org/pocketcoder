@@ -40,7 +40,8 @@ void main() {
     );
   }
 
-  testWidgets('presents the trial offer and store-derived price for a '
+  testWidgets(
+      'presents the trial offer and store-derived price for a '
       'trial-eligible package', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -102,8 +103,7 @@ void main() {
     expect(restores, 1);
   });
 
-  testWidgets(
-      'an active Pro subscriber sees and can tap Manage Subscription',
+  testWidgets('an active Pro subscriber sees and can tap Manage Subscription',
       (tester) async {
     var manageCalls = 0;
     await tester.pumpWidget(subject(
@@ -118,7 +118,8 @@ void main() {
     expect(manageCalls, 1);
   });
 
-  testWidgets('keeps only the back action, whether reached during '
+  testWidgets(
+      'keeps only the back action, whether reached during '
       'onboarding or standalone from Configure', (tester) async {
     await tester.pumpWidget(subject());
     await tester.pumpAndSettle();

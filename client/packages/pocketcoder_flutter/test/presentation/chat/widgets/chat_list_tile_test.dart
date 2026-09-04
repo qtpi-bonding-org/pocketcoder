@@ -29,11 +29,11 @@ void main() {
 
     await tester.pumpWidget(_wrap(
       ChatListTile(
-          chat: chat,
-          onOpen: _noopString,
-          onArchive: _noopString,
-          onDelete: _noopString,
-        ),
+        chat: chat,
+        onOpen: _noopString,
+        onArchive: _noopString,
+        onDelete: _noopString,
+      ),
     ));
 
     expect(find.text('New Chat'), findsNothing);
@@ -47,11 +47,11 @@ void main() {
 
     await tester.pumpWidget(_wrap(
       ChatListTile(
-          chat: chat,
-          onOpen: _noopString,
-          onArchive: _noopString,
-          onDelete: _noopString,
-        ),
+        chat: chat,
+        onOpen: _noopString,
+        onArchive: _noopString,
+        onDelete: _noopString,
+      ),
     ));
 
     expect(find.text('No messages yet'), findsOneWidget);
@@ -69,11 +69,11 @@ void main() {
 
     await tester.pumpWidget(_wrap(
       ChatListTile(
-          chat: chat,
-          onOpen: _noopString,
-          onArchive: _noopString,
-          onDelete: _noopString,
-        ),
+        chat: chat,
+        onOpen: _noopString,
+        onArchive: _noopString,
+        onDelete: _noopString,
+      ),
     ));
 
     expect(find.text('No messages yet'), findsNothing);

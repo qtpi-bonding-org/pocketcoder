@@ -8,7 +8,8 @@ void main() {
   setUp(() => db = ProvisioningLogDb.forExecutor(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  test('imports bounded journal JSON and maps sources and priorities', () async {
+  test('imports bounded journal JSON and maps sources and priorities',
+      () async {
     await importProvisioningJournal(
       db: db,
       instanceId: 'instance-1',

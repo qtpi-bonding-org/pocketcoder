@@ -8,7 +8,7 @@ import 'package:pocketcoder_flutter/application/notifications/notification_rule_
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -22,19 +22,19 @@ class NotificationSettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-        create: (_) => getIt<NotificationRuleCubit>()..watchRules(),
-        child: NotificationSettingsAdapter(
+      create: (_) => getIt<NotificationRuleCubit>()..watchRules(),
+      child: NotificationSettingsAdapter(
           onEnableDevice: getIt<PushService>().requestPermissions,
           onConfigureSelfHostedPush: getIt<PushService>().configure));
 }
 
 class NotificationSettingsView extends StatelessWidget {
-  const NotificationSettingsView({
-    super.key,
-    required this.state,
-    required this.onChanged,
-    required this.onEnableDevice,
-    required this.onConfigureSelfHostedPush});
+  const NotificationSettingsView(
+      {super.key,
+      required this.state,
+      required this.onChanged,
+      required this.onEnableDevice,
+      required this.onConfigureSelfHostedPush});
 
   static const List<(String, String)> types = [
     ('chat_reply', 'chatReply'),
@@ -53,44 +53,44 @@ class NotificationSettingsView extends StatelessWidget {
         'schedule' => context.l10n.notificationSettingsScheduleLabel,
         'taskComplete' => context.l10n.notificationSettingsTaskCompleteLabel,
         'taskError' => context.l10n.notificationSettingsTaskErrorLabel,
-        _ => key};
+        _ => key
+      };
 
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: context.l10n.notificationSettingsScreenTitle,
-      activePillar: NavPillar.configure,
-      showBack: true,
-      body: BiosFrame(
         title: context.l10n.notificationSettingsScreenTitle,
-        child: switch (state.status) {
-          UiFlowStatus.loading =>
-            const Center(child: CircularProgressIndicator()),
-          UiFlowStatus.failure => Center(
-              child: TerminalText(
-                safeErrorMessage(state.error),
-                role: TextRole.warn)),
-          UiFlowStatus.success => ListView(
-              children: [
-                TerminalButton(
-                  label: context.l10n.notificationSettingsEnableDevice,
-                  onTap: onEnableDevice),
-                VSpace.x3,
-                BiosSection(
-                  title: context.l10n.notificationSettingsScreenTitle,
-                  child: Column(
-                    children: [
-                      for (final (type, key) in types)
-                        BiosRow(
+        activePillar: NavPillar.configure,
+        showBack: true,
+        body: BiosFrame(
+            title: context.l10n.notificationSettingsScreenTitle,
+            child: switch (state.status) {
+              UiFlowStatus.loading =>
+                const Center(child: CircularProgressIndicator()),
+              UiFlowStatus.failure => Center(
+                  child: TerminalText(safeErrorMessage(state.error),
+                      role: TextRole.warn)),
+              UiFlowStatus.success => ListView(children: [
+                  TerminalButton(
+                      label: context.l10n.notificationSettingsEnableDevice,
+                      onTap: onEnableDevice),
+                  VSpace.x3,
+                  SectionHeader(
+                      name: context.l10n.notificationSettingsScreenTitle
+                          .toLowerCase()),
+                  Column(children: [
+                    for (final (type, key) in types)
+                      BiosRow(
                           label: _labelFor(context, key),
                           variant: BiosRowVariant.toggle,
                           toggleValue: state.rules[type] ?? true,
                           onToggleChanged: (value) => onChanged(type, value)),
-                    ])),
-                VSpace.x3,
-                _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
-              ]),
-          UiFlowStatus.idle => const SizedBox.shrink()}));
+                  ]),
+                  VSpace.x3,
+                  _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
+                ]),
+              UiFlowStatus.idle => const SizedBox.shrink()
+            }));
   }
 }
 
@@ -102,11 +102,11 @@ class _SelfHostedPushOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TerminalCard(
-      padding: EdgeInsets.all(AppSizes.space * 1.5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TerminalText(context.l10n.proSelfHostedPushTitle, role: TextRole.body),
+        padding: EdgeInsets.all(AppSizes.space * 1.5),
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          TerminalText(context.l10n.proSelfHostedPushTitle,
+              role: TextRole.body),
           VSpace.x1,
           TerminalText(
             context.l10n.proSelfHostedPushBody,
@@ -114,9 +114,9 @@ class _SelfHostedPushOption extends StatelessWidget {
           ),
           VSpace.x2,
           TerminalButton(
-            label: context.l10n.proConfigureSelfHostedPush,
-            onTap: onConfigure,
-            isPrimary: false),
+              label: context.l10n.proConfigureSelfHostedPush,
+              onTap: onConfigure,
+              isPrimary: false),
         ]));
   }
 }

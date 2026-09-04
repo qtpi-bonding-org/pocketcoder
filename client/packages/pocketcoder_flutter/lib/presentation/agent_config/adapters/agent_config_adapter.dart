@@ -8,11 +8,13 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.d
 
 /// Top-level screen for the agent configuration UI.
 ///
-class AgentConfigAdapter extends CubitAdapter<AgentConfigCubit, AgentConfigState> {
+class AgentConfigAdapter
+    extends CubitAdapter<AgentConfigCubit, AgentConfigState> {
   const AgentConfigAdapter({super.key});
   static AgentConfigState _selectState(AgentConfigState state) => state;
   @override
-  Widget buildAdapter(BuildContext context, CubitAdapterState<AgentConfigCubit, AgentConfigState> adapter) {
+  Widget buildAdapter(BuildContext context,
+      CubitAdapterState<AgentConfigCubit, AgentConfigState> adapter) {
     final state = adapter.cubitField(_selectState);
     final cubit = context.read<AgentConfigCubit>();
     return UiFlowListener<AgentConfigCubit, AgentConfigState>(

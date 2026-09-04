@@ -14,7 +14,13 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.da
 /// title, a back target, or footer actions, that's the signal to revisit
 /// this decision -- until then, stays a raw Scaffold on purpose.
 class BootView extends StatelessWidget {
-  const BootView({super.key, required this.logs, required this.logsDimmed, required this.pocoVisible, required this.pocoState, required this.scrollController});
+  const BootView(
+      {super.key,
+      required this.logs,
+      required this.logsDimmed,
+      required this.pocoVisible,
+      required this.pocoState,
+      required this.scrollController});
 
   final List<String> logs;
   final bool logsDimmed;
@@ -40,21 +46,25 @@ class BootView extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final logEntry = logs[index];
                   Color? textColor = colors.primary;
-                  if (logEntry.startsWith('[!]') || logEntry.contains('ERROR')) {
+                  if (logEntry.startsWith('[!]') ||
+                      logEntry.contains('ERROR')) {
                     textColor = context.terminalColors.warning;
                   } else if (logEntry.startsWith('[sys]')) {
                     textColor = colors.tertiary;
                   } else if (logEntry.startsWith('[net]')) {
                     textColor = colors.secondary;
                   }
-                  return Text(logEntry, style: context.textTheme.bodySmall?.copyWith(color: textColor));
+                  return Text(logEntry,
+                      style: context.textTheme.bodySmall
+                          ?.copyWith(color: textColor));
                 },
               ),
             ),
             if (pocoVisible)
               Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+                  constraints:
+                      BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -68,7 +78,10 @@ class BootView extends StatelessWidget {
                         ),
                       ),
                       VSpace.x4,
-                      PocoBubble(message: pocoState.message, history: pocoState.history, showFace: false),
+                      PocoBubble(
+                          message: pocoState.message,
+                          history: pocoState.history,
+                          showFace: false),
                     ],
                   ),
                 ),

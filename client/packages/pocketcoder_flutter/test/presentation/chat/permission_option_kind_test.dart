@@ -18,8 +18,15 @@ void main() {
     // arbitrary input, which the honesty principle forbids: a confidently
     // wrong "this will delete your data" manufactures consent.
     const adversarial = [
-      'destructive', 'delete', 'rm -rf /', 'DESTRUCTIVE', 'wipe',
-      'reject_destructive', '', '   ', 'allow_delete_everything',
+      'destructive',
+      'delete',
+      'rm -rf /',
+      'DESTRUCTIVE',
+      'wipe',
+      'reject_destructive',
+      '',
+      '   ',
+      'allow_delete_everything',
     ];
     for (final k in adversarial) {
       expect(actionKindForPermissionOption(k), isNot(ActionKind.destructive),

@@ -70,7 +70,6 @@ class AppFonts {
           fontWeight: heavy,
           height: AppSizes.lineHeightFactor,
         ),
-
         bodyLarge: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,
@@ -89,7 +88,6 @@ class AppFonts {
           fontWeight: medium,
           height: AppSizes.lineHeightFactor,
         ),
-
         labelLarge: TextStyle(
           fontFamily: family,
           fontSize: AppSizes.fontBody,

@@ -36,8 +36,8 @@ void showAddRuleDialog(
                 final (value, label) = entry;
                 return Expanded(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: AppSizes.space / 2),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: AppSizes.space / 2),
                     child: TerminalButton(
                       label: label,
                       isPrimary: selectedAction == value,

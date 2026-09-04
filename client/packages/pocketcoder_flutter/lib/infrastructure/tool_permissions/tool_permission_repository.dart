@@ -17,7 +17,8 @@ class ToolPermissionRepository implements IToolPermissionRepository {
   }
 
   @override
-  Future<void> createRule({required String tool, required String action}) async {
+  Future<void> createRule(
+      {required String tool, required String action}) async {
     return tryMethod(
       () async {
         await _toolPermissionDao.save(null, {

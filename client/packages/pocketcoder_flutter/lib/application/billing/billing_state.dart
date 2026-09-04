@@ -14,5 +14,4 @@ sealed class BillingState with _$BillingState, UiFlowStateMixin {
     @Default(false) bool isPro,
     Object? error,
   }) = _BillingState;
-
 }

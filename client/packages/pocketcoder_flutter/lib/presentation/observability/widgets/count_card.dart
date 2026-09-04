@@ -11,19 +11,17 @@ class CountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.all(AppSizes.space),
-        decoration: BoxDecoration(
-          border: Border.all(color: context.colorScheme.primary)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TerminalText(
-              '$value',
-              role: TextRole.value,
-            ),
-            TerminalText(
-              label,
-              role: TextRole.label,
-            ),
-          ]));
+      padding: EdgeInsets.all(AppSizes.space),
+      decoration:
+          BoxDecoration(border: Border.all(color: context.colorScheme.primary)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        TerminalText(
+          '$value',
+          role: TextRole.value,
+        ),
+        TerminalText(
+          label,
+          role: TextRole.label,
+        ),
+      ]));
 }

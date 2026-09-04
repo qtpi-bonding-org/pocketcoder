@@ -13,8 +13,6 @@ const _artExemptions = {
 
 /// These files are owned by later tasks and will be fixed there, not here.
 const _deferredExemptions = {
-  'lib/presentation/core/widgets/terminal_text.dart', // Task 7: TerminalText takes a role, not a size
-  'lib/presentation/core/widgets/bios_section.dart', // Task 8: Section header replaces BiosSection
   'lib/presentation/core/widgets/bios_row.dart', // Task 9: DetailRow replaces BiosRow
   'lib/presentation/core/widgets/bios_action_strip.dart', // Task 14: Dialog actions and action strips to angle brackets
   'lib/presentation/core/widgets/terminal_status_glyph.dart', // Task 10: Markers and loader split

@@ -73,8 +73,7 @@ class HealthcheckRepository implements IHealthcheckRepository {
         if (!controller.isClosed) {
           controller.add(records.items);
         }
-      } catch (_) {
-      }
+      } catch (_) {}
     });
 
     try {

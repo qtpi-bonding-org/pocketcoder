@@ -11,17 +11,17 @@ import 'package:pocketcoder_flutter/presentation/onboarding/widgets/harness_choi
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 
 class AgentAuthView extends StatelessWidget {
-  const AgentAuthView({
-    super.key,
-    required this.status,
-    required this.harnesses,
-    required this.error,
-    required this.onSelected,
-    required this.harnessProvidersLoaded,
-    required this.onSkip,
-    this.onContinue,
-    this.connectedHarnessIds = const {},
-    this.selectedHarnesses = const []});
+  const AgentAuthView(
+      {super.key,
+      required this.status,
+      required this.harnesses,
+      required this.error,
+      required this.onSelected,
+      required this.harnessProvidersLoaded,
+      required this.onSkip,
+      this.onContinue,
+      this.connectedHarnessIds = const {},
+      this.selectedHarnesses = const []});
 
   final UiFlowStatus status;
   final List<Harnesse> harnesses;
@@ -59,19 +59,19 @@ class AgentAuthView extends StatelessWidget {
     }).toList();
 
     return PocketCoderShell(
-      title: context.l10n.onboardingChooseHarnessTitle,
-      activePillar: NavPillar.configure,
-      showBack: false,
-      showNavigation: false,
-      actions: [
-        TerminalAction(label: context.l10n.actionSkip, onTap: onSkip),
-        if (onContinue case final continueTap?)
-          TerminalAction(
-            label: context.l10n.actionContinue,
-            onTap: continueTap,
-            emphasis: Emphasis.outlined),
-      ],
-      body: _buildBody(context, supported));
+        title: context.l10n.onboardingChooseHarnessTitle,
+        activePillar: NavPillar.configure,
+        showBack: false,
+        showNavigation: false,
+        actions: [
+          TerminalAction(label: context.l10n.actionSkip, onTap: onSkip),
+          if (onContinue case final continueTap?)
+            TerminalAction(
+                label: context.l10n.actionContinue,
+                onTap: continueTap,
+                emphasis: Emphasis.outlined),
+        ],
+        body: _buildBody(context, supported));
   }
 
   Widget _buildBody(BuildContext context, List<Harnesse> supported) {
@@ -99,25 +99,28 @@ class AgentAuthView extends StatelessWidget {
     }
 
     return OnboardingContentShell(
-      listBuilder: (context) => ListView(
-        shrinkWrap: true,
-        padding: EdgeInsets.all(AppSizes.space * 2),
-        children: [
-          TerminalText(
-            context.l10n.onboardingChooseHarnessBody,
-            role: TextRole.body,
-          ),
-          VSpace.x3,
-          if (!harnessProvidersLoaded)
-            TerminalText(context.l10n.onboardingChooseHarnessLoadingProviders, role: TextRole.body),
-          for (final harness in supported)
-            Padding(
-              padding: EdgeInsets.only(bottom: AppSizes.space),
-              child: HarnessChoiceCard(
-                harness: harness,
-                connected: connectedHarnessIds.contains(harness.id),
-                onTap:
-                    harnessProvidersLoaded ? () => onSelected(harness) : null)),
-        ]));
+        listBuilder: (context) => ListView(
+                shrinkWrap: true,
+                padding: EdgeInsets.all(AppSizes.space * 2),
+                children: [
+                  TerminalText(
+                    context.l10n.onboardingChooseHarnessBody,
+                    role: TextRole.body,
+                  ),
+                  VSpace.x3,
+                  if (!harnessProvidersLoaded)
+                    TerminalText(
+                        context.l10n.onboardingChooseHarnessLoadingProviders,
+                        role: TextRole.body),
+                  for (final harness in supported)
+                    Padding(
+                        padding: EdgeInsets.only(bottom: AppSizes.space),
+                        child: HarnessChoiceCard(
+                            harness: harness,
+                            connected: connectedHarnessIds.contains(harness.id),
+                            onTap: harnessProvidersLoaded
+                                ? () => onSelected(harness)
+                                : null)),
+                ]));
   }
 }

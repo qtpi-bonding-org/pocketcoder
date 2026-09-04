@@ -60,12 +60,10 @@ void main() {
     );
   });
 
-  test('clearSession clears auth state and the persisted server URL',
-      () async {
+  test('clearSession clears auth state and the persisted server URL', () async {
     when(() => authStore.clear()).thenReturn(null);
     when(() => authStoreConfig.clear()).thenAnswer((_) async {});
-    when(() => storage.delete(key: 'pb_server_url'))
-        .thenAnswer((_) async {});
+    when(() => storage.delete(key: 'pb_server_url')).thenAnswer((_) async {});
 
     await repository.clearSession();
 

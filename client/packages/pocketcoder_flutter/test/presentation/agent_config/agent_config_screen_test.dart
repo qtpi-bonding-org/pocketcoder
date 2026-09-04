@@ -12,11 +12,16 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
-  theme: AppTheme.lightTheme,
-  localizationsDelegates: const [AppLocalizations.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
-  supportedLocales: const [Locale('en')],
-  home: Scaffold(body: child),
-);
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate
+      ],
+      supportedLocales: const [Locale('en')],
+      home: Scaffold(body: child),
+    );
 
 void main() {
   final config = PocoConfig(id: 'config-1', name: 'Test Config');
@@ -27,7 +32,8 @@ void main() {
     baseSessionMode: PermissionModeBaseSessionMode.approve,
   );
 
-  Future<void> pumpView(WidgetTester tester, {
+  Future<void> pumpView(
+    WidgetTester tester, {
     AgentConfigState state = const AgentConfigState(),
     Future<void> Function(PocoConfig)? onSave,
     Future<void> Function(String)? onDelete,
@@ -58,7 +64,8 @@ void main() {
     await pumpView(tester, state: AgentConfigState(configs: [config]));
     await tester.tap(find.text('TEST CONFIG'));
     await tester.pumpAndSettle();
-    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text, 'Test Config');
+    expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Test Config');
   });
 
   testWidgets('saving calls the supplied callback', (tester) async {
@@ -74,9 +81,15 @@ void main() {
   });
 
   testWidgets('prompt picker lists and selects prompts', (tester) async {
-    await pumpView(tester, state: AgentConfigState(prompts: [prompt, Prompt(id: 'prompt-2', name: 'Second Prompt', body: 'b')]));
-    await tester.tap(find.text('ADD NEW')); await tester.pumpAndSettle();
-    await tester.tap(find.text('SYSTEM PROMPT')); await tester.pumpAndSettle();
+    await pumpView(tester,
+        state: AgentConfigState(prompts: [
+          prompt,
+          Prompt(id: 'prompt-2', name: 'Second Prompt', body: 'b')
+        ]));
+    await tester.tap(find.text('ADD NEW'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('SYSTEM PROMPT'));
+    await tester.pumpAndSettle();
     expect(find.text('SELECT PROMPT'), findsOneWidget);
     expect(find.text('SECOND PROMPT'), findsOneWidget);
   });
@@ -105,24 +118,31 @@ void main() {
 
   testWidgets('is_default toggle works', (tester) async {
     await pumpView(tester);
-    await tester.tap(find.text('ADD NEW')); await tester.pumpAndSettle();
+    await tester.tap(find.text('ADD NEW'));
+    await tester.pumpAndSettle();
     final toggle = find.byType(TerminalCheckbox);
     await tester.ensureVisible(toggle);
     await tester.pumpAndSettle();
     expect(tester.widget<TerminalCheckbox>(toggle).value, false);
-    await tester.tap(toggle); await tester.pumpAndSettle();
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
     expect(tester.widget<TerminalCheckbox>(toggle).value, true);
   });
 
   testWidgets('deleting calls the supplied callback', (tester) async {
     String? deleted;
-    await pumpView(tester, state: AgentConfigState(configs: [config]), onDelete: (id) async => deleted = id);
-    await tester.tap(find.text('TEST CONFIG')); await tester.pumpAndSettle();
+    await pumpView(tester,
+        state: AgentConfigState(configs: [config]),
+        onDelete: (id) async => deleted = id);
+    await tester.tap(find.text('TEST CONFIG'));
+    await tester.pumpAndSettle();
     final deleteButton = find.text('DELETE').last;
     await tester.ensureVisible(deleteButton);
     await tester.pumpAndSettle();
-    await tester.tap(deleteButton); await tester.pumpAndSettle();
-    await tester.tap(find.text('DELETE').last); await tester.pumpAndSettle();
+    await tester.tap(deleteButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('DELETE').last);
+    await tester.pumpAndSettle();
     expect(deleted, 'config-1');
   });
 }

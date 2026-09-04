@@ -3,7 +3,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_section.dart';
 import 'package:pocketcoder_flutter/presentation/settings/widgets/settings_view.dart';
 
 void main() {
@@ -94,44 +93,5 @@ void main() {
     ));
 
     expect(find.textContaining('PRO'), findsNothing);
-  });
-
-  testWidgets(
-      'BiosSection centers its title with a divider on both sides '
-      'when centerTitle is true', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: BiosSection(
-          title: 'security',
-          centerTitle: true,
-          child: SizedBox.shrink(),
-        ),
-      ),
-    ));
-
-    final titleRow = tester.widget<Row>(find.byType(Row).first);
-    final dividerCount = titleRow.children
-        .where((w) => w is Expanded && w.child is Divider)
-        .length;
-    expect(dividerCount, 2,
-        reason:
-            'centered title needs a divider on both sides, not just trailing');
-  });
-
-  testWidgets(
-      'BiosSection stays left-aligned with a trailing divider only '
-      'by default', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: BiosSection(title: 'security', child: SizedBox.shrink()),
-      ),
-    ));
-
-    final titleRow = tester.widget<Row>(find.byType(Row).first);
-    final dividerCount = titleRow.children
-        .where((w) => w is Expanded && w.child is Divider)
-        .length;
-    expect(dividerCount, 1,
-        reason: 'default layout only has a trailing divider after the title');
   });
 }

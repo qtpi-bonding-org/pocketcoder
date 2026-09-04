@@ -13,8 +13,10 @@ import 'package:pocketcoder_flutter/presentation/foss/foss_server_setup_view.dar
 
 class _FakeKeyGenerator implements ISshKeyGenerator {
   @override
-  Future<({String publicKey, String privateKey})> generate() async =>
-      (publicKey: 'ssh-ed25519 AAAAtest pocketcoder', privateKey: 'PRIVATE-PEM');
+  Future<({String publicKey, String privateKey})> generate() async => (
+        publicKey: 'ssh-ed25519 AAAAtest pocketcoder',
+        privateKey: 'PRIVATE-PEM'
+      );
   @override
   Future<({String publicKey, String privateKey})> generateHostKeyPair() async =>
       throw UnimplementedError('not used by this view');
@@ -26,12 +28,14 @@ class _FakeTester implements IFossRootSshConnectionTester {
     required String host,
     required String privateKeyPem,
   }) async =>
-      const FossHostIdentity(hostKeyType: 'ssh-ed25519', hostKeyFingerprint: 'SHA256:abc');
+      const FossHostIdentity(
+          hostKeyType: 'ssh-ed25519', hostKeyFingerprint: 'SHA256:abc');
 }
 
 class _MockStore extends Mock implements FossRootSshCredentialsStore {}
 
-Widget _wrap(FossServerSetupCubit cubit, {required VoidCallback onSetupComplete}) =>
+Widget _wrap(FossServerSetupCubit cubit,
+        {required VoidCallback onSetupComplete}) =>
     MaterialApp(
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -86,7 +90,8 @@ void main() {
     await tester.tap(find.text('GENERATE KEY'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('ssh-ed25519 AAAAtest pocketcoder'), findsOneWidget);
+    expect(find.textContaining('ssh-ed25519 AAAAtest pocketcoder'),
+        findsOneWidget);
     expect(find.textContaining('my-server.example'), findsOneWidget);
     expect(find.byType(TextField), findsNothing,
         reason: 'the host is derived from PocketBase, never user-entered '
@@ -104,7 +109,8 @@ void main() {
     await tester.tap(find.text('TEST CONNECTION & SAVE'));
     await tester.pumpAndSettle();
 
-    expect(find.text('CONNECTED -- YOUR SERVER IS NOW MANAGED'), findsOneWidget);
+    expect(
+        find.text('CONNECTED -- YOUR SERVER IS NOW MANAGED'), findsOneWidget);
     expect(completions, 1);
     verify(() => store.save(any())).called(1);
   });

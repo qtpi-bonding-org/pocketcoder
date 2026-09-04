@@ -49,8 +49,7 @@ void main() {
       );
     });
 
-    test('updatePin swaps the delegate and closes the previous one',
-        () async {
+    test('updatePin swaps the delegate and closes the previous one', () async {
       final client = CaddyCaPinningHttpClient();
 
       // A real (if throwaway) self-signed cert -- SecurityContext parses

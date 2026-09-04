@@ -40,7 +40,9 @@ class _ConfigPickerState extends State<ConfigPicker> {
                   padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
                   child: Row(children: [
                     Text(
-                        _expanded ? RowAffordance.expand.glyph : RowAffordance.collapse.glyph,
+                        _expanded
+                            ? RowAffordance.expand.glyph
+                            : RowAffordance.collapse.glyph,
                         style: TextStyle(
                             color: colors.onSurface.withValues(alpha: .5),
                             fontFamily: AppFonts.family)),
@@ -63,8 +65,7 @@ class _ConfigPickerState extends State<ConfigPicker> {
         value = o['currentValue'];
     final label = Text(name.toUpperCase(),
         style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontFamily: AppFonts.family));
+            color: context.colorScheme.onSurface, fontFamily: AppFonts.family));
     void submit(String v) => widget.onSetOption(
         SetSessionConfigOptionRequest(sessionId: '', configId: id, value: v));
     if (kind == 'boolean') {
@@ -72,7 +73,8 @@ class _ConfigPickerState extends State<ConfigPicker> {
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
           child: Row(children: [
             Expanded(child: label),
-            TerminalCheckbox(value: value == true, onChanged: (v) => submit('$v'))
+            TerminalCheckbox(
+                value: value == true, onChanged: (v) => submit('$v'))
           ]));
     }
     if (kind == 'select') {

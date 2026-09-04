@@ -40,18 +40,24 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
 
   MessageKey? _mapAuthException(AuthException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('Login') => const MessageKey.error('auth.login.failed'),
-      String msg when msg.contains('not authenticated') => const MessageKey.error('auth.not.authenticated'),
-      String msg when msg.contains('token') => const MessageKey.error('auth.token.expired'),
+      String msg when msg.contains('Login') =>
+        const MessageKey.error('auth.login.failed'),
+      String msg when msg.contains('not authenticated') =>
+        const MessageKey.error('auth.not.authenticated'),
+      String msg when msg.contains('token') =>
+        const MessageKey.error('auth.token.expired'),
       _ => const MessageKey.error('auth.error'),
     };
   }
 
   MessageKey? _mapChatException(ChatException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('chat.fetch.failed'),
-      String msg when msg.contains('send') => const MessageKey.error('chat.send.failed'),
-      String msg when msg.contains('not found') => const MessageKey.error('chat.not.found'),
+      String msg when msg.contains('fetch') =>
+        const MessageKey.error('chat.fetch.failed'),
+      String msg when msg.contains('send') =>
+        const MessageKey.error('chat.send.failed'),
+      String msg when msg.contains('not found') =>
+        const MessageKey.error('chat.not.found'),
       _ => const MessageKey.error('chat.error'),
     };
   }
@@ -62,24 +68,30 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
 
   MessageKey? _mapPermissionException(PermissionException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('permission.fetch.failed'),
-      String msg when msg.contains('update') => const MessageKey.error('permission.update.failed'),
+      String msg when msg.contains('fetch') =>
+        const MessageKey.error('permission.fetch.failed'),
+      String msg when msg.contains('update') =>
+        const MessageKey.error('permission.update.failed'),
       _ => const MessageKey.error('permission.error'),
     };
   }
 
   MessageKey? _mapAiException(AiException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('ai.fetch.failed'),
-      String msg when msg.contains('save') => const MessageKey.error('ai.save.failed'),
+      String msg when msg.contains('fetch') =>
+        const MessageKey.error('ai.fetch.failed'),
+      String msg when msg.contains('save') =>
+        const MessageKey.error('ai.save.failed'),
       _ => const MessageKey.error('ai.error'),
     };
   }
 
   MessageKey? _mapToolPermissionsException(ToolPermissionsException exception) {
     return switch (exception.message) {
-      String msg when msg.contains('fetch') => const MessageKey.error('tool.permissions.fetch.failed'),
-      String msg when msg.contains('update') => const MessageKey.error('tool.permissions.update.failed'),
+      String msg when msg.contains('fetch') =>
+        const MessageKey.error('tool.permissions.fetch.failed'),
+      String msg when msg.contains('update') =>
+        const MessageKey.error('tool.permissions.update.failed'),
       _ => const MessageKey.error('tool.permissions.error'),
     };
   }

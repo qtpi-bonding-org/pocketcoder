@@ -11,32 +11,32 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/widgets/mcp_management_view.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
-  theme: AppTheme.lightTheme,
-  localizationsDelegates: const [
-    AppLocalizations.delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ],
-  supportedLocales: const [Locale('en')],
-  home: Scaffold(body: child),
-);
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en')],
+      home: Scaffold(body: child),
+    );
 
 McpManagementView _view(McpServer server) => McpManagementView(
-  servers: [server],
-  oauthProviders: Future.value(const <McpOAuthProvider>[]),
-  hasPendingDelivery: (_) => false,
-  onAuthorize: (_, __) {},
-  onDeny: (_) {},
-  onConnectOAuth: (_) {},
-  onRetryOAuth: (_) {},
-  onCreateServer: ({
-    required String name,
-    String? image,
-    String? oauthProvider,
-    String? oauthTokenEnvVar,
-  }) {},
-);
+      servers: [server],
+      oauthProviders: Future.value(const <McpOAuthProvider>[]),
+      hasPendingDelivery: (_) => false,
+      onAuthorize: (_, __) {},
+      onDeny: (_) {},
+      onConnectOAuth: (_) {},
+      onRetryOAuth: (_) {},
+      onCreateServer: ({
+        required String name,
+        String? image,
+        String? oauthProvider,
+        String? oauthTokenEnvVar,
+      }) {},
+    );
 
 void main() {
   testWidgets('pending DENY is warning-colored, not danger red', (

@@ -16,16 +16,16 @@ import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'scheduler_dialogs.dart';
 
 class SchedulerView extends StatelessWidget {
-  const SchedulerView({
-    super.key,
-    required this.state,
-    required this.onPause,
-    required this.onUnpause,
-    required this.onRunNow,
-    required this.onDelete,
-    required this.onRename,
-    required this.onUpdateCron,
-    required this.onCreate});
+  const SchedulerView(
+      {super.key,
+      required this.state,
+      required this.onPause,
+      required this.onUnpause,
+      required this.onRunNow,
+      required this.onDelete,
+      required this.onRename,
+      required this.onUpdateCron,
+      required this.onCreate});
 
   final SchedulerState state;
   final ValueChanged<String> onPause;
@@ -33,45 +33,41 @@ class SchedulerView extends StatelessWidget {
   final ValueChanged<String> onRunNow;
   final ValueChanged<String> onDelete;
   final Future<void> Function({required String id, required String displayName})
-  onRename;
+      onRename;
   final Future<void> Function({required String id, required String cron})
-  onUpdateCron;
-  final Future<void> Function({
-    required String displayName,
-    required String cron,
-    required String prompt})
-  onCreate;
+      onUpdateCron;
+  final Future<void> Function(
+      {required String displayName,
+      required String cron,
+      required String prompt}) onCreate;
 
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: context.l10n.schedulerTitle,
-      activePillar: NavPillar.configure,
-      showBack: true,
-      body: BiosFrame(
-        title: context.l10n.schedulerRegistryTitle,
-        child: Builder(
-          builder: (context) {
-            if (state.status == UiFlowStatus.loading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (state.status == UiFlowStatus.failure) {
-              return Center(
-                child: TerminalText(
-                  safeErrorMessage(state.error),
-                  role: TextRole.warn));
-            }
-            if (state.status != UiFlowStatus.success) {
-              return const SizedBox.shrink();
-            }
-            final schedules = state.schedules;
-            return ListView(
-              children: [
+        title: context.l10n.schedulerTitle,
+        activePillar: NavPillar.configure,
+        showBack: true,
+        body: BiosFrame(
+            title: context.l10n.schedulerRegistryTitle,
+            child: Builder(builder: (context) {
+              if (state.status == UiFlowStatus.loading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state.status == UiFlowStatus.failure) {
+                return Center(
+                    child: TerminalText(safeErrorMessage(state.error),
+                        role: TextRole.warn));
+              }
+              if (state.status != UiFlowStatus.success) {
+                return const SizedBox.shrink();
+              }
+              final schedules = state.schedules;
+              return ListView(children: [
                 Padding(
-                  padding: EdgeInsets.all(AppSizes.space),
-                  child: TerminalButton(
-                    label: context.l10n.schedulerAddButton,
-                    onTap: () => showAddScheduleDialog(context, onCreate))),
+                    padding: EdgeInsets.all(AppSizes.space),
+                    child: TerminalButton(
+                        label: context.l10n.schedulerAddButton,
+                        onTap: () => showAddScheduleDialog(context, onCreate))),
                 for (final schedule in schedules)
                   _buildScheduleItem(context, schedule),
                 if (schedules.isEmpty)
@@ -85,39 +81,37 @@ class SchedulerView extends StatelessWidget {
                     ),
                   ),
               ]);
-          })));
+            })));
   }
 
   Widget _buildScheduleItem(BuildContext context, ScheduleOwner schedule) {
     final paused = schedule.paused ?? false;
     return BiosCard(
-      header: [
-        BiosRow(
-          label: schedule.displayName,
-          value: schedule.cron ?? '',
-          hasBadge: paused),
-      ],
-      footer: BiosActionStrip(
-        actions: [
+        header: [
+          BiosRow(
+              label: schedule.displayName,
+              value: schedule.cron ?? '',
+              hasBadge: paused),
+        ],
+        footer: BiosActionStrip(actions: [
           BiosActionStripItem(
-            label: paused
-                ? context.l10n.schedulerResumeButton
-                : context.l10n.schedulerPauseButton,
-            onTap: () => paused ? onUnpause(schedule.id) : onPause(schedule.id)),
+              label: paused
+                  ? context.l10n.schedulerResumeButton
+                  : context.l10n.schedulerPauseButton,
+              onTap: () =>
+                  paused ? onUnpause(schedule.id) : onPause(schedule.id)),
           BiosActionStripItem(
-            label: context.l10n.schedulerRunNowButton,
-            onTap: () => onRunNow(schedule.id)),
+              label: context.l10n.schedulerRunNowButton,
+              onTap: () => onRunNow(schedule.id)),
           BiosActionStripItem(
-            label: context.l10n.schedulerEditButton,
-            onTap: () => showEditScheduleDialog(
-              context,
-              schedule,
-              onRename,
-              onUpdateCron)),
+              label: context.l10n.schedulerEditButton,
+              onTap: () => showEditScheduleDialog(
+                  context, schedule, onRename, onUpdateCron)),
           BiosActionStripItem(
-            label: context.l10n.schedulerDeleteButton,
-            // Schedules can be recreated, so deletion is warning-level here.
-            onTap: () => onDelete(schedule.id)),
+              label: context.l10n.schedulerDeleteButton,
+              // Schedules can be recreated, so deletion is warning-level here.
+              color: context.terminalColors.warning,
+              onTap: () => onDelete(schedule.id)),
         ]));
   }
 }

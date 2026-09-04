@@ -6,9 +6,9 @@
 /// stylistic choice.
 enum RowAffordance {
   none(''),
-  navigate('→'),   // arrow -- pushes another screen
-  expand('▾'),     // small triangle down -- reveals in place
-  collapse('▴');   // small triangle up -- hides in place
+  navigate('→'), // arrow -- pushes another screen
+  expand('▾'), // small triangle down -- reveals in place
+  collapse('▴'); // small triangle up -- hides in place
 
   const RowAffordance(this.glyph);
   final String glyph;

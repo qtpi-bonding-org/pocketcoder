@@ -29,8 +29,7 @@ class ChatCubit extends AppCubit<ChatState> {
     this._networkRecoverySignal,
     this._chatListRepository,
     this._seenMessages,
-  )
-      : super(const ChatState());
+  ) : super(const ChatState());
 
   final AgentChatRepository _repository;
   final NetworkRecoverySignal _networkRecoverySignal;
@@ -116,8 +115,7 @@ class ChatCubit extends AppCubit<ChatState> {
           final finished = reducer.current.timeline
               .whereType<TextTimelineItem>()
               .firstWhereOrNull((item) => item.id == event.messageId);
-          if (finished != null &&
-              finished.kind != ChatMessageKind.reasoning) {
+          if (finished != null && finished.kind != ChatMessageKind.reasoning) {
             unawaited(_chatListRepository.recordMessagePreview(
               chatId,
               text: finished.text,

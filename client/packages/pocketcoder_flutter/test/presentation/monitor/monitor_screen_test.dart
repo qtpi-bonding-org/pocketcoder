@@ -16,13 +16,16 @@ Widget _app(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('renders the discovered container registry',
-      (tester) async {
+  testWidgets('renders the discovered container registry', (tester) async {
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
         containers: [
-          ContainerInfo(name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h'),
-          ContainerInfo(name: 'pocketcoder-ollama', state: 'exited', status: 'Exited (0)'),
+          ContainerInfo(
+              name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h'),
+          ContainerInfo(
+              name: 'pocketcoder-ollama',
+              state: 'exited',
+              status: 'Exited (0)'),
         ],
       ),
       onSelectContainer: (_) {},
@@ -40,7 +43,10 @@ void main() {
     String? selected;
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
-        containers: [ContainerInfo(name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h')],
+        containers: [
+          ContainerInfo(
+              name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h')
+        ],
       ),
       onSelectContainer: (c) => selected = c,
     )));
@@ -69,11 +75,15 @@ void main() {
     expect(find.byType(BiosFrame), findsOneWidget);
   });
 
-  testWidgets('leaves container names without the pocketcoder- prefix unchanged',
+  testWidgets(
+      'leaves container names without the pocketcoder- prefix unchanged',
       (tester) async {
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
-        containers: [ContainerInfo(name: 'custom-service', state: 'running', status: 'Up 1h')],
+        containers: [
+          ContainerInfo(
+              name: 'custom-service', state: 'running', status: 'Up 1h')
+        ],
       ),
       onSelectContainer: (_) {},
     )));

@@ -33,8 +33,8 @@ class FakeProviderOptionService implements IProviderOptionService {
 
 void main() {
   setUp(() {
-    GetIt.I
-        .registerFactory<IProviderOptionService>(() => FakeProviderOptionService());
+    GetIt.I.registerFactory<IProviderOptionService>(
+        () => FakeProviderOptionService());
   });
 
   tearDown(() {
@@ -163,7 +163,8 @@ void main() {
     // Unavailable providers should use a de-emphasized role
     // Check that the rendered Text widget has the label role's color
     final unavailableText = tester.widget<Text>(
-      find.descendant(of: find.byWidget(unavailable), matching: find.byType(Text)),
+      find.descendant(
+          of: find.byWidget(unavailable), matching: find.byType(Text)),
     );
     expect(unavailableText.style?.color, TextRole.label.color);
 

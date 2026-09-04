@@ -57,16 +57,14 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
             initialData: localSettings.hapticsEnabledSync,
             stream: localSettings.watchHapticsEnabled(),
             builder: (context, hapticsSnapshot) => SettingsView(
-              hasPendingMcp:
-                  _hasPendingMcp(mcpSnapshot.data ?? mcpCubit.state),
+              hasPendingMcp: _hasPendingMcp(mcpSnapshot.data ?? mcpCubit.state),
               isPro: GetIt.instance<IAppEdition>().isPro,
               hapticsEnabled:
                   hapticsSnapshot.data ?? localSettings.hapticsEnabledSync,
               onNavigate: (routeKey) => _navigateTo(context, routeKey),
               onLogout: () => _confirmLogout(context, authCubit),
               onFactoryReset: () => _confirmFactoryReset(context, authCubit),
-              onDeleteProData: () =>
-                  _confirmDeleteProData(context, authCubit),
+              onDeleteProData: () => _confirmDeleteProData(context, authCubit),
               onReportAiContent: () => launchUrl(_reportAiContentUri),
               onHapticsChanged: localSettings.setHapticsEnabled,
             ),

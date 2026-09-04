@@ -16,10 +16,10 @@ void main() {
     });
 
     test('maps to the specified roles', () {
-      expect(StatusMarker.ok.role,        TextRole.ok);
+      expect(StatusMarker.ok.role, TextRole.ok);
       expect(StatusMarker.attention.role, TextRole.warn);
-      expect(StatusMarker.failed.role,    TextRole.fail);
-      expect(StatusMarker.pending.role,   TextRole.label);
+      expect(StatusMarker.failed.role, TextRole.fail);
+      expect(StatusMarker.pending.role, TextRole.label);
     });
   });
 
@@ -36,7 +36,8 @@ void main() {
 
     test('destructive may not lead a row', () {
       expect(ActionKind.destructive.mayLeadRow, isFalse);
-      for (final k in ActionKind.values.where((k) => k != ActionKind.destructive)) {
+      for (final k
+          in ActionKind.values.where((k) => k != ActionKind.destructive)) {
         expect(k.mayLeadRow, isTrue);
       }
     });
@@ -47,10 +48,9 @@ void main() {
       // An arrow means "go there"; a triangle means "open this". Using one for
       // the other is an error, not a stylistic choice.
       expect(RowAffordance.navigate.glyph, '→');
-      expect(RowAffordance.expand.glyph,   '▾');
+      expect(RowAffordance.expand.glyph, '▾');
       expect(RowAffordance.collapse.glyph, '▴');
-      expect(RowAffordance.navigate.glyph,
-          isNot(RowAffordance.expand.glyph));
+      expect(RowAffordance.navigate.glyph, isNot(RowAffordance.expand.glyph));
     });
 
     test('markers are unwrapped -- the row is the tap target', () {
@@ -63,7 +63,10 @@ void main() {
 
   test('pillars are declared in footer order', () {
     expect(NavPillar.values, [
-      NavPillar.chat, NavPillar.config, NavPillar.status, NavPillar.control,
+      NavPillar.chat,
+      NavPillar.config,
+      NavPillar.status,
+      NavPillar.control,
     ]);
     // `control` is the only conditional one -- the footer must render
     // correctly at three pillars as well as four.

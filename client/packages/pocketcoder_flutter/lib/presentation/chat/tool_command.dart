@@ -33,4 +33,6 @@ String commandFor({
 /// refusal and primary respectively. No harness-supplied kind can ever be
 /// destructive, which requires app-level semantics the harness cannot possess.
 ActionKind actionKindForPermissionOption(String harnessOptionKind) =>
-    harnessOptionKind.startsWith('reject') ? ActionKind.refusal : ActionKind.primary;
+    harnessOptionKind.startsWith('reject')
+        ? ActionKind.refusal
+        : ActionKind.primary;

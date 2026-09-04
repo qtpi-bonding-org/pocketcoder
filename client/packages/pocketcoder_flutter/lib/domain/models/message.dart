@@ -10,17 +10,21 @@ sealed class Message with _$Message {
     required String id,
     required String chat,
     @JsonKey(unknownEnumValue: MessageRole.unknown) required MessageRole role,
-    @JsonKey(unknownEnumValue: MessageEngineMessageStatus.unknown) MessageEngineMessageStatus? engineMessageStatus,
-    @JsonKey(unknownEnumValue: MessageUserMessageStatus.unknown) MessageUserMessageStatus? userMessageStatus,
+    @JsonKey(unknownEnumValue: MessageEngineMessageStatus.unknown)
+    MessageEngineMessageStatus? engineMessageStatus,
+    @JsonKey(unknownEnumValue: MessageUserMessageStatus.unknown)
+    MessageUserMessageStatus? userMessageStatus,
     String? aiEngineMessageId,
     String? parentId,
     dynamic parts,
-    @JsonKey(unknownEnumValue: MessageErrorDomain.unknown) MessageErrorDomain? errorDomain,
+    @JsonKey(unknownEnumValue: MessageErrorDomain.unknown)
+    MessageErrorDomain? errorDomain,
     dynamic errorPayload,
     DateTime? created,
     DateTime? updated,
     dynamic content,
-    @JsonKey(unknownEnumValue: MessageAcpStatus.unknown) MessageAcpStatus? acpStatus,
+    @JsonKey(unknownEnumValue: MessageAcpStatus.unknown)
+    MessageAcpStatus? acpStatus,
     dynamic usage,
     dynamic cost,
   }) = _Message;
