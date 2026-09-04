@@ -78,7 +78,7 @@ void main() {
     final revoke = tester
         .widgetList<BiosActionButton>(find.byType(BiosActionButton))
         .firstWhere((button) => button.action.label == 'REVOKE');
-    expect(revoke.action.color, const Color(0xFFFF3333));
+    expect(revoke.action.color, AppPalette.red);
   });
 
   testWidgets('renders a pending server as a BiosCard with a BiosActionStrip', (
