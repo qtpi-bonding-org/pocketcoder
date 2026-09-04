@@ -25,32 +25,7 @@ class AppSizes {
   /// Measure the advance width of a single character 'M' in the body style.
   /// Noto Sans Mono is the body font; measured directly to avoid circular imports.
   /// Uses a base font size of 1.0 to avoid issues with font loading in tests.
-  static double _measureCh() {
-    const fontFamily = 'Noto Sans Mono';
-    const baseFontSize = 1.0;
-    final painter = TextPainter(
-      text: const TextSpan(
-        text: 'M',
-        style: TextStyle(
-          fontFamily: fontFamily,
-          fontSize: baseFontSize,
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    double charWidth = painter.width;
-
-    // If font isn't loaded, TextPainter returns width equal to font size (1.0).
-    // Use 0.5 as the advance ratio (design requirement: 36 columns at 320pt minimum).
-    if (charWidth >= baseFontSize * 0.8) {
-      charWidth = baseFontSize * 0.5;
-    }
-
-    // Scale to actual font size
-    return charWidth * fontBody;
-  }
+  static double _measureCh() => measureCharacterAdvance(fontBody);
 
   static double get iconTiny => UiScaler.instance.sp(8.0);
   static double get iconSmall => UiScaler.instance.sp(16.0);
@@ -76,4 +51,38 @@ class AppSizes {
 
   static double get borderWidth => UiScaler.instance.px(1.0);
   static double get borderWidthThick => UiScaler.instance.px(2.0);
+}
+
+/// Measure character advance width for a given font size.
+/// Exposed for testing to verify real font measurement after font loading.
+@visibleForTesting
+double measureCharacterAdvance(double fontBodySize) {
+  const fontFamily = 'Noto Sans Mono';
+  const baseFontSize = 1.0;
+  final painter = TextPainter(
+    text: const TextSpan(
+      text: 'M',
+      style: TextStyle(
+        fontFamily: fontFamily,
+        fontSize: baseFontSize,
+        fontWeight: FontWeight.w400,
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+
+  double charWidth = painter.width;
+
+  // If font isn't loaded, TextPainter returns width equal to font size (1.0).
+  // The 0.8 threshold detects this: an unloaded font gives ratio 1.0, so any
+  // measured width >= 0.8 is treated as a fallback case. Real Noto Sans Mono
+  // has advance ratio ~0.5-0.6, well below this threshold. When fallback is
+  // triggered, use the conservative 0.5 ratio (design requirement: 36-column
+  // floor at narrowest device width).
+  if (charWidth >= baseFontSize * 0.8) {
+    charWidth = baseFontSize * 0.5;
+  }
+
+  // Scale to actual font size
+  return charWidth * fontBodySize;
 }

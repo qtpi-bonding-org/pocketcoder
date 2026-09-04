@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/app_fonts.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/app_sizes.dart';
@@ -59,4 +60,27 @@ void main() {
   // passes whether or not the token exists, which is worse than no test.
   // The real guard is the compiler: deleting the getter makes every call
   // site a build error. Task 20's deletion sweep greps for it as well.
+
+  testWidgets('character advance is measured from real font when loaded', (tester) async {
+    // Load Noto Sans Mono using the plain unqualified key (matching TextStyle
+    // fontFamily lookup in _measureCh). The asset path still needs the package prefix.
+    await (FontLoader('Noto Sans Mono')
+          ..addFont(rootBundle.load(
+            'packages/pocketcoder_flutter/assets/Noto_Sans_Mono/static/NotoSansMono-Regular.ttf',
+          )))
+        .load();
+
+    // Measure with the font now available. The fallback would give 0.5;
+    // real Noto Sans Mono should measure ~0.55-0.65 (closer to 0.5 than 1.0).
+    final measured = measureCharacterAdvance(AppSizes.fontBody);
+    final ratio = measured / AppSizes.fontBody;
+
+    // Verify we got real measurement, not fallback:
+    // Real Noto Sans Mono measures ~0.6; fallback would be 0.5.
+    expect(ratio, greaterThan(0.45), reason: 'ratio too small; measurement may be broken');
+    expect(ratio, lessThan(0.75), reason: 'ratio too large; font loading may have failed');
+    // Key assertion: real font measurement (~0.6) differs meaningfully from fallback (0.5)
+    expect(ratio, greaterThan(0.55),
+        reason: 'measured value too close to fallback (0.5); real font may not be loaded');
+  });
 }
