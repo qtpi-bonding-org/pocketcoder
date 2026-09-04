@@ -67,7 +67,7 @@ class _CountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.all(AppSizes.space),
+        padding: EdgeInsets.symmetric(horizontal: AppSizes.space / 2, vertical: AppSizes.space / 4),
         decoration: BoxDecoration(
           border: Border.all(color: context.colorScheme.primary),
         ),

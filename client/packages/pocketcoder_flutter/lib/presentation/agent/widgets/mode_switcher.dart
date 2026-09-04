@@ -35,8 +35,8 @@ class ModeSwitcher extends StatelessWidget {
         Text(context.l10n.agentModeLabel,
             style: TextStyle(
                 color: colors.onSurface.withValues(alpha: .5),
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontTiny,
+                fontFamily: AppFonts.family,
+                fontSize: AppSizes.fontBody,
                 fontWeight: AppFonts.heavy,
                 letterSpacing: 2)),
         HSpace.x1,
@@ -50,8 +50,8 @@ class ModeSwitcher extends StatelessWidget {
                 child: Text(
                   ((m['name'] as String?) ?? m['id'] as String).toUpperCase(),
                   style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
-                      fontSize: AppSizes.fontMini,
+                      fontFamily: AppFonts.family,
+                      fontSize: AppSizes.fontBody,
                       fontWeight: AppFonts.heavy),
                 ),
               ),
@@ -60,13 +60,13 @@ class ModeSwitcher extends StatelessWidget {
             Text(currentName.toUpperCase(),
                 style: TextStyle(
                     color: colors.primary,
-                    fontFamily: AppFonts.bodyFamily,
-                    fontSize: AppSizes.fontMini,
+                    fontFamily: AppFonts.family,
+                    fontSize: AppSizes.fontBody,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 1)),
             HSpace.x1,
             Icon(Icons.arrow_drop_down,
-                color: colors.primary, size: AppSizes.fontStandard),
+                color: colors.primary, size: AppSizes.fontBody),
           ]),
         ),
       ]),

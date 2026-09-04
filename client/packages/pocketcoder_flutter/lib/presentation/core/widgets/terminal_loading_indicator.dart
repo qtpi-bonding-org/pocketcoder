@@ -20,16 +20,16 @@ class TerminalLoadingIndicator extends StatelessWidget {
       children: [
         TerminalStatusGlyph(
           status: status,
-          fontSize: AppSizes.fontLarge,
+          fontSize: AppSizes.fontBody,
         ),
         if (label != null) ...[
           VSpace.x1,
           Text(
             '[ ${label?.toUpperCase() ?? ''} ]',
             style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
+              fontFamily: AppFonts.family,
               color: colors.secondary,
-              fontSize: AppSizes.fontTiny,
+              fontSize: AppSizes.fontBody,
               package: 'pocketcoder_flutter',
             ),
           ),

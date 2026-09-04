@@ -34,7 +34,7 @@ enum TerminalTextWeight {
 /// A standardised text widget that maps semantic size/weight enums
 /// to the design-system tokens in [AppSizes] and [AppFonts].
 ///
-/// Replaces ad-hoc `TextStyle(fontFamily: AppFonts.bodyFamily, …)` patterns.
+/// Replaces ad-hoc `TextStyle(fontFamily: AppFonts.family, …)` patterns.
 class TerminalText extends StatelessWidget {
   final String text;
   final TerminalTextSize size;
@@ -112,11 +112,11 @@ class TerminalText extends StatelessWidget {
 
 
   double _resolveSize() => switch (size) {
-        TerminalTextSize.tiny => AppSizes.fontTiny,
-        TerminalTextSize.mini => AppSizes.fontMini,
-        TerminalTextSize.small => AppSizes.fontSmall,
-        TerminalTextSize.base => AppSizes.fontStandard,
-        TerminalTextSize.large => AppSizes.fontLarge,
+        TerminalTextSize.tiny => AppSizes.fontBody,
+        TerminalTextSize.mini => AppSizes.fontBody,
+        TerminalTextSize.small => AppSizes.fontBody,
+        TerminalTextSize.base => AppSizes.fontBody,
+        TerminalTextSize.large => AppSizes.fontBody,
       };
 
   FontWeight _resolveWeight() => switch (weight) {
@@ -139,7 +139,7 @@ class TerminalText extends StatelessWidget {
       maxLines: maxLines,
       overflow: overflow,
       style: TextStyle(
-        fontFamily: AppFonts.bodyFamily,
+        fontFamily: AppFonts.family,
         fontSize: _resolveSize(),
         fontWeight: _resolveWeight(),
         color: effectiveColor,

@@ -33,9 +33,9 @@ class PocoTerminalResponse extends StatelessWidget {
         prefix: context.l10n.chatPocoPrompt,
         prefixStyle: TextStyle(
           color: context.colorScheme.primary,
-          fontFamily: AppFonts.bodyFamily,
+          fontFamily: AppFonts.family,
           package: 'pocketcoder_flutter',
-          fontSize: AppSizes.fontStandard,
+          fontSize: AppSizes.fontBody,
           fontWeight: AppFonts.medium,
           height: 1.4,
         ),
@@ -45,9 +45,9 @@ class PocoTerminalResponse extends StatelessWidget {
         onComplete: onAnimationComplete,
         style: TextStyle(
           color: context.colorScheme.primary,
-          fontFamily: AppFonts.bodyFamily,
+          fontFamily: AppFonts.family,
           package: 'pocketcoder_flutter',
-          fontSize: AppSizes.fontStandard,
+          fontSize: AppSizes.fontBody,
           fontWeight: AppFonts.medium,
           height: 1.4,
         ),

@@ -20,8 +20,8 @@ class TerminalRoleLabel extends StatelessWidget {
       label,
       style: TextStyle(
         color: color,
-        fontFamily: AppFonts.bodyFamily,
-        fontSize: AppSizes.fontTiny,
+        fontFamily: AppFonts.family,
+        fontSize: AppSizes.fontBody,
         fontWeight: AppFonts.heavy,
         letterSpacing: 2,
       ),
@@ -51,9 +51,9 @@ class TerminalTranscriptLine extends StatelessWidget {
           prefix,
           style: TextStyle(
             color: color,
-            fontFamily: AppFonts.bodyFamily,
+            fontFamily: AppFonts.family,
             package: 'pocketcoder_flutter',
-            fontSize: AppSizes.fontStandard,
+            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.medium,
           ),
         ),
@@ -162,7 +162,7 @@ class TerminalConversationTurn extends StatelessWidget {
           message: message,
           sequence: sequence,
           history: history,
-          pocoSize: AppSizes.fontLarge,
+          pocoSize: AppSizes.fontBody,
           showFace: showPocoFace,
         ),
       );
@@ -174,8 +174,8 @@ class TerminalConversationTurn extends StatelessWidget {
         '\$ $message',
         style: TextStyle(
           color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
-          fontFamily: AppFonts.bodyFamily,
-          fontSize: AppSizes.fontStandard,
+          fontFamily: AppFonts.family,
+          fontSize: AppSizes.fontBody,
         ),
       ),
     );
@@ -228,8 +228,8 @@ class TerminalPromptSuggestion extends StatelessWidget {
           '> ${label.toUpperCase()}',
           style: TextStyle(
             color: textColor,
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontTiny,
+            fontFamily: AppFonts.family,
+            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.heavy,
           ),
         ),

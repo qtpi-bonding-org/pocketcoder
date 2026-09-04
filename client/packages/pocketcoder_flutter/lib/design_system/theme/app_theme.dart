@@ -109,7 +109,7 @@ class AppTheme {
       textTheme: AppFonts.textTheme.apply(
         bodyColor: palette.phosphorGreen,
         displayColor: palette.vividGreen,
-        fontFamily: AppFonts.bodyFamily,
+        fontFamily: AppFonts.family,
         package: 'pocketcoder_flutter',
       ),
       colorScheme: ColorScheme(
@@ -139,8 +139,8 @@ class AppTheme {
             borderRadius: BorderRadius.zero,
           ),
           textStyle: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontStandard,
+            fontFamily: AppFonts.family,
+            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.heavy,
           ),
         ),
@@ -173,8 +173,8 @@ class AppTheme {
         contentPadding: EdgeInsets.all(AppSizes.space * 1.5),
         labelStyle: TextStyle(
           color: palette.vividGreen.withValues(alpha: 0.7),
-          fontFamily: AppFonts.headerFamily,
-          fontSize: AppSizes.fontTiny,
+          fontFamily: AppFonts.family,
+          fontSize: AppSizes.fontBody,
           fontWeight: AppFonts.heavy,
         ),
       ),

@@ -100,9 +100,9 @@ class BiosActionButton extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
+                    fontFamily: AppFonts.family,
                     color: fgColor,
-                    fontSize: AppSizes.fontMini,
+                    fontSize: AppSizes.fontBody,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
                   ),
@@ -113,11 +113,11 @@ class BiosActionButton extends StatelessWidget {
                 Text(
                   '[!]',
                   style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
+                    fontFamily: AppFonts.family,
                     color: emphasis == Emphasis.selected
                         ? Colors.black
                         : terminalColors.warning,
-                    fontSize: AppSizes.fontMini,
+                    fontSize: AppSizes.fontBody,
                     fontWeight: AppFonts.heavy,
                   ),
                 ),

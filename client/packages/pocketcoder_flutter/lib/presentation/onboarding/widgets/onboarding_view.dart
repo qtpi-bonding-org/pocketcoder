@@ -32,7 +32,7 @@ class OnboardingView extends StatelessWidget {
                 children: [
                   AsciiLogo(
                       text: AppAscii.pocketCoderLogo,
-                      fontSize: AppSizes.fontTiny),
+                      fontSize: AppSizes.fontBody),
                   VSpace.x6,
                   TerminalConversationTurn(
                     speaker: TerminalConversationSpeaker.poco,

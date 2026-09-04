@@ -147,7 +147,7 @@ class AsciiFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveColor = color ?? context.colorScheme.onSurface;
-    final effectiveSize = fontSize ?? AppSizes.fontStandard;
+    final effectiveSize = fontSize ?? AppSizes.fontBody;
 
     final fullFaceString = AppAscii.build(expression, armor);
 
@@ -157,7 +157,7 @@ class AsciiFace extends StatelessWidget {
         color: effectiveColor,
         fontSize: effectiveSize,
         height: 1.0,
-        fontFamily: AppFonts.bodyFamily,
+        fontFamily: AppFonts.family,
         package: 'pocketcoder_flutter',
         leadingDistribution: TextLeadingDistribution.even,
         letterSpacing: 0,

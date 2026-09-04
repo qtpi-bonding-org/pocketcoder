@@ -83,8 +83,8 @@ class _TerminalStatusGlyphState extends State<TerminalStatusGlyph> {
       _glyph,
       style: TextStyle(
         color: _color(context),
-        fontFamily: AppFonts.bodyFamily,
-        fontSize: widget.fontSize ?? AppSizes.fontStandard,
+        fontFamily: AppFonts.family,
+        fontSize: widget.fontSize ?? AppSizes.fontBody,
         fontWeight: AppFonts.heavy,
         package: 'pocketcoder_flutter',
       ),

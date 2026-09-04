@@ -97,9 +97,9 @@ class BiosRow extends StatelessWidget {
                     label.toUpperCase(),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
+                      fontFamily: AppFonts.family,
                       color: textColor,
-                      fontSize: labelFontSize ?? AppSizes.fontStandard,
+                      fontSize: labelFontSize ?? AppSizes.fontBody,
                       fontWeight: AppFonts.heavy,
                       package: 'pocketcoder_flutter',
                     ),
@@ -110,10 +110,10 @@ class BiosRow extends StatelessWidget {
                   Text(
                     '[!]',
                     style: TextStyle(
-                      fontFamily: AppFonts.bodyFamily,
+                      fontFamily: AppFonts.family,
                       color:
                           isSelected ? colors.surface : terminalColors.warning,
-                      fontSize: AppSizes.fontStandard,
+                      fontSize: AppSizes.fontBody,
                       fontWeight: AppFonts.heavy,
                     ),
                   ),
@@ -150,9 +150,9 @@ class BiosRow extends StatelessWidget {
           onChanged: onInputChanged,
           textAlign: TextAlign.right,
           style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
+            fontFamily: AppFonts.family,
             color: textColor,
-            fontSize: AppSizes.fontStandard,
+            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.heavy,
           ),
           decoration: InputDecoration(
@@ -172,9 +172,9 @@ class BiosRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                    fontFamily: AppFonts.bodyFamily,
+                    fontFamily: AppFonts.family,
                     color: textColor,
-                    fontSize: labelFontSize ?? AppSizes.fontStandard,
+                    fontSize: labelFontSize ?? AppSizes.fontBody,
                     fontWeight: AppFonts.heavy,
                     package: 'pocketcoder_flutter',
                   ),
@@ -196,9 +196,9 @@ class BiosRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.right,
             style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
+              fontFamily: AppFonts.family,
               color: textColor,
-              fontSize: AppSizes.fontStandard,
+              fontSize: AppSizes.fontBody,
               fontWeight: AppFonts.heavy,
               package: 'pocketcoder_flutter',
             ),

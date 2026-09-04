@@ -7,13 +7,9 @@ class AppSizes {
 
   static double get space => UiScaler.instance.px(8.0);
 
-  static double get fontTiny => UiScaler.instance.sp(10.0);
-  static double get fontMini => UiScaler.instance.sp(12.0);
-  static double get fontSmall => UiScaler.instance.sp(14.0);
-  static double get fontStandard => UiScaler.instance.sp(16.0);
-  static double get fontBig => UiScaler.instance.sp(18.0);
-  static double get fontLarge => UiScaler.instance.sp(24.0);
-  static double get fontMassive => UiScaler.instance.sp(36.0);
+  static double get fontBody => UiScaler.instance.sp(16.0);
+
+  static List<double> get textSizes => [fontBody];
 
   static double get letterSpacingWide => 2.0;
 

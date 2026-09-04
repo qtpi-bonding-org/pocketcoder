@@ -37,9 +37,9 @@ class TerminalMetricBox extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
+                fontFamily: AppFonts.family,
                 color: accent,
-                fontSize: AppSizes.fontMini,
+                fontSize: AppSizes.fontBody,
                 fontWeight: AppFonts.heavy,
                 letterSpacing: 1,
               ),
@@ -48,9 +48,9 @@ class TerminalMetricBox extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                fontFamily: AppFonts.bodyFamily,
+                fontFamily: AppFonts.family,
                 color: colors.onSurface,
-                fontSize: AppSizes.fontBig,
+                fontSize: AppSizes.fontBody,
                 fontWeight: AppFonts.heavy,
               ),
             ),

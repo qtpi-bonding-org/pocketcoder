@@ -40,7 +40,7 @@ class _ErrorTileState extends State<ErrorTile> {
               '${context.l10n.errorsOccurred(entry.occurrenceCount)}',
           variant: BiosRowVariant.expand,
           isExpanded: _isExpanded,
-          labelFontSize: AppSizes.fontSmall,
+          labelFontSize: AppSizes.fontBody,
           onTap: () => setState(() => _isExpanded = !_isExpanded),
         ),
       ],

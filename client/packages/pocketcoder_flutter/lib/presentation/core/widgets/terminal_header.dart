@@ -18,9 +18,9 @@ class TerminalHeader extends StatelessWidget {
         Text(
           title.toUpperCase(),
           style: TextStyle(
-            fontFamily: AppFonts.headerFamily,
+            fontFamily: AppFonts.family,
             color: colors.onSurface,
-            fontSize: AppSizes.fontBig,
+            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.heavy,
             letterSpacing: 2,
             package: 'pocketcoder_flutter',

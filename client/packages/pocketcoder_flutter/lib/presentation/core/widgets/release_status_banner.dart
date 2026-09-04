@@ -62,8 +62,8 @@ class ReleaseStatusBanner extends StatelessWidget {
               snapshot.summary == null ? label : '$label — ${snapshot.summary}',
               style: TextStyle(
                 color: color,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontMini,
+                fontFamily: AppFonts.family,
+                fontSize: AppSizes.fontBody,
                 fontWeight: AppFonts.heavy,
               ),
             ),

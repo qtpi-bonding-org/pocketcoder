@@ -62,8 +62,8 @@ class PermissionCard extends StatelessWidget {
                       toolTitle,
                       style: TextStyle(
                         color: terminalColors.warning,
-                        fontFamily: AppFonts.bodyFamily,
-                        fontSize: AppSizes.fontStandard,
+                        fontFamily: AppFonts.family,
+                        fontSize: AppSizes.fontBody,
                         fontWeight: AppFonts.heavy,
                       ),
                     ),
@@ -78,7 +78,7 @@ class PermissionCard extends StatelessWidget {
               '[$requestId]',
               style: TextStyle(
                 color: terminalColors.warning.withValues(alpha: 0.5),
-                fontSize: AppSizes.fontMini,
+                fontSize: AppSizes.fontBody,
               ),
             ),
           ],

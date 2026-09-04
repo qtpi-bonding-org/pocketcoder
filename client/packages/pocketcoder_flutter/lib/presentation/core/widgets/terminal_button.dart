@@ -63,9 +63,9 @@ class TerminalButton extends StatelessWidget {
                 textAlign: TextAlign.center,
                 softWrap: true,
                 style: TextStyle(
-                  fontFamily: AppFonts.bodyFamily,
+                  fontFamily: AppFonts.family,
                   color: textColor,
-                  fontSize: AppSizes.fontTiny,
+                  fontSize: AppSizes.fontBody,
                   fontWeight: AppFonts.heavy,
                   package: 'pocketcoder_flutter',
                 ),

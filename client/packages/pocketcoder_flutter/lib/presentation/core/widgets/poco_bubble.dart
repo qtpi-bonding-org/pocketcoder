@@ -41,12 +41,12 @@ class PocoBubble extends StatelessWidget {
                 children: [
                   if (showFace) ...[
                     SizedBox(
-                      height: (pocoSize ?? AppSizes.fontLarge) * 3,
+                      height: (pocoSize ?? AppSizes.fontBody) * 3,
                       child: Align(
                         alignment: Alignment.center,
                         child: PocoFace(
                           key: ValueKey(sequence),
-                          fontSize: pocoSize ?? AppSizes.fontLarge,
+                          fontSize: pocoSize ?? AppSizes.fontBody,
                           sequence: sequence,
                         ),
                       ),
@@ -72,11 +72,11 @@ class PocoBubble extends StatelessWidget {
                                 child: Text(
                                   msg,
                                   style: TextStyle(
-                                    fontFamily: AppFonts.bodyFamily,
+                                    fontFamily: AppFonts.family,
                                     package: 'pocketcoder_flutter',
                                     color:
                                         colors.onSurface.withValues(alpha: 0.5),
-                                    fontSize: AppSizes.fontStandard,
+                                    fontSize: AppSizes.fontBody,
                                   ),
                                   textAlign: textAlign,
                                 ),
@@ -85,10 +85,10 @@ class PocoBubble extends StatelessWidget {
                             key: ValueKey(message),
                             text: message,
                             style: TextStyle(
-                              fontFamily: AppFonts.bodyFamily,
+                              fontFamily: AppFonts.family,
                               package: 'pocketcoder_flutter',
                               color: colors.onSurface,
-                              fontSize: AppSizes.fontStandard,
+                              fontSize: AppSizes.fontBody,
                             ),
                             speed: const Duration(milliseconds: 10),
                           ),

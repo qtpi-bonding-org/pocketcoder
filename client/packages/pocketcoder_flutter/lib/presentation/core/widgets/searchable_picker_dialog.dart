@@ -165,12 +165,12 @@ class _SearchablePickerDialogState<T>
                                     child: Text(
                                       row.header!.toUpperCase(),
                                       style: TextStyle(
-                                        fontFamily: AppFonts.bodyFamily,
+                                        fontFamily: AppFonts.family,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .primary,
                                         fontWeight: AppFonts.heavy,
-                                        fontSize: AppSizes.fontTiny,
+                                        fontSize: AppSizes.fontBody,
                                         letterSpacing: 1.2,
                                         package: 'pocketcoder_flutter',
                                       ),

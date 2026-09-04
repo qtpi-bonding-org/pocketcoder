@@ -61,7 +61,7 @@ class ChooseProviderView extends StatelessWidget {
                 children: [
                   PocoBubble(
                     message: context.l10n.onboardingProviderPoco,
-                    pocoSize: AppSizes.fontLarge,
+                    pocoSize: AppSizes.fontBody,
                   ),
                   VSpace.x3,
                   TerminalText.label(context.l10n.onboardingProviderTitle),

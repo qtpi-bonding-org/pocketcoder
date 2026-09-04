@@ -94,8 +94,8 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                   '\$ ${widget.command}',
                   style: TextStyle(
                     color: colors.secondary,
-                    fontFamily: AppFonts.bodyFamily,
-                    fontSize: AppSizes.fontSmall,
+                    fontFamily: AppFonts.family,
+                    fontSize: AppSizes.fontBody,
                     fontWeight: AppFonts.heavy,
                     height: 1.4,
                     package: 'pocketcoder_flutter',
@@ -117,8 +117,8 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                       _outputExpanded ? '▾' : '▸',
                       style: TextStyle(
                         color: colors.secondary,
-                        fontFamily: AppFonts.bodyFamily,
-                        fontSize: AppSizes.fontSmall,
+                        fontFamily: AppFonts.family,
+                        fontSize: AppSizes.fontBody,
                         fontWeight: AppFonts.heavy,
                       ),
                     ),
@@ -127,8 +127,8 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                       widget.outputLabel,
                       style: TextStyle(
                         color: colors.onSurface.withValues(alpha: 0.7),
-                        fontFamily: AppFonts.bodyFamily,
-                        fontSize: AppSizes.fontTiny,
+                        fontFamily: AppFonts.family,
+                        fontSize: AppSizes.fontBody,
                         fontWeight: AppFonts.heavy,
                         letterSpacing: 1,
                       ),
@@ -144,8 +144,8 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
               combinedOutput,
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.75),
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontMini,
+                fontFamily: AppFonts.family,
+                fontSize: AppSizes.fontBody,
                 height: 1.4,
               ),
             ),

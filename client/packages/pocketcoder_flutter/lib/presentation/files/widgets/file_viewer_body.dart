@@ -47,8 +47,8 @@ class FileViewerBody extends StatelessWidget {
         child: SelectableText(
           utf8.decode(value),
           style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
-              fontSize: AppSizes.fontMini,
+              fontFamily: AppFonts.family,
+              fontSize: AppSizes.fontBody,
               package: 'pocketcoder_flutter'),
         ),
       );

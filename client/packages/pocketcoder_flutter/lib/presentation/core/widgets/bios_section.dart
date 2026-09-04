@@ -19,10 +19,10 @@ class BiosSection extends StatelessWidget {
     final titleText = Text(
       title.toUpperCase(),
       style: TextStyle(
-        fontFamily: AppFonts.bodyFamily,
+        fontFamily: AppFonts.family,
         color: colors.primary,
         fontWeight: AppFonts.heavy,
-        fontSize: AppSizes.fontTiny,
+        fontSize: AppSizes.fontBody,
         letterSpacing: 1.2,
         package: 'pocketcoder_flutter',
       ),

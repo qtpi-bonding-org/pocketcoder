@@ -117,7 +117,7 @@ class MonitorContainerTile extends StatelessWidget {
       label: displayName(container.name),
       value: container.state.toUpperCase(),
       isSelected: isSelected,
-      labelFontSize: AppSizes.fontSmall,
+      labelFontSize: AppSizes.fontBody,
       onTap: () => onSelectContainer(isSelected ? null : container.name),
     );
   }

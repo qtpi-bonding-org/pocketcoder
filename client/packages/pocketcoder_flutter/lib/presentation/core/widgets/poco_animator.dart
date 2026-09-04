@@ -70,7 +70,7 @@ class _PocoAnimatorState extends State<PocoAnimator> {
   Widget build(BuildContext context) {
     return AsciiFace(
       expression: _currentFace,
-      fontSize: widget.fontSize ?? AppSizes.fontStandard,
+      fontSize: widget.fontSize ?? AppSizes.fontBody,
       color: widget.color ?? context.colorScheme.onSurface,
     );
   }
