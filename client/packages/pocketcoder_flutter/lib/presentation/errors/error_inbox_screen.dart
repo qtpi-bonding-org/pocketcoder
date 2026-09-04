@@ -39,7 +39,9 @@ class ErrorInboxScreen extends StatelessWidget {
               return Padding(
                 padding: EdgeInsets.all(AppSizes.space * 2),
                 child: TerminalText(
-                  context.l10n.errorsEmpty));
+                  context.l10n.errorsEmpty,
+                  role: TextRole.body,
+                ));
             }
             return Column(
               children: [

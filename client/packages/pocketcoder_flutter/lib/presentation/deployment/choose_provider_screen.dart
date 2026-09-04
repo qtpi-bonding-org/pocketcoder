@@ -93,6 +93,8 @@ class _UnavailableProvider extends StatelessWidget {
           border: Border.all(
             color: colors.onSurface.withValues(alpha: 0.2))),
         child: TerminalText(
-          '> ${option.name.toUpperCase()} · ${context.l10n.chooseProviderComingSoon}')));
+          '> ${option.name.toUpperCase()} · ${context.l10n.chooseProviderComingSoon}',
+          role: TextRole.label,
+        )));
   }
 }

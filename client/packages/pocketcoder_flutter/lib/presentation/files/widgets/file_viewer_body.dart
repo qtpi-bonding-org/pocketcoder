@@ -29,7 +29,7 @@ class FileViewerBody extends StatelessWidget {
     if (loading) return const Center(child: TerminalLoadingIndicator());
     if (error != null) {
       return Center(
-          child: TerminalText(safeErrorMessage(error)), role: TextRole.body)
+          child: TerminalText(safeErrorMessage(error), role: TextRole.body));
     }
     final value = bytes;
     if (value == null) return const SizedBox.shrink();
@@ -38,7 +38,7 @@ class FileViewerBody extends StatelessWidget {
     }
     if (value.length > _maxPreviewBytes) {
       return Center(
-          child: TerminalText(context.l10n.filesTooLargeToPreview), role: TextRole.body)
+          child: TerminalText(context.l10n.filesTooLargeToPreview, role: TextRole.label));
     }
     try {
       return SingleChildScrollView(
@@ -50,7 +50,7 @@ class FileViewerBody extends StatelessWidget {
               package: 'pocketcoder_flutter')));
     } on FormatException {
       return Center(
-          child: TerminalText(context.l10n.filesCantPreviewType), role: TextRole.body)
+          child: TerminalText(context.l10n.filesCantPreviewType, role: TextRole.label));
     }
   }
 }

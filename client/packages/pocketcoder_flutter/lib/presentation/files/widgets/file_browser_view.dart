@@ -32,13 +32,16 @@ class FileBrowserView extends StatelessWidget {
             return Center(
               child: Padding(
                 padding: EdgeInsets.all(AppSizes.space * 4),
-                child: TerminalText(context.l10n.filesEmpty)), role: TextRole.body)
+                child: TerminalText(context.l10n.filesEmpty, role: TextRole.label),
+              ),
+            )
           }
           return ListView(
             children: [
               Padding(
                 padding: EdgeInsets.all(AppSizes.space),
-                child: TerminalText('/${state.path}'), role: TextRole.body)
+                child: TerminalText('/${state.path}', role: TextRole.label),
+              ),
               ...state.entries.map((entry) => _entryRow(context, state, entry)),
             ]);
         }));
@@ -46,8 +49,8 @@ class FileBrowserView extends StatelessWidget {
 
   Widget _entryRow(BuildContext context, FileBrowserState state, FileEntry entry) {
     return ListTile(
-      leading: TerminalText(entry.isDir ? '[DIR]' : '[FILE]', role: TextRole.body)
-      title: TerminalText(entry.name, role: TextRole.body)
+      leading: TerminalText(entry.isDir ? '[DIR]' : '[FILE]', role: TextRole.label),
+      title: TerminalText(entry.name, role: TextRole.label),
       onTap: () {
         if (entry.isDir) {
           onNavigateInto(entry.name);

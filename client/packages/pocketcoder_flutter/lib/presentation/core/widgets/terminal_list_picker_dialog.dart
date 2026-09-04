@@ -23,7 +23,7 @@ Future<T?> showTerminalListPicker<T>({
         width: double.maxFinite,
         height: height ?? AppSizes.pickerHeight,
         child: items.isEmpty
-            ? Center(child: TerminalText(emptyLabel ?? ''), role: TextRole.body)
+            ? Center(child: TerminalText(emptyLabel ?? '', role: TextRole.label))
             : ListView(
                 children: [
                   for (final item in items)
