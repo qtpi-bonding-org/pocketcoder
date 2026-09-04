@@ -116,7 +116,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // DetailRow renders labels in sentence case, not uppercased.
-    expect(find.text('ChatCubit'), findsOneWidget);
+    expect(find.text('chatcubit'), findsOneWidget);
     expect(find.textContaining('CHAT_001'), findsOneWidget);
     expect(find.byType(DetailRow), findsWidgets);
     expect(find.text('#0 fake stack'), findsNothing);
@@ -161,7 +161,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('<DELETE>'));
+    await tester.tap(find.text('<delete>'));
     await tester.pumpAndSettle();
 
     verify(() => storage.deleteError('e1')).called(1);
@@ -198,7 +198,7 @@ void main() {
 
     await tester.tap(find.byType(DetailRow).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('<REPORT ON GITHUB>'));
+    await tester.tap(find.text('<report on github>'));
     await tester.pumpAndSettle();
 
     expect(clipboardText, contains('App version: 1.2.3+45'));

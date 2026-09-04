@@ -123,7 +123,7 @@ void main() {
     expect(find.text('self-host setup'), findsOneWidget);
     expect(find.text('A LINUX SERVER OR VPS YOU CONTROL'), findsOneWidget);
     expect(find.text('DOCKER COMPOSE V2'), findsOneWidget);
-    expect(find.text('<GUIDE>'), findsOneWidget);
+    expect(find.text('<guide>'), findsOneWidget);
     expect(find.text('<next>'), findsOneWidget);
   });
 

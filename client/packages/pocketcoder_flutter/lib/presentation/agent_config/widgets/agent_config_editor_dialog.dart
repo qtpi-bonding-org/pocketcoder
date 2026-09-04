@@ -75,7 +75,7 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
       title: existing == null
           ? context.l10n.agentConfigTitle.toLowerCase()
           : context.l10n
-              .agentConfigDialogTitle(existing.name.toUpperCase())
+              .agentConfigDialogTitle(existing.name)
               .toLowerCase(),
       content: ConstrainedBox(
         constraints: BoxConstraints(

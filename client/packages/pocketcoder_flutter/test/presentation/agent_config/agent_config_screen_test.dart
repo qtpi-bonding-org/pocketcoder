@@ -48,12 +48,12 @@ void main() {
 
   testWidgets('lists existing configs from plain state', (tester) async {
     await pumpView(tester, state: AgentConfigState(configs: [config]));
-    expect(find.text('TEST CONFIG'), findsOneWidget);
+    expect(find.text('test config'), findsOneWidget);
   });
 
   testWidgets('ADD NEW opens the editor dialog', (tester) async {
     await pumpView(tester);
-    await tester.tap(find.text('<ADD NEW>'));
+    await tester.tap(find.text('<add new>'));
     await tester.pumpAndSettle();
     expect(find.text('agent configuration'), findsWidgets);
     expect(find.byType(TextField), findsOneWidget);
@@ -62,7 +62,7 @@ void main() {
 
   testWidgets('existing config prefills the editor', (tester) async {
     await pumpView(tester, state: AgentConfigState(configs: [config]));
-    await tester.tap(find.text('TEST CONFIG'));
+    await tester.tap(find.text('test config'));
     await tester.pumpAndSettle();
     expect(tester.widget<TextField>(find.byType(TextField)).controller!.text,
         'Test Config');
@@ -71,10 +71,10 @@ void main() {
   testWidgets('saving calls the supplied callback', (tester) async {
     PocoConfig? saved;
     await pumpView(tester, onSave: (value) async => saved = value);
-    await tester.tap(find.text('<ADD NEW>'));
+    await tester.tap(find.text('<add new>'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'My New Agent');
-    await tester.tap(find.text('<SAVE>').last);
+    await tester.tap(find.text('<save>').last);
     await tester.pumpAndSettle();
     expect(saved?.name, 'My New Agent');
     expect(saved?.id, '');
@@ -86,12 +86,12 @@ void main() {
           prompt,
           Prompt(id: 'prompt-2', name: 'Second Prompt', body: 'b')
         ]));
-    await tester.tap(find.text('<ADD NEW>'));
+    await tester.tap(find.text('<add new>'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('SYSTEM PROMPT'));
+    await tester.tap(find.text('system prompt'));
     await tester.pumpAndSettle();
     expect(find.text('SELECT PROMPT'), findsOneWidget);
-    expect(find.text('Second Prompt'), findsOneWidget);
+    expect(find.text('second prompt'), findsOneWidget);
   });
 
   testWidgets('mode picker lists live permission modes and selects one',
@@ -107,18 +107,18 @@ void main() {
         ),
       ]),
     );
-    await tester.tap(find.text('<ADD NEW>'));
+    await tester.tap(find.text('<add new>'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('MODE'));
+    await tester.tap(find.text('mode'));
     await tester.pumpAndSettle();
     expect(find.text('SELECT MODE'), findsOneWidget);
-    expect(find.text('Balanced'), findsOneWidget);
-    expect(find.text('Autonomous'), findsOneWidget);
+    expect(find.text('balanced'), findsOneWidget);
+    expect(find.text('autonomous'), findsOneWidget);
   });
 
   testWidgets('is_default toggle works', (tester) async {
     await pumpView(tester);
-    await tester.tap(find.text('<ADD NEW>'));
+    await tester.tap(find.text('<add new>'));
     await tester.pumpAndSettle();
     final toggle = find.byType(TerminalCheckbox);
     await tester.ensureVisible(toggle);
@@ -134,14 +134,14 @@ void main() {
     await pumpView(tester,
         state: AgentConfigState(configs: [config]),
         onDelete: (id) async => deleted = id);
-    await tester.tap(find.text('TEST CONFIG'));
+    await tester.tap(find.text('test config'));
     await tester.pumpAndSettle();
-    final deleteButton = find.text('<DELETE>').last;
+    final deleteButton = find.text('<delete>').last;
     await tester.ensureVisible(deleteButton);
     await tester.pumpAndSettle();
     await tester.tap(deleteButton);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('<DELETE>').last);
+    await tester.tap(find.text('<delete>').last);
     await tester.pumpAndSettle();
     expect(deleted, 'config-1');
   });

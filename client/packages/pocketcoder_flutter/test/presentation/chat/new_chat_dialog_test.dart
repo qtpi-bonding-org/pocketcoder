@@ -59,7 +59,7 @@ void main() {
 
   testWidgets('cancel returns null and creates nothing', (tester) async {
     await pumpAndOpen(tester);
-    await tester.tap(find.text('<CANCEL>'));
+    await tester.tap(find.text('<cancel>'));
     await tester.pumpAndSettle();
     expect(find.byType(NewChatDialog), findsNothing);
   });
@@ -110,7 +110,7 @@ void main() {
     await tester.tap(find.text('Claude'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('<CREATE>'));
+    await tester.tap(find.text('<create>'));
     await tester.pumpAndSettle();
 
     final result = await resultFuture;
@@ -147,7 +147,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('qwen2.5:0.5b (LOCAL)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('<CREATE>'));
+    await tester.tap(find.text('<create>'));
     await tester.pumpAndSettle();
 
     final result = await resultFuture;

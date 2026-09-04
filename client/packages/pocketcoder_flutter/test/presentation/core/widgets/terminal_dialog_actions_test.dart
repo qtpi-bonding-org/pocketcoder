@@ -15,7 +15,6 @@ void main() {
     ));
     expect(find.text('<restart>'), findsOneWidget);
     expect(find.text('<cancel>'), findsOneWidget);
-    expect(find.text('<RESTART>'), findsNothing);
   });
 
   testWidgets('a refusal is amber, never red', (tester) async {

@@ -117,7 +117,7 @@ class MonitorContainerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return DetailRow(
       label: displayName(container.name),
-      value: container.state.toUpperCase(),
+      value: container.state,
       trailingDetail: isSelected ? '✓' : null,
       onTap: () => onSelectContainer(isSelected ? null : container.name),
     );

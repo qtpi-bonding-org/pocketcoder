@@ -17,9 +17,8 @@ void main() {
       value: longValue,
     )));
 
-    final labelFinder = find.text('SERVER PROVIDER');
-    final valueFinder = find.text('A VERY LONG VALUE THAT WOULD OTHERWISE BE '
-        'TRUNCATED');
+    final labelFinder = find.text('server provider');
+    final valueFinder = find.text(longValue);
     expect(labelFinder, findsOneWidget);
     expect(valueFinder, findsOneWidget);
     expect(tester.getTopLeft(valueFinder).dy,

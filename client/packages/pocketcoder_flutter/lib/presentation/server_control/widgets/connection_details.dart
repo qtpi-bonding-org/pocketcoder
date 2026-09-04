@@ -37,7 +37,7 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
   Widget build(BuildContext context) {
     final details = widget.details;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      TerminalText(context.l10n.serverControlConnectionDetails,
+      TerminalText(context.l10n.serverControlConnectionDetails.toLowerCase(),
           role: TextRole.body),
       VSpace.x1,
       if (details.ipAddress case final value?)

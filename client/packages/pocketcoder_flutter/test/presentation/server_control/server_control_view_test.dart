@@ -184,13 +184,13 @@ void main() {
     expect(find.text(l10n.serverControlGroupPocketCoder), findsOneWidget);
     expect(find.text(l10n.serverControlGroupNixOs), findsOneWidget);
     expect(find.text(l10n.serverControlGroupData), findsOneWidget);
-    expect(find.text('<${l10n.serverControlActionRestart}>'), findsNWidgets(2));
-    expect(find.text('<${l10n.serverControlActionUpdate}>'), findsNWidgets(2));
-    expect(find.text('<${l10n.serverControlActionSave}>'), findsOneWidget);
-    expect(find.text('<${l10n.serverControlActionRestore}>'), findsOneWidget);
+    expect(find.text('<${l10n.serverControlActionRestart.toLowerCase()}>'), findsNWidgets(2));
+    expect(find.text('<${l10n.serverControlActionUpdate.toLowerCase()}>'), findsNWidgets(2));
+    expect(find.text('<${l10n.serverControlActionSave.toLowerCase()}>'), findsOneWidget);
+    expect(find.text('<${l10n.serverControlActionRestore.toLowerCase()}>'), findsOneWidget);
     await cubit.inspectRelease();
     await tester.pump();
-    expect(find.textContaining('RELEASE STATUS: CURRENT'), findsOneWidget);
+    expect(find.textContaining('RELEASE STATUS: current'), findsOneWidget);
     expect(find.textContaining('CURRENT: 2.0.0'), findsOneWidget);
     await cubit.close();
   });
@@ -294,7 +294,7 @@ void main() {
     service.pending[ServerControlOperation.saveBackup] = future;
     await tester.pumpWidget(_app(cubit));
 
-    await tester.tap(find.text('<SAVE>'));
+    await tester.tap(find.text('<save>'));
     await tester.pumpAndSettle();
     expect(find.text('confirm server control'), findsOneWidget);
     expect(service.calls, isEmpty);
@@ -302,7 +302,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(service.calls, isEmpty);
 
-    await tester.tap(find.text('<SAVE>'));
+    await tester.tap(find.text('<save>'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('CONFIRM'));
     await tester.pump();
@@ -330,7 +330,7 @@ void main() {
     // The control-group IgnorePointers are what busy state disables --
     // unrelated shell chrome (nav, etc.) also uses IgnorePointer for other
     // reasons, so scope this to the actual operation buttons, not the tree.
-    for (final label in ['<RESTART>', '<UPDATE>', '<SAVE>', '<RESTORE>']) {
+    for (final label in ['<restart>', '<update>', '<save>', '<restore>']) {
       for (final finder in find.text(label).evaluate()) {
         final ignorePointer = tester.widget<IgnorePointer>(find
             .ancestor(
@@ -400,16 +400,16 @@ void main() {
     await tester.pumpWidget(_app(cubit));
 
     expect(find.textContaining('•' * 'secret-pw'.length), findsOneWidget);
-    await tester.tap(find.text('<SHOW>'));
+    await tester.tap(find.text('<show>'));
     await tester.pumpAndSettle();
     expect(find.textContaining('secret-pw'), findsNothing);
 
     gate.approve = true;
-    await tester.tap(find.text('<SHOW>'));
+    await tester.tap(find.text('<show>'));
     await tester.pumpAndSettle();
     expect(find.textContaining('secret-pw'), findsOneWidget);
 
-    await tester.tap(find.text('<HIDE>'));
+    await tester.tap(find.text('<hide>'));
     await tester.pumpAndSettle();
     expect(find.textContaining('secret-pw'), findsNothing);
     await cubit.close();
@@ -425,12 +425,12 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('PRIVATE-KEY-PEM'), findsNothing);
-    await tester.tap(find.text('<SHOW>').last);
+    await tester.tap(find.text('<show>').last);
     await tester.pumpAndSettle();
     expect(find.textContaining('PRIVATE-KEY-PEM'), findsNothing);
 
     gate.approve = true;
-    await tester.tap(find.text('<SHOW>').last);
+    await tester.tap(find.text('<show>').last);
     await tester.pumpAndSettle();
     expect(find.textContaining('PRIVATE-KEY-PEM'), findsOneWidget);
     await cubit.close();
@@ -443,7 +443,7 @@ void main() {
       final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
       await tester.pumpWidget(_app(cubit));
 
-      expect(find.text('<PROVIDER WEB PORTAL>'), findsNothing);
+      expect(find.text('<provider web portal>'), findsNothing);
       await cubit.close();
     });
 
@@ -460,8 +460,8 @@ void main() {
         inAppBrowserLauncher: launcher,
       ));
 
-      expect(find.text('<PROVIDER WEB PORTAL>'), findsOneWidget);
-      await tester.tap(find.text('<PROVIDER WEB PORTAL>'));
+      expect(find.text('<provider web portal>'), findsOneWidget);
+      await tester.tap(find.text('<provider web portal>'));
       await tester.pumpAndSettle();
 
       expect(launcher.opened, Uri.parse('https://cloud.linode.com/linodes/42'));
@@ -480,7 +480,7 @@ void main() {
         inAppBrowserLauncher: launcher,
       ));
 
-      await tester.tap(find.text('<PROVIDER WEB PORTAL>'));
+      await tester.tap(find.text('<provider web portal>'));
       await tester.pumpAndSettle();
 
       expect(launcher.opened, isNull);

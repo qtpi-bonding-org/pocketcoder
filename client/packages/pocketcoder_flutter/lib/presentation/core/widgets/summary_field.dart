@@ -12,10 +12,10 @@ class SummaryField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      TerminalText(label.toUpperCase(), role: TextRole.label),
+      TerminalText(label, role: TextRole.label),
       VSpace.x0_5,
       TerminalText(
-        value.toUpperCase(),
+        value,
         role: TextRole.value,
       ),
     ]);

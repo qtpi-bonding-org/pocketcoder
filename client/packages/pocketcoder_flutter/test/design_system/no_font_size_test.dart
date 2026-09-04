@@ -11,13 +11,11 @@ const _artExemptions = {
   'lib/presentation/core/widgets/poco_animator.dart', // Poco animated face sizing
 };
 
-/// These files are owned by later tasks and will be fixed there, not here.
-const _deferredExemptions = {
-  'lib/presentation/core/widgets/bios_row.dart', // Task 9: DetailRow replaces BiosRow
-  'lib/presentation/core/widgets/bios_action_strip.dart', // Task 14: Dialog actions and action strips to angle brackets
-  'lib/presentation/core/widgets/terminal_status_glyph.dart', // Task 10: Markers and loader split
-  'lib/presentation/core/widgets/terminal_loading_indicator.dart', // Task 10: Markers and loader split
-};
+/// These files were owned by earlier tasks; all have landed clean, so this
+/// set is empty. Kept as a named hook rather than removed entirely -- add a
+/// file here (with a task reference) only for a genuinely temporary,
+/// in-progress migration, and remove it the moment that migration lands.
+const _deferredExemptions = <String>{};
 
 void main() {
   test('no fontSize outside the design system', () {

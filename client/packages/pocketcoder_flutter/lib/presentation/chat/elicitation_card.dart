@@ -195,7 +195,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             HSpace.x1,
             Expanded(
               child: Text(
-                title.toUpperCase(),
+                title,
                 style: TextStyle(
                   color: colors.onSurface,
                   fontFamily: AppFonts.family,
@@ -217,7 +217,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             signed: true,
           ),
           decoration: InputDecoration(
-            labelText: title.toUpperCase(),
+            labelText: title,
             isDense: true,
             border: const OutlineInputBorder(),
           ),
@@ -235,7 +235,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
         return TextField(
           controller: controller,
           decoration: InputDecoration(
-            labelText: title.toUpperCase(),
+            labelText: title,
             isDense: true,
             border: const OutlineInputBorder(),
           ),

@@ -29,7 +29,7 @@ class _MemoryDashboardScreenState extends State<MemoryDashboardScreen> {
   @override
   Widget build(BuildContext context) => BlocBuilder<MemoryCubit, MemoryState>(
       builder: (context, state) => PocketCoderShell(
-          footer: buildPillarFooter(context, NavPillar.config),
+          footer: buildPillarFooter(context, NavPillar.status),
           showBack: true,
           body: switch (state.status) {
             UiFlowStatus.loading ||

@@ -47,7 +47,7 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
     return TerminalDialog(
       title: editing
           ? context.l10n
-              .skillsEditDialogTitle(skillName.toUpperCase())
+              .skillsEditDialogTitle(skillName)
               .toLowerCase()
           : context.l10n.skillsAddDialogTitle.toLowerCase(),
       content: Column(
@@ -181,7 +181,7 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
                   items: configs
                       .map((config) => DropdownMenuItem(
                           value: config,
-                          child: Text(config.name.toUpperCase())))
+                          child: Text(config.name)))
                       .toList(),
                   onChanged: (value) =>
                       setState(() => _selectedConfig = value)),

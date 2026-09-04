@@ -47,14 +47,14 @@ class ModeSwitcher extends StatelessWidget {
               PopupMenuItem<String>(
                 value: m['id'] as String,
                 child: Text(
-                  ((m['name'] as String?) ?? m['id'] as String).toUpperCase(),
+                  ((m['name'] as String?) ?? m['id'] as String),
                   style: TextStyle(
                       fontFamily: AppFonts.family, fontWeight: AppFonts.heavy),
                 ),
               ),
           ],
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Text(currentName.toUpperCase(),
+            Text(currentName,
                 style: TextStyle(
                     color: colors.primary,
                     fontFamily: AppFonts.family,

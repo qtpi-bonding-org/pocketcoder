@@ -67,7 +67,7 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
     final selected = _selectedProvider;
     final title = selected == null
         ? context.l10n.providerScreenSelectProvider
-        : context.l10n.providerScreenAddKeyTitle(selected.name.toUpperCase());
+        : context.l10n.providerScreenAddKeyTitle(selected.name);
     return TerminalDialog(
         title: title.toLowerCase(),
         content: SingleChildScrollView(
@@ -79,7 +79,7 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
                 selected == null
                     ? context.l10n.providerScreenAddKey
                     : context.l10n
-                        .providerScreenAddKeyBody(selected.name.toUpperCase()),
+                        .providerScreenAddKeyBody(selected.name),
                 role: TextRole.body,
               ),
               VSpace.x2,
@@ -129,8 +129,8 @@ class ProviderTargetPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DetailRow(
       label: context.l10n.providerScreenProviderLabel,
-      value: selectedProvider?.name.toUpperCase() ??
-          context.l10n.providerScreenSelectProvider.toUpperCase(),
+      value: selectedProvider?.name ??
+          context.l10n.providerScreenSelectProvider,
       affordance: RowAffordance.navigate,
       onTap: () async {
         final picked = await showDialog<domain.Provider>(
@@ -186,7 +186,7 @@ class ProviderTargetOption extends StatelessWidget {
                 children: [
                   Expanded(
                     child: TerminalText(
-                      provider.name.toUpperCase(),
+                      provider.name,
                       role: TextRole.label,
                       overflow: TextOverflow.ellipsis,
                     ),

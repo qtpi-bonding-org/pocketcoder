@@ -209,9 +209,9 @@ class McpManagementView extends StatelessWidget {
     _show(
         context,
         server.status == McpServerStatus.pending
-            ? context.l10n.mcpAuthorizeDialogTitle(server.name.toUpperCase())
+            ? context.l10n.mcpAuthorizeDialogTitle(server.name)
             : context.l10n
-                .mcpUpdateConfigDialogTitle(server.name.toUpperCase()),
+                .mcpUpdateConfigDialogTitle(server.name),
         Column(mainAxisSize: MainAxisSize.min, children: [
           if (image?.isNotEmpty == true)
             TerminalText(image ?? '', role: TextRole.body),
@@ -223,7 +223,7 @@ class McpManagementView extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: AppSizes.space),
                 child: TerminalTextField(
                     controller: e.value,
-                    label: e.key.toUpperCase(),
+                    label: e.key,
                     obscureText: false))),
           ],
         ]),

@@ -153,7 +153,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('SET UP YOUR SERVER FIRST'), findsOneWidget);
-    expect(find.text('<RESTART>'), findsNothing);
+    expect(find.text('<restart>'), findsNothing);
   });
 
   testWidgets(
@@ -163,7 +163,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('SET UP YOUR SERVER FIRST'), findsNothing);
-    expect(find.text('<RESTART>'), findsNWidgets(2),
+    expect(find.text('<restart>'), findsNWidgets(2),
         reason: 'normal controls should render');
   });
 
@@ -177,7 +177,7 @@ void main() {
     await tester.pumpWidget(_wrap(const ServerControlScreen(instanceId: '')));
     await tester.pumpAndSettle();
 
-    expect(find.text('<RESTART>'), findsNothing,
+    expect(find.text('<restart>'), findsNothing,
         reason: 'gate resolution errors must remain blocked');
   });
 
@@ -198,6 +198,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('SET UP YOUR SERVER FIRST'), findsNothing);
-    expect(find.text('<RESTART>'), findsNWidgets(2));
+    expect(find.text('<restart>'), findsNWidgets(2));
   });
 }

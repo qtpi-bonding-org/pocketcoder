@@ -31,10 +31,10 @@ void main() {
     )));
     await tester.tap(find.byType(DetailRow));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ANTHROPIC'));
+    await tester.tap(find.text('Anthropic'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'sk-test-key');
-    await tester.tap(find.text('<SAVE>'));
+    await tester.tap(find.text('<save>'));
     await tester.pumpAndSettle();
     expect(saved, isNotNull);
     expect(saved!.provider, 'p1');
@@ -49,7 +49,7 @@ void main() {
       onSave: (_) => called = true,
     )));
     await tester.enterText(find.byType(TextField), 'sk-orphan-key');
-    await tester.tap(find.text('<SAVE>'));
+    await tester.tap(find.text('<save>'));
     expect(called, isFalse);
   });
 
@@ -62,9 +62,9 @@ void main() {
     )));
     await tester.tap(find.byType(DetailRow));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ANTHROPIC'));
+    await tester.tap(find.text('Anthropic'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('<SAVE>'));
+    await tester.tap(find.text('<save>'));
     expect(called, isFalse);
   });
 
@@ -82,9 +82,9 @@ void main() {
       ),
       onSave: (key) => saved = key,
     )));
-    expect(find.text('ANTHROPIC'), findsOneWidget);
+    expect(find.text('Anthropic'), findsOneWidget);
     expect(find.text('Leave blank to keep the existing key'), findsOneWidget);
-    await tester.tap(find.text('<SAVE>'));
+    await tester.tap(find.text('<save>'));
     await tester.pumpAndSettle();
     expect(saved, isNotNull);
     expect(saved!.id, 'pk1');

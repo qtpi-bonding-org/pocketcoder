@@ -52,7 +52,8 @@ void main() {
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(find.text(l10n.proTrialNoPaymentInfo), findsOneWidget);
     expect(find.text(l10n.proTrialLapseExplainer), findsOneWidget);
-    expect(find.text('<${l10n.proStartTrial(7)}>'), findsOneWidget);
+    expect(
+        find.text('<${l10n.proStartTrial(7).toLowerCase()}>'), findsOneWidget);
     expect(find.text(l10n.proRestore), findsOneWidget);
     // Apple requires the auto-renewal disclosure visible for a trial offer
     // too, not just a plain subscription -- the trial-specific wording,
@@ -94,8 +95,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('<START 7-DAY FREE TRIAL>'));
-    await tester.tap(find.text('<START 7-DAY FREE TRIAL>'));
+    await tester.ensureVisible(find.text('<start 7-day free trial>'));
+    await tester.tap(find.text('<start 7-day free trial>'));
     await tester.ensureVisible(find.text('RESTORE PURCHASES'));
     await tester.tap(find.text('RESTORE PURCHASES'));
 
@@ -112,8 +113,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('<MANAGE SUBSCRIPTION>'), findsOneWidget);
-    await tester.tap(find.text('<MANAGE SUBSCRIPTION>'));
+    expect(find.text('<manage subscription>'), findsOneWidget);
+    await tester.tap(find.text('<manage subscription>'));
 
     expect(manageCalls, 1);
   });

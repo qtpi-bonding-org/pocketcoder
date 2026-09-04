@@ -10,8 +10,10 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: DetailRow(label: 'Uptime', value: '6d 4h')),
     ));
-    expect(find.text('Uptime'), findsOneWidget); // NOT 'UPTIME'
-    expect(tester.widget<Text>(find.text('Uptime')).style!.color,
+    // Lowercase, matching the rest of the redesign's angle-bracket/pillar/
+    // section-header convention -- not 'UPTIME', not 'Uptime'.
+    expect(find.text('uptime'), findsOneWidget);
+    expect(tester.widget<Text>(find.text('uptime')).style!.color,
         TextRole.label.color);
     expect(tester.widget<Text>(find.text('6d 4h')).style!.color,
         TextRole.value.color);

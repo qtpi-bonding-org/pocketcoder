@@ -12,6 +12,8 @@ void main() {
         offenders.add(f.path);
       }
     }
-    expect(offenders, isEmpty);
+    expect(offenders, isEmpty,
+        reason: 'every PocketCoderShell call site must supply a footer -- '
+            'a wizard or pillar strip cannot be implied, only given (§11)');
   });
 }

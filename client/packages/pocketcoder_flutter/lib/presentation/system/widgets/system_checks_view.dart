@@ -21,7 +21,7 @@ class SystemChecksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        footer: buildPillarFooter(context, NavPillar.config),
+        footer: buildPillarFooter(context, NavPillar.status),
         showBack: true,
         body: DecisionFrame(
             title: context.l10n.systemChecksDiagnostics.toLowerCase(),
@@ -47,7 +47,7 @@ class SystemChecksView extends StatelessWidget {
                             itemBuilder: (context, index) {
                               final check = state.checks[index];
                               return _buildCheckRow(context,
-                                  check.name.toUpperCase(), check.status);
+                                  check.name, check.status);
                             })),
               ]);
             })));

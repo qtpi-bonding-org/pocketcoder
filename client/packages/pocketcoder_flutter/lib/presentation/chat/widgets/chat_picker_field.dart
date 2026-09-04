@@ -35,7 +35,7 @@ class ChatPickerField<T> extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Semantics(
         label: label,
-        child: TerminalText(label.toUpperCase(), role: TextRole.label),
+        child: TerminalText(label, role: TextRole.label),
       ),
       VSpace.x1,
       InkWell(

@@ -162,9 +162,9 @@ void main() {
         await _settle(tester);
 
         expect(find.text('run shell'), findsOneWidget);
-        expect(find.text('<Allow Once>'), findsOneWidget);
+        expect(find.text('<allow once>'), findsOneWidget);
 
-        await tester.tap(find.text('<Allow Once>').last);
+        await tester.tap(find.text('<allow once>').last);
         await _settle(tester);
 
         expect(repo.respondPermissionCalls, hasLength(1));
@@ -213,7 +213,7 @@ void main() {
       // asked for, just its own internal request id in tiny gray text.
       expect(find.text('Permission requested'), findsOneWidget);
 
-      await tester.tap(find.text('<DENY>'));
+      await tester.tap(find.text('<deny>'));
       await _settle(tester);
 
       expect(repo.respondPermissionCalls, hasLength(1));
@@ -256,9 +256,9 @@ void main() {
       await _settle(tester);
 
       final allowButton = tester.widget<TerminalButton>(
-          find.widgetWithText(TerminalButton, '<Allow Once>'));
+          find.widgetWithText(TerminalButton, '<allow once>'));
       final rejectButton = tester.widget<TerminalButton>(
-          find.widgetWithText(TerminalButton, '<Reject Once>'));
+          find.widgetWithText(TerminalButton, '<reject once>'));
 
       expect(allowButton.kind, isNot(rejectButton.kind));
       expect(rejectButton.kind, ActionKind.refusal);

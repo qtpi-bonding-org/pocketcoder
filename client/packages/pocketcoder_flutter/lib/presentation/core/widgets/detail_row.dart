@@ -151,7 +151,7 @@ class _DetailRowState extends State<DetailRow> {
     );
   }
 
-  Widget _label() => _text(widget.label, TextRole.label);
+  Widget _label() => _text(widget.label.toLowerCase(), TextRole.label);
 
   Widget _value(String text) => _text(text, _valueRole);
 
@@ -169,7 +169,7 @@ class _DetailRowState extends State<DetailRow> {
     final inherited = DefaultTextStyle.of(context).style;
     final labelStyle = inherited.merge(TextRole.label.style);
     final valueStyle = inherited.merge(_valueRole.style);
-    var needed = _measure(widget.label, labelStyle);
+    var needed = _measure(widget.label.toLowerCase(), labelStyle);
     if (widget.hasBadge) {
       needed += AppSizes.ch + _measure('[!]', TextRole.warn.style);
     }

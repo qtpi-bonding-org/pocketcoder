@@ -225,7 +225,7 @@ class TerminalPromptSuggestion extends StatelessWidget {
           ),
         ),
         child: Text(
-          '> ${label.toUpperCase()}',
+          '> $label',
           style: TextStyle(
             color: textColor,
             fontFamily: AppFonts.family,

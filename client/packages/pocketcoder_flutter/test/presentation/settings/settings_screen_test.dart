@@ -138,12 +138,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('LOGOUT'),
+      find.text('logout'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('LOGOUT'));
+    await tester.tap(find.text('logout'));
     await tester.pumpAndSettle();
 
     expect(find.text('SIGN OUT'), findsWidgets);
@@ -159,12 +159,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('LOGOUT'),
+      find.text('logout'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('LOGOUT'));
+    await tester.tap(find.text('logout'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('CANCEL'));
@@ -184,12 +184,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('DELETE POCKETCODER PRO DATA'),
+      find.text('delete pocketcoder pro data'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DELETE POCKETCODER PRO DATA'));
+    await tester.tap(find.text('delete pocketcoder pro data'));
     await tester.pumpAndSettle();
 
     expect(find.text('DELETE'), findsWidgets);
@@ -200,7 +200,7 @@ void main() {
     verify(() => proDataDeletionHook.deleteProData()).called(1);
     // Unlike LOGOUT/RESET, a successful deleteProData must not navigate
     // away from Settings -- it never touches the local session.
-    expect(find.text('DELETE POCKETCODER PRO DATA'), findsOneWidget);
+    expect(find.text('delete pocketcoder pro data'), findsOneWidget);
   });
 
   testWidgets(
@@ -213,12 +213,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('DELETE POCKETCODER PRO DATA'),
+      find.text('delete pocketcoder pro data'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DELETE POCKETCODER PRO DATA'));
+    await tester.tap(find.text('delete pocketcoder pro data'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('CANCEL'));
@@ -233,12 +233,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('ERROR REPORTS'),
+      find.text('error reports'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ERROR REPORTS'));
+    await tester.tap(find.text('error reports'));
     await tester.pumpAndSettle();
 
     expect(find.text('errors-placeholder'), findsOneWidget);

@@ -33,14 +33,14 @@ void main() {
       ),
     ));
 
-    expect(find.text('AGENT'), findsOneWidget);
-    expect(find.text('READ-ONLY'), findsNothing);
+    expect(find.text('Agent'), findsOneWidget);
+    expect(find.text('Read-Only'), findsNothing);
 
     await tester.tap(find.byType(PopupMenuButton<String>));
     await tester.pumpAndSettle();
-    expect(find.text('READ-ONLY'), findsOneWidget);
+    expect(find.text('Read-Only'), findsOneWidget);
 
-    await tester.tap(find.text('READ-ONLY').last);
+    await tester.tap(find.text('Read-Only').last);
     await tester.pumpAndSettle();
     expect(selected, 'read-only');
   });
@@ -63,6 +63,6 @@ void main() {
     await tester.tap(find.byType(PopupMenuButton<String>));
     await tester.pumpAndSettle();
     expect(find.text('NO ID MODE'), findsNothing);
-    expect(find.text('AGENT'), findsWidgets);
+    expect(find.text('Agent'), findsWidgets);
   });
 }

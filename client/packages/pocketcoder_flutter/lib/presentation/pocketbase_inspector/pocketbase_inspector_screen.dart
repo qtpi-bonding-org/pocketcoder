@@ -31,7 +31,7 @@ class _PocketbaseInspectorScreenState extends State<PocketbaseInspectorScreen> {
   Widget build(BuildContext context) =>
       BlocBuilder<PocketbaseInspectorCubit, PocketbaseInspectorState>(
           builder: (context, state) => PocketCoderShell(
-              footer: buildPillarFooter(context, NavPillar.config),
+              footer: buildPillarFooter(context, NavPillar.status),
               showBack: true,
               body: switch (state.status) {
                 UiFlowStatus.loading ||

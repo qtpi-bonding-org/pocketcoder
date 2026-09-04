@@ -95,7 +95,7 @@ class _BiosActionButtonState extends State<BiosActionButton> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(
-              child: text('<${action.label}>', role),
+              child: text('<${action.label.toLowerCase()}>', role),
             ),
             if (action.hasBadge) ...[
               HSpace.x1,

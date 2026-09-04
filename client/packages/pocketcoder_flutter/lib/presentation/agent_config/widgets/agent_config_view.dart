@@ -77,7 +77,7 @@ class AgentConfigView extends StatelessWidget {
                     final config = state.configs[index];
                     final isDefault = config.isDefault ?? false;
                     return DetailRow(
-                        label: config.name.toUpperCase(),
+                        label: config.name,
                         value: isDefault
                             ? context.l10n.agentConfigDefaultBadge
                             : _permissionModeLabelFor(config),
@@ -92,7 +92,7 @@ class AgentConfigView extends StatelessWidget {
           .where((m) => m.id == config.permissionMode)
           .firstOrNull
           ?.name
-          .toUpperCase() ??
+           ??
       '';
 
   void _openEditor(BuildContext context, PocoConfig? existing) {
@@ -131,7 +131,7 @@ class AgentConfigView extends StatelessWidget {
                     .toLowerCase(),
                 content: TerminalText(
                   dialogContext.l10n.agentConfigDeleteConfirmBody(
-                      existing.name.toUpperCase()),
+                      existing.name),
                   role: TextRole.body,
                 ),
                 actions: [

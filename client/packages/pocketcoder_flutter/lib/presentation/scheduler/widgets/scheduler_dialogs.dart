@@ -22,7 +22,7 @@ void showEditScheduleDialog(
     builder: (dialogContext) => TerminalDialog(
       title: context.l10n
           .schedulerEditDialogTitle(
-            schedule.displayName.toUpperCase(),
+            schedule.displayName,
           )
           .toLowerCase(),
       content: Column(

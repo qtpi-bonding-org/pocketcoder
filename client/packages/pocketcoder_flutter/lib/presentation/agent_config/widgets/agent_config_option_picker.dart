@@ -34,8 +34,8 @@ class AgentConfigOptionPicker<T> extends StatelessWidget {
     return AgentConfigSelectionField(
       label: label,
       currentValue: selected == null
-          ? selectTitle.toUpperCase()
-          : itemLabel(selected).toUpperCase(),
+          ? selectTitle
+          : itemLabel(selected),
       onTap: () async {
         final picked = await showTerminalListPicker<T>(
           context: context,

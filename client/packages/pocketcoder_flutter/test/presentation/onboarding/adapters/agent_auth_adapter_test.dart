@@ -289,14 +289,14 @@ void main() {
       await tester.pump();
     }
 
-    expect(find.text('<OPEN AUTHORIZATION PAGE>'), findsOneWidget);
+    expect(find.text('<open authorization page>'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
 
-    await tester.tap(find.text('<OPEN AUTHORIZATION PAGE>'));
+    await tester.tap(find.text('<open authorization page>'));
     await tester.pump();
     expect(launcher.opened, [_verificationUri]);
 
-    await tester.tap(find.text('<CANCEL>'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -361,7 +361,7 @@ void main() {
 
     // Close the dialog so the timer is cancelled and no pending Timer trips
     // flutter_test's teardown invariant check.
-    await tester.tap(find.text('<CANCEL>'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -416,7 +416,7 @@ void main() {
     await tester.pump();
     expect(pollCount, greaterThanOrEqualTo(1));
 
-    await tester.tap(find.text('<CANCEL>'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -476,7 +476,7 @@ void main() {
 
     expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), '  one-time-code  ');
-    await tester.tap(find.text('<SUBMIT>'));
+    await tester.tap(find.text('<submit>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -511,15 +511,15 @@ void main() {
       await tester.pump();
     }
 
-    await tester.tap(find.text('<OPEN AUTHORIZATION PAGE>'));
+    await tester.tap(find.text('<open authorization page>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
 
     expect(find.byType(SnackBar), findsOneWidget);
-    expect(find.text('<CANCEL>'), findsOneWidget);
+    expect(find.text('<cancel>'), findsOneWidget);
 
-    await tester.tap(find.text('<CANCEL>'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -550,7 +550,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('<CANCEL>'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 8; i++) {
       await tester.pump();
     }
@@ -609,11 +609,11 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('<COPY>'));
+    await tester.tap(find.text('<copy>'));
     await tester.pump();
 
     expect(find.byType(SnackBar), findsOneWidget);
-    await tester.tap(find.text('<CANCEL>'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }

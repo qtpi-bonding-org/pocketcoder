@@ -32,12 +32,12 @@ void main() {
     )));
 
     expect(find.text('ABCD-1234'), findsOneWidget);
-    expect(find.text('<COPY>'), findsOneWidget);
-    expect(find.text('<OPEN AUTHORIZATION PAGE>'), findsOneWidget);
-    expect(find.textContaining('authorization page'), findsOneWidget);
+    expect(find.text('<copy>'), findsOneWidget);
+    expect(find.text('<open authorization page>'), findsOneWidget);
+    expect(find.textContaining('authorization page'), findsWidgets);
     expect(find.byType(TerminalTextField), findsNothing);
-    expect(find.text('<SUBMIT>'), findsNothing);
-    await tester.tap(find.text('<COPY>'));
+    expect(find.text('<submit>'), findsNothing);
+    await tester.tap(find.text('<copy>'));
     await tester.pump();
     expect(submitted, isFalse);
   });
@@ -93,7 +93,7 @@ void main() {
       onRetry: () {},
     )));
 
-    await tester.tap(find.text('<COPY>'));
+    await tester.tap(find.text('<copy>'));
     await tester.pump();
     expect(message, equals(<String, dynamic>{'text': 'EXACT-CODE'}));
   });
@@ -113,16 +113,16 @@ void main() {
       onRetry: () {},
     )));
 
-    expect(find.text('<OPEN AUTHORIZATION PAGE>'), findsOneWidget);
+    expect(find.text('<open authorization page>'), findsOneWidget);
     expect(find.byType(TerminalTextField), findsOneWidget);
-    expect(find.text('<SUBMIT>'), findsOneWidget);
-    await tester.tap(find.text('<SUBMIT>'));
+    expect(find.text('<submit>'), findsOneWidget);
+    await tester.tap(find.text('<submit>'));
     expect(submitted, isEmpty);
     await tester.enterText(find.byType(TextField), '  claude-code  ');
-    await tester.tap(find.text('<SUBMIT>'));
+    await tester.tap(find.text('<submit>'));
     expect(submitted, equals(<String>['claude-code']));
     await tester.enterText(find.byType(TextField), '   ');
-    await tester.tap(find.text('<SUBMIT>'));
+    await tester.tap(find.text('<submit>'));
     expect(submitted, equals(<String>['claude-code']));
   });
 }

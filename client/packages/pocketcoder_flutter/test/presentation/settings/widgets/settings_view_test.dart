@@ -33,7 +33,7 @@ void main() {
     expect(find.text('[SETUP]'), findsNothing);
     expect(find.text('[CONFIGURE]'), findsNothing);
     expect(find.text('[MANAGE]'), findsNothing);
-    expect(find.textContaining('TOOL PERMISSIONS'), findsOneWidget);
+    expect(find.textContaining('tool permissions'), findsOneWidget);
     expect(find.textContaining('POCKETCODER UPDATE'), findsNothing,
         reason: 'promoted to the MANAGE footer button; the Configure row '
             'was a dead link before that (no instanceId reached the '
@@ -65,7 +65,7 @@ void main() {
       ),
     ));
 
-    await tester.tap(find.text('REPORT AI CONTENT'));
+    await tester.tap(find.text('report ai content'));
     expect(tapped, isTrue);
   });
 

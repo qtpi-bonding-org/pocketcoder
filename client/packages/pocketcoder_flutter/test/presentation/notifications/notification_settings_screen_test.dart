@@ -107,10 +107,10 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    expect(find.text('CHAT REPLIES'), findsOneWidget);
-    expect(find.text('SCHEDULED TASKS'), findsOneWidget);
-    expect(find.text('TASK COMPLETE'), findsOneWidget);
-    expect(find.text('TASK ERRORS'), findsOneWidget);
+    expect(find.text('chat replies'), findsOneWidget);
+    expect(find.text('scheduled tasks'), findsOneWidget);
+    expect(find.text('task complete'), findsOneWidget);
+    expect(find.text('task errors'), findsOneWidget);
 
     expect(find.byType(DetailRow), findsNWidgets(4));
     expect(find.text('on'), findsNWidgets(4));
@@ -141,10 +141,10 @@ void main() {
           .isNotEmpty;
     }
 
-    expect(isOn('CHAT REPLIES'), isFalse);
-    expect(isOn('SCHEDULED TASKS'), isTrue);
-    expect(isOn('TASK COMPLETE'), isTrue);
-    expect(isOn('TASK ERRORS'), isFalse);
+    expect(isOn('chat replies'), isFalse);
+    expect(isOn('scheduled tasks'), isTrue);
+    expect(isOn('task complete'), isTrue);
+    expect(isOn('task errors'), isFalse);
   });
 
   testWidgets('tapping a toggle calls cubit.setTypeEnabled with the right args',
@@ -186,9 +186,9 @@ void main() {
     expect(find.text(l10n.proSelfHostedPushTitle), findsOneWidget);
 
     await tester
-        .ensureVisible(find.text('<${l10n.proConfigureSelfHostedPush}>'));
+        .ensureVisible(find.text('<${l10n.proConfigureSelfHostedPush.toLowerCase()}>'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('<${l10n.proConfigureSelfHostedPush}>'));
+    await tester.tap(find.text('<${l10n.proConfigureSelfHostedPush.toLowerCase()}>'));
     await tester.pumpAndSettle();
 
     expect(pushService.configureCalls, 1);

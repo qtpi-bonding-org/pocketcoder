@@ -28,7 +28,7 @@ class _TerminalButtonState extends State<TerminalButton> {
   Widget build(BuildContext context) {
     final role = widget.kind.role;
 
-    final label = TerminalText('<${widget.label}>', role: role);
+    final label = TerminalText('<${widget.label.toLowerCase()}>', role: role);
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,

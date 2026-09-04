@@ -293,11 +293,11 @@ void main() {
     // provider-management screen drives the same widget.
     await tester.tap(find.text('SELECT PROVIDER'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ANTHROPIC'));
+    await tester.tap(find.text('Anthropic'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'sk-test-key');
-    await tester.tap(find.text('<SAVE>'));
+    await tester.tap(find.text('<save>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }

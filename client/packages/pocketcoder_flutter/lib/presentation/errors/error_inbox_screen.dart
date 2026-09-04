@@ -30,7 +30,7 @@ class ErrorInboxScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-        footer: buildPillarFooter(context, NavPillar.config),
+        footer: buildPillarFooter(context, NavPillar.status),
         showBack: true,
         body: DecisionFrame(
             title: context.l10n.errorsTitle.toLowerCase(),

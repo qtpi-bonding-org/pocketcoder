@@ -7,16 +7,11 @@ import 'package:flutter_test/flutter_test.dart';
 /// visual consistency and take wrong colors. These files are owned by
 /// later tasks that will wrap text in proper marker/action widgets.
 const _bracketExemptions = {
-  'lib/presentation/core/widgets/terminal_status_glyph.dart', // Task 10: Markers and loader split
-  'lib/presentation/core/widgets/terminal_loading_indicator.dart', // Task 10: Markers and loader split
-  'lib/presentation/core/widgets/bios_action_strip.dart', // Task 14: Dialog actions and action strips to angle brackets
-  'lib/presentation/files/widgets/file_browser_view.dart', // Task 10: [DIR]/[FILE] markers to proper marker widget
+  'lib/presentation/files/widgets/file_browser_view.dart', // [DIR]/[FILE] markers -- no task in this plan owns this, flagged as a known gap
   'lib/presentation/chat/elicitation_card.dart', // No task in this plan currently owns bracket fixes here — flagged as a known gap
-  'lib/presentation/core/widgets/bios_row.dart', // Task 9: DetailRow replaces BiosRow
-  'lib/presentation/core/widgets/terminal_checkbox.dart', // Task 10: Checkbox glyph to proper widget
-  'lib/presentation/chat/thinking_block.dart', // Task 7: Thinking block bracket to marker
+  'lib/presentation/core/widgets/terminal_checkbox.dart', // [X]/[ ] checkbox glyph -- no task in this plan owns this, flagged as a known gap
+  'lib/presentation/chat/thinking_block.dart', // '[ THOUGHTS ]' -- no task in this plan owns this, flagged as a known gap
   'lib/presentation/chat/widgets/inline_approval.dart', // Task 15: spec section 8 mandates literal [!] eyebrow and [requestId] brackets -- neither is a StatusMarker glyph, so no role-based primitive fits
-  'lib/presentation/agent/widgets/plan_panel.dart', // No task in this plan currently owns this — flagged as a known gap, not silently hidden
   'lib/presentation/onboarding/widgets/harness_choice_card.dart', // No task in this plan currently owns this — flagged as a known gap, not silently hidden
 };
 

@@ -24,7 +24,7 @@ class ReleaseLine extends StatelessWidget {
   String _lines(BuildContext context, ServerReleaseStatusSnapshot release) {
     final lines = [
       context.l10n
-          .serverControlReleaseStatus(release.status.name.toUpperCase()),
+          .serverControlReleaseStatus(release.status.name),
       context.l10n.serverControlReleaseCurrent(release.currentVersion),
       if (release.availableVersion case final available?)
         context.l10n.serverControlReleaseAvailable(available),

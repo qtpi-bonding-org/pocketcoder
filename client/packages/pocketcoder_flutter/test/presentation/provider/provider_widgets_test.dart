@@ -24,7 +24,7 @@ void main() {
     )));
 
     expect(find.byType(DetailRow), findsOneWidget);
-    expect(find.text('CLAUDE'), findsOneWidget);
+    expect(find.text('Claude'), findsOneWidget);
   });
 
   testWidgets('search box filters a large synced provider list client-side',
@@ -60,18 +60,18 @@ void main() {
     await tester.tap(find.byType(DetailRow));
     await tester.pumpAndSettle();
 
-    expect(find.text('ANTHROPIC'), findsOneWidget);
-    expect(find.text('OPENAI'), findsOneWidget);
-    expect(find.text('OPENROUTER'), findsOneWidget);
+    expect(find.text('Anthropic'), findsOneWidget);
+    expect(find.text('OpenAI'), findsOneWidget);
+    expect(find.text('OpenRouter'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'open');
     await tester.pumpAndSettle();
 
-    expect(find.text('ANTHROPIC'), findsNothing);
-    expect(find.text('OPENAI'), findsOneWidget);
-    expect(find.text('OPENROUTER'), findsOneWidget);
+    expect(find.text('Anthropic'), findsNothing);
+    expect(find.text('OpenAI'), findsOneWidget);
+    expect(find.text('OpenRouter'), findsOneWidget);
 
-    await tester.tap(find.text('OPENAI'));
+    await tester.tap(find.text('OpenAI'));
     await tester.pumpAndSettle();
 
     expect(picked, targets[1]);
@@ -93,7 +93,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'nonexistent-xyz');
     await tester.pumpAndSettle();
 
-    expect(find.text('CLAUDE'), findsNothing);
+    expect(find.text('Claude'), findsNothing);
     expect(find.text('NO MATCHING PROVIDERS'), findsOneWidget);
   });
 }

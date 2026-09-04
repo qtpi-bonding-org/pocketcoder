@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 /// A configuration object for a single footer button
 class TerminalAction {
@@ -43,43 +45,26 @@ class TerminalFooter extends StatelessWidget {
     final colors = context.colorScheme;
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(
-          top: BorderSide(color: colors.onSurface, width: AppSizes.borderWidth),
-        ),
-      ),
+      color: colors.surface,
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: actions.map((action) {
-                final stripItem = action._asStripItem;
-                final showDivider = stripItem.kind != ActionKind.primary;
-                if (action.isLabel)
-                  return Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: AppSizes.space * 2),
-                    child: Center(child: Text(action.label)),
-                  );
-                return Container(
-                  decoration: BoxDecoration(
-                    border: showDivider
-                        ? Border(
-                            right: BorderSide(
-                              color: colors.onSurface.withValues(alpha: 0.1),
-                              width: AppSizes.borderWidth,
-                            ),
-                          )
-                        : null,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: actions.map((action) {
+              if (action.isLabel) {
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+                    child: Center(
+                      child: TerminalText(action.label, role: TextRole.label),
+                    ),
                   ),
-                  child: BiosActionButton(action: stripItem),
                 );
-              }).toList(),
-            ),
+              }
+              return Expanded(
+                  child: BiosActionButton(action: action._asStripItem));
+            }).toList(),
           ),
         ),
       ),

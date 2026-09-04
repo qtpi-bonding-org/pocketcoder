@@ -154,7 +154,7 @@ class _SearchablePickerDialogState<T> extends State<SearchablePickerDialog<T>> {
                                                     vertical:
                                                         AppSizes.space * 0.5),
                                                 child: Text(
-                                                    row.header!.toUpperCase(),
+                                                    row.header!,
                                                     style: TextStyle(
                                                         fontFamily:
                                                             AppFonts.family,

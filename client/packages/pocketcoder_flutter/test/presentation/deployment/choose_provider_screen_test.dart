@@ -80,7 +80,7 @@ void main() {
 
     expect(find.byType(TerminalFooter), findsOneWidget);
 
-    await tester.tap(find.textContaining('LINODE'));
+    await tester.tap(find.textContaining('Linode'));
     await tester.pumpAndSettle();
 
     expect(capturedRoute, '/auth');
@@ -120,7 +120,7 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.textContaining('LINODE'));
+    await tester.tap(find.textContaining('Linode'));
     await tester.pumpAndSettle();
 
     expect(selectedProvider?.id, 'linode');
@@ -156,7 +156,7 @@ void main() {
 
     final unavailable = tester.widget<TerminalText>(
       find.byWidgetPredicate(
-        (widget) => widget is TerminalText && widget.text.contains('ELESTIO'),
+        (widget) => widget is TerminalText && widget.text.contains('Elestio'),
       ),
     );
     expect(unavailable.text, contains('COMING SOON'));
@@ -168,7 +168,7 @@ void main() {
     );
     expect(unavailableText.style?.color, TextRole.label.color);
 
-    await tester.tap(find.textContaining('ELESTIO'));
+    await tester.tap(find.textContaining('Elestio'));
     await tester.pump();
     expect(selectionChecks, 0);
   });

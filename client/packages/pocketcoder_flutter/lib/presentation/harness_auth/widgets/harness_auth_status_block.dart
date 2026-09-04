@@ -35,7 +35,7 @@ class HarnessAuthStatusBlock extends StatelessWidget {
     return Column(children: [
       SectionHeader(name: '${harness.name} [${harness.cliId}]'.toLowerCase()),
       Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        TerminalText(l10n.harnessAuthStatus(s.status.toUpperCase()),
+        TerminalText(l10n.harnessAuthStatus(s.status),
             role: TextRole.body),
         if (s.lastError case final lastError? when lastError.isNotEmpty) ...[
           VSpace.x1,
@@ -44,7 +44,7 @@ class HarnessAuthStatusBlock extends StatelessWidget {
         if (s.credentialMode.isNotEmpty) ...[
           VSpace.x1,
           TerminalText(
-            l10n.harnessAuthMode(s.credentialMode.toUpperCase()),
+            l10n.harnessAuthMode(s.credentialMode),
             role: TextRole.body,
           ),
         ],
@@ -63,7 +63,7 @@ class HarnessAuthStatusBlock extends StatelessWidget {
         if (configuredApiKeyProvider case final provider?) ...[
           VSpace.x1,
           TerminalText(
-            l10n.harnessAuthApiKeyConfigured(provider.name.toUpperCase()),
+            l10n.harnessAuthApiKeyConfigured(provider.name),
             role: TextRole.body,
           ),
         ],

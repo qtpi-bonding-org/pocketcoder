@@ -123,7 +123,7 @@ class PlanPanel extends StatelessWidget {
               ),
               if (priority.isNotEmpty || status.isNotEmpty)
                 Text(
-                  '[${priority.isNotEmpty ? '${priority.toUpperCase()} · ' : ''}${status.toUpperCase()}]',
+                  '[${priority.isNotEmpty ? '$priority · ' : ''}$status]',
                   style: TextStyle(
                     color: accent,
                     fontFamily: AppFonts.family,

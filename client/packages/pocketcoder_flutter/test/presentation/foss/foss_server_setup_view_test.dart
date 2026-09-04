@@ -78,7 +78,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_wrap(cubit, onSetupComplete: () {}));
 
-    expect(find.text('<GENERATE KEY>'), findsOneWidget);
+    expect(find.text('<generate key>'), findsOneWidget);
     expect(find.byType(SelectableText), findsNothing);
   });
 
@@ -87,7 +87,7 @@ void main() {
       'with no editable host field', (tester) async {
     await tester.pumpWidget(_wrap(cubit, onSetupComplete: () {}));
 
-    await tester.tap(find.text('<GENERATE KEY>'));
+    await tester.tap(find.text('<generate key>'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('ssh-ed25519 AAAAtest pocketcoder'),
@@ -104,9 +104,9 @@ void main() {
     var completions = 0;
     await tester.pumpWidget(_wrap(cubit, onSetupComplete: () => completions++));
 
-    await tester.tap(find.text('<GENERATE KEY>'));
+    await tester.tap(find.text('<generate key>'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('<TEST CONNECTION & SAVE>'));
+    await tester.tap(find.text('<test connection & save>'));
     await tester.pumpAndSettle();
 
     expect(

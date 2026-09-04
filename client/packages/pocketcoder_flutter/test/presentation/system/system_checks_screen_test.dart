@@ -24,7 +24,7 @@ void main() {
     )));
 
     expect(find.byType(ServiceLine), findsOneWidget);
-    expect(find.text('DATABASE'), findsOneWidget);
+    expect(find.text('database'), findsOneWidget);
     // ServiceLine/StatusMarkerView render the marker's fixed status word,
     // not the domain-specific HealthcheckStatus name -- ready maps to the
     // "ok" marker.

@@ -20,7 +20,7 @@ class SkillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      TerminalText(skill.name.toUpperCase(), role: TextRole.body),
+      TerminalText(skill.name, role: TextRole.body),
       VSpace.x1,
       TerminalText(skill.description, role: TextRole.body),
       VSpace.x1,

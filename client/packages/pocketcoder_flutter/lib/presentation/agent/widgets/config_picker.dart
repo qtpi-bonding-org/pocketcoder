@@ -63,7 +63,7 @@ class _ConfigPickerState extends State<ConfigPicker> {
     final name = (o['name'] as String?) ?? id,
         kind = o['kind'] as String?,
         value = o['currentValue'];
-    final label = Text(name.toUpperCase(),
+    final label = Text(name,
         style: TextStyle(
             color: context.colorScheme.onSurface, fontFamily: AppFonts.family));
     void submit(String v) => widget.onSetOption(
@@ -99,7 +99,7 @@ class _ConfigPickerState extends State<ConfigPicker> {
                     .map((c) => DropdownMenuItem(
                         value: '${c['value']}',
                         child: Text((c['label'] as String? ?? '${c['value']}')
-                            .toUpperCase())))
+                            )))
                     .toList(),
                 onChanged: (v) {
                   if (v != null) submit(v);
