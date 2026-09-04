@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -55,6 +56,7 @@ class ChooseProviderView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         PocoBubble(
+                            posture: PocoPosture.exposed,
                             message: context.l10n.onboardingProviderPoco,
                             pocoSize: AppSizes.fontBody),
                         VSpace.x3,

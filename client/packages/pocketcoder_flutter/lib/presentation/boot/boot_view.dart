@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
@@ -74,11 +75,15 @@ class BootView extends StatelessWidget {
                       Center(
                         child: Container(
                           color: colors.surface,
-                          child: PocoFace(sequence: pocoState.sequence),
+                          child: PocoFace(
+                            sequence: pocoState.sequence,
+                            posture: PocoPosture.exposed,
+                          ),
                         ),
                       ),
                       VSpace.x4,
                       PocoBubble(
+                          posture: PocoPosture.exposed,
                           message: pocoState.message,
                           history: pocoState.history,
                           showFace: false),

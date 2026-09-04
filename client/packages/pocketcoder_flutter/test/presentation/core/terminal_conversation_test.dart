@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
@@ -86,6 +87,7 @@ void main() {
             child: SizedBox(
               width: 180,
               child: PocoBubble(
+                posture: PocoPosture.armored,
                 message: message,
                 pocoSize: 16,
               ),

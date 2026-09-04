@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 class PocoExpression {
@@ -25,11 +26,6 @@ class PocoExpression {
   static const String vigilantRight = '-_o';
 }
 
-enum PocoArmor {
-  standard,
-  fortified,
-}
-
 class AppAscii {
   static const String pocketCoderProLogo = r'''
  ______   ______    ______
@@ -51,117 +47,86 @@ class AppAscii {
        \ \_____\  \ \_____\  \ \____-  \ \_____\  \ \_\ \_\   
         \/_____/   \/_____/   \/____/   \/_____/   \/_/ /_/   ''';
 
+  /// Retained as a convenient source for clients that need the legacy shape.
   static String build(String expression,
-      [PocoArmor armor = PocoArmor.standard]) {
-    switch (armor) {
-      case PocoArmor.fortified:
-        return '''
-╔═════╗
-║ $expression ║
-╚═════╝''';
-
-      case PocoArmor.standard:
-        return '''
-┌─────┐
-│ $expression │
-└─────┘''';
+      [PocoPosture posture = PocoPosture.armored]) {
+    switch (posture) {
+      case PocoPosture.exposed:
+        return expression;
+      case PocoPosture.armored:
+        return '\n┌─────┐\n│ $expression │\n└─────┘';
+      case PocoPosture.fortified:
+        return '\n╔═════╗\n║ $expression ║\n╚═════╝';
     }
   }
 }
 
 class AsciiFace extends StatelessWidget {
   final String expression;
-  final PocoArmor armor;
+  final PocoPosture posture;
+  final PocoMood? mood;
   final Color? color;
   final double? fontSize;
 
   const AsciiFace({
     super.key,
     required this.expression,
-    this.armor = PocoArmor.standard,
+    this.posture = PocoPosture.armored,
+    this.mood,
     this.color,
     this.fontSize,
   });
 
-  factory AsciiFace.sleepy(
-          {PocoArmor armor = PocoArmor.standard,
-          Color? color,
-          double? fontSize}) =>
-      AsciiFace(
-          expression: PocoExpression.sleepy,
-          armor: armor,
-          color: color,
-          fontSize: fontSize);
-
-  factory AsciiFace.awake(
-          {PocoArmor armor = PocoArmor.standard,
-          Color? color,
-          double? fontSize}) =>
-      AsciiFace(
-          expression: PocoExpression.awake,
-          armor: armor,
-          color: color,
-          fontSize: fontSize);
-
-  factory AsciiFace.happy(
-          {PocoArmor armor = PocoArmor.standard,
-          Color? color,
-          double? fontSize}) =>
-      AsciiFace(
-          expression: PocoExpression.happy,
-          armor: armor,
-          color: color,
-          fontSize: fontSize);
-
-  factory AsciiFace.surprised(
-          {PocoArmor armor = PocoArmor.standard,
-          Color? color,
-          double? fontSize}) =>
-      AsciiFace(
-          expression: PocoExpression.surprised,
-          armor: armor,
-          color: color,
-          fontSize: fontSize);
-
-  factory AsciiFace.mistaken(
-          {PocoArmor armor = PocoArmor.standard,
-          Color? color,
-          double? fontSize}) =>
-      AsciiFace(
-          expression: PocoExpression.mistaken,
-          armor: armor,
-          color: color,
-          fontSize: fontSize);
-
-  factory AsciiFace.thinking(
-          {PocoArmor armor = PocoArmor.standard,
-          Color? color,
-          double? fontSize}) =>
-      AsciiFace(
-          expression: PocoExpression.thinking,
-          armor: armor,
-          color: color,
-          fontSize: fontSize);
-
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? context.colorScheme.onSurface;
+    final effectiveColor = color ?? mood?.color ?? _moodFor(expression).color;
     final effectiveSize = fontSize ?? AppSizes.fontBody;
-
-    final fullFaceString = AppAscii.build(expression, armor);
-
-    return Text(
-      fullFaceString,
-      style: TextStyle(
-        color: effectiveColor,
-        fontSize: effectiveSize,
-        height: 1.0,
-        fontFamily: AppFonts.family,
-        package: 'pocketcoder_flutter',
-        leadingDistribution: TextLeadingDistribution.even,
-        letterSpacing: 0,
-        fontWeight: AppFonts.heavy,
-      ),
+    final style = TextStyle(
+      color: effectiveColor,
+      fontSize: effectiveSize,
+      height: 1.0,
+      fontFamily: AppFonts.family,
+      package: 'pocketcoder_flutter',
+      leadingDistribution: TextLeadingDistribution.even,
+      letterSpacing: 0,
+      fontWeight: AppFonts.heavy,
+    );
+    final frame = posture == PocoPosture.armored
+        ? '┌─────┐\n│     │\n└─────┘'
+        : '╔═════╗\n║     ║\n╚═════╝';
+    if (posture == PocoPosture.exposed) {
+      return Text(expression, key: const ValueKey('poco-face'), style: style);
+    }
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Text(frame, key: const ValueKey('poco-frame'), style: style),
+        Text(expression, key: const ValueKey('poco-face'), style: style),
+      ],
     );
   }
+
+  PocoMood _moodFor(String value) => switch (value) {
+        PocoExpression.happy => PocoMood.happy,
+        PocoExpression.awake => PocoMood.awake,
+        PocoExpression.cheeky => PocoMood.cheeky,
+        PocoExpression.amazed => PocoMood.amazed,
+        PocoExpression.thinking => PocoMood.thinking,
+        PocoExpression.winkLeft => PocoMood.winkLeft,
+        PocoExpression.winkRight => PocoMood.winkRight,
+        PocoExpression.sleepy => PocoMood.sleepy,
+        PocoExpression.shy => PocoMood.shy,
+        PocoExpression.nervous => PocoMood.nervous,
+        PocoExpression.vigilantLeft => PocoMood.vigilantLeft,
+        PocoExpression.vigilantRight => PocoMood.vigilantRight,
+        PocoExpression.skeptical => PocoMood.skeptical,
+        PocoExpression.surprised => PocoMood.surprised,
+        PocoExpression.lookRight => PocoMood.lookRight,
+        PocoExpression.lookLeft => PocoMood.lookLeft,
+        PocoExpression.mad => PocoMood.mad,
+        PocoExpression.mistaken => PocoMood.mistaken,
+        PocoExpression.panic => PocoMood.panic,
+        PocoExpression.sad => PocoMood.sad,
+        _ => PocoMood.awake,
+      };
 }
