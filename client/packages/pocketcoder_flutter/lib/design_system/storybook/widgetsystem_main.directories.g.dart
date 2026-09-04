@@ -34,8 +34,6 @@ import 'package:pocketcoder_flutter/design_system/storybook/terminal_conversatio
     as _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/terminal_dialog_actions.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories;
-import 'package:pocketcoder_flutter/design_system/storybook/tinted_alert_card.stories.dart'
-    as _pocketcoder_flutter_design_system_storybook_tinted_alert_card_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/tool_permissions_view.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
@@ -264,23 +262,6 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
                             .disabledConfirm,
-                  ),
-                ],
-              ),
-              _widgetbook.WidgetbookComponent(
-                name: 'TintedAlertCard',
-                useCases: [
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'error tint',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_tinted_alert_card_stories
-                            .errorTint,
-                  ),
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'warning tint',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_tinted_alert_card_stories
-                            .warningTint,
                   ),
                 ],
               ),

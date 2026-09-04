@@ -5128,18 +5128,6 @@ abstract class AppLocalizations {
   /// **'WHY DOES IT START AFTER POCKETBASE?'**
   String get walkthroughServicesSqlPageChipStartOrder;
 
-  /// No description provided for @permissionSecurityTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'SECURITY'**
-  String get permissionSecurityTitle;
-
-  /// No description provided for @permissionSignoffTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'COMMANDER\'S SIGNOFF'**
-  String get permissionSignoffTitle;
-
   /// No description provided for @permissionRequestedFallback.
   ///
   /// In en, this message translates to:

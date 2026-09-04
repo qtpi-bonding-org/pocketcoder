@@ -2822,12 +2822,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'WHY DOES IT START AFTER POCKETBASE?';
 
   @override
-  String get permissionSecurityTitle => 'SECURITY';
-
-  @override
-  String get permissionSignoffTitle => 'COMMANDER\'S SIGNOFF';
-
-  @override
   String get permissionRequestedFallback => 'Permission requested';
 
   @override

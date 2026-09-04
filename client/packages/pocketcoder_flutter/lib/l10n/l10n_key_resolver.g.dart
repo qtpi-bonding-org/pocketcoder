@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-09-03T16:39:54.756262
+// Generated at: 2026-09-04T05:52:43.097543
 
 import 'app_localizations.dart';
 
@@ -731,8 +731,6 @@ class L10nKeyResolver {
       'permission.fetch.failed' => _l10n.permissionFetchFailed,
       'permission.patterns.label' => _l10n.permissionPatternsLabel,
       'permission.requested.fallback' => _l10n.permissionRequestedFallback,
-      'permission.security.title' => _l10n.permissionSecurityTitle,
-      'permission.signoff.title' => _l10n.permissionSignoffTitle,
       'permission.update.failed' => _l10n.permissionUpdateFailed,
       'pocket.coder.progress.active' => _l10n.pocketCoderProgressActive,
       'pocket.coder.progress.complete' => _l10n.pocketCoderProgressComplete,
@@ -2066,8 +2064,6 @@ class L10nKeyResolver {
     'permission.patterns.label',
     'permission.requested.fallback',
     'permission.requesting.label',
-    'permission.security.title',
-    'permission.signoff.title',
     'permission.update.failed',
     'pocket.coder.progress.active',
     'pocket.coder.progress.complete',
@@ -3187,8 +3183,6 @@ class L10nKeyResolver {
     'permissionPatternsLabel': 'permission.patterns.label',
     'permissionRequestedFallback': 'permission.requested.fallback',
     'permissionRequestingLabel': 'permission.requesting.label',
-    'permissionSecurityTitle': 'permission.security.title',
-    'permissionSignoffTitle': 'permission.signoff.title',
     'permissionUpdateFailed': 'permission.update.failed',
     'pocketCoderProgressActive': 'pocket.coder.progress.active',
     'pocketCoderProgressComplete': 'pocket.coder.progress.complete',
@@ -4363,8 +4357,6 @@ class L10nKeyResolver {
     'permission.patterns.label': 'permissionPatternsLabel',
     'permission.requested.fallback': 'permissionRequestedFallback',
     'permission.requesting.label': 'permissionRequestingLabel',
-    'permission.security.title': 'permissionSecurityTitle',
-    'permission.signoff.title': 'permissionSignoffTitle',
     'permission.update.failed': 'permissionUpdateFailed',
     'pocket.coder.progress.active': 'pocketCoderProgressActive',
     'pocket.coder.progress.complete': 'pocketCoderProgressComplete',
@@ -5714,8 +5706,6 @@ abstract class L10nKeys {
   static (String, Map<String, dynamic>) permissionRequestingLabel(
           String source) =>
       ('permission.requesting.label', {'source': source});
-  static const permissionSecurityTitle = 'permission.security.title';
-  static const permissionSignoffTitle = 'permission.signoff.title';
   static const permissionUpdateFailed = 'permission.update.failed';
   static const pocketCoderProgressActive = 'pocket.coder.progress.active';
   static const pocketCoderProgressComplete = 'pocket.coder.progress.complete';

@@ -1,4 +1,5 @@
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 // ElicitationCard renders a pending ACP form inline in the message timeline.
 // It is Cubit-free: the adapter owns submission side effects and supplies the
 // serialized response callback.
@@ -8,7 +9,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/tinted_alert_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class ElicitationCard extends StatefulWidget {
   const ElicitationCard({
@@ -85,82 +86,85 @@ class _ElicitationCardState extends State<ElicitationCard> {
     final elicitationId = widget.item.requestId;
     final fields = properties?.entries.toList() ?? const [];
 
-    return TintedAlertCard(
-      eyebrowLeft: context.l10n.chatElicitationFormLabel,
-      eyebrowRight: context.l10n.chatElicitationRequest,
-      tint: colors.secondary,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (message != null && message.isNotEmpty)
-            Text(
-              message,
-              style: TextStyle(
-                color: colors.secondary,
-                fontFamily: AppFonts.family,
-              ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TerminalText(
+          context.l10n.chatElicitationFormLabel,
+          role: TextRole.body,
+        ),
+        TerminalText(
+          context.l10n.chatElicitationRequest,
+          role: TextRole.label,
+        ),
+        if (message != null && message.isNotEmpty)
+          Text(
+            message,
+            style: TextStyle(
+              color: colors.secondary,
+              fontFamily: AppFonts.family,
             ),
-          if (elicitationId.isNotEmpty) ...[
-            VSpace.x1,
-            Text(
-              '[$elicitationId]',
-              style: TextStyle(
-                color: colors.secondary.withValues(alpha: 0.5),
-              ),
+          ),
+        if (elicitationId.isNotEmpty) ...[
+          VSpace.x1,
+          Text(
+            '[$elicitationId]',
+            style: TextStyle(
+              color: colors.secondary.withValues(alpha: 0.5),
             ),
-          ],
-          VSpace.x3,
-          for (final entry in fields) ...[
-            _buildField(
-              context,
-              name: entry.key,
-              spec: entry.value is Map
-                  ? Map<String, dynamic>.from(entry.value as Map)
-                  : const <String, dynamic>{},
-            ),
-            VSpace.x2,
-          ],
-          if (fields.isEmpty)
-            Text(
-              context.l10n.chatNoFieldsRequested,
-              style: TextStyle(
-                color: colors.onSurface.withValues(alpha: 0.4),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          VSpace.x2,
-          Row(
-            children: [
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.actionCancel,
-                  kind: ActionKind.neutral,
-                  onTap: () => _submit(context, ElicitationResponse.cancel()),
-                ),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.chatDecline,
-                  kind: ActionKind.neutral,
-                  onTap: () => _submit(context, ElicitationResponse.decline()),
-                ),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.chatSubmit,
-                  onTap: () => _submit(
-                    context,
-                    ElicitationResponse.accept(_collectValues(properties)),
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
-      ),
+        VSpace.x3,
+        for (final entry in fields) ...[
+          _buildField(
+            context,
+            name: entry.key,
+            spec: entry.value is Map
+                ? Map<String, dynamic>.from(entry.value as Map)
+                : const <String, dynamic>{},
+          ),
+          VSpace.x2,
+        ],
+        if (fields.isEmpty)
+          Text(
+            context.l10n.chatNoFieldsRequested,
+            style: TextStyle(
+              color: colors.onSurface.withValues(alpha: 0.4),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        VSpace.x2,
+        Row(
+          children: [
+            Expanded(
+              child: TerminalButton(
+                label: context.l10n.actionCancel,
+                kind: ActionKind.neutral,
+                onTap: () => _submit(context, ElicitationResponse.cancel()),
+              ),
+            ),
+            HSpace.x2,
+            Expanded(
+              child: TerminalButton(
+                label: context.l10n.chatDecline,
+                kind: ActionKind.neutral,
+                onTap: () => _submit(context, ElicitationResponse.decline()),
+              ),
+            ),
+            HSpace.x2,
+            Expanded(
+              child: TerminalButton(
+                label: context.l10n.chatSubmit,
+                onTap: () => _submit(
+                  context,
+                  ElicitationResponse.accept(_collectValues(properties)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

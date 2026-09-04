@@ -1129,8 +1129,6 @@
   "walkthroughServicesSqlPageChipContents": "WHAT CAN THIS DASHBOARD SHOW?",
   "walkthroughServicesSqlPageChipStartOrder": "WHY DOES IT START AFTER POCKETBASE?",
 
-  "permissionSecurityTitle": "SECURITY",
-  "permissionSignoffTitle": "COMMANDER'S SIGNOFF",
   "permissionRequestedFallback": "Permission requested",
   "permissionRequestingLabel": "{source} IS REQUESTING PERMISSION:",
   "@permissionRequestingLabel": {
