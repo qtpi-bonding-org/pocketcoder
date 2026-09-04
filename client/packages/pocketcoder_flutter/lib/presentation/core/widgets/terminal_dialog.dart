@@ -35,8 +35,9 @@ class TerminalDialog extends StatelessWidget {
             VSpace.x2,
             Padding(
               padding: EdgeInsets.all(AppSizes.space * 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: AppSizes.space * 2,
                 children: actions,
               ),
             ),
