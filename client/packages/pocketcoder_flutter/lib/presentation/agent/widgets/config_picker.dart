@@ -1,5 +1,6 @@
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 
@@ -39,7 +40,7 @@ class _ConfigPickerState extends State<ConfigPicker> {
                   padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
                   child: Row(children: [
                     Text(
-                        _expanded ? '[v]' : '[>]',
+                        _expanded ? RowAffordance.expand.glyph : RowAffordance.collapse.glyph,
                         style: TextStyle(
                             color: colors.onSurface.withValues(alpha: .5),
                             fontFamily: AppFonts.family)),

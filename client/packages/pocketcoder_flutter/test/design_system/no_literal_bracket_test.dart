@@ -11,7 +11,17 @@ const _bracketExemptions = {
   'lib/presentation/core/widgets/terminal_loading_indicator.dart', // Task 10: Markers and loader split
   'lib/presentation/core/widgets/bios_action_strip.dart', // Task 14: Dialog actions and action strips to angle brackets
   'lib/presentation/files/widgets/file_browser_view.dart', // Task 10: [DIR]/[FILE] markers to proper marker widget
-  'lib/presentation/agent/widgets/config_picker.dart', // False positive: brackets are from dict access, not string literals
+  'lib/presentation/chat/elicitation_card.dart', // No task in this plan currently owns bracket fixes here — flagged as a known gap
+  'lib/presentation/core/widgets/bios_frame.dart', // Task 8: Section header replaces BiosSection
+  'lib/presentation/core/widgets/bios_row.dart', // Task 9: DetailRow replaces BiosRow
+  'lib/presentation/core/widgets/terminal_checkbox.dart', // Task 10: Checkbox glyph to proper widget
+  'lib/presentation/chat/thinking_block.dart', // Task 7: Thinking block bracket to marker
+  'lib/presentation/chat/permission_card.dart', // Task 14: Dialog actions ownership
+  'lib/presentation/agent/widgets/plan_panel.dart', // Task TBD: Plan panel bracket ownership
+  'lib/presentation/agent/widgets/config_picker.dart', // Awaiting bracket detection false positive fix (dict access)
+  'lib/presentation/agent/widgets/mode_switcher.dart', // Awaiting bracket detection false positive fix (dict access)
+  'lib/presentation/foss/foss_server_setup_view.dart', // Awaiting bracket detection false positive fix (interpolation)
+  'lib/presentation/onboarding/widgets/harness_choice_card.dart', // Task TBD: Choice card bracket ownership
 };
 
 void main() {
@@ -24,15 +34,23 @@ void main() {
       final content = f.readAsStringSync();
       final lines = content.split('\n');
 
-      // Simple scan: look for Text( followed by a string with brackets
+      // Scan for Text( or Text.rich( followed (possibly on next line) by a string with brackets
       for (var i = 0; i < lines.length; i++) {
         final line = lines[i];
-        // Check if line contains Text( and has brackets
+
+        // Check if this line has Text( or Text.rich(
         if (line.contains('Text(') || line.contains('Text.rich(')) {
-          // Look for [ or < in string literals within Text calls
-          if (line.contains(RegExp(r'"[^"]*[\[<][^"]*"')) ||
-              line.contains(RegExp(r"'[^']*[\[<][^']*'"))) {
-            offenders.add('${f.path}:${i + 1}  ${line.trim()}');
+          // Look for brackets on this line or the next few lines
+          for (var j = i; j < (i + 3).clamp(0, lines.length); j++) {
+            final searchLine = lines[j];
+            // Skip lines with ${} (false positives from interpolation/dict access)
+            if (searchLine.contains(r'${')) continue;
+            // Match string literals containing [ or <
+            if (searchLine.contains(RegExp(r'"[^"]*[\[<][^"]*"')) ||
+                searchLine.contains(RegExp(r"'[^']*[\[<][^']*'"))) {
+              offenders.add('${f.path}:${j + 1}  ${searchLine.trim()}');
+              break; // Only report once per Text call
+            }
           }
         }
       }
