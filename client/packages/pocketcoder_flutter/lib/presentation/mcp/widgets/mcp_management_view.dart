@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_fiel
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class McpManagementView extends StatelessWidget {
   const McpManagementView(
@@ -97,7 +98,7 @@ class McpManagementView extends StatelessWidget {
                     onTap: () => _configDialog(context, server)),
                 BiosActionStripItem(
                     label: context.l10n.mcpDeny,
-                    color: context.terminalColors.warning,
+                    kind: ActionKind.refusal,
                     onTap: () => onDeny(server.id)),
               ])
             : server.status == McpServerStatus.approved
@@ -107,7 +108,7 @@ class McpManagementView extends StatelessWidget {
                         onTap: () => _configDialog(context, server)),
                     BiosActionStripItem(
                         label: context.l10n.mcpRevoke,
-                        color: context.terminalColors.danger,
+                        kind: ActionKind.destructive,
                         onTap: () => onDeny(server.id)),
                   ])
                 : null;
@@ -188,7 +189,7 @@ class McpManagementView extends StatelessWidget {
                         Expanded(
                             child: TerminalButton(
                                 label: context.l10n.mcpRevoke,
-                                color: context.terminalColors.danger,
+                                kind: ActionKind.destructive,
                                 onTap: () => onDeny(server.id))),
                       ],
                     ]),
@@ -284,19 +285,21 @@ class McpManagementView extends StatelessWidget {
           String submitLabel, VoidCallback submit) =>
       showDialog<void>(
           context: context,
-          builder: (dialogContext) =>
-              TerminalDialog(title: title.toLowerCase(), content: content, actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    child: Text(cancel)),
-                HSpace.x2,
-                TextButton(
-                    onPressed: () {
-                      submit();
-                      Navigator.pop(dialogContext);
-                    },
-                    child: Text(submitLabel)),
-              ]));
+          builder: (dialogContext) => TerminalDialog(
+                  title: title.toLowerCase(),
+                  content: content,
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(cancel)),
+                    HSpace.x2,
+                    TextButton(
+                        onPressed: () {
+                          submit();
+                          Navigator.pop(dialogContext);
+                        },
+                        child: Text(submitLabel)),
+                  ]));
 }
 
 Map<String, dynamic> _resolveConfigSchema(McpServer server) =>

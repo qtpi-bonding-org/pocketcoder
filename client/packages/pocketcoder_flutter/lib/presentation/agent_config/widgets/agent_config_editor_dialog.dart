@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_option_picker.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/is_default_toggle.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class AgentConfigEditorDialog extends StatefulWidget {
   const AgentConfigEditorDialog({
@@ -73,7 +74,9 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
     return TerminalDialog(
       title: existing == null
           ? context.l10n.agentConfigTitle.toLowerCase()
-          : context.l10n.agentConfigDialogTitle(existing.name.toUpperCase()).toLowerCase(),
+          : context.l10n
+              .agentConfigDialogTitle(existing.name.toUpperCase())
+              .toLowerCase(),
       content: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: AppSizes.pickerHeight,
@@ -126,7 +129,7 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
                 VSpace.x2,
                 TerminalButton(
                   label: context.l10n.agentConfigDelete,
-                  isPrimary: false,
+                  kind: ActionKind.neutral,
                   onTap: onDelete,
                 ),
               ],
@@ -137,7 +140,7 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
       actions: [
         TerminalButton(
           label: context.l10n.actionCancel,
-          isPrimary: false,
+          kind: ActionKind.neutral,
           onTap: () => Navigator.of(context).pop(),
         ),
         HSpace.x2,

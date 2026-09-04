@@ -1,3 +1,4 @@
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 // ElicitationCard renders a pending ACP form inline in the message timeline.
 // It is Cubit-free: the adapter owns submission side effects and supplies the
 // serialized response callback.
@@ -134,7 +135,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
               Expanded(
                 child: TerminalButton(
                   label: context.l10n.actionCancel,
-                  isPrimary: false,
+                  kind: ActionKind.neutral,
                   onTap: () => _submit(context, ElicitationResponse.cancel()),
                 ),
               ),
@@ -142,7 +143,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
               Expanded(
                 child: TerminalButton(
                   label: context.l10n.chatDecline,
-                  isPrimary: false,
+                  kind: ActionKind.neutral,
                   onTap: () => _submit(context, ElicitationResponse.decline()),
                 ),
               ),

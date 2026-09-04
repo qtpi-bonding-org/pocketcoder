@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
@@ -73,7 +74,7 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
               ? context.l10n.onboardingServerConnecting
               : context.l10n.onboardingLogin,
           onTap: loading ? () {} : _login,
-          emphasis: Emphasis.outlined,
+          kind: ActionKind.primary,
         ),
       ],
       body: OnboardingContentShell(

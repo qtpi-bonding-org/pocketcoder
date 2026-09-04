@@ -133,8 +133,8 @@ void main() {
     await tester.pumpAndSettle();
 
     bool isOn(String label) {
-      final row = find.ancestor(
-          of: find.text(label), matching: find.byType(DetailRow));
+      final row =
+          find.ancestor(of: find.text(label), matching: find.byType(DetailRow));
       return find
           .descendant(of: row, matching: find.text('on'))
           .evaluate()

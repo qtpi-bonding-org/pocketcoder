@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/errors/widgets/error_tile.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class ErrorInboxScreen extends StatelessWidget {
   const ErrorInboxScreen(
@@ -52,14 +53,12 @@ class ErrorInboxScreen extends StatelessWidget {
                           BiosActionButton(
                               action: BiosActionStripItem(
                                   label: context.l10n.errorsCopyAll,
-                                  color: context.colorScheme.primary,
-                                  emphasis: Emphasis.outlined,
+                                  kind: ActionKind.primary,
                                   onTap: onCopyAll)),
                           BiosActionButton(
                               action: BiosActionStripItem(
                                   label: context.l10n.errorsClearAll,
-                                  color: context.terminalColors.danger,
-                                  emphasis: Emphasis.outlined,
+                                  kind: ActionKind.destructive,
                                   onTap: onClearAll)),
                         ])),
                 // A plain Column here overflows once the tiles' combined

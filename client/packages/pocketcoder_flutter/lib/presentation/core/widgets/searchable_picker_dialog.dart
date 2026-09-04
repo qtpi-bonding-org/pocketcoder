@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class SearchablePickerDialog<T> extends StatefulWidget {
   const SearchablePickerDialog(
@@ -171,7 +172,7 @@ class _SearchablePickerDialogState<T> extends State<SearchablePickerDialog<T>> {
         actions: [
           TerminalButton(
               label: context.l10n.actionCancel,
-              isPrimary: false,
+              kind: ActionKind.neutral,
               onTap: () => Navigator.of(context).pop()),
         ]);
   }

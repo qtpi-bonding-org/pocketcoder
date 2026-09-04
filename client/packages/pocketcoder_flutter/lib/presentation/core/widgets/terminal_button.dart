@@ -1,77 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
-class TerminalButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final bool isPrimary;
-  final Color? color;
-  final bool isLoading;
-
-  final bool filled;
-
+class TerminalButton extends StatefulWidget {
   const TerminalButton({
     super.key,
     required this.label,
     required this.onTap,
-    this.isPrimary = true,
-    this.color,
+    this.kind = ActionKind.neutral,
     this.isLoading = false,
-    this.filled = true,
   });
+
+  final String label;
+  final VoidCallback onTap;
+  final ActionKind kind;
+  final bool isLoading;
+
+  @override
+  State<TerminalButton> createState() => _TerminalButtonState();
+}
+
+class _TerminalButtonState extends State<TerminalButton> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final accentColor =
-        color ?? (isPrimary ? colors.primary : colors.onSurface);
-    final textColor = filled ? colors.surface : accentColor;
-    final bgColor = filled ? accentColor : Colors.transparent;
+    final role = widget.kind.role;
 
-    return InkWell(
-      onTap: isLoading ? null : onTap,
+    final label = TerminalText('<${widget.label}>', role: role);
+    final content = Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (widget.isLoading) ...[
+          SizedBox(
+            width: AppSizes.progressIndicatorSize,
+            height: AppSizes.progressIndicatorSize,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  _pressed ? AppPalette.ground : role.color),
+            ),
+          ),
+          HSpace.x2,
+        ],
+        Flexible(
+          child: _pressed
+              ? ColorFiltered(
+                  colorFilter: const ColorFilter.mode(
+                      AppPalette.ground, BlendMode.srcIn),
+                  child: label,
+                )
+              : label,
+        ),
+      ],
+    );
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.isLoading ? null : widget.onTap,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
       child: Container(
+        color: _pressed ? role.color : Colors.transparent,
         padding: EdgeInsets.symmetric(
           horizontal: AppSizes.space * 2,
           vertical: AppSizes.space,
         ),
-        decoration: BoxDecoration(
-          color: isLoading ? bgColor.withValues(alpha: 0.5) : bgColor,
-          border: Border.all(
-            color: accentColor,
-            width: AppSizes.borderWidth,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isLoading) ...[
-              SizedBox(
-                width: AppSizes.progressIndicatorSize,
-                height: AppSizes.progressIndicatorSize,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(textColor),
-                ),
-              ),
-              HSpace.x2,
-            ],
-            Flexible(
-              child: Text(
-                label.toUpperCase(),
-                textAlign: TextAlign.center,
-                softWrap: true,
-                style: TextStyle(
-                  fontFamily: AppFonts.family,
-                  color: textColor,
-                  fontWeight: AppFonts.heavy,
-                  package: 'pocketcoder_flutter',
-                ),
-              ),
-            ),
-          ],
-        ),
+        child: content,
       ),
     );
   }

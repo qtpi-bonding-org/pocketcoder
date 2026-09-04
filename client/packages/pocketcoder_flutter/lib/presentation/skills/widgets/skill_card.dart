@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/domain/models/skill.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class SkillCard extends StatelessWidget {
   const SkillCard(
@@ -30,13 +31,13 @@ class SkillCard extends StatelessWidget {
           Expanded(
               child: TerminalButton(
                   label: context.l10n.skillsEditButton,
-                  isPrimary: false,
+                  kind: ActionKind.neutral,
                   onTap: () => onEdit(skill))),
           HSpace.x2,
           Expanded(
             child: TerminalButton(
                 label: context.l10n.skillsDeleteButton,
-                color: context.terminalColors.warning,
+                kind: ActionKind.refusal,
                 onTap: () => onDelete(skill.id)),
           ),
         ]),

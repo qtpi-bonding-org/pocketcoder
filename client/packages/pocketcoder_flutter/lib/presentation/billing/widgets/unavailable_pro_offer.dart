@@ -3,6 +3,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class UnavailableProOffer extends StatelessWidget {
   const UnavailableProOffer({super.key, required this.onRestore});
@@ -17,7 +18,9 @@ class UnavailableProOffer extends StatelessWidget {
       TerminalText(context.l10n.proUnavailableBody, role: TextRole.body),
       VSpace.x3,
       TerminalButton(
-          label: context.l10n.proRestore, onTap: onRestore, isPrimary: false),
+          label: context.l10n.proRestore,
+          onTap: onRestore,
+          kind: ActionKind.neutral),
     ]);
   }
 }

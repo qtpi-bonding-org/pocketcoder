@@ -3,6 +3,7 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
@@ -59,7 +60,7 @@ class _CreateAccountViewState extends State<CreateAccountView> {
           TerminalAction(
               label: context.l10n.actionContinue,
               onTap: widget.isValid ? widget.onContinue : () {},
-              emphasis: widget.isValid ? Emphasis.outlined : null),
+              kind: widget.isValid ? ActionKind.primary : ActionKind.neutral),
         ],
         body: OnboardingContentShell(
           child: Column(

@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 sealed class CredentialConnectionStep {
   const CredentialConnectionStep();
@@ -118,11 +119,11 @@ class CredentialConnectionView extends StatelessWidget {
     return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
       TerminalButton(
           label: context.l10n.credentialConnectionCancel,
-          isPrimary: false,
+          kind: ActionKind.neutral,
           onTap: onCancel),
       TerminalButton(
           label: context.l10n.credentialConnectionRetry,
-          isPrimary: false,
+          kind: ActionKind.neutral,
           onTap: onRetry),
     ]);
   }

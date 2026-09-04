@@ -160,10 +160,10 @@ void main() {
         await _settle(tester);
 
         expect(find.text('Pick a value'), findsOneWidget);
-        expect(find.text('SUBMIT'), findsOneWidget);
+        expect(find.text('<SUBMIT>'), findsOneWidget);
 
         await tester.enterText(find.byType(TextField), 'blue');
-        await tester.tap(find.text('SUBMIT'));
+        await tester.tap(find.text('<SUBMIT>'));
         await _settle(tester);
 
         expect(repo.respondElicitationCalls, hasLength(1));
@@ -239,7 +239,7 @@ void main() {
       final form = tester.widget<Text>(find.text('FORM'));
       expect(form.style?.color, const Color(0xFF00B82A));
 
-      final cancel = tester.widget<Text>(find.text('CANCEL'));
+      final cancel = tester.widget<Text>(find.text('<CANCEL>'));
       expect(cancel.style?.color, isNot(const Color(0xFFFF3333)));
     });
   });

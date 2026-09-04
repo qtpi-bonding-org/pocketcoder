@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/application/agent/permission_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
@@ -161,9 +162,9 @@ void main() {
         await _settle(tester);
 
         expect(find.text('run shell'), findsOneWidget);
-        expect(find.text('ALLOW ONCE'), findsOneWidget);
+        expect(find.text('<Allow Once>'), findsOneWidget);
 
-        await tester.tap(find.text('ALLOW ONCE').last);
+        await tester.tap(find.text('<Allow Once>').last);
         await _settle(tester);
 
         expect(repo.respondPermissionCalls, hasLength(1));
@@ -212,7 +213,7 @@ void main() {
       // asked for, just its own internal request id in tiny gray text.
       expect(find.text('Permission requested'), findsOneWidget);
 
-      await tester.tap(find.text('DENY'));
+      await tester.tap(find.text('<DENY>'));
       await _settle(tester);
 
       expect(repo.respondPermissionCalls, hasLength(1));
@@ -255,17 +256,13 @@ void main() {
       await _settle(tester);
 
       final allowButton = tester.widget<TerminalButton>(
-          find.widgetWithText(TerminalButton, 'ALLOW ONCE'));
+          find.widgetWithText(TerminalButton, '<Allow Once>'));
       final rejectButton = tester.widget<TerminalButton>(
-          find.widgetWithText(TerminalButton, 'REJECT ONCE'));
+          find.widgetWithText(TerminalButton, '<Reject Once>'));
 
-      expect(allowButton.filled, isFalse);
-      expect(rejectButton.filled, isFalse);
-      expect(allowButton.color, isNot(rejectButton.color));
-
-      final context = tester.element(find.byType(PermissionCard));
-      expect(rejectButton.color, context.terminalColors.warning);
-      expect(allowButton.color, context.colorScheme.primary);
+      expect(allowButton.kind, isNot(rejectButton.kind));
+      expect(rejectButton.kind, ActionKind.refusal);
+      expect(allowButton.kind, ActionKind.primary);
     });
   });
 }

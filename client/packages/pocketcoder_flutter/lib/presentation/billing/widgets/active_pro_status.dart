@@ -3,6 +3,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class ActiveProStatus extends StatelessWidget {
   const ActiveProStatus(
@@ -24,10 +25,12 @@ class ActiveProStatus extends StatelessWidget {
       TerminalButton(
           label: context.l10n.proManageSubscription,
           onTap: onManageSubscription,
-          isPrimary: false),
+          kind: ActionKind.neutral),
       VSpace.x1,
       TerminalButton(
-          label: context.l10n.proRestore, onTap: onRestore, isPrimary: false),
+          label: context.l10n.proRestore,
+          onTap: onRestore,
+          kind: ActionKind.neutral),
     ]);
   }
 }

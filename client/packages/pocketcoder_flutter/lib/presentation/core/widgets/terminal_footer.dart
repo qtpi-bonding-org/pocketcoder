@@ -1,27 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 
 /// A configuration object for a single footer button
 class TerminalAction {
-  final String label; // e.g. "HELP"
+  final String label; // e.g. "help"
   final VoidCallback onTap;
   final bool hasBadge;
   final bool isActive;
-  final Color? color;
-
-  /// Overrides the emphasis derived from [isActive] -- lets a footer
-  /// button read as the recommended next action (.outlined) without being
-  /// the active tab. See the emphasis-states spec (2026-08-23).
-  final Emphasis? emphasis;
+  final ActionKind kind;
 
   TerminalAction({
     required this.label,
     required this.onTap,
     this.hasBadge = false,
     this.isActive = false,
-    this.color,
-    this.emphasis,
+    this.kind = ActionKind.neutral,
   });
 
   BiosActionStripItem get _asStripItem => BiosActionStripItem(
@@ -29,8 +24,7 @@ class TerminalAction {
         onTap: onTap,
         hasBadge: hasBadge,
         isActive: isActive,
-        color: color,
-        emphasis: emphasis,
+        kind: kind,
       );
 }
 
@@ -62,8 +56,7 @@ class TerminalFooter extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: actions.map((action) {
                 final stripItem = action._asStripItem;
-                final showDivider =
-                    stripItem.resolvedEmphasis != Emphasis.outlined;
+                final showDivider = stripItem.kind != ActionKind.primary;
                 return Container(
                   decoration: BoxDecoration(
                     border: showDivider

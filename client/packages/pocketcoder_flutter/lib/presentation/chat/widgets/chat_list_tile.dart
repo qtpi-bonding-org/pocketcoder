@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class ChatListTile extends StatelessWidget {
   const ChatListTile({
@@ -82,7 +83,7 @@ class ChatListTile extends StatelessWidget {
         actions: [
           TerminalButton(
             label: context.l10n.chatListArchive,
-            isPrimary: false,
+            kind: ActionKind.neutral,
             onTap: () {
               Navigator.of(dialogContext).pop();
               onArchive(chat.id);
@@ -91,7 +92,7 @@ class ChatListTile extends StatelessWidget {
           HSpace.x2,
           TerminalButton(
             label: context.l10n.chatListDelete,
-            isPrimary: false,
+            kind: ActionKind.neutral,
             onTap: () {
               Navigator.of(dialogContext).pop();
               onDelete(chat.id);

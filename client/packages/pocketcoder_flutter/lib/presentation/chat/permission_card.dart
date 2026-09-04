@@ -3,6 +3,7 @@
 // permission side effects and supplies this view's callback.
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/tinted_alert_card.dart';
@@ -86,9 +87,7 @@ class PermissionCard extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TerminalButton(
                 label: context.l10n.actionDeny,
-                isPrimary: false,
-                filled: false,
-                color: terminalColors.warning,
+                kind: ActionKind.refusal,
                 onTap: () => onSelect(requestId, cancelled: true),
               ),
             )
@@ -100,10 +99,9 @@ class PermissionCard extends StatelessWidget {
                 for (final option in options)
                   TerminalButton(
                     label: option.label,
-                    filled: false,
-                    color: option.kind.startsWith('reject')
-                        ? terminalColors.warning
-                        : colors.primary,
+                    kind: option.kind.startsWith('reject')
+                        ? ActionKind.refusal
+                        : ActionKind.primary,
                     onTap: () => onSelect(
                       requestId,
                       optionId: option.optionId,

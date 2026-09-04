@@ -289,10 +289,10 @@ void main() {
       await tester.pump();
     }
 
-    expect(find.text('[OPEN AUTHORIZATION PAGE]'), findsOneWidget);
+    expect(find.text('<OPEN AUTHORIZATION PAGE>'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
 
-    await tester.tap(find.text('[OPEN AUTHORIZATION PAGE]'));
+    await tester.tap(find.text('<OPEN AUTHORIZATION PAGE>'));
     await tester.pump();
     expect(launcher.opened, [_verificationUri]);
 
@@ -476,7 +476,7 @@ void main() {
 
     expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), '  one-time-code  ');
-    await tester.tap(find.text('[SUBMIT]'));
+    await tester.tap(find.text('<SUBMIT>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -511,7 +511,7 @@ void main() {
       await tester.pump();
     }
 
-    await tester.tap(find.text('[OPEN AUTHORIZATION PAGE]'));
+    await tester.tap(find.text('<OPEN AUTHORIZATION PAGE>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -609,7 +609,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('[COPY]'));
+    await tester.tap(find.text('<COPY>'));
     await tester.pump();
 
     expect(find.byType(SnackBar), findsOneWidget);

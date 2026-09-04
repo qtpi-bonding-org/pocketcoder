@@ -8,11 +8,12 @@ void main() {
   testWidgets('prefix is dim, name is a value, detail is a label',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(body: ServiceLine(
-        name: 'pocketbase', detail: '6d 4h', status: StatusMarker.ok)),
+      home: Scaffold(
+          body: ServiceLine(
+              name: 'pocketbase', detail: '6d 4h', status: StatusMarker.ok)),
     ));
-    expect(tester.widget<Text>(find.text('*')).style!.color,
-        TextRole.label.color);
+    expect(
+        tester.widget<Text>(find.text('*')).style!.color, TextRole.label.color);
     expect(tester.widget<Text>(find.text('pocketbase')).style!.color,
         TextRole.value.color);
     expect(tester.widget<Text>(find.text('6d 4h')).style!.color,
@@ -21,8 +22,8 @@ void main() {
 
   testWidgets('detail is optional', (tester) async {
     await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(body: ServiceLine(
-        name: 'goose', status: StatusMarker.attention)),
+      home: Scaffold(
+          body: ServiceLine(name: 'goose', status: StatusMarker.attention)),
     ));
     expect(find.text('goose'), findsOneWidget);
   });

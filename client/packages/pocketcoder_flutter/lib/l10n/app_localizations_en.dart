@@ -2987,11 +2987,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get credentialConnectionApiKey => 'Connect with an API key.';
 
   @override
-  String get credentialConnectionCopy => '[COPY]';
+  String get credentialConnectionCopy => 'COPY';
 
   @override
   String get credentialConnectionOpenAuthorizationPage =>
-      '[OPEN AUTHORIZATION PAGE]';
+      'OPEN AUTHORIZATION PAGE';
 
   @override
   String get credentialConnectionPasteCode =>
@@ -3002,7 +3002,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter the code shown on the authorization page.';
 
   @override
-  String get credentialConnectionSubmit => '[SUBMIT]';
+  String get credentialConnectionSubmit => 'SUBMIT';
 
   @override
   String get credentialConnectionCancel => 'CANCEL';

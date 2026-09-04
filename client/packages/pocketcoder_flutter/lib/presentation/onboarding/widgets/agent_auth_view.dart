@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/harness_choice_card.dart';
@@ -69,7 +70,7 @@ class AgentAuthView extends StatelessWidget {
             TerminalAction(
                 label: context.l10n.actionContinue,
                 onTap: continueTap,
-                emphasis: Emphasis.outlined),
+                kind: ActionKind.primary),
         ],
         body: _buildBody(context, supported));
   }

@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/application/server_control/server_control_st
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 String _buttonLabel(BuildContext context, ServerControlOperation operation) =>
     switch (operation) {
@@ -49,11 +50,11 @@ class ControlGroupRow extends StatelessWidget {
                 child: BiosActionStrip(actions: [
                   BiosActionStripItem(
                       label: _buttonLabel(context, left),
-                      emphasis: Emphasis.outlined,
+                      kind: ActionKind.primary,
                       onTap: () => onRun(left)),
                   BiosActionStripItem(
                       label: _buttonLabel(context, right),
-                      emphasis: Emphasis.outlined,
+                      kind: ActionKind.primary,
                       onTap: () => onRun(right)),
                 ]))),
       ]));

@@ -37,7 +37,6 @@ class ChatListView extends StatelessWidget {
             child: TerminalButton(
               label: context.l10n.chatListNewChat,
               onTap: onNewChat,
-              filled: false,
             ),
           ),
           Expanded(

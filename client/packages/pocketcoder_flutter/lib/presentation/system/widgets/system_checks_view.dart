@@ -47,10 +47,8 @@ class SystemChecksView extends StatelessWidget {
                             itemCount: state.checks.length,
                             itemBuilder: (context, index) {
                               final check = state.checks[index];
-                              return _buildCheckRow(
-                                  context,
-                                  check.name.toUpperCase(),
-                                  check.status);
+                              return _buildCheckRow(context,
+                                  check.name.toUpperCase(), check.status);
                             })),
               ]);
             })));
@@ -60,10 +58,13 @@ class SystemChecksView extends StatelessWidget {
       BuildContext context, String component, HealthcheckStatus status) {
     final marker = switch (status) {
       HealthcheckStatus.ready => StatusMarker.ok,
-      HealthcheckStatus.starting || HealthcheckStatus.degraded =>
+      HealthcheckStatus.starting ||
+      HealthcheckStatus.degraded =>
         StatusMarker.attention,
-      HealthcheckStatus.offline || HealthcheckStatus.error ||
-      HealthcheckStatus.unknown => StatusMarker.failed,
+      HealthcheckStatus.offline ||
+      HealthcheckStatus.error ||
+      HealthcheckStatus.unknown =>
+        StatusMarker.failed,
     };
     return ServiceLine(name: component, status: marker);
   }

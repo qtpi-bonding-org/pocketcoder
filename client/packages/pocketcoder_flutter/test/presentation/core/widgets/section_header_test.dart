@@ -9,7 +9,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: SectionHeader(name: 'services')),
     ));
-    expect(find.text('●'), findsOneWidget);   // the bullet
+    expect(find.text('●'), findsOneWidget); // the bullet
     expect(find.text('services'), findsOneWidget);
     expect(find.byType(Divider), findsNothing,
         reason: 'the divider is the settings-utility tell (spec section 2)');
@@ -17,8 +17,9 @@ void main() {
 
   testWidgets('bullet takes the aggregate state colour', (tester) async {
     await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(body: SectionHeader(
-        name: 'gatekeeper', state: SectionState.attention)),
+      home: Scaffold(
+          body:
+              SectionHeader(name: 'gatekeeper', state: SectionState.attention)),
     ));
     final bullet = tester.widget<Text>(find.text('●'));
     expect(bullet.style!.color, TextRole.warn.color);

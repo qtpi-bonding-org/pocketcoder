@@ -16,6 +16,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'adapters/notification_settings_adapter.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class NotificationSettingsScreen extends StatelessWidget {
   const NotificationSettingsScreen({super.key});
@@ -111,7 +112,7 @@ class _SelfHostedPushOption extends StatelessWidget {
       TerminalButton(
           label: context.l10n.proConfigureSelfHostedPush,
           onTap: onConfigure,
-          isPrimary: false),
+          kind: ActionKind.neutral),
     ]);
   }
 }

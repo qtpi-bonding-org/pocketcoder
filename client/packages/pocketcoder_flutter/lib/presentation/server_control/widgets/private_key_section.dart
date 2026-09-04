@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/application/server_control/server_control_st
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/copy_button.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class PrivateKeySection extends StatefulWidget {
   const PrivateKeySection(
@@ -58,7 +59,7 @@ class PrivateKeySectionState extends State<PrivateKeySection> {
             label: _revealed
                 ? context.l10n.serverControlHide
                 : context.l10n.serverControlShow,
-            emphasis: Emphasis.outlined,
+            kind: ActionKind.primary,
             onTap: () => _toggleReveal(context),
           ),
         ),

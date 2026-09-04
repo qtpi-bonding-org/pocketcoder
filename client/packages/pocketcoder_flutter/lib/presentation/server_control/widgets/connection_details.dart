@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/copy_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class ConnectionDetails extends StatefulWidget {
   const ConnectionDetails({super.key, required this.details});
@@ -64,7 +65,7 @@ class ConnectionDetailsState extends State<ConnectionDetails> {
                       label: _showPassword
                           ? context.l10n.serverControlHide
                           : context.l10n.serverControlShow,
-                      emphasis: Emphasis.outlined,
+                      kind: ActionKind.primary,
                       onTap: () => _toggleShowPassword(context))),
               HSpace.x1,
               CopyButton(value: value),

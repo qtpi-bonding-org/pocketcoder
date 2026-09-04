@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_editor_dialog.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class AgentConfigView extends StatelessWidget {
   const AgentConfigView(
@@ -118,7 +119,8 @@ class AgentConfigView extends StatelessWidget {
     return showDialog<bool>(
         context: dialogContext,
         builder: (confirmContext) => TerminalDialog(
-                title: dialogContext.l10n.agentConfigDeleteConfirmTitle.toLowerCase(),
+                title: dialogContext.l10n.agentConfigDeleteConfirmTitle
+                    .toLowerCase(),
                 content: TerminalText(
                   dialogContext.l10n.agentConfigDeleteConfirmBody(
                       existing.name.toUpperCase()),
@@ -127,7 +129,7 @@ class AgentConfigView extends StatelessWidget {
                 actions: [
                   TerminalButton(
                       label: dialogContext.l10n.actionCancel,
-                      isPrimary: false,
+                      kind: ActionKind.neutral,
                       onTap: () => Navigator.of(confirmContext).pop(false)),
                   HSpace.x2,
                   TerminalButton(

@@ -147,7 +147,6 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
-        filled: true,
         fillColor: palette.backgroundPrimary,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.zero,

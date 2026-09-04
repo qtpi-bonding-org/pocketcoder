@@ -194,7 +194,6 @@ class _TerminalInputState extends State<TerminalInput> {
           focusedBorder: InputBorder.none,
           isDense: true,
           contentPadding: EdgeInsets.zero,
-          filled: false,
         ),
       ),
     );

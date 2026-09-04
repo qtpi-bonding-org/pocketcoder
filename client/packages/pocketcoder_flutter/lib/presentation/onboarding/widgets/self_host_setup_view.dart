@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
@@ -30,7 +31,7 @@ class SelfHostSetupView extends StatelessWidget {
         TerminalAction(
             label: context.l10n.onboardingSelfHostActionConnect,
             onTap: onConnect,
-            emphasis: Emphasis.outlined),
+            kind: ActionKind.primary),
       ],
       body: OnboardingContentShell(
           child:
@@ -40,7 +41,8 @@ class SelfHostSetupView extends StatelessWidget {
             message: context.l10n.onboardingSelfHostPoco),
         VSpace.x3,
         DecisionFrame(
-            title: context.l10n.onboardingSelfHostRequirementsTitle.toLowerCase(),
+            title:
+                context.l10n.onboardingSelfHostRequirementsTitle.toLowerCase(),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

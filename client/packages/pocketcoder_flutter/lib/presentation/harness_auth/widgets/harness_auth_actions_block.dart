@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class HarnessAuthActionsBlock extends StatelessWidget {
   const HarnessAuthActionsBlock(
@@ -50,8 +51,7 @@ class HarnessAuthActionsBlock extends StatelessWidget {
       VSpace.x2,
       TerminalButton(
           label: l10n.harnessAuthRefresh,
-          isPrimary: false,
-          filled: false,
+          kind: ActionKind.neutral,
           isLoading: isBusy,
           onTap: isBusy ? () {} : onRefresh),
       if (status.attempt case final attempt?)
@@ -97,7 +97,6 @@ class HarnessAuthActionsBlock extends StatelessWidget {
                 TerminalButton(
                     label: context.l10n.harnessAuthAccountLogin,
                     onTap: isBusy ? () {} : () => onStartAccount(edge.provider),
-                    filled: false,
                     isLoading: isBusy),
             ]
           : edges.isNotEmpty
@@ -105,7 +104,6 @@ class HarnessAuthActionsBlock extends StatelessWidget {
                   TerminalButton(
                       label: context.l10n.providerScreenAddKey,
                       onTap: isBusy ? () {} : onUseApiKey,
-                      filled: false,
                       isLoading: isBusy),
                 ]
               : const <Widget>[];
@@ -120,13 +118,11 @@ class HarnessAuthActionsBlock extends StatelessWidget {
       return TerminalButton(
           label: context.l10n.harnessAuthDisconnect,
           onTap: isBusy ? () {} : onDisconnect,
-          filled: false,
           isLoading: isBusy);
     }
     return TerminalButton(
         label: context.l10n.harnessAuthCancel,
         onTap: isBusy ? () {} : onCancel,
-        filled: false,
         isLoading: isBusy);
   }
 

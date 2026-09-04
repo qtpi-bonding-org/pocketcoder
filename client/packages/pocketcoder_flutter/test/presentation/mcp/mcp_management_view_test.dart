@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
@@ -57,7 +58,8 @@ void main() {
     final deny = tester
         .widgetList<BiosActionButton>(find.byType(BiosActionButton))
         .firstWhere((button) => button.action.label == 'DENY');
-    expect(deny.action.color, isNot(const Color(0xFFFF3333)));
+    expect(deny.action.kind, isNot(ActionKind.destructive));
+    expect(deny.action.kind, ActionKind.refusal);
   });
 
   testWidgets('approved REVOKE remains danger red', (tester) async {
@@ -77,11 +79,11 @@ void main() {
     final revoke = tester
         .widgetList<BiosActionButton>(find.byType(BiosActionButton))
         .firstWhere((button) => button.action.label == 'REVOKE');
-    expect(revoke.action.color, AppPalette.red);
+    expect(revoke.action.kind, ActionKind.destructive);
   });
 
-  testWidgets(
-      'renders a pending server as a DetailRow with a BiosActionStrip', (
+  testWidgets('renders a pending server as a DetailRow with a BiosActionStrip',
+      (
     tester,
   ) async {
     await tester.pumpWidget(

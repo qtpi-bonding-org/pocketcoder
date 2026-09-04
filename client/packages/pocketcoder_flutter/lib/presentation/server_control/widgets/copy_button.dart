@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class CopyButton extends StatelessWidget {
   const CopyButton({super.key, required this.value});
@@ -12,7 +13,7 @@ class CopyButton extends StatelessWidget {
   Widget build(BuildContext context) => BiosActionButton(
         action: BiosActionStripItem(
           label: context.l10n.serverControlCopy,
-          emphasis: Emphasis.outlined,
+          kind: ActionKind.primary,
           onTap: () async {
             await Clipboard.setData(ClipboardData(text: value));
             if (context.mounted) {

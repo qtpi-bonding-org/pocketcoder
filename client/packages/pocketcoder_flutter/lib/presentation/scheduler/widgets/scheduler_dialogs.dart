@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 void showEditScheduleDialog(
   BuildContext context,
@@ -19,9 +20,11 @@ void showEditScheduleDialog(
   showDialog(
     context: context,
     builder: (dialogContext) => TerminalDialog(
-      title: context.l10n.schedulerEditDialogTitle(
-        schedule.displayName.toUpperCase(),
-      ).toLowerCase(),
+      title: context.l10n
+          .schedulerEditDialogTitle(
+            schedule.displayName.toUpperCase(),
+          )
+          .toLowerCase(),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -41,24 +44,27 @@ void showEditScheduleDialog(
       ),
       actions: [
         TerminalDialogActions(
-          confirmLabel: context.l10n.schedulerSaveButton,
-          onConfirm: () {
-            final name = nameController.text.trim();
-            final cron = cronController.text.trim();
-            if (name.isEmpty || cron.isEmpty) {
-              return;
-            }
-            if (name != schedule.displayName) {
-              onRename(id: schedule.id, displayName: name);
-            }
-            if (cron != (schedule.cron ?? '')) {
-              onUpdateCron(id: schedule.id, cron: cron);
-            }
-            Navigator.of(dialogContext).pop();
-          },
-          cancelLabel: context.l10n.actionCancel,
-          onCancel: () => Navigator.of(dialogContext).pop(),
-        ),
+          actions: [
+            TerminalActionSpec(context.l10n.actionCancel, ActionKind.refusal,
+                () => Navigator.of(dialogContext).pop()),
+            TerminalActionSpec(
+              context.l10n.schedulerSaveButton,
+              ActionKind.primary,
+              () {
+                final name = nameController.text.trim();
+                final cron = cronController.text.trim();
+                if (name.isEmpty || cron.isEmpty) return;
+                if (name != schedule.displayName) {
+                  onRename(id: schedule.id, displayName: name);
+                }
+                if (cron != (schedule.cron ?? '')) {
+                  onUpdateCron(id: schedule.id, cron: cron);
+                }
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        )
       ],
     ),
   );
@@ -106,20 +112,23 @@ void showAddScheduleDialog(
       ),
       actions: [
         TerminalDialogActions(
-          confirmLabel: context.l10n.actionAdd,
-          onConfirm: () {
-            final name = nameController.text.trim();
-            final cron = cronController.text.trim();
-            final prompt = promptController.text.trim();
-            if (name.isEmpty || cron.isEmpty || prompt.isEmpty) {
-              return;
-            }
-            onCreate(displayName: name, cron: cron, prompt: prompt);
-            Navigator.of(dialogContext).pop();
-          },
-          cancelLabel: context.l10n.actionCancel,
-          onCancel: () => Navigator.of(dialogContext).pop(),
-        ),
+          actions: [
+            TerminalActionSpec(context.l10n.actionCancel, ActionKind.refusal,
+                () => Navigator.of(dialogContext).pop()),
+            TerminalActionSpec(
+              context.l10n.actionAdd,
+              ActionKind.primary,
+              () {
+                final name = nameController.text.trim();
+                final cron = cronController.text.trim();
+                final prompt = promptController.text.trim();
+                if (name.isEmpty || cron.isEmpty || prompt.isEmpty) return;
+                onCreate(displayName: name, cron: cron, prompt: prompt);
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        )
       ],
     ),
   );

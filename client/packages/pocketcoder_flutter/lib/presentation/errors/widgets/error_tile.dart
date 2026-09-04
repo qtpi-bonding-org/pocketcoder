@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class ErrorTile extends StatefulWidget {
   final ErrorBoxEntry entry;
@@ -37,8 +38,7 @@ class _ErrorTileState extends State<ErrorTile> {
         value:
             '${entry.errorData.errorCode} · ${DateFormat.yMd().add_Hm().format(entry.lastOccurred)} · '
             '${context.l10n.errorsOccurred(entry.occurrenceCount)}',
-        affordance:
-            _isExpanded ? RowAffordance.collapse : RowAffordance.expand,
+        affordance: _isExpanded ? RowAffordance.collapse : RowAffordance.expand,
         onTap: () => setState(() => _isExpanded = !_isExpanded),
       ),
       if (_isExpanded) ...[
@@ -51,12 +51,12 @@ class _ErrorTileState extends State<ErrorTile> {
             children: [
               TerminalButton(
                 label: context.l10n.errorsReportOnGithub,
-                isPrimary: false,
+                kind: ActionKind.neutral,
                 onTap: () => widget.onReportOnGithub(entry.errorData),
               ),
               TerminalButton(
                 label: context.l10n.errorsCopy,
-                isPrimary: true,
+                kind: ActionKind.primary,
                 onTap: () => widget.onCopy(entry.errorData),
               ),
             ],
@@ -75,7 +75,7 @@ class _ErrorTileState extends State<ErrorTile> {
         actions: [
           BiosActionStripItem(
             label: context.l10n.errorsDeleteAction,
-            color: context.terminalColors.danger,
+            kind: ActionKind.destructive,
             onTap: () => widget.onDelete(entry.id),
           ),
         ],

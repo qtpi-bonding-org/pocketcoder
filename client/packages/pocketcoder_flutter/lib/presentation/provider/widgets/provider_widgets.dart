@@ -10,6 +10,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class ProviderKeyEditorDialog extends StatefulWidget {
   const ProviderKeyEditorDialog(
@@ -107,7 +108,7 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
         actions: [
           TerminalButton(
               label: context.l10n.actionCancel,
-              isPrimary: false,
+              kind: ActionKind.neutral,
               onTap: () => Navigator.of(context).pop()),
           HSpace.x2,
           TerminalButton(label: context.l10n.actionSave, onTap: _handleSave),
@@ -135,7 +136,8 @@ class ProviderTargetPicker extends StatelessWidget {
         final picked = await showDialog<domain.Provider>(
             context: context,
             builder: (dialogContext) => SearchablePickerDialog<domain.Provider>(
-                title: dialogContext.l10n.providerScreenSelectProvider.toLowerCase(),
+                title: dialogContext.l10n.providerScreenSelectProvider
+                    .toLowerCase(),
                 items: targets,
                 itemLabel: (p) => p.name,
                 matches: (p, query) {

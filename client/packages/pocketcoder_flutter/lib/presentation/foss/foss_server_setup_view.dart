@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/application/foss/foss_server_setup_state.dar
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class FossServerSetupView extends StatelessWidget {
   const FossServerSetupView({super.key, required this.onSetupComplete});
@@ -34,7 +35,7 @@ class FossServerSetupView extends StatelessWidget {
                 if (state.phase == FossServerSetupPhase.idle)
                   TerminalButton(
                       label: context.l10n.fossServerSetupGenerateKey,
-                      isPrimary: true,
+                      kind: ActionKind.primary,
                       onTap: () =>
                           context.read<FossServerSetupCubit>().generateKey()),
                 if (state.publicKey case final publicKey?) ...[
@@ -54,7 +55,7 @@ class FossServerSetupView extends StatelessWidget {
                   if (state.phase != FossServerSetupPhase.connected)
                     TerminalButton(
                         label: context.l10n.fossServerSetupTestAndSave,
-                        isPrimary: true,
+                        kind: ActionKind.primary,
                         isLoading: state.phase == FossServerSetupPhase.testing,
                         onTap: () =>
                             context.read<FossServerSetupCubit>().testAndSave()),

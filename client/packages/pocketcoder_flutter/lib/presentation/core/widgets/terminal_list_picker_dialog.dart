@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/app_sizes.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 Future<T?> showTerminalListPicker<T>(
     {required BuildContext context,
@@ -37,7 +38,7 @@ Future<T?> showTerminalListPicker<T>(
               : [
                   TerminalButton(
                       label: cancelLabel,
-                      isPrimary: false,
+                      kind: ActionKind.neutral,
                       onTap: () => Navigator.of(dialogContext).pop()),
                 ]));
 }

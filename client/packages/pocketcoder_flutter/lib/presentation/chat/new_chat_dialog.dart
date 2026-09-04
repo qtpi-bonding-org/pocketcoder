@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_picker_field.
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 /// The selection a confirmed [NewChatDialog] returns — `null` fields mean
 /// "no override, inherit from the chat's poco_config" (design spec §5.7).
@@ -188,7 +189,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
       actions: [
         TerminalButton(
           label: context.l10n.newChatCancel,
-          isPrimary: false,
+          kind: ActionKind.neutral,
           onTap: () => Navigator.of(context).pop(),
         ),
         HSpace.x2,

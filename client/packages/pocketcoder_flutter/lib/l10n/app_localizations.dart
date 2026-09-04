@@ -5419,13 +5419,13 @@ abstract class AppLocalizations {
   /// No description provided for @credentialConnectionCopy.
   ///
   /// In en, this message translates to:
-  /// **'[COPY]'**
+  /// **'COPY'**
   String get credentialConnectionCopy;
 
   /// No description provided for @credentialConnectionOpenAuthorizationPage.
   ///
   /// In en, this message translates to:
-  /// **'[OPEN AUTHORIZATION PAGE]'**
+  /// **'OPEN AUTHORIZATION PAGE'**
   String get credentialConnectionOpenAuthorizationPage;
 
   /// No description provided for @credentialConnectionPasteCode.
@@ -5443,7 +5443,7 @@ abstract class AppLocalizations {
   /// No description provided for @credentialConnectionSubmit.
   ///
   /// In en, this message translates to:
-  /// **'[SUBMIT]'**
+  /// **'SUBMIT'**
   String get credentialConnectionSubmit;
 
   /// No description provided for @credentialConnectionCancel.

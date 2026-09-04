@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
 import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 import 'scheduler_dialogs.dart';
 
@@ -109,7 +110,7 @@ class SchedulerView extends StatelessWidget {
         BiosActionStripItem(
             label: context.l10n.schedulerDeleteButton,
             // Schedules can be recreated, so deletion is warning-level here.
-            color: context.terminalColors.warning,
+            kind: ActionKind.refusal,
             onTap: () => onDelete(schedule.id)),
       ]),
       VSpace.x2,

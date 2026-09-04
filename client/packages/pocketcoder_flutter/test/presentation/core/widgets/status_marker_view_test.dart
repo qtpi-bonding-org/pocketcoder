@@ -10,12 +10,12 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: StatusMarkerView(marker: StatusMarker.ok)),
     ));
-    expect(tester.widget<Text>(find.text('[')).style!.color,
-        TextRole.label.color);
-    expect(tester.widget<Text>(find.text(']')).style!.color,
-        TextRole.label.color);
-    expect(tester.widget<Text>(find.text('ok')).style!.color,
-        TextRole.ok.color);
+    expect(
+        tester.widget<Text>(find.text('[')).style!.color, TextRole.label.color);
+    expect(
+        tester.widget<Text>(find.text(']')).style!.color, TextRole.label.color);
+    expect(
+        tester.widget<Text>(find.text('ok')).style!.color, TextRole.ok.color);
   });
 
   testWidgets('failure and warning share the !! word, differ in colour',

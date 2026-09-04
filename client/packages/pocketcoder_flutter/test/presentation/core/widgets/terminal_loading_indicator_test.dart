@@ -18,8 +18,8 @@ void main() {
 
   testWidgets('renders a label as plain text below the spinner when given',
       (tester) async {
-    await tester.pumpWidget(
-        _wrap(const TerminalLoadingIndicator(label: 'connecting')));
+    await tester
+        .pumpWidget(_wrap(const TerminalLoadingIndicator(label: 'connecting')));
     expect(find.byType(TerminalSpinner), findsOneWidget);
     expect(find.text('connecting'), findsOneWidget);
     expect(find.text('[ CONNECTING ]'), findsNothing);

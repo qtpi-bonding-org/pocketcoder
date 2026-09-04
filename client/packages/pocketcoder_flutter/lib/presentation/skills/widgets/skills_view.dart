@@ -67,16 +67,16 @@ class SkillsView extends StatelessWidget {
         SectionHeader(name: context.l10n.skillsGlobalSection.toLowerCase()),
         Column(
             children: global
-                .map((skill) => SkillCard(
-                    skill: skill, onEdit: onEdit, onDelete: onDelete))
+                .map((skill) =>
+                    SkillCard(skill: skill, onEdit: onEdit, onDelete: onDelete))
                 .toList()),
       ],
       if (project.isNotEmpty) ...[
         SectionHeader(name: context.l10n.skillsProjectSection.toLowerCase()),
         Column(
             children: project
-                .map((skill) => SkillCard(
-                    skill: skill, onEdit: onEdit, onDelete: onDelete))
+                .map((skill) =>
+                    SkillCard(skill: skill, onEdit: onEdit, onDelete: onDelete))
                 .toList()),
       ],
       if (data.skills.isEmpty)
