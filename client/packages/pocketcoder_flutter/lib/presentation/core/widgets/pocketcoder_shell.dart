@@ -106,7 +106,11 @@ class PocketCoderShell extends StatelessWidget {
       body: Column(children: [
         ReleaseStatusBanner(
             state: releaseState, onDismiss: releaseScope?.onDismiss ?? () {}),
-        Expanded(child: body),
+        // Top-left, never centered: a screen's content shouldn't float in
+        // the middle of a short viewport. Align only loosens the minimum
+        // constraints it hands down, so a body that fills (Expanded,
+        // ListView) is unaffected -- it still fills exactly as before.
+        Expanded(child: Align(alignment: Alignment.topLeft, child: body)),
       ]),
     );
   }
