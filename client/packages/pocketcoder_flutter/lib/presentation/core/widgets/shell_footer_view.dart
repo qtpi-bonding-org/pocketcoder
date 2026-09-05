@@ -23,15 +23,15 @@ class ShellFooterView extends StatelessWidget {
             ...footer.extraActions,
           ],
         WizardFooter footer => [
-            if (footer.onBack != null)
-              TerminalAction(label: 'back', onTap: footer.onBack!),
+            if (footer.onBack case final onBack?)
+              TerminalAction(label: 'back', onTap: onBack),
             TerminalAction(
               label: '(${footer.step}/${footer.totalSteps})',
               onTap: () {},
               isLabel: true,
             ),
-            if (footer.onNext != null)
-              TerminalAction(label: 'next', onTap: footer.onNext!),
+            if (footer.onNext case final onNext?)
+              TerminalAction(label: 'next', onTap: onNext),
           ],
         DeadEndFooter footer => [
             for (final action in footer.actions)

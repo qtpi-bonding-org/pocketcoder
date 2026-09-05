@@ -2,9 +2,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 /// Lays [children] out on one row at their natural width when they all
-/// fit; otherwise falls back to a fixed 2-column grid, with a trailing odd
-/// child centered alone on its own row. Unlike [Wrap], a fallback never
-/// staggers into one item per line just because the full row didn't fit.
+/// fit; otherwise splits them across the fewest rows that will hold them,
+/// balanced evenly, with a trailing odd child centered alone. Unlike [Wrap],
+/// a fallback never staggers into one item per line just because the full
+/// row didn't fit.
 class GridWrap extends MultiChildRenderObjectWidget {
   const GridWrap({
     super.key,
@@ -49,8 +50,6 @@ class _RenderGridWrap extends RenderBox
   })  : _spacing = spacing,
         _runSpacing = runSpacing,
         _alignment = alignment;
-
-  static const int _columns = 2;
 
   double _spacing;
   set spacing(double value) {
@@ -136,10 +135,15 @@ class _RenderGridWrap extends RenderBox
       return;
     }
 
+    // Use the fewest rows the content actually needs, then spread items
+    // evenly across them. A fixed 2-column fallback turned five footer
+    // items into three rows even though 3+2 fits in two.
+    final rowCount = (naturalRowWidth / maxWidth).ceil().clamp(2, children.length);
+    final columns = (children.length / rowCount).ceil();
     final rows = <List<int>>[
-      for (var i = 0; i < children.length; i += _columns)
+      for (var i = 0; i < children.length; i += columns)
         [
-          for (var k = i; k < children.length && k < i + _columns; k++) k,
+          for (var k = i; k < children.length && k < i + columns; k++) k,
         ],
     ];
 
@@ -155,17 +159,20 @@ class _RenderGridWrap extends RenderBox
           rowHeight = children[index].size.height;
         }
       }
-      if (row.length == _columns) {
-        // A full pair hugs opposite edges (left/right), not a shared cell
-        // midpoint -- matches the spec's <button1>   <button2> spread.
-        final left = row[0];
-        final right = row[1];
-        (children[left].parentData! as _GridWrapParentData).offset =
-            Offset(0, y + (rowHeight - children[left].size.height) / 2);
-        final rightX =
-            (maxWidth - children[right].size.width).clamp(0.0, maxWidth);
-        (children[right].parentData! as _GridWrapParentData).offset =
-            Offset(rightX, y + (rowHeight - children[right].size.height) / 2);
+      if (row.length > 1) {
+        // Ends hug the edges, the rest spread evenly between -- the
+        // <button1>   <button2>   <button3> spread. Positioning only the
+        // first two left a third child stacked at the origin.
+        final used = row.fold<double>(
+            0, (sum, i) => sum + children[i].size.width);
+        final slack =
+            (maxWidth - used).clamp(0.0, double.infinity) / (row.length - 1);
+        var x = 0.0;
+        for (final index in row) {
+          (children[index].parentData! as _GridWrapParentData).offset =
+              Offset(x, y + (rowHeight - children[index].size.height) / 2);
+          x += children[index].size.width + slack;
+        }
       } else {
         final index = row.first;
         final x = ((maxWidth - children[index].size.width) / 2)
