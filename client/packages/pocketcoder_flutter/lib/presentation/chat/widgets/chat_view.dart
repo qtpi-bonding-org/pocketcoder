@@ -15,9 +15,9 @@ import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/reasoning_caption.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 class ChatView extends StatefulWidget {
@@ -261,25 +261,12 @@ class _ChatViewState extends State<ChatView> {
       padding: EdgeInsets.zero,
       body: Column(
         children: [
-          // Files button now in footer. Cancel and monitor toggle remain here.
           Padding(
             padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.space * 2, vertical: AppSizes.space),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (widget.isRunning)
-                  Wrap(
-                    spacing: AppSizes.space,
-                    runSpacing: AppSizes.space,
-                    children: [
-                      TerminalButton(
-                        label: context.l10n.actionCancel,
-                        kind: ActionKind.refusal,
-                        onTap: widget.onCancel,
-                      ),
-                    ],
-                  ),
                 if (widget.showMonitorAction)
                   DetailRow.toggle(
                     label: context.l10n.chatMonitorAction,
@@ -339,6 +326,8 @@ class _ChatViewState extends State<ChatView> {
                     ),
                   ),
                 ),
+                if (widget.isRunning)
+                  InterruptRow(onInterrupt: widget.onCancel),
               ],
             ),
           ),

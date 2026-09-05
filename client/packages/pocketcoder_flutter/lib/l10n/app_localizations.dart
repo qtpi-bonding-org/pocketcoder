@@ -286,6 +286,12 @@ abstract class AppLocalizations {
   /// **'cancel'**
   String get actionCancel;
 
+  /// Label beside the ^C control that stops the running turn
+  ///
+  /// In en, this message translates to:
+  /// **'interrupt'**
+  String get chatInterruptHint;
+
   /// No description provided for @actionSave.
   ///
   /// In en, this message translates to:
