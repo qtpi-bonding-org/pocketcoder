@@ -14,7 +14,7 @@ class AppSizes {
 
   /// Measured character advance width of the monospace body font.
   /// Cached after first access to avoid repeated TextPainter measurements.
-  static late final double ch = _measureCh();
+  static final double ch = _measureCh();
 
   /// Declared line height factor for vertical grid alignment.
   static const double lineHeightFactor = 1.3;

@@ -199,8 +199,6 @@ class ProviderView extends StatelessWidget {
 
   Widget _buildProviderKeyTile(
       BuildContext context, ProviderState state, ProviderApiKey key) {
-    final colors = context.colorScheme;
-
     final providerLabel =
         state.providerCatalog.firstWhere((p) => p.id == key.provider).name;
 

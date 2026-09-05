@@ -68,7 +68,8 @@ double _lum(Color c) {
         : math.pow((s + 0.055) / 1.055, 2.4) as double;
   }
 
-  return 0.2126 * ch(c.red) + 0.7152 * ch(c.green) + 0.0722 * ch(c.blue);
+  int c8(double channel) => (channel * 255.0).round().clamp(0, 255);
+  return 0.2126 * ch(c8(c.r)) + 0.7152 * ch(c8(c.g)) + 0.0722 * ch(c8(c.b));
 }
 
 double _contrast(Color a, Color b) {
