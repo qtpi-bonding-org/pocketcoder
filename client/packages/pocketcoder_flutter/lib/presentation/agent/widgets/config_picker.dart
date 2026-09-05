@@ -45,8 +45,8 @@ class _ConfigPickerState extends State<ConfigPicker> {
                   child: Row(children: [
                     Text(
                         _expanded
-                            ? RowAffordance.expand.glyph
-                            : RowAffordance.collapse.glyph,
+                            ? RowAffordance.collapse.glyph
+                            : RowAffordance.expand.glyph,
                         style: TextStyle(
                             color: colors.onSurface.withValues(alpha: .5),
                             fontFamily: AppFonts.family)),
