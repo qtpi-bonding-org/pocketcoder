@@ -3,7 +3,6 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -33,21 +32,14 @@ class SelfHostSetupView extends StatelessWidget {
             speaker: TerminalConversationSpeaker.poco,
             message: context.l10n.onboardingSelfHostPoco),
         VSpace.x3,
-        DecisionFrame(
-            title:
-                context.l10n.onboardingSelfHostRequirementsTitle.toLowerCase(),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _Requirement(
-                      label: context.l10n.onboardingSelfHostRequirementServer),
-                  VSpace.x1,
-                  _Requirement(
-                      label: context.l10n.onboardingSelfHostRequirementDocker),
-                  VSpace.x1,
-                  _Requirement(
-                      label: context.l10n.onboardingSelfHostRequirementAccess),
-                ])),
+        SectionHeader(
+            name:
+                context.l10n.onboardingSelfHostRequirementsTitle.toLowerCase()),
+        _Requirement(label: context.l10n.onboardingSelfHostRequirementServer),
+        VSpace.x1,
+        _Requirement(label: context.l10n.onboardingSelfHostRequirementDocker),
+        VSpace.x1,
+        _Requirement(label: context.l10n.onboardingSelfHostRequirementAccess),
         VSpace.x3,
         TerminalButton(
             label: context.l10n.onboardingSelfHostActionGuide,

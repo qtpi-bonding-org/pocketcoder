@@ -3,7 +3,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/service_line.dart';
@@ -23,34 +23,51 @@ class SystemChecksView extends StatelessWidget {
     return PocketCoderShell(
         footer: buildPillarFooter(context, NavPillar.status),
         showBack: true,
-        body: DecisionFrame(
-            title: context.l10n.systemChecksDiagnostics.toLowerCase(),
-            child: Builder(builder: (context) {
-              return Column(children: [
-                Padding(
-                    padding: EdgeInsets.all(AppSizes.space),
-                    child: Align(
-                        alignment: Alignment.centerRight,
-                        child: TerminalButton(
-                            label: context.l10n.actionRefresh,
-                            onTap: onRefresh))),
-                Expanded(
-                    child: state.checks.isEmpty && !state.isLoading
-                        ? Center(
-                            child: TerminalText(
-                              context.l10n.systemChecksEmpty,
-                              role: TextRole.body,
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: state.checks.length,
-                            itemBuilder: (context, index) {
-                              final check = state.checks[index];
-                              return _buildCheckRow(context,
-                                  check.name, check.status);
-                            })),
-              ]);
-            })));
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionHeader(
+                name: context.l10n.systemChecksDiagnostics.toLowerCase(),
+                state: _aggregateState(state.checks)),
+            Padding(
+                padding: EdgeInsets.all(AppSizes.space),
+                child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TerminalButton(
+                        label: context.l10n.actionRefresh,
+                        onTap: onRefresh))),
+            Expanded(
+                child: state.checks.isEmpty && !state.isLoading
+                    ? Center(
+                        child: TerminalText(
+                          context.l10n.systemChecksEmpty,
+                          role: TextRole.body,
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: state.checks.length,
+                        itemBuilder: (context, index) {
+                          final check = state.checks[index];
+                          return _buildCheckRow(
+                              context, check.name, check.status);
+                        })),
+          ],
+        ));
+  }
+
+  SectionState _aggregateState(List<Healthcheck> checks) {
+    if (checks.any((c) =>
+        c.status == HealthcheckStatus.offline ||
+        c.status == HealthcheckStatus.error ||
+        c.status == HealthcheckStatus.unknown)) {
+      return SectionState.failed;
+    }
+    if (checks.any((c) =>
+        c.status == HealthcheckStatus.starting ||
+        c.status == HealthcheckStatus.degraded)) {
+      return SectionState.attention;
+    }
+    return SectionState.nominal;
   }
 
   Widget _buildCheckRow(

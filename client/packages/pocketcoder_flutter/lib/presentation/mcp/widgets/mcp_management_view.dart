@@ -3,7 +3,6 @@ import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
@@ -49,37 +48,46 @@ class McpManagementView extends StatelessWidget {
     return PocketCoderShell(
         footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
-        body: DecisionFrame(
-            title: context.l10n.mcpCapabilitiesRegistry.toLowerCase(),
-            child: ListView(children: [
-              Padding(
-                  padding: EdgeInsets.all(AppSizes.space),
-                  child: TerminalButton(
-                      label: context.l10n.mcpAddNew,
-                      onTap: () => _addDialog(context))),
-              if (pending.isNotEmpty) ...[
-                SectionHeader(
-                    name: context.l10n.mcpPendingApproval.toLowerCase()),
-                Column(
-                    children: pending.map((s) => _server(context, s)).toList()),
-              ],
-              if (active.isNotEmpty) ...[
-                SectionHeader(
-                    name: context.l10n.mcpActiveCapabilities.toLowerCase()),
-                Column(
-                    children: active.map((s) => _server(context, s)).toList()),
-              ],
-              if (servers.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(AppSizes.space * 4),
-                    child: TerminalText(
-                      context.l10n.mcpNoCapabilities,
-                      role: TextRole.body,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionHeader(
+                name: context.l10n.mcpCapabilitiesRegistry.toLowerCase()),
+            Expanded(
+              child: ListView(children: [
+                Padding(
+                    padding: EdgeInsets.all(AppSizes.space),
+                    child: TerminalButton(
+                        label: context.l10n.mcpAddNew,
+                        onTap: () => _addDialog(context))),
+                if (pending.isNotEmpty) ...[
+                  SectionHeader(
+                      name: context.l10n.mcpPendingApproval.toLowerCase()),
+                  Column(
+                      children:
+                          pending.map((s) => _server(context, s)).toList()),
+                ],
+                if (active.isNotEmpty) ...[
+                  SectionHeader(
+                      name: context.l10n.mcpActiveCapabilities.toLowerCase()),
+                  Column(
+                      children:
+                          active.map((s) => _server(context, s)).toList()),
+                ],
+                if (servers.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSizes.space * 4),
+                      child: TerminalText(
+                        context.l10n.mcpNoCapabilities,
+                        role: TextRole.body,
+                      ),
                     ),
                   ),
-                ),
-            ])));
+              ]),
+            ),
+          ],
+        ));
   }
 
   Widget _server(BuildContext context, McpServer server) {

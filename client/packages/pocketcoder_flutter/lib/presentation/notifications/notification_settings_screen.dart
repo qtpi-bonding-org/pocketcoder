@@ -8,7 +8,6 @@ import 'package:pocketcoder_flutter/application/notifications/notification_rule_
 import 'package:pocketcoder_flutter/application/notifications/notification_rule_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -63,34 +62,40 @@ class NotificationSettingsView extends StatelessWidget {
     return PocketCoderShell(
         footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
-        body: DecisionFrame(
-            title: context.l10n.notificationSettingsScreenTitle.toLowerCase(),
-            child: switch (state.status) {
-              UiFlowStatus.loading =>
-                const Center(child: TerminalSpinner()),
-              UiFlowStatus.failure => Center(
-                  child: TerminalText(safeErrorMessage(state.error),
-                      role: TextRole.warn)),
-              UiFlowStatus.success => ListView(children: [
-                  TerminalButton(
-                      label: context.l10n.notificationSettingsEnableDevice,
-                      onTap: onEnableDevice),
-                  VSpace.x3,
-                  SectionHeader(
-                      name: context.l10n.notificationSettingsScreenTitle
-                          .toLowerCase()),
-                  Column(children: [
-                    for (final (type, key) in types)
-                      DetailRow.toggle(
-                          label: _labelFor(context, key),
-                          value: state.rules[type] ?? true,
-                          onChanged: (value) => onChanged(type, value)),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionHeader(
+                name: context.l10n.notificationSettingsScreenTitle
+                    .toLowerCase()),
+            Expanded(
+              child: switch (state.status) {
+                UiFlowStatus.loading =>
+                  const Center(child: TerminalSpinner()),
+                UiFlowStatus.failure => Center(
+                    child: TerminalText(safeErrorMessage(state.error),
+                        role: TextRole.warn)),
+                UiFlowStatus.success => ListView(children: [
+                    TerminalButton(
+                        label: context.l10n.notificationSettingsEnableDevice,
+                        onTap: onEnableDevice),
+                    VSpace.x3,
+                    Column(children: [
+                      for (final (type, key) in types)
+                        DetailRow.toggle(
+                            label: _labelFor(context, key),
+                            value: state.rules[type] ?? true,
+                            onChanged: (value) => onChanged(type, value)),
+                    ]),
+                    VSpace.x3,
+                    _SelfHostedPushOption(
+                        onConfigure: onConfigureSelfHostedPush),
                   ]),
-                  VSpace.x3,
-                  _SelfHostedPushOption(onConfigure: onConfigureSelfHostedPush),
-                ]),
-              UiFlowStatus.idle => const SizedBox.shrink()
-            }));
+                UiFlowStatus.idle => const SizedBox.shrink()
+              },
+            ),
+          ],
+        ));
   }
 }
 

@@ -4,7 +4,6 @@ import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
@@ -35,48 +34,52 @@ class ToolPermissionsView extends StatelessWidget {
     return PocketCoderShell(
         footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
-        body: DecisionFrame(
-            title: context.l10n.toolPermissionsRulesRegistry.toLowerCase(),
-            child: Builder(builder: (context) {
-              if (state.status == UiFlowStatus.loading) {
-                return const Center(child: TerminalSpinner());
-              }
-              if (state.status == UiFlowStatus.failure) {
-                return Center(
-                    child: TerminalText(safeErrorMessage(state.error),
-                        role: TextRole.warn));
-              }
-              if (state.status != UiFlowStatus.success) {
-                return const SizedBox.shrink();
-              }
-              final rules = state.rules;
-              return ListView(children: [
-                Padding(
-                    padding: EdgeInsets.all(AppSizes.space),
-                    child: TerminalButton(
-                        label: context.l10n.toolPermissionsAddRuleButton,
-                        onTap: () => showAddRuleDialog(context, onCreateRule))),
-                if (rules.isNotEmpty) ...[
-                  SectionHeader(
-                      name: context.l10n.toolPermissionsRulesRegistry
-                          .toLowerCase()),
-                  Column(
-                      children: rules
-                          .map((r) => _buildRuleItem(context, r))
-                          .toList()),
-                ],
-                if (rules.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(AppSizes.space * 4),
-                      child: TerminalText(
-                        context.l10n.toolPermissionsNoRules,
-                        role: TextRole.body,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionHeader(
+                name: context.l10n.toolPermissionsRulesRegistry.toLowerCase()),
+            Expanded(
+              child: Builder(builder: (context) {
+                if (state.status == UiFlowStatus.loading) {
+                  return const Center(child: TerminalSpinner());
+                }
+                if (state.status == UiFlowStatus.failure) {
+                  return Center(
+                      child: TerminalText(safeErrorMessage(state.error),
+                          role: TextRole.warn));
+                }
+                if (state.status != UiFlowStatus.success) {
+                  return const SizedBox.shrink();
+                }
+                final rules = state.rules;
+                return ListView(children: [
+                  Padding(
+                      padding: EdgeInsets.all(AppSizes.space),
+                      child: TerminalButton(
+                          label: context.l10n.toolPermissionsAddRuleButton,
+                          onTap: () =>
+                              showAddRuleDialog(context, onCreateRule))),
+                  if (rules.isNotEmpty)
+                    Column(
+                        children: rules
+                            .map((r) => _buildRuleItem(context, r))
+                            .toList()),
+                  if (rules.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(AppSizes.space * 4),
+                        child: TerminalText(
+                          context.l10n.toolPermissionsNoRules,
+                          role: TextRole.body,
+                        ),
                       ),
                     ),
-                  ),
-              ]);
-            })));
+                ]);
+              }),
+            ),
+          ],
+        ));
   }
 
   Widget _buildRuleItem(BuildContext context, ToolPermission rule) {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -43,9 +42,13 @@ class SkillsView extends StatelessWidget {
     return PocketCoderShell(
         footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
-        body: DecisionFrame(
-            title: context.l10n.skillsRegistryTitle.toLowerCase(),
-            child: _buildBody(context, colors, global, project)));
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionHeader(name: context.l10n.skillsRegistryTitle.toLowerCase()),
+            Expanded(child: _buildBody(context, colors, global, project)),
+          ],
+        ));
   }
 
   Widget _buildBody(BuildContext context, ColorScheme colors,

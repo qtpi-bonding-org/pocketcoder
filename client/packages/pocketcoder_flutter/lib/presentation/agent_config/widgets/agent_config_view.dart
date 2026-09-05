@@ -4,7 +4,6 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/application/agent_config/agent_config_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
@@ -34,10 +33,10 @@ class AgentConfigView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SectionHeader(name: context.l10n.agentConfigTitle.toLowerCase()),
+            SectionHeader(
+                name: context.l10n.agentConfigRegistry.toLowerCase()),
             Expanded(
-              child: DecisionFrame(
-                  title: context.l10n.agentConfigRegistry.toLowerCase(),
-                  child: _buildBody(context, state)),
+              child: _buildBody(context, state),
             ),
           ],
         ));
