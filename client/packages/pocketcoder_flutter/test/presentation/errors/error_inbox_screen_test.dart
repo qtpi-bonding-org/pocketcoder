@@ -200,7 +200,7 @@ void main() {
 
     await tester.tap(find.byType(DetailRow).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('<report on github>'));
+    await tester.tap(find.text('<report on GitHub>'));
     await tester.pumpAndSettle();
 
     expect(clipboardText, contains('App version: 1.2.3+45'));

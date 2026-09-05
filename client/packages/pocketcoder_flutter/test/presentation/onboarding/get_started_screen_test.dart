@@ -88,8 +88,8 @@ void main() {
       question.message,
       'Are you already part of the PocketCoder Initiative?',
     );
-    expect(find.textContaining('i have a server — log in'), findsOneWidget);
-    expect(find.textContaining('i’m new — join'), findsOneWidget);
+    expect(find.textContaining('I have a server — log in'), findsOneWidget);
+    expect(find.textContaining("I'm new — join"), findsOneWidget);
     expect(find.byType(TerminalPromptSuggestion), findsNWidgets(2));
     expect(find.textContaining('computer that stays online'), findsNothing);
     expect(find.byType(TextField), findsNothing);
@@ -109,7 +109,7 @@ void main() {
     expect(welcome.message, contains('a server—a computer that stays online'));
     expect(welcome.message, contains('accessible and ready'));
     expect(find.textContaining('help me with setup'), findsOneWidget);
-    expect(find.textContaining('i’ll set it up'), findsOneWidget);
+    expect(find.textContaining("I'll set it up"), findsOneWidget);
     expect(find.byType(TerminalPromptSuggestion), findsNWidgets(2));
   });
 
