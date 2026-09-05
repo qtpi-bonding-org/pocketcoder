@@ -72,8 +72,13 @@ class _BiosActionButtonState extends State<BiosActionButton> {
     final role = action.kind.role;
     final reversed = action.isActive || _pressed;
 
-    Widget text(String text, TextRole role) {
-      final rendered = TerminalText(text, role: role);
+    Widget text(String text, TextRole role, {int? maxLines}) {
+      final rendered = TerminalText(
+        text,
+        role: role,
+        maxLines: maxLines,
+        overflow: maxLines != null ? TextOverflow.ellipsis : null,
+      );
       if (!reversed) return rendered;
       return ColorFiltered(
         colorFilter: const ColorFilter.mode(AppPalette.ground, BlendMode.srcIn),
@@ -90,12 +95,13 @@ class _BiosActionButtonState extends State<BiosActionButton> {
       child: Container(
         color: reversed ? role.color : Colors.transparent,
         padding: EdgeInsets.symmetric(
-            horizontal: AppSizes.space * 2, vertical: AppSizes.space * 1.5),
+            horizontal: AppSizes.space, vertical: AppSizes.space * 1.5),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(
-              child: text('<${action.label.toLowerCase()}>', role),
+              child: text('<${action.label.toLowerCase()}>', role,
+                  maxLines: 1),
             ),
             if (action.hasBadge) ...[
               HSpace.x1,

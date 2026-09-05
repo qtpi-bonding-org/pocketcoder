@@ -51,19 +51,22 @@ class TerminalFooter extends StatelessWidget {
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: actions.map((action) {
               if (action.isLabel) {
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-                    child: Center(
-                      child: TerminalText(action.label, role: TextRole.label),
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+                  child: Center(
+                    child: TerminalText(
+                      action.label,
+                      role: TextRole.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 );
               }
-              return Expanded(
-                  child: BiosActionButton(action: action._asStripItem));
+              return BiosActionButton(action: action._asStripItem);
             }).toList(),
           ),
         ),

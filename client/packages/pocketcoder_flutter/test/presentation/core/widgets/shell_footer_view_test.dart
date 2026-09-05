@@ -18,6 +18,23 @@ void main() {
     }
   });
 
+  testWidgets(
+      'pillar labels are maxLines: 1, so a width regression fails as visible '
+      'truncation, not a silent mid-word wrap', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+          body: ShellFooterView(
+              footer:
+                  PillarFooter(active: NavPillar.status, onSelect: (_) {}))),
+    ));
+    for (final label in ['<chat>', '<config>', '<status>', '<control>']) {
+      final text = tester.widget<Text>(find.text(label));
+      expect(text.maxLines, 1);
+    }
+  });
+
   testWidgets('pillar footer sits correctly at three items', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
