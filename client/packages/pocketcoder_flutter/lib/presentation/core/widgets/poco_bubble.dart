@@ -45,7 +45,7 @@ class PocoBubble extends StatelessWidget {
               children: [
                 if (showFace) ...[
                   SizedBox(
-                    height: (pocoSize ?? AppSizes.fontPoco) * 3,
+                    height: (pocoSize ?? AppSizes.fontPoco) * 2,
                     child: Align(
                       alignment: Alignment.center,
                       child: PocoFace(
@@ -57,7 +57,7 @@ class PocoBubble extends StatelessWidget {
                       ),
                     ),
                   ),
-                  VSpace.x4,
+                  VSpace.x1,
                 ],
                 Column(
                   crossAxisAlignment: crossAxisAlignment(textAlign),

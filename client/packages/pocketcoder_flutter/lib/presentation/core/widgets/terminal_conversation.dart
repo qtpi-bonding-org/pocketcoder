@@ -145,6 +145,7 @@ class TerminalConversationTurn extends StatelessWidget {
     this.sequence = const [],
     this.history = const [],
     this.showPocoFace = true,
+    this.pocoSize,
   });
 
   final TerminalConversationSpeaker speaker;
@@ -152,6 +153,8 @@ class TerminalConversationTurn extends StatelessWidget {
   final List<(String, int)> sequence;
   final List<String> history;
   final bool showPocoFace;
+
+  final double? pocoSize;
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +167,7 @@ class TerminalConversationTurn extends StatelessWidget {
           sequence: sequence,
           history: history,
           showFace: showPocoFace,
+          pocoSize: pocoSize,
         ),
       );
     }

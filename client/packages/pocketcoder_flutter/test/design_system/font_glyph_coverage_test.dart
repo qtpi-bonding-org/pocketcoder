@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_progress_bar.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 
 /// Stale if `support/noto_sans_mono_regular_cmap.json` is not regenerated
@@ -42,6 +43,11 @@ void main() {
       if (affordance.glyph.isEmpty) continue;
       expectCovered(affordance.glyph, 'RowAffordance.${affordance.name}');
     }
+  });
+
+  test('progress bar cells are covered by the shipped font', () {
+    expectCovered(TerminalProgressBar.filledGlyph, 'progress bar filled cell');
+    expectCovered(TerminalProgressBar.emptyGlyph, 'progress bar empty cell');
   });
 
   test('section state bullet is covered by the shipped font', () {
