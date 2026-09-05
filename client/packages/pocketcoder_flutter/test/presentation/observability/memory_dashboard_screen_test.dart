@@ -77,7 +77,8 @@ void main() {
     await tester.pumpWidget(_app(cubit));
     await tester.pumpAndSettle();
 
-    expect(find.text('MEMORY UNAVAILABLE'), findsOneWidget);
+    final context = tester.element(find.byType(MemoryDashboardScreen));
+    expect(find.text(context.l10n.memoryDashboardUnavailable), findsOneWidget);
     await cubit.close();
   });
 }

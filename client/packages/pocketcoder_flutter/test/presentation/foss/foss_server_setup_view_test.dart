@@ -110,7 +110,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-        find.text('CONNECTED -- YOUR SERVER IS NOW MANAGED'), findsOneWidget);
+        find.text('connected -- your server is now managed'), findsOneWidget);
     expect(completions, 1);
     verify(() => store.save(any())).called(1);
   });

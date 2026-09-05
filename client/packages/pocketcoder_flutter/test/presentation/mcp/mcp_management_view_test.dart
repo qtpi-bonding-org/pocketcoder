@@ -57,7 +57,7 @@ void main() {
 
     final deny = tester
         .widgetList<BiosActionButton>(find.byType(BiosActionButton))
-        .firstWhere((button) => button.action.label == 'DENY');
+        .firstWhere((button) => button.action.label == 'deny');
     expect(deny.action.kind, isNot(ActionKind.destructive));
     expect(deny.action.kind, ActionKind.refusal);
   });
@@ -78,7 +78,7 @@ void main() {
 
     final revoke = tester
         .widgetList<BiosActionButton>(find.byType(BiosActionButton))
-        .firstWhere((button) => button.action.label == 'REVOKE');
+        .firstWhere((button) => button.action.label == 'revoke');
     expect(revoke.action.kind, ActionKind.destructive);
   });
 

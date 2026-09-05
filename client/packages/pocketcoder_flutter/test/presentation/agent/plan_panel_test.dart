@@ -29,7 +29,7 @@ void main() {
       ),
     );
 
-    final header = tester.widget<Text>(find.text('[PLAN]'));
+    final header = tester.widget<Text>(find.text('[plan]'));
     expect(header.style?.color, const Color(0xFF00FF41));
   });
 }
