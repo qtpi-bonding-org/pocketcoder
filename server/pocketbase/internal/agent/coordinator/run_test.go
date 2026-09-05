@@ -107,6 +107,7 @@ type fakeConn struct {
 	elicitationResolved         bool
 	lastMode                    string
 	lastModeSession             string
+	setModeErr                  error
 	requestPermission           bool
 	requestPermissionToolCallID string
 
@@ -383,8 +384,9 @@ func (f *fakeConn) SetSessionMode(_ context.Context, req acpsdk.SetSessionModeRe
 	f.mu.Lock()
 	f.lastMode = string(req.ModeId)
 	f.lastModeSession = string(req.SessionId)
+	err := f.setModeErr
 	f.mu.Unlock()
-	return acpsdk.SetSessionModeResponse{}, nil
+	return acpsdk.SetSessionModeResponse{}, err
 }
 func (f *fakeConn) SetSessionConfigOption(_ context.Context, req acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) {
 	f.mu.Lock()

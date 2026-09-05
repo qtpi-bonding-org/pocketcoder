@@ -67,6 +67,18 @@ func TestGlobalConfigApplier_SetsMode(t *testing.T) {
 	}
 }
 
+func TestGlobalConfigApplier_ToleratesUnknownModeError(t *testing.T) {
+	fc := &fakeConn{setModeErr: &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: mode not found: approve",
+		Data: map[string]any{"mode": "approve"},
+	}}
+	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
+	if err != nil {
+		t.Fatalf("expected the unknown-mode error to be swallowed, got: %v", err)
+	}
+}
+
 // Goose's session/new|load rejects a null mcpServers/additionalDirectories
 // with -32602 "invalid type: null, expected a sequence". A profile with no MCP
 // servers and no extra directories (the default chat) must still serialize

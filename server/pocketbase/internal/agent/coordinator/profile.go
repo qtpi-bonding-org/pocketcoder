@@ -20,7 +20,9 @@ package coordinator
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"path"
 	"strings"
 
@@ -208,6 +210,14 @@ func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID s
 	_, err := conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{
 		SessionId: acpsdk.SessionId(sessionID), ModeId: p.Mode,
 	})
+	// Mode is a preference, not a required session parameter -- an unknown
+	// mode id must not fail the whole run.
+	var reqErr *acpsdk.RequestError
+	if errors.As(err, &reqErr) && reqErr.Code == -32602 &&
+		strings.Contains(reqErr.Message, "mode not found") {
+		log.Printf("[coordinator] session %s: harness rejected mode %q as unknown, continuing without it", sessionID, p.Mode)
+		return nil
+	}
 	return err
 }
 
