@@ -4165,13 +4165,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingNoServerChipExisting.
   ///
   /// In en, this message translates to:
-  /// **'log in'**
+  /// **'I have a server — log in'**
   String get onboardingNoServerChipExisting;
 
   /// No description provided for @onboardingNoServerChipNew.
   ///
   /// In en, this message translates to:
-  /// **'join'**
+  /// **'I\'m new — join'**
   String get onboardingNoServerChipNew;
 
   /// No description provided for @onboardingWelcomeTitle.
@@ -5317,7 +5317,7 @@ abstract class AppLocalizations {
   /// No description provided for @harnessAuthAccountLogin.
   ///
   /// In en, this message translates to:
-  /// **'Account login'**
+  /// **'account login'**
   String get harnessAuthAccountLogin;
 
   /// No description provided for @harnessAuthApiKey.
