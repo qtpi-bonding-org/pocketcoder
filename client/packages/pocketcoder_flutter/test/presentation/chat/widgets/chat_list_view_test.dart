@@ -37,4 +37,28 @@ void main() {
     await tester.pump();
     expect(tapped, isTrue);
   });
+
+  testWidgets('entries are separated by space, not a divider rule',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.darkTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en')],
+      home: ChatListView(
+        state: const ChatListState(chats: [], status: UiFlowStatus.success),
+        onNewChat: () {},
+        onOpen: (_) {},
+        onArchive: (_) {},
+        onDelete: (_) {},
+      ),
+    ));
+
+    expect(find.byType(Divider), findsNothing,
+        reason: 'spec §2: one blank line separates entries, not a rule');
+  });
 }

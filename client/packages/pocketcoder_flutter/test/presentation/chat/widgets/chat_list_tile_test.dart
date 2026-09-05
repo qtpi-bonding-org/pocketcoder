@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_list_tile.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
       localizationsDelegates: const [
@@ -55,6 +58,89 @@ void main() {
     ));
 
     expect(find.text('No messages yet'), findsOneWidget);
+  });
+
+  testWidgets('headline, preview and timestamp render in three distinct '
+      'roles, not three identical label lines', (tester) async {
+    final chat = Chat(
+      id: 'c1',
+      title: 'New Chat',
+      user: 'u1',
+      turn: ChatTurn.assistant,
+      firstMessage: 'how do I deploy this',
+      preview: 'looks like it is working now',
+      lastActive: DateTime.now(),
+    );
+
+    await tester.pumpWidget(_wrap(
+      ChatListTile(
+        chat: chat,
+        onOpen: _noopString,
+        onArchive: _noopString,
+        onDelete: _noopString,
+      ),
+    ));
+
+    expect(
+      tester.widget<Text>(find.text('how do I deploy this')).style!.color,
+      TextRole.value.color,
+      reason: 'the headline is the record\'s subject -- bright and bold',
+    );
+    expect(
+      tester
+          .widget<Text>(find.text('looks like it is working now'))
+          .style!
+          .color,
+      TextRole.body.color,
+    );
+    expect(
+      tester.widget<Text>(find.text('now')).style!.color,
+      TextRole.label.color,
+      reason: 'timestamp stays label -- after task 7 that is body-weight, '
+          'still readable',
+    );
+  });
+
+  testWidgets('delete is destructive, not neutral', (tester) async {
+    final chat = Chat(id: 'c1', title: 'New Chat', user: 'u1');
+
+    await tester.pumpWidget(_wrap(
+      ChatListTile(
+        chat: chat,
+        onOpen: _noopString,
+        onArchive: _noopString,
+        onDelete: _noopString,
+      ),
+    ));
+
+    await tester.longPress(find.byType(InkWell));
+    await tester.pumpAndSettle();
+
+    final deleteButton = tester
+        .widget<TerminalButton>(find.widgetWithText(TerminalButton, '<delete>'));
+    expect(deleteButton.kind, ActionKind.destructive);
+  });
+
+  testWidgets('the long-press dialog states what archive and delete do, '
+      'not an empty body', (tester) async {
+    final chat = Chat(id: 'c1', title: 'my chat', user: 'u1');
+
+    await tester.pumpWidget(_wrap(
+      ChatListTile(
+        chat: chat,
+        onOpen: _noopString,
+        onArchive: _noopString,
+        onDelete: _noopString,
+      ),
+    ));
+
+    await tester.longPress(find.byType(InkWell));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('my chat'), findsWidgets,
+        reason: 'names the chat, not just the actions');
+    expect(find.textContaining('archive'), findsWidgets);
+    expect(find.textContaining('delete'), findsWidgets);
   });
 
   testWidgets(
