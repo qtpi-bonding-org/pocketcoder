@@ -236,7 +236,7 @@ void main() {
       ));
       await _settle(tester);
 
-      final form = tester.widget<Text>(find.text('FORM'));
+      final form = tester.widget<Text>(find.text('form'));
       expect(form.style?.color, const Color(0xFF00B82A));
 
       final cancel = tester.widget<Text>(find.text('<cancel>'));

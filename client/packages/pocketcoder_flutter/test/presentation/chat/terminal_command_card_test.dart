@@ -31,10 +31,10 @@ void main() {
         child: TerminalSpinner(),
       ),
     ));
-    expect(find.text('⠋'), findsOneWidget);
+    expect(find.text('▁'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('⠋'), findsOneWidget);
+    expect(find.text('▁'), findsOneWidget);
   });
 
   testWidgets('shows a running command without output', (tester) async {

@@ -184,7 +184,7 @@ void main() {
     )));
     await tester.pump();
     expect(find.byType(VimToast), findsOneWidget);
-    expect(find.textContaining('RUN INTERRUPTED'), findsOneWidget);
+    expect(find.textContaining('run interrupted'), findsOneWidget);
     // VimToast self-dismisses via Future.delayed(3s) -- drain it before the
     // widget tree tears down, or flutter_test's teardown invariant check
     // fails with "A Timer is still pending".
