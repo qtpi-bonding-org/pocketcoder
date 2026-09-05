@@ -45,12 +45,12 @@ class PocoBubble extends StatelessWidget {
               children: [
                 if (showFace) ...[
                   SizedBox(
-                    height: (pocoSize ?? AppSizes.fontBody) * 3,
+                    height: (pocoSize ?? AppSizes.fontPoco) * 3,
                     child: Align(
                       alignment: Alignment.center,
                       child: PocoFace(
                         key: ValueKey(sequence),
-                        fontSize: pocoSize ?? AppSizes.fontBody,
+                        fontSize: pocoSize ?? AppSizes.fontPoco,
                         sequence: sequence,
                         posture: posture,
                         mood: mood,

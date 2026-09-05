@@ -10,6 +10,10 @@ class AppSizes {
 
   static double get fontBody => UiScaler.instance.sp(16.0);
 
+  /// Art is exempt from the text scale and sized like an image.
+  /// Poco and terminal ASCII art use this to maintain their proportions.
+  static double get fontPoco => UiScaler.instance.sp(24.0);
+
   static List<double> get textSizes => [fontBody];
 
   /// Measured character advance width of the monospace body font.

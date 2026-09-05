@@ -127,7 +127,7 @@ class AsciiFace extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveColor = color ?? mood?.color ?? _moodFor(expression).color;
-    final effectiveSize = fontSize ?? AppSizes.fontBody;
+    final effectiveSize = fontSize ?? AppSizes.fontPoco;
     final style = TextStyle(
       color: effectiveColor,
       fontSize: effectiveSize,

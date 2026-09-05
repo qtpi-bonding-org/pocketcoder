@@ -67,7 +67,7 @@ class _PocoAnimatorState extends State<PocoAnimator> {
   @override
   Widget build(BuildContext context) => AsciiFace(
       expression: _currentFace,
-      fontSize: widget.fontSize ?? AppSizes.fontBody,
+      fontSize: widget.fontSize ?? AppSizes.fontPoco,
       color: widget.color,
       mood: widget.mood,
       posture: widget.posture);
