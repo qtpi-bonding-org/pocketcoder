@@ -38,6 +38,7 @@ class TerminalScaffold extends StatelessWidget {
       body: ScanlineWidget(
         child: SafeArea(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: Padding(
