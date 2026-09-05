@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 
 class TerminalButton extends StatefulWidget {
   const TerminalButton({
@@ -34,15 +35,7 @@ class _TerminalButtonState extends State<TerminalButton> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (widget.isLoading) ...[
-          SizedBox(
-            width: AppSizes.progressIndicatorSize,
-            height: AppSizes.progressIndicatorSize,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                  _pressed ? AppPalette.ground : role.color),
-            ),
-          ),
+          const TerminalSpinner(),
           HSpace.x2,
         ],
         Flexible(

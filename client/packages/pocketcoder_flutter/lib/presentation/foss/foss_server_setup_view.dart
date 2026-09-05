@@ -43,9 +43,11 @@ class FossServerSetupView extends StatelessWidget {
                   VSpace.x1,
                   Row(children: [
                     Expanded(child: SelectableText(publicKey)),
-                    IconButton(
-                        icon: const Icon(Icons.copy),
-                        onPressed: () =>
+                    SizedBox(width: AppSizes.space),
+                    TerminalButton(
+                        label: 'copy',
+                        kind: ActionKind.neutral,
+                        onTap: () =>
                             Clipboard.setData(ClipboardData(text: publicKey))),
                   ]),
                   VSpace.x2,

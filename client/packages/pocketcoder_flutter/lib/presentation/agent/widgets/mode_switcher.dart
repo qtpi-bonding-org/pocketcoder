@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
 class ModeSwitcher extends StatelessWidget {
   const ModeSwitcher(
@@ -61,8 +64,8 @@ class ModeSwitcher extends StatelessWidget {
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 1)),
             HSpace.x1,
-            Icon(Icons.arrow_drop_down,
-                color: colors.primary, size: AppSizes.fontBody),
+            TerminalText(RowAffordance.expand.glyph,
+                role: TextRole.value),
           ]),
         ),
       ]),

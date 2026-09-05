@@ -7,6 +7,8 @@ import 'package:pocketcoder_flutter/domain/models/file_entry.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 
 class FileBrowserView extends StatelessWidget {
   final void Function(BuildContext context, String path) onOpenFile;
@@ -49,10 +51,10 @@ class FileBrowserView extends StatelessWidget {
 
   Widget _entryRow(
       BuildContext context, FileBrowserState state, FileEntry entry) {
-    return ListTile(
-        leading: TerminalText(entry.isDir ? '[DIR]' : '[FILE]',
-            role: TextRole.label),
-        title: TerminalText(entry.name, role: TextRole.label),
+    return DetailRow(
+        label: entry.name,
+        value: entry.isDir ? '[DIR]' : '[FILE]',
+        affordance: RowAffordance.navigate,
         onTap: () {
           if (entry.isDir) {
             onNavigateInto(entry.name);

@@ -6,6 +6,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dar
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/domain/models/skill.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
@@ -50,7 +51,7 @@ class SkillsView extends StatelessWidget {
   Widget _buildBody(BuildContext context, ColorScheme colors,
       List<Skill> global, List<Skill> project) {
     if (data.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: TerminalSpinner());
     }
     if (data.error != null) {
       return Center(

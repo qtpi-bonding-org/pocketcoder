@@ -5,8 +5,13 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 
 class SkillEditorDialog extends StatefulWidget {
   const SkillEditorDialog({super.key, this.skill, required this.onSubmit});
@@ -175,16 +180,22 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
             ],
             if (!_global && configs.isNotEmpty) ...[
               VSpace.x1,
-              DropdownButton<PocoConfig>(
-                  isExpanded: true,
-                  value: selected,
-                  items: configs
-                      .map((config) => DropdownMenuItem(
-                          value: config,
-                          child: Text(config.name)))
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedConfig = value)),
+              DetailRow(
+                label: context.l10n.skillsProjectLabel,
+                value: selected?.name ?? '',
+                affordance: RowAffordance.expand,
+                onTap: () => showTerminalListPicker<PocoConfig>(
+                  context: context,
+                  title: context.l10n.skillsProjectLabel,
+                  items: configs,
+                  itemBuilder: (_, config) => TerminalText(config.name, role: TextRole.label),
+                  selected: selected,
+                  emptyLabel: 'no projects',
+                  cancelLabel: 'cancel',
+                ).then((config) {
+                  if (config != null) setState(() => _selectedConfig = config);
+                }),
+              ),
             ],
           ]),
       actions: [

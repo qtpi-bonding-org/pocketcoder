@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dar
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/application/scheduler/scheduler_state.dart';
 import 'package:pocketcoder_flutter/domain/models/schedule_owner.dart';
@@ -51,7 +52,7 @@ class SchedulerView extends StatelessWidget {
             title: context.l10n.schedulerRegistryTitle.toLowerCase(),
             child: Builder(builder: (context) {
               if (state.status == UiFlowStatus.loading) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: TerminalSpinner());
               }
               if (state.status == UiFlowStatus.failure) {
                 return Center(

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/widgets/mcp_management_view.dart';
 
@@ -22,7 +23,7 @@ class McpManagementAdapter extends CubitAdapter<McpCubit, McpState> {
         valueListenable: state,
         builder: (context, value, _) => switch (value.status) {
           UiFlowStatus.loading =>
-            const Center(child: CircularProgressIndicator()),
+            const Center(child: TerminalSpinner()),
           UiFlowStatus.failure =>
             Center(child: Text(safeErrorMessage(value.error))),
           UiFlowStatus.success => McpManagementView(

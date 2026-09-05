@@ -12,6 +12,7 @@ import 'package:pocketcoder_flutter/domain/server_control/i_server_control_setup
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/server_control_view.dart';
 
 class ServerControlScreen extends StatefulWidget {
@@ -49,7 +50,7 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
         future: _setupScreen,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: TerminalSpinner());
           }
           if (snapshot.hasError) {
             return Center(

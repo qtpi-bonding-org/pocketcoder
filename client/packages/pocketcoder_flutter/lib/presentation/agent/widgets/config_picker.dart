@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
 class ConfigPicker extends StatefulWidget {
   const ConfigPicker(
@@ -84,27 +88,29 @@ class _ConfigPickerState extends State<ConfigPicker> {
               .toList() ??
           const <Map<String, dynamic>>[];
       final current = value?.toString() ?? '';
-      return Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
-          child: Row(children: [
-            Expanded(child: label),
-            DropdownButton<String>(
-                value: choices.any((c) => '${c['value']}' == current)
-                    ? current
-                    : null,
-                hint: Text(current.isEmpty ? '--' : current,
-                    style: TextStyle(color: context.colorScheme.onSurface)),
-                dropdownColor: context.colorScheme.surface,
+      final displayValue = choices.any((c) => '${c['value']}' == current)
+          ? current
+          : (current.isEmpty ? '--' : current);
+      return DetailRow(
+          label: name,
+          value: displayValue,
+          affordance: RowAffordance.expand,
+          onTap: () => showTerminalListPicker<String>(
+                context: context,
+                title: name,
                 items: choices
-                    .map((c) => DropdownMenuItem(
-                        value: '${c['value']}',
-                        child: Text((c['label'] as String? ?? '${c['value']}')
-                            )))
+                    .map((c) => '${c['value']}')
                     .toList(),
-                onChanged: (v) {
-                  if (v != null) submit(v);
-                })
-          ]));
+                itemBuilder: (_, item) => TerminalText(
+                    (choices.firstWhere((c) => '${c['value']}' == item,
+                            orElse: () => {})['label'] as String? ?? item),
+                    role: TextRole.label),
+                selected: displayValue == '--' ? null : current,
+                emptyLabel: 'no options',
+                cancelLabel: 'cancel',
+              ).then((selected) {
+                if (selected != null) submit(selected);
+              }));
     }
     return Padding(
         padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
