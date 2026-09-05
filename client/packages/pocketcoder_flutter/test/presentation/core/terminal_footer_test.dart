@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart'
+    show TerminalFooter, TerminalAction;
 
 void main() {
   testWidgets('an active action renders inverted: filled bg in its role color',

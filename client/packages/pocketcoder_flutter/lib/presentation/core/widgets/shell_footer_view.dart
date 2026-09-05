@@ -20,6 +20,7 @@ class ShellFooterView extends StatelessWidget {
                 hasBadge: pillar == NavPillar.config &&
                     (footer.configureBadge || configureBadge),
               ),
+            ...footer.extraActions,
           ],
         WizardFooter footer => [
             if (footer.onBack != null)

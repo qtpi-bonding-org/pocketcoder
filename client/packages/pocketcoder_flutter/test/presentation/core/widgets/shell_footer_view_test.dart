@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/shell_footer_view.dart';
 
 void main() {
@@ -71,5 +73,98 @@ void main() {
   test('a wizard footer cannot be stepless', () {
     expect(() => WizardFooter(step: 0, totalSteps: 7, onNext: () {}),
         throwsAssertionError);
+  });
+
+  testWidgets('pillar footer with extra actions renders all labels',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.lightTheme,
+      home: Scaffold(
+        body: ShellFooterView(
+          footer: PillarFooter(
+            active: NavPillar.chat,
+            onSelect: (_) {},
+            extraActions: [
+              TerminalAction(
+                label: 'files',
+                onTap: () {},
+                kind: ActionKind.neutral,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ));
+
+    // Should render four pillars plus the extra action
+    expect(find.text('<chat>'), findsOneWidget);
+    expect(find.text('<config>'), findsOneWidget);
+    expect(find.text('<status>'), findsOneWidget);
+    expect(find.text('<control>'), findsOneWidget);
+    expect(find.text('<files>'), findsOneWidget);
+  });
+
+  testWidgets(
+      'pillar footer at 320dp with extra action wraps without overflow or '
+      'mid-word truncation', (tester) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.lightTheme,
+      home: Scaffold(
+        body: ShellFooterView(
+          footer: PillarFooter(
+            active: NavPillar.chat,
+            onSelect: (_) {},
+            extraActions: [
+              TerminalAction(
+                label: 'files',
+                onTap: () {},
+                kind: ActionKind.neutral,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ));
+
+    // All labels should render whole (maxLines: 1)
+    for (final label in ['<chat>', '<config>', '<status>', '<control>', '<files>']) {
+      expect(find.text(label), findsOneWidget);
+      final text = tester.widget<Text>(find.text(label));
+      expect(text.maxLines, 1,
+          reason: 'Label $label must not wrap mid-word');
+    }
+
+    // Check that there are no render exceptions (overflow)
+    final exception = tester.takeException();
+    expect(exception, isNull,
+        reason: 'Should not have render overflow at 320dp with 5 items');
+  });
+
+  testWidgets('pillar footer with no extra actions looks exactly as before',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.lightTheme,
+      home: Scaffold(
+        body: ShellFooterView(
+          footer: PillarFooter(
+            active: NavPillar.chat,
+            onSelect: (_) {},
+            extraActions: const [],
+          ),
+        ),
+      ),
+    ));
+
+    // Should render only four pillars
+    expect(find.text('<chat>'), findsOneWidget);
+    expect(find.text('<config>'), findsOneWidget);
+    expect(find.text('<status>'), findsOneWidget);
+    expect(find.text('<control>'), findsOneWidget);
+
+    // Should not render any extra actions
+    expect(find.text('<files>'), findsNothing);
   });
 }

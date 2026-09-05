@@ -6,12 +6,15 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/shell_footer_view.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
+
+// Re-export TerminalAction for convenience
+export 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart'
+    show TerminalAction;
 
 void _navHaptic() {
   if (GetIt.instance<ILocalSettingsService>().hapticsEnabledSync) {
@@ -19,8 +22,12 @@ void _navHaptic() {
   }
 }
 
-PillarFooter buildPillarFooter(BuildContext context, NavPillar active,
-    {bool configureBadge = false}) {
+PillarFooter buildPillarFooter(
+  BuildContext context,
+  NavPillar active, {
+  bool configureBadge = false,
+  List<TerminalAction> extraActions = const [],
+}) {
   return PillarFooter(
     active: active,
     onSelect: (pillar) {
@@ -41,6 +48,7 @@ PillarFooter buildPillarFooter(BuildContext context, NavPillar active,
         NavPillar.control,
     ],
     configureBadge: configureBadge,
+    extraActions: extraActions,
   );
 }
 

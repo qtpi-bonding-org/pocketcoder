@@ -241,37 +241,45 @@ class _ChatViewState extends State<ChatView> {
       animatedMessageIds: widget.animatedMessageIds,
       onMessageAnimated: widget.onMessageAnimated,
     );
+
+    // Files button now sits in the footer alongside the pillars
+    final extraFooterActions = [
+      TerminalAction(
+        label: context.l10n.chatFilesAction,
+        onTap: widget.onFiles,
+        kind: ActionKind.neutral,
+      ),
+    ];
+
     return PocketCoderShell(
-      footer: buildPillarFooter(context, NavPillar.chat),
+      footer: buildPillarFooter(
+        context,
+        NavPillar.chat,
+        extraActions: extraFooterActions,
+      ),
       showBack: true,
       padding: EdgeInsets.zero,
       body: Column(
         children: [
-          // The footer is navigation-only now (Task 17) -- these contextual,
-          // per-chat actions moved from chrome into the body's own header row.
+          // Files button now in footer. Cancel and monitor toggle remain here.
           Padding(
             padding: EdgeInsets.symmetric(
                 horizontal: AppSizes.space * 2, vertical: AppSizes.space),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: AppSizes.space,
-                  runSpacing: AppSizes.space,
-                  children: [
-                    TerminalButton(
-                      label: context.l10n.chatFilesAction,
-                      kind: ActionKind.neutral,
-                      onTap: widget.onFiles,
-                    ),
-                    if (widget.isRunning)
+                if (widget.isRunning)
+                  Wrap(
+                    spacing: AppSizes.space,
+                    runSpacing: AppSizes.space,
+                    children: [
                       TerminalButton(
                         label: context.l10n.actionCancel,
                         kind: ActionKind.refusal,
                         onTap: widget.onCancel,
                       ),
-                  ],
-                ),
+                    ],
+                  ),
                 if (widget.showMonitorAction)
                   DetailRow.toggle(
                     label: context.l10n.chatMonitorAction,
