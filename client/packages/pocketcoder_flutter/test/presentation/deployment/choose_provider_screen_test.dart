@@ -80,7 +80,7 @@ void main() {
 
     expect(find.byType(TerminalFooter), findsOneWidget);
 
-    await tester.tap(find.textContaining('linode'));
+    await tester.tap(find.textContaining('Linode'));
     await tester.pumpAndSettle();
 
     expect(capturedRoute, '/auth');
@@ -120,7 +120,7 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.textContaining('linode'));
+    await tester.tap(find.textContaining('Linode'));
     await tester.pumpAndSettle();
 
     expect(selectedProvider?.id, 'linode');
