@@ -67,13 +67,16 @@ class ProOffer extends StatelessWidget {
         role: TextRole.label,
         textAlign: TextAlign.center,
       ),
-      Wrap(alignment: WrapAlignment.center, children: [
-        TextButton(
-            onPressed: onOpenTermsOfService,
-            child: Text(context.l10n.proTermsOfServiceLink)),
-        TextButton(
-            onPressed: onOpenPrivacyPolicy,
-            child: Text(context.l10n.proPrivacyPolicyLink)),
+      VSpace.x1,
+      Wrap(alignment: WrapAlignment.center, spacing: AppSizes.ch * 2, children: [
+        TerminalButton(
+            label: context.l10n.proTermsOfServiceLink,
+            kind: ActionKind.neutral,
+            onTap: onOpenTermsOfService),
+        TerminalButton(
+            label: context.l10n.proPrivacyPolicyLink,
+            kind: ActionKind.neutral,
+            onTap: onOpenPrivacyPolicy),
       ]),
     ]);
   }

@@ -77,10 +77,13 @@ void main() {
     await tester.pumpAndSettle();
 
     final l10n = lookupAppLocalizations(const Locale('en'));
-    await tester.ensureVisible(find.text(l10n.proTermsOfServiceLink));
-    await tester.tap(find.text(l10n.proTermsOfServiceLink));
-    await tester.ensureVisible(find.text(l10n.proPrivacyPolicyLink));
-    await tester.tap(find.text(l10n.proPrivacyPolicyLink));
+    // TerminalButton decorates every label as <label>; the call site must not.
+    final terms = find.text('<${l10n.proTermsOfServiceLink}>');
+    final privacy = find.text('<${l10n.proPrivacyPolicyLink}>');
+    await tester.ensureVisible(terms);
+    await tester.tap(terms);
+    await tester.ensureVisible(privacy);
+    await tester.tap(privacy);
 
     expect(termsOpened, 1);
     expect(privacyOpened, 1);
