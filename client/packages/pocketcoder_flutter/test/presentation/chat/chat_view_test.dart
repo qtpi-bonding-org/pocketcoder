@@ -76,7 +76,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('<watch>'));
+    await tester.tap(find.text('watch'));
     await tester.pump();
 
     expect(toggled, isTrue);
@@ -90,7 +90,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('<watch>'), findsNothing);
+    expect(find.text('watch'), findsNothing);
   });
 
   testWidgets('exactly one composer is rendered', (tester) async {
