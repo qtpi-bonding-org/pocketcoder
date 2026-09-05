@@ -2572,7 +2572,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Why does Docker need its own rules?';
 
   @override
-  String get walkthroughNixosNetworkChipIpVersions => 'WHAT ARE IPv4 AND IPv6?';
+  String get walkthroughNixosNetworkChipIpVersions => 'What are IPv4 and IPv6?';
 
   @override
   String get walkthroughNixosSshTitle => 'key-only SSH';
@@ -3318,7 +3318,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String serverControlReleaseContracts(
       String app, String server, String deployment) {
-    return 'CONTRACTS: APP v$app · SERVER v$server · DEPLOYMENT v$deployment';
+    return 'contracts: app v$app · server v$server · deployment v$deployment';
   }
 
   @override

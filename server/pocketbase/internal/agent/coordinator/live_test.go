@@ -18,6 +18,7 @@ package coordinator
 
 import (
 	"context"
+	"errors"
 	"os"
 	"strconv"
 	"testing"
@@ -276,6 +277,60 @@ func TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer(t *testing.T
 		t.Fatalf("run ended in RUN_ERROR -- if this mentions \"Provider not set\", the fix has regressed; events: %v", got)
 	}
 	t.Logf("provider bootstrap on fresh container ok: events=%d, last=%v, assistant reply=%q", len(got), got[len(got)-1], reply)
+}
+
+func TestLiveSetConfigOptionSwitchesModel(t *testing.T) {
+	profile := liveProfile()
+	if !profile.SupportsLiveConfig {
+		t.Skip("set GOOSE_LIVE_PROVIDER and GOOSE_LIVE_MODEL to run this test")
+	}
+
+	c, err := New(liveConfig(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chatID := "live-chat-config-switch"
+	resolve := func(context.Context) (string, error) { return "", nil }
+	profileFn := func(context.Context) (SessionProfile, error) { return profile, nil }
+	created := func(context.Context, string) error { return nil }
+	finished := func(context.Context, acpsdk.StopReason) error { return nil }
+
+	// A slow prompt keeps the run active long enough for the polling loop
+	// below to catch it before RUN_FINISHED.
+	if _, err := c.StartPrompt(chatID, "Count slowly from 1 to 12, one number per line.", resolve, profileFn, created, finished); err != nil {
+		t.Fatalf("StartPrompt failed: %v", err)
+	}
+	defer func() { _ = c.Cancel(context.Background(), chatID) }()
+
+	req := acpsdk.SetSessionConfigOptionRequest{ValueId: &acpsdk.SetSessionConfigOptionValueId{
+		ConfigId: "model",
+		Value:    acpsdk.SessionConfigValueId(profile.Model),
+	}}
+
+	deadline := time.Now().Add(liveTimeout())
+	var setErr error
+	for time.Now().Before(deadline) {
+		setErr = c.SetConfigOption(context.Background(), chatID, req)
+		if setErr == nil || !errors.Is(setErr, ErrNoActiveRun) {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	if setErr != nil {
+		t.Fatalf("live session/set_config_option for configId \"model\" failed: %v", setErr)
+	}
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	got := drainEventTypes(t, att, liveTimeout())
+	if len(got) == 0 {
+		t.Fatal("expected at least one event")
+	}
+	if last := got[len(got)-1]; last == events.EventTypeRunError {
+		t.Fatalf("run ended in RUN_ERROR after a live model switch: %v", got)
+	}
+	t.Logf("mid-run model switch ok: events=%d", len(got))
 }
 
 // TestLiveWrongSecretRejected proves the WS endpoint enforces auth: a bad

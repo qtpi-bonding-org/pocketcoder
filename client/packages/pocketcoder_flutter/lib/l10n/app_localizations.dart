@@ -4711,7 +4711,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughNixosNetworkChipIpVersions.
   ///
   /// In en, this message translates to:
-  /// **'WHAT ARE IPv4 AND IPv6?'**
+  /// **'What are IPv4 and IPv6?'**
   String get walkthroughNixosNetworkChipIpVersions;
 
   /// No description provided for @walkthroughNixosSshTitle.
@@ -5972,7 +5972,7 @@ abstract class AppLocalizations {
   /// No description provided for @serverControlReleaseContracts.
   ///
   /// In en, this message translates to:
-  /// **'CONTRACTS: APP v{app} · SERVER v{server} · DEPLOYMENT v{deployment}'**
+  /// **'contracts: app v{app} · server v{server} · deployment v{deployment}'**
   String serverControlReleaseContracts(
       String app, String server, String deployment);
 
