@@ -160,13 +160,7 @@ void main() {
       ),
     );
     expect(unavailable.text, contains('coming soon'));
-    // Unavailable providers should use a de-emphasized role
-    // Check that the rendered Text widget has the label role's color
-    final unavailableText = tester.widget<Text>(
-      find.descendant(
-          of: find.byWidget(unavailable), matching: find.byType(Text)),
-    );
-    expect(unavailableText.style?.color, TextRole.label.color);
+    expect(unavailable.role, TextRole.label);
 
     await tester.tap(find.textContaining('Elestio'));
     await tester.pump();
