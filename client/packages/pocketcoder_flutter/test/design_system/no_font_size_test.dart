@@ -9,6 +9,7 @@ const _artExemptions = {
   'lib/presentation/core/widgets/ascii_logo.dart',
   'lib/presentation/core/widgets/poco_bubble.dart', // Poco face sizing
   'lib/presentation/core/widgets/poco_animator.dart', // Poco animated face sizing
+  'lib/presentation/boot/boot_view.dart', // Poco art sizing on boot screen
 };
 
 /// These files were owned by earlier tasks; all have landed clean, so this

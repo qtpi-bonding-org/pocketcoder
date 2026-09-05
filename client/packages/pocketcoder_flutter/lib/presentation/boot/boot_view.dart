@@ -78,6 +78,7 @@ class BootView extends StatelessWidget {
                           child: PocoFace(
                             sequence: pocoState.sequence,
                             posture: PocoPosture.armored,
+                            fontSize: 40.0,
                           ),
                         ),
                       ),
