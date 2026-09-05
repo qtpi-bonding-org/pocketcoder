@@ -14,21 +14,24 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 class WizardFooterBar extends StatelessWidget {
   const WizardFooterBar({
     super.key,
-    required this.step,
-    required this.totalSteps,
+    this.step,
+    this.totalSteps,
     this.onBack,
     this.onNext,
   });
 
-  final int step;
-  final int totalSteps;
+  final int? step;
+  final int? totalSteps;
   final VoidCallback? onBack;
   final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final counterText = '($step/$totalSteps)';
+    final step = this.step;
+    final totalSteps = this.totalSteps;
+    final counterText =
+        step != null && totalSteps != null ? '($step/$totalSteps)' : null;
 
     return Container(
       width: double.infinity,
@@ -52,18 +55,19 @@ class WizardFooterBar extends StatelessWidget {
                     ),
                   ),
                 ),
-              Align(
-                alignment: Alignment.center,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-                  child: TerminalText(
-                    counterText,
-                    role: TextRole.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              if (counterText case final text?)
+                Align(
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+                    child: TerminalText(
+                      text,
+                      role: TextRole.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
-              ),
               if (onNext case final next?)
                 Align(
                   alignment: Alignment.centerRight,

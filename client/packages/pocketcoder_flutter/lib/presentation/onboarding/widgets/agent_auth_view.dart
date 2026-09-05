@@ -66,8 +66,7 @@ class AgentAuthView extends StatelessWidget {
         // as the forward action; onSkip stays reachable via its own body
         // button below rather than disappearing from the footer's single
         // onNext slot.
-        footer:
-            WizardFooter(step: 6, totalSteps: 6, onNext: onContinue ?? onSkip),
+        footer: WizardFooter(onNext: onContinue ?? onSkip),
         body: _buildBody(context, supported));
   }
 

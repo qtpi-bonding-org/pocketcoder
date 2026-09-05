@@ -58,19 +58,24 @@ final class PillarFooter extends ShellFooter {
 /// A linear flow: onboarding, provisioning, deployment, harness auth on the
 /// onboarding path.
 ///
-/// `step` and `totalSteps` are required. A wizard that cannot say where it is
-/// has no business being a wizard, and the position is real data already held
-/// by the flow's step list -- never a decorative fraction.
+/// `step`/`totalSteps` are both-or-neither: a branching screen with no real
+/// position passes neither and renders no counter.
 final class WizardFooter extends ShellFooter {
   const WizardFooter({
-    required this.step,
-    required this.totalSteps,
+    this.step,
+    this.totalSteps,
     this.onNext,
     this.onBack,
-  }) : assert(step >= 1 && step <= totalSteps);
+  }) : assert(
+          (step == null && totalSteps == null) ||
+              (step != null &&
+                  totalSteps != null &&
+                  step >= 1 &&
+                  step <= totalSteps),
+        );
 
-  final int step;
-  final int totalSteps;
+  final int? step;
+  final int? totalSteps;
   final VoidCallback? onNext; // null when the step auto-advances
   final VoidCallback? onBack; // null on the first step
 }

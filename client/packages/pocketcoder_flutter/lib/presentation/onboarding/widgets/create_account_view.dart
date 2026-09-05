@@ -53,8 +53,6 @@ class _CreateAccountViewState extends State<CreateAccountView> {
   @override
   Widget build(BuildContext context) => PocketCoderShell(
         footer: WizardFooter(
-            step: 3,
-            totalSteps: 6,
             onNext: widget.isValid ? widget.onContinue : () {}),
         showBack: true,
         backFallbackRoute: AppRoutes.onboarding,

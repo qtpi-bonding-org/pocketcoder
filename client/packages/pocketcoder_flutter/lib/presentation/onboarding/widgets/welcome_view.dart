@@ -26,7 +26,7 @@ class WelcomeView extends StatelessWidget {
         // Counted so the flow stays contiguous 1..6 -- but no onNext:
         // the two prompts in the body are the choice, and a footer
         // <next> would silently pick one of them.
-        footer: const WizardFooter(step: 1, totalSteps: 6),
+        footer: const WizardFooter(),
         body: OnboardingContentShell(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

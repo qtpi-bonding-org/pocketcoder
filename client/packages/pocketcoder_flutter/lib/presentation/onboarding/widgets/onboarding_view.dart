@@ -23,7 +23,7 @@ class OnboardingView extends StatelessWidget {
   Widget build(BuildContext context) => PocketCoderShell(
         // Entry point, so no back. Counted so the flow reads 1..6; no
         // onNext because the two prompts in the body are the choice.
-        footer: const WizardFooter(step: 2, totalSteps: 6),
+        footer: const WizardFooter(),
         body: OnboardingContentShell(
           paddingMultiplier: 4,
           mainAxisAlignment: MainAxisAlignment.center,

@@ -65,8 +65,7 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
     return PocketCoderShell(
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
-      footer: WizardFooter(
-          step: 4, totalSteps: 6, onNext: loading ? () {} : _login),
+      footer: WizardFooter(onNext: loading ? () {} : _login),
       body: OnboardingContentShell(
         child: Column(
           children: [
