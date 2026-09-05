@@ -60,36 +60,30 @@ class ChooseProviderView extends StatelessWidget {
         null => buildPillarFooter(context, NavPillar.config),
       },
       showBack: true,
-      body: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-              child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        PocoBubble(
-                            posture: PocoPosture.armored,
-                            message: context.l10n.onboardingProviderPoco),
-                        VSpace.x3,
-                        TerminalText(
-                          context.l10n.onboardingProviderTitle,
-                          role: TextRole.body,
-                        ),
-                        VSpace.x2,
-                        for (final option in options)
-                          Padding(
-                              padding: EdgeInsets.only(bottom: AppSizes.space),
-                              child: option.isAvailable
-                                  ? TerminalPromptSuggestion(
-                                      label: option.requiresPro
-                                          ? '${option.name} · ${context.l10n.chooseProviderProBadge}'
-                                          : option.name,
-                                      emphasis: Emphasis.outlined,
-                                      onSelected: () => onSelected(option))
-                                  : _UnavailableProvider(option: option)),
-                      ])))));
+      scrollable: true,
+      scrollPadding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
+      body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        PocoBubble(
+            posture: PocoPosture.armored,
+            message: context.l10n.onboardingProviderPoco),
+        VSpace.x3,
+        TerminalText(
+          context.l10n.onboardingProviderTitle,
+          role: TextRole.body,
+        ),
+        VSpace.x2,
+        for (final option in options)
+          Padding(
+              padding: EdgeInsets.only(bottom: AppSizes.space),
+              child: option.isAvailable
+                  ? TerminalPromptSuggestion(
+                      label: option.requiresPro
+                          ? '${option.name} · ${context.l10n.chooseProviderProBadge}'
+                          : option.name,
+                      emphasis: Emphasis.outlined,
+                      onSelected: () => onSelected(option))
+                  : _UnavailableProvider(option: option)),
+      ]));
 }
 
 class _UnavailableProvider extends StatelessWidget {

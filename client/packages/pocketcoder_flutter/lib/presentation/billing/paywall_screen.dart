@@ -68,20 +68,13 @@ class PaywallView extends StatelessWidget {
     return PocketCoderShell(
       footer: buildPillarFooter(context, NavPillar.config),
       showBack: true,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(vertical: AppSizes.line),
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildContent(context),
-              ],
-            ),
-          ),
-        ),
+      scrollable: true,
+      scrollPadding: EdgeInsets.symmetric(vertical: AppSizes.line),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildContent(context),
+        ],
       ),
     );
   }
