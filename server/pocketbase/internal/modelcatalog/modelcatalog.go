@@ -372,12 +372,14 @@ func upsertModel(app core.App, providerRec *core.Record, p ProviderInfo, m Model
 	return rec, nil
 }
 
+const opencodeCliID = "opencode"
+
 // harnessModelID computes the model identifier a given harness's ACP
 // session/set_config_option call actually needs. OpenCode always addresses
 // a model as "<providerID>/<modelID>"; other harnesses use the bare
 // models.dev id directly.
 func harnessModelID(harness *core.Record, providerID, modelID string) string {
-	if harness.GetString("cli_id") != "opencode" {
+	if harness.GetString("cli_id") != opencodeCliID {
 		return modelID
 	}
 	prefix := providerID + "/"

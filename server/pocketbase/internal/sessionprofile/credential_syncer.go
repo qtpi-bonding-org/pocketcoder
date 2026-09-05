@@ -35,6 +35,8 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 )
 
+const opencodeCliID = "opencode"
+
 type CredentialSyncer interface {
 	Sync(ctx context.Context, app core.App, instance *core.Record, providerRec *core.Record, credential string) error
 }
@@ -84,7 +86,7 @@ func (OpencodeAuthFileSyncer) Sync(ctx context.Context, app core.App, instance *
 	if err != nil {
 		return fmt.Errorf("resolve workspace volume: %w", err)
 	}
-	volumes, err := harnessvolume.Resolve(volumeBase, fresh.GetString("user"), "opencode", fresh.GetString("oauth_account"))
+	volumes, err := harnessvolume.Resolve(volumeBase, fresh.GetString("user"), opencodeCliID, fresh.GetString("oauth_account"))
 	if err != nil {
 		return fmt.Errorf("resolve harness volumes: %w", err)
 	}
@@ -99,17 +101,17 @@ func (OpencodeAuthFileSyncer) Sync(ctx context.Context, app core.App, instance *
 	if err := writeOpencodeAuthFile(ctx, client, image, volumes.Auth, providerID, credential); err != nil {
 		return fmt.Errorf("write opencode auth file: %w", err)
 	}
-	// opencode re-syncs its model catalog (~4.5MB) from scratch the first
-	// time anything asks for a given provider's models under a fresh
-	// HOME -- warming it here, once per credential, writes the result to
-	// volumes.Auth (persistent, survives container restarts) so the
-	// coordinator's later SetSessionConfigOption("model", ...) doesn't
-	// race a catalog sync that's still in flight. Best-effort: a failure
-	// here must not block the credential write/restart that already
-	// succeeded, since setModelWithRetry still covers a cold cache live.
-	if err := warmOpencodeModelCache(ctx, client, image, volumes.Auth, providerID); err != nil {
-		log.Printf("[sessionprofile] warm opencode model cache for instance %s: %v", instance.Id, err)
-	}
+	// Detached: best-effort (setModelWithRetry covers a cold cache live),
+	// so it must not add its own delay to a chat's first message. ctx is
+	// gone by the time this finishes, hence WithoutCancel plus its own
+	// bounded timeout.
+	go func() {
+		warmCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 90*time.Second)
+		defer cancel()
+		if err := warmOpencodeModelCache(warmCtx, client, image, volumes.Auth, providerID); err != nil {
+			log.Printf("[sessionprofile] warm opencode model cache for instance %s: %v", instance.Id, err)
+		}
+	}()
 	if err := hooks.RestartContainer(fresh.GetString("container_name"), 30*time.Second); err != nil {
 		return fmt.Errorf("restart opencode container: %w", err)
 	}
@@ -210,7 +212,7 @@ func warmOpencodeModelCache(ctx context.Context, client *dockerapi.Client, image
 }
 
 func selectCredentialSyncer(harness *core.Record) CredentialSyncer {
-	if harness.GetString("cli_id") == "opencode" {
+	if harness.GetString("cli_id") == opencodeCliID {
 		return OpencodeAuthFileSyncer{}
 	}
 	return NoopCredentialSyncer{}

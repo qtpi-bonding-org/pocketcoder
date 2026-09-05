@@ -213,13 +213,46 @@ func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID s
 	})
 	// Mode is a preference, not a required session parameter -- an unknown
 	// mode id must not fail the whole run.
-	var reqErr *acpsdk.RequestError
-	if errors.As(err, &reqErr) && reqErr.Code == -32602 &&
-		strings.Contains(reqErr.Message, "mode not found") {
+	if isModeNotFoundError(err, p.Mode) {
 		log.Printf("[coordinator] session %s: harness rejected mode %q as unknown, continuing without it", sessionID, p.Mode)
 		return nil
 	}
 	return err
+}
+
+func requestErrorData(err error) (data map[string]any, code int, ok bool) {
+	var reqErr *acpsdk.RequestError
+	if !errors.As(err, &reqErr) {
+		return nil, 0, false
+	}
+	m, _ := reqErr.Data.(map[string]any)
+	return m, reqErr.Code, true
+}
+
+// Data.mode is checked before the message text, which can drift.
+func isModeNotFoundError(err error, mode acpsdk.SessionModeId) bool {
+	data, code, ok := requestErrorData(err)
+	if !ok || code != -32602 {
+		return false
+	}
+	if m, ok := data["mode"].(string); ok {
+		return m == string(mode)
+	}
+	var reqErr *acpsdk.RequestError
+	return errors.As(err, &reqErr) && strings.Contains(reqErr.Message, "mode not found")
+}
+
+// Data.modelId is checked before the message text, which can drift.
+func isModelNotFoundError(err error, model string) bool {
+	data, code, ok := requestErrorData(err)
+	if !ok || code != -32602 {
+		return false
+	}
+	if m, ok := data["modelId"].(string); ok {
+		return m == model
+	}
+	var reqErr *acpsdk.RequestError
+	return errors.As(err, &reqErr) && strings.Contains(reqErr.Message, "model not found")
 }
 
 func modeAdvertised(modes *acpsdk.SessionModeState, mode acpsdk.SessionModeId) bool {
@@ -299,9 +332,7 @@ func setModelWithRetry(ctx context.Context, conn acp.Conn, sessionID, model stri
 		if err == nil {
 			return nil
 		}
-		var reqErr *acpsdk.RequestError
-		if !errors.As(err, &reqErr) || reqErr.Code != -32602 ||
-			!strings.Contains(reqErr.Message, "model not found") {
+		if !isModelNotFoundError(err, model) {
 			return err
 		}
 		if !time.Now().Before(deadline) {

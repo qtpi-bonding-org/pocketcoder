@@ -80,6 +80,30 @@ func TestGlobalConfigApplier_ToleratesUnknownModeError(t *testing.T) {
 	}
 }
 
+func TestGlobalConfigApplier_UsesStructuredDataOverMessageText(t *testing.T) {
+	fc := &fakeConn{setModeErr: &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: totally different wording",
+		Data: map[string]any{"mode": "approve"},
+	}}
+	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
+	if err != nil {
+		t.Fatalf("expected Data.mode match to swallow the error regardless of message text, got: %v", err)
+	}
+}
+
+func TestGlobalConfigApplier_DoesNotSwallowMismatchedModeInData(t *testing.T) {
+	fc := &fakeConn{setModeErr: &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: mode not found: some-other-mode",
+		Data: map[string]any{"mode": "some-other-mode"},
+	}}
+	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
+	if err == nil {
+		t.Fatal("expected an error for a mode mismatch unrelated to the one we sent")
+	}
+}
+
 // Goose's session/new|load rejects a null mcpServers/additionalDirectories
 // with -32602 "invalid type: null, expected a sequence". A profile with no MCP
 // servers and no extra directories (the default chat) must still serialize
@@ -205,6 +229,24 @@ func TestPerSessionApplierRetriesModelNotFound(t *testing.T) {
 	}
 	if len(fc.setConfigOptionCalls) != 3 {
 		t.Fatalf("set_config_option calls = %d, want 3 (2 failures + 1 success)", len(fc.setConfigOptionCalls))
+	}
+}
+
+func TestPerSessionApplierRetriesOnDataModelIdRegardlessOfMessageText(t *testing.T) {
+	originalPoll := modelRetryPollInterval
+	modelRetryPollInterval = 5 * time.Millisecond
+	defer func() { modelRetryPollInterval = originalPoll }()
+
+	modelNotFound := &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: totally different wording",
+		Data: map[string]any{"modelId": "openrouter/auto"},
+	}
+	fc := &fakeConn{setConfigOptionErrs: []error{modelNotFound, nil}}
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Model: "openrouter/auto", SupportsLiveConfig: true,
+	}, nil)
+	if err != nil {
+		t.Fatalf("expected Data.modelId match to trigger a retry regardless of message text, got: %v", err)
 	}
 }
 
