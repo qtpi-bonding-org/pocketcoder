@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
@@ -64,7 +63,6 @@ class ChooseProviderView extends StatelessWidget {
       scrollPadding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
       body: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         PocoBubble(
-            posture: PocoPosture.armored,
             message: context.l10n.onboardingProviderPoco),
         VSpace.x3,
         TerminalText(

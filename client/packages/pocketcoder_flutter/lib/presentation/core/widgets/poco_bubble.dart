@@ -3,6 +3,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'poco_animator.dart';
+import 'poco_posture_scope.dart';
 import 'typewriter_text.dart';
 
 class PocoBubble extends StatelessWidget {
@@ -12,13 +13,13 @@ class PocoBubble extends StatelessWidget {
   final double? pocoSize;
   final TextAlign textAlign;
   final bool showFace;
-  final PocoPosture posture;
+  final PocoPosture? posture;
   final PocoMood? mood;
 
   const PocoBubble({
     super.key,
     required this.message,
-    required this.posture,
+    this.posture,
     this.mood,
     this.sequence = const [],
     this.history = const [],
@@ -29,6 +30,7 @@ class PocoBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedPosture = posture ?? PocoPostureScope.of(context);
     return LayoutBuilder(builder: (context, constraints) {
       final bubbleWidth = constraints.maxWidth.isFinite
           ? constraints.maxWidth.clamp(0.0, AppSizes.contentMaxWidth)
@@ -50,7 +52,7 @@ class PocoBubble extends StatelessWidget {
                       key: ValueKey(sequence),
                       fontSize: pocoSize ?? AppSizes.fontPoco,
                       sequence: sequence,
-                      posture: posture,
+                      posture: resolvedPosture,
                       mood: mood,
                     ),
                   ),
@@ -101,14 +103,14 @@ class PocoFace extends StatelessWidget {
     this.fontSize,
     this.color,
     this.mood,
-    this.posture = PocoPosture.armored,
+    this.posture,
     this.sequence = const [],
   });
 
   final double? fontSize;
   final Color? color;
   final PocoMood? mood;
-  final PocoPosture posture;
+  final PocoPosture? posture;
   final List<(String, int)> sequence;
 
   @override
@@ -116,7 +118,7 @@ class PocoFace extends StatelessWidget {
         fontSize: fontSize,
         color: color,
         mood: mood,
-        posture: posture,
+        posture: posture ?? PocoPostureScope.of(context),
         sequence: sequence,
       );
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'poco_posture_scope.dart';
 
 class PocoExpression {
   static const String sleepy = '-_-';
@@ -110,7 +111,7 @@ class AppAscii {
 
 class AsciiFace extends StatelessWidget {
   final String expression;
-  final PocoPosture posture;
+  final PocoPosture? posture;
   final PocoMood? mood;
   final Color? color;
   final double? fontSize;
@@ -118,7 +119,7 @@ class AsciiFace extends StatelessWidget {
   const AsciiFace({
     super.key,
     required this.expression,
-    this.posture = PocoPosture.armored,
+    this.posture,
     this.mood,
     this.color,
     this.fontSize,
@@ -126,6 +127,7 @@ class AsciiFace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final resolvedPosture = posture ?? PocoPostureScope.of(context);
     final effectiveColor = color ?? mood?.color ?? _moodFor(expression).color;
     final effectiveSize = fontSize ?? AppSizes.fontPoco;
     final style = TextStyle(
@@ -138,7 +140,7 @@ class AsciiFace extends StatelessWidget {
       letterSpacing: 0,
       fontWeight: AppFonts.heavy,
     );
-    final frame = posture == PocoPosture.armored
+    final frame = resolvedPosture == PocoPosture.armored
         ? '┌─────┐\n│     │\n└─────┘'
         : '╔═════╗\n║     ║\n╚═════╝';
     return Stack(
