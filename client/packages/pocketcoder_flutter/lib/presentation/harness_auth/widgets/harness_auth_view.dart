@@ -60,7 +60,7 @@ class HarnessAuthScreenView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => PocketCoderShell(
       footer: onboarding
-          ? WizardFooter(step: 6, totalSteps: 6)
+          ? const WizardFooter()
           : buildPillarFooter(context, NavPillar.config),
       showBack: true,
       body: HarnessAuthView(
