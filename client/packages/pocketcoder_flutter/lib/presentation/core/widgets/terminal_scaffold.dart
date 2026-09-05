@@ -43,7 +43,7 @@ class TerminalScaffold extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: padding ??
-                      EdgeInsets.symmetric(horizontal: AppSizes.space * 2),
+                      EdgeInsets.symmetric(horizontal: AppSizes.screenInset),
                   child: body,
                 ),
               ),

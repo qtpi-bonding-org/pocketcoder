@@ -51,8 +51,8 @@ class TerminalFooter extends StatelessWidget {
       // The page footer is a persistent status bar, not a row of discrete
       // buttons: labels stay bare and reverse-video carries the state.
       return Expanded(
-          child: BiosActionButton(
-              action: action.asStripItem(bracketed: false)));
+          child:
+              BiosActionButton(action: action.asStripItem(bracketed: false)));
     }).toList();
 
     return Container(
@@ -61,9 +61,12 @@ class TerminalFooter extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: children,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSizes.screenInset),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
+            ),
           ),
         ),
       ),

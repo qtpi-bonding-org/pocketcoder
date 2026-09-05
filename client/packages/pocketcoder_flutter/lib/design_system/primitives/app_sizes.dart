@@ -46,6 +46,9 @@ class AppSizes {
   static double get inputHeight => space * 7;
   static double get appBarHeight => space * 7;
   static double get bottomBarHeight => space * 10;
+  /// The gutter every screen keeps between its content and the display
+  /// edge, footers included. One value so the chrome lines up down the page.
+  static double get screenInset => space * 2;
   static double get contentMaxWidth => ch * 44;
   static double get pickerHeight => line * 12;
   static double get progressIndicatorSize => space * 1.5;

@@ -39,44 +39,47 @@ class WizardFooterBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: IntrinsicHeight(
-          child: Stack(
-            children: [
-              if (onBack case final back?)
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: BiosActionButton(
-                    action: BiosActionStripItem(
-                      label: 'back',
-                      onTap: back,
-                      bracketed: false,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSizes.screenInset),
+            child: Stack(
+              children: [
+                if (onBack case final back?)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: BiosActionButton(
+                      action: BiosActionStripItem(
+                        label: 'back',
+                        onTap: back,
+                        bracketed: false,
+                      ),
                     ),
                   ),
-                ),
-              if (counterText case final text?)
-                Align(
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-                    child: TerminalText(
-                      text,
-                      role: TextRole.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                if (counterText case final text?)
+                  Align(
+                    alignment: Alignment.center,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+                      child: TerminalText(
+                        text,
+                        role: TextRole.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                ),
-              if (onNext case final next?)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: BiosActionButton(
-                    action: BiosActionStripItem(
-                      label: 'next',
-                      onTap: next,
-                      bracketed: false,
+                if (onNext case final next?)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: BiosActionButton(
+                      action: BiosActionStripItem(
+                        label: 'next',
+                        onTap: next,
+                        bracketed: false,
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
