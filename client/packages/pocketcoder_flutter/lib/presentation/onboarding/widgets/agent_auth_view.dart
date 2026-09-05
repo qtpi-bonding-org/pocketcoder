@@ -67,7 +67,7 @@ class AgentAuthView extends StatelessWidget {
         // button below rather than disappearing from the footer's single
         // onNext slot.
         footer:
-            WizardFooter(step: 4, totalSteps: 4, onNext: onContinue ?? onSkip),
+            WizardFooter(step: 6, totalSteps: 6, onNext: onContinue ?? onSkip),
         body: _buildBody(context, supported));
   }
 

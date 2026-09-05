@@ -66,7 +66,7 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
       footer: WizardFooter(
-          step: 2, totalSteps: 4, onNext: loading ? () {} : _login),
+          step: 4, totalSteps: 6, onNext: loading ? () {} : _login),
       body: OnboardingContentShell(
         child: Column(
           children: [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
@@ -20,6 +21,9 @@ class OnboardingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
+        // Entry point, so no back. Counted so the flow reads 1..6; no
+        // onNext because the two prompts in the body are the choice.
+        footer: const WizardFooter(step: 2, totalSteps: 6),
         body: OnboardingContentShell(
           paddingMultiplier: 4,
           mainAxisAlignment: MainAxisAlignment.center,
