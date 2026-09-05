@@ -85,6 +85,7 @@ class PocketCoderShell extends StatelessWidget {
             active: currentFooter.active,
             onSelect: currentFooter.onSelect,
             available: const [],
+            extraActions: currentFooter.extraActions,
           )
         : footer;
     final footerActions = <TerminalAction>[
