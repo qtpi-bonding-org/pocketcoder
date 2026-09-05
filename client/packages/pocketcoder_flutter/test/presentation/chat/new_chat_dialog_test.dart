@@ -70,7 +70,7 @@ void main() {
     // The harness field itself only shows the "select harness" placeholder
     // until tapped — tap it to open the nested picker dialog, then the
     // harness name should be visible as an option.
-    await tester.tap(find.text('SELECT HARNESS'));
+    await tester.tap(find.text('select harness'));
     await tester.pumpAndSettle();
     expect(find.text('Goose'), findsOneWidget);
   });
@@ -99,13 +99,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // Open the harness picker and select it.
-    await tester.tap(find.text('SELECT HARNESS'));
+    await tester.tap(find.text('select harness'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Goose'));
     await tester.pumpAndSettle();
 
     // Open the model picker (now populated) and select it.
-    await tester.tap(find.text('SELECT MODEL'));
+    await tester.tap(find.text('select model'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Claude'));
     await tester.pumpAndSettle();
@@ -139,11 +139,11 @@ void main() {
     ));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('SELECT HARNESS'));
+    await tester.tap(find.text('select harness'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Goose'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('SELECT MODEL'));
+    await tester.tap(find.text('select model'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('qwen2.5:0.5b (LOCAL)'));
     await tester.pumpAndSettle();

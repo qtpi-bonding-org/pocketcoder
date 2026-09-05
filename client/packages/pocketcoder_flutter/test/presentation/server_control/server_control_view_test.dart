@@ -179,7 +179,7 @@ void main() {
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     await tester.pumpWidget(_app(cubit));
 
-    expect(find.text('RELEASE STATUS: CHECKING'), findsOneWidget);
+    expect(find.text('release status: checking'), findsOneWidget);
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(find.text(l10n.serverControlGroupPocketCoder), findsOneWidget);
     expect(find.text(l10n.serverControlGroupNixOs), findsOneWidget);
@@ -190,8 +190,8 @@ void main() {
     expect(find.text('<${l10n.serverControlActionRestore.toLowerCase()}>'), findsOneWidget);
     await cubit.inspectRelease();
     await tester.pump();
-    expect(find.textContaining('RELEASE STATUS: current'), findsOneWidget);
-    expect(find.textContaining('CURRENT: 2.0.0'), findsOneWidget);
+    expect(find.textContaining('release status: current'), findsOneWidget);
+    expect(find.textContaining('current: 2.0.0'), findsOneWidget);
     await cubit.close();
   });
 
@@ -215,12 +215,12 @@ void main() {
     await cubit.inspectRelease();
     await tester.pump();
 
-    expect(find.textContaining('AVAILABLE: 2.1.0'), findsOneWidget);
+    expect(find.textContaining('available: 2.1.0'), findsOneWidget);
     expect(
       find.textContaining('CONTRACTS: APP v2 · SERVER v1 · DEPLOYMENT v3'),
       findsOneWidget,
     );
-    expect(find.textContaining('NIXOS: 26.05'), findsOneWidget);
+    expect(find.textContaining('NixOS: 26.05'), findsOneWidget);
     await cubit.close();
   });
 
@@ -231,9 +231,9 @@ void main() {
     await cubit.inspectRelease();
     await tester.pump();
 
-    expect(find.textContaining('AVAILABLE:'), findsNothing);
+    expect(find.textContaining('available:'), findsNothing);
     expect(find.textContaining('CONTRACTS:'), findsNothing);
-    expect(find.textContaining('NIXOS:'), findsNothing);
+    expect(find.textContaining('NixOS:'), findsNothing);
     await cubit.close();
   });
 
@@ -298,13 +298,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('confirm server control'), findsOneWidget);
     expect(service.calls, isEmpty);
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     await tester.pumpAndSettle();
     expect(service.calls, isEmpty);
 
     await tester.tap(find.text('<save>'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CONFIRM'));
+    await tester.tap(find.text('<confirm>'));
     await tester.pump();
     expect(service.calls, [ServerControlOperation.saveBackup]);
     await cubit.close();
@@ -359,8 +359,8 @@ void main() {
     );
     await tester.pump();
     expect(find.text(r'$ saveBackup'), findsOneWidget);
-    expect(find.text('OUTPUT'), findsOneWidget);
-    await tester.tap(find.text('OUTPUT'));
+    expect(find.text('output'), findsOneWidget);
+    await tester.tap(find.text('output'));
     await tester.pump();
     expect(find.text('backup complete'), findsOneWidget);
     await cubit.close();
@@ -381,7 +381,7 @@ void main() {
           instanceId: 'instance-1',
         ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('OUTPUT'));
+    await tester.tap(find.text('output'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('permission denied'), findsOneWidget);
