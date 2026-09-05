@@ -53,8 +53,9 @@ PillarFooter buildPillarFooter(
 }
 
 class PocketCoderShell extends StatelessWidget {
-  // footer: is deliberately present on every route-owned shell.
-  final ShellFooter footer;
+  // footer: present on most routes. null on branch points (multiple choices,
+  // not a linear step).
+  final ShellFooter? footer;
   final Widget body;
   final bool showBack;
   final String? backLabel;
@@ -63,7 +64,7 @@ class PocketCoderShell extends StatelessWidget {
 
   const PocketCoderShell({
     super.key,
-    required this.footer,
+    this.footer,
     required this.body,
     this.showBack = false,
     this.backLabel,

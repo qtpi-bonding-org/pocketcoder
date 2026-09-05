@@ -23,7 +23,7 @@ class SelfHostSetupView extends StatelessWidget {
   Widget build(BuildContext context) => PocketCoderShell(
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
-      footer: WizardFooter(step: 5, totalSteps: 6, onNext: onConnect),
+      footer: WizardFooter(step: 3, totalSteps: 4, onNext: onConnect),
       body: OnboardingContentShell(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

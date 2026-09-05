@@ -91,8 +91,8 @@ class _BiosActionButtonState extends State<BiosActionButton> {
     }
 
     final displayLabel = action.bracketed
-        ? '<${action.label.toLowerCase()}>'
-        : action.label.toLowerCase();
+        ? '<${action.label}>'
+        : action.label;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

@@ -1913,11 +1913,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentWorkloadCloudReply =>
-      'Cloud models run inference through your online AI account. Your server mainly needs room for PocketCoder, your agents, and your projects.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.';
+      'Cloud models run inference through your online AI account. Your server mainly needs room for PocketCoder, your agents, and your projects.\n\nI\'ll show the minimum server size I recommend. You can choose a larger one.';
 
   @override
   String get deploymentWorkloadLocalReply =>
-      'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.';
+      'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI\'ll show the minimum server size I recommend. You can choose a larger one.';
 
   @override
   String get deploymentUseCloudModels => 'use cloud models';
@@ -1936,7 +1936,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentHarnessPoco =>
-      'Now choose which coding agents to have ready on your server.\n\nThis installs their software. You’ll connect any required accounts after your server is ready.';
+      'Now choose which coding agents to have ready on your server.\n\nThis installs their software. You\'ll connect any required accounts after your server is ready.';
 
   @override
   String get deploymentLinuxPoco =>
@@ -2027,11 +2027,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughTransitionProvisioning =>
-      'Let’s follow this next part of the server setup together.';
+      'Let\'s follow this next part of the server setup together.';
 
   @override
   String get walkthroughTransitionDeployment =>
-      'Now we’ll follow the verified release onto the host.';
+      'Now we\'ll follow the verified release onto the host.';
 
   @override
   String initializationSyncAttempt(Object attempt) {
@@ -2257,33 +2257,33 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you already part of the PocketCoder Initiative?';
 
   @override
-  String get onboardingNoServerChipExisting => 'I have a server — log in';
+  String get onboardingNoServerChipExisting => 'log in';
 
   @override
-  String get onboardingNoServerChipNew => 'I’m new — join';
+  String get onboardingNoServerChipNew => 'join';
 
   @override
   String get onboardingWelcomeTitle => 'welcome';
 
   @override
   String get onboardingWelcomePoco =>
-      'Welcome to the PocketCoder Initiative.\n\nI’ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.';
+      'Welcome to the PocketCoder Initiative.\n\nI\'ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.';
 
   @override
   String get onboardingWelcomeActionGuided => 'help me with setup';
 
   @override
-  String get onboardingWelcomeActionSelfHost => 'I’ll set it up';
+  String get onboardingWelcomeActionSelfHost => 'I\'ll set it up';
 
   @override
   String get onboardingSelfHostTitle => 'self-host setup';
 
   @override
   String get onboardingSelfHostPoco =>
-      'You’ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you’ll use to connect this app.';
+      'You\'ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you\'ll use to connect this app.';
 
   @override
-  String get onboardingSelfHostRequirementsTitle => 'what you’ll need';
+  String get onboardingSelfHostRequirementsTitle => 'what you\'ll need';
 
   @override
   String get onboardingSelfHostRequirementServer =>
@@ -2303,7 +2303,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingSignInPoco =>
-      'Welcome. We’ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you’ll use to sign in when it’s ready.';
+      'Welcome. We\'ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you\'ll use to sign in when it\'s ready.';
 
   @override
   String get onboardingSignInTitle => 'set up your sign-in';
@@ -2390,7 +2390,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingRegionConsentChipUseLocation => 'use my location';
 
   @override
-  String get onboardingRegionConsentChipChooseMyself => 'I’ll choose myself';
+  String get onboardingRegionConsentChipChooseMyself => 'I\'ll choose myself';
 
   @override
   String get onboardingRegionPoco =>
@@ -2401,7 +2401,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingHarnessPoco =>
-      'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you’ll connect any required accounts after your server is ready.';
+      'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you\'ll connect any required accounts after your server is ready.';
 
   @override
   String get onboardingHarnessTitle => 'choose coding agents';
@@ -2442,7 +2442,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingProvisioningPoco =>
-      'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI’ll show you what we’re building, one piece at a time.';
+      'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI\'ll show you what we\'re building, one piece at a time.';
 
   @override
   String get onboardingOrientationTitle => 'initiative orientation';
@@ -2487,7 +2487,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String onboardingFailureConnectionPoco(String providerName) {
-    return 'I couldn’t confirm that PocketCoder finished setting up.\n\nYour server is still available in your $providerName account.';
+    return 'I couldn\'t confirm that PocketCoder finished setting up.\n\nYour server is still available in your $providerName account.';
   }
 
   @override
@@ -2544,7 +2544,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughCaddyWebEntryPoco =>
-      'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder’s deployment status, and passes app requests to PocketBase without exposing PocketBase’s own port.';
+      'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder\'s deployment status, and passes app requests to PocketBase without exposing PocketBase\'s own port.';
 
   @override
   String get walkthroughCaddyWebEntryChipCaddy => 'What is Caddy?';
@@ -2558,7 +2558,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughNixosStoragePoco =>
-      'This tells NixOS where PocketCoder’s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.';
+      'This tells NixOS where PocketCoder\'s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.';
 
   @override
   String get walkthroughNixosNetworkTitle => 'network boundaries';
@@ -2590,7 +2590,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughNixosDockerPoco =>
-      'This turns on Docker, the system that runs PocketCoder’s containers. It sends their logs to NixOS’s built-in system log, so there is one place to check what happened.';
+      'This turns on Docker, the system that runs PocketCoder\'s containers. It sends their logs to NixOS\'s built-in system log, so there is one place to check what happened.';
 
   @override
   String get walkthroughServerKeyTitle => 'your server key';
@@ -2653,7 +2653,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughRuntimeSettingsPoco =>
-      'This prepares PocketCoder’s local settings file and locks it so only its administrator—you—can read it. It creates the internal credentials PocketCoder needs to run.';
+      'This prepares PocketCoder\'s local settings file and locks it so only its administrator—you—can read it. It creates the internal credentials PocketCoder needs to run.';
 
   @override
   String get walkthroughRuntimeSettingsChipLocalSettings =>
@@ -2699,7 +2699,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughDebianSetupStatusPoco =>
-      'This setup script keeps PocketCoder’s deployment status up to date as it runs. If something fails, it records where and cleans up temporary files so it can be checked or safely retried.';
+      'This setup script keeps PocketCoder\'s deployment status up to date as it runs. If something fails, it records where and cleans up temporary files so it can be checked or safely retried.';
 
   @override
   String get walkthroughDebianSetupStatusChipStatus =>
@@ -2714,7 +2714,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughServicesComposePoco =>
-      'Docker Compose is PocketCoder’s blueprint. It keeps your data when we update the software, and gives each component only the connections it needs.';
+      'Docker Compose is PocketCoder\'s blueprint. It keeps your data when we update the software, and gives each component only the connections it needs.';
 
   @override
   String get walkthroughServicesComposeChipDockerCompose =>
@@ -2808,7 +2808,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughServicesSqlPagePoco =>
-      'SQLPage is PocketCoder’s built-in dashboard for showing what is happening on your server. It starts after PocketBase is ready and uses saved PocketCoder data to build those pages.';
+      'SQLPage is PocketCoder\'s built-in dashboard for showing what is happening on your server. It starts after PocketBase is ready and uses saved PocketCoder data to build those pages.';
 
   @override
   String get walkthroughServicesSqlPageChipContents =>

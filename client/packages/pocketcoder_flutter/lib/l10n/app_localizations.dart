@@ -3589,13 +3589,13 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentWorkloadCloudReply.
   ///
   /// In en, this message translates to:
-  /// **'Cloud models run inference through your online AI account. Your server mainly needs room for PocketCoder, your agents, and your projects.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.'**
+  /// **'Cloud models run inference through your online AI account. Your server mainly needs room for PocketCoder, your agents, and your projects.\n\nI\'ll show the minimum server size I recommend. You can choose a larger one.'**
   String get deploymentWorkloadCloudReply;
 
   /// No description provided for @deploymentWorkloadLocalReply.
   ///
   /// In en, this message translates to:
-  /// **'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.'**
+  /// **'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI\'ll show the minimum server size I recommend. You can choose a larger one.'**
   String get deploymentWorkloadLocalReply;
 
   /// No description provided for @deploymentUseCloudModels.
@@ -3625,7 +3625,7 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentHarnessPoco.
   ///
   /// In en, this message translates to:
-  /// **'Now choose which coding agents to have ready on your server.\n\nThis installs their software. You’ll connect any required accounts after your server is ready.'**
+  /// **'Now choose which coding agents to have ready on your server.\n\nThis installs their software. You\'ll connect any required accounts after your server is ready.'**
   String get deploymentHarnessPoco;
 
   /// No description provided for @deploymentLinuxPoco.
@@ -3769,13 +3769,13 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughTransitionProvisioning.
   ///
   /// In en, this message translates to:
-  /// **'Let’s follow this next part of the server setup together.'**
+  /// **'Let\'s follow this next part of the server setup together.'**
   String get walkthroughTransitionProvisioning;
 
   /// No description provided for @walkthroughTransitionDeployment.
   ///
   /// In en, this message translates to:
-  /// **'Now we’ll follow the verified release onto the host.'**
+  /// **'Now we\'ll follow the verified release onto the host.'**
   String get walkthroughTransitionDeployment;
 
   /// No description provided for @initializationSyncAttempt.
@@ -4165,13 +4165,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingNoServerChipExisting.
   ///
   /// In en, this message translates to:
-  /// **'I have a server — log in'**
+  /// **'log in'**
   String get onboardingNoServerChipExisting;
 
   /// No description provided for @onboardingNoServerChipNew.
   ///
   /// In en, this message translates to:
-  /// **'I’m new — join'**
+  /// **'join'**
   String get onboardingNoServerChipNew;
 
   /// No description provided for @onboardingWelcomeTitle.
@@ -4183,7 +4183,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingWelcomePoco.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to the PocketCoder Initiative.\n\nI’ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.'**
+  /// **'Welcome to the PocketCoder Initiative.\n\nI\'ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.'**
   String get onboardingWelcomePoco;
 
   /// No description provided for @onboardingWelcomeActionGuided.
@@ -4195,7 +4195,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingWelcomeActionSelfHost.
   ///
   /// In en, this message translates to:
-  /// **'I’ll set it up'**
+  /// **'I\'ll set it up'**
   String get onboardingWelcomeActionSelfHost;
 
   /// No description provided for @onboardingSelfHostTitle.
@@ -4207,13 +4207,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSelfHostPoco.
   ///
   /// In en, this message translates to:
-  /// **'You’ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you’ll use to connect this app.'**
+  /// **'You\'ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you\'ll use to connect this app.'**
   String get onboardingSelfHostPoco;
 
   /// No description provided for @onboardingSelfHostRequirementsTitle.
   ///
   /// In en, this message translates to:
-  /// **'what you’ll need'**
+  /// **'what you\'ll need'**
   String get onboardingSelfHostRequirementsTitle;
 
   /// No description provided for @onboardingSelfHostRequirementServer.
@@ -4249,7 +4249,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSignInPoco.
   ///
   /// In en, this message translates to:
-  /// **'Welcome. We’ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you’ll use to sign in when it’s ready.'**
+  /// **'Welcome. We\'ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you\'ll use to sign in when it\'s ready.'**
   String get onboardingSignInPoco;
 
   /// No description provided for @onboardingSignInTitle.
@@ -4399,7 +4399,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingRegionConsentChipChooseMyself.
   ///
   /// In en, this message translates to:
-  /// **'I’ll choose myself'**
+  /// **'I\'ll choose myself'**
   String get onboardingRegionConsentChipChooseMyself;
 
   /// No description provided for @onboardingRegionPoco.
@@ -4417,7 +4417,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingHarnessPoco.
   ///
   /// In en, this message translates to:
-  /// **'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you’ll connect any required accounts after your server is ready.'**
+  /// **'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you\'ll connect any required accounts after your server is ready.'**
   String get onboardingHarnessPoco;
 
   /// No description provided for @onboardingHarnessTitle.
@@ -4483,7 +4483,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingProvisioningPoco.
   ///
   /// In en, this message translates to:
-  /// **'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI’ll show you what we’re building, one piece at a time.'**
+  /// **'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI\'ll show you what we\'re building, one piece at a time.'**
   String get onboardingProvisioningPoco;
 
   /// No description provided for @onboardingOrientationTitle.
@@ -4567,7 +4567,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingFailureConnectionPoco.
   ///
   /// In en, this message translates to:
-  /// **'I couldn’t confirm that PocketCoder finished setting up.\n\nYour server is still available in your {providerName} account.'**
+  /// **'I couldn\'t confirm that PocketCoder finished setting up.\n\nYour server is still available in your {providerName} account.'**
   String onboardingFailureConnectionPoco(String providerName);
 
   /// No description provided for @onboardingFailureActionRetryConnection.
@@ -4663,7 +4663,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughCaddyWebEntryPoco.
   ///
   /// In en, this message translates to:
-  /// **'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder’s deployment status, and passes app requests to PocketBase without exposing PocketBase’s own port.'**
+  /// **'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder\'s deployment status, and passes app requests to PocketBase without exposing PocketBase\'s own port.'**
   String get walkthroughCaddyWebEntryPoco;
 
   /// No description provided for @walkthroughCaddyWebEntryChipCaddy.
@@ -4687,7 +4687,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughNixosStoragePoco.
   ///
   /// In en, this message translates to:
-  /// **'This tells NixOS where PocketCoder’s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.'**
+  /// **'This tells NixOS where PocketCoder\'s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.'**
   String get walkthroughNixosStoragePoco;
 
   /// No description provided for @walkthroughNixosNetworkTitle.
@@ -4741,7 +4741,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughNixosDockerPoco.
   ///
   /// In en, this message translates to:
-  /// **'This turns on Docker, the system that runs PocketCoder’s containers. It sends their logs to NixOS’s built-in system log, so there is one place to check what happened.'**
+  /// **'This turns on Docker, the system that runs PocketCoder\'s containers. It sends their logs to NixOS\'s built-in system log, so there is one place to check what happened.'**
   String get walkthroughNixosDockerPoco;
 
   /// No description provided for @walkthroughServerKeyTitle.
@@ -4849,7 +4849,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughRuntimeSettingsPoco.
   ///
   /// In en, this message translates to:
-  /// **'This prepares PocketCoder’s local settings file and locks it so only its administrator—you—can read it. It creates the internal credentials PocketCoder needs to run.'**
+  /// **'This prepares PocketCoder\'s local settings file and locks it so only its administrator—you—can read it. It creates the internal credentials PocketCoder needs to run.'**
   String get walkthroughRuntimeSettingsPoco;
 
   /// No description provided for @walkthroughRuntimeSettingsChipLocalSettings.
@@ -4927,7 +4927,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughDebianSetupStatusPoco.
   ///
   /// In en, this message translates to:
-  /// **'This setup script keeps PocketCoder’s deployment status up to date as it runs. If something fails, it records where and cleans up temporary files so it can be checked or safely retried.'**
+  /// **'This setup script keeps PocketCoder\'s deployment status up to date as it runs. If something fails, it records where and cleans up temporary files so it can be checked or safely retried.'**
   String get walkthroughDebianSetupStatusPoco;
 
   /// No description provided for @walkthroughDebianSetupStatusChipStatus.
@@ -4951,7 +4951,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughServicesComposePoco.
   ///
   /// In en, this message translates to:
-  /// **'Docker Compose is PocketCoder’s blueprint. It keeps your data when we update the software, and gives each component only the connections it needs.'**
+  /// **'Docker Compose is PocketCoder\'s blueprint. It keeps your data when we update the software, and gives each component only the connections it needs.'**
   String get walkthroughServicesComposePoco;
 
   /// No description provided for @walkthroughServicesComposeChipDockerCompose.
@@ -5101,7 +5101,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughServicesSqlPagePoco.
   ///
   /// In en, this message translates to:
-  /// **'SQLPage is PocketCoder’s built-in dashboard for showing what is happening on your server. It starts after PocketBase is ready and uses saved PocketCoder data to build those pages.'**
+  /// **'SQLPage is PocketCoder\'s built-in dashboard for showing what is happening on your server. It starts after PocketBase is ready and uses saved PocketCoder data to build those pages.'**
   String get walkthroughServicesSqlPagePoco;
 
   /// No description provided for @walkthroughServicesSqlPageChipContents.

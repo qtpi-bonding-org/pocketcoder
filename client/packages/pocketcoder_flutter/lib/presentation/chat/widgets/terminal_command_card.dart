@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
 /// A read-only terminal transcript for a command Poco ran.
@@ -112,7 +113,14 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                 child: Row(
                   children: [
                     Text(
-                      _outputExpanded ? '▾' : '▸',
+                      // The glyph names the ACTION, not the state: collapsed
+                      // offers `expand`, expanded offers `collapse`. It used
+                      // to render `navigate` when collapsed, which is the
+                      // one confusion RowAffordance exists to prevent.
+                      (_outputExpanded
+                              ? RowAffordance.collapse
+                              : RowAffordance.expand)
+                          .glyph,
                       style: TextStyle(
                         color: colors.secondary,
                         fontFamily: AppFonts.family,

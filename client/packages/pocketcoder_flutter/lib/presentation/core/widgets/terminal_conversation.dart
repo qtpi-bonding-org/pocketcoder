@@ -3,7 +3,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 enum TerminalConversationSpeaker { user, poco }
 
@@ -183,9 +183,8 @@ class TerminalConversationTurn extends StatelessWidget {
   }
 }
 
-/// A suggested local prompt. It intentionally looks like a terminal command
-/// row instead of a modern rounded chip.
-class TerminalPromptSuggestion extends StatelessWidget {
+/// A suggested local prompt with user's voice represented as a prompt marker (>).
+class TerminalPromptSuggestion extends StatefulWidget {
   const TerminalPromptSuggestion({
     super.key,
     required this.label,
@@ -199,15 +198,47 @@ class TerminalPromptSuggestion extends StatelessWidget {
   final Emphasis? emphasis;
 
   @override
+  State<TerminalPromptSuggestion> createState() =>
+      _TerminalPromptSuggestionState();
+}
+
+class _TerminalPromptSuggestionState extends State<TerminalPromptSuggestion> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: TerminalButton(
-        label: label,
-        kind: emphasis == Emphasis.outlined
+    final role = (widget.emphasis == Emphasis.outlined
             ? ActionKind.primary
-            : ActionKind.neutral,
-        onTap: onSelected,
+            : ActionKind.neutral)
+        .role;
+    final reversed = _pressed;
+
+    return GestureDetector(
+      onTap: widget.onSelected,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      child: Container(
+        width: double.infinity,
+        color: reversed ? role.color : Colors.transparent,
+        padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.75),
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            TerminalText(
+              '> ',
+              role: role,
+            ),
+            Expanded(
+              child: TerminalText(
+                widget.label,
+                role: role,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
