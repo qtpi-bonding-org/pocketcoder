@@ -37,13 +37,6 @@ class TerminalTransition {
                           height: 2,
                           decoration: BoxDecoration(
                             color: colors.primary,
-                            boxShadow: [
-                              BoxShadow(
-                                color: colors.primary.withValues(alpha: 0.6),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ],
                           ),
                         ),
                       ),

@@ -35,12 +35,6 @@ class AsciiLogo extends StatelessWidget {
           fontWeight: AppFonts.heavy,
           fontFamily: AppFonts.family,
           package: 'pocketcoder_flutter',
-          shadows: [
-            Shadow(
-              color: effectiveColor.withValues(alpha: 0.5),
-              blurRadius: 4,
-            ),
-          ],
         ),
       ),
     );
