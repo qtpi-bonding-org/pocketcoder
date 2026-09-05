@@ -2257,10 +2257,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you already part of the PocketCoder Initiative?';
 
   @override
-  String get onboardingNoServerChipExisting => 'I have a server — log in';
+  String get onboardingNoServerChipExisting => 'log in';
 
   @override
-  String get onboardingNoServerChipNew => 'I\'m new — join';
+  String get onboardingNoServerChipNew => 'join';
 
   @override
   String get onboardingWelcomeTitle => 'welcome';
