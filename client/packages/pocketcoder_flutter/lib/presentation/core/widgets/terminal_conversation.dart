@@ -206,7 +206,7 @@ class TerminalPromptSuggestion extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: TerminalButton(
-        label: '> $label',
+        label: label,
         kind: ActionKind.neutral,
         onTap: onSelected,
       ),

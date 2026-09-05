@@ -60,6 +60,9 @@ class _FakeLocalSettingsService implements ILocalSettingsService {
   }
 }
 
+AppLocalizations l10nOf(WidgetTester tester) =>
+    AppLocalizations.of(tester.element(find.byType(SettingsScreen)))!;
+
 void main() {
   late MockAuthRepository authRepo;
   late MockMcpCubit mcpCubit;
@@ -146,9 +149,10 @@ void main() {
     await tester.tap(find.text('logout'));
     await tester.pumpAndSettle();
 
-    expect(find.text('SIGN OUT'), findsWidgets);
+    final signOutLabel = '<${l10nOf(tester).settingsLogoutConfirm}>';
+    expect(find.text(signOutLabel), findsWidgets);
 
-    await tester.tap(find.text('SIGN OUT').last);
+    await tester.tap(find.text(signOutLabel).last);
     await tester.pumpAndSettle();
 
     verify(() => authRepo.logout()).called(1);
@@ -167,7 +171,7 @@ void main() {
     await tester.tap(find.text('logout'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<${l10nOf(tester).settingsLogoutCancel}>'));
     await tester.pumpAndSettle();
 
     verifyNever(() => authRepo.logout());
@@ -192,9 +196,10 @@ void main() {
     await tester.tap(find.text('delete pocketcoder pro data'));
     await tester.pumpAndSettle();
 
-    expect(find.text('DELETE'), findsWidgets);
+    final deleteLabel = '<${l10nOf(tester).settingsDeleteProDataConfirm}>';
+    expect(find.text(deleteLabel), findsWidgets);
 
-    await tester.tap(find.text('DELETE').last);
+    await tester.tap(find.text(deleteLabel).last);
     await tester.pumpAndSettle();
 
     verify(() => proDataDeletionHook.deleteProData()).called(1);
@@ -221,7 +226,8 @@ void main() {
     await tester.tap(find.text('delete pocketcoder pro data'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('CANCEL'));
+    await tester
+        .tap(find.text('<${l10nOf(tester).settingsDeleteProDataCancel}>'));
     await tester.pumpAndSettle();
 
     verifyNever(() => proDataDeletionHook.deleteProData());

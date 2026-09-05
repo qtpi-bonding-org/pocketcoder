@@ -23,10 +23,10 @@ void main() {
       ),
     );
 
-    expect(find.text('> What is a container?'), findsOneWidget);
+    expect(find.text('<what is a container?>'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
 
-    await tester.tap(find.text('> What is a container?'));
+    await tester.tap(find.text('<what is a container?>'));
     expect(selected, isTrue);
   });
 
