@@ -41,10 +41,18 @@ void main() {
   test('the 36-column floor fits the smallest supported device', () {
     // UiScaler clamps at 0.85, so the narrowest realistic case is a 320pt
     // screen scaled to 0.85. Content must still clear 36 columns there.
+    //
+    // The scale must be applied to the FONT as well as read off the width.
+    // UiScaler is not initialised in a plain unit test, so AppSizes returns
+    // raw values here; comparing an unscaled 16pt font against a 320pt screen
+    // models a device that does not exist and understates the column count.
     const narrowest = 320.0;
-    final margins = AppSizes.space * 4; // two indents each side
-    final columns = (narrowest - margins) / AppSizes.ch;
-    expect(columns, greaterThanOrEqualTo(35.0));
+    const clamp = 0.85;
+    final ch = AppSizes.fontBody * clamp * monoAdvanceRatio;
+    final margins = AppSizes.space * clamp * 4; // two indents each side
+    final columns = (narrowest - margins) / ch;
+    expect(columns, greaterThanOrEqualTo(35.0),
+        reason: 'got ${columns.toStringAsFixed(1)} columns at the 0.85 clamp');
   });
 
   test('max width and picker height are expressed in grid units', () {

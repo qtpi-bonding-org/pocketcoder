@@ -36,7 +36,10 @@ void main() {
     )));
 
     final sizedBox = tester.widget<SizedBox>(find.byType(SizedBox).first);
-    expect(sizedBox.width, AppSizes.space);
+    // HSpace is CHARACTER-based ("one unit = one character width"), not the
+    // pixel `space` token. These were numerically equal only while the font
+    // advance was mis-measured at 0.5, which hid the conflation.
+    expect(sizedBox.width, AppSizes.ch);
   });
 
   testWidgets('honors an explicit spacing override', (tester) async {
@@ -47,7 +50,7 @@ void main() {
     )));
 
     final sizedBox = tester.widget<SizedBox>(find.byType(SizedBox).first);
-    expect(sizedBox.width, AppSizes.space * 2);
+    expect(sizedBox.width, AppSizes.ch * 2);
   });
 
   testWidgets('expands the child to fill remaining row space', (tester) async {

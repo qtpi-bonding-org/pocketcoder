@@ -57,36 +57,52 @@ class AppSizes {
   static double get borderWidthThick => UiScaler.instance.px(2.0);
 }
 
-/// Measure character advance width for a given font size.
-/// Exposed for testing to verify real font measurement after font loading.
-@visibleForTesting
-double measureCharacterAdvance(double fontBodySize) {
-  const fontFamily = 'Noto Sans Mono';
-  const baseFontSize = 1.0;
+/// The shipped monospace font's advance ratio -- the width of one character
+/// as a fraction of the font size.
+///
+/// Measured once from the real font rather than assumed, because it is a
+/// property of whatever font ships and a constant here would go silently
+/// wrong the moment the family changes. Every horizontal grid unit derives
+/// from this, so it lives in one place.
+///
+/// Noto Sans Mono is 600/1000 upm, so this resolves to 0.6.
+double get monoAdvanceRatio => _advanceRatio ??= _measureAdvanceRatio();
+double? _advanceRatio;
+
+/// The ratio used when the font has not loaded, which happens in a bare
+/// widget test with no FontLoader. Deliberately the true value rather than a
+/// "safe" smaller one: understating it makes `ch` too small, which makes
+/// `contentMaxWidth` too narrow and clamps text early.
+const double kFallbackMonoAdvanceRatio = 0.6;
+
+double _measureAdvanceRatio() {
+  // Measured at a large size and divided down. Laying out at 1.0 rounds to
+  // roughly the font size, which tripped the unloaded-font check below and
+  // pinned the ratio at 0.5 -- every grid unit was then 17% short.
+  const probeSize = 100.0;
   final painter = TextPainter(
     text: const TextSpan(
       text: 'M',
       style: TextStyle(
-        fontFamily: fontFamily,
-        fontSize: baseFontSize,
+        fontFamily: 'Noto Sans Mono',
+        fontSize: probeSize,
         fontWeight: FontWeight.w400,
       ),
     ),
     textDirection: TextDirection.ltr,
   )..layout();
 
-  double charWidth = painter.width;
+  final ratio = painter.width / probeSize;
 
-  // If font isn't loaded, TextPainter returns width equal to font size (1.0).
-  // The 0.8 threshold detects this: an unloaded font gives ratio 1.0, so any
-  // measured width >= 0.8 is treated as a fallback case. Real Noto Sans Mono
-  // has advance ratio ~0.5-0.6, well below this threshold. When fallback is
-  // triggered, use the conservative 0.5 ratio (design requirement: 36-column
-  // floor at narrowest device width).
-  if (charWidth >= baseFontSize * 0.8) {
-    charWidth = baseFontSize * 0.5;
-  }
-
-  // Scale to actual font size
-  return charWidth * fontBodySize;
+  // An unloaded font lays out at roughly one em per character. A real
+  // monospace advance is well below that, so anything at or above 0.8 means
+  // the measurement is of the fallback face, not ours.
+  if (ratio >= 0.8) return kFallbackMonoAdvanceRatio;
+  return ratio;
 }
+
+/// Measure character advance width for a given font size.
+/// Exposed for testing to verify real font measurement after font loading.
+@visibleForTesting
+double measureCharacterAdvance(double fontBodySize) =>
+    monoAdvanceRatio * fontBodySize;
