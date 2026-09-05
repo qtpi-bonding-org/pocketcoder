@@ -63,7 +63,7 @@ class PocoBubble extends StatelessWidget {
                   crossAxisAlignment: crossAxisAlignment(textAlign),
                   children: [
                     ...history.map((msg) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4.0),
+                          padding: EdgeInsets.only(bottom: AppSizes.line),
                           child: Text(msg,
                               style: TextRole.label.style.copyWith(
                                 fontFamily: AppFonts.family,
