@@ -24,6 +24,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
@@ -97,15 +98,105 @@ func (OpencodeAuthFileSyncer) Sync(ctx context.Context, app core.App, instance *
 	if err := writeOpencodeAuthFile(ctx, client, image, volumes.Auth, providerID, credential); err != nil {
 		return fmt.Errorf("write opencode auth file: %w", err)
 	}
+	// opencode re-syncs its model catalog (~4.5MB) from scratch the first
+	// time anything asks for a given provider's models under a fresh
+	// HOME -- warming it here, once per credential, writes the result to
+	// volumes.Auth (persistent, survives container restarts) so the
+	// coordinator's later SetSessionConfigOption("model", ...) doesn't
+	// race a catalog sync that's still in flight.
+	if err := warmOpencodeModelCache(ctx, client, image, volumes.Auth, providerID); err != nil {
+		return fmt.Errorf("warm opencode model cache: %w", err)
+	}
 	if err := hooks.RestartContainer(fresh.GetString("container_name"), 30*time.Second); err != nil {
 		return fmt.Errorf("restart opencode container: %w", err)
 	}
+	// RestartContainer only waits for Docker to accept the restart request,
+	// not for the process inside to re-bind its port -- the coordinator's
+	// very next dial otherwise races a container that is still booting.
+	var launch struct {
+		Port int `json:"port"`
+	}
+	if err := harnessRec.UnmarshalJSONField("launch_template", &launch); err != nil {
+		return fmt.Errorf("parse launch_template.port: %w", err)
+	}
+	if err := waitForPort(ctx, fresh.GetString("container_name"), launch.Port, 20*time.Second); err != nil {
+		return fmt.Errorf("opencode container did not come back up after restart: %w", err)
+	}
 	existing[providerID] = hash
-	fresh.Set("synced_credentials", existing)
-	if err := app.Save(fresh); err != nil {
+	return markCredentialSynced(app, instance.Id, existing)
+}
+
+// markCredentialSynced re-fetches instanceID immediately before saving:
+// ProvisionHarnessInstance can concurrently set acp_endpoint on this same
+// row while the caller's slow Docker I/O is in flight, and saving a
+// snapshot fetched before that I/O started would silently clobber it back
+// to empty.
+func markCredentialSynced(app core.App, instanceID string, syncedCredentials map[string]string) error {
+	current, err := app.FindRecordById("harness_instances", instanceID)
+	if err != nil {
+		return fmt.Errorf("re-fetch harness instance before save: %w", err)
+	}
+	current.Set("synced_credentials", syncedCredentials)
+	if err := app.Save(current); err != nil {
 		return fmt.Errorf("save synced_credentials: %w", err)
 	}
 	return nil
+}
+
+func waitForPort(ctx context.Context, host string, port int, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	addr := fmt.Sprintf("%s:%d", host, port)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		conn, err := (&net.Dialer{Timeout: time.Second}).DialContext(ctx, "tcp", addr)
+		if err == nil {
+			conn.Close()
+			return nil
+		}
+		lastErr = err
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(300 * time.Millisecond):
+		}
+	}
+	return fmt.Errorf("timed out waiting for %s: %w", addr, lastErr)
+}
+
+// warmOpencodeModelCache runs `opencode models <provider>` once in a
+// throwaway helper container against the same auth-home volume the real
+// harness container mounts, so its ~/.cache/opencode/models.json is already
+// populated by the time any session dials in. Best-effort by design: a
+// slow/failed warm here just means the coordinator's own setModelWithRetry
+// falls back to retrying live, not a fatal sync error.
+func warmOpencodeModelCache(ctx context.Context, client *dockerapi.Client, image, authVolume, providerID string) error {
+	const mountPath = harnessvolume.AuthHomeMount
+	containerName := "pc-opencode-model-warm-" + providerID + "-" + fmt.Sprint(time.Now().UnixNano())
+	_, err := client.Create(ctx, containerName, dockerapi.CreateSpec{
+		Image: image, Entrypoint: []string{"sh", "-lc"}, Cmd: []string{"opencode models " + providerID + " >/dev/null 2>&1 || true"},
+		Env:         []string{"HOME=" + mountPath},
+		VolumeBinds: []string{authVolume + ":" + mountPath}, RestartPolicy: "no",
+	})
+	if err != nil {
+		return err
+	}
+	if err := client.Start(ctx, containerName); err != nil {
+		_ = client.Remove(ctx, containerName)
+		return err
+	}
+	defer func() { _ = client.Remove(ctx, containerName) }()
+	deadline := time.Now().Add(60 * time.Second)
+	for time.Now().Before(deadline) {
+		insp, err := client.Inspect(ctx, containerName)
+		if err != nil {
+			return fmt.Errorf("inspect model-warm helper container: %w", err)
+		}
+		if !insp.State.Running {
+			return nil
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+	return fmt.Errorf("model-warm helper container did not exit within 60s")
 }
 
 func selectCredentialSyncer(harness *core.Record) CredentialSyncer {
