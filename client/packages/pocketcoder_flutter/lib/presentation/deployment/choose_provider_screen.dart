@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
@@ -20,12 +21,15 @@ class ChooseProviderScreen extends StatelessWidget {
       this.credentials,
       required this.deployOptionService,
       required this.onHasProAccess,
-      this.onProviderSelected});
+      this.onProviderSelected,
+      this.wizardPosition});
 
   final ServerCredentials? credentials;
   final IProviderOptionService deployOptionService;
   final Future<bool> Function() onHasProAccess;
   final DeployProviderSelectionHandler? onProviderSelected;
+
+  final (int step, int total)? wizardPosition;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -33,19 +37,28 @@ class ChooseProviderScreen extends StatelessWidget {
       child: ChooseProviderAdapter(
           credentials: credentials,
           onHasProAccess: onHasProAccess,
-          onProviderSelected: onProviderSelected));
+          onProviderSelected: onProviderSelected,
+          wizardPosition: wizardPosition));
 }
 
 class ChooseProviderView extends StatelessWidget {
   const ChooseProviderView(
-      {super.key, required this.options, required this.onSelected});
+      {super.key,
+      required this.options,
+      required this.onSelected,
+      this.wizardPosition});
 
   final List<ProviderOption> options;
   final Future<void> Function(ProviderOption option) onSelected;
+  final (int step, int total)? wizardPosition;
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-      footer: buildPillarFooter(context, NavPillar.config),
+      footer: switch (wizardPosition) {
+        (final step, final total) =>
+          WizardFooter(step: step, totalSteps: total),
+        null => buildPillarFooter(context, NavPillar.config),
+      },
       showBack: true,
       body: Align(
           alignment: Alignment.topCenter,

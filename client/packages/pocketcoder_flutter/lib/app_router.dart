@@ -53,6 +53,7 @@ class AppRouter {
   /// Additional routes injected by the proprietary package (e.g. Linode flow).
   static List<RouteBase> _additionalRoutes = const [];
   static DeployProviderSelectionHandler? _deployProviderSelectionHandler;
+  static (int step, int total)? _chooseProviderWizardPosition;
 
   /// Call before accessing [router] to inject proprietary routes.
   static void setAdditionalRoutes(List<RouteBase> routes) {
@@ -65,6 +66,14 @@ class AppRouter {
     DeployProviderSelectionHandler handler,
   ) {
     _deployProviderSelectionHandler = handler;
+  }
+
+  /// Lets a distribution tell the provider picker its position in that
+  /// distribution's own wizard (e.g. PRO's provisioning flow), without FOSS
+  /// depending on any proprietary step-list type. Unset (the FOSS-only
+  /// default) means the picker renders no counter.
+  static void setChooseProviderWizardPosition((int step, int total)? position) {
+    _chooseProviderWizardPosition = position;
   }
 
   static final GoRouter _router = GoRouter(
@@ -363,6 +372,7 @@ class AppRouter {
             deployOptionService: getIt<IProviderOptionService>(),
             onHasProAccess: getIt<BillingService>().hasProAccess,
             onProviderSelected: _deployProviderSelectionHandler,
+            wizardPosition: _chooseProviderWizardPosition,
           ),
         ),
       ),
