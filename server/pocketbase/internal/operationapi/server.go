@@ -314,7 +314,7 @@ func (s *server) SetChatConfigOption(ctx context.Context, request openapi.SetCha
 		return nil, re.BadRequestError("a config option value is required", nil)
 	}
 	req := acpsdk.SetSessionConfigOptionRequest{ValueId: &acpsdk.SetSessionConfigOptionValueId{ConfigId: acpsdk.SessionConfigId(request.Body.ConfigId), Value: acpsdk.SessionConfigValueId(request.Body.Value)}}
-	if err := api.SetChatConfigOption(re, s.agent, string(request.ChatId), req); err != nil {
+	if err := api.SetChatConfigOption(s.app, re, s.agent, string(request.ChatId), req); err != nil {
 		return nil, errorutil.Internal("set chat config option", err)
 	}
 	return openapi.SetChatConfigOption202Response{}, nil
