@@ -3,19 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'ascii_art.dart';
+import 'poco_posture_scope.dart';
 
 class PocoAnimator extends StatefulWidget {
   final double? fontSize;
   final Color? color;
   final PocoMood? mood;
-  final PocoPosture posture;
+  final PocoPosture? posture;
   final List<(String, int)> sequence;
   const PocoAnimator(
       {super.key,
       this.fontSize,
       this.color,
       this.mood,
-      this.posture = PocoPosture.armored,
+      this.posture,
       this.sequence = const [
         (PocoExpression.awake, 2000),
         (PocoExpression.sleepy, 150),
@@ -70,5 +71,5 @@ class _PocoAnimatorState extends State<PocoAnimator> {
       fontSize: widget.fontSize ?? AppSizes.fontPoco,
       color: widget.color,
       mood: widget.mood,
-      posture: widget.posture);
+      posture: widget.posture ?? PocoPostureScope.of(context));
 }

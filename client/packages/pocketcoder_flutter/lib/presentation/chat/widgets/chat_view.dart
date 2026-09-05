@@ -6,7 +6,6 @@ import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
@@ -14,10 +13,9 @@ import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/reasoning_caption.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 class ChatView extends StatefulWidget {
@@ -242,13 +240,19 @@ class _ChatViewState extends State<ChatView> {
       onMessageAnimated: widget.onMessageAnimated,
     );
 
-    // Files button now sits in the footer alongside the pillars
     final extraFooterActions = [
       TerminalAction(
         label: context.l10n.chatFilesAction,
         onTap: widget.onFiles,
         kind: ActionKind.neutral,
       ),
+      if (widget.showMonitorAction)
+        TerminalAction(
+          label: context.l10n.chatMonitorAction,
+          onTap: widget.onToggleMonitored,
+          isActive: widget.monitored,
+          kind: ActionKind.neutral,
+        ),
     ];
 
     return PocketCoderShell(
@@ -261,34 +265,6 @@ class _ChatViewState extends State<ChatView> {
       padding: EdgeInsets.zero,
       body: Column(
         children: [
-          // Files button now in footer. Cancel and monitor toggle remain here.
-          Padding(
-            padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.space * 2, vertical: AppSizes.space),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.isRunning)
-                  Wrap(
-                    spacing: AppSizes.space,
-                    runSpacing: AppSizes.space,
-                    children: [
-                      TerminalButton(
-                        label: context.l10n.actionCancel,
-                        kind: ActionKind.refusal,
-                        onTap: widget.onCancel,
-                      ),
-                    ],
-                  ),
-                if (widget.showMonitorAction)
-                  DetailRow.toggle(
-                    label: context.l10n.chatMonitorAction,
-                    value: widget.monitored,
-                    onChanged: (_) => widget.onToggleMonitored(),
-                  ),
-              ],
-            ),
-          ),
           PlanPanel(plan: widget.conversation.sessionState.plan),
           ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
           Expanded(
@@ -312,7 +288,7 @@ class _ChatViewState extends State<ChatView> {
                   Padding(
                     padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
                     child: Center(
-                      child: PocoFace(posture: PocoPosture.fortified),
+                      child: PocoFace(),
                     ),
                   ),
                 Expanded(
@@ -339,6 +315,8 @@ class _ChatViewState extends State<ChatView> {
                     ),
                   ),
                 ),
+                if (widget.isRunning)
+                  InterruptRow(onInterrupt: widget.onCancel),
               ],
             ),
           ),

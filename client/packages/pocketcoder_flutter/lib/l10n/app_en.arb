@@ -43,6 +43,10 @@
   "billingError": "Billing error",
 
   "actionCancel": "cancel",
+  "chatInterruptHint": "interrupt",
+  "@chatInterruptHint": {
+    "description": "Label beside the ^C control that stops the running turn"
+  },
   "actionSave": "save",
   "actionClose": "close",
   "actionDeny": "deny",
@@ -1215,6 +1219,10 @@
   },
   "agentModeLabel": "mode:",
   "agentConfigLabel": "config",
+  "agentSessionLabel": "session",
+  "@agentSessionLabel": {
+    "description": "Collapsed label for the chat session's active configuration"
+  },
   "pocketCoderUpdateChecking": "$ Checking verified release status...",
   "pocketCoderUpdateCheckAgain": "check again",
   "pocketCoderUpdateNoDeployment": "No deployment found on this device.",

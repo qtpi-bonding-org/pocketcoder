@@ -28,38 +28,23 @@ class _ConfigPickerState extends State<ConfigPicker> {
             .toList() ??
         const <Map<String, dynamic>>[];
     if (options.isEmpty) return const SizedBox.shrink();
-    final colors = context.colorScheme;
-    return Container(
-        padding: EdgeInsets.all(AppSizes.space),
-        decoration: BoxDecoration(
-            border: Border(
-                top: BorderSide(
-                    color: colors.onSurface.withValues(alpha: .1),
-                    width: AppSizes.borderWidth))),
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          InkWell(
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
-                  child: Row(children: [
-                    Text(
-                        _expanded
-                            ? RowAffordance.expand.glyph
-                            : RowAffordance.collapse.glyph,
-                        style: TextStyle(
-                            color: colors.onSurface.withValues(alpha: .5),
-                            fontFamily: AppFonts.family)),
-                    Text(context.l10n.agentConfigLabel,
-                        style: TextStyle(
-                            color: colors.onSurface.withValues(alpha: .5),
-                            fontFamily: AppFonts.family,
-                            fontWeight: AppFonts.heavy,
-                            letterSpacing: 2))
-                  ]))),
-          if (_expanded) ...options.map((o) => _option(context, o)),
-        ]));
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      DetailRow(
+        label: context.l10n.agentSessionLabel,
+        value: _expanded ? null : _summary(options),
+        affordance:
+            _expanded ? RowAffordance.collapse : RowAffordance.expand,
+        onTap: () => setState(() => _expanded = !_expanded),
+      ),
+      if (_expanded) ...options.map((o) => _option(context, o)),
+    ]);
   }
+
+  String _summary(List<Map<String, dynamic>> options) => options
+      .where((o) => o['kind'] == 'select')
+      .map((o) => o['currentValue']?.toString() ?? '')
+      .where((value) => value.isNotEmpty)
+      .join(' · ');
 
   Widget _option(BuildContext context, Map<String, dynamic> o) {
     final id = o['id'] as String?;

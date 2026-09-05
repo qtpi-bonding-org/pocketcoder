@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -162,7 +161,6 @@ class TerminalConversationTurn extends StatelessWidget {
       return TerminalConversationFrame(
         speaker: speaker,
         child: PocoBubble(
-          posture: PocoPosture.armored,
           message: message,
           sequence: sequence,
           history: history,

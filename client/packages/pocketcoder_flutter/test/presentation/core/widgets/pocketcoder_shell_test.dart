@@ -41,8 +41,8 @@ void main() {
     )));
     final texts =
         tester.widgetList<Text>(find.byType(Text)).map((e) => e.data).toList();
-    expect(texts.indexOf('<back>'), 0);
-    expect(texts, isNot(contains('<chat>')));
+    expect(texts.indexOf('back'), 0);
+    expect(texts, isNot(contains('chat')));
   });
 
   testWidgets('BACK honors fallback route', (tester) async {
@@ -67,7 +67,7 @@ void main() {
     await tester.pumpWidget(
         MaterialApp.router(theme: AppTheme.darkTheme, routerConfig: router));
     await tester.pump();
-    await tester.tap(find.text('<back>'));
+    await tester.tap(find.text('back'));
     await tester.pumpAndSettle();
     expect(find.text('ONBOARDING'), findsOneWidget);
   });

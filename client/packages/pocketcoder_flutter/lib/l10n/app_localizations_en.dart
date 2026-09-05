@@ -109,6 +109,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionCancel => 'cancel';
 
   @override
+  String get chatInterruptHint => 'interrupt';
+
+  @override
   String get actionSave => 'save';
 
   @override
@@ -3021,6 +3024,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentConfigLabel => 'config';
+
+  @override
+  String get agentSessionLabel => 'session';
 
   @override
   String get pocketCoderUpdateChecking =>

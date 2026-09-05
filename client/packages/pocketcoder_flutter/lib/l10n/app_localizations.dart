@@ -286,6 +286,12 @@ abstract class AppLocalizations {
   /// **'cancel'**
   String get actionCancel;
 
+  /// Label beside the ^C control that stops the running turn
+  ///
+  /// In en, this message translates to:
+  /// **'interrupt'**
+  String get chatInterruptHint;
+
   /// No description provided for @actionSave.
   ///
   /// In en, this message translates to:
@@ -5463,6 +5469,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'config'**
   String get agentConfigLabel;
+
+  /// Collapsed label for the chat session's active configuration
+  ///
+  /// In en, this message translates to:
+  /// **'session'**
+  String get agentSessionLabel;
 
   /// No description provided for @pocketCoderUpdateChecking.
   ///

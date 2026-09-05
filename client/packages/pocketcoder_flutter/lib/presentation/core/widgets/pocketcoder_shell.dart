@@ -6,11 +6,13 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/app_sizes.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/shell_footer_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_posture_scope.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 
 // Re-export TerminalAction for convenience
@@ -120,22 +122,28 @@ class PocketCoderShell extends StatelessWidget {
             configureBadge: releaseState.shouldShowNotice),
       ];
     }
-    return TerminalScaffold(
-      padding: padding,
-      actions: footerActions,
-      footer: footerWidget,
-      body: Column(children: [
-        ReleaseStatusBanner(
-            state: releaseState, onDismiss: releaseScope?.onDismiss ?? () {}),
-        // Top-left, never centered: a screen's content shouldn't float in
-        // the middle of a short viewport. Align only loosens the minimum
-        // constraints it hands down, so a body that fills (Expanded,
-        // ListView) is unaffected -- it still fills exactly as before.
-        Expanded(
-            child: scrollable
-                ? ContentScrollRegion(padding: scrollPadding, child: body)
-                : Align(alignment: Alignment.topLeft, child: body)),
-      ]),
+    return PocoPostureScope(
+      posture: switch (footer) {
+        PillarFooter() => PocoPosture.fortified,
+        _ => PocoPosture.armored,
+      },
+      child: TerminalScaffold(
+        padding: padding,
+        actions: footerActions,
+        footer: footerWidget,
+        body: Column(children: [
+          ReleaseStatusBanner(
+              state: releaseState, onDismiss: releaseScope?.onDismiss ?? () {}),
+          // Top-left, never centered: a screen's content shouldn't float in
+          // the middle of a short viewport. Align only loosens the minimum
+          // constraints it hands down, so a body that fills (Expanded,
+          // ListView) is unaffected -- it still fills exactly as before.
+          Expanded(
+              child: scrollable
+                  ? ContentScrollRegion(padding: scrollPadding, child: body)
+                  : Align(alignment: Alignment.topLeft, child: body)),
+        ]),
+      ),
     );
   }
 }

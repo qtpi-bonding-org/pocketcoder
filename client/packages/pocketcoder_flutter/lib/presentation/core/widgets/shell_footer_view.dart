@@ -44,9 +44,6 @@ class ShellFooterView extends StatelessWidget {
           onBack: f.onBack,
           onNext: f.onNext,
         ),
-        _ => TerminalFooter(
-          actions: actionsFor(footer),
-          useBrackets: footer is! PillarFooter,
-        ),
+        _ => TerminalFooter(actions: actionsFor(footer)),
       };
 }

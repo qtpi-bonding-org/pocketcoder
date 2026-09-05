@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_row.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
@@ -90,7 +91,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('watch'), findsNothing);
+    expect(find.textContaining('watch'), findsNothing);
   });
 
   testWidgets('exactly one composer is rendered', (tester) async {
@@ -360,5 +361,20 @@ void main() {
         ?.position;
     expect(position?.pixels,
         moreOrLessEquals(position?.maxScrollExtent ?? 0, epsilon: 1));
+  });
+
+  testWidgets('the interrupt offers itself only while a turn is running',
+      (tester) async {
+    const conversation = ag_ui_widgets.Conversation();
+
+    await tester.pumpWidget(
+        buildChatView(conversation: conversation, isRunning: false));
+    await tester.pumpAndSettle();
+    expect(find.byType(InterruptRow), findsNothing);
+
+    await tester.pumpWidget(
+        buildChatView(conversation: conversation, isRunning: true));
+    await tester.pumpAndSettle();
+    expect(find.byType(InterruptRow), findsOneWidget);
   });
 }

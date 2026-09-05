@@ -158,10 +158,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TerminalFooter), findsOneWidget);
-    expect(find.text('<back>'), findsOneWidget);
-    expect(find.text('<chat>'), findsNothing);
-    expect(find.text('<status>'), findsNothing);
-    expect(find.text('<config>'), findsNothing);
-    expect(find.text('<control>'), findsNothing);
+    expect(find.text('back'), findsOneWidget);
+    expect(find.text('chat'), findsNothing);
+    expect(find.text('status'), findsNothing);
+    expect(find.text('config'), findsNothing);
+    expect(find.text('control'), findsNothing);
   });
 }

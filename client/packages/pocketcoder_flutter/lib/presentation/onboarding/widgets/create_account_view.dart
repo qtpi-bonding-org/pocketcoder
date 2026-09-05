@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
@@ -60,7 +59,6 @@ class _CreateAccountViewState extends State<CreateAccountView> {
           child: Column(
             children: [
               PocoBubble(
-                posture: PocoPosture.armored,
                 message: context.l10n.onboardingServerCredentialsPoco,
               ),
               VSpace.x3,

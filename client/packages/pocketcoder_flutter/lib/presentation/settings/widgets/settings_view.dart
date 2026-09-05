@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({
@@ -79,8 +79,7 @@ class SettingsView extends StatelessWidget {
       showBack: false,
       body: ListView(
         children: [
-          // TODO(task 19): ASCII banner art replaces this placeholder
-          TerminalText('config', role: TextRole.label),
+          AsciiLogo(text: AppAscii.bannerFor(NavPillar.config)),
           for (final section in _sections(context)) ...[
             SectionHeader(name: section.$1.toLowerCase()),
             Column(
