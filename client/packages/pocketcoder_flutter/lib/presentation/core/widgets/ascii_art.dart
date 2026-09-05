@@ -29,38 +29,45 @@ class PocoExpression {
 
 class AppAscii {
   static const String navChat = r'''
-    _         _
- __| |_  __ _| |_
-/ _| ' \/ _` |  _|
-\__|_||_\__,_|\__|
+                            
+   ▄▄▄  █               ▄   
+ ▄▀   ▀ █ ▄▄    ▄▄▄   ▄▄█▄▄ 
+ █      █▀  █  ▀   █    █   
+ █      █   █  ▄▀▀▀█    █   
+  ▀▄▄▄▀ █   █  ▀▄▄▀█    ▀▄▄ 
+                            
                   ''';
 
   static const String navConfig = r'''
-              __ _
- __ ___ _ _  / _(_)__ _
-/ _/ _ \ ' \|  _| / _` |
-\__\___/_||_|_| |_\__, |
-                  |___/ ''';
+                                          
+   ▄▄▄                  ▄▀▀    ▀          
+ ▄▀   ▀  ▄▄▄   ▄ ▄▄   ▄▄█▄▄  ▄▄▄     ▄▄▄▄ 
+ █      █▀ ▀█  █▀  █    █      █    █▀ ▀█ 
+ █      █   █  █   █    █      █    █   █ 
+  ▀▄▄▄▀ ▀█▄█▀  █   █    █    ▄▄█▄▄  ▀█▄▀█ 
+                                     ▄  █ 
+                                      ▀▀  
+''';
 
   static const String navStatus = r'''
-    _        _
- __| |_ __ _| |_ _  _ ___
-(_-<  _/ _` |  _| || (_-<
-/__/\__\__,_|\__|\_,_/__/
+                                          
+  ▄▄▄▄    ▄             ▄                 
+ █▀   ▀ ▄▄█▄▄   ▄▄▄   ▄▄█▄▄  ▄   ▄   ▄▄▄  
+ ▀█▄▄▄    █    ▀   █    █    █   █  █   ▀ 
+     ▀█   █    ▄▀▀▀█    █    █   █   ▀▀▀▄ 
+ ▀▄▄▄█▀   ▀▄▄  ▀▄▄▀█    ▀▄▄  ▀▄▄▀█  ▀▄▄▄▀ 
+                                          
                          ''';
 
   static const String navControl = r'''
-            _           _
- __ ___ _ _| |_ _ _ ___| |
-/ _/ _ \ ' \  _| '_/ _ \ |
-\__\___/_||_\__|_| \___/_|
+                                                 
+   ▄▄▄                  ▄                  ▀▀█   
+ ▄▀   ▀  ▄▄▄   ▄ ▄▄   ▄▄█▄▄   ▄ ▄▄   ▄▄▄     █   
+ █      █▀ ▀█  █▀  █    █     █▀  ▀ █▀ ▀█    █   
+ █      █   █  █   █    █     █     █   █    █   
+  ▀▄▄▄▀ ▀█▄█▀  █   █    ▀▄▄   █     ▀█▄█▀    ▀▄▄ 
+                                                 
                           ''';
-
-  static const String boot = r'''
-
-._  _  _|  __|_ _ _  _| _ ._
-|_)(_)(_|<(/_|_(_(_)(_|(/_|
-|                            ''';
 
   static String bannerFor(NavPillar pillar) => switch (pillar) {
         NavPillar.chat => navChat,
@@ -68,8 +75,6 @@ class AppAscii {
         NavPillar.status => navStatus,
         NavPillar.control => navControl,
       };
-
-  static String get bootBanner => boot;
 
   static const String pocketCoderProLogo = r'''
  ______   ______    ______
