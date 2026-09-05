@@ -8,7 +8,8 @@ import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/domain/models/credential_selection.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_oauth_account.dart';
-import 'package:pocketcoder_flutter/presentation/chat/new_chat_selection.dart';
+import 'package:pocketcoder_flutter/presentation/chat/new_chat_selection.dart'
+    show validateWorkspacePath, WorkspacePathValidationError, supportsOllamaHarness;
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_picker_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
@@ -109,15 +110,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
     final selectedHarness = _selectedHarness;
     final availableModels = selectedHarness == null
         ? const <HarnessModel>[]
-        : selectableModels(
-            harnessId: selectedHarness.id,
-            harnessModels: widget.harnessModels,
-            models: widget.models,
-            harnessProviders: widget.harnessProviders,
-            providerAPIKeys: widget.providerAPIKeys,
-            credentialSelections: widget.credentialSelections,
-            harnessOAuthAccounts: widget.harnessOAuthAccounts,
-          );
+        : widget.harnessModels.where((hm) => hm.harness == selectedHarness.id).toList();
 
     return _buildDialog(
       context,
@@ -192,7 +185,6 @@ class _NewChatDialogState extends State<NewChatDialog> {
           kind: ActionKind.neutral,
           onTap: () => Navigator.of(context).pop(),
         ),
-        HSpace.x2,
         TerminalButton(
           label: context.l10n.newChatCreate,
           onTap: _submit,
