@@ -15,6 +15,7 @@ import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dar
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/settings_view.dart';
 
@@ -67,13 +68,24 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
               onLogout: () => _confirmLogout(context, authCubit),
               onFactoryReset: () => _confirmFactoryReset(context, authCubit),
               onDeleteProData: () => _confirmDeleteProData(context, authCubit),
-              onReportAiContent: () => launchUrl(_reportAiContentUri),
+              onReportAiContent: () => _reportAiContent(context),
               onHapticsChanged: localSettings.setHapticsEnabled,
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _reportAiContent(BuildContext context) async {
+    final opened = await launchUrl(_reportAiContentUri);
+    if (!opened && context.mounted) {
+      VimToast.show(
+        context,
+        context.l10n.errorCouldNotOpenMailApp,
+        color: context.terminalColors.warning,
+      );
+    }
   }
 
   void _confirmLogout(BuildContext context, AuthCubit cubit) {

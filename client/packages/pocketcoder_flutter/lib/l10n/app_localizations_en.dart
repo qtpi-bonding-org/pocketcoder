@@ -31,6 +31,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not open the browser. Please try again.';
 
   @override
+  String get errorCouldNotOpenMailApp =>
+      'Could not open a mail app. Please try again.';
+
+  @override
   String get authLoginFailed => 'Login failed';
 
   @override

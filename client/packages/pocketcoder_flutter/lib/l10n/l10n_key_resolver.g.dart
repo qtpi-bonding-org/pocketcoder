@@ -286,6 +286,7 @@ class L10nKeyResolver {
       'error.auth.failed' => _l10n.errorAuthFailed,
       'error.auth.unauthorized' => _l10n.errorAuthUnauthorized,
       'error.could.not.open.browser' => _l10n.errorCouldNotOpenBrowser,
+      'error.could.not.open.mail.app' => _l10n.errorCouldNotOpenMailApp,
       'error.generic' => _l10n.errorGeneric,
       'error.network' => _l10n.errorNetwork,
       'error.timeout' => _l10n.errorTimeout,
@@ -1347,6 +1348,7 @@ class L10nKeyResolver {
     'error.auth.failed',
     'error.auth.unauthorized',
     'error.could.not.open.browser',
+    'error.could.not.open.mail.app',
     'error.generic',
     'error.network',
     'error.timeout',
@@ -2389,6 +2391,7 @@ class L10nKeyResolver {
     'errorAuthFailed': 'error.auth.failed',
     'errorAuthUnauthorized': 'error.auth.unauthorized',
     'errorCouldNotOpenBrowser': 'error.could.not.open.browser',
+    'errorCouldNotOpenMailApp': 'error.could.not.open.mail.app',
     'errorGeneric': 'error.generic',
     'errorNetwork': 'error.network',
     'errorTimeout': 'error.timeout',
@@ -3428,6 +3431,7 @@ class L10nKeyResolver {
     'error.auth.failed': 'errorAuthFailed',
     'error.auth.unauthorized': 'errorAuthUnauthorized',
     'error.could.not.open.browser': 'errorCouldNotOpenBrowser',
+    'error.could.not.open.mail.app': 'errorCouldNotOpenMailApp',
     'error.generic': 'errorGeneric',
     'error.network': 'errorNetwork',
     'error.timeout': 'errorTimeout',
@@ -4474,6 +4478,7 @@ abstract class L10nKeys {
   static const errorAuthFailed = 'error.auth.failed';
   static const errorAuthUnauthorized = 'error.auth.unauthorized';
   static const errorCouldNotOpenBrowser = 'error.could.not.open.browser';
+  static const errorCouldNotOpenMailApp = 'error.could.not.open.mail.app';
   static const errorGeneric = 'error.generic';
   static const errorNetwork = 'error.network';
   static const errorTimeout = 'error.timeout';

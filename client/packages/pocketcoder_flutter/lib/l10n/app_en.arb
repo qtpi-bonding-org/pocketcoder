@@ -11,6 +11,7 @@
   "errorAuthFailed": "Authentication failed",
   "errorGeneric": "Something went wrong",
   "errorCouldNotOpenBrowser": "Could not open the browser. Please try again.",
+  "errorCouldNotOpenMailApp": "Could not open a mail app. Please try again.",
 
   "authLoginFailed": "Login failed",
   "authNotAuthenticated": "Please log in",

@@ -136,6 +136,12 @@ abstract class AppLocalizations {
   /// **'Could not open the browser. Please try again.'**
   String get errorCouldNotOpenBrowser;
 
+  /// No description provided for @errorCouldNotOpenMailApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open a mail app. Please try again.'**
+  String get errorCouldNotOpenMailApp;
+
   /// No description provided for @authLoginFailed.
   ///
   /// In en, this message translates to:
