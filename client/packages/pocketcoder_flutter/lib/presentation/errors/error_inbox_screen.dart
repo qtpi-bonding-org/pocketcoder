@@ -34,22 +34,38 @@ class ErrorInboxScreen extends StatelessWidget {
         footer: buildPillarFooter(context, NavPillar.status),
         showBack: true,
         body: Builder(builder: (context) {
+          // The header renders in both states so the screen is never a bare
+          // sentence with no title. Its bullet is the section's aggregate
+          // state per spec section 2 -- red only when something actually
+          // failed, green when the inbox is clean. A permanently red bullet
+          // would carry no information.
+          final header = Padding(
+            padding:
+                EdgeInsets.only(left: AppSizes.ch * 2, top: AppSizes.line),
+            child: SectionHeader(
+              name: context.l10n.errorsTitle.toLowerCase(),
+              state:
+                  errors.isEmpty ? SectionState.nominal : SectionState.failed,
+            ),
+          );
+
           if (errors.isEmpty) {
-            return Padding(
-                padding: EdgeInsets.all(AppSizes.space * 2),
-                child: TerminalText(
-                  context.l10n.errorsEmpty,
-                  role: TextRole.body,
-                ));
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                header,
+                Padding(
+                    padding: EdgeInsets.only(
+                        left: AppSizes.ch * 2, top: AppSizes.line),
+                    child: TerminalText(
+                      context.l10n.errorsEmpty,
+                      role: TextRole.body,
+                    )),
+              ],
+            );
           }
           return Column(children: [
-            Padding(
-              padding: EdgeInsets.only(left: AppSizes.ch * 2, top: AppSizes.line),
-              child: SectionHeader(
-                name: context.l10n.errorsTitle.toLowerCase(),
-                state: SectionState.failed,
-              ),
-            ),
+            header,
             // A plain Column here overflows once the tiles' combined
             // height (an expanded tile's full stack trace especially)
             // exceeds the frame's bounded height -- this list needs to
