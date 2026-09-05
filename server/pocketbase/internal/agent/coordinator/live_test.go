@@ -18,7 +18,6 @@ package coordinator
 
 import (
 	"context"
-	"errors"
 	"os"
 	"strconv"
 	"testing"
@@ -303,23 +302,58 @@ func TestLiveSetConfigOptionSwitchesModel(t *testing.T) {
 	}
 	defer func() { _ = c.Cancel(context.Background(), chatID) }()
 
-	req := acpsdk.SetSessionConfigOptionRequest{ValueId: &acpsdk.SetSessionConfigOptionValueId{
-		ConfigId: "model",
-		Value:    acpsdk.SessionConfigValueId(profile.Model),
-	}}
-
+	var h *runHandle
 	deadline := time.Now().Add(liveTimeout())
-	var setErr error
 	for time.Now().Before(deadline) {
-		setErr = c.SetConfigOption(context.Background(), chatID, req)
-		if setErr == nil || !errors.Is(setErr, ErrNoActiveRun) {
+		h = c.runFor(chatID)
+		if h != nil && h.conn != nil {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	if setErr != nil {
-		t.Fatalf("live session/set_config_option for configId \"model\" failed: %v", setErr)
+	if h == nil || h.conn == nil {
+		t.Fatal("run never reached an established session")
 	}
+
+	selfSet := func(value acpsdk.SessionConfigValueId) acpsdk.SetSessionConfigOptionResponse {
+		resp, err := h.conn.SetSessionConfigOption(context.Background(), acpsdk.SetSessionConfigOptionRequest{
+			ValueId: &acpsdk.SetSessionConfigOptionValueId{
+				SessionId: acpsdk.SessionId(h.sessionID),
+				ConfigId:  "model",
+				Value:     value,
+			},
+		})
+		if err != nil {
+			t.Fatalf("session/set_config_option for configId \"model\"=%q failed: %v", value, err)
+		}
+		return resp
+	}
+
+	baseline := selfSet(acpsdk.SessionConfigValueId(profile.Model))
+	current, choices := modelOptionState(t, baseline)
+	swapTo := ""
+	for _, choice := range choices {
+		if choice != current {
+			swapTo = choice
+			break
+		}
+	}
+	if swapTo == "" {
+		t.Skipf("only one model option (%q) advertised for this provider; cannot exercise a genuine swap", current)
+	}
+
+	if err := c.SetConfigOption(context.Background(), chatID, acpsdk.SetSessionConfigOptionRequest{
+		ValueId: &acpsdk.SetSessionConfigOptionValueId{ConfigId: "model", Value: acpsdk.SessionConfigValueId(swapTo)},
+	}); err != nil {
+		t.Fatalf("Coordinator.SetConfigOption(model=%q) failed: %v", swapTo, err)
+	}
+
+	confirmed := selfSet(acpsdk.SessionConfigValueId(swapTo))
+	after, _ := modelOptionState(t, confirmed)
+	if after != swapTo {
+		t.Fatalf("goose reports current model %q after switching, want %q", after, swapTo)
+	}
+	t.Logf("live model swap confirmed: %q -> %q", current, after)
 
 	att := c.Attach(chatID, 0)
 	defer att.Unsubscribe()
@@ -330,7 +364,32 @@ func TestLiveSetConfigOptionSwitchesModel(t *testing.T) {
 	if last := got[len(got)-1]; last == events.EventTypeRunError {
 		t.Fatalf("run ended in RUN_ERROR after a live model switch: %v", got)
 	}
-	t.Logf("mid-run model switch ok: events=%d", len(got))
+	t.Logf("run continued after model swap: events=%d", len(got))
+}
+
+func modelOptionState(t *testing.T, resp acpsdk.SetSessionConfigOptionResponse) (current string, choices []string) {
+	t.Helper()
+	for _, opt := range resp.ConfigOptions {
+		if opt.Select == nil || opt.Select.Id != "model" {
+			continue
+		}
+		current = string(opt.Select.CurrentValue)
+		if opt.Select.Options.Ungrouped != nil {
+			for _, o := range *opt.Select.Options.Ungrouped {
+				choices = append(choices, string(o.Value))
+			}
+		}
+		if opt.Select.Options.Grouped != nil {
+			for _, group := range *opt.Select.Options.Grouped {
+				for _, o := range group.Options {
+					choices = append(choices, string(o.Value))
+				}
+			}
+		}
+		return current, choices
+	}
+	t.Fatal("response has no \"model\" select config option")
+	return "", nil
 }
 
 // TestLiveWrongSecretRejected proves the WS endpoint enforces auth: a bad
