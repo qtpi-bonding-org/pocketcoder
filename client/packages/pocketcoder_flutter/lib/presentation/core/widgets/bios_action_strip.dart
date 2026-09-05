@@ -104,8 +104,12 @@ class _BiosActionButtonState extends State<BiosActionButton> {
         color: reversed ? role.color : Colors.transparent,
         padding: EdgeInsets.symmetric(
             horizontal: AppSizes.space, vertical: AppSizes.space * 1.5),
+        // Each slot is an equal share of the row, so the label centres in its
+        // own share -- left-aligned labels put the gaps in different places
+        // depending on how long each word happens to be.
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Flexible(
               child: text(displayLabel, role, maxLines: 1),
