@@ -101,7 +101,7 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
                 itemLabel: (prompt) => prompt.name,
                 itemBuilder: (_, prompt, selected) => DetailRow(
                   label: prompt.name,
-                  trailingDetail: selected?.id == prompt.id ? '✓' : null,
+                  isSelected: selected?.id == prompt.id,
                 ),
                 onSelected: (id) => setState(() => _systemPromptId = id),
               ),
@@ -116,7 +116,7 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
                 itemLabel: (mode) => mode.name,
                 itemBuilder: (_, mode, selected) => DetailRow(
                   label: mode.name,
-                  trailingDetail: selected?.id == mode.id ? '✓' : null,
+                  isSelected: selected?.id == mode.id,
                 ),
                 onSelected: (id) => setState(() => _permissionModeId = id),
               ),
@@ -143,7 +143,6 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
           kind: ActionKind.neutral,
           onTap: () => Navigator.of(context).pop(),
         ),
-        HSpace.x2,
         TerminalButton(
           label: context.l10n.actionSave,
           onTap: _handleSave,

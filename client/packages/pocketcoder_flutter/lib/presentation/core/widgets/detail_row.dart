@@ -16,6 +16,7 @@ class DetailRow extends StatefulWidget {
     this.destructive = false,
     this.warning = false,
     this.hasBadge = false,
+    this.isSelected = false,
     this.trailingDetail,
     this.trailing,
   })  : _kind = _DetailRowKind.row,
@@ -62,6 +63,7 @@ class DetailRow extends StatefulWidget {
         destructive = false,
         warning = false,
         hasBadge = false,
+        isSelected = false,
         trailingDetail = null,
         trailing = null,
         _kind = _DetailRowKind.toggle,
@@ -83,6 +85,7 @@ class DetailRow extends StatefulWidget {
         destructive = false,
         warning = false,
         hasBadge = false,
+        isSelected = false,
         trailingDetail = null,
         trailing = null,
         _kind = _DetailRowKind.input,
@@ -99,6 +102,7 @@ class DetailRow extends StatefulWidget {
   final bool destructive;
   final bool warning;
   final bool hasBadge;
+  final bool isSelected;
   final String? trailingDetail;
   final Widget? trailing;
 
@@ -140,18 +144,25 @@ class _DetailRowState extends State<DetailRow> {
       ? TextRole.fail
       : (widget.warning ? TextRole.warn : TextRole.value);
 
+  // Destructive/warning colours the whole row -- label included, not only
+  // the value/affordance -- so the row reads as a unit rather than only its
+  // trailing glyph carrying the meaning.
+  TextRole get _labelRole => widget.destructive
+      ? TextRole.fail
+      : (widget.warning ? TextRole.warn : TextRole.label);
+
+  bool get _reverseVideo => _pressed || widget.isSelected;
+
   Widget _text(String text, TextRole role) {
-    if (!_pressed) return TerminalText(text, role: role);
-    // Keep the semantic role while replacing its foreground with the ground
-    // color for reverse video. This avoids a second, manually styled text
-    // implementation for the pressed state.
+    if (!_reverseVideo) return TerminalText(text, role: role);
+    // Keeps the semantic role; only the foreground swaps to ground.
     return ColorFiltered(
       colorFilter: const ColorFilter.mode(AppPalette.ground, BlendMode.srcIn),
       child: TerminalText(text, role: role),
     );
   }
 
-  Widget _label() => _text(widget.label.toLowerCase(), TextRole.label);
+  Widget _label() => _text(widget.label.toLowerCase(), _labelRole);
 
   Widget _value(String text) => _text(text, _valueRole);
 
@@ -167,7 +178,7 @@ class _DetailRowState extends State<DetailRow> {
 
   bool _fits(BuildContext context, double width) {
     final inherited = DefaultTextStyle.of(context).style;
-    final labelStyle = inherited.merge(TextRole.label.style);
+    final labelStyle = inherited.merge(_labelRole.style);
     final valueStyle = inherited.merge(_valueRole.style);
     var needed = _measure(widget.label.toLowerCase(), labelStyle);
     if (widget.hasBadge) {
@@ -196,7 +207,7 @@ class _DetailRowState extends State<DetailRow> {
   Widget _input() => TextField(
         controller: _controller,
         onChanged: widget._inputChanged,
-        style: _pressed
+        style: _reverseVideo
             ? TextRole.value.style.copyWith(color: AppPalette.ground)
             : TextRole.value.style,
         decoration: InputDecoration(
@@ -269,7 +280,7 @@ class _DetailRowState extends State<DetailRow> {
                   ),
                 ]);
           final row = Container(
-            color: _pressed ? _valueRole.color : Colors.transparent,
+            color: _reverseVideo ? _valueRole.color : Colors.transparent,
             padding: EdgeInsets.symmetric(vertical: AppSizes.space),
             child: Padding(
               padding: EdgeInsets.only(left: AppSizes.ch * 2),

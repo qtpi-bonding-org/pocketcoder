@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/memory/i_memory_repository.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
-import 'package:pocketcoder_flutter/presentation/observability/widgets/count_card.dart';
 import 'package:pocketcoder_flutter/presentation/observability/widgets/empty_label.dart';
 import 'package:pocketcoder_flutter/presentation/observability/widgets/memory_record_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -15,22 +15,19 @@ class MemoryDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(children: [
-        Row(children: [
-          Expanded(
-              child: CountCard(
-                  label: context.l10n.memoryDashboardObservations,
-                  value: stats.observations)),
-          HSpace.x1,
-          Expanded(
-              child: CountCard(
-                  label: context.l10n.memoryDashboardInterpretations,
-                  value: stats.interpretations)),
-          HSpace.x1,
-          Expanded(
-              child: CountCard(
-                  label: context.l10n.memoryDashboardLinks,
-                  value: stats.links)),
-        ]),
+        SectionHeader(name: 'memory'),
+        DetailRow(
+          label: context.l10n.memoryDashboardObservations.toLowerCase(),
+          value: '${stats.observations}',
+        ),
+        DetailRow(
+          label: context.l10n.memoryDashboardInterpretations.toLowerCase(),
+          value: '${stats.interpretations}',
+        ),
+        DetailRow(
+          label: context.l10n.memoryDashboardLinks.toLowerCase(),
+          value: '${stats.links}',
+        ),
         VSpace.x2,
         SectionHeader(
             name: context.l10n.memoryDashboardByAccount.toLowerCase()),
@@ -40,6 +37,7 @@ class MemoryDashboardView extends StatelessWidget {
                 children: stats.byAccount
                     .map((account) => _AccountRow(account: account))
                     .toList()),
+        VSpace.x2,
         SectionHeader(
             name: context.l10n.memoryDashboardRecentObservations.toLowerCase()),
         stats.recentObservations.isEmpty
@@ -51,6 +49,7 @@ class MemoryDashboardView extends StatelessWidget {
                         createdAt: observation.createdAt,
                         body: observation.body))
                     .toList()),
+        VSpace.x2,
         SectionHeader(
             name: context.l10n.memoryDashboardRecentInterpretations
                 .toLowerCase()),

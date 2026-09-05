@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/pocketbase_inspector/i_pocketbase_inspector_repository.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
@@ -12,37 +13,31 @@ class PocketbaseInspectorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView(children: [
-        GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 3,
-            mainAxisSpacing: AppSizes.space,
-            crossAxisSpacing: AppSizes.space,
-            // The terminal shell caps its content width, so at larger display
-            // scales each of these three columns can be only about 100 px
-            // wide. A slightly taller card keeps the scaled count and label
-            // within the padded content area.
-            childAspectRatio: 1.15,
-            children: [
-              _CountCard(
-                  label: context.l10n.pocketbaseInspectorUsers,
-                  value: stats.users),
-              _CountCard(
-                  label: context.l10n.pocketbaseInspectorChats,
-                  value: stats.chats),
-              _CountCard(
-                  label: context.l10n.pocketbaseInspectorAgentProfiles,
-                  value: stats.agentProfiles),
-              _CountCard(
-                  label: context.l10n.pocketbaseInspectorHarnesses,
-                  value: stats.harnesses),
-              _CountCard(
-                  label: context.l10n.pocketbaseInspectorMcpServers,
-                  value: stats.mcpServers),
-              _CountCard(
-                  label: context.l10n.pocketbaseInspectorSkills,
-                  value: stats.skills),
-            ]),
+        SectionHeader(name: 'pocketbase'),
+        DetailRow(
+          label: context.l10n.pocketbaseInspectorUsers.toLowerCase(),
+          value: '${stats.users}',
+        ),
+        DetailRow(
+          label: context.l10n.pocketbaseInspectorChats.toLowerCase(),
+          value: '${stats.chats}',
+        ),
+        DetailRow(
+          label: context.l10n.pocketbaseInspectorAgentProfiles.toLowerCase(),
+          value: '${stats.agentProfiles}',
+        ),
+        DetailRow(
+          label: context.l10n.pocketbaseInspectorHarnesses.toLowerCase(),
+          value: '${stats.harnesses}',
+        ),
+        DetailRow(
+          label: context.l10n.pocketbaseInspectorMcpServers.toLowerCase(),
+          value: '${stats.mcpServers}',
+        ),
+        DetailRow(
+          label: context.l10n.pocketbaseInspectorSkills.toLowerCase(),
+          value: '${stats.skills}',
+        ),
         VSpace.x2,
         SectionHeader(
             name: context.l10n.pocketbaseInspectorRecentChats.toLowerCase()),
@@ -53,35 +48,6 @@ class PocketbaseInspectorView extends StatelessWidget {
                     .map((chat) => _ChatRow(chat: chat))
                     .toList()),
       ]);
-}
-
-class _CountCard extends StatelessWidget {
-  const _CountCard({required this.label, required this.value});
-
-  final String label;
-  final int value;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: EdgeInsets.symmetric(
-            horizontal: AppSizes.space / 2, vertical: AppSizes.space / 4),
-        decoration: BoxDecoration(
-            border: Border.all(color: context.colorScheme.primary)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TerminalText(
-              '$value',
-              role: TextRole.value,
-            ),
-            TerminalText(
-              label,
-              role: TextRole.label,
-            ),
-          ],
-        ),
-      );
 }
 
 class _EmptyLabel extends StatelessWidget {
@@ -105,24 +71,30 @@ class _ChatRow extends StatelessWidget {
   final PocketbaseChatSummary chat;
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.only(bottom: AppSizes.space),
-        child: Row(
-          children: [
-            Expanded(
-              child: TerminalText(
-                chat.archived
-                    ? context.l10n
-                        .pocketbaseInspectorChatArchivedTitle(chat.title)
-                    : chat.title,
-                role: TextRole.body,
-              ),
-            ),
-            TerminalText(
-              chat.lastActive,
-              role: TextRole.label,
-            ),
-          ],
-        ),
+  Widget build(BuildContext context) => DetailRow(
+        label: chat.archived
+            ? context.l10n
+                .pocketbaseInspectorChatArchivedTitle(chat.title)
+            : chat.title,
+        value: _formatTime(chat.lastActive),
       );
+}
+
+String _formatTime(String timestampStr) {
+  try {
+    final dateTime = DateTime.parse(timestampStr);
+    final now = DateTime.now();
+    final isToday = dateTime.year == now.year &&
+        dateTime.month == now.month &&
+        dateTime.day == now.day;
+
+    if (isToday) {
+      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } else {
+      return '${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
+          '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    }
+  } catch (e) {
+    return timestampStr;
+  }
 }

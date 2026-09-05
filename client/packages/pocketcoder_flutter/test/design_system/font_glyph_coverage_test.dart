@@ -53,4 +53,23 @@ void main() {
     const boxDrawing = '┌┐└┘│─╔╗╚╝║═';
     expectCovered(boxDrawing, 'box-drawing set');
   });
+
+  test('glyphs known to be missing from the shipped font never reappear as '
+      'literals in lib/presentation', () {
+    const banned = ['✓', '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    final dir = Directory('lib/presentation');
+    for (final entity in dir.listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      final content = entity.readAsStringSync();
+      for (final glyph in banned) {
+        expect(
+          content.contains(glyph),
+          isFalse,
+          reason: '${entity.path} contains banned glyph "$glyph" -- it is '
+              'missing from Noto Sans Mono Regular\'s cmap and silently '
+              'falls back to a different font',
+        );
+      }
+    }
+  });
 }
