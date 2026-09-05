@@ -59,34 +59,28 @@ class PocoBubble extends StatelessWidget {
                   ),
                   VSpace.x4,
                 ],
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSizes.space * 2,
-                    vertical: AppSizes.space,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: crossAxisAlignment(textAlign),
-                    children: [
-                      ...history.map((msg) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4.0),
-                            child: Text(msg,
-                                style: TextRole.label.style.copyWith(
-                                  fontFamily: AppFonts.family,
-                                  package: 'pocketcoder_flutter',
-                                ),
-                                textAlign: textAlign),
-                          )),
-                      TypewriterText(
-                        key: ValueKey(message),
-                        text: message,
-                        style: TextRole.body.style.copyWith(
-                          fontFamily: AppFonts.family,
-                          package: 'pocketcoder_flutter',
-                        ),
-                        speed: const Duration(milliseconds: 10),
+                Column(
+                  crossAxisAlignment: crossAxisAlignment(textAlign),
+                  children: [
+                    ...history.map((msg) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4.0),
+                          child: Text(msg,
+                              style: TextRole.label.style.copyWith(
+                                fontFamily: AppFonts.family,
+                                package: 'pocketcoder_flutter',
+                              ),
+                              textAlign: textAlign),
+                        )),
+                    TypewriterText(
+                      key: ValueKey(message),
+                      text: message,
+                      style: TextRole.body.style.copyWith(
+                        fontFamily: AppFonts.family,
+                        package: 'pocketcoder_flutter',
                       ),
-                    ],
-                  ),
+                      speed: const Duration(milliseconds: 10),
+                    ),
+                  ],
                 ),
               ],
             ),

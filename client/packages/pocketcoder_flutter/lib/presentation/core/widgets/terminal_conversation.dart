@@ -163,7 +163,6 @@ class TerminalConversationTurn extends StatelessWidget {
           message: message,
           sequence: sequence,
           history: history,
-          pocoSize: AppSizes.fontBody,
           showFace: showPocoFace,
         ),
       );
@@ -221,7 +220,10 @@ class _TerminalPromptSuggestionState extends State<TerminalPromptSuggestion> {
       child: Container(
         width: double.infinity,
         color: reversed ? role.color : Colors.transparent,
-        padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.75),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.space,
+          vertical: AppSizes.space * 0.75,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.max,
           children: [
