@@ -53,7 +53,7 @@ class FileBrowserView extends StatelessWidget {
       BuildContext context, FileBrowserState state, FileEntry entry) {
     return DetailRow(
         label: entry.name,
-        value: entry.isDir ? '[DIR]' : '[FILE]',
+        value: entry.isDir ? '[dir]' : '[file]',
         affordance: RowAffordance.navigate,
         onTap: () {
           if (entry.isDir) {
