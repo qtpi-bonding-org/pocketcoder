@@ -73,6 +73,7 @@ class ChooseProviderView extends StatelessWidget {
                                       label: option.requiresPro
                                           ? '${option.name} · ${context.l10n.chooseProviderProBadge}'
                                           : option.name,
+                                      emphasis: Emphasis.outlined,
                                       onSelected: () => onSelected(option))
                                   : _UnavailableProvider(option: option)),
                       ])))));

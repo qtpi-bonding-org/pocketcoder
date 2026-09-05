@@ -53,6 +53,7 @@ class ProOffer extends StatelessWidget {
           label: trialDays == null
               ? context.l10n.proSubscribe
               : context.l10n.proStartTrial(trialDays),
+          kind: ActionKind.primary,
           onTap: onPurchase),
       VSpace.x1,
       Center(
