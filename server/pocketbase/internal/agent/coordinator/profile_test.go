@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 )
@@ -184,6 +185,60 @@ func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 	if !found {
 		t.Errorf("expected a configId=model value=claude-opus call, got %+v", fc.setConfigOptionCalls)
 	}
+}
+
+func TestPerSessionApplierRetriesModelNotFound(t *testing.T) {
+	originalPoll := modelRetryPollInterval
+	modelRetryPollInterval = 5 * time.Millisecond
+	defer func() { modelRetryPollInterval = originalPoll }()
+
+	modelNotFound := &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: model not found: openrouter/auto",
+		Data: map[string]any{"modelId": "openrouter/auto"},
+	}
+	fc := &fakeConn{setConfigOptionErrs: []error{modelNotFound, modelNotFound, nil}}
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Model: "openrouter/auto", SupportsLiveConfig: true,
+	}, nil)
+	if err != nil {
+		t.Fatalf("expected the model to be applied after retrying, got: %v", err)
+	}
+	if len(fc.setConfigOptionCalls) != 3 {
+		t.Fatalf("set_config_option calls = %d, want 3 (2 failures + 1 success)", len(fc.setConfigOptionCalls))
+	}
+}
+
+func TestPerSessionApplierGivesUpOnGenuinelyUnknownModel(t *testing.T) {
+	originalTimeout, originalPoll := modelRetryTimeout, modelRetryPollInterval
+	modelRetryTimeout, modelRetryPollInterval = 30*time.Millisecond, 5*time.Millisecond
+	defer func() { modelRetryTimeout, modelRetryPollInterval = originalTimeout, originalPoll }()
+
+	notFound := &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: model not found: nonexistent-model",
+	}
+	fc := &fakeConnAlwaysErr{err: notFound}
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Model: "nonexistent-model", SupportsLiveConfig: true,
+	}, nil)
+	if err == nil {
+		t.Fatal("expected an error for a model that never becomes available, got nil")
+	}
+	if fc.calls < 2 {
+		t.Fatalf("set_config_option calls = %d, want at least 2 (proves it actually retried before giving up)", fc.calls)
+	}
+}
+
+// fakeConnAlwaysErr avoids a bounded scripted-error queue that would panic
+// once exhausted.
+type fakeConnAlwaysErr struct {
+	fakeConn
+	err   error
+	calls int
+}
+
+func (f *fakeConnAlwaysErr) SetSessionConfigOption(ctx context.Context, req acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) {
+	f.calls++
+	return acpsdk.SetSessionConfigOptionResponse{}, f.err
 }
 
 func TestPerSessionApplierSkipsEmptyFields(t *testing.T) {
