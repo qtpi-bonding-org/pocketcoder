@@ -20,7 +20,7 @@ class WelcomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        showBack: false,
+        showBack: true,
         backFallbackRoute: AppRoutes.onboarding,
         body: OnboardingContentShell(
           child: Column(

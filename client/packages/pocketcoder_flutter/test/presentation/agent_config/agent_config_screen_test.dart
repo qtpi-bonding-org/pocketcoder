@@ -112,6 +112,8 @@ void main() {
     );
     await tester.tap(find.text('<add new>'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('mode'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('mode'));
     await tester.pumpAndSettle();
     final context = tester.element(find.byType(AgentConfigView));
