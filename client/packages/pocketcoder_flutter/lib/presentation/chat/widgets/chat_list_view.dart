@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_list_tile.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 /// Pure chat-list rendering. State loading and navigation live in the adapter.
 class ChatListView extends StatelessWidget {
@@ -34,8 +34,7 @@ class ChatListView extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // TODO(task 19): ASCII banner art replaces this placeholder
-          TerminalText('chat', role: TextRole.label),
+          AsciiLogo(text: AppAscii.bannerFor(NavPillar.chat)),
           Padding(
             padding: EdgeInsets.all(AppSizes.space),
             child: TerminalButton(

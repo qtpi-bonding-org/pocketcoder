@@ -173,6 +173,16 @@ ServerControlResult _failure(ServerControlOperation operation) =>
       stderr: 'permission denied',
     );
 
+/// These tests assert what a command renders, not how much of it fits. The
+/// nav banner shortens the default viewport enough that a lazy ListView stops
+/// building the output rows.
+void _tallViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 2400);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
   testWidgets('renders all six controls and release status', (tester) async {
     final service = _FakeService()..release = _release();
@@ -348,6 +358,7 @@ void main() {
   });
 
   testWidgets('renders command output and errors', (tester) async {
+    _tallViewport(tester);
     final service = _FakeService();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final result = _success(ServerControlOperation.saveBackup);
@@ -367,6 +378,7 @@ void main() {
   });
 
   testWidgets('renders failed command output', (tester) async {
+    _tallViewport(tester);
     final service = _FakeService();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     service.pending[ServerControlOperation.updateNixOs] =
