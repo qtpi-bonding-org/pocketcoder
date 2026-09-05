@@ -14,8 +14,6 @@ import 'package:pocketcoder_flutter/design_system/storybook/agent_config_view.st
     as _pocketcoder_flutter_design_system_storybook_agent_config_view_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/config_picker.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_config_picker_stories;
-import 'package:pocketcoder_flutter/design_system/storybook/mode_switcher.stories.dart'
-    as _pocketcoder_flutter_design_system_storybook_mode_switcher_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/notification_and_system.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_notification_and_system_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/paywall.stories.dart'
@@ -62,23 +60,6 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _pocketcoder_flutter_design_system_storybook_config_picker_stories
                             .configPickerEmpty,
-                  ),
-                ],
-              ),
-              _widgetbook.WidgetbookComponent(
-                name: 'ModeSwitcher',
-                useCases: [
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'no modes',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_mode_switcher_stories
-                            .modeSwitcherEmpty,
-                  ),
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'selectable modes',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_mode_switcher_stories
-                            .modeSwitcherPopulated,
                   ),
                 ],
               ),

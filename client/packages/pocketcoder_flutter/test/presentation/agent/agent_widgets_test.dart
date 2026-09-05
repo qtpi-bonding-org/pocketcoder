@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
-import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
       theme: AppTheme.lightTheme,
@@ -20,31 +19,6 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('ModeSwitcher renders modes and reports selection',
-      (tester) async {
-    String? selected;
-    await tester.pumpWidget(_wrap(ModeSwitcher(
-      modes: {
-        'currentModeId': 'auto',
-        'availableModes': [
-          {'id': 'auto', 'name': 'Auto'},
-          {'id': 'chat', 'name': 'Chat'},
-        ],
-      },
-      onSelectMode: (id) => selected = id,
-    )));
-    expect(find.text('Auto'), findsOneWidget);
-    expect(find.text('Chat'), findsNothing);
-
-    await tester.tap(find.byType(PopupMenuButton<String>));
-    await tester.pumpAndSettle();
-    expect(find.text('Chat'), findsOneWidget);
-
-    await tester.tap(find.text('Chat').last);
-    await tester.pumpAndSettle();
-    expect(selected, 'chat');
-  });
-
   testWidgets('ConfigPicker renders options and reports changes',
       (tester) async {
     SetSessionConfigOptionRequest? request;
