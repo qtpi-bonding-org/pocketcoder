@@ -44,14 +44,11 @@ class WizardFooterBar extends StatelessWidget {
               if (onBack case final back?)
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: SizedBox(
-                    width: 80,
-                    child: BiosActionButton(
-                      action: BiosActionStripItem(
-                        label: 'back',
-                        onTap: back,
-                        bracketed: true,
-                      ),
+                  child: BiosActionButton(
+                    action: BiosActionStripItem(
+                      label: 'back',
+                      onTap: back,
+                      bracketed: false,
                     ),
                   ),
                 ),
@@ -71,14 +68,11 @@ class WizardFooterBar extends StatelessWidget {
               if (onNext case final next?)
                 Align(
                   alignment: Alignment.centerRight,
-                  child: SizedBox(
-                    width: 80,
-                    child: BiosActionButton(
-                      action: BiosActionStripItem(
-                        label: 'next',
-                        onTap: next,
-                        bracketed: true,
-                      ),
+                  child: BiosActionButton(
+                    action: BiosActionStripItem(
+                      label: 'next',
+                      onTap: next,
+                      bracketed: false,
                     ),
                   ),
                 ),

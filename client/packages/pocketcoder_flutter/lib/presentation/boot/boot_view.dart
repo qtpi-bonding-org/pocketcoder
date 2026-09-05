@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
@@ -87,10 +86,15 @@ class BootView extends StatelessWidget {
                         ),
                       ),
                       VSpace.x4,
-                      PocoBubble(
-                          message: pocoState.message,
-                          history: pocoState.history,
-                          showFace: false),
+                      // The message needs the same opaque backdrop as the
+                      // face: the dimmed log wall runs behind both.
+                      Container(
+                        color: colors.surface,
+                        child: PocoBubble(
+                            message: pocoState.message,
+                            history: pocoState.history,
+                            showFace: false),
+                      ),
                     ],
                   ),
                 ),

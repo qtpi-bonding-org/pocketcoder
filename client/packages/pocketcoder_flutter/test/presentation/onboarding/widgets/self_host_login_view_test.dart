@@ -28,14 +28,14 @@ void main() {
       ),
     );
 
-    final text = tester.widget<Text>(find.text('<next>'));
+    final text = tester.widget<Text>(find.text('next'));
     expect(text.style?.color, isNot(Colors.black));
 
     final container = tester.widget<Container>(
       find
           .descendant(
               of: find.ancestor(
-                of: find.text('<next>'),
+                of: find.text('next'),
                 matching: find.byType(GestureDetector),
               ),
               matching: find.byType(Container))

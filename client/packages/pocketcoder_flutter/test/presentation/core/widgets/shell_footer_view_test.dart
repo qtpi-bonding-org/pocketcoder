@@ -62,9 +62,9 @@ void main() {
               footer: WizardFooter(
                   step: 3, totalSteps: 7, onNext: () {}, onBack: () {}))),
     ));
-    expect(find.text('<back>'), findsOneWidget);
+    expect(find.text('back'), findsOneWidget);
     expect(find.text('(3/7)'), findsOneWidget);
-    expect(find.text('<next>'), findsOneWidget);
+    expect(find.text('next'), findsOneWidget);
     expect(find.textContaining('▸'), findsNothing,
         reason: 'the navigate glyph means navigate-to-a-screen and nothing '
             'else');

@@ -19,6 +19,9 @@ class NavBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
         height: height,
-        child: AsciiLogo(text: AppAscii.bannerFor(pillar)),
+        child: AsciiLogo(
+          text: AppAscii.bannerFor(pillar),
+          alignment: Alignment.center,
+        ),
       );
 }

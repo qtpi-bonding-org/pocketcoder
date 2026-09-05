@@ -292,7 +292,7 @@ void main() {
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
     ));
-    expect(find.text('<back>'), findsNothing);
+    expect(find.text('back'), findsNothing);
     await cubit.close();
   });
 

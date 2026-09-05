@@ -258,7 +258,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('<next>'));
+    await tester.tap(find.text('next'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }

@@ -124,7 +124,7 @@ void main() {
     expect(find.text('a Linux server or VPS you control'), findsOneWidget);
     expect(find.text('Docker compose v2'), findsOneWidget);
     expect(find.text('<guide>'), findsOneWidget);
-    expect(find.text('<next>'), findsOneWidget);
+    expect(find.text('next'), findsOneWidget);
   });
 
   testWidgets('login adapter renders the challenge and form without a server',
@@ -134,7 +134,7 @@ void main() {
 
     expect(find.byType(PocoBubble), findsOneWidget);
     expect(find.byType(TextField), findsNWidgets(3));
-    expect(find.text('<next>'), findsOneWidget);
+    expect(find.text('next'), findsOneWidget);
   });
 
   testWidgets('prefilled login page shows server credentials', (tester) async {
@@ -187,7 +187,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
     await tester.pump();
-    await tester.tap(find.text('<next>'));
+    await tester.tap(find.text('next'));
     await tester.pumpAndSettle();
 
     expect(captured, isNotNull);
@@ -232,7 +232,7 @@ void main() {
 
     expect(find.text('Must be at least 8 characters'), findsOneWidget);
 
-    await tester.tap(find.text('<next>'));
+    await tester.tap(find.text('next'));
     await tester.pumpAndSettle();
 
     expect(captured, isNull,
@@ -278,7 +278,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
     await tester.pump();
-    await tester.tap(find.text('<next>'));
+    await tester.tap(find.text('next'));
     await tester.pumpAndSettle();
 
     expect(captured?.email, 'admin@example.com');
@@ -319,7 +319,7 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.text('<back>'));
+    await tester.tap(find.text('back'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);

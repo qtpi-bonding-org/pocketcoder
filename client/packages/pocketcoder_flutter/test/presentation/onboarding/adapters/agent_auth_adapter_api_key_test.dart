@@ -227,7 +227,7 @@ void main() {
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
 
-    await tester.tap(find.text('<next>'));
+    await tester.tap(find.text('next'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -314,7 +314,7 @@ void main() {
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
 
-    await tester.tap(find.text('<next>'));
+    await tester.tap(find.text('next'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
