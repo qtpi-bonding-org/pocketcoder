@@ -17,8 +17,12 @@ class AppSizes {
   static List<double> get textSizes => [fontBody];
 
   /// Measured character advance width of the monospace body font.
-  /// Cached after first access to avoid repeated TextPainter measurements.
-  static final double ch = _measureCh();
+  ///
+  /// Derived per access, not cached: the advance scales with [fontBody], so a
+  /// stored value freezes the grid to whichever scale happened to be active
+  /// at first access. The costly part -- measuring the font -- is memoised in
+  /// [monoAdvanceRatio], leaving this a multiplication.
+  static double get ch => _measureCh();
 
   /// Declared line height factor for vertical grid alignment.
   static const double lineHeightFactor = 1.3;
