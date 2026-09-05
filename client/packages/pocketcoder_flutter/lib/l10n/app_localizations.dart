@@ -4165,13 +4165,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingNoServerChipExisting.
   ///
   /// In en, this message translates to:
-  /// **'log in'**
+  /// **'Log in'**
   String get onboardingNoServerChipExisting;
 
   /// No description provided for @onboardingNoServerChipNew.
   ///
   /// In en, this message translates to:
-  /// **'join'**
+  /// **'Join'**
   String get onboardingNoServerChipNew;
 
   /// No description provided for @onboardingWelcomeTitle.
@@ -4189,7 +4189,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingWelcomeActionGuided.
   ///
   /// In en, this message translates to:
-  /// **'help me with setup'**
+  /// **'Help me with setup'**
   String get onboardingWelcomeActionGuided;
 
   /// No description provided for @onboardingWelcomeActionSelfHost.

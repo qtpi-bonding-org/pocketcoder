@@ -2257,10 +2257,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you already part of the PocketCoder Initiative?';
 
   @override
-  String get onboardingNoServerChipExisting => 'log in';
+  String get onboardingNoServerChipExisting => 'Log in';
 
   @override
-  String get onboardingNoServerChipNew => 'join';
+  String get onboardingNoServerChipNew => 'Join';
 
   @override
   String get onboardingWelcomeTitle => 'welcome';
@@ -2270,7 +2270,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Welcome to the PocketCoder Initiative.\n\nI\'ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.';
 
   @override
-  String get onboardingWelcomeActionGuided => 'help me with setup';
+  String get onboardingWelcomeActionGuided => 'Help me with setup';
 
   @override
   String get onboardingWelcomeActionSelfHost => 'I\'ll set it up';
