@@ -54,7 +54,7 @@ void main() {
     expect(find.text(l10n.proTrialLapseExplainer), findsOneWidget);
     expect(
         find.text('<${l10n.proStartTrial(7).toLowerCase()}>'), findsOneWidget);
-    expect(find.text(l10n.proRestore), findsOneWidget);
+    expect(find.text('<${l10n.proRestore}>'), findsOneWidget);
     // Apple requires the auto-renewal disclosure visible for a trial offer
     // too, not just a plain subscription -- the trial-specific wording,
     // not the no-trial one.
@@ -97,8 +97,8 @@ void main() {
 
     await tester.ensureVisible(find.text('<start 7-day free trial>'));
     await tester.tap(find.text('<start 7-day free trial>'));
-    await tester.ensureVisible(find.text('RESTORE PURCHASES'));
-    await tester.tap(find.text('RESTORE PURCHASES'));
+    await tester.ensureVisible(find.text('<restore purchases>'));
+    await tester.tap(find.text('<restore purchases>'));
 
     expect(purchases, 1);
     expect(restores, 1);
