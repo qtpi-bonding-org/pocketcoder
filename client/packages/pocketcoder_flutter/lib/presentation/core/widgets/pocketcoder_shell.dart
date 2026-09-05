@@ -89,20 +89,35 @@ class PocketCoderShell extends StatelessWidget {
             extraActions: currentFooter.extraActions,
           )
         : footer;
-    final footerActions = <TerminalAction>[
-      if (showBack)
-        TerminalAction(
-          label: backLabel ?? 'back',
-          onTap: () => backFallbackRoute == null
-              ? AppNavigation.back(context)
-              : AppNavigation.back(context, fallback: backFallbackRoute!),
+    void goBack() => switch (backFallbackRoute) {
+          final fallback? => AppNavigation.back(context, fallback: fallback),
+          null => AppNavigation.back(context),
+        };
+
+    // A wizard's 3-slot layout can't be a flat TerminalAction row.
+    List<TerminalAction>? footerActions;
+    Widget? footerWidget;
+    if (effectiveFooter case final WizardFooter wizard) {
+      footerWidget = ShellFooterView(
+        footer: WizardFooter(
+          step: wizard.step,
+          totalSteps: wizard.totalSteps,
+          onNext: wizard.onNext,
+          onBack: wizard.onBack ?? (showBack ? goBack : null),
         ),
-      ...ShellFooterView.actionsFor(effectiveFooter,
-          configureBadge: releaseState.shouldShowNotice),
-    ];
+      );
+    } else {
+      footerActions = <TerminalAction>[
+        if (showBack)
+          TerminalAction(label: backLabel ?? 'back', onTap: goBack),
+        ...ShellFooterView.actionsFor(effectiveFooter,
+            configureBadge: releaseState.shouldShowNotice),
+      ];
+    }
     return TerminalScaffold(
       padding: padding,
       actions: footerActions,
+      footer: footerWidget,
       body: Column(children: [
         ReleaseStatusBanner(
             state: releaseState, onDismiss: releaseScope?.onDismiss ?? () {}),

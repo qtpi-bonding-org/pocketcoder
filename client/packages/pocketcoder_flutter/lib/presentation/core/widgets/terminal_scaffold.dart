@@ -8,6 +8,11 @@ class TerminalScaffold extends StatelessWidget {
   // screen's own body, not this chrome.
   final Widget body;
   final List<TerminalAction>? actions;
+
+  /// A pre-built footer widget, used when the footer's layout can't be
+  /// expressed as a flat [TerminalAction] row (e.g. a wizard's 3-slot
+  /// back/counter/next layout). Takes precedence over [actions] when set.
+  final Widget? footer;
   final bool showFooter;
   final EdgeInsets? padding;
 
@@ -15,6 +20,7 @@ class TerminalScaffold extends StatelessWidget {
     super.key,
     required this.body,
     this.actions,
+    this.footer,
     this.showFooter = true,
     this.padding,
   });
@@ -22,6 +28,11 @@ class TerminalScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final resolvedFooter = footer ??
+        switch (actions) {
+          final acts? => TerminalFooter(actions: acts),
+          null => null,
+        };
     return Scaffold(
       backgroundColor: colors.surface,
       body: ScanlineWidget(
@@ -39,9 +50,7 @@ class TerminalScaffold extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: showFooter && actions != null
-          ? TerminalFooter(actions: actions!)
-          : null,
+      bottomNavigationBar: showFooter ? resolvedFooter : null,
     );
   }
 }
