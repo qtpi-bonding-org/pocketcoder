@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 enum TerminalConversationSpeaker { user, poco }
 
@@ -201,37 +203,12 @@ class TerminalPromptSuggestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final resolvedEmphasis = emphasis;
-    final resolved = resolvedEmphasis == null
-        ? null
-        : emphasize(colors.primary, resolvedEmphasis);
-    final borderColor =
-        resolved?.border ?? colors.primary.withValues(alpha: 0.3);
-    final textColor = resolved?.text ?? colors.primary;
     return SizedBox(
       width: double.infinity,
-      child: TextButton(
-        onPressed: onSelected,
-        style: TextButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSizes.space,
-            vertical: AppSizes.space,
-          ),
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: borderColor),
-            borderRadius: BorderRadius.zero,
-          ),
-        ),
-        child: Text(
-          '> $label',
-          style: TextStyle(
-            color: textColor,
-            fontFamily: AppFonts.family,
-            fontWeight: AppFonts.heavy,
-          ),
-        ),
+      child: TerminalButton(
+        label: '> $label',
+        kind: ActionKind.neutral,
+        onTap: onSelected,
       ),
     );
   }

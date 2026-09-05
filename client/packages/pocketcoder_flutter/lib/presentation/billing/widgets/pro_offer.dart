@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
@@ -55,8 +56,10 @@ class ProOffer extends StatelessWidget {
           onTap: onPurchase),
       VSpace.x1,
       Center(
-          child: TextButton(
-              onPressed: onRestore, child: Text(context.l10n.proRestore))),
+          child: TerminalButton(
+              label: context.l10n.proRestore,
+              kind: ActionKind.neutral,
+              onTap: onRestore)),
       TerminalText(
         trialDays == null
             ? context.l10n.proTerms(recurringPrice)

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/domain/security/i_local_auth_gate.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_provider_console_link.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_details_provider.dart';
@@ -10,6 +11,7 @@ import 'package:pocketcoder_flutter/domain/server_control/i_server_control_servi
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_setup_gate.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/server_control_view.dart';
 
 class ServerControlScreen extends StatefulWidget {
@@ -56,9 +58,10 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
                 children: [
                   Text(context.l10n
                       .serverControlErrorPrefix(snapshot.error.toString())),
-                  TextButton(
-                    onPressed: _resolveSetupScreen,
-                    child: Text(context.l10n.serverControlRetryAction),
+                  TerminalButton(
+                    label: context.l10n.serverControlRetryAction,
+                    kind: ActionKind.primary,
+                    onTap: _resolveSetupScreen,
                   ),
                 ],
               ),

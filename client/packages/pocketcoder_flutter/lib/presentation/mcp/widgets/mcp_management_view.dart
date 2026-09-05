@@ -288,16 +288,18 @@ class McpManagementView extends StatelessWidget {
                   title: title.toLowerCase(),
                   content: content,
                   actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(dialogContext),
-                        child: Text(cancel)),
+                    TerminalButton(
+                        label: cancel,
+                        kind: ActionKind.refusal,
+                        onTap: () => Navigator.pop(dialogContext)),
                     HSpace.x2,
-                    TextButton(
-                        onPressed: () {
+                    TerminalButton(
+                        label: submitLabel,
+                        kind: ActionKind.primary,
+                        onTap: () {
                           submit();
                           Navigator.pop(dialogContext);
-                        },
-                        child: Text(submitLabel)),
+                        }),
                   ]));
 }
 

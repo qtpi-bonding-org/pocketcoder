@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 class ReleaseStatusScope extends InheritedWidget {
   const ReleaseStatusScope({
@@ -68,9 +70,10 @@ class ReleaseStatusBanner extends StatelessWidget {
             ),
           ),
           if (!critical)
-            TextButton(
-              onPressed: onDismiss,
-              child: Text(context.l10n.actionDismiss),
+            TerminalButton(
+              label: context.l10n.actionDismiss,
+              kind: ActionKind.refusal,
+              onTap: onDismiss,
             ),
         ],
       ),

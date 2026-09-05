@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -206,11 +207,10 @@ class ProviderView extends StatelessWidget {
     return DetailRow(
       label: providerLabel,
       value: _maskKeyPreview(key.apiKey),
-      trailing: TextButton(
-          child: Text(context.l10n.providerScreenDeleteKeyAction,
-              style:
-                  TextStyle(color: colors.error, fontWeight: AppFonts.heavy)),
-          onPressed: () => onDelete(key.id)),
+      trailing: TerminalButton(
+          label: context.l10n.providerScreenDeleteKeyAction,
+          kind: ActionKind.destructive,
+          onTap: () => onDelete(key.id)),
     );
   }
 
