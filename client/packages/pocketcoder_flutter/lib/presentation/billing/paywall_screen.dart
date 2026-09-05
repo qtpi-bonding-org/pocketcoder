@@ -7,7 +7,6 @@ import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/billing/adapters/paywall_adapter.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/billing/widgets/active_pro_status.dart';
@@ -76,8 +75,6 @@ class PaywallView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SectionHeader(name: context.l10n.proPlanTitle.toLowerCase()),
-                VSpace.x2,
                 _buildContent(context),
               ],
             ),

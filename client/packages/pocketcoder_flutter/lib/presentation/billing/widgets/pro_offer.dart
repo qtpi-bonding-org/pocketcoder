@@ -61,14 +61,14 @@ class ProOffer extends StatelessWidget {
               label: context.l10n.proRestore,
               kind: ActionKind.neutral,
               onTap: onRestore)),
+      VSpace.x2,
       TerminalText(
         trialDays == null
             ? context.l10n.proTerms(recurringPrice)
             : context.l10n.proTrialTerms(trialDays, recurringPrice),
         role: TextRole.label,
-        textAlign: TextAlign.center,
       ),
-      VSpace.x1,
+      VSpace.x2,
       Wrap(alignment: WrapAlignment.center, spacing: AppSizes.ch * 2, children: [
         TerminalButton(
             label: context.l10n.proTermsOfServiceLink,
