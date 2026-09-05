@@ -47,7 +47,8 @@ class ChooseProviderView extends StatelessWidget {
   Widget build(BuildContext context) => PocketCoderShell(
       footer: buildPillarFooter(context, NavPillar.config),
       showBack: true,
-      body: Center(
+      body: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
               child: SingleChildScrollView(

@@ -31,7 +31,8 @@ class OnboardingContentShell extends StatelessWidget {
                   ),
           );
 
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
         child: content,
