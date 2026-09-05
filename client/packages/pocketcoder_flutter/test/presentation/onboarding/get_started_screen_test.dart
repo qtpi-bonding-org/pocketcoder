@@ -88,8 +88,8 @@ void main() {
       question.message,
       'Are you already part of the PocketCoder Initiative?',
     );
-    expect(find.textContaining('log in'), findsOneWidget);
-    expect(find.textContaining('join'), findsOneWidget);
+    expect(find.textContaining('Log in'), findsOneWidget);
+    expect(find.textContaining('Join'), findsOneWidget);
     expect(find.byType(TerminalPromptSuggestion), findsNWidgets(2));
     expect(find.textContaining('computer that stays online'), findsNothing);
     expect(find.byType(TextField), findsNothing);
@@ -108,7 +108,7 @@ void main() {
     final welcome = tester.widget<PocoBubble>(find.byType(PocoBubble));
     expect(welcome.message, contains('a server—a computer that stays online'));
     expect(welcome.message, contains('accessible and ready'));
-    expect(find.textContaining('help me with setup'), findsOneWidget);
+    expect(find.textContaining('Help me with setup'), findsOneWidget);
     expect(find.textContaining("I'll set it up"), findsOneWidget);
     expect(find.byType(TerminalPromptSuggestion), findsNWidgets(2));
   });

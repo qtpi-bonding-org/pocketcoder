@@ -24,7 +24,7 @@ void main() {
 
     final guidedSuggestion = tester.widget<TerminalPromptSuggestion>(
       find.ancestor(
-        of: find.textContaining('help me with setup'),
+        of: find.textContaining('Help me with setup'),
         matching: find.byType(TerminalPromptSuggestion),
       ),
     );
