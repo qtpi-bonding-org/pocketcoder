@@ -94,6 +94,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Claude'), findsNothing);
-    expect(find.text('NO MATCHING PROVIDERS'), findsOneWidget);
+    expect(find.text('no matching providers'), findsOneWidget);
   });
 }

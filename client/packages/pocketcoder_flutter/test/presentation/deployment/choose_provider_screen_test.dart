@@ -80,7 +80,7 @@ void main() {
 
     expect(find.byType(TerminalFooter), findsOneWidget);
 
-    await tester.tap(find.textContaining('Linode'));
+    await tester.tap(find.textContaining('linode'));
     await tester.pumpAndSettle();
 
     expect(capturedRoute, '/auth');
@@ -120,7 +120,7 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.textContaining('Linode'));
+    await tester.tap(find.textContaining('linode'));
     await tester.pumpAndSettle();
 
     expect(selectedProvider?.id, 'linode');
@@ -159,7 +159,7 @@ void main() {
         (widget) => widget is TerminalText && widget.text.contains('Elestio'),
       ),
     );
-    expect(unavailable.text, contains('COMING SOON'));
+    expect(unavailable.text, contains('coming soon'));
     // Unavailable providers should use a de-emphasized role
     // Check that the rendered Text widget has the label role's color
     final unavailableText = tester.widget<Text>(
