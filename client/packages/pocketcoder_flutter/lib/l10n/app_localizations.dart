@@ -2668,6 +2668,12 @@ abstract class AppLocalizations {
   /// **'unlock PocketCoder Pro'**
   String get proSubscribe;
 
+  /// No description provided for @proContinueSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'continue setup'**
+  String get proContinueSetup;
+
   /// No description provided for @proRestore.
   ///
   /// In en, this message translates to:

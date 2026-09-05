@@ -24,6 +24,7 @@ void main() {
     VoidCallback? onManageSubscription,
     VoidCallback? onOpenTermsOfService,
     VoidCallback? onOpenPrivacyPolicy,
+    VoidCallback? onContinue,
   }) {
     return MaterialApp(
       theme: AppTheme.terminalTheme,
@@ -36,6 +37,7 @@ void main() {
         onManageSubscription: onManageSubscription ?? () {},
         onOpenTermsOfService: onOpenTermsOfService ?? () {},
         onOpenPrivacyPolicy: onOpenPrivacyPolicy ?? () {},
+        onContinue: onContinue,
       ),
     );
   }
@@ -120,6 +122,33 @@ void main() {
     await tester.tap(find.text('<manage subscription>'));
 
     expect(manageCalls, 1);
+  });
+
+  testWidgets(
+      'an already-unlocked subscriber sees a continue affordance only when '
+      'onContinue is supplied, and tapping it invokes the callback',
+      (tester) async {
+    var continues = 0;
+    await tester.pumpWidget(subject(
+      state: const BillingState(package: package, isPro: true),
+      onContinue: () => continues += 1,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('<continue setup>'), findsOneWidget);
+    await tester.tap(find.text('<continue setup>'));
+    expect(continues, 1);
+  });
+
+  testWidgets(
+      'an already-unlocked subscriber outside guided setup sees no '
+      'continue affordance', (tester) async {
+    await tester.pumpWidget(subject(
+      state: const BillingState(package: package, isPro: true),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('<continue setup>'), findsNothing);
   });
 
   testWidgets(

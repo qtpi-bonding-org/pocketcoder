@@ -627,6 +627,7 @@
     "placeholders": {"days": {"type": "int"}}
   },
   "proSubscribe": "unlock PocketCoder Pro",
+  "proContinueSetup": "continue setup",
   "proRestore": "restore purchases",
   "proManageSubscription": "manage subscription",
   "proTerms": "Subscription renews at {price} Until cancelled. Manage or cancel in your app store account.",

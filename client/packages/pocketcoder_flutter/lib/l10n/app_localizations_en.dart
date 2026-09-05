@@ -1402,6 +1402,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get proSubscribe => 'unlock PocketCoder Pro';
 
   @override
+  String get proContinueSetup => 'continue setup';
+
+  @override
   String get proRestore => 'restore purchases';
 
   @override

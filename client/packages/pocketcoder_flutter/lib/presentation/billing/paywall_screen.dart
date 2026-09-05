@@ -52,6 +52,7 @@ class PaywallView extends StatelessWidget {
     required this.onManageSubscription,
     required this.onOpenTermsOfService,
     required this.onOpenPrivacyPolicy,
+    this.onContinue,
   });
 
   final BillingState state;
@@ -60,6 +61,7 @@ class PaywallView extends StatelessWidget {
   final VoidCallback onManageSubscription;
   final VoidCallback onOpenTermsOfService;
   final VoidCallback onOpenPrivacyPolicy;
+  final VoidCallback? onContinue;
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +94,7 @@ class PaywallView extends StatelessWidget {
       return ActiveProStatus(
         onRestore: onRestore,
         onManageSubscription: onManageSubscription,
+        onContinue: onContinue,
       );
     }
 
