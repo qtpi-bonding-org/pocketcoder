@@ -217,7 +217,7 @@ void main() {
 
     expect(find.textContaining('available: 2.1.0'), findsOneWidget);
     expect(
-      find.textContaining('CONTRACTS: APP v2 · SERVER v1 · DEPLOYMENT v3'),
+      find.textContaining('contracts: app v2 · server v1 · deployment v3'),
       findsOneWidget,
     );
     expect(find.textContaining('NixOS: 26.05'), findsOneWidget);
@@ -232,7 +232,7 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('available:'), findsNothing);
-    expect(find.textContaining('CONTRACTS:'), findsNothing);
+    expect(find.textContaining('contracts:'), findsNothing);
     expect(find.textContaining('NixOS:'), findsNothing);
     await cubit.close();
   });
