@@ -2011,12 +2011,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkthroughLabel(int current, int total) {
-    return 'walkthrough $current / $total';
+    return 'walkthrough $current/$total';
   }
 
   @override
   String briefLabel(int current, int total) {
-    return 'brief $current / $total';
+    return 'brief $current/$total';
   }
 
   @override

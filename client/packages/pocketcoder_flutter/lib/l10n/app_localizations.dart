@@ -3745,13 +3745,13 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughLabel.
   ///
   /// In en, this message translates to:
-  /// **'walkthrough {current} / {total}'**
+  /// **'walkthrough {current}/{total}'**
   String walkthroughLabel(int current, int total);
 
   /// No description provided for @briefLabel.
   ///
   /// In en, this message translates to:
-  /// **'brief {current} / {total}'**
+  /// **'brief {current}/{total}'**
   String briefLabel(int current, int total);
 
   /// No description provided for @walkthroughAskPoco.

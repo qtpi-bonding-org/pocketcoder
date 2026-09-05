@@ -848,14 +848,14 @@
   "@deploymentMonthlyPrice": {"placeholders": {"price": {"type": "String"}}},
   "@deploymentFaultDetected": {"placeholders": {"error": {"type": "String"}}},
   "@deploymentStatusPrefix": {"placeholders": {"status": {"type": "String"}}},
-  "walkthroughLabel": "walkthrough {current} / {total}",
+  "walkthroughLabel": "walkthrough {current}/{total}",
   "@walkthroughLabel": {
     "placeholders": {
       "current": {"type": "int"},
       "total": {"type": "int"}
     }
   },
-  "briefLabel": "brief {current} / {total}",
+  "briefLabel": "brief {current}/{total}",
   "@briefLabel": {
     "placeholders": {
       "current": {"type": "int"},
