@@ -247,6 +247,61 @@ func TestSyncPopulatesModelsForAnyScopedHarnessFromEveryProvider(t *testing.T) {
 	}
 }
 
+func TestSyncPrefixesOpenCodeModelIdsWithProviderButNotGoose(t *testing.T) {
+	app := testApp(t)
+	srv := fixtureServer(t)
+	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+		t.Fatal(err)
+	}
+	anthropic, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model, err := app.FindFirstRecordByFilter("models", "provider = {:p} && name = 'claude-sonnet-5'", map[string]any{"p": anthropic.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	opencode, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'opencode'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	opencodeHM, err := app.FindFirstRecordByFilter("harness_models", "harness = {:h} && model = {:m}", map[string]any{"h": opencode.Id, "m": model.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := opencodeHM.GetString("harness_model_id"), "anthropic/claude-sonnet-5"; got != want {
+		t.Errorf("opencode harness_model_id = %q, want %q", got, want)
+	}
+
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gooseHM, err := app.FindFirstRecordByFilter("harness_models", "harness = {:h} && model = {:m}", map[string]any{"h": goose.Id, "m": model.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := gooseHM.GetString("harness_model_id"), "claude-sonnet-5"; got != want {
+		t.Errorf("goose harness_model_id = %q, want %q (unprefixed)", got, want)
+	}
+}
+
+func TestHarnessModelIDDoesNotDoublePrefixAlreadyPrefixedID(t *testing.T) {
+	app := testApp(t)
+	coll, err := app.FindCollectionByNameOrId("harnesses")
+	if err != nil {
+		t.Fatal(err)
+	}
+	opencode := core.NewRecord(coll)
+	opencode.Set("name", "OpenCode")
+	opencode.Set("cli_id", "opencode")
+	opencode.Set("acp_transport", "stdio")
+	if got, want := harnessModelID(opencode, "anthropic", "anthropic/claude-sonnet-5"), "anthropic/claude-sonnet-5"; got != want {
+		t.Errorf("harnessModelID = %q, want %q (no double prefix)", got, want)
+	}
+}
+
 // TestSyncCoversAnyFutureAnyScopedHarnessNotJustGooseOrOpenCode proves the
 // sync isn't special-cased to today's two multi-provider harnesses: it
 // keys purely off harnesses.provider_fanout, so a brand-new harness seeded

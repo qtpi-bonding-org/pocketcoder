@@ -172,7 +172,7 @@ func Register(app core.App, e *core.ServeEvent, coord func() coordinator.AgentRu
 	api.AddOllamaOperations(registry, api.OllamaDeps{})
 	api.AddReleaseStatusOperations(registry)
 	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, api.AgentDeps{})
-	filesystem.AddFileOperations(registry)
+	filesystem.AddFileOperations(registry, filesystem.FileDeps{App: app})
 	hooks.AddPushOperations(app, registry)
 	hooks.AddProDataOperations(app, registry)
 	api.AddLiveActivityOperations(app, registry)

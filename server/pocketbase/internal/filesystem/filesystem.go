@@ -20,16 +20,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package filesystem
 
 import (
+	"archive/tar"
+	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/pocketbase/pocketbase/tools/filesystem"
-	"github.com/pocketbase/pocketbase/tools/filesystem/blob"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 )
 
@@ -43,82 +47,57 @@ type FileTreeEntry struct {
 	Children []FileTreeEntry `json:"children,omitempty"`
 }
 
-// workspaceRoot is the directory the file endpoints serve. It's a package
-// variable (not a const) so tests can point it at a temp directory.
 var workspaceRoot = "/workspace"
 
 // resolveWorkspacePath cleans pathParam and rejects any path that would
-// resolve — after following symlinks — outside workspaceRoot. It returns
-// the cleaned path (relative to workspaceRoot, safe to hand to
-// fsys.GetReader/List) and ok=false if the path should be rejected.
+// escape workspaceRoot syntactically. Symlink escapes are the target
+// container's own concern -- Docker's archive API resolves them against
+// that container's real filesystem, not anything local to this process.
 //
 // A target that doesn't exist yet (or is a broken symlink) is allowed
-// through: sanitization has already passed, so the normal
-// fs.GetReader/List call is left to report its own NotFound error.
+// through: sanitization has already passed, so the archive fetch is left to
+// report its own NotFound error.
 func resolveWorkspacePath(pathParam string) (cleanPath string, ok bool) {
 	cleanPath = filepath.Clean(pathParam)
 	if strings.HasPrefix(cleanPath, "..") || strings.HasPrefix(cleanPath, "/") {
 		return "", false
 	}
-
-	resolvedRoot, err := filepath.EvalSymlinks(workspaceRoot)
-	if err != nil {
-		return "", false
-	}
-
-	target := filepath.Join(workspaceRoot, cleanPath)
-	resolvedTarget, err := filepath.EvalSymlinks(target)
-	if err != nil {
-		return cleanPath, true
-	}
-	if resolvedTarget != resolvedRoot && !strings.HasPrefix(resolvedTarget, resolvedRoot+string(filepath.Separator)) {
-		return "", false
-	}
 	return cleanPath, true
 }
 
-// listObjectsForPath resolves the request's ?path= query param against
-// workspaceRoot (rejecting any escape attempt) and returns the full flat,
-// recursive object listing under it, for ListWorkspaceFileTree to nest into
-// a full tree.
-func listObjectsForPath(re *core.RequestEvent) (cleanPath, prefix string, objects []*blob.ListObject, err error) {
-	if re.Auth == nil {
-		return "", "", nil, re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
-	}
-	pathParam := re.Request.URL.Query().Get("path")
-	cleanPath, ok := resolveWorkspacePath(pathParam)
-	if !ok {
-		return "", "", nil, re.ForbiddenError("Path escape attempt detected.", nil)
-	}
-	fsys, ferr := filesystem.NewLocal(workspaceRoot)
-	if ferr != nil {
-		return "", "", nil, re.InternalServerError("Sovereign storage failure.", ferr)
-	}
-	defer fsys.Close()
-	prefix = cleanPath
-	if prefix == "." {
-		prefix = ""
-	} else {
-		prefix += "/"
-	}
-	objects, lerr := fsys.List(prefix)
-	if lerr != nil {
-		return "", "", nil, re.NotFoundError("Directory not found.", lerr)
-	}
-	return cleanPath, prefix, objects, nil
+// containerArchiveReader abstracts Docker's archive-read API so tests can
+// fake a container's filesystem without a real Docker daemon.
+type containerArchiveReader interface {
+	GetArchive(ctx context.Context, containerName, path string) (io.ReadCloser, error)
 }
 
-func ListWorkspaceFileTree(re *core.RequestEvent) (string, []FileTreeEntry, error) {
-	cleanPath, prefix, objects, err := listObjectsForPath(re)
+type dockerArchiveReader struct{ client *dockerapi.Client }
+
+func (d dockerArchiveReader) GetArchive(ctx context.Context, containerName, path string) (io.ReadCloser, error) {
+	return d.client.GetArchive(ctx, containerName, path)
+}
+
+// Any of the user's running instances works: they share one workspace volume.
+func resolveUserContainer(app core.App, userID string) (string, error) {
+	instances, err := app.FindRecordsByFilter(
+		"harness_instances", "user = {:user} && status = 'running'", "-updated", 1, 0,
+		map[string]any{"user": userID},
+	)
 	if err != nil {
-		return "", nil, err
+		return "", fmt.Errorf("find running harness instance: %w", err)
 	}
-	return cleanPath, buildFileTree(prefix, objects), nil
+	if len(instances) == 0 {
+		return "", fmt.Errorf("no running harness instance for this user")
+	}
+	containerName := instances[0].GetString("container_name")
+	if containerName == "" {
+		return "", fmt.Errorf("running harness instance has no container name")
+	}
+	return containerName, nil
 }
 
-// fileTreeNode is buildFileTree's scratch structure -- a directory's children
-// keyed by name, plus insertion order so the final sort is deterministic
-// regardless of how the flat object list from fsys.List was ordered.
+// order lets the final sort be deterministic regardless of the tar's own
+// entry order.
 type fileTreeNode struct {
 	entry    FileTreeEntry
 	children map[string]*fileTreeNode
@@ -129,18 +108,28 @@ func newFileTreeNode(name string) *fileTreeNode {
 	return &fileTreeNode{entry: FileTreeEntry{Name: name}, children: map[string]*fileTreeNode{}}
 }
 
-// buildFileTree nests a flat, recursive listing (as returned by
-// filesystem.System.List) into a full directory tree relative to prefix.
-// Mirrors groupImmediateChildren's conflict resolution: a path that appears
-// both as its own object key and as an ancestor of deeper keys (e.g. "src"
-// and "src/a.go" both present) always resolves to a directory, regardless of
-// which one was seen first.
-func buildFileTree(prefix string, objects []*blob.ListObject) []FileTreeEntry {
+// rootName is the requested directory's own base name -- Docker's archive
+// API names every entry in the stream relative to it (e.g. requesting
+// "/workspace/src" yields "src/main.go"), so it must be stripped here.
+func buildFileTreeFromTar(r io.Reader, rootName string) ([]FileTreeEntry, error) {
+	tr := tar.NewReader(r)
 	root := newFileTreeNode("")
-	for _, obj := range objects {
-		rel := strings.TrimPrefix(obj.Key, prefix)
-		if rel == "" {
-			continue
+	rootPrefix := rootName + "/"
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("read tar stream: %w", err)
+		}
+		name := strings.TrimSuffix(hdr.Name, "/")
+		if name == rootName || name == "" {
+			continue // the requested directory's own entry
+		}
+		rel := strings.TrimPrefix(name, rootPrefix)
+		if rel == "" || rel == name {
+			continue // outside rootPrefix -- shouldn't happen, skip defensively
 		}
 		parts := strings.Split(rel, "/")
 		node := root
@@ -152,20 +141,16 @@ func buildFileTree(prefix string, objects []*blob.ListObject) []FileTreeEntry {
 				node.order = append(node.order, part)
 			}
 			isLast := i == len(parts)-1
-			if isLast {
-				if !child.entry.IsDir {
-					child.entry.Size = obj.Size
-					child.entry.ModTime = obj.ModTime.Format(time.RFC3339)
-				}
-			} else {
+			if hdr.Typeflag == tar.TypeDir || !isLast {
 				child.entry.IsDir = true
-				child.entry.Size = 0
-				child.entry.ModTime = ""
+			} else {
+				child.entry.Size = hdr.Size
+				child.entry.ModTime = hdr.ModTime.Format(time.RFC3339)
 			}
 			node = child
 		}
 	}
-	return flattenFileTree(root)
+	return flattenFileTree(root), nil
 }
 
 func flattenFileTree(node *fileTreeNode) []FileTreeEntry {
@@ -182,7 +167,90 @@ func flattenFileTree(node *fileTreeNode) []FileTreeEntry {
 	return result
 }
 
-func AddFileOperations(registry *operation.Registry) {
+func readFileFromContainer(archive io.Reader) ([]byte, error) {
+	tr := tar.NewReader(archive)
+	hdr, err := tr.Next()
+	if err != nil {
+		return nil, fmt.Errorf("read tar stream: %w", err)
+	}
+	if hdr.Typeflag == tar.TypeDir {
+		return nil, fmt.Errorf("path is a directory")
+	}
+	return io.ReadAll(tr)
+}
+
+// FileDeps wires the workspace file endpoints to the requesting user's own
+// running harness container -- each user has their own derived workspace
+// volume, so there is no single local mount pocketbase itself can read.
+type FileDeps struct {
+	App    core.App
+	Reader containerArchiveReader // nil -> real Docker archive API
+}
+
+func listWorkspaceFileTree(ctx context.Context, reader containerArchiveReader, app core.App, userID, pathParam string) (cleanPath string, entries []FileTreeEntry, err error) {
+	cleanPath, ok := resolveWorkspacePath(pathParam)
+	if !ok {
+		return "", nil, errPathEscape
+	}
+	containerName, err := resolveUserContainer(app, userID)
+	if err != nil {
+		return "", nil, fmt.Errorf("%w: %v", errWorkspaceUnavailable, err)
+	}
+	containerPath := path.Join(workspaceRoot, cleanPath)
+	archive, err := reader.GetArchive(ctx, containerName, containerPath)
+	if err != nil {
+		return "", nil, fmt.Errorf("%w: %v", errNotFound, err)
+	}
+	defer archive.Close()
+	entries, err = buildFileTreeFromTar(archive, filepath.Base(containerPath))
+	if err != nil {
+		return "", nil, err
+	}
+	return cleanPath, entries, nil
+}
+
+var (
+	errPathEscape           = errors.New("path escape attempt detected")
+	errWorkspaceUnavailable = errors.New("workspace not available")
+	errNotFound             = errors.New("not found")
+)
+
+// Always uses the real Docker archive API -- the strict-server dispatch
+// path (operationapi/server.go) that calls this has no test-injected reader.
+func ListWorkspaceFileTree(re *core.RequestEvent) (string, []FileTreeEntry, error) {
+	if re.Auth == nil {
+		return "", nil, re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
+	}
+	cleanPath, entries, err := listWorkspaceFileTree(
+		re.Request.Context(), dockerArchiveReader{client: dockerapi.New()}, re.App, re.Auth.Id,
+		re.Request.URL.Query().Get("path"),
+	)
+	if err != nil {
+		return "", nil, fileTreeErrorResponse(re, err)
+	}
+	return cleanPath, entries, nil
+}
+
+func fileTreeErrorResponse(re *core.RequestEvent, err error) error {
+	switch {
+	case errors.Is(err, errPathEscape):
+		return re.ForbiddenError("Path escape attempt detected.", nil)
+	case errors.Is(err, errWorkspaceUnavailable):
+		return re.NotFoundError("Workspace not available.", err)
+	case errors.Is(err, errNotFound):
+		return re.NotFoundError("Directory not found.", err)
+	default:
+		return re.InternalServerError("Sovereign storage failure.", err)
+	}
+}
+
+func AddFileOperations(registry *operation.Registry, deps FileDeps) {
+	reader := deps.Reader
+	if reader == nil {
+		reader = dockerArchiveReader{client: dockerapi.New()}
+	}
+	app := deps.App
+
 	registry.Add(operation.Route{OperationID: "getWorkspaceFile", Method: http.MethodGet, Path: "/api/pocketcoder/v1/files", Auth: true, Direct: true, Action: func(re *core.RequestEvent) error {
 		if re.Auth == nil {
 			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
@@ -198,23 +266,21 @@ func AddFileOperations(registry *operation.Registry) {
 			return re.ForbiddenError("Path escape attempt detected.", nil)
 		}
 
-		// 3. Initialize Filesystem Abstraction (S3-Ready)
-		// For now we point it at the local workspaceRoot volume
-		fsys, err := filesystem.NewLocal(workspaceRoot)
+		containerName, err := resolveUserContainer(app, re.Auth.Id)
 		if err != nil {
-			return re.InternalServerError("Sovereign storage failure.", err)
+			return re.NotFoundError("Workspace not available.", err)
 		}
-		defer fsys.Close()
 
-		r, err := fsys.GetReader(cleanPath)
+		archive, err := reader.GetArchive(re.Request.Context(), containerName, path.Join(workspaceRoot, cleanPath))
 		if err != nil {
 			return re.NotFoundError("File not found.", err)
 		}
-		defer r.Close()
+		defer archive.Close()
+		data, err := readFileFromContainer(archive)
+		if err != nil {
+			return re.NotFoundError("File not found.", err)
+		}
 
-		// Sniff Content Type if possible, or default to octet-stream
-		// Actually, http.ServeContent or similar might be better, but GetReader logic is manual
-		// We'll set a default and let the client handle it for now, or use a basic extension check.
 		re.Response.Header().Set("Content-Type", "application/octet-stream")
 		if strings.HasSuffix(cleanPath, ".html") {
 			re.Response.Header().Set("Content-Type", "text/html")
@@ -226,16 +292,20 @@ func AddFileOperations(registry *operation.Registry) {
 			re.Response.Header().Set("Content-Type", "text/plain")
 		}
 
-		_, err = io.Copy(re.Response, r)
+		_, err = re.Response.Write(data)
 		return err
 	}})
 
 	registry.Add(operation.Route{OperationID: "listWorkspaceFileTree", Method: http.MethodGet, Path: "/api/pocketcoder/v1/files-tree", Auth: true, Action: func(re *core.RequestEvent) error {
-		cleanPath, entries, err := ListWorkspaceFileTree(re)
-		if err != nil {
-			return err
+		if re.Auth == nil {
+			return re.ForbiddenError("Direct access to fragments is forbidden for shadows.", nil)
 		}
-
+		cleanPath, entries, err := listWorkspaceFileTree(
+			re.Request.Context(), reader, app, re.Auth.Id, re.Request.URL.Query().Get("path"),
+		)
+		if err != nil {
+			return fileTreeErrorResponse(re, err)
+		}
 		return re.JSON(200, map[string]any{
 			"path":    cleanPath,
 			"entries": entries,

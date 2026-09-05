@@ -40,6 +40,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -229,7 +230,7 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 						log.Printf("[ModelCatalog] skipping model %s/%s: %v", p.ID, m.ID, err)
 						continue
 					}
-					if err := upsertHarnessModel(txApp, h, modelRec, m.ID); err != nil {
+					if err := upsertHarnessModel(txApp, h, modelRec, harnessModelID(h, p.ID, m.ID)); err != nil {
 						log.Printf("[ModelCatalog] skipping harness_model %s/%s/%s: %v", h.GetString("cli_id"), p.ID, m.ID, err)
 					}
 				}
@@ -369,6 +370,23 @@ func upsertModel(app core.App, providerRec *core.Record, p ProviderInfo, m Model
 		}
 	}
 	return rec, nil
+}
+
+const opencodeCliID = "opencode"
+
+// harnessModelID computes the model identifier a given harness's ACP
+// session/set_config_option call actually needs. OpenCode always addresses
+// a model as "<providerID>/<modelID>"; other harnesses use the bare
+// models.dev id directly.
+func harnessModelID(harness *core.Record, providerID, modelID string) string {
+	if harness.GetString("cli_id") != opencodeCliID {
+		return modelID
+	}
+	prefix := providerID + "/"
+	if strings.HasPrefix(modelID, prefix) {
+		return modelID
+	}
+	return prefix + modelID
 }
 
 func upsertHarnessModel(app core.App, harness, model *core.Record, harnessModelID string) error {

@@ -24,6 +24,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"log"
+	"net"
 	"sync"
 	"time"
 
@@ -32,6 +34,8 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessvolume"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 )
+
+const opencodeCliID = "opencode"
 
 type CredentialSyncer interface {
 	Sync(ctx context.Context, app core.App, instance *core.Record, providerRec *core.Record, credential string) error
@@ -82,7 +86,7 @@ func (OpencodeAuthFileSyncer) Sync(ctx context.Context, app core.App, instance *
 	if err != nil {
 		return fmt.Errorf("resolve workspace volume: %w", err)
 	}
-	volumes, err := harnessvolume.Resolve(volumeBase, fresh.GetString("user"), "opencode", fresh.GetString("oauth_account"))
+	volumes, err := harnessvolume.Resolve(volumeBase, fresh.GetString("user"), opencodeCliID, fresh.GetString("oauth_account"))
 	if err != nil {
 		return fmt.Errorf("resolve harness volumes: %w", err)
 	}
@@ -97,19 +101,118 @@ func (OpencodeAuthFileSyncer) Sync(ctx context.Context, app core.App, instance *
 	if err := writeOpencodeAuthFile(ctx, client, image, volumes.Auth, providerID, credential); err != nil {
 		return fmt.Errorf("write opencode auth file: %w", err)
 	}
+	// Detached: best-effort (setModelWithRetry covers a cold cache live),
+	// so it must not add its own delay to a chat's first message. ctx is
+	// gone by the time this finishes, hence WithoutCancel plus its own
+	// bounded timeout.
+	go func() {
+		warmCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 90*time.Second)
+		defer cancel()
+		if err := warmOpencodeModelCache(warmCtx, client, image, volumes.Auth, providerID); err != nil {
+			log.Printf("[sessionprofile] warm opencode model cache for instance %s: %v", instance.Id, err)
+		}
+	}()
 	if err := hooks.RestartContainer(fresh.GetString("container_name"), 30*time.Second); err != nil {
 		return fmt.Errorf("restart opencode container: %w", err)
 	}
+	// RestartContainer only waits for Docker to accept the restart request,
+	// not for the process inside to re-bind its port -- the coordinator's
+	// very next dial otherwise races a container that is still booting.
+	var launch struct {
+		Port int `json:"port"`
+	}
+	if err := harnessRec.UnmarshalJSONField("launch_template", &launch); err != nil {
+		return fmt.Errorf("parse launch_template.port: %w", err)
+	}
+	if launch.Port == 0 {
+		return fmt.Errorf("harness %s launch_template has no port", harnessRec.Id)
+	}
+	if err := waitForPort(ctx, fresh.GetString("container_name"), launch.Port, 20*time.Second); err != nil {
+		return fmt.Errorf("opencode container did not come back up after restart: %w", err)
+	}
 	existing[providerID] = hash
-	fresh.Set("synced_credentials", existing)
-	if err := app.Save(fresh); err != nil {
+	return markCredentialSynced(app, instance.Id, existing)
+}
+
+// markCredentialSynced re-fetches instanceID immediately before saving:
+// ProvisionHarnessInstance can concurrently set acp_endpoint on this same
+// row while the caller's slow Docker I/O is in flight, and saving a
+// snapshot fetched before that I/O started would silently clobber it back
+// to empty.
+func markCredentialSynced(app core.App, instanceID string, syncedCredentials map[string]string) error {
+	current, err := app.FindRecordById("harness_instances", instanceID)
+	if err != nil {
+		return fmt.Errorf("re-fetch harness instance before save: %w", err)
+	}
+	current.Set("synced_credentials", syncedCredentials)
+	if err := app.Save(current); err != nil {
 		return fmt.Errorf("save synced_credentials: %w", err)
 	}
 	return nil
 }
 
+func waitForPort(ctx context.Context, host string, port int, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	addr := fmt.Sprintf("%s:%d", host, port)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		conn, err := (&net.Dialer{Timeout: time.Second}).DialContext(ctx, "tcp", addr)
+		if err == nil {
+			conn.Close()
+			return nil
+		}
+		lastErr = err
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(300 * time.Millisecond):
+		}
+	}
+	return fmt.Errorf("timed out waiting for %s: %w", addr, lastErr)
+}
+
+// warmOpencodeModelCache runs `opencode models <provider>` once in a
+// throwaway helper container against the same auth-home volume the real
+// harness container mounts, so its ~/.cache/opencode/models.json is already
+// populated by the time any session dials in. Best-effort by design: a
+// slow/failed warm here just means the coordinator's own setModelWithRetry
+// falls back to retrying live, not a fatal sync error.
+func warmOpencodeModelCache(ctx context.Context, client *dockerapi.Client, image, authVolume, providerID string) error {
+	const mountPath = harnessvolume.AuthHomeMount
+	containerName := "pc-opencode-model-warm-" + providerID + "-" + fmt.Sprint(time.Now().UnixNano())
+	_, err := client.Create(ctx, containerName, dockerapi.CreateSpec{
+		Image: image, Entrypoint: []string{"sh", "-lc"}, Cmd: []string{"opencode models " + providerID + " >/dev/null 2>&1 || true"},
+		Env:         []string{"HOME=" + mountPath},
+		VolumeBinds: []string{authVolume + ":" + mountPath}, RestartPolicy: "no",
+	})
+	if err != nil {
+		return err
+	}
+	if err := client.Start(ctx, containerName); err != nil {
+		_ = client.Remove(context.WithoutCancel(ctx), containerName)
+		return err
+	}
+	defer func() { _ = client.Remove(context.WithoutCancel(ctx), containerName) }()
+	deadline := time.Now().Add(60 * time.Second)
+	for time.Now().Before(deadline) {
+		insp, err := client.Inspect(ctx, containerName)
+		if err != nil {
+			return fmt.Errorf("inspect model-warm helper container: %w", err)
+		}
+		if !insp.State.Running {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(300 * time.Millisecond):
+		}
+	}
+	return fmt.Errorf("model-warm helper container did not exit within 60s")
+}
+
 func selectCredentialSyncer(harness *core.Record) CredentialSyncer {
-	if harness.GetString("cli_id") == "opencode" {
+	if harness.GetString("cli_id") == opencodeCliID {
 		return OpencodeAuthFileSyncer{}
 	}
 	return NoopCredentialSyncer{}
@@ -141,10 +244,10 @@ fs.chmodSync(path, 0o600);
 		return err
 	}
 	if err := client.Start(ctx, containerName); err != nil {
-		_ = client.Remove(ctx, containerName)
+		_ = client.Remove(context.WithoutCancel(ctx), containerName)
 		return err
 	}
-	defer func() { _ = client.Remove(ctx, containerName) }()
+	defer func() { _ = client.Remove(context.WithoutCancel(ctx), containerName) }()
 	deadline := time.Now().Add(15 * time.Second)
 	for time.Now().Before(deadline) {
 		insp, err := client.Inspect(ctx, containerName)
