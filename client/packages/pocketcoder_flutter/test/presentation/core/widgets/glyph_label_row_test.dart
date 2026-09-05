@@ -25,8 +25,9 @@ void main() {
       child: const TerminalText('harness', role: TextRole.body),
     )));
 
-    final glyphText = tester.widget<Text>(find.text(r'$'));
-    expect(glyphText.style?.color, TextRole.label.color);
+    final glyphText =
+        tester.widget<TerminalText>(find.widgetWithText(TerminalText, r'$'));
+    expect(glyphText.role, TextRole.label);
   });
 
   testWidgets('defaults to HSpace.x1 when no spacing is given', (tester) async {

@@ -7,6 +7,7 @@ import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_list_tile.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
       localizationsDelegates: const [
@@ -82,20 +83,24 @@ void main() {
     ));
 
     expect(
-      tester.widget<Text>(find.text('how do I deploy this')).style!.color,
-      TextRole.value.color,
+      tester
+          .widget<TerminalText>(
+              find.widgetWithText(TerminalText, 'how do I deploy this'))
+          .role,
+      TextRole.value,
       reason: 'the headline is the record\'s subject -- bright and bold',
     );
     expect(
       tester
-          .widget<Text>(find.text('looks like it is working now'))
-          .style!
-          .color,
-      TextRole.body.color,
+          .widget<TerminalText>(find.widgetWithText(
+              TerminalText, 'looks like it is working now'))
+          .role,
+      TextRole.body,
     );
     expect(
-      tester.widget<Text>(find.text('now')).style!.color,
-      TextRole.label.color,
+      tester.widget<TerminalText>(find.widgetWithText(TerminalText, 'now'))
+          .role,
+      TextRole.label,
       reason: 'timestamp stays label -- after task 7 that is body-weight, '
           'still readable',
     );

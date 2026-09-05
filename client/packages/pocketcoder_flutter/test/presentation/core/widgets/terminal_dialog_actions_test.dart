@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/app_palette.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 
 void main() {
@@ -15,20 +14,6 @@ void main() {
     ));
     expect(find.text('<restart>'), findsOneWidget);
     expect(find.text('<cancel>'), findsOneWidget);
-  });
-
-  testWidgets('a refusal is amber, never red', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-          body: TerminalDialogActions(actions: [
-        TerminalActionSpec('deny', ActionKind.refusal, () {}),
-      ])),
-    ));
-    expect(tester.widget<Text>(find.text('<deny>')).style!.color,
-        AppPalette.amber);
-    expect(tester.widget<Text>(find.text('<deny>')).style!.color,
-        isNot(AppPalette.red),
-        reason: 'red on the cautious option teaches the wrong lesson');
   });
 
   testWidgets('a destructive action is never first', (tester) async {

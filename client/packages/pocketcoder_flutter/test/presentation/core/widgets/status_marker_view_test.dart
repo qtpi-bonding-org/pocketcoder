@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 void main() {
   testWidgets('brackets are dim and only the word takes the status colour',
@@ -11,11 +12,17 @@ void main() {
       home: Scaffold(body: StatusMarkerView(marker: StatusMarker.ok)),
     ));
     expect(
-        tester.widget<Text>(find.text('[')).style!.color, TextRole.label.color);
+        tester.widget<TerminalText>(find.widgetWithText(TerminalText, '['))
+            .role,
+        TextRole.label);
     expect(
-        tester.widget<Text>(find.text(']')).style!.color, TextRole.label.color);
+        tester.widget<TerminalText>(find.widgetWithText(TerminalText, ']'))
+            .role,
+        TextRole.label);
     expect(
-        tester.widget<Text>(find.text('ok')).style!.color, TextRole.ok.color);
+        tester.widget<TerminalText>(find.widgetWithText(TerminalText, 'ok'))
+            .role,
+        TextRole.ok);
   });
 
   testWidgets('failure and warning share the !! word, differ in colour',
@@ -27,7 +34,10 @@ void main() {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(body: StatusMarkerView(marker: marker)),
       ));
-      expect(tester.widget<Text>(find.text('!!')).style!.color, role.color);
+      expect(
+          tester.widget<TerminalText>(find.widgetWithText(TerminalText, '!!'))
+              .role,
+          role);
     }
   });
 

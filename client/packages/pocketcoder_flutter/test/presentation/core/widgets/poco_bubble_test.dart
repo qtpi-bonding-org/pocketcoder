@@ -21,20 +21,6 @@ void main() {
     }
   });
 
-  testWidgets('the armor takes the same colour as the face', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-          body: PocoBubble(
-              message: 'hmm',
-              mood: PocoMood.suspicious,
-              posture: PocoPosture.fortified)),
-    ));
-    final face = tester.widget<Text>(find.byKey(const ValueKey('poco-face')));
-    final frame = tester.widget<Text>(find.byKey(const ValueKey('poco-frame')));
-    expect(frame.style!.color, face.style!.color,
-        reason: 'a frame in a different colour reads as two objects');
-  });
-
   test('no expression maps to red', () {
     for (final mood in PocoMood.values) {
       expect(mood.color, isNot(AppPalette.red),

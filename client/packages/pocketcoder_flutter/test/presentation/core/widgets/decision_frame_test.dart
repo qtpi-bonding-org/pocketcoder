@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/app_palette.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/decision_frame.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 void main() {
   testWidgets('title sits inside the top border, lowercase, label role',
@@ -11,8 +12,9 @@ void main() {
       home:
           Scaffold(body: DecisionFrame(title: 'confirm', child: Text('body'))),
     ));
-    final title = tester.widget<Text>(find.text('confirm'));
-    expect(title.style!.color, TextRole.label.color);
+    final title =
+        tester.widget<TerminalText>(find.widgetWithText(TerminalText, 'confirm'));
+    expect(title.role, TextRole.label);
     expect(find.text('CONFIRM'), findsNothing);
   });
 

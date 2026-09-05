@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/app_palette.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/inline_approval.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 void main() {
   testWidgets('no tint, no border -- it lives in the stream', (tester) async {
@@ -34,9 +34,9 @@ void main() {
         options: [],
       )),
     ));
-    final cmd = tester.widget<Text>(find.text('rm -rf /workspace/build'));
-    expect(cmd.style!.color, TextRole.value.color);
-    expect(cmd.style!.color, isNot(AppPalette.red),
+    final cmd = tester.widget<TerminalText>(
+        find.widgetWithText(TerminalText, 'rm -rf /workspace/build'));
+    expect(cmd.role, TextRole.value,
         reason: 'colouring it red would be deciding it is destructive, '
             'which is interpretation (spec section 2b)');
   });

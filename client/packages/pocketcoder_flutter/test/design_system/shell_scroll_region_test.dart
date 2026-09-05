@@ -19,8 +19,10 @@ void main() {
 
       final lines = content.split('\n');
       for (var i = 0; i < lines.length; i++) {
-        if (lines[i].contains('SingleChildScrollView')) {
-          offenders.add('${f.path}:${i + 1}  ${lines[i].trim()}');
+        final line = lines[i];
+        if (line.trim().startsWith('//')) continue;
+        if (line.contains('SingleChildScrollView')) {
+          offenders.add('${f.path}:${i + 1}  ${line.trim()}');
         }
       }
     }

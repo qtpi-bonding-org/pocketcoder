@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/app_palette.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 void main() {
   testWidgets('destructive colours the label, not only the affordance',
@@ -19,13 +20,15 @@ void main() {
     ));
     expect(
       tester
-          .widget<Text>(find.text('delete pocketcoder pro data'))
-          .style!
-          .color,
-      TextRole.fail.color,
+          .widget<TerminalText>(
+              find.widgetWithText(TerminalText, 'delete pocketcoder pro data'))
+          .role,
+      TextRole.fail,
     );
-    expect(tester.widget<Text>(find.text('▸')).style!.color,
-        TextRole.fail.color);
+    expect(
+      tester.widget<TerminalText>(find.widgetWithText(TerminalText, '▸')).role,
+      TextRole.fail,
+    );
   });
 
   testWidgets('warning colours the label, not only the affordance',
@@ -39,10 +42,15 @@ void main() {
         onTap: () {},
       )),
     ));
-    expect(tester.widget<Text>(find.text('logout')).style!.color,
-        TextRole.warn.color);
-    expect(tester.widget<Text>(find.text('▸')).style!.color,
-        TextRole.warn.color);
+    expect(
+      tester.widget<TerminalText>(find.widgetWithText(TerminalText, 'logout'))
+          .role,
+      TextRole.warn,
+    );
+    expect(
+      tester.widget<TerminalText>(find.widgetWithText(TerminalText, '▸')).role,
+      TextRole.warn,
+    );
   });
 
   testWidgets('isSelected renders the row in full-row reverse video',
@@ -68,10 +76,16 @@ void main() {
     // Lowercase, matching the rest of the redesign's angle-bracket/pillar/
     // section-header convention -- not 'UPTIME', not 'Uptime'.
     expect(find.text('uptime'), findsOneWidget);
-    expect(tester.widget<Text>(find.text('uptime')).style!.color,
-        TextRole.label.color);
-    expect(tester.widget<Text>(find.text('6d 4h')).style!.color,
-        TextRole.value.color);
+    expect(
+      tester.widget<TerminalText>(find.widgetWithText(TerminalText, 'uptime'))
+          .role,
+      TextRole.label,
+    );
+    expect(
+      tester.widget<TerminalText>(find.widgetWithText(TerminalText, '6d 4h'))
+          .role,
+      TextRole.value,
+    );
   });
 
   testWidgets('navigate renders an arrow, expand renders a triangle',
