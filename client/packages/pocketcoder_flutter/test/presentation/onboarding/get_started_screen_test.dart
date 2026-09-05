@@ -88,8 +88,8 @@ void main() {
       question.message,
       'Are you already part of the PocketCoder Initiative?',
     );
-    expect(find.textContaining('I HAVE A SERVER — LOG IN'), findsOneWidget);
-    expect(find.textContaining('I’M NEW — JOIN'), findsOneWidget);
+    expect(find.textContaining('i have a server — log in'), findsOneWidget);
+    expect(find.textContaining('i’m new — join'), findsOneWidget);
     expect(find.byType(TerminalPromptSuggestion), findsNWidgets(2));
     expect(find.textContaining('computer that stays online'), findsNothing);
     expect(find.byType(TextField), findsNothing);
@@ -108,8 +108,8 @@ void main() {
     final welcome = tester.widget<PocoBubble>(find.byType(PocoBubble));
     expect(welcome.message, contains('a server—a computer that stays online'));
     expect(welcome.message, contains('accessible and ready'));
-    expect(find.textContaining('HELP ME WITH SETUP'), findsOneWidget);
-    expect(find.textContaining('I’LL SET IT UP'), findsOneWidget);
+    expect(find.textContaining('help me with setup'), findsOneWidget);
+    expect(find.textContaining('i’ll set it up'), findsOneWidget);
     expect(find.byType(TerminalPromptSuggestion), findsNWidgets(2));
   });
 
@@ -121,8 +121,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('self-host setup'), findsOneWidget);
-    expect(find.text('A LINUX SERVER OR VPS YOU CONTROL'), findsOneWidget);
-    expect(find.text('DOCKER COMPOSE V2'), findsOneWidget);
+    expect(find.text('a Linux server or VPS you control'), findsOneWidget);
+    expect(find.text('Docker compose v2'), findsOneWidget);
     expect(find.text('<guide>'), findsOneWidget);
     expect(find.text('<next>'), findsOneWidget);
   });
