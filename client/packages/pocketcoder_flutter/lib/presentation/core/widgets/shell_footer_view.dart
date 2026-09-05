@@ -30,7 +30,8 @@ class ShellFooterView extends StatelessWidget {
               onTap: () {},
               isLabel: true,
             ),
-            TerminalAction(label: 'next', onTap: footer.onNext),
+            if (footer.onNext != null)
+              TerminalAction(label: 'next', onTap: footer.onNext!),
           ],
         DeadEndFooter footer => [
             for (final action in footer.actions)

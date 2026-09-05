@@ -56,13 +56,11 @@ class HarnessAuthScreenView extends StatelessWidget {
 
   // This step auto-advances once a harness connects (see
   // harness_auth_adapter.dart's onboarding listener) -- there is no
-  // separate manual "continue" action, so onNext is a no-op.
-  static void _noAdvance() {}
-
+  // separate manual "continue" action, so onNext is null.
   @override
   Widget build(BuildContext context) => PocketCoderShell(
       footer: onboarding
-          ? WizardFooter(step: 6, totalSteps: 6, onNext: _noAdvance)
+          ? WizardFooter(step: 6, totalSteps: 6)
           : buildPillarFooter(context, NavPillar.config),
       showBack: true,
       body: HarnessAuthView(

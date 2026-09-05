@@ -65,13 +65,13 @@ final class WizardFooter extends ShellFooter {
   const WizardFooter({
     required this.step,
     required this.totalSteps,
-    required this.onNext,
+    this.onNext,
     this.onBack,
   }) : assert(step >= 1 && step <= totalSteps);
 
   final int step;
   final int totalSteps;
-  final VoidCallback onNext;
+  final VoidCallback? onNext; // null when the step auto-advances
   final VoidCallback? onBack; // null on the first step
 }
 
