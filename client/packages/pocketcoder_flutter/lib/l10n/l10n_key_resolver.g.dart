@@ -72,6 +72,7 @@ class L10nKeyResolver {
       'agent.registry.empty' => _l10n.agentRegistryEmpty,
       'agent.searching' => _l10n.agentSearching,
       'agent.select.to.configure' => _l10n.agentSelectToConfigure,
+      'agent.session.label' => _l10n.agentSessionLabel,
       'agent.title' => _l10n.agentTitle,
       'ai.error' => _l10n.aiError,
       'ai.fetch.failed' => _l10n.aiFetchFailed,
@@ -698,6 +699,7 @@ class L10nKeyResolver {
       'pro.benefit.server.setup' => _l10n.proBenefitServerSetup,
       'pro.checking.status' => _l10n.proCheckingStatus,
       'pro.configure.self.hosted.push' => _l10n.proConfigureSelfHostedPush,
+      'pro.continue.setup' => _l10n.proContinueSetup,
       'pro.feature.console' => _l10n.proFeatureConsole,
       'pro.feature.deploy' => _l10n.proFeatureDeploy,
       'pro.feature.push' => _l10n.proFeaturePush,
@@ -1121,6 +1123,7 @@ class L10nKeyResolver {
     'agent.registry.empty',
     'agent.searching',
     'agent.select.to.configure',
+    'agent.session.label',
     'agent.title',
     'ai.error',
     'ai.fetch.failed',
@@ -1804,6 +1807,7 @@ class L10nKeyResolver {
     'pro.benefit.server.setup',
     'pro.checking.status',
     'pro.configure.self.hosted.push',
+    'pro.continue.setup',
     'pro.feature.console',
     'pro.feature.deploy',
     'pro.feature.push',
@@ -2164,6 +2168,7 @@ class L10nKeyResolver {
     'agentRegistryEmpty': 'agent.registry.empty',
     'agentSearching': 'agent.searching',
     'agentSelectToConfigure': 'agent.select.to.configure',
+    'agentSessionLabel': 'agent.session.label',
     'agentTitle': 'agent.title',
     'aiError': 'ai.error',
     'aiFetchFailed': 'ai.fetch.failed',
@@ -2847,6 +2852,7 @@ class L10nKeyResolver {
     'proBenefitServerSetup': 'pro.benefit.server.setup',
     'proCheckingStatus': 'pro.checking.status',
     'proConfigureSelfHostedPush': 'pro.configure.self.hosted.push',
+    'proContinueSetup': 'pro.continue.setup',
     'proFeatureConsole': 'pro.feature.console',
     'proFeatureDeploy': 'pro.feature.deploy',
     'proFeaturePush': 'pro.feature.push',
@@ -3204,6 +3210,7 @@ class L10nKeyResolver {
     'agent.registry.empty': 'agentRegistryEmpty',
     'agent.searching': 'agentSearching',
     'agent.select.to.configure': 'agentSelectToConfigure',
+    'agent.session.label': 'agentSessionLabel',
     'agent.title': 'agentTitle',
     'ai.error': 'aiError',
     'ai.fetch.failed': 'aiFetchFailed',
@@ -3887,6 +3894,7 @@ class L10nKeyResolver {
     'pro.benefit.server.setup': 'proBenefitServerSetup',
     'pro.checking.status': 'proCheckingStatus',
     'pro.configure.self.hosted.push': 'proConfigureSelfHostedPush',
+    'pro.continue.setup': 'proContinueSetup',
     'pro.feature.console': 'proFeatureConsole',
     'pro.feature.deploy': 'proFeatureDeploy',
     'pro.feature.push': 'proFeaturePush',
@@ -4251,6 +4259,7 @@ abstract class L10nKeys {
   static const agentRegistryEmpty = 'agent.registry.empty';
   static const agentSearching = 'agent.searching';
   static const agentSelectToConfigure = 'agent.select.to.configure';
+  static const agentSessionLabel = 'agent.session.label';
   static const agentTitle = 'agent.title';
   static const aiError = 'ai.error';
   static const aiFetchFailed = 'ai.fetch.failed';
@@ -4934,6 +4943,7 @@ abstract class L10nKeys {
   static const proBenefitServerSetup = 'pro.benefit.server.setup';
   static const proCheckingStatus = 'pro.checking.status';
   static const proConfigureSelfHostedPush = 'pro.configure.self.hosted.push';
+  static const proContinueSetup = 'pro.continue.setup';
   static const proFeatureConsole = 'pro.feature.console';
   static const proFeatureDeploy = 'pro.feature.deploy';
   static const proFeaturePush = 'pro.feature.push';

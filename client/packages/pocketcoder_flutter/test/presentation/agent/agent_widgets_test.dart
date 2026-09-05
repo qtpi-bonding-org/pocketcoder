@@ -45,7 +45,7 @@ void main() {
       },
       onSetOption: (value) => request = value,
     )));
-    await tester.tap(find.text('config'));
+    await tester.tap(find.text('session'));
     await tester.pumpAndSettle();
     expect(find.text('Auto Approve'), findsOneWidget);
     expect(find.text('preset'), findsOneWidget);

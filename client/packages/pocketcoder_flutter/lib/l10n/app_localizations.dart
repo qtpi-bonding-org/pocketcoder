@@ -5464,6 +5464,12 @@ abstract class AppLocalizations {
   /// **'config'**
   String get agentConfigLabel;
 
+  /// Collapsed label for the chat session's active configuration
+  ///
+  /// In en, this message translates to:
+  /// **'session'**
+  String get agentSessionLabel;
+
   /// No description provided for @pocketCoderUpdateChecking.
   ///
   /// In en, this message translates to:

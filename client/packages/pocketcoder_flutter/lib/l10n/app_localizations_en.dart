@@ -3023,6 +3023,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentConfigLabel => 'config';
 
   @override
+  String get agentSessionLabel => 'session';
+
+  @override
   String get pocketCoderUpdateChecking =>
       '\$ Checking verified release status...';
 

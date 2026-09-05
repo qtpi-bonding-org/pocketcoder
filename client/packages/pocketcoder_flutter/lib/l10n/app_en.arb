@@ -1215,6 +1215,10 @@
   },
   "agentModeLabel": "mode:",
   "agentConfigLabel": "config",
+  "agentSessionLabel": "session",
+  "@agentSessionLabel": {
+    "description": "Collapsed label for the chat session's active configuration"
+  },
   "pocketCoderUpdateChecking": "$ Checking verified release status...",
   "pocketCoderUpdateCheckAgain": "check again",
   "pocketCoderUpdateNoDeployment": "No deployment found on this device.",
