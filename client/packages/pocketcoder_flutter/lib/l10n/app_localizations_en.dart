@@ -102,52 +102,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get billingError => 'Billing error';
 
   @override
-  String get actionCancel => 'CANCEL';
+  String get actionCancel => 'cancel';
 
   @override
-  String get actionSave => 'SAVE';
+  String get actionSave => 'save';
 
   @override
-  String get actionClose => 'CLOSE';
+  String get actionClose => 'close';
 
   @override
-  String get actionDeny => 'DENY';
+  String get actionDeny => 'deny';
 
   @override
-  String get actionAuthorize => 'AUTHORIZE';
+  String get actionAuthorize => 'authorize';
 
   @override
-  String get actionRefresh => 'REFRESH';
+  String get actionRefresh => 'refresh';
 
   @override
-  String get actionBack => 'BACK';
+  String get actionBack => 'back';
 
   @override
-  String get actionSkip => 'SKIP';
+  String get actionSkip => 'skip';
 
   @override
-  String get actionContinue => 'NEXT';
+  String get actionContinue => 'next';
 
   @override
-  String get actionChange => 'CHANGE';
+  String get actionChange => 'change';
 
   @override
-  String get actionCreate => 'CREATE';
+  String get actionCreate => 'create';
 
   @override
-  String get actionAddNew => 'ADD NEW';
+  String get actionAddNew => 'add new';
 
   @override
-  String get actionRestore => 'RESTORE';
+  String get actionRestore => 'restore';
 
   @override
-  String get actionConfigure => 'CONFIGURE';
+  String get actionConfigure => 'configure';
 
   @override
-  String get actionReject => 'REJECT';
+  String get actionReject => 'reject';
 
   @override
-  String get externalAuthTitle => 'EXTERNAL AUTHENTICATION';
+  String get externalAuthTitle => 'external authentication';
 
   @override
   String externalAuthConnecting(String label) {
@@ -155,22 +155,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get externalAuthRetry => 'RETRY';
+  String get externalAuthRetry => 'retry';
 
   @override
-  String get externalAuthCancel => 'CANCEL';
-
-  @override
-  String get navChats => 'CHATS';
-
-  @override
-  String get navMonitor => 'MONITOR';
-
-  @override
-  String get navConfigure => 'CONFIGURE';
-
-  @override
-  String get navManage => 'MANAGE';
+  String get externalAuthCancel => 'cancel';
 
   @override
   String get bootLoadError =>
@@ -209,89 +197,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bootNoiseReasoningEngine => '[agent] reasoning_engine: idle';
 
   @override
-  String get onboardingTitle => 'IDENTIFICATION UNLOCK';
+  String get onboardingTitle => 'identification unlock';
 
   @override
   String get onboardingPocoChallengeMessage =>
-      'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.';
+      'Who goes there? Identify yourself and provide the secret passphrase.';
 
   @override
   String get onboardingPocoWelcome =>
       'Identity verified! Welcome home. I knew it was you—just had to make sure the Cloud wasn\'t spoofing your signature.';
 
   @override
-  String get onboardingAccessDenied => 'ACCESS DENIED.';
+  String get onboardingAccessDenied => 'Access denied.';
 
   @override
-  String get onboardingProcessing => 'PROCESSING...';
+  String get onboardingProcessing => 'Processing...';
 
   @override
-  String get onboardingLogin => 'CONNECT';
+  String get onboardingLogin => 'connect';
 
   @override
-  String get onboardingDeploy => 'DEPLOY';
+  String get onboardingDeploy => 'deploy';
 
   @override
-  String get onboardingHomeServer => 'HOME SERVER';
+  String get onboardingHomeServer => 'home server';
 
   @override
-  String get onboardingIdentityLabel => 'IDENTITY';
+  String get onboardingIdentityLabel => 'identity';
 
   @override
-  String get onboardingEmailHint => 'ENTER EMAIL';
+  String get onboardingEmailHint => 'enter email';
 
   @override
-  String get onboardingPassphraseLabel => 'PASSPHRASE';
+  String get onboardingPassphraseLabel => 'passphrase';
 
   @override
-  String get onboardingPasswordHint => 'ENTER PASSWORD';
+  String get onboardingPasswordHint => 'enter password';
 
   @override
-  String get onboardingAuthenticating => 'AUTHENTICATING';
+  String get onboardingAuthenticating => 'authenticating';
 
   @override
-  String get onboardingSetupTitle => 'POCKETCODER SETUP';
+  String get onboardingSetupTitle => 'PocketCoder setup';
 
   @override
   String get onboardingConnectOrDeploy =>
-      'ARE YOU ALREADY PART OF THE POCKETCODER INITIATIVE?';
+      'Are you already part of the PocketCoder initiative?';
 
   @override
-  String get onboardingExistingServer => 'USE AN EXISTING POCKETBASE SERVER';
+  String get onboardingExistingServer => 'use an existing PocketBase server';
 
   @override
-  String get onboardingCreateServer => 'CREATE A NEW SERVER';
+  String get onboardingCreateServer => 'create a new server';
 
   @override
-  String get onboardingServerLoginTitle => 'SERVER LOGIN';
+  String get onboardingServerLoginTitle => 'server login';
 
   @override
-  String get onboardingServerUrl => 'SERVER URL';
+  String get onboardingServerUrl => 'server URL';
 
   @override
   String get onboardingServerUrlHint => 'https://server.example.com';
 
   @override
-  String get onboardingEmail => 'EMAIL';
+  String get onboardingEmail => 'email';
 
   @override
   String get onboardingEmailHintShort => 'admin@example.com';
 
   @override
-  String get onboardingPassword => 'PASSWORD';
+  String get onboardingPassword => 'password';
 
   @override
-  String get onboardingServerConnecting => 'CONNECTING...';
+  String get onboardingServerConnecting => 'Connecting...';
 
   @override
-  String get onboardingRequiredFields => 'ENTER ALL REQUIRED FIELDS';
+  String get onboardingRequiredFields => 'enter all required fields';
 
   @override
-  String get onboardingChooseHarnessTitle => 'CHOOSE YOUR HARNESS';
+  String get onboardingChooseHarnessTitle => 'choose your harness';
 
   @override
   String get onboardingChooseHarnessBody =>
-      'CHOOSE THE ACCOUNT-BASED AGENT TO CONNECT.';
+      'Choose the account-based agent to connect.';
 
   @override
   String get onboardingChooseHarnessLoadingProviders =>
@@ -301,22 +289,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingHarnessProvidersLoading => 'Loading harness providers…';
 
   @override
-  String get onboardingHarnessNotFound => 'HARNESS NOT FOUND';
+  String get onboardingHarnessNotFound => 'harness not found';
 
   @override
-  String get onboardingClaudeAccountLogin => 'CLAUDE ACCOUNT LOGIN';
+  String get onboardingClaudeAccountLogin => 'Claude account login';
 
   @override
-  String get onboardingCodexAccountLogin => 'CHATGPT ACCOUNT LOGIN';
+  String get onboardingCodexAccountLogin => 'ChatGPT account login';
 
   @override
   String onboardingHarnessAccountLogin(String harness) {
-    return '$harness ACCOUNT LOGIN';
+    return '$harness account login';
   }
 
   @override
   String onboardingHarnessLoginTitle(String provider) {
-    return '$provider LOGIN';
+    return '$provider login';
   }
 
   @override
@@ -337,44 +325,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingHarnessAccountVisibilityCancel => 'Cancel';
 
   @override
-  String get onboardingConnected => 'CONNECTED';
+  String get onboardingConnected => 'connected';
 
   @override
-  String get onboardingAccountLogin => 'ACCOUNT LOGIN';
+  String get onboardingAccountLogin => 'account login';
 
   @override
-  String get onboardingAuthorizationCode => 'AUTHORIZATION CODE';
+  String get onboardingAuthorizationCode => 'authorization code';
 
   @override
   String get onboardingAuthorizationCodeHint => 'paste code';
 
   @override
-  String get onboardingSubmitCode => 'SUBMIT CODE';
+  String get onboardingSubmitCode => 'submit code';
 
   @override
-  String get onboardingOpenAuthorization => 'OPEN AUTHORIZATION';
+  String get onboardingOpenAuthorization => 'open authorization';
 
   @override
-  String get onboardingCheckStatus => 'CHECK STATUS';
+  String get onboardingCheckStatus => 'check status';
 
   @override
   String get onboardingOpenChatFailed =>
       'Could not open a new chat. Please try again.';
 
   @override
-  String get onboardingServerCredentialsTitle => 'SERVER CREDENTIALS';
+  String get onboardingServerCredentialsTitle => 'server credentials';
 
   @override
-  String get onboardingPocketbaseAdminEmail => 'POCKETCODER ADMIN EMAIL';
+  String get onboardingPocketbaseAdminEmail => 'PocketCoder admin email';
 
   @override
-  String get onboardingPocketbaseAdminPassword => 'POCKETCODER ADMIN PASSWORD';
+  String get onboardingPocketbaseAdminPassword => 'PocketCoder admin password';
 
   @override
-  String get homeTitle => 'CHATS';
+  String get homeTitle => 'chats';
 
   @override
-  String get homeLoadingChats => 'LOADING CHATS';
+  String get homeLoadingChats => 'loading chats';
 
   @override
   String homeErrorPrefix(String error) {
@@ -382,19 +370,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get homeNewChat => 'NEW CHAT';
+  String get homeNewChat => 'new chat';
 
   @override
   String get homeNoChats => 'No active chats found.';
 
   @override
-  String get chatSessionTitle => 'CHAT SESSION';
+  String get chatSessionTitle => 'chat session';
 
   @override
-  String get chatTerminalAction => 'TERMINAL';
+  String get chatTerminalAction => 'terminal';
 
   @override
-  String get chatListNewChat => 'NEW';
+  String get chatListNewChat => 'new';
 
   @override
   String get chatListNoMessages => 'No messages yet';
@@ -418,16 +406,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newChatCwdHint => '/workspace';
 
   @override
-  String get newChatCreate => 'CREATE';
+  String get newChatCreate => 'create';
 
   @override
-  String get newChatCancel => 'CANCEL';
+  String get newChatCancel => 'cancel';
 
   @override
-  String get newChatSelectHarness => 'SELECT HARNESS';
+  String get newChatSelectHarness => 'select harness';
 
   @override
-  String get newChatSelectModel => 'SELECT MODEL';
+  String get newChatSelectModel => 'select model';
 
   @override
   String get newChatNoModelsAvailable => 'No models available for this harness';
@@ -440,10 +428,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Path must be /workspace or a subdirectory of it';
 
   @override
-  String get chatListArchive => 'ARCHIVE';
+  String get chatListArchive => 'archive';
 
   @override
-  String get chatListDelete => 'DELETE';
+  String get chatListDelete => 'delete';
+
+  @override
+  String chatListActionsBody(String title) {
+    return 'archive hides \"$title\" from this list. delete removes it permanently.';
+  }
 
   @override
   String get chatListTimestampNow => 'now';
@@ -464,19 +457,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get chatFilesAction => 'FILES';
+  String get chatFilesAction => 'files';
 
   @override
-  String get chatNewCapabilityRequest => '[!] NEW CAPABILITY REQUEST RECEIVED';
+  String get chatNewCapabilityRequest => '[!] new capability request received';
 
   @override
-  String get chatThinking => 'THINKING';
+  String get chatThinking => 'thinking';
 
   @override
-  String get chatThinkingLive => 'THINKING...';
+  String get chatThinkingLive => 'Thinking...';
 
   @override
-  String get chatThought => 'THOUGHT';
+  String get chatThought => 'thought';
 
   @override
   String get chatAwaitingHarnessStart =>
@@ -486,34 +479,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatWorkingThroughRequest => 'Working through the request.';
 
   @override
-  String get chatCommandOutput => 'OUTPUT';
+  String get chatCommandOutput => 'output';
 
   @override
   String get chatToolCallFallback => 'Tool call';
 
   @override
-  String get chatSessionAction => 'SESSION';
+  String get chatSessionAction => 'session';
 
   @override
-  String get chatMonitorAction => 'WATCH';
+  String get chatMonitorAction => 'watch';
 
   @override
   String get chatSendTooltip => 'Send';
 
   @override
-  String get chatCommanderRole => 'COMMANDER';
+  String get chatCommanderRole => 'commander';
 
   @override
-  String get chatThinkingRole => 'THINKING';
+  String get chatThinkingRole => 'thinking';
 
   @override
-  String get chatPocoRole => 'POCO';
+  String get chatPocoRole => 'Poco';
 
   @override
-  String get chatElicitationRequest => 'ELICITATION REQUEST';
+  String get chatElicitationRequest => 'elicitation request';
 
   @override
-  String get chatElicitationFormLabel => 'FORM';
+  String get chatElicitationFormLabel => 'form';
 
   @override
   String get chatCommanderPrompt => 'commander@pc \$ ';
@@ -528,111 +521,111 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatPickerFieldIndicator => '[v]';
 
   @override
-  String get chatDecline => 'DECLINE';
+  String get chatDecline => 'decline';
 
   @override
-  String get chatSubmit => 'SUBMIT';
+  String get chatSubmit => 'submit';
 
   @override
   String get chatNoFieldsRequested => '(no fields requested)';
 
   @override
-  String get chatRunOutcomeInterruptedTitle => 'RUN INTERRUPTED';
+  String get chatRunOutcomeInterruptedTitle => 'run interrupted';
 
   @override
   String get chatRunOutcomeInterruptedBody =>
       'The connection ended before the run finished.';
 
   @override
-  String get chatRunOutcomeCancelledTitle => 'RUN STOPPED';
+  String get chatRunOutcomeCancelledTitle => 'run stopped';
 
   @override
   String get chatRunOutcomeCancelledBody => 'The run was stopped.';
 
   @override
-  String get chatRunOutcomeFailedTitle => 'RUN FAILED';
+  String get chatRunOutcomeFailedTitle => 'run failed';
 
   @override
   String get chatRunOutcomeFailedBody =>
       'Something went wrong while running this request.';
 
   @override
-  String get filesTitle => 'FILES';
+  String get filesTitle => 'files';
 
   @override
-  String get filesEmpty => 'NO FILES';
+  String get filesEmpty => 'no files';
 
   @override
-  String get filesTooLargeToPreview => 'FILE TOO LARGE TO PREVIEW';
+  String get filesTooLargeToPreview => 'file too large to preview';
 
   @override
-  String get filesCantPreviewType => 'CAN\'T PREVIEW THIS FILE TYPE';
+  String get filesCantPreviewType => 'can\'t preview this file type';
 
   @override
-  String get chatModelLabel => 'MODEL:';
+  String get chatModelLabel => 'model:';
 
   @override
-  String get chatModelDefault => 'DEFAULT';
+  String get chatModelDefault => 'default';
 
   @override
-  String get chatModelPerChat => '[CHAT]';
+  String get chatModelPerChat => '[chat]';
 
   @override
-  String get chatSelectModelTitle => 'SELECT MODEL';
+  String get chatSelectModelTitle => 'select model';
 
   @override
-  String get chatUseGlobalDefault => 'USE GLOBAL DEFAULT';
+  String get chatUseGlobalDefault => 'use global default';
 
   @override
-  String get llmTitle => 'LLM MANAGEMENT';
+  String get llmTitle => 'llm management';
 
   @override
-  String get llmLoadingProviders => 'LOADING PROVIDERS';
+  String get llmLoadingProviders => 'loading providers';
 
   @override
-  String get llmActiveModelSection => 'ACTIVE MODEL';
+  String get llmActiveModelSection => 'active model';
 
   @override
-  String get llmProvidersSection => 'PROVIDERS';
+  String get llmProvidersSection => 'providers';
 
   @override
-  String get llmApiKeysSection => 'API KEYS';
+  String get llmApiKeysSection => 'API keys';
 
   @override
-  String get llmGlobalDefault => 'GLOBAL DEFAULT';
+  String get llmGlobalDefault => 'global default';
 
   @override
-  String get llmNotSet => 'NOT SET';
+  String get llmNotSet => 'not set';
 
   @override
-  String get llmAddKeyHint => 'ADD AN API KEY TO ENABLE MODEL SELECTION';
+  String get llmAddKeyHint => 'add an API key to enable model selection';
 
   @override
-  String get llmNoProviders => 'NO PROVIDERS AVAILABLE';
+  String get llmNoProviders => 'no providers available';
 
   @override
-  String get llmConnected => '[ CONNECTED ]';
+  String get llmConnected => '[ connected ]';
 
   @override
-  String get llmNoKey => '[ NO KEY ]';
+  String get llmNoKey => '[ no key ]';
 
   @override
   String llmModelsAvailable(int count) {
-    return '$count MODEL(S) AVAILABLE';
+    return '$count model(s) available';
   }
 
   @override
-  String get llmUpdateKey => 'UPDATE KEY';
+  String get llmUpdateKey => 'update key';
 
   @override
-  String get llmAddKey => 'ADD KEY';
+  String get llmAddKey => 'add key';
 
   @override
-  String get llmModelsButton => 'MODELS';
+  String get llmModelsButton => 'models';
 
   @override
   String llmApiKeyDialogTitle(String provider) {
-    return 'API KEY: $provider';
+    return 'API key: $provider';
   }
 
   @override
@@ -641,64 +634,64 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get llmSelectModelTitle => 'SELECT MODEL';
+  String get llmSelectModelTitle => 'select model';
 
   @override
   String llmProviderModelsTitle(String provider) {
-    return '$provider MODELS';
+    return '$provider models';
   }
 
   @override
-  String get llmNoModels => 'NO MODELS LISTED';
+  String get llmNoModels => 'no models listed';
 
   @override
-  String get llmSelect => '[ SELECT ]';
+  String get llmSelect => '[ select ]';
 
   @override
-  String get mcpTitle => 'MCP MANAGEMENT';
+  String get mcpTitle => 'MCP management';
 
   @override
-  String get mcpCapabilitiesRegistry => 'CAPABILITIES REGISTRY';
+  String get mcpCapabilitiesRegistry => 'capabilities registry';
 
   @override
-  String get mcpPendingApproval => 'PENDING APPROVAL';
+  String get mcpPendingApproval => 'pending approval';
 
   @override
-  String get mcpActiveCapabilities => 'ACTIVE CAPABILITIES';
+  String get mcpActiveCapabilities => 'active capabilities';
 
   @override
-  String get mcpNoCapabilities => 'NO CAPABILITIES REGISTERED';
+  String get mcpNoCapabilities => 'no capabilities registered';
 
   @override
   String mcpImageLabel(String image) {
-    return 'IMAGE: $image';
+    return 'image: $image';
   }
 
   @override
   String mcpPurposeLabel(String reason) {
-    return 'PURPOSE: $reason';
+    return 'purpose: $reason';
   }
 
   @override
-  String get mcpRequiredConfig => 'REQUIRED CONFIG:';
+  String get mcpRequiredConfig => 'required config:';
 
   @override
-  String get mcpAuthorizeCap => 'AUTHORIZE CAPABILITY';
+  String get mcpAuthorizeCap => 'authorize capability';
 
   @override
-  String get mcpEditConfig => 'EDIT CONFIGURATION';
+  String get mcpEditConfig => 'edit configuration';
 
   @override
-  String get mcpRevoke => 'REVOKE';
+  String get mcpRevoke => 'revoke';
 
   @override
   String mcpAuthorizeDialogTitle(String name) {
-    return 'AUTHORIZE: $name';
+    return 'authorize: $name';
   }
 
   @override
   String mcpUpdateConfigDialogTitle(String name) {
-    return 'UPDATE CONFIG: $name';
+    return 'update config: $name';
   }
 
   @override
@@ -708,150 +701,150 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mcpEnterSecrets => 'Enter required secrets:';
 
   @override
-  String get mcpAddDialogTitle => 'ADD MCP SERVER';
+  String get mcpAddDialogTitle => 'add MCP server';
 
   @override
-  String get mcpServerNameLabel => 'SERVER NAME';
+  String get mcpServerNameLabel => 'server name';
 
   @override
-  String get mcpImageOptionalLabel => 'IMAGE (OPTIONAL)';
+  String get mcpImageOptionalLabel => 'image (optional)';
 
   @override
   String get mcpAddConfigOptional =>
       'Optional config (leave blank if none needed)';
 
   @override
-  String get mcpConnectCap => 'CONNECT';
+  String get mcpConnectCap => 'connect';
 
   @override
-  String get mcpRetryDeliveryCap => 'RETRY DELIVERY';
+  String get mcpRetryDeliveryCap => 'retry delivery';
 
   @override
   String mcpOauthRequiredLabel(String provider) {
-    return 'REQUIRES OAUTH: $provider';
+    return 'requires OAuth: $provider';
   }
 
   @override
-  String get mcpOauthProviderOptionalLabel => 'OAUTH PROVIDER (OPTIONAL)';
+  String get mcpOauthProviderOptionalLabel => 'OAuth provider (optional)';
 
   @override
   String get mcpOauthTokenEnvVarOptionalLabel =>
-      'OAUTH TOKEN ENV VAR (OPTIONAL)';
+      'OAuth token env var (optional)';
 
   @override
   String mcpOauthProviderNotConfiguredLabel(String provider) {
-    return '$provider NOT YET CONFIGURED';
+    return '$provider not yet configured';
   }
 
   @override
-  String get mcpAddNew => 'ADD NEW';
+  String get mcpAddNew => 'add new';
 
   @override
-  String get mcpDeny => 'DENY';
+  String get mcpDeny => 'deny';
 
   @override
-  String get mcpAuthorize => 'AUTHORIZE';
+  String get mcpAuthorize => 'authorize';
 
   @override
-  String get actionAdd => 'ADD';
+  String get actionAdd => 'add';
 
   @override
-  String get toolPermissionsScreenTitle => 'TOOL PERMISSIONS';
+  String get toolPermissionsScreenTitle => 'tool permissions';
 
   @override
-  String get toolPermissionsRulesRegistry => 'PERMISSION RULES';
+  String get toolPermissionsRulesRegistry => 'permission rules';
 
   @override
-  String get toolPermissionsNoRules => 'NO RULES CONFIGURED';
+  String get toolPermissionsNoRules => 'no rules configured';
 
   @override
-  String get toolPermissionsAddRuleTitle => 'ADD PERMISSION RULE';
+  String get toolPermissionsAddRuleTitle => 'add permission rule';
 
   @override
-  String get toolPermissionsToolNameLabel => 'TOOL NAME';
+  String get toolPermissionsToolNameLabel => 'tool name';
 
   @override
-  String get toolPermissionsAllowLabel => 'ALLOW';
+  String get toolPermissionsAllowLabel => 'allow';
 
   @override
-  String get toolPermissionsAskLabel => 'ASK';
+  String get toolPermissionsAskLabel => 'ask';
 
   @override
-  String get toolPermissionsDenyLabel => 'DENY';
+  String get toolPermissionsDenyLabel => 'deny';
 
   @override
-  String get toolPermissionsAddRuleButton => 'ADD RULE';
+  String get toolPermissionsAddRuleButton => 'add rule';
 
   @override
-  String get notificationSettingsScreenTitle => 'NOTIFICATIONS';
+  String get notificationSettingsScreenTitle => 'notifications';
 
   @override
-  String get notificationSettingsChatReplyLabel => 'CHAT REPLIES';
+  String get notificationSettingsChatReplyLabel => 'chat replies';
 
   @override
-  String get notificationSettingsScheduleLabel => 'SCHEDULED TASKS';
+  String get notificationSettingsScheduleLabel => 'scheduled tasks';
 
   @override
-  String get notificationSettingsTaskCompleteLabel => 'TASK COMPLETE';
+  String get notificationSettingsTaskCompleteLabel => 'task complete';
 
   @override
-  String get notificationSettingsTaskErrorLabel => 'TASK ERRORS';
+  String get notificationSettingsTaskErrorLabel => 'task errors';
 
   @override
   String get notificationSettingsPoco =>
       'I can notify you when an agent needs approval or finishes a task, even when PocketCoder is not open. Your phone will ask for permission before I enable alerts on this device.';
 
   @override
-  String get notificationSettingsEnableDevice => 'ENABLE ON THIS DEVICE';
+  String get notificationSettingsEnableDevice => 'enable on this device';
 
   @override
-  String get skillsTitle => 'SKILLS';
+  String get skillsTitle => 'skills';
 
   @override
-  String get skillsRegistryTitle => 'SKILLS REGISTRY';
+  String get skillsRegistryTitle => 'skills registry';
 
   @override
-  String get skillsGlobalSection => 'GLOBAL';
+  String get skillsGlobalSection => 'global';
 
   @override
-  String get skillsProjectSection => 'PROJECT';
+  String get skillsProjectSection => 'project';
 
   @override
-  String get skillsNoSkills => 'NO SKILLS CONFIGURED';
+  String get skillsNoSkills => 'no skills configured';
 
   @override
-  String get skillsAddButton => 'ADD SKILL';
+  String get skillsAddButton => 'add skill';
 
   @override
-  String get skillsEditButton => 'EDIT';
+  String get skillsEditButton => 'edit';
 
   @override
-  String get skillsDeleteButton => 'DELETE';
+  String get skillsDeleteButton => 'delete';
 
   @override
-  String get skillsSaveButton => 'SAVE';
+  String get skillsSaveButton => 'save';
 
   @override
-  String get skillsNameLabel => 'NAME';
+  String get skillsNameLabel => 'name';
 
   @override
-  String get skillsDescriptionLabel => 'DESCRIPTION';
+  String get skillsDescriptionLabel => 'description';
 
   @override
-  String get skillsContentLabel => 'CONTENT';
+  String get skillsContentLabel => 'content';
 
   @override
-  String get skillsGlobalLabel => 'GLOBAL';
+  String get skillsGlobalLabel => 'global';
 
   @override
-  String get skillsProjectLabel => 'PROJECT';
+  String get skillsProjectLabel => 'project';
 
   @override
-  String get skillsAddDialogTitle => 'ADD SKILL';
+  String get skillsAddDialogTitle => 'add skill';
 
   @override
   String skillsEditDialogTitle(String name) {
-    return 'EDIT: $name';
+    return 'edit: $name';
   }
 
   @override
@@ -859,261 +852,261 @@ class AppLocalizationsEn extends AppLocalizations {
       'No agent config has a workspace folder configured.';
 
   @override
-  String get skillsBuiltInLabel => 'BUILT-IN';
+  String get skillsBuiltInLabel => 'built-in';
 
   @override
-  String get schedulerTitle => 'SCHEDULER';
+  String get schedulerTitle => 'scheduler';
 
   @override
-  String get schedulerRegistryTitle => 'SCHEDULED TASKS';
+  String get schedulerRegistryTitle => 'scheduled tasks';
 
   @override
-  String get schedulerNoSchedules => 'NO SCHEDULES CONFIGURED';
+  String get schedulerNoSchedules => 'no schedules configured';
 
   @override
-  String get schedulerAddButton => 'ADD SCHEDULE';
+  String get schedulerAddButton => 'add schedule';
 
   @override
-  String get schedulerEditButton => 'EDIT';
+  String get schedulerEditButton => 'edit';
 
   @override
-  String get schedulerDeleteButton => 'DELETE';
+  String get schedulerDeleteButton => 'delete';
 
   @override
-  String get schedulerSaveButton => 'SAVE';
+  String get schedulerSaveButton => 'save';
 
   @override
-  String get schedulerPauseButton => 'PAUSE';
+  String get schedulerPauseButton => 'pause';
 
   @override
-  String get schedulerResumeButton => 'RESUME';
+  String get schedulerResumeButton => 'resume';
 
   @override
-  String get schedulerRunNowButton => 'RUN NOW';
+  String get schedulerRunNowButton => 'run now';
 
   @override
-  String get schedulerNameLabel => 'NAME';
+  String get schedulerNameLabel => 'name';
 
   @override
-  String get schedulerCronLabel => 'CRON EXPRESSION';
+  String get schedulerCronLabel => 'cron expression';
 
   @override
-  String get schedulerPromptLabel => 'PROMPT';
+  String get schedulerPromptLabel => 'prompt';
 
   @override
-  String get schedulerAddDialogTitle => 'ADD SCHEDULE';
+  String get schedulerAddDialogTitle => 'add schedule';
 
   @override
   String schedulerEditDialogTitle(String name) {
-    return 'EDIT: $name';
+    return 'edit: $name';
   }
 
   @override
-  String get schedulerPausedBadge => 'PAUSED';
+  String get schedulerPausedBadge => 'paused';
 
   @override
-  String get schedulerRunningBadge => 'RUNNING';
+  String get schedulerRunningBadge => 'running';
 
   @override
-  String get settingsTitle => 'CONFIGURE';
+  String get settingsTitle => 'configure';
 
   @override
-  String get settingsAiAgentsSection => 'AGENTS & ACCESS';
+  String get settingsAiAgentsSection => 'agents & access';
 
   @override
-  String get settingsReportAiContentLabel => 'REPORT AI CONTENT';
+  String get settingsReportAiContentLabel => 'report AI content';
 
   @override
-  String get settingsSystemSection => 'SYSTEM';
+  String get settingsSystemSection => 'system';
 
   @override
-  String get settingsAccountSection => 'ACCOUNT';
+  String get settingsAccountSection => 'account';
 
   @override
-  String get settingsMenuLlmManagement => 'LLM MANAGEMENT';
+  String get settingsMenuLlmManagement => 'llm management';
 
   @override
-  String get settingsMenuAgentRegistry => 'AGENT REGISTRY';
+  String get settingsMenuAgentRegistry => 'agent registry';
 
   @override
-  String get settingsMenuMcpManagement => 'MCP MANAGEMENT';
+  String get settingsMenuMcpManagement => 'MCP management';
 
   @override
-  String get settingsMenuSkills => 'SKILLS';
+  String get settingsMenuSkills => 'skills';
 
   @override
-  String get settingsMenuToolPermissions => 'TOOL PERMISSIONS';
+  String get settingsMenuToolPermissions => 'tool permissions';
 
   @override
-  String get settingsMenuHarnessConnections => 'HARNESS CONNECTIONS';
+  String get settingsMenuHarnessConnections => 'harness connections';
 
   @override
-  String get settingsMenuSystemChecks => 'SYSTEM CHECKS';
+  String get settingsMenuSystemChecks => 'system checks';
 
   @override
-  String get settingsMenuPocketMemory => 'POCKET MEMORY';
+  String get settingsMenuPocketMemory => 'pocket memory';
 
   @override
-  String get settingsMenuPocketbase => 'POCKETBASE';
+  String get settingsMenuPocketbase => 'PocketBase';
 
   @override
-  String get settingsMenuScheduler => 'SCHEDULER';
+  String get settingsMenuScheduler => 'scheduler';
 
   @override
-  String get settingsMenuNotifications => 'NOTIFICATIONS';
+  String get settingsMenuNotifications => 'notifications';
 
   @override
-  String get settingsMenuLogout => 'LOGOUT';
+  String get settingsMenuLogout => 'logout';
 
   @override
-  String get settingsMenuReset => 'RESET';
+  String get settingsMenuReset => 'reset';
 
   @override
-  String get settingsMenuHapticFeedback => 'HAPTIC FEEDBACK';
+  String get settingsMenuHapticFeedback => 'haptic feedback';
 
   @override
-  String get settingsLogoutConfirmTitle => 'SIGN OUT';
+  String get settingsLogoutConfirmTitle => 'sign out';
 
   @override
   String get settingsLogoutConfirmBody =>
       'This will end your current session. You will need to log in again to continue.';
 
   @override
-  String get settingsLogoutCancel => 'CANCEL';
+  String get settingsLogoutCancel => 'cancel';
 
   @override
-  String get settingsLogoutConfirm => 'SIGN OUT';
+  String get settingsLogoutConfirm => 'sign out';
 
   @override
-  String get settingsFactoryResetConfirmTitle => 'RESET';
+  String get settingsFactoryResetConfirmTitle => 'reset';
 
   @override
   String get settingsFactoryResetConfirmBody =>
       'This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.';
 
   @override
-  String get settingsFactoryResetCancel => 'CANCEL';
+  String get settingsFactoryResetCancel => 'cancel';
 
   @override
-  String get settingsFactoryResetConfirm => 'RESET';
+  String get settingsFactoryResetConfirm => 'reset';
 
   @override
-  String get settingsDeleteProDataLabel => 'DELETE POCKETCODER PRO DATA';
+  String get settingsDeleteProDataLabel => 'delete PocketCoder Pro data';
 
   @override
-  String get settingsDeleteProDataConfirmTitle => 'DELETE PRO DATA';
+  String get settingsDeleteProDataConfirmTitle => 'delete pro data';
 
   @override
   String get settingsDeleteProDataConfirmBody =>
       'This removes your subscription and notification records from PocketCoder Pro\'s systems. Your server and everything on it are unaffected -- use your own SSH access if you want to wipe that too.';
 
   @override
-  String get settingsDeleteProDataCancel => 'CANCEL';
+  String get settingsDeleteProDataCancel => 'cancel';
 
   @override
-  String get settingsDeleteProDataConfirm => 'DELETE';
+  String get settingsDeleteProDataConfirm => 'delete';
 
   @override
-  String get agentTitle => 'AGENT REGISTRY';
+  String get agentTitle => 'agent registry';
 
   @override
-  String get agentModelsPersonas => 'MODELS & PERSONAS';
+  String get agentModelsPersonas => 'models & personas';
 
   @override
-  String get agentSearching => 'SEARCHING...';
+  String get agentSearching => 'Searching...';
 
   @override
-  String get agentRegistryEmpty => 'REGISTRY EMPTY.';
+  String get agentRegistryEmpty => 'Registry empty.';
 
   @override
-  String get agentSelectToConfigure => 'SELECT AGENT TO CONFIGURE';
+  String get agentSelectToConfigure => 'select agent to configure';
 
   @override
   String agentDialogTitle(String name) {
-    return 'AGENT: $name';
+    return 'agent: $name';
   }
 
   @override
-  String get agentNameLabel => 'NAME';
+  String get agentNameLabel => 'name';
 
   @override
-  String get agentDescriptionLabel => 'DESCRIPTION';
+  String get agentDescriptionLabel => 'description';
 
   @override
-  String get agentPromptsLabel => 'PROMPTS';
+  String get agentPromptsLabel => 'prompts';
 
   @override
-  String get agentModelsLabel => 'MODELS';
+  String get agentModelsLabel => 'models';
 
   @override
-  String get agentParametersLabel => 'PARAMETERS';
+  String get agentParametersLabel => 'parameters';
 
   @override
-  String get agentNone => 'NONE';
+  String get agentNone => 'none';
 
   @override
-  String get agentNoneSelected => 'NONE SELECTED';
+  String get agentNoneSelected => 'none selected';
 
   @override
-  String get agentDefaultTuned => 'DEFAULT [TUNED]';
+  String get agentDefaultTuned => 'default [tuned]';
 
   @override
-  String get agentPlanPanelBadge => '[PLAN]';
+  String get agentPlanPanelBadge => '[plan]';
 
   @override
-  String get agentPlanPanelLabel => 'PLAN';
+  String get agentPlanPanelLabel => 'plan';
 
   @override
-  String get agentConfigTitle => 'AGENT CONFIGURATION';
+  String get agentConfigTitle => 'agent configuration';
 
   @override
-  String get agentConfigRegistry => 'AGENT CONFIGS';
+  String get agentConfigRegistry => 'agent configs';
 
   @override
-  String get agentConfigEmpty => 'NO AGENT CONFIGS YET';
+  String get agentConfigEmpty => 'no agent configs yet';
 
   @override
   String agentConfigDialogTitle(String name) {
-    return 'AGENT CONFIG: $name';
+    return 'agent config: $name';
   }
 
   @override
-  String get agentConfigNameLabel => 'NAME';
+  String get agentConfigNameLabel => 'name';
 
   @override
-  String get agentConfigPromptLabel => 'SYSTEM PROMPT';
+  String get agentConfigPromptLabel => 'system prompt';
 
   @override
-  String get agentConfigModeLabel => 'MODE';
+  String get agentConfigModeLabel => 'mode';
 
   @override
-  String get agentConfigIsDefaultLabel => 'IS DEFAULT';
+  String get agentConfigIsDefaultLabel => 'is default';
 
   @override
-  String get agentConfigNoPrompts => 'NO PROMPTS AVAILABLE';
+  String get agentConfigNoPrompts => 'no prompts available';
 
   @override
-  String get agentConfigNoModes => 'NO MODES AVAILABLE';
+  String get agentConfigNoModes => 'no modes available';
 
   @override
-  String get agentConfigSelectPrompt => 'SELECT PROMPT';
+  String get agentConfigSelectPrompt => 'select prompt';
 
   @override
-  String get agentConfigSelectMode => 'SELECT MODE';
+  String get agentConfigSelectMode => 'select mode';
 
   @override
-  String get agentConfigDelete => 'DELETE';
+  String get agentConfigDelete => 'delete';
 
   @override
-  String get agentConfigDeleteConfirmTitle => 'DELETE CONFIG?';
+  String get agentConfigDeleteConfirmTitle => 'Delete config?';
 
   @override
   String agentConfigDeleteConfirmBody(String name) {
-    return 'DELETE $name? THIS CANNOT BE UNDONE.';
+    return 'Delete $name? This cannot be undone.';
   }
 
   @override
-  String get agentConfigDefaultBadge => '[ DEFAULT ]';
+  String get agentConfigDefaultBadge => '[ default ]';
 
   @override
   String agentConfigErrorPrefix(String error) {
@@ -1121,45 +1114,45 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get providerScreenTitle => 'PROVIDER MANAGEMENT';
+  String get providerScreenTitle => 'provider management';
 
   @override
-  String get providerScreenLoading => 'LOADING PROVIDERS';
+  String get providerScreenLoading => 'loading providers';
 
   @override
-  String get providerScreenHarnessModelsSection => 'HARNESS MODELS';
+  String get providerScreenHarnessModelsSection => 'harness models';
 
   @override
-  String get providerScreenApiKeysSection => 'API KEYS';
+  String get providerScreenApiKeysSection => 'API keys';
 
   @override
-  String get providerScreenNoHarnessModels => 'NO HARNESS MODELS LISTED';
+  String get providerScreenNoHarnessModels => 'no harness models listed';
 
   @override
   String providerScreenHarnessModelCount(int count) {
-    return '$count MODELS';
+    return '$count models';
   }
 
   @override
   String providerScreenBrowseAllModels(int count) {
-    return 'BROWSE ALL $count MODELS';
+    return 'browse all $count models';
   }
 
   @override
-  String get providerScreenNoApiKeys => 'NO API KEYS CONFIGURED';
+  String get providerScreenNoApiKeys => 'no API keys configured';
 
   @override
-  String get providerScreenEmptyHint => 'NO HARNESS MODELS OR API KEYS YET';
+  String get providerScreenEmptyHint => 'no harness models or API keys yet';
 
   @override
-  String get providerScreenAddKey => 'ADD KEY';
+  String get providerScreenAddKey => 'add key';
 
   @override
-  String get providerScreenUpdateKey => 'UPDATE KEY';
+  String get providerScreenUpdateKey => 'update key';
 
   @override
   String providerScreenAddKeyTitle(String provider) {
-    return 'API KEY: $provider';
+    return 'API key: $provider';
   }
 
   @override
@@ -1168,22 +1161,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get providerScreenSelectProvider => 'SELECT PROVIDER';
+  String get providerScreenSelectProvider => 'select provider';
 
   @override
-  String get providerScreenNoProviders => 'NO PROVIDERS AVAILABLE';
+  String get providerScreenNoProviders => 'no providers available';
 
   @override
-  String get providerScreenSearchLabel => 'SEARCH';
+  String get providerScreenSearchLabel => 'search';
 
   @override
   String get providerScreenSearchHint => 'Filter providers';
 
   @override
-  String get providerScreenSearchNoMatches => 'NO MATCHING PROVIDERS';
+  String get providerScreenSearchNoMatches => 'no matching providers';
 
   @override
-  String get providerScreenDefaultBadge => '[ DEFAULT ]';
+  String get providerScreenDefaultBadge => '[ default ]';
 
   @override
   String providerScreenErrorPrefix(String error) {
@@ -1205,34 +1198,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Existing key is stored securely; enter a new key to replace it.';
 
   @override
-  String get providerScreenProviderLabel => 'PROVIDER';
+  String get providerScreenProviderLabel => 'provider';
 
   @override
-  String get providerScreenDeleteKeyAction => 'DELETE';
+  String get providerScreenDeleteKeyAction => 'delete';
 
   @override
-  String get toolPermissionsTitle => 'GATEKEEPER CONFIGURATION';
+  String get toolPermissionsTitle => 'gatekeeper configuration';
 
   @override
-  String get toolPermissionsFrameTitle => 'TOOL PERMISSIONS';
+  String get toolPermissionsFrameTitle => 'tool permissions';
 
   @override
-  String get toolPermissionsLoading => 'LOADING PERMISSIONS';
+  String get toolPermissionsLoading => 'loading permissions';
 
   @override
-  String get toolPermissionsEmpty => 'NO PERMISSIONS DEFINED.';
+  String get toolPermissionsEmpty => 'No permissions defined.';
 
   @override
-  String get toolPermissionsAdd => 'ADD PERMISSION';
+  String get toolPermissionsAdd => 'add permission';
 
   @override
-  String get toolPermissionsScopeAgent => 'AGENT';
+  String get toolPermissionsScopeAgent => 'agent';
 
   @override
-  String get toolPermissionsScopeGlobal => 'GLOBAL';
+  String get toolPermissionsScopeGlobal => 'global';
 
   @override
-  String get toolPermissionsAddTitle => 'ADD TOOL PERMISSION';
+  String get toolPermissionsAddTitle => 'add tool permission';
 
   @override
   String get toolPermissionsToolLabel => 'TOOL (e.g. bash, edit, cao_*)';
@@ -1241,135 +1234,135 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolPermissionsPatternLabel => 'PATTERN (e.g. *, git *, rm *)';
 
   @override
-  String get toolPermissionsActionLabel => 'ACTION:';
+  String get toolPermissionsActionLabel => 'action:';
 
   @override
-  String get terminalTitle => 'TERMINAL MIRROR';
+  String get terminalTitle => 'terminal mirror';
 
   @override
-  String get terminalTransfer => 'TRANSFER';
+  String get terminalTransfer => 'transfer';
 
   @override
-  String get terminalReconnect => 'RECONNECT';
+  String get terminalReconnect => 'reconnect';
 
   @override
-  String get terminalConnecting => 'ESTABLISHING SSH LINK';
+  String get terminalConnecting => 'establishing SSH link';
 
   @override
-  String get terminalConnectionFailed => 'CONNECTION FAILED';
+  String get terminalConnectionFailed => 'connection failed';
 
   @override
-  String get terminalRetry => 'RETRY CONNECTION';
+  String get terminalRetry => 'retry connection';
 
   @override
-  String get terminalSftpTitle => 'SFTP TRANSFER';
+  String get terminalSftpTitle => 'SFTP transfer';
 
   @override
-  String get terminalDestinationPath => 'DESTINATION PATH';
+  String get terminalDestinationPath => 'destination path';
 
   @override
-  String get terminalUpload => 'UPLOAD';
+  String get terminalUpload => 'upload';
 
   @override
-  String get terminalConnectionStatus => 'CONNECTION_STATUS';
+  String get terminalConnectionStatus => 'connection_status';
 
   @override
   String terminalSshLink(String host, String port) {
-    return 'SSH LINK: $host:$port';
+    return 'SSH link: $host:$port';
   }
 
   @override
-  String get terminalOnline => 'ONLINE';
+  String get terminalOnline => 'online';
 
   @override
-  String get terminalOffline => 'OFFLINE';
+  String get terminalOffline => 'offline';
 
   @override
-  String get monitorTitle => 'MONITOR';
+  String get monitorTitle => 'monitor';
 
   @override
-  String get monitorTelemetryUnavailable => 'TELEMETRY UNAVAILABLE';
+  String get monitorTelemetryUnavailable => 'telemetry unavailable';
 
   @override
-  String get fileTitle => 'SOURCE OUTPUT MANIFEST';
+  String get fileTitle => 'source output manifest';
 
   @override
-  String get fileDashboardAction => 'DASHBOARD';
+  String get fileDashboardAction => 'dashboard';
 
   @override
-  String get fileClearAction => 'CLEAR';
+  String get fileClearAction => 'clear';
 
   @override
-  String get fileNoFileSelected => 'NO FILE SELECTED.';
+  String get fileNoFileSelected => 'No file selected.';
 
   @override
-  String get fileSelectFromChat => '>> SELECT FROM CHAT TO VIEW';
+  String get fileSelectFromChat => '>> select from chat to view';
 
   @override
-  String get fileFetching => 'FETCHING DATA...';
+  String get fileFetching => 'Fetching data...';
 
   @override
-  String get fileEmpty => 'EMPTY FILE';
+  String get fileEmpty => 'empty file';
 
   @override
-  String get systemChecksTitle => 'SYSTEM CHECKS';
+  String get systemChecksTitle => 'system checks';
 
   @override
-  String get systemChecksDiagnostics => 'SYSTEM DIAGNOSTICS';
+  String get systemChecksDiagnostics => 'system diagnostics';
 
   @override
-  String get systemChecksEmpty => 'NO DIAGNOSTICS AVAILABLE';
+  String get systemChecksEmpty => 'no diagnostics available';
 
   @override
-  String get observabilityRegistry => 'REGISTRY';
+  String get observabilityRegistry => 'registry';
 
   @override
-  String get observabilityLogTerminal => 'SYSTEM LOG TERMINAL';
+  String get observabilityLogTerminal => 'system log terminal';
 
   @override
   String get observabilitySelectContainer =>
-      '>> SELECT CONTAINER FOR LOG STREAM';
+      '>> select container for log stream';
 
   @override
-  String get proTitle => 'POCKETCODER PRO';
+  String get proTitle => 'PocketCoder Pro';
 
   @override
-  String get proPlanTitle => 'UNLOCK ALL SYSTEMS';
+  String get proPlanTitle => 'unlock all systems';
 
   @override
-  String get proCheckingStatus => 'CHECKING PRO STATUS...';
+  String get proCheckingStatus => 'Checking pro status...';
 
   @override
   String get proUnlockCommand => '\$ unlock --all';
 
   @override
   String get proSummary =>
-      'ONE SUBSCRIPTION. EVERY POCKETCODER PRO CAPABILITY.';
+      'One subscription. Every PocketCoder Pro capability.';
 
   @override
   String get proFeatureReady => '[OK]';
 
   @override
-  String get proFeatureDeploy => 'PROVISION AND DEPLOY POCKETCODER SERVERS';
+  String get proFeatureDeploy => 'provision and deploy PocketCoder servers';
 
   @override
-  String get proFeaturePush => 'RECEIVE HOSTED AGENT NOTIFICATIONS';
+  String get proFeaturePush => 'receive hosted agent notifications';
 
   @override
-  String get proFeatureConsole => 'USE PRO CONSOLE CONTROLS AS THEY SHIP';
+  String get proFeatureConsole => 'use pro console controls as they ship';
 
   @override
   String proTrialDuration(int days) {
-    return '$days DAYS FREE';
+    return '$days days free';
   }
 
   @override
   String get proTrialNoPaymentInfo =>
-      'STARTS A FREE WEEK. NO PAYMENT INFO IS COLLECTED NOW.';
+      'Starts a free week. No payment info is collected now.';
 
   @override
   String get proTrialLapseExplainer =>
-      'IF YOU DO NOT KEEP PRO, ONLY HOSTED PUSH NOTIFICATIONS STOP. YOUR SERVER KEEPS RUNNING.';
+      'If you do not keep pro, only hosted push notifications stop. Your server keeps running.';
 
   @override
   String proPrice(String price) {
@@ -1378,130 +1371,130 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String proPriceAfterTrial(String price) {
-    return 'THEN $price';
+    return 'then $price';
   }
 
   @override
   String proPricePerWeek(String price) {
-    return '$price / WEEK';
+    return '$price / week';
   }
 
   @override
   String proPricePerMonth(String price) {
-    return '$price / MONTH';
+    return '$price / month';
   }
 
   @override
   String proPricePerYear(String price) {
-    return '$price / YEAR';
+    return '$price / year';
   }
 
   @override
   String proStartTrial(int days) {
-    return 'START $days-DAY FREE TRIAL';
+    return 'start $days-day free trial';
   }
 
   @override
-  String get proSubscribe => 'UNLOCK POCKETCODER PRO';
+  String get proSubscribe => 'unlock PocketCoder Pro';
 
   @override
-  String get proRestore => 'RESTORE PURCHASES';
+  String get proRestore => 'restore purchases';
 
   @override
-  String get proManageSubscription => 'MANAGE SUBSCRIPTION';
+  String get proManageSubscription => 'manage subscription';
 
   @override
   String proTerms(String price) {
-    return 'SUBSCRIPTION RENEWS AT $price UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.';
+    return 'Subscription renews at $price Until cancelled. Manage or cancel in your app store account.';
   }
 
   @override
   String proTrialTerms(int days, String price) {
-    return 'FREE FOR $days DAYS, THEN $price UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.';
+    return 'Free for $days Days, then $price Until cancelled. Manage or cancel in your app store account.';
   }
 
   @override
-  String get proTermsOfServiceLink => 'TERMS OF SERVICE';
+  String get proTermsOfServiceLink => 'terms of service';
 
   @override
-  String get proPrivacyPolicyLink => 'PRIVACY POLICY';
+  String get proPrivacyPolicyLink => 'privacy policy';
 
   @override
   String get proBenefitServerSetup =>
-      'ONE-TAP SERVER SETUP -- NO MANUAL VPS CONFIGURATION';
+      'one-tap server setup -- no manual VPS configuration';
 
   @override
   String get proBenefitPushNotifications =>
-      'PUSH NOTIFICATIONS FOR AGENT ACTIVITY -- APPROVALS, TASK COMPLETION';
+      'push notifications for agent activity -- approvals, task completion';
 
   @override
-  String get proBenefitLiveMonitoring => 'LIVE AGENT MONITORING';
+  String get proBenefitLiveMonitoring => 'live agent monitoring';
 
   @override
-  String get proActive => '> ENTITLEMENT: ACTIVE';
+  String get proActive => '> entitlement: active';
 
   @override
   String get proActiveBody =>
-      'POCKETCODER PRO IS ACTIVE. DEPLOYMENT AND HOSTED NOTIFICATIONS ARE UNLOCKED.';
+      'PocketCoder Pro is active. Deployment and hosted notifications are unlocked.';
 
   @override
-  String get proUnavailable => '> OFFERING: UNAVAILABLE';
+  String get proUnavailable => '> offering: unavailable';
 
   @override
   String get proUnavailableBody =>
-      'THE APP STORE COULD NOT RETURN THE POCKETCODER PRO SUBSCRIPTION. CHECK YOUR CONNECTION OR RESTORE AN EXISTING PURCHASE.';
+      'The app store could not return the PocketCoder Pro subscription. Check your connection or restore an existing purchase.';
 
   @override
-  String get proSelfHostedPushTitle => 'SELF-HOSTED NOTIFICATIONS';
+  String get proSelfHostedPushTitle => 'self-hosted notifications';
 
   @override
   String get proSelfHostedPushBody =>
-      'YOU CAN CONNECT YOUR OWN NTFY OR UNIFIEDPUSH DISTRIBUTOR WITHOUT POCKETCODER PRO.';
+      'You can connect your own Ntfy or UnifiedPush distributor without PocketCoder Pro.';
 
   @override
-  String get proConfigureSelfHostedPush => 'CONFIGURE SELF-HOSTED PUSH';
+  String get proConfigureSelfHostedPush => 'configure self-hosted push';
 
   @override
-  String get proSettingsLabel => 'POCKETCODER PRO';
+  String get proSettingsLabel => 'PocketCoder Pro';
 
   @override
-  String get proSettingsStatus => '[STATUS]';
+  String get proSettingsStatus => '[status]';
 
   @override
-  String get chooseProviderTitle => 'CHOOSE PROVIDER';
+  String get chooseProviderTitle => 'choose provider';
 
   @override
-  String get deploySelectProvider => 'SELECT PROVIDER';
+  String get deploySelectProvider => 'select provider';
 
   @override
-  String get deployChooseProvider => 'CHOOSE WHERE TO DEPLOY YOUR INSTANCE';
+  String get deployChooseProvider => 'choose where to deploy your instance';
 
   @override
-  String get chooseProviderProBadge => 'PRO';
+  String get chooseProviderProBadge => 'pro';
 
   @override
-  String get chooseProviderComingSoon => 'COMING SOON';
+  String get chooseProviderComingSoon => 'coming soon';
 
   @override
-  String get pocketCoderProgressProvisionServer => 'PROVISION SERVER';
+  String get pocketCoderProgressProvisionServer => 'provision server';
 
   @override
-  String get pocketCoderProgressDeployPocketCoder => 'DEPLOY POCKETCODER';
+  String get pocketCoderProgressDeployPocketCoder => 'deploy PocketCoder';
 
   @override
-  String get pocketCoderProgressWaiting => 'WAITING';
+  String get pocketCoderProgressWaiting => 'waiting';
 
   @override
-  String get pocketCoderProgressActive => 'ACTIVE';
+  String get pocketCoderProgressActive => 'active';
 
   @override
-  String get pocketCoderProgressComplete => 'DONE';
+  String get pocketCoderProgressComplete => 'done';
 
   @override
   String get pocketCoderProgressFailed => 'FAILED';
 
   @override
-  String get pocketCoderProgressInitializing => 'INITIALIZING';
+  String get pocketCoderProgressInitializing => 'initializing';
 
   @override
   String get deploymentStepCreateInstance => 'Creating server';
@@ -1574,34 +1567,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentStepReady => 'Ready';
 
   @override
-  String get initializationScreenTitle => 'INITIALIZING SERVER';
+  String get initializationScreenTitle => 'initializing server';
 
   @override
-  String get initializationActionAbort => 'ABORT';
+  String get initializationActionAbort => 'abort';
 
   @override
-  String get initializationActionRetry => 'RETRY';
+  String get initializationActionRetry => 'retry';
 
   @override
-  String get initializationUnknown => 'UNKNOWN';
+  String get initializationUnknown => 'unknown';
 
   @override
-  String get initializationTechnicalDetailsToggle => 'TECHNICAL DETAILS';
+  String get initializationTechnicalDetailsToggle => 'technical details';
 
   @override
-  String get initializationNetworkIp => 'NETWORK IP';
+  String get initializationNetworkIp => 'network IP';
 
   @override
-  String get initializationGeoGrid => 'GEO GRID';
+  String get initializationGeoGrid => 'geo grid';
 
   @override
   String initializationFaultDetected(Object error) {
-    return 'FAULT DETECTED: $error';
+    return 'fault detected: $error';
   }
 
   @override
   String get initializationFaultGeneric =>
-      'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
+      'Setup could not continue. Return and try again.';
 
   @override
   String get initializationFaultProvisionInterruptedNoResource =>
@@ -1634,251 +1627,251 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get initializationFailed =>
-      'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.';
+      'Setup could not continue. Return and try again.';
 
   @override
   String initializationReady(Object ipAddress) {
-    return 'SERVER READY AT $ipAddress.';
+    return 'Server ready at $ipAddress.';
   }
 
   @override
-  String get initializationInProgress => 'SERVER SETUP STARTED.';
+  String get initializationInProgress => 'Server setup started.';
 
   @override
-  String get deploymentStatusValidating => 'VALIDATING CONFIGURATION';
+  String get deploymentStatusValidating => 'validating configuration';
 
   @override
-  String get deploymentStatusConstructing => 'CONSTRUCTING INSTANCE';
+  String get deploymentStatusConstructing => 'constructing instance';
 
   @override
-  String get deploymentStatusPreparingOperatingSystem => 'PREPARING OS';
+  String get deploymentStatusPreparingOperatingSystem => 'preparing OS';
 
   @override
-  String get deploymentStatusSecuring => 'SECURING CONNECTION';
+  String get deploymentStatusSecuring => 'securing connection';
 
   @override
-  String get deploymentStatusTlsReady => 'CONNECTION SECURED';
+  String get deploymentStatusTlsReady => 'connection secured';
 
   @override
-  String get deploymentStatusTlsZeroSsl => 'USING BACKUP CERTIFICATE AUTHORITY';
+  String get deploymentStatusTlsZeroSsl => 'using backup certificate authority';
 
   @override
   String get deploymentStatusTlsRateLimited =>
-      'CERTIFICATE AUTHORITY RATE LIMITED';
+      'certificate authority rate limited';
 
   @override
-  String get deploymentStatusTlsFailed => 'CERTIFICATE ISSUANCE FAILED';
+  String get deploymentStatusTlsFailed => 'certificate issuance failed';
 
   @override
-  String get deploymentStatusConfiguringOperatingSystem => 'CONFIGURING OS';
+  String get deploymentStatusConfiguringOperatingSystem => 'configuring OS';
 
   @override
-  String get deploymentStatusFetching => 'FETCHING RELEASE';
+  String get deploymentStatusFetching => 'fetching release';
 
   @override
-  String get deploymentStatusLoadingImages => 'LOADING IMAGES';
+  String get deploymentStatusLoadingImages => 'loading images';
 
   @override
-  String get deploymentStatusStarting => 'STARTING SERVICES';
+  String get deploymentStatusStarting => 'starting services';
 
   @override
-  String get deploymentStatusFinishing => 'FINISHING UP';
+  String get deploymentStatusFinishing => 'finishing up';
 
   @override
-  String get deploymentStatusReady => 'HANDSHAKE SUCCESSFUL';
+  String get deploymentStatusReady => 'handshake successful';
 
   @override
-  String get deploymentStatusFailed => 'DEPLOYMENT ABORTED';
+  String get deploymentStatusFailed => 'deployment aborted';
 
   @override
-  String get initializationStatusInitializing => 'INITIALIZING STACK';
+  String get initializationStatusInitializing => 'initializing stack';
 
   @override
   String get deploymentDescriptionValidating =>
-      'CHECKING THE PROVISIONING CONFIGURATION.';
+      'Checking the provisioning configuration.';
 
   @override
   String get deploymentDescriptionConstructing =>
-      'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.';
+      'Allocating hardware resources on cloud grid.';
 
   @override
   String get deploymentDescriptionPreparingOperatingSystem =>
-      'PREPARING THE OPERATING SYSTEM.';
+      'Preparing the operating system.';
 
   @override
   String get deploymentDescriptionSecuring =>
-      'WAITING FOR THE NATIVE REVERSE PROXY.';
+      'Waiting for the native reverse proxy.';
 
   @override
   String get deploymentDescriptionTlsReady =>
-      'A BROWSER-TRUSTED CERTIFICATE IS ACTIVE.';
+      'A browser-trusted certificate is active.';
 
   @override
   String get deploymentDescriptionTlsZeroSsl =>
-      'ISSUED VIA THE BACKUP AUTHORITY AFTER THE PRIMARY WAS UNAVAILABLE.';
+      'Issued via the backup authority after the primary was unavailable.';
 
   @override
   String get deploymentDescriptionTlsRateLimited =>
-      'RETRYING AUTOMATICALLY WITH A BACKUP CERTIFICATE AUTHORITY.';
+      'Retrying automatically with a backup certificate authority.';
 
   @override
   String get deploymentDescriptionTlsFailed =>
-      'THE REVERSE PROXY COULD NOT OBTAIN A CERTIFICATE.';
+      'The reverse proxy could not obtain a certificate.';
 
   @override
   String get deploymentDescriptionConfiguringOperatingSystem =>
-      'PREPARING NATIVE SERVICES AND DEPENDENCIES.';
+      'Preparing native services and dependencies.';
 
   @override
-  String get deploymentDescriptionFetching => 'FETCHING THE IMMUTABLE RELEASE.';
+  String get deploymentDescriptionFetching => 'Fetching the immutable release.';
 
   @override
   String get deploymentDescriptionLoadingImages =>
-      'LOADING THE VERIFIED IMAGE BUNDLE.';
+      'Loading the verified image bundle.';
 
   @override
-  String get deploymentDescriptionStarting => 'STARTING APPLICATION SERVICES.';
+  String get deploymentDescriptionStarting => 'Starting application services.';
 
   @override
-  String get deploymentDescriptionFinishing => 'FINISHING DEPLOYMENT.';
+  String get deploymentDescriptionFinishing => 'Finishing deployment.';
 
   @override
-  String get deploymentDescriptionReady => 'THE SERVER IS FULLY OPERATIONAL.';
+  String get deploymentDescriptionReady => 'The server is fully operational.';
 
   @override
   String get deploymentDescriptionFailed =>
-      'SETUP STOPPED BEFORE COMPLETION. NO LATER STEP WILL CONTINUE.';
+      'Setup stopped before completion. No later step will continue.';
 
   @override
   String get initializationDescriptionInitializing =>
-      'PREPARING INITIALIZATION MANIFEST.';
+      'Preparing initialization manifest.';
 
   @override
   String initializationStatusPrefix(Object status) {
-    return 'STATUS: $status';
+    return 'status: $status';
   }
 
   @override
-  String get initializationSecure => '[SECURE]';
+  String get initializationSecure => '[secure]';
 
   @override
-  String get initializationConnectionParameters => 'CONNECTION PARAMETERS';
+  String get initializationConnectionParameters => 'connection parameters';
 
   @override
-  String get initializationMetadataRegistry => 'METADATA REGISTRY';
+  String get initializationMetadataRegistry => 'metadata registry';
 
   @override
-  String get initializationActionLogin => 'LOGIN';
+  String get initializationActionLogin => 'login';
 
   @override
-  String get deploymentActionRefresh => 'REFRESH';
+  String get deploymentActionRefresh => 'refresh';
 
   @override
-  String get deploymentActionUpdate => 'UPDATE';
+  String get deploymentActionUpdate => 'update';
 
   @override
-  String get deploymentActionDismiss => 'DISMISS';
+  String get deploymentActionDismiss => 'dismiss';
 
   @override
-  String get initializationInstanceManifest => 'INSTANCE MANIFEST';
+  String get initializationInstanceManifest => 'instance manifest';
 
   @override
-  String get initializationIpAddress => 'IP ADDRESS';
+  String get initializationIpAddress => 'IP address';
 
   @override
-  String get initializationHttpsEndpoint => 'HTTPS ENDPOINT';
+  String get initializationHttpsEndpoint => 'HTTPS endpoint';
 
   @override
-  String get initializationAdminIdentity => 'ADMIN IDENTITY';
+  String get initializationAdminIdentity => 'admin identity';
 
   @override
-  String get initializationAdminPassword => 'ADMIN PASSWORD';
+  String get initializationAdminPassword => 'admin password';
 
   @override
-  String get initializationNotAvailable => 'N/A';
+  String get initializationNotAvailable => 'n/a';
 
   @override
-  String get initializationCopyAction => 'COPY';
+  String get initializationCopyAction => 'copy';
 
   @override
-  String get initializationHideAction => 'HIDE';
+  String get initializationHideAction => 'hide';
 
   @override
-  String get initializationShowAction => 'SHOW';
+  String get initializationShowAction => 'show';
 
   @override
-  String get deploymentProvisioned => 'PROVISIONED';
+  String get deploymentProvisioned => 'provisioned';
 
   @override
-  String get initializationCloudRegion => 'CLOUD REGION';
+  String get initializationCloudRegion => 'cloud region';
 
   @override
-  String get initializationHardwarePlan => 'HARDWARE PLAN';
+  String get initializationHardwarePlan => 'hardware plan';
 
   @override
   String get initializationSecurityNotice =>
-      'SECURITY NOTICE: CREDENTIALS ARE STORED IN LOCAL SECURE ENCLAVE. PASSPHRASE RETAINS ENCRYPTION AT REST.';
+      'Security notice: credentials are stored in local secure enclave. Passphrase retains encryption at rest.';
 
   @override
   String initializationCopiedToBuffer(Object label) {
-    return '$label COPIED TO BUFFER';
+    return '$label copied to buffer';
   }
 
   @override
   String initializationCopyLabel(Object label) {
-    return 'COPY $label';
+    return 'copy $label';
   }
 
   @override
-  String get deploymentManifestConfiguration => 'MANIFEST CONFIGURATION';
+  String get deploymentManifestConfiguration => 'manifest configuration';
 
   @override
-  String get deploymentActionBack => 'BACK';
+  String get deploymentActionBack => 'back';
 
   @override
-  String get deploymentActionDeployInstance => 'DEPLOY INSTANCE';
+  String get deploymentActionDeployInstance => 'deploy instance';
 
   @override
-  String get deploymentActionInitialize => 'INITIALIZE';
+  String get deploymentActionInitialize => 'initialize';
 
   @override
-  String get deploymentSystemParameters => 'SYSTEM PARAMETERS';
+  String get deploymentSystemParameters => 'system parameters';
 
   @override
-  String get deploymentHardwareGeography => 'HARDWARE & GEOGRAPHY';
+  String get deploymentHardwareGeography => 'hardware & geography';
 
   @override
-  String get deploymentInitializingHardware => 'INITIALIZING HW REGISTRY...';
+  String get deploymentInitializingHardware => 'Initializing HW registry...';
 
   @override
-  String get deploymentScanningRegions => 'SCANNING GLOBAL REGIONS...';
+  String get deploymentScanningRegions => 'Scanning global regions...';
 
   @override
-  String get deploymentCodingHarnesses => 'CODING HARNESSES';
+  String get deploymentCodingHarnesses => 'coding harnesses';
 
   @override
   String get deploymentHarnessSelectionDescription =>
       'Choose what is downloaded onto your VPS. Goose is ready by default; you can select more than one.';
 
   @override
-  String get deploymentOperatingSystem => 'OPERATING SYSTEM';
+  String get deploymentOperatingSystem => 'operating system';
 
   @override
-  String get deploymentInstancePlan => 'INSTANCE PLAN';
+  String get deploymentInstancePlan => 'instance plan';
 
   @override
   String deploymentMonthlyPrice(String price) {
-    return '$price/MO';
+    return '$price/mo';
   }
 
   @override
-  String get deploymentRegion => 'DEPLOYMENT REGION';
+  String get deploymentRegion => 'deployment region';
 
   @override
-  String get deploymentBackend => 'BACKEND';
+  String get deploymentBackend => 'backend';
 
   @override
-  String get deploymentDistribution => 'DISTRIBUTION';
+  String get deploymentDistribution => 'distribution';
 
   @override
   String get deploymentNixos => 'NixOS';
@@ -1893,22 +1886,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentUbuntu => 'Ubuntu';
 
   @override
-  String get deploymentSetupTypeTitle => 'CHOOSE YOUR SETUP';
+  String get deploymentSetupTypeTitle => 'choose your setup';
 
   @override
-  String get deploymentServerSizeTitle => 'CHOOSE YOUR SERVER SIZE';
+  String get deploymentServerSizeTitle => 'choose your server size';
 
   @override
-  String get deploymentServerRegionTitle => 'CHOOSE YOUR SERVER REGION';
+  String get deploymentServerRegionTitle => 'choose your server region';
 
   @override
-  String get deploymentCodingAgentsTitle => 'CHOOSE CODING AGENTS';
+  String get deploymentCodingAgentsTitle => 'choose coding agents';
 
   @override
-  String get deploymentLinuxSystemTitle => 'LINUX SYSTEM';
+  String get deploymentLinuxSystemTitle => 'Linux system';
 
   @override
-  String get deploymentReviewTitle => 'REVIEW YOUR SERVER';
+  String get deploymentReviewTitle => 'review your server';
 
   @override
   String get deploymentWorkloadPoco =>
@@ -1923,10 +1916,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.';
 
   @override
-  String get deploymentUseCloudModels => 'USE CLOUD MODELS';
+  String get deploymentUseCloudModels => 'use cloud models';
 
   @override
-  String get deploymentRunLocalModel => 'RUN A LOCAL MODEL';
+  String get deploymentRunLocalModel => 'run a local model';
 
   @override
   String deploymentPlanPoco(String minimumMemory) {
@@ -1951,23 +1944,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deploymentNoSuitablePlans =>
-      'NO SUITABLE SERVER SIZES ARE AVAILABLE FOR THIS SETUP.';
+      'No suitable server sizes are available for this setup.';
 
   @override
-  String get deploymentMinimum => 'MINIMUM';
+  String get deploymentMinimum => 'minimum';
 
   @override
-  String get deploymentRecommended => 'RECOMMENDED';
+  String get deploymentRecommended => 'recommended';
 
   @override
   String get deploymentGpuBadge => 'GPU';
 
   @override
-  String get deploymentDefaultAgent => 'READY BY DEFAULT';
+  String get deploymentDefaultAgent => 'ready by default';
 
   @override
   String deploymentPlanSpecs(int vcpus, String memory, int diskGb) {
-    return '$vcpus CPU · $memory RAM · $diskGb GB DISK';
+    return '$vcpus CPU · $memory RAM · $diskGb GB disk';
   }
 
   @override
@@ -1989,16 +1982,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'A Debian server configured with setup scripts. Faster to set up.';
 
   @override
-  String get deploymentProvisioningSummary => 'PROVISIONING SUMMARY';
+  String get deploymentProvisioningSummary => 'provisioning summary';
 
   @override
-  String get deploymentServerProvider => 'SERVER PROVIDER';
+  String get deploymentServerProvider => 'server provider';
 
   @override
-  String get deploymentProviderLinode => 'LINODE';
+  String get deploymentProviderLinode => 'Linode';
 
   @override
-  String get deploymentProviderFake => 'FAKE';
+  String get deploymentProviderFake => 'fake';
 
   @override
   String get deploymentConfigNotReadyError =>
@@ -2011,22 +2004,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkthroughLabel(int current, int total) {
-    return 'WALKTHROUGH $current / $total';
+    return 'walkthrough $current / $total';
   }
 
   @override
   String briefLabel(int current, int total) {
-    return 'BRIEF $current / $total';
+    return 'brief $current / $total';
   }
 
   @override
-  String get walkthroughAskPoco => 'ASK POCO';
+  String get walkthroughAskPoco => 'ask Poco';
 
   @override
-  String get walkthroughActionSkip => 'SKIP';
+  String get walkthroughActionSkip => 'skip';
 
   @override
-  String get walkthroughBriefDivider => 'BRIEF';
+  String get walkthroughBriefDivider => 'brief';
 
   @override
   String get walkthroughTransitionProvisioning =>
@@ -2038,29 +2031,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String initializationSyncAttempt(Object attempt) {
-    return 'SYNC ATTEMPT: $attempt';
+    return 'sync attempt: $attempt';
   }
 
   @override
-  String get initializationCurrentOperation => 'CURRENT OPERATION';
+  String get initializationCurrentOperation => 'current operation';
 
   @override
-  String get initializationSourceCommit => 'SOURCE COMMIT';
+  String get initializationSourceCommit => 'source commit';
 
   @override
-  String get initializationRunId => 'INITIALIZATION RUN';
+  String get initializationRunId => 'initialization run';
 
   @override
-  String get initializationStatusSchema => 'STATUS SCHEMA';
+  String get initializationStatusSchema => 'status schema';
 
   @override
-  String get initializationLastSignal => 'LAST SERVER SIGNAL';
+  String get initializationLastSignal => 'last server signal';
 
   @override
-  String get initializationErrorCode => 'SERVER ERROR CODE';
+  String get initializationErrorCode => 'server error code';
 
   @override
-  String get pocoProvisioningTourTitle => 'POCO WALKTHROUGH';
+  String get pocoProvisioningTourTitle => 'Poco walkthrough';
 
   @override
   String get pocoProvisioningWaitingForSource =>
@@ -2079,16 +2072,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'The setup stopped, so I stopped the walkthrough too. Go back to review the configuration, then we can try again.';
 
   @override
-  String get pocoProvisioningPrevious => 'PREVIOUS';
+  String get pocoProvisioningPrevious => 'previous';
 
   @override
-  String get pocoProvisioningNext => 'NEXT';
+  String get pocoProvisioningNext => 'next';
 
   @override
-  String get pocoProvisioningShowFull => 'SHOW FULL SNIPPET';
+  String get pocoProvisioningShowFull => 'show full snippet';
 
   @override
-  String get pocoProvisioningShowConcise => 'SHOW PREVIEW';
+  String get pocoProvisioningShowConcise => 'show preview';
 
   @override
   String get pocoLessonVpsStorageTitle => 'Your VPS disk';
@@ -2260,56 +2253,56 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you already part of the PocketCoder Initiative?';
 
   @override
-  String get onboardingNoServerChipExisting => 'I HAVE A SERVER — LOG IN';
+  String get onboardingNoServerChipExisting => 'I have a server — log in';
 
   @override
-  String get onboardingNoServerChipNew => 'I’M NEW — JOIN';
+  String get onboardingNoServerChipNew => 'I’m new — join';
 
   @override
-  String get onboardingWelcomeTitle => 'WELCOME';
+  String get onboardingWelcomeTitle => 'welcome';
 
   @override
   String get onboardingWelcomePoco =>
       'Welcome to the PocketCoder Initiative.\n\nI’ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.';
 
   @override
-  String get onboardingWelcomeActionGuided => 'HELP ME WITH SETUP';
+  String get onboardingWelcomeActionGuided => 'help me with setup';
 
   @override
-  String get onboardingWelcomeActionSelfHost => 'I’LL SET IT UP';
+  String get onboardingWelcomeActionSelfHost => 'I’ll set it up';
 
   @override
-  String get onboardingSelfHostTitle => 'SELF-HOST SETUP';
+  String get onboardingSelfHostTitle => 'self-host setup';
 
   @override
   String get onboardingSelfHostPoco =>
       'You’ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you’ll use to connect this app.';
 
   @override
-  String get onboardingSelfHostRequirementsTitle => 'WHAT YOU’LL NEED';
+  String get onboardingSelfHostRequirementsTitle => 'what you’ll need';
 
   @override
   String get onboardingSelfHostRequirementServer =>
-      'A LINUX SERVER OR VPS YOU CONTROL';
+      'a Linux server or VPS you control';
 
   @override
-  String get onboardingSelfHostRequirementDocker => 'DOCKER COMPOSE V2';
+  String get onboardingSelfHostRequirementDocker => 'Docker compose v2';
 
   @override
-  String get onboardingSelfHostRequirementAccess => 'SSH ACCESS TO THE SERVER';
+  String get onboardingSelfHostRequirementAccess => 'SSH access to the server';
 
   @override
-  String get onboardingSelfHostActionGuide => 'GUIDE';
+  String get onboardingSelfHostActionGuide => 'guide';
 
   @override
-  String get onboardingSelfHostActionConnect => 'CONNECT';
+  String get onboardingSelfHostActionConnect => 'connect';
 
   @override
   String get onboardingSignInPoco =>
       'Welcome. We’ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you’ll use to sign in when it’s ready.';
 
   @override
-  String get onboardingSignInTitle => 'SET UP YOUR SIGN-IN';
+  String get onboardingSignInTitle => 'set up your sign-in';
 
   @override
   String get onboardingServerCredentialsPoco =>
@@ -2323,13 +2316,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.';
 
   @override
-  String get onboardingProviderTitle => 'CHOOSE A SERVER PROVIDER';
+  String get onboardingProviderTitle => 'choose a server provider';
 
   @override
-  String get onboardingProviderChipLinode => 'LINODE';
+  String get onboardingProviderChipLinode => 'Linode';
 
   @override
-  String get onboardingProviderChipElestioComingSoon => 'ELESTIO — COMING SOON';
+  String get onboardingProviderChipElestioComingSoon => 'Elestio — coming soon';
 
   @override
   String onboardingTrialPoco(int trialDuration) {
@@ -2337,10 +2330,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get onboardingTrialChipStart => 'START FREE TRIAL';
+  String get onboardingTrialChipStart => 'start free trial';
 
   @override
-  String get onboardingTrialChipNotNow => 'NOT NOW';
+  String get onboardingTrialChipNotNow => 'not now';
 
   @override
   String get onboardingProviderAuthorizationPoco =>
@@ -2348,16 +2341,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingProviderAuthorizationTitle =>
-      'CONNECT YOUR SERVER PROVIDER';
+      'connect your server provider';
 
   @override
-  String get onboardingProviderAuthorizationAction => 'CONTINUE';
+  String get onboardingProviderAuthorizationAction => 'continue';
 
   @override
-  String get onboardingProviderAuthorizationWaiting => 'CONNECTING';
+  String get onboardingProviderAuthorizationWaiting => 'connecting';
 
   @override
-  String get onboardingProviderAuthorizationError => 'CONNECTION STOPPED';
+  String get onboardingProviderAuthorizationError => 'connection stopped';
 
   @override
   String get onboardingProviderAuthorizationCancelled =>
@@ -2372,10 +2365,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Before we choose your server, what kind of PocketCoder setup are you planning?\n\nA cloud model runs through an online AI account. A local model runs on your own server.';
 
   @override
-  String get onboardingIntentChipCloudModels => 'USE CLOUD MODELS';
+  String get onboardingIntentChipCloudModels => 'use cloud models';
 
   @override
-  String get onboardingIntentChipLocalModels => 'RUN A LOCAL MODEL';
+  String get onboardingIntentChipLocalModels => 'run a local model';
 
   @override
   String onboardingPlanPoco(String providerName) {
@@ -2383,41 +2376,41 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get onboardingPlanTitle => 'CHOOSE YOUR SERVER SIZE';
+  String get onboardingPlanTitle => 'choose your server size';
 
   @override
   String get onboardingRegionConsentPoco =>
       'I can find server regions near you, if you want.\n\nYour location stays on this phone. I only use it to sort the available regions by distance.';
 
   @override
-  String get onboardingRegionConsentChipUseLocation => 'USE MY LOCATION';
+  String get onboardingRegionConsentChipUseLocation => 'use my location';
 
   @override
-  String get onboardingRegionConsentChipChooseMyself => 'I’LL CHOOSE MYSELF';
+  String get onboardingRegionConsentChipChooseMyself => 'I’ll choose myself';
 
   @override
   String get onboardingRegionPoco =>
       'A region is the city where your server—and its data—will live. Choose one close to you, or to people who will use PocketCoder most.';
 
   @override
-  String get onboardingRegionTitle => 'CHOOSE YOUR SERVER REGION';
+  String get onboardingRegionTitle => 'choose your server region';
 
   @override
   String get onboardingHarnessPoco =>
       'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you’ll connect any required accounts after your server is ready.';
 
   @override
-  String get onboardingHarnessTitle => 'CHOOSE CODING AGENTS';
+  String get onboardingHarnessTitle => 'choose coding agents';
 
   @override
   String get onboardingOsPoco =>
       'Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.';
 
   @override
-  String get onboardingOsTitle => 'CHOOSE LINUX SYSTEM';
+  String get onboardingOsTitle => 'choose Linux system';
 
   @override
-  String get onboardingOsNixosLabel => 'NIXOS — RECOMMENDED';
+  String get onboardingOsNixosLabel => 'NixOS — recommended';
 
   @override
   String onboardingOsNixosDescription(int minutes) {
@@ -2425,7 +2418,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get onboardingOsDebianLabel => 'DEBIAN';
+  String get onboardingOsDebianLabel => 'Debian';
 
   @override
   String onboardingOsDebianDescription(int minutes) {
@@ -2438,55 +2431,55 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get onboardingReviewTitle => 'REVIEW YOUR SERVER';
+  String get onboardingReviewTitle => 'review your server';
 
   @override
-  String get onboardingReviewActionProvision => 'PROVISION SERVER';
+  String get onboardingReviewActionProvision => 'provision server';
 
   @override
   String get onboardingProvisioningPoco =>
       'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI’ll show you what we’re building, one piece at a time.';
 
   @override
-  String get onboardingOrientationTitle => 'INITIATIVE ORIENTATION';
+  String get onboardingOrientationTitle => 'initiative orientation';
 
   @override
-  String get onboardingOrientationActionSkip => 'SKIP ORIENTATION';
+  String get onboardingOrientationActionSkip => 'skip orientation';
 
   @override
-  String get onboardingOrientationActionContinue => 'CONTINUE ORIENTATION';
+  String get onboardingOrientationActionContinue => 'continue orientation';
 
   @override
-  String get onboardingDockerIntroEyebrow => 'INTRODUCTION';
+  String get onboardingDockerIntroEyebrow => 'introduction';
 
   @override
-  String get onboardingDockerIntroTitle => 'DOCKER AND CONTAINERS';
+  String get onboardingDockerIntroTitle => 'Docker and containers';
 
   @override
   String get onboardingDockerIntroPoco =>
       'PocketCoder is made of software components, such as its dashboard and coding agents. Docker runs each component in its own separate container on your server.';
 
   @override
-  String get onboardingDockerIntroActionStart => 'START WALKTHROUGH';
+  String get onboardingDockerIntroActionStart => 'start walkthrough';
 
   @override
-  String get onboardingDockerIntroChipComponent => 'WHAT IS A COMPONENT?';
+  String get onboardingDockerIntroChipComponent => 'What is a component?';
 
   @override
-  String get onboardingDockerIntroChipContainer => 'WHAT IS A CONTAINER?';
+  String get onboardingDockerIntroChipContainer => 'What is a container?';
 
   @override
-  String get onboardingDockerIntroChipSavedData => 'WHAT IS SAVED DATA?';
+  String get onboardingDockerIntroChipSavedData => 'What is saved data?';
 
   @override
-  String get onboardingDockerIntroChipConnections => 'WHAT ARE CONNECTIONS?';
+  String get onboardingDockerIntroChipConnections => 'What are connections?';
 
   @override
   String get onboardingReadyPoco =>
       'Your PocketCoder server is ready.\n\nWelcome to the PocketCoder Initiative, Commander.\n\nYour server is online at its new HTTPS address. Your selected coding harnesses are ready.';
 
   @override
-  String get onboardingReadyActionLogin => 'LOG IN TO POCKETCODER';
+  String get onboardingReadyActionLogin => 'log in to PocketCoder';
 
   @override
   String onboardingFailureConnectionPoco(String providerName) {
@@ -2494,77 +2487,77 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get onboardingFailureActionRetryConnection => 'RETRY CONNECTION';
+  String get onboardingFailureActionRetryConnection => 'retry connection';
 
   @override
-  String get onboardingFailureActionViewServerDetails => 'VIEW SERVER DETAILS';
+  String get onboardingFailureActionViewServerDetails => 'view server details';
 
   @override
   String get onboardingFailureCreatePoco =>
       'The server could not be created.\n\nNothing was deployed. Check your server provider connection, then try again.';
 
   @override
-  String get onboardingFailureActionBackToSetup => 'BACK TO SETUP';
+  String get onboardingFailureActionBackToSetup => 'back to setup';
 
   @override
   String get onboardingFailureActionTechnicalDetails =>
-      'SHOW TECHNICAL DETAILS';
+      'show technical details';
 
   @override
   String walkthroughHeader(String os, int current, int total) {
-    return '$os SERVER SETUP · WALKTHROUGH $current / $total';
+    return '$os server setup · walkthrough $current / $total';
   }
 
   @override
   String walkthroughProgress(int current, int total, String brief) {
-    return 'WALKTHROUGH $current/$total · BRIEF $brief';
+    return 'walkthrough $current/$total · brief $brief';
   }
 
   @override
-  String get walkthroughActionShowFullCode => 'SHOW FULL CODE';
+  String get walkthroughActionShowFullCode => 'show full code';
 
   @override
-  String get walkthroughActionShowConciseCode => 'SHOW CONCISE CODE';
+  String get walkthroughActionShowConciseCode => 'show concise code';
 
   @override
-  String get walkthroughCaddyAddressTitle => 'YOUR HTTPS ADDRESS';
+  String get walkthroughCaddyAddressTitle => 'your HTTPS address';
 
   @override
   String get walkthroughCaddyAddressPoco =>
       'First, the server finds its public IP address and turns it into an HTTPS address using sslip.io. PocketCoder saves that address so the mobile app knows where to sign in.';
 
   @override
-  String get walkthroughCaddyAddressChipIpAddress => 'WHAT IS AN IP ADDRESS?';
+  String get walkthroughCaddyAddressChipIpAddress => 'What is an IP address?';
 
   @override
-  String get walkthroughCaddyAddressChipHttps => 'WHAT IS HTTPS?';
+  String get walkthroughCaddyAddressChipHttps => 'What is HTTPS?';
 
   @override
-  String get walkthroughCaddyAddressChipSslip => 'WHAT IS SSLIP.IO?';
+  String get walkthroughCaddyAddressChipSslip => 'What is sslip.io?';
 
   @override
-  String get walkthroughCaddyWebEntryTitle => 'THE SECURE WEB ENTRY';
+  String get walkthroughCaddyWebEntryTitle => 'the secure web entry';
 
   @override
   String get walkthroughCaddyWebEntryPoco =>
       'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder’s deployment status, and passes app requests to PocketBase without exposing PocketBase’s own port.';
 
   @override
-  String get walkthroughCaddyWebEntryChipCaddy => 'WHAT IS CADDY?';
+  String get walkthroughCaddyWebEntryChipCaddy => 'What is Caddy?';
 
   @override
   String get walkthroughCaddyWebEntryChipPrivatePort =>
-      'WHY IS POCKETBASE\'S PORT PRIVATE?';
+      'Why is PocketBase\'s port private?';
 
   @override
-  String get walkthroughNixosStorageTitle => 'YOUR SERVER DISK';
+  String get walkthroughNixosStorageTitle => 'your server disk';
 
   @override
   String get walkthroughNixosStoragePoco =>
       'This tells NixOS where PocketCoder’s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.';
 
   @override
-  String get walkthroughNixosNetworkTitle => 'NETWORK BOUNDARIES';
+  String get walkthroughNixosNetworkTitle => 'network boundaries';
 
   @override
   String get walkthroughNixosNetworkPoco =>
@@ -2572,47 +2565,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughNixosNetworkChipPorts =>
-      'WHAT ARE HTTP, HTTPS, AND SSH?';
+      'What are HTTP, HTTPS, and SSH?';
 
   @override
   String get walkthroughNixosNetworkChipDockerRules =>
-      'WHY DOES DOCKER NEED ITS OWN RULES?';
+      'Why does Docker need its own rules?';
 
   @override
   String get walkthroughNixosNetworkChipIpVersions => 'WHAT ARE IPv4 AND IPv6?';
 
   @override
-  String get walkthroughNixosSshTitle => 'KEY-ONLY SSH';
+  String get walkthroughNixosSshTitle => 'key-only SSH';
 
   @override
   String get walkthroughNixosSshPoco =>
       'SSH is the secure way to administer a server from another device—even a phone. We accept only your SSH key—not passwords—and temporarily block repeated failed attempts.';
 
   @override
-  String get walkthroughNixosDockerTitle => 'DOCKER';
+  String get walkthroughNixosDockerTitle => 'Docker';
 
   @override
   String get walkthroughNixosDockerPoco =>
       'This turns on Docker, the system that runs PocketCoder’s containers. It sends their logs to NixOS’s built-in system log, so there is one place to check what happened.';
 
   @override
-  String get walkthroughServerKeyTitle => 'YOUR SERVER KEY';
+  String get walkthroughServerKeyTitle => 'your server key';
 
   @override
   String get walkthroughServerKeyPoco =>
       'Before PocketCoder starts, this installs your public SSH key on the server. The mobile app keeps the matching private SSH key securely on your phone: the public key is the lock, and the private key is the key that opens it.';
 
   @override
-  String get walkthroughServerKeyChipPrivate => 'WHAT IS A PRIVATE SSH KEY?';
+  String get walkthroughServerKeyChipPrivate => 'What is a private SSH key?';
 
   @override
-  String get walkthroughServerKeyChipPublic => 'WHAT IS A PUBLIC SSH KEY?';
+  String get walkthroughServerKeyChipPublic => 'What is a public SSH key?';
 
   @override
-  String get walkthroughServerKeyChipSsh => 'WHAT IS SSH?';
+  String get walkthroughServerKeyChipSsh => 'What is SSH?';
 
   @override
-  String get walkthroughVerifiedVersionTitle => 'VERIFIED POCKETCODER VERSION';
+  String get walkthroughVerifiedVersionTitle => 'verified PocketCoder version';
 
   @override
   String get walkthroughVerifiedVersionPoco =>
@@ -2620,17 +2613,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughVerifiedVersionChipVerification =>
-      'HOW IS THE VERSION VERIFIED?';
+      'How is the version verified?';
 
   @override
   String get walkthroughVerifiedVersionChipDownloadFailure =>
-      'WHAT HAPPENS IF THE DOWNLOAD FAILS?';
+      'What happens if the download fails?';
 
   @override
-  String get walkthroughVerifiedVersionChipUpdates => 'CAN I UPDATE LATER?';
+  String get walkthroughVerifiedVersionChipUpdates => 'Can I update later?';
 
   @override
-  String get walkthroughStartPocketCoderTitle => 'START POCKETCODER';
+  String get walkthroughStartPocketCoderTitle => 'start PocketCoder';
 
   @override
   String get walkthroughStartPocketCoderPoco =>
@@ -2638,21 +2631,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughStartPocketCoderChipWhatStarts =>
-      'WHAT STARTS AFTER THIS?';
+      'What starts after this?';
 
   @override
   String get walkthroughStartPocketCoderChipAddHarness =>
-      'CAN I ADD A HARNESS LATER?';
+      'Can I add a harness later?';
 
   @override
-  String get walkthroughNixosDockerRulesTitle => 'DOCKER FIREWALL RULES';
+  String get walkthroughNixosDockerRulesTitle => 'Docker firewall rules';
 
   @override
   String get walkthroughNixosDockerRulesPoco =>
       'Docker needs its own rules because it manages a separate path for container traffic. These rules keep the same boundaries without opening extra entry ports.';
 
   @override
-  String get walkthroughRuntimeSettingsTitle => 'LOCAL SETTINGS';
+  String get walkthroughRuntimeSettingsTitle => 'local settings';
 
   @override
   String get walkthroughRuntimeSettingsPoco =>
@@ -2660,45 +2653,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughRuntimeSettingsChipLocalSettings =>
-      'WHAT ARE LOCAL SETTINGS?';
+      'What are local settings?';
 
   @override
-  String get walkthroughRuntimeVersionTitle => 'RUNNING VERSION';
+  String get walkthroughRuntimeVersionTitle => 'running version';
 
   @override
   String get walkthroughRuntimeVersionPoco =>
       'PocketCoder records the version it is running in the same protected settings file.';
 
   @override
-  String get walkthroughActivationPrepareTitle => 'PREPARE THE RELEASE';
+  String get walkthroughActivationPrepareTitle => 'prepare the release';
 
   @override
   String get walkthroughActivationPreparePoco =>
       'This checks that the release files match the verified PocketCoder version and prepares them for installation. It also sets up status reporting for the PocketCoder deployment.';
 
   @override
-  String get walkthroughActivationSelectedSoftwareTitle => 'SELECTED SOFTWARE';
+  String get walkthroughActivationSelectedSoftwareTitle => 'selected software';
 
   @override
   String get walkthroughActivationSelectedSoftwarePoco =>
       'Next, the server loads PocketCoder and only the coding agents you chose. It checks each software component before Docker runs it.';
 
   @override
-  String get walkthroughActivationSwitchTitle => 'MAKE IT ACTIVE';
+  String get walkthroughActivationSwitchTitle => 'make it active';
 
   @override
   String get walkthroughActivationSwitchPoco =>
       'This makes the new PocketCoder version active and starts its containers. It uses prebuilt software for faster setup and consistent versioning.';
 
   @override
-  String get walkthroughActivationHealthTitle => 'CHECK THE DEPLOYMENT';
+  String get walkthroughActivationHealthTitle => 'check the deployment';
 
   @override
   String get walkthroughActivationHealthPoco =>
       'Before calling the deployment complete, PocketCoder checks that its core and optional services are healthy. Only then does it record this version as active.';
 
   @override
-  String get walkthroughDebianSetupStatusTitle => 'SETUP STATUS';
+  String get walkthroughDebianSetupStatusTitle => 'setup status';
 
   @override
   String get walkthroughDebianSetupStatusPoco =>
@@ -2706,14 +2699,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughDebianSetupStatusChipStatus =>
-      'HOW IS DEPLOYMENT STATUS SHOWN?';
+      'How is deployment status shown?';
 
   @override
   String get walkthroughDebianSetupStatusChipFailure =>
-      'WHAT HAPPENS IF SETUP FAILS?';
+      'What happens if setup fails?';
 
   @override
-  String get walkthroughServicesComposeTitle => 'THE DOCKER BLUEPRINT';
+  String get walkthroughServicesComposeTitle => 'the Docker blueprint';
 
   @override
   String get walkthroughServicesComposePoco =>
@@ -2721,17 +2714,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughServicesComposeChipDockerCompose =>
-      'WHAT IS DOCKER COMPOSE?';
+      'What is Docker compose?';
 
   @override
-  String get walkthroughServicesComposeChipSavedData => 'WHAT IS SAVED DATA?';
+  String get walkthroughServicesComposeChipSavedData => 'What is saved data?';
 
   @override
   String get walkthroughServicesComposeChipPrivateConnections =>
-      'WHAT ARE PRIVATE CONNECTIONS?';
+      'What are private connections?';
 
   @override
-  String get walkthroughServicesPocketBaseTitle => 'POCKETBASE';
+  String get walkthroughServicesPocketBaseTitle => 'PocketBase';
 
   @override
   String get walkthroughServicesPocketBasePoco =>
@@ -2739,18 +2732,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughServicesPocketBaseChipKeeps =>
-      'WHAT DOES POCKETBASE KEEP?';
+      'What does PocketBase keep?';
 
   @override
   String get walkthroughServicesPocketBaseChipSignIn =>
-      'HOW DO I SIGN IN SECURELY?';
+      'How do I sign in securely?';
 
   @override
   String get walkthroughServicesPocketBaseChipUpdates =>
-      'WHAT HAPPENS WHEN POCKETCODER UPDATES?';
+      'What happens when PocketCoder updates?';
 
   @override
-  String get walkthroughServicesHarnessesTitle => 'CODING HARNESSES';
+  String get walkthroughServicesHarnessesTitle => 'coding harnesses';
 
   @override
   String walkthroughServicesHarnessesPoco(String selectedHarnesses) {
@@ -2759,36 +2752,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughServicesHarnessesChipHarness =>
-      'WHAT IS A CODING HARNESS?';
+      'What is a coding harness?';
 
   @override
   String get walkthroughServicesHarnessesChipWorkspace =>
-      'WHAT IS A SAVED WORKSPACE?';
+      'What is a saved workspace?';
 
   @override
   String get walkthroughServicesHarnessesChipAdd =>
-      'CAN I ADD A HARNESS LATER?';
+      'Can I add a harness later?';
 
   @override
-  String get walkthroughServicesToolsTitle => 'TOOL CONNECTIONS';
+  String get walkthroughServicesToolsTitle => 'tool connections';
 
   @override
   String get walkthroughServicesToolsPoco =>
       'The MCP Gateway is a controlled connection point for extra tools your coding harnesses can use. Its separate Docker proxy grants only the permissions those tools need, while blocking more sensitive actions such as accessing saved data or secrets.';
 
   @override
-  String get walkthroughServicesToolsChipMcp => 'WHAT IS MCP?';
+  String get walkthroughServicesToolsChipMcp => 'What is MCP?';
 
   @override
   String get walkthroughServicesToolsChipHarnessTools =>
-      'WHAT TOOLS CAN A HARNESS USE?';
+      'What tools can a harness use?';
 
   @override
   String get walkthroughServicesToolsChipProxy =>
-      'WHY DOES THIS HAVE A SEPARATE PROXY?';
+      'Why does this have a separate proxy?';
 
   @override
-  String get walkthroughServicesOllamaTitle => 'LOCAL MODELS';
+  String get walkthroughServicesOllamaTitle => 'local models';
 
   @override
   String get walkthroughServicesOllamaPoco =>
@@ -2796,18 +2789,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughServicesOllamaChipLocalModel =>
-      'WHAT IS A LOCAL MODEL?';
+      'What is a local model?';
 
   @override
   String get walkthroughServicesOllamaChipDownload =>
-      'WHEN IS A MODEL DOWNLOADED?';
+      'When is a model downloaded?';
 
   @override
   String get walkthroughServicesOllamaChipGpu =>
-      'DOES THIS USE MY SERVER\'S GPU?';
+      'Does this use my server\'s GPU?';
 
   @override
-  String get walkthroughServicesSqlPageTitle => 'SERVER DASHBOARD';
+  String get walkthroughServicesSqlPageTitle => 'server dashboard';
 
   @override
   String get walkthroughServicesSqlPagePoco =>
@@ -2815,69 +2808,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkthroughServicesSqlPageChipContents =>
-      'WHAT CAN THIS DASHBOARD SHOW?';
+      'What can this dashboard show?';
 
   @override
   String get walkthroughServicesSqlPageChipStartOrder =>
-      'WHY DOES IT START AFTER POCKETBASE?';
+      'Why does it start after PocketBase?';
 
   @override
   String get permissionRequestedFallback => 'Permission requested';
 
   @override
   String permissionRequestingLabel(String source) {
-    return '$source IS REQUESTING PERMISSION:';
+    return '$source is requesting permission:';
   }
 
   @override
   String get permissionPatternsLabel => 'Patterns:';
 
   @override
-  String get questionIncomingTitle => 'INCOMING QUERY';
+  String get questionIncomingTitle => 'incoming query';
 
   @override
-  String get questionPocoAsking => 'POCO IS ASKING:';
+  String get questionPocoAsking => 'Poco is asking:';
 
   @override
-  String get questionSendReply => 'SEND REPLY';
+  String get questionSendReply => 'send reply';
 
   @override
-  String get thoughtsWaiting => '[NEURAL LINK ACTIVE. WAITING FOR THOUGHTS...]';
+  String get thoughtsWaiting => '[neural link active. waiting for thoughts...]';
 
   @override
   String notificationSignalReceived(String title) {
-    return 'SIGNAL RECEIVED: $title';
+    return 'signal received: $title';
   }
 
   @override
-  String get errorsTitle => 'ERROR REPORTS';
+  String get errorsTitle => 'error reports';
 
   @override
-  String get errorsEmpty => 'NO ERRORS CAPTURED';
+  String get errorsEmpty => 'no errors captured';
 
   @override
-  String get errorsCopy => 'COPY REPORT';
+  String get errorsCopy => 'copy report';
 
   @override
-  String get errorsReportOnGithub => 'REPORT ON GITHUB';
+  String get errorsReportOnGithub => 'report on GitHub';
 
   @override
-  String get errorsCopyAll => 'COPY ALL';
+  String get errorsCopyAll => 'copy all';
 
   @override
-  String get errorsCopied => 'DIAGNOSTIC REPORT COPIED';
+  String get errorsCopied => 'diagnostic report copied';
 
   @override
-  String get errorsClearAll => 'CLEAR ALL';
+  String get errorsClearAll => 'clear all';
 
   @override
-  String get harnessAuthChallengeTargetCopied => 'CHALLENGE TARGET COPIED';
+  String get harnessAuthChallengeTargetCopied => 'challenge target copied';
 
   @override
-  String get harnessAuthCopy => '[COPY]';
+  String get harnessAuthCopy => '[copy]';
 
   @override
-  String get harnessAuthChallengeDetailsCopied => 'CODE COPIED';
+  String get harnessAuthChallengeDetailsCopied => 'code copied';
 
   @override
   String get harnessAuthLoading => 'Loading harnesses';
@@ -2981,11 +2974,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get credentialConnectionApiKey => 'Connect with an API key.';
 
   @override
-  String get credentialConnectionCopy => 'COPY';
+  String get credentialConnectionCopy => 'copy';
 
   @override
   String get credentialConnectionOpenAuthorizationPage =>
-      'OPEN AUTHORIZATION PAGE';
+      'open authorization page';
 
   @override
   String get credentialConnectionPasteCode =>
@@ -2996,13 +2989,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter the code shown on the authorization page.';
 
   @override
-  String get credentialConnectionSubmit => 'SUBMIT';
+  String get credentialConnectionSubmit => 'submit';
 
   @override
-  String get credentialConnectionCancel => 'CANCEL';
+  String get credentialConnectionCancel => 'cancel';
 
   @override
-  String get credentialConnectionRetry => 'RETRY';
+  String get credentialConnectionRetry => 'retry';
 
   @override
   String get credentialConnectionOpenFailed =>
@@ -3017,86 +3010,86 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get agentModeLabel => 'MODE:';
+  String get agentModeLabel => 'mode:';
 
   @override
-  String get agentConfigLabel => 'CONFIG';
+  String get agentConfigLabel => 'config';
 
   @override
   String get pocketCoderUpdateChecking =>
-      '\$ CHECKING VERIFIED RELEASE STATUS...';
+      '\$ Checking verified release status...';
 
   @override
-  String get pocketCoderUpdateCheckAgain => 'CHECK AGAIN';
+  String get pocketCoderUpdateCheckAgain => 'check again';
 
   @override
   String get pocketCoderUpdateNoDeployment =>
-      'NO DEPLOYMENT FOUND ON THIS DEVICE.';
+      'No deployment found on this device.';
 
   @override
-  String get actionDismiss => 'DISMISS';
+  String get actionDismiss => 'dismiss';
 
   @override
-  String get pocketCoderUpdateWorking => 'UPGRADING...';
+  String get pocketCoderUpdateWorking => 'Upgrading...';
 
   @override
-  String get pocketCoderUpdateUpgrade => 'UPGRADE POCKETCODER';
+  String get pocketCoderUpdateUpgrade => 'upgrade PocketCoder';
 
   @override
   String get pocketCoderUpdateCommand => 'pocketcoder-release update';
 
   @override
-  String get pocketCoderUpdateOutput => 'OUTPUT';
+  String get pocketCoderUpdateOutput => 'output';
 
   @override
-  String get pocketCoderUpdateStderr => '--- STDERR ---';
+  String get pocketCoderUpdateStderr => '--- stderr ---';
 
   @override
-  String get pocketCoderUpdateSucceeded => 'UPDATE SUCCEEDED (EXIT 0)';
+  String get pocketCoderUpdateSucceeded => 'update succeeded (exit 0)';
 
   @override
   String pocketCoderUpdateFailed(int exitCode) {
-    return 'UPDATE FAILED (EXIT $exitCode)';
+    return 'update failed (exit $exitCode)';
   }
 
   @override
-  String get pocketCoderUpdateReviewDataChange => 'REVIEW DATA CHANGE';
+  String get pocketCoderUpdateReviewDataChange => 'review data change';
 
   @override
-  String get pocketCoderUpdateConfirmUpgrade => 'CONFIRM UPGRADE';
+  String get pocketCoderUpdateConfirmUpgrade => 'confirm upgrade';
 
   @override
-  String get pocketCoderUpdateCurrent => 'CURRENT';
+  String get pocketCoderUpdateCurrent => 'current';
 
   @override
-  String get pocketCoderUpdateAvailable => 'AVAILABLE';
+  String get pocketCoderUpdateAvailable => 'available';
 
   @override
-  String get pocketCoderUpdateDownload => 'DOWNLOAD';
+  String get pocketCoderUpdateDownload => 'download';
 
   @override
-  String get pocketCoderUpdateRequiredDisk => 'REQUIRED DISK';
+  String get pocketCoderUpdateRequiredDisk => 'required disk';
 
   @override
-  String get pocketCoderUpdateCurrentStatus => '\$ POCKETCODER IS CURRENT';
+  String get pocketCoderUpdateCurrentStatus => '\$ PocketCoder is current';
 
   @override
-  String get pocketCoderUpdateAvailableStatus => '\$ UPDATE AVAILABLE';
+  String get pocketCoderUpdateAvailableStatus => '\$ update available';
 
   @override
-  String get pocketCoderUpdateCriticalStatus => '\$ CRITICAL RELEASE WARNING';
+  String get pocketCoderUpdateCriticalStatus => '\$ critical release warning';
 
   @override
-  String get pocketCoderUpdateUnknownStatus => '\$ RELEASE STATUS UNKNOWN';
+  String get pocketCoderUpdateUnknownStatus => '\$ release status unknown';
 
   @override
   String get pocketCoderUpdateRollbackWarning =>
-      'AFTER SUCCESS, NORMAL ROLLBACK IS UNAVAILABLE. RESTORING THE PRE-UPGRADE SNAPSHOT WOULD DISCARD DATA CREATED AFTERWARD.';
+      'After success, normal rollback is unavailable. Restoring the pre-upgrade snapshot would discard data created afterward.';
 
   @override
   String pocketCoderUpdateDataBoundary(
       int currentVersion, int availableVersion) {
-    return 'DATA VERSION $currentVersion → $availableVersion';
+    return 'data version $currentVersion → $availableVersion';
   }
 
   @override
@@ -3105,10 +3098,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get errorsDeleteAction => 'DELETE';
+  String get errorsDeleteAction => 'delete';
 
   @override
-  String get deploymentResetAction => 'RESET';
+  String get deploymentResetAction => 'reset';
 
   @override
   String get deploymentResetConfirmationTitle =>
@@ -3127,16 +3120,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Also sign out of the cloud provider (clear OAuth tokens)';
 
   @override
-  String get deploymentResetConfirm => 'RESET';
+  String get deploymentResetConfirm => 'reset';
 
   @override
-  String get deploymentResetCancel => 'CANCEL';
+  String get deploymentResetCancel => 'cancel';
 
   @override
   String get deploymentResetComplete => 'Local deployment state cleared.';
 
   @override
-  String get deploymentDisconnectAction => 'DISCONNECT';
+  String get deploymentDisconnectAction => 'disconnect';
 
   @override
   String get deploymentDisconnectConfirmationTitle =>
@@ -3147,10 +3140,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This clears the saved session and local deployment state so you can connect to another instance. It does not delete your cloud server.';
 
   @override
-  String get deploymentDisconnectConfirm => 'DISCONNECT';
+  String get deploymentDisconnectConfirm => 'disconnect';
 
   @override
-  String get deploymentDisconnectCancel => 'CANCEL';
+  String get deploymentDisconnectCancel => 'cancel';
 
   @override
   String get instanceVerificationTitle => 'Can\'t verify your deployment';
@@ -3165,11 +3158,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String instanceVerificationCheckAction(String provider) {
-    return 'CHECK VIA $provider';
+    return 'check via $provider';
   }
 
   @override
-  String get instanceVerificationResetAction => 'RESET';
+  String get instanceVerificationResetAction => 'reset';
 
   @override
   String get instanceVerificationResetConfirmationTitle =>
@@ -3180,10 +3173,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'This clears the saved session and local deployment state on this device. It does not delete your cloud server.';
 
   @override
-  String get instanceVerificationResetConfirm => 'RESET';
+  String get instanceVerificationResetConfirm => 'reset';
 
   @override
-  String get instanceVerificationResetCancel => 'CANCEL';
+  String get instanceVerificationResetCancel => 'cancel';
 
   @override
   String get instanceGoneTitle => 'Instance no longer exists';
@@ -3193,7 +3186,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'The provider confirms this deployment\'s server no longer exists. The only way forward is to reset local state and set up a new deployment.';
 
   @override
-  String get instanceGoneResetAction => 'RESET';
+  String get instanceGoneResetAction => 'reset';
 
   @override
   String get instanceGoneResetConfirmationTitle =>
@@ -3204,13 +3197,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'This clears all local deployment state on this device. The instance is already gone on the provider side, so nothing further will be deleted remotely.';
 
   @override
-  String get instanceGoneResetCancel => 'CANCEL';
+  String get instanceGoneResetCancel => 'cancel';
 
   @override
-  String get instanceGoneResetConfirm => 'RESET';
+  String get instanceGoneResetConfirm => 'reset';
 
   @override
-  String get deploymentDiscardAttemptTitle => 'DISCARD THIS DEPLOYMENT RECORD?';
+  String get deploymentDiscardAttemptTitle => 'Discard this deployment record?';
 
   @override
   String get deploymentDiscardAttemptBody =>
@@ -3230,10 +3223,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'I checked and this won\'t create a duplicate charge';
 
   @override
-  String get deploymentDiscardAttemptCancel => 'CANCEL';
+  String get deploymentDiscardAttemptCancel => 'cancel';
 
   @override
-  String get deploymentDiscardAttemptConfirm => 'DISCARD';
+  String get deploymentDiscardAttemptConfirm => 'discard';
 
   @override
   String get deploymentCleanupSucceeded => 'Cloud server deleted.';
@@ -3250,41 +3243,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deploymentCleanupNotNeeded => 'No cloud server to clean up.';
 
   @override
-  String get serverControlTitle => 'SERVER CONTROLS';
+  String get serverControlTitle => 'server controls';
 
   @override
-  String get serverControlConnectionDetails => 'CONNECTION DETAILS';
+  String get serverControlConnectionDetails => 'connection details';
 
   @override
-  String get serverControlIpAddress => 'IP ADDRESS';
+  String get serverControlIpAddress => 'IP address';
 
   @override
-  String get serverControlHttpsEndpoint => 'HTTPS ENDPOINT';
+  String get serverControlHttpsEndpoint => 'HTTPS endpoint';
 
   @override
-  String get serverControlAdminIdentity => 'ADMIN IDENTITY';
+  String get serverControlAdminIdentity => 'admin identity';
 
   @override
-  String get serverControlAdminPassword => 'ADMIN PASSWORD';
+  String get serverControlAdminPassword => 'admin password';
 
   @override
-  String get serverControlShow => 'SHOW';
+  String get serverControlShow => 'show';
 
   @override
-  String get serverControlHide => 'HIDE';
+  String get serverControlHide => 'hide';
 
   @override
   String get serverControlLocalAuthReason =>
       'Authenticate to reveal this credential';
 
   @override
-  String get serverControlCopy => 'COPY';
+  String get serverControlCopy => 'copy';
 
   @override
-  String get serverControlCopied => 'COPIED';
+  String get serverControlCopied => 'copied';
 
   @override
-  String get serverControlConfirmTitle => 'CONFIRM SERVER CONTROL';
+  String get serverControlConfirmTitle => 'confirm server control';
 
   @override
   String serverControlConfirmBody(String operation) {
@@ -3292,34 +3285,34 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get serverControlConfirmCancel => 'CANCEL';
+  String get serverControlConfirmCancel => 'cancel';
 
   @override
-  String get serverControlConfirmConfirm => 'CONFIRM';
+  String get serverControlConfirmConfirm => 'confirm';
 
   @override
-  String get serverControlConfirmRestoreTitle => 'RESTORE BACKUP?';
+  String get serverControlConfirmRestoreTitle => 'Restore backup?';
 
   @override
   String get serverControlConfirmRestoreBody =>
       'This overwrites all current data on your server with the last saved backup. This cannot be undone.';
 
   @override
-  String get serverControlReleaseChecking => 'RELEASE STATUS: CHECKING';
+  String get serverControlReleaseChecking => 'release status: checking';
 
   @override
   String serverControlReleaseStatus(String status) {
-    return 'RELEASE STATUS: $status';
+    return 'release status: $status';
   }
 
   @override
   String serverControlReleaseCurrent(String version) {
-    return 'CURRENT: $version';
+    return 'current: $version';
   }
 
   @override
   String serverControlReleaseAvailable(String version) {
-    return 'AVAILABLE: $version';
+    return 'available: $version';
   }
 
   @override
@@ -3330,7 +3323,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String serverControlReleaseNixos(String version) {
-    return 'NIXOS: $version';
+    return 'NixOS: $version';
   }
 
   @override
@@ -3352,16 +3345,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlOperationRestoreBackup => 'Restore backup';
 
   @override
-  String get serverControlActionRestart => 'RESTART';
+  String get serverControlActionRestart => 'restart';
 
   @override
-  String get serverControlActionUpdate => 'UPDATE';
+  String get serverControlActionUpdate => 'update';
 
   @override
-  String get serverControlActionSave => 'SAVE';
+  String get serverControlActionSave => 'save';
 
   @override
-  String get serverControlActionRestore => 'RESTORE';
+  String get serverControlActionRestore => 'restore';
 
   @override
   String get serverControlGroupPocketCoder => 'app';
@@ -3373,13 +3366,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverControlGroupData => 'data';
 
   @override
-  String get serverControlPublicKeyLabel => 'SSH PUBLIC KEY ON FILE';
+  String get serverControlPublicKeyLabel => 'SSH public key on file';
 
   @override
-  String get serverControlPrivateKeyLabel => 'SSH PRIVATE KEY';
+  String get serverControlPrivateKeyLabel => 'SSH private key';
 
   @override
-  String get serverControlProviderConsole => 'PROVIDER WEB PORTAL';
+  String get serverControlProviderConsole => 'provider web portal';
 
   @override
   String get serverControlProviderConsoleUnavailable =>
@@ -3391,20 +3384,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get serverControlRetryAction => 'RETRY';
+  String get serverControlRetryAction => 'retry';
 
   @override
-  String get serverControlOutputLabel => 'OUTPUT';
+  String get serverControlOutputLabel => 'output';
 
   @override
-  String get fossServerSetupTitle => 'CONNECT YOUR SERVER';
+  String get fossServerSetupTitle => 'connect your server';
 
   @override
   String get fossServerSetupIntro =>
       'Generate a key, add it to your VPS, then verify the connection.';
 
   @override
-  String get fossServerSetupGenerateKey => 'GENERATE KEY';
+  String get fossServerSetupGenerateKey => 'generate key';
 
   @override
   String get fossServerSetupPublicKeyLabel =>
@@ -3414,11 +3407,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fossServerSetupHostLabel => 'This will connect to:';
 
   @override
-  String get fossServerSetupTestAndSave => 'TEST CONNECTION & SAVE';
+  String get fossServerSetupTestAndSave => 'test connection & save';
 
   @override
   String get fossServerSetupConnected =>
-      'CONNECTED -- YOUR SERVER IS NOW MANAGED';
+      'connected -- your server is now managed';
 
   @override
   String fossServerSetupErrorPrefix(String error) {
@@ -3426,25 +3419,25 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get initializationInstanceId => 'INSTANCE ID';
+  String get initializationInstanceId => 'instance ID';
 
   @override
-  String get initializationRetryAttempt => 'RETRY ATTEMPT';
+  String get initializationRetryAttempt => 'retry attempt';
 
   @override
-  String get memoryDashboardTitle => 'POCKET MEMORY';
+  String get memoryDashboardTitle => 'pocket memory';
 
   @override
-  String get memoryDashboardUnavailable => 'MEMORY UNAVAILABLE';
+  String get memoryDashboardUnavailable => 'memory unavailable';
 
   @override
-  String get memoryDashboardObservations => 'OBSERVATIONS';
+  String get memoryDashboardObservations => 'observations';
 
   @override
-  String get memoryDashboardInterpretations => 'INTERPRETATIONS';
+  String get memoryDashboardInterpretations => 'interpretations';
 
   @override
-  String get memoryDashboardLinks => 'LINKS';
+  String get memoryDashboardLinks => 'links';
 
   @override
   String get memoryDashboardByAccount => 'Memory by Account';
@@ -3475,28 +3468,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get pocketbaseInspectorTitle => 'POCKETBASE';
+  String get pocketbaseInspectorTitle => 'PocketBase';
 
   @override
-  String get pocketbaseInspectorUnavailable => 'DATABASE UNAVAILABLE';
+  String get pocketbaseInspectorUnavailable => 'database unavailable';
 
   @override
-  String get pocketbaseInspectorUsers => 'USERS';
+  String get pocketbaseInspectorUsers => 'users';
 
   @override
-  String get pocketbaseInspectorChats => 'CHATS';
+  String get pocketbaseInspectorChats => 'chats';
 
   @override
-  String get pocketbaseInspectorAgentProfiles => 'AGENT PROFILES';
+  String get pocketbaseInspectorAgentProfiles => 'agent profiles';
 
   @override
-  String get pocketbaseInspectorHarnesses => 'HARNESSES';
+  String get pocketbaseInspectorHarnesses => 'harnesses';
 
   @override
-  String get pocketbaseInspectorMcpServers => 'MCP SERVERS';
+  String get pocketbaseInspectorMcpServers => 'MCP servers';
 
   @override
-  String get pocketbaseInspectorSkills => 'SKILLS';
+  String get pocketbaseInspectorSkills => 'skills';
 
   @override
   String get pocketbaseInspectorRecentChats => 'Recent Chats';
