@@ -115,8 +115,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // DetailRow renders labels in sentence case, not uppercased.
-    expect(find.text('chatcubit'), findsOneWidget);
+    expect(find.textContaining('ChatCubit'), findsOneWidget);
     expect(find.textContaining('CHAT_001'), findsOneWidget);
     expect(find.byType(DetailRow), findsWidgets);
     expect(find.text('#0 fake stack'), findsNothing);
@@ -142,7 +141,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('NO ERRORS CAPTURED'), findsOneWidget);
+    expect(find.text('no errors captured'), findsOneWidget);
   });
 
   testWidgets('delete removes an entry', (tester) async {
@@ -159,6 +158,9 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(DetailRow).first);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('<delete>'));
