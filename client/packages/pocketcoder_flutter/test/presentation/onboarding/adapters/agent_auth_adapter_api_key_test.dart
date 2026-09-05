@@ -291,7 +291,7 @@ void main() {
     // Only one provider is in the catalog for this harness -- pick it via
     // the target-picker's search dialog, matching how the existing
     // provider-management screen drives the same widget.
-    await tester.tap(find.text('SELECT PROVIDER'));
+    await tester.tap(find.text('select provider').first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Anthropic'));
     await tester.pumpAndSettle();
