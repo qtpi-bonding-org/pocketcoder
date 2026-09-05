@@ -77,7 +77,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('watch'));
+    // The shell brackets every footer label, so the rendered text is '<watch>'.
+    await tester.tap(find.text('<watch>'));
     await tester.pump();
 
     expect(toggled, isTrue);
@@ -91,7 +92,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('watch'), findsNothing);
+    expect(find.textContaining('watch'), findsNothing);
   });
 
   testWidgets('exactly one composer is rendered', (tester) async {

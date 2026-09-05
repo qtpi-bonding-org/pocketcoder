@@ -14,7 +14,6 @@ import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/reasoning_caption.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -242,13 +241,19 @@ class _ChatViewState extends State<ChatView> {
       onMessageAnimated: widget.onMessageAnimated,
     );
 
-    // Files button now sits in the footer alongside the pillars
     final extraFooterActions = [
       TerminalAction(
         label: context.l10n.chatFilesAction,
         onTap: widget.onFiles,
         kind: ActionKind.neutral,
       ),
+      if (widget.showMonitorAction)
+        TerminalAction(
+          label: context.l10n.chatMonitorAction,
+          onTap: widget.onToggleMonitored,
+          isActive: widget.monitored,
+          kind: ActionKind.neutral,
+        ),
     ];
 
     return PocketCoderShell(
@@ -261,21 +266,6 @@ class _ChatViewState extends State<ChatView> {
       padding: EdgeInsets.zero,
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(
-                horizontal: AppSizes.space * 2, vertical: AppSizes.space),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.showMonitorAction)
-                  DetailRow.toggle(
-                    label: context.l10n.chatMonitorAction,
-                    value: widget.monitored,
-                    onChanged: (_) => widget.onToggleMonitored(),
-                  ),
-              ],
-            ),
-          ),
           PlanPanel(plan: widget.conversation.sessionState.plan),
           ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
           Expanded(
