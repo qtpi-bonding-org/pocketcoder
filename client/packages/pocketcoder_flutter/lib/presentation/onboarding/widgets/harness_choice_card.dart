@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/glyph_label_row.dart';
@@ -63,7 +64,10 @@ class HarnessChoiceCard extends StatelessWidget {
                         ),
                       ),
                       TerminalText(
-                        connected ? '[x]' : '[>]',
+                        // `[x]` is a checkbox -- a state, correctly bracketed. The other arm
+                    // used `[>]`, the pre-redesign chevron that spec section 3
+                    // replaced with the bare navigate affordance.
+                    connected ? '[x]' : RowAffordance.navigate.glyph,
                         role: TextRole.body,
                       ),
                     ])))));
