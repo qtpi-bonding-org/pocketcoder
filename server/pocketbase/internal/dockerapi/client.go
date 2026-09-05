@@ -434,6 +434,28 @@ func (c *Client) CopyArchive(ctx context.Context, containerName, destination str
 	return nil
 }
 
+func (c *Client) GetArchive(ctx context.Context, containerName, path string) (io.ReadCloser, error) {
+	q := url.Values{"path": []string{path}}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/containers/"+containerName+"/archive?"+q.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("get archive from %s: %w", containerName, err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		resp.Body.Close()
+		return nil, ErrContainerNotFound
+	}
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("get archive from %s: docker API returned %s: %s", containerName, resp.Status, string(body))
+	}
+	return resp.Body, nil
+}
+
 func (c *Client) Start(ctx context.Context, containerName string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/containers/"+containerName+"/start", nil)
 	if err != nil {
