@@ -5,8 +5,7 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_list_tile.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/nav_banner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 
@@ -34,7 +33,7 @@ class ChatListView extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AsciiLogo(text: AppAscii.bannerFor(NavPillar.chat)),
+          NavBanner(pillar: NavPillar.chat),
           Padding(
             padding: EdgeInsets.all(AppSizes.space),
             child: TerminalButton(

@@ -109,9 +109,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionCancel => 'cancel';
 
   @override
-  String get chatInterruptHint => 'interrupt';
-
-  @override
   String get actionSave => 'save';
 
   @override

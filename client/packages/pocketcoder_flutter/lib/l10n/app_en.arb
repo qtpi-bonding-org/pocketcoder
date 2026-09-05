@@ -43,10 +43,6 @@
   "billingError": "Billing error",
 
   "actionCancel": "cancel",
-  "chatInterruptHint": "interrupt",
-  "@chatInterruptHint": {
-    "description": "Label beside the ^C control that stops the running turn"
-  },
   "actionSave": "save",
   "actionClose": "close",
   "actionDeny": "deny",

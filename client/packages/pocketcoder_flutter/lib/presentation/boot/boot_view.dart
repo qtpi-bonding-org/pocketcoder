@@ -71,13 +71,18 @@ class BootView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Opaque backdrop so the dimmed log wall behind it
-                      // doesn't bleed through the face glyph.
-                      Center(
-                        child: Container(
-                          color: colors.surface,
-                          child: PocoFace(
-                            sequence: pocoState.sequence,
-                            fontSize: 40.0,
+                      // doesn't bleed through the face glyph. Poco is sized
+                      // for the boot screen's empty middle, so on a short
+                      // viewport he scales down rather than overflowing.
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Container(
+                            color: colors.surface,
+                            child: PocoFace(
+                              sequence: pocoState.sequence,
+                              fontSize: 64.0,
+                            ),
                           ),
                         ),
                       ),

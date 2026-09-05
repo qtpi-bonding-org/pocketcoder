@@ -11,8 +11,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/nav_banner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_confirm_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/connection_details.dart';
@@ -94,7 +93,7 @@ class ServerControlView extends StatelessWidget {
             footer: buildPillarFooter(context, NavPillar.control),
             showBack: false,
             body: ListView(children: [
-              AsciiLogo(text: AppAscii.bannerFor(NavPillar.control)),
+              NavBanner(pillar: NavPillar.control),
               if (state.connectionDetails case final details?
                   when details.isAvailable) ...[
                 ConnectionDetails(details: details),

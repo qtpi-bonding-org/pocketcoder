@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/nav_banner.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
 import 'adapters/monitor_adapter.dart';
 import 'widgets/monitor_registry_and_logs.dart';
@@ -32,7 +31,7 @@ class MonitorView extends StatelessWidget {
       showBack: false,
       body: Column(
         children: [
-          AsciiLogo(text: AppAscii.bannerFor(NavPillar.status)),
+          NavBanner(pillar: NavPillar.status),
           Expanded(
             child: MonitorRegistryAndLogs(
               state: state,
