@@ -42,7 +42,13 @@ void main() {
       final lines = f.readAsLinesSync();
       for (var i = 0; i < lines.length; i++) {
         final line = lines[i];
-        final isBodyCenter = bodyCenterPatterns.any((p) => p.hasMatch(line));
+        // dart format splits `body: Align(` from its alignment argument, so
+        // the Align form needs a lookahead rather than one line.
+        final isBodyCenter = bodyCenterPatterns.any((p) => p.hasMatch(line)) ||
+            (RegExp(r'body:\s*Align\(').hasMatch(line) &&
+                lines
+                    .sublist(i, (i + 3).clamp(0, lines.length))
+                    .any(RegExp(r'alignment:\s*Alignment\.center\b').hasMatch));
         // onboarding_content_shell.dart is the shared chrome wrapper every
         // onboarding screen renders through -- its own top-level `return
         // Center(...)` is the exact same violation as `body: Center(...)`
