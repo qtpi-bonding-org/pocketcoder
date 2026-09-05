@@ -90,7 +90,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('system prompt'));
     await tester.pumpAndSettle();
-    expect(find.text('SELECT PROMPT'), findsOneWidget);
+    final context = tester.element(find.byType(AgentConfigView));
+    expect(
+        find.text(context.l10n.agentConfigSelectPrompt.toLowerCase()),
+        findsWidgets);
     expect(find.text('second prompt'), findsOneWidget);
   });
 
@@ -111,7 +114,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('mode'));
     await tester.pumpAndSettle();
-    expect(find.text('SELECT MODE'), findsOneWidget);
+    final context = tester.element(find.byType(AgentConfigView));
+    expect(
+        find.text(context.l10n.agentConfigSelectMode.toLowerCase()),
+        findsWidgets);
     expect(find.text('balanced'), findsOneWidget);
     expect(find.text('autonomous'), findsOneWidget);
   });

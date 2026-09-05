@@ -71,10 +71,10 @@ void main() {
       },
       onSetOption: (value) => request = value,
     )));
-    await tester.tap(find.text('CONFIG'));
+    await tester.tap(find.text('config'));
     await tester.pumpAndSettle();
     expect(find.text('Auto Approve'), findsOneWidget);
-    expect(find.text('Preset'), findsOneWidget);
+    expect(find.text('preset'), findsOneWidget);
     expect(find.byType(Switch), findsNothing);
     await tester.tap(find.text('[ ]'));
     expect(request?.configId, 'auto-approve');
