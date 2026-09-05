@@ -14,6 +14,7 @@ class BiosActionStripItem {
     this.kind = ActionKind.neutral,
     this.isActive = false,
     this.hasBadge = false,
+    this.bracketed = true,
   });
 
   final String label;
@@ -26,6 +27,9 @@ class BiosActionStripItem {
   final bool isActive;
 
   final bool hasBadge;
+
+  /// false: plain label (nav footer needs no brackets for space). true: bracketed.
+  final bool bracketed;
 }
 
 /// A bare row of [BiosActionStripItem] buttons -- no outer border/SafeArea
@@ -86,6 +90,10 @@ class _BiosActionButtonState extends State<BiosActionButton> {
       );
     }
 
+    final displayLabel = action.bracketed
+        ? '<${action.label.toLowerCase()}>'
+        : action.label.toLowerCase();
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: action.onTap,
@@ -100,8 +108,7 @@ class _BiosActionButtonState extends State<BiosActionButton> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(
-              child: text('<${action.label.toLowerCase()}>', role,
-                  maxLines: 1),
+              child: text(displayLabel, role, maxLines: 1),
             ),
             if (action.hasBadge) ...[
               HSpace.x1,

@@ -7,7 +7,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/shell_footer_view.dart';
 
 void main() {
-  testWidgets('pillar footer renders four angle-bracket pillars in order',
+  testWidgets('pillar footer renders four plain-word pillars in order',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -15,7 +15,7 @@ void main() {
               footer:
                   PillarFooter(active: NavPillar.status, onSelect: (_) {}))),
     ));
-    for (final label in ['<chat>', '<config>', '<status>', '<control>']) {
+    for (final label in ['chat', 'config', 'status', 'control']) {
       expect(find.text(label), findsOneWidget);
     }
   });
@@ -31,7 +31,7 @@ void main() {
               footer:
                   PillarFooter(active: NavPillar.status, onSelect: (_) {}))),
     ));
-    for (final label in ['<chat>', '<config>', '<status>', '<control>']) {
+    for (final label in ['chat', 'config', 'status', 'control']) {
       final text = tester.widget<Text>(find.text(label));
       expect(text.maxLines, 1);
     }
@@ -50,8 +50,8 @@ void main() {
             NavPillar.status
           ]))),
     ));
-    expect(find.text('<control>'), findsNothing);
-    expect(find.text('<chat>'), findsOneWidget);
+    expect(find.text('control'), findsNothing);
+    expect(find.text('chat'), findsOneWidget);
   });
 
   testWidgets('wizard footer uses words and a counter, never arrows',
@@ -97,23 +97,24 @@ void main() {
     ));
 
     // Should render four pillars plus the extra action
-    expect(find.text('<chat>'), findsOneWidget);
-    expect(find.text('<config>'), findsOneWidget);
-    expect(find.text('<status>'), findsOneWidget);
-    expect(find.text('<control>'), findsOneWidget);
-    expect(find.text('<files>'), findsOneWidget);
+    expect(find.text('chat'), findsOneWidget);
+    expect(find.text('config'), findsOneWidget);
+    expect(find.text('status'), findsOneWidget);
+    expect(find.text('control'), findsOneWidget);
+    expect(find.text('files'), findsOneWidget);
   });
 
   testWidgets(
-      'pillar footer at 320dp with extra action wraps without overflow or '
-      'mid-word truncation', (tester) async {
+      'pillar footer at 320dp with extra action fits five items on one row '
+      'with no overflow', (tester) async {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.binding.setSurfaceSize(const Size(320, 640));
 
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.lightTheme,
-      home: Scaffold(
-        body: ShellFooterView(
+      home: Align(
+        alignment: Alignment.topLeft,
+        child: ShellFooterView(
           footer: PillarFooter(
             active: NavPillar.chat,
             onSelect: (_) {},
@@ -129,9 +130,10 @@ void main() {
       ),
     ));
 
-    // All labels should render whole (maxLines: 1)
-    for (final label in ['<chat>', '<config>', '<status>', '<control>', '<files>']) {
-      expect(find.text(label), findsOneWidget);
+    // All five items fit one row without wrapping (only possible unbracketed).
+    for (final label in ['chat', 'config', 'status', 'control', 'files']) {
+      expect(find.text(label), findsOneWidget,
+          reason: 'Single-row constraint; label $label must render whole');
       final text = tester.widget<Text>(find.text(label));
       expect(text.maxLines, 1,
           reason: 'Label $label must not wrap mid-word');
@@ -140,10 +142,10 @@ void main() {
     // Check that there are no render exceptions (overflow)
     final exception = tester.takeException();
     expect(exception, isNull,
-        reason: 'Should not have render overflow at 320dp with 5 items');
+        reason: 'Should not have render overflow at 320dp with 5 unbracketed items');
   });
 
-  testWidgets('pillar footer with no extra actions looks exactly as before',
+  testWidgets('pillar footer with no extra actions renders four unbracketed labels',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.lightTheme,
@@ -159,12 +161,12 @@ void main() {
     ));
 
     // Should render only four pillars
-    expect(find.text('<chat>'), findsOneWidget);
-    expect(find.text('<config>'), findsOneWidget);
-    expect(find.text('<status>'), findsOneWidget);
-    expect(find.text('<control>'), findsOneWidget);
+    expect(find.text('chat'), findsOneWidget);
+    expect(find.text('config'), findsOneWidget);
+    expect(find.text('status'), findsOneWidget);
+    expect(find.text('control'), findsOneWidget);
 
     // Should not render any extra actions
-    expect(find.text('<files>'), findsNothing);
+    expect(find.text('files'), findsNothing);
   });
 }

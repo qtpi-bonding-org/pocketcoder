@@ -44,6 +44,8 @@ class ShellFooterView extends StatelessWidget {
       };
 
   @override
-  Widget build(BuildContext context) =>
-      TerminalFooter(actions: actionsFor(footer));
+  Widget build(BuildContext context) => TerminalFooter(
+        actions: actionsFor(footer),
+        useBrackets: footer is! PillarFooter,
+      );
 }
