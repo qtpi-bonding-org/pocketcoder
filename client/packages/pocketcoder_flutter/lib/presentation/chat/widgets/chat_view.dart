@@ -10,7 +10,6 @@ import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
-import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
@@ -30,7 +29,6 @@ class ChatView extends StatefulWidget {
     this.awaitingHarnessStart = false,
     required this.isRunning,
     required this.requiresProviderReauthentication,
-    required this.modes,
     required this.config,
     required this.showMonitorAction,
     required this.monitored,
@@ -38,7 +36,6 @@ class ChatView extends StatefulWidget {
     required this.onOpen,
     required this.onSendPrompt,
     required this.onCancel,
-    required this.onSelectMode,
     required this.onSetOption,
     required this.onPermissionOptionSelected,
     required this.onElicitationRespond,
@@ -55,7 +52,6 @@ class ChatView extends StatefulWidget {
   final bool awaitingHarnessStart;
   final bool isRunning;
   final bool requiresProviderReauthentication;
-  final Map<String, dynamic>? modes;
   final Map<String, dynamic>? config;
   final bool showMonitorAction;
   final bool monitored;
@@ -63,7 +59,6 @@ class ChatView extends StatefulWidget {
   final ValueChanged<String> onOpen;
   final ValueChanged<String> onSendPrompt;
   final VoidCallback onCancel;
-  final ValueChanged<String> onSelectMode;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
   final void Function(String requestId, {String? optionId, bool cancelled})
       onPermissionOptionSelected;
@@ -283,7 +278,6 @@ class _ChatViewState extends State<ChatView> {
             ),
           ),
           PlanPanel(plan: widget.conversation.sessionState.plan),
-          ModeSwitcher(modes: widget.modes, onSelectMode: widget.onSelectMode),
           ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
           Expanded(
             child: Column(
