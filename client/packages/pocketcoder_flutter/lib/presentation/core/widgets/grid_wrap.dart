@@ -84,7 +84,7 @@ class _RenderGridWrap extends RenderBox
     RenderBox? child = firstChild;
     while (child != null) {
       list.add(child);
-      child = (child.parentData! as _GridWrapParentData).nextSibling;
+      child = (child.parentData as _GridWrapParentData).nextSibling;
     }
     return list;
   }
@@ -127,7 +127,7 @@ class _RenderGridWrap extends RenderBox
       final effectiveWidth = maxWidth.isFinite ? maxWidth : naturalRowWidth;
       var x = _rowStartX(naturalRowWidth, effectiveWidth);
       for (var i = 0; i < children.length; i++) {
-        (children[i].parentData! as _GridWrapParentData).offset =
+        (children[i].parentData as _GridWrapParentData).offset =
             Offset(x, (rowHeight - naturalSizes[i].height) / 2);
         x += naturalSizes[i].width + _spacing;
       }
@@ -169,7 +169,7 @@ class _RenderGridWrap extends RenderBox
             (maxWidth - used).clamp(0.0, double.infinity) / (row.length - 1);
         var x = 0.0;
         for (final index in row) {
-          (children[index].parentData! as _GridWrapParentData).offset =
+          (children[index].parentData as _GridWrapParentData).offset =
               Offset(x, y + (rowHeight - children[index].size.height) / 2);
           x += children[index].size.width + slack;
         }
@@ -177,7 +177,7 @@ class _RenderGridWrap extends RenderBox
         final index = row.first;
         final x = ((maxWidth - children[index].size.width) / 2)
             .clamp(0.0, double.infinity);
-        (children[index].parentData! as _GridWrapParentData).offset =
+        (children[index].parentData as _GridWrapParentData).offset =
             Offset(x, y + (rowHeight - children[index].size.height) / 2);
       }
       y += rowHeight + _runSpacing;
