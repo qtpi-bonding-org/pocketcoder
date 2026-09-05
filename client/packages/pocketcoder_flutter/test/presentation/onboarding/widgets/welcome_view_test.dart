@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/welcome_view.dart';
 
 void main() {
   testWidgets(
-      'the guided-setup suggestion renders a full-opacity outlined border; '
-      'self-host keeps the existing alpha-0.3 chip border', (tester) async {
+      'the guided-setup suggestion is emphasized (primary); self-host is '
+      'the plain default (neutral)', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,
@@ -21,28 +23,20 @@ void main() {
       ),
     );
 
-    final colors =
-        Theme.of(tester.element(find.byType(WelcomeView))).colorScheme;
-
-    final guidedButton = tester.widget<TextButton>(
+    final guidedButton = tester.widget<TerminalButton>(
       find.ancestor(
-        of: find.textContaining('HELP ME WITH SETUP'),
-        matching: find.byType(TextButton),
+        of: find.textContaining('help me with setup'),
+        matching: find.byType(TerminalButton),
       ),
     );
-    final guidedSide =
-        (guidedButton.style?.shape?.resolve({}) as RoundedRectangleBorder).side;
-    expect(guidedSide.color, colors.primary);
+    expect(guidedButton.kind, ActionKind.primary);
 
-    final selfHostButton = tester.widget<TextButton>(
+    final selfHostButton = tester.widget<TerminalButton>(
       find.ancestor(
-        of: find.textContaining("I’LL SET IT UP"),
-        matching: find.byType(TextButton),
+        of: find.textContaining('i’ll set it up'),
+        matching: find.byType(TerminalButton),
       ),
     );
-    final selfHostSide =
-        (selfHostButton.style?.shape?.resolve({}) as RoundedRectangleBorder)
-            .side;
-    expect(selfHostSide.color, colors.primary.withValues(alpha: 0.3));
+    expect(selfHostButton.kind, ActionKind.neutral);
   });
 }

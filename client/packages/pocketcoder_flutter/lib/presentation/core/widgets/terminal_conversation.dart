@@ -196,9 +196,6 @@ class TerminalPromptSuggestion extends StatelessWidget {
   final String label;
   final VoidCallback onSelected;
 
-  /// When set, routes the border/text color through emphasize() instead
-  /// of the default alpha-0.3 border. See the emphasis-states spec
-  /// (2026-08-23).
   final Emphasis? emphasis;
 
   @override
@@ -207,7 +204,9 @@ class TerminalPromptSuggestion extends StatelessWidget {
       width: double.infinity,
       child: TerminalButton(
         label: label,
-        kind: ActionKind.neutral,
+        kind: emphasis == Emphasis.outlined
+            ? ActionKind.primary
+            : ActionKind.neutral,
         onTap: onSelected,
       ),
     );
