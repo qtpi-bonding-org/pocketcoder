@@ -185,16 +185,17 @@ class _DetailRowState extends State<DetailRow> {
       needed += AppSizes.ch + _measure('[!]', TextRole.warn.style);
     }
     final value = widget._kind == _DetailRowKind.toggle
-        ? (widget._toggleValue! ? 'on' : 'off')
+        ? ((widget._toggleValue ?? false) ? 'on' : 'off')
         : widget.value;
     if (value != null) {
       needed += AppSizes.ch * 2 + _measure(value, valueStyle);
-      if (widget.trailingDetail != null) {
-        needed += AppSizes.ch + _measure(widget.trailingDetail!, labelStyle);
+      if (widget.trailingDetail case final trailingDetail?) {
+        needed += AppSizes.ch + _measure(trailingDetail, labelStyle);
       }
     }
-    if (widget.affordance != null && widget.affordance != RowAffordance.none) {
-      needed += AppSizes.ch + _measure(widget.affordance!.glyph, valueStyle);
+    if (widget.affordance case final affordance?
+        when affordance != RowAffordance.none) {
+      needed += AppSizes.ch + _measure(affordance.glyph, valueStyle);
     }
     // `trailing` is an arbitrary widget we cannot measure via TextPainter.
     // A `<copy>`-style bracket button is the common case and is wider than
@@ -220,24 +221,25 @@ class _DetailRowState extends State<DetailRow> {
 
   Widget _valueAndExtras() {
     final value = widget._kind == _DetailRowKind.toggle
-        ? (widget._toggleValue! ? 'on' : 'off')
+        ? ((widget._toggleValue ?? false) ? 'on' : 'off')
         : widget.value;
     final affordance = widget.affordance;
+    final trailing = widget.trailing;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (value != null) Flexible(child: _value(value)),
-        if (widget.trailingDetail != null) ...[
+        if (widget.trailingDetail case final trailingDetail?) ...[
           SizedBox(width: AppSizes.ch),
-          _text(widget.trailingDetail!, TextRole.label),
+          _text(trailingDetail, TextRole.label),
         ],
         if (affordance != null && affordance != RowAffordance.none) ...[
           SizedBox(width: AppSizes.ch),
           _text(affordance.glyph, _valueRole),
         ],
-        if (widget.trailing != null) ...[
+        if (trailing != null) ...[
           SizedBox(width: AppSizes.ch),
-          widget.trailing!
+          trailing,
         ],
       ],
     );
@@ -287,10 +289,11 @@ class _DetailRowState extends State<DetailRow> {
               child: content,
             ),
           );
+          final onChanged = widget._onChanged;
           return GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: widget._kind == _DetailRowKind.toggle
-                ? () => widget._onChanged!(!widget._toggleValue!)
+            onTap: widget._kind == _DetailRowKind.toggle && onChanged != null
+                ? () => onChanged(!(widget._toggleValue ?? false))
                 : widget.onTap,
             onTapDown: (_) => setState(() => _pressed = true),
             onTapUp: (_) => setState(() => _pressed = false),
