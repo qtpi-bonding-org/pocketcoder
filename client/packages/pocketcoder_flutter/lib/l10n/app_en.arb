@@ -664,7 +664,7 @@
   "pocketCoderProgressWaiting": "waiting",
   "pocketCoderProgressActive": "active",
   "pocketCoderProgressComplete": "done",
-  "pocketCoderProgressFailed": "failed",
+  "pocketCoderProgressFailed": "FAILED",
   "pocketCoderProgressInitializing": "initializing",
   "deploymentStepCreateInstance": "Creating server",
   "deploymentStepPlanLookup": "Looking up plan details",
