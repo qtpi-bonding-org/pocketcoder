@@ -24,14 +24,9 @@ extension _TerminalActionExt on TerminalAction {
 class TerminalFooter extends StatelessWidget {
   final List<TerminalAction> actions;
 
-  /// false: plain labels (PillarFooter; reverse-video is the signal).
-  /// true: bracketed labels (default; other footers lack reverse-video).
-  final bool useBrackets;
-
   const TerminalFooter({
     super.key,
     required this.actions,
-    this.useBrackets = true,
   });
 
   @override
@@ -53,9 +48,11 @@ class TerminalFooter extends StatelessWidget {
           ),
         );
       }
+      // The page footer is a persistent status bar, not a row of discrete
+      // buttons: labels stay bare and reverse-video carries the state.
       return Expanded(
           child: BiosActionButton(
-              action: action.asStripItem(bracketed: useBrackets)));
+              action: action.asStripItem(bracketed: false)));
     }).toList();
 
     return Container(

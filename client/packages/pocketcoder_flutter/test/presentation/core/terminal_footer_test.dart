@@ -21,7 +21,7 @@ void main() {
       ),
     );
 
-    expect(find.text('<chat>'), findsOneWidget);
+    expect(find.text('chat'), findsOneWidget);
     final container = tester.widget<Container>(
       find
           .descendant(
@@ -73,8 +73,8 @@ void main() {
       ),
     );
 
-    expect(find.text('<connect>'), findsOneWidget);
-    final text = tester.widget<Text>(find.text('<connect>'));
+    expect(find.text('connect'), findsOneWidget);
+    final text = tester.widget<Text>(find.text('connect'));
     expect(text.style?.color, ActionKind.primary.role.color);
 
     final container = tester.widget<Container>(

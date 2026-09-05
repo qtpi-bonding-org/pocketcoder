@@ -77,8 +77,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    // The shell brackets every footer label, so the rendered text is '<watch>'.
-    await tester.tap(find.text('<watch>'));
+    await tester.tap(find.text('watch'));
     await tester.pump();
 
     expect(toggled, isTrue);
