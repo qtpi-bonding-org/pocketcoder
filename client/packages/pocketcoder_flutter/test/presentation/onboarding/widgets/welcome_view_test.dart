@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/welcome_view.dart';
 
 void main() {
@@ -23,20 +22,20 @@ void main() {
       ),
     );
 
-    final guidedButton = tester.widget<TerminalButton>(
+    final guidedSuggestion = tester.widget<TerminalPromptSuggestion>(
       find.ancestor(
         of: find.textContaining('help me with setup'),
-        matching: find.byType(TerminalButton),
+        matching: find.byType(TerminalPromptSuggestion),
       ),
     );
-    expect(guidedButton.kind, ActionKind.primary);
+    expect(guidedSuggestion.emphasis, Emphasis.outlined);
 
-    final selfHostButton = tester.widget<TerminalButton>(
+    final selfHostSuggestion = tester.widget<TerminalPromptSuggestion>(
       find.ancestor(
-        of: find.textContaining('i’ll set it up'),
-        matching: find.byType(TerminalButton),
+        of: find.textContaining("I'll set it up"),
+        matching: find.byType(TerminalPromptSuggestion),
       ),
     );
-    expect(selfHostButton.kind, ActionKind.neutral);
+    expect(selfHostSuggestion.emphasis, isNot(Emphasis.outlined));
   });
 }
