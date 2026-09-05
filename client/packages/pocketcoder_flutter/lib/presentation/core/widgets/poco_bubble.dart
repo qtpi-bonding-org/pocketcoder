@@ -44,17 +44,14 @@ class PocoBubble extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (showFace) ...[
-                  SizedBox(
-                    height: (pocoSize ?? AppSizes.fontPoco) * 2,
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: PocoFace(
-                        key: ValueKey(sequence),
-                        fontSize: pocoSize ?? AppSizes.fontPoco,
-                        sequence: sequence,
-                        posture: posture,
-                        mood: mood,
-                      ),
+                  Align(
+                    alignment: Alignment.center,
+                    child: PocoFace(
+                      key: ValueKey(sequence),
+                      fontSize: pocoSize ?? AppSizes.fontPoco,
+                      sequence: sequence,
+                      posture: posture,
+                      mood: mood,
                     ),
                   ),
                   VSpace.x1,

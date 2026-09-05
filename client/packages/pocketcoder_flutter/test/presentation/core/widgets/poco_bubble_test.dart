@@ -27,4 +27,25 @@ void main() {
           reason: 'poco is never red -- he is neither destruction nor failure');
     }
   });
+
+  testWidgets('the face is never clipped: it gets its full frame height',
+      (tester) async {
+    // AsciiFace draws a three-line frame at height 1.0, so anything that
+    // reserves less than 3x the font size cuts off the bottom border.
+    const size = 24.0;
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+        body: PocoBubble(
+          posture: PocoPosture.armored,
+          message: 'hello',
+          pocoSize: size,
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    final face = tester.getSize(find.byType(PocoFace));
+    expect(face.height, greaterThanOrEqualTo(size * 3));
+    expect(tester.takeException(), isNull);
+  });
 }
