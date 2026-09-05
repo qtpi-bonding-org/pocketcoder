@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/app_sizes.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
@@ -61,6 +62,10 @@ class PocketCoderShell extends StatelessWidget {
   final String? backLabel;
   final String? backFallbackRoute;
   final EdgeInsets? padding;
+  // A ListView body needs default false: wrapping it in a scroll region
+  // hands it unbounded height and breaks its virtualisation.
+  final bool scrollable;
+  final EdgeInsets? scrollPadding;
 
   const PocketCoderShell({
     super.key,
@@ -70,6 +75,8 @@ class PocketCoderShell extends StatelessWidget {
     this.backLabel,
     this.backFallbackRoute,
     this.padding,
+    this.scrollable = false,
+    this.scrollPadding,
   });
 
   @override
@@ -108,8 +115,7 @@ class PocketCoderShell extends StatelessWidget {
       );
     } else {
       footerActions = <TerminalAction>[
-        if (showBack)
-          TerminalAction(label: backLabel ?? 'back', onTap: goBack),
+        if (showBack) TerminalAction(label: backLabel ?? 'back', onTap: goBack),
         ...ShellFooterView.actionsFor(effectiveFooter,
             configureBadge: releaseState.shouldShowNotice),
       ];
@@ -125,8 +131,27 @@ class PocketCoderShell extends StatelessWidget {
         // the middle of a short viewport. Align only loosens the minimum
         // constraints it hands down, so a body that fills (Expanded,
         // ListView) is unaffected -- it still fills exactly as before.
-        Expanded(child: Align(alignment: Alignment.topLeft, child: body)),
+        Expanded(
+            child: scrollable
+                ? ContentScrollRegion(padding: scrollPadding, child: body)
+                : Align(alignment: Alignment.topLeft, child: body)),
       ]),
     );
   }
+}
+
+class ContentScrollRegion extends StatelessWidget {
+  const ContentScrollRegion({super.key, required this.child, this.padding});
+
+  final Widget child;
+  final EdgeInsets? padding;
+
+  @override
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+          child: SingleChildScrollView(padding: padding, child: child),
+        ),
+      );
 }
