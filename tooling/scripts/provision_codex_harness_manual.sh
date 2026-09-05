@@ -41,5 +41,7 @@ docker run -d --name "$CONTAINER_NAME" \
   pocketcoder-harness-codex:1.1.9 --cmd codex-acp --port 3000
 docker network connect pocketcoder-harness-egress "$CONTAINER_NAME"
 
+: > /tmp/codex_secret.txt
+chmod 600 /tmp/codex_secret.txt
 echo "$SECRET" > /tmp/codex_secret.txt
 echo "codex harness container started: $CONTAINER_NAME"

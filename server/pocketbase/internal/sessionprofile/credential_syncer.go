@@ -24,6 +24,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -103,9 +104,11 @@ func (OpencodeAuthFileSyncer) Sync(ctx context.Context, app core.App, instance *
 	// HOME -- warming it here, once per credential, writes the result to
 	// volumes.Auth (persistent, survives container restarts) so the
 	// coordinator's later SetSessionConfigOption("model", ...) doesn't
-	// race a catalog sync that's still in flight.
+	// race a catalog sync that's still in flight. Best-effort: a failure
+	// here must not block the credential write/restart that already
+	// succeeded, since setModelWithRetry still covers a cold cache live.
 	if err := warmOpencodeModelCache(ctx, client, image, volumes.Auth, providerID); err != nil {
-		return fmt.Errorf("warm opencode model cache: %w", err)
+		log.Printf("[sessionprofile] warm opencode model cache for instance %s: %v", instance.Id, err)
 	}
 	if err := hooks.RestartContainer(fresh.GetString("container_name"), 30*time.Second); err != nil {
 		return fmt.Errorf("restart opencode container: %w", err)
@@ -118,6 +121,9 @@ func (OpencodeAuthFileSyncer) Sync(ctx context.Context, app core.App, instance *
 	}
 	if err := harnessRec.UnmarshalJSONField("launch_template", &launch); err != nil {
 		return fmt.Errorf("parse launch_template.port: %w", err)
+	}
+	if launch.Port == 0 {
+		return fmt.Errorf("harness %s launch_template has no port", harnessRec.Id)
 	}
 	if err := waitForPort(ctx, fresh.GetString("container_name"), launch.Port, 20*time.Second); err != nil {
 		return fmt.Errorf("opencode container did not come back up after restart: %w", err)
@@ -181,10 +187,10 @@ func warmOpencodeModelCache(ctx context.Context, client *dockerapi.Client, image
 		return err
 	}
 	if err := client.Start(ctx, containerName); err != nil {
-		_ = client.Remove(ctx, containerName)
+		_ = client.Remove(context.WithoutCancel(ctx), containerName)
 		return err
 	}
-	defer func() { _ = client.Remove(ctx, containerName) }()
+	defer func() { _ = client.Remove(context.WithoutCancel(ctx), containerName) }()
 	deadline := time.Now().Add(60 * time.Second)
 	for time.Now().Before(deadline) {
 		insp, err := client.Inspect(ctx, containerName)
@@ -194,7 +200,11 @@ func warmOpencodeModelCache(ctx context.Context, client *dockerapi.Client, image
 		if !insp.State.Running {
 			return nil
 		}
-		time.Sleep(300 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(300 * time.Millisecond):
+		}
 	}
 	return fmt.Errorf("model-warm helper container did not exit within 60s")
 }
@@ -232,10 +242,10 @@ fs.chmodSync(path, 0o600);
 		return err
 	}
 	if err := client.Start(ctx, containerName); err != nil {
-		_ = client.Remove(ctx, containerName)
+		_ = client.Remove(context.WithoutCancel(ctx), containerName)
 		return err
 	}
-	defer func() { _ = client.Remove(ctx, containerName) }()
+	defer func() { _ = client.Remove(context.WithoutCancel(ctx), containerName) }()
 	deadline := time.Now().Add(15 * time.Second)
 	for time.Now().Before(deadline) {
 		insp, err := client.Inspect(ctx, containerName)
