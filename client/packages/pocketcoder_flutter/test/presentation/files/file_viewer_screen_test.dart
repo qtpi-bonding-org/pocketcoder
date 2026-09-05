@@ -62,7 +62,7 @@ void main() {
         _wrap(FileViewerScreen(path: 'data.bin', repository: repo)));
     await tester.pumpAndSettle();
 
-    expect(find.text("CAN'T PREVIEW THIS FILE TYPE"), findsOneWidget);
+    expect(find.text("can't preview this file type"), findsOneWidget);
   });
 
   testWidgets('shows a too-large message instead of decoding a huge file',
@@ -74,6 +74,6 @@ void main() {
         _wrap(FileViewerScreen(path: 'huge.log', repository: repo)));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('TOO LARGE'), findsOneWidget);
+    expect(find.textContaining('too large'), findsOneWidget);
   });
 }

@@ -103,6 +103,6 @@ void main() {
     await tester.pumpWidget(buildTestable());
     await tester.pumpAndSettle();
 
-    expect(find.text('NO FILES'), findsOneWidget);
+    expect(find.text('no files'), findsOneWidget);
   });
 }
