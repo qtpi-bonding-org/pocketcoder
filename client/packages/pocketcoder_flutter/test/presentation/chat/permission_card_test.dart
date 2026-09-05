@@ -162,9 +162,9 @@ void main() {
         await _settle(tester);
 
         expect(find.text('run shell'), findsOneWidget);
-        expect(find.text('<allow once>'), findsOneWidget);
+        expect(find.text('<Allow Once>'), findsOneWidget);
 
-        await tester.tap(find.text('<allow once>').last);
+        await tester.tap(find.text('<Allow Once>').last);
         await _settle(tester);
 
         expect(repo.respondPermissionCalls, hasLength(1));
@@ -256,9 +256,9 @@ void main() {
       await _settle(tester);
 
       final allowButton = tester.widget<TerminalButton>(
-          find.widgetWithText(TerminalButton, '<allow once>'));
+          find.widgetWithText(TerminalButton, '<Allow Once>'));
       final rejectButton = tester.widget<TerminalButton>(
-          find.widgetWithText(TerminalButton, '<reject once>'));
+          find.widgetWithText(TerminalButton, '<Reject Once>'));
 
       expect(allowButton.kind, isNot(rejectButton.kind));
       expect(rejectButton.kind, ActionKind.refusal);

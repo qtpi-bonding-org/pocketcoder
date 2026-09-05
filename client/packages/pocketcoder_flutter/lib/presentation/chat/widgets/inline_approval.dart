@@ -28,14 +28,13 @@ class InlineApproval extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Hardcoded 'DENY', not context.l10n.actionDeny: this widget's own test
-    // (per the plan's brief) mounts InlineApproval without AppLocalizations
-    // delegates configured, so any context.l10n call here throws. Matches
-    // the l10n value's current English text exactly.
+    // Hardcoded 'deny', not context.l10n.actionDeny: InlineApproval can be
+    // mounted without AppLocalizations delegates configured, so a
+    // context.l10n call here would throw.
     final actions = options.isEmpty
         ? [
             TerminalActionSpec(
-              'DENY',
+              'deny',
               ActionKind.refusal,
               () => onSelect?.call(requestId, cancelled: true),
             ),
