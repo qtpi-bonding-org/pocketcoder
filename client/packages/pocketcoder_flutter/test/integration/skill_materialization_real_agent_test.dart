@@ -69,11 +69,14 @@ void main() {
         reason: 'provider "$realProviderId" must exist in the catalog');
     final providerId = providers.first.id;
 
-    // "$realProviderId/auto" is recognized by every fan-out harness's own
-    // model catalog; a plain free-tier name is not guaranteed to be.
-    var models = await client
-        .collection('models')
-        .getFullList(filter: "provider = '$providerId' && name = '$realProviderId/auto'");
+    // opencode needs "openrouter/openrouter/auto" for this specific model
+    // (OpenRouter's own upstream id for it is itself "openrouter/auto"), so
+    // use the free-tier fallback below instead.
+    var models = cliId == 'opencode'
+        ? <pocketbase.RecordModel>[]
+        : await client
+            .collection('models')
+            .getFullList(filter: "provider = '$providerId' && name = '$realProviderId/auto'");
     if (models.isEmpty) {
       models = await client
           .collection('models')
@@ -478,9 +481,6 @@ void main() {
         await checkSkillProofForApiKeyHarness('opencode');
       },
       timeout: const Timeout(Duration(minutes: 3)),
-      skip: 'opencode harness-adapter drops the ACP connection on reuse '
-          'after the first prompt (per-connection subprocess lifecycle bug, '
-          'unrelated to skill materialization) -- unskip once that lands',
     );
 
     test(
