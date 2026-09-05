@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dar
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'adapters/notification_settings_adapter.dart';
@@ -66,7 +67,7 @@ class NotificationSettingsView extends StatelessWidget {
             title: context.l10n.notificationSettingsScreenTitle.toLowerCase(),
             child: switch (state.status) {
               UiFlowStatus.loading =>
-                const Center(child: CircularProgressIndicator()),
+                const Center(child: TerminalSpinner()),
               UiFlowStatus.failure => Center(
                   child: TerminalText(safeErrorMessage(state.error),
                       role: TextRole.warn)),
