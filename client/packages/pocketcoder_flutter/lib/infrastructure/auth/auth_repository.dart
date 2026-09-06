@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.d
 import 'package:pocketcoder_flutter/infrastructure/core/auth_aware_http_client.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 
 @LazySingleton(as: IAuthRepository)
 class AuthRepository implements IAuthRepository {
@@ -130,29 +131,50 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<AuthRefreshResult> refreshToken() async {
+    AppLogger.debug('AuthRepository.refreshToken start', {
+      'baseUrl': _pocketBase.baseURL,
+    });
     try {
       // Deliberate exception: this is the auth refresh operation itself and
       // necessarily runs before DAO session guards can apply.
       await _pocketBase.collection(Collections.users).authRefresh(
         headers: {AuthAwareHttpClient.skipRefreshHeader: '1'},
       );
+      AppLogger.debug('AuthRepository.refreshToken succeeded');
       return AuthRefreshResult.refreshed;
-    } on ClientException catch (error) {
+    } on ClientException catch (error, stackTrace) {
+      AppLogger.warning('AuthRepository.refreshToken ClientException', {
+        'statusCode': error.statusCode,
+        'error': error.toString(),
+        'originalError': error.originalError?.toString(),
+        'originalErrorType': error.originalError?.runtimeType.toString(),
+        'stackTrace': stackTrace.toString(),
+      });
       if (error.statusCode == 401 || error.statusCode == 403) {
         // PocketBase does not clear the store for a failed auth-refresh.
         // Explicitly clear both the in-memory and persisted credentials only
         // when the server has definitively rejected this session.
         _pocketBase.authStore.clear();
         await _authStoreConfig.clear();
+        AppLogger.warning(
+            'AuthRepository.refreshToken -> invalidSession (401/403)');
         return AuthRefreshResult.invalidSession;
       }
 
       // A timeout, DNS failure, or 5xx response says nothing about whether
       // the user's locally persisted identity is still valid.
+      AppLogger.warning(
+          'AuthRepository.refreshToken -> temporarilyUnavailable (ClientException, '
+          'statusCode=${error.statusCode})');
       return AuthRefreshResult.temporarilyUnavailable;
-    } catch (_) {
+    } catch (error, stackTrace) {
       // Unknown client/decoding failures are still not proof that the session
       // is invalid. Preserve the credential and let the app recover later.
+      AppLogger.warning('AuthRepository.refreshToken unknown error', {
+        'errorType': error.runtimeType.toString(),
+        'error': error.toString(),
+        'stackTrace': stackTrace.toString(),
+      });
       return AuthRefreshResult.temporarilyUnavailable;
     }
   }

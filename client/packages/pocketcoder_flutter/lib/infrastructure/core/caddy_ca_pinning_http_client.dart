@@ -108,18 +108,50 @@ final class CaddyCaPinningHttpClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    logDebug('CaddyCaPinningHttpClient: send',
-        {'method': request.method, 'url': request.url.toString()});
+    logDebug('CaddyCaPinningHttpClient: send', {
+      'method': request.method,
+      'url': request.url.toString(),
+      'hasPin': _pinnedPem != null,
+      'hasRecovery': _recovery != null,
+    });
     try {
-      return await _delegate.send(request);
-    } on Object catch (error) {
+      final response = await _delegate.send(request);
+      logDebug('CaddyCaPinningHttpClient: response', {
+        'url': request.url.toString(),
+        'statusCode': response.statusCode,
+      });
+      return response;
+    } on Object catch (error, stackTrace) {
       final recovery = _recovery;
       final replay = request is http.Request ? _cloneRequest(request) : null;
-      if (recovery == null || replay == null || !_isCertificateFailure(error)) {
+      final isCertFailure = _isCertificateFailure(error);
+      logDebug('CaddyCaPinningHttpClient: send threw', {
+        'url': request.url.toString(),
+        'errorType': error.runtimeType.toString(),
+        'error': error.toString(),
+        'isCertificateFailure': isCertFailure,
+        'hasRecovery': recovery != null,
+        'isReplayable': replay != null,
+        'stackTrace': stackTrace.toString(),
+      });
+      if (recovery == null || replay == null || !isCertFailure) {
         rethrow;
       }
+      // `recovered` alone can't drive the retry: an unchanged fingerprint
+      // (recovered == false) still means updatePin() just installed a pin
+      // the live client never had before, which alone justifies a retry.
+      final hadPinBefore = _pinnedPem != null;
       final recovered = await recovery.recoverIfStale(requestUrl: request.url);
-      if (!recovered) rethrow;
+      final pinNowPresent = _pinnedPem != null;
+      final shouldRetry = recovered || (!hadPinBefore && pinNowPresent);
+      logDebug('CaddyCaPinningHttpClient: recoverIfStale result', {
+        'url': request.url.toString(),
+        'recovered': recovered,
+        'hadPinBefore': hadPinBefore,
+        'pinNowPresent': pinNowPresent,
+        'shouldRetry': shouldRetry,
+      });
+      if (!shouldRetry) rethrow;
       logDebug('CaddyCaPinningHttpClient: retrying after CA-pin recovery',
           {'url': request.url.toString()});
       return _delegate.send(replay);
