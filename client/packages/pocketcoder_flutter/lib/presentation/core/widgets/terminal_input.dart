@@ -156,6 +156,7 @@ class _TerminalInputState extends State<TerminalInput> {
       fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
       fontWeight: AppFonts.heavy,
+      height: 1.4,
     );
     return Container(
       padding: EdgeInsets.symmetric(
@@ -189,6 +190,8 @@ class _TerminalInputState extends State<TerminalInput> {
               color: colors.secondary,
               fontFamily: AppFonts.family,
               package: 'pocketcoder_flutter',
+              fontWeight: AppFonts.medium,
+              height: 1.4,
             ),
             // Flutter's caret is a thin bar with a blink we cannot retime, so
             // a block cursor has to be built: widen it, and drive its colour
