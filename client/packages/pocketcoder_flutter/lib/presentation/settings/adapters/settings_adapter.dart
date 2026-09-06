@@ -7,11 +7,15 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart';
 import 'package:pocketcoder_flutter/application/mcp/mcp_state.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
+import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/settings_view.dart';
 
@@ -38,6 +42,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     final state = adapter.cubitField(_selectState);
     final authCubit = context.read<AuthCubit>();
     final mcpCubit = context.read<McpCubit>();
+    final localSettings = GetIt.instance<ILocalSettingsService>();
     return UiFlowListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state.isSuccess &&
@@ -51,40 +56,57 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
         builder: (context, _, __) => StreamBuilder<McpState>(
           initialData: mcpCubit.state,
           stream: mcpCubit.stream,
-          builder: (context, snapshot) => SettingsView(
-            hasPendingMcp: _hasPendingMcp(snapshot.data ?? mcpCubit.state),
-            isPro: GetIt.instance<IAppEdition>().isPro,
-            onNavigate: (routeKey) => _navigateTo(context, routeKey),
-            onLogout: () => _confirmLogout(context, authCubit),
-            onFactoryReset: () => _confirmFactoryReset(context, authCubit),
-            onDeleteProData: () => _confirmDeleteProData(context, authCubit),
-            onReportAiContent: () => launchUrl(_reportAiContentUri),
+          builder: (context, mcpSnapshot) => StreamBuilder<bool>(
+            initialData: localSettings.hapticsEnabledSync,
+            stream: localSettings.watchHapticsEnabled(),
+            builder: (context, hapticsSnapshot) => SettingsView(
+              hasPendingMcp: _hasPendingMcp(mcpSnapshot.data ?? mcpCubit.state),
+              isPro: GetIt.instance<IAppEdition>().isPro,
+              hapticsEnabled:
+                  hapticsSnapshot.data ?? localSettings.hapticsEnabledSync,
+              onNavigate: (routeKey) => _navigateTo(context, routeKey),
+              onLogout: () => _confirmLogout(context, authCubit),
+              onFactoryReset: () => _confirmFactoryReset(context, authCubit),
+              onDeleteProData: () => _confirmDeleteProData(context, authCubit),
+              onReportAiContent: () => _reportAiContent(context),
+              onHapticsChanged: localSettings.setHapticsEnabled,
+            ),
           ),
         ),
       ),
     );
   }
 
+  Future<void> _reportAiContent(BuildContext context) async {
+    final opened = await launchUrl(_reportAiContentUri);
+    if (!opened && context.mounted) {
+      VimToast.show(
+        context,
+        context.l10n.errorCouldNotOpenMailApp,
+        color: context.terminalColors.warning,
+      );
+    }
+  }
+
   void _confirmLogout(BuildContext context, AuthCubit cubit) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: context.l10n.settingsLogoutConfirmTitle,
+        title: context.l10n.settingsLogoutConfirmTitle.toLowerCase(),
         content: Text(context.l10n.settingsLogoutConfirmBody),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.settingsLogoutCancel),
+          TerminalButton(
+            label: context.l10n.settingsLogoutCancel,
+            kind: ActionKind.refusal,
+            onTap: () => Navigator.of(dialogContext).pop(),
           ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: context.terminalColors.warning,
-            ),
-            onPressed: () {
+          TerminalButton(
+            label: context.l10n.settingsLogoutConfirm,
+            kind: ActionKind.primary,
+            onTap: () {
               Navigator.of(dialogContext).pop();
               cubit.logout();
             },
-            child: Text(context.l10n.settingsLogoutConfirm),
           ),
         ],
       ),
@@ -95,22 +117,21 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: context.l10n.settingsFactoryResetConfirmTitle,
+        title: context.l10n.settingsFactoryResetConfirmTitle.toLowerCase(),
         content: Text(context.l10n.settingsFactoryResetConfirmBody),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.settingsFactoryResetCancel),
+          TerminalButton(
+            label: context.l10n.settingsFactoryResetCancel,
+            kind: ActionKind.refusal,
+            onTap: () => Navigator.of(dialogContext).pop(),
           ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: context.terminalColors.danger,
-            ),
-            onPressed: () {
+          TerminalButton(
+            label: context.l10n.settingsFactoryResetConfirm,
+            kind: ActionKind.destructive,
+            onTap: () {
               Navigator.of(dialogContext).pop();
               cubit.factoryReset();
             },
-            child: Text(context.l10n.settingsFactoryResetConfirm),
           ),
         ],
       ),
@@ -121,22 +142,21 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: context.l10n.settingsDeleteProDataConfirmTitle,
+        title: context.l10n.settingsDeleteProDataConfirmTitle.toLowerCase(),
         content: Text(context.l10n.settingsDeleteProDataConfirmBody),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(context.l10n.settingsDeleteProDataCancel),
+          TerminalButton(
+            label: context.l10n.settingsDeleteProDataCancel,
+            kind: ActionKind.refusal,
+            onTap: () => Navigator.of(dialogContext).pop(),
           ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: context.terminalColors.danger,
-            ),
-            onPressed: () {
+          TerminalButton(
+            label: context.l10n.settingsDeleteProDataConfirm,
+            kind: ActionKind.destructive,
+            onTap: () {
               Navigator.of(dialogContext).pop();
               cubit.deleteProData();
             },
-            child: Text(context.l10n.settingsDeleteProDataConfirm),
           ),
         ],
       ),
@@ -149,15 +169,15 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
       'configureToolPermissions' => AppRoutes.configureToolPermissions,
       'configureMcp' => AppRoutes.configureMcp,
       'configureSkills' => AppRoutes.configureSkills,
-      'configureSystemChecks' => AppRoutes.configureSystemChecks,
+      'statusSystemChecks' => AppRoutes.statusSystemChecks,
       'configurePaywall' => AppRoutes.configurePaywall,
-      'configureMemory' => AppRoutes.configureMemory,
-      'configurePocketbase' => AppRoutes.configurePocketbase,
+      'statusMemory' => AppRoutes.statusMemory,
+      'statusPocketbase' => AppRoutes.statusPocketbase,
       'configureLlm' => AppRoutes.configureLlm,
       'configureHarnessAuth' => AppRoutes.configureHarnessAuth,
       'configureScheduler' => AppRoutes.configureScheduler,
       'configureNotifications' => AppRoutes.configureNotifications,
-      'configureErrors' => AppRoutes.configureErrors,
+      'statusErrors' => AppRoutes.statusErrors,
       _ => null,
     };
     if (route != null) context.push(route);

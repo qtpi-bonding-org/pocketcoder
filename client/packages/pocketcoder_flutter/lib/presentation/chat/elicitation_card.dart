@@ -1,3 +1,5 @@
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 // ElicitationCard renders a pending ACP form inline in the message timeline.
 // It is Cubit-free: the adapter owns submission side effects and supplies the
 // serialized response callback.
@@ -7,6 +9,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/agent/elicitation_response.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class ElicitationCard extends StatefulWidget {
   const ElicitationCard({
@@ -83,118 +86,85 @@ class _ElicitationCardState extends State<ElicitationCard> {
     final elicitationId = widget.item.requestId;
     final fields = properties?.entries.toList() ?? const [];
 
-    return Container(
-      margin: EdgeInsets.all(AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space * 2),
-      decoration: BoxDecoration(
-        color: colors.secondary.withValues(alpha: 0.05),
-        border: Border.all(
-          color: colors.secondary.withValues(alpha: 0.3),
-          width: AppSizes.borderWidth,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TerminalText(
+          context.l10n.chatElicitationFormLabel,
+          role: TextRole.body,
         ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'FORM',
-                style: TextStyle(
-                  color: colors.secondary,
-                  fontSize: AppSizes.fontTiny,
-                  fontWeight: AppFonts.heavy,
-                  letterSpacing: 2,
-                ),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: Text(
-                  context.l10n.chatElicitationRequest,
-                  style: TextStyle(
-                    color: colors.secondary,
-                    fontSize: AppSizes.fontTiny,
-                    fontWeight: AppFonts.heavy,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ],
+        TerminalText(
+          context.l10n.chatElicitationRequest,
+          role: TextRole.label,
+        ),
+        if (message != null && message.isNotEmpty)
+          Text(
+            message,
+            style: TextStyle(
+              color: colors.secondary,
+              fontFamily: AppFonts.family,
+            ),
           ),
-          if (message != null && message.isNotEmpty) ...[
-            VSpace.x2,
-            Text(
-              message,
-              style: TextStyle(
-                color: colors.secondary,
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontStandard,
-              ),
+        if (elicitationId.isNotEmpty) ...[
+          VSpace.x1,
+          Text(
+            '[$elicitationId]',
+            style: TextStyle(
+              color: colors.secondary.withValues(alpha: 0.5),
             ),
-          ],
-          if (elicitationId.isNotEmpty) ...[
-            VSpace.x1,
-            Text(
-              '[$elicitationId]',
-              style: TextStyle(
-                color: colors.secondary.withValues(alpha: 0.5),
-                fontSize: AppSizes.fontMini,
-              ),
-            ),
-          ],
-          VSpace.x3,
-          for (final entry in fields) ...[
-            _buildField(
-              context,
-              name: entry.key,
-              spec: entry.value is Map
-                  ? Map<String, dynamic>.from(entry.value as Map)
-                  : const <String, dynamic>{},
-            ),
-            VSpace.x2,
-          ],
-          if (fields.isEmpty)
-            Text(
-              context.l10n.chatNoFieldsRequested,
-              style: TextStyle(
-                color: colors.onSurface.withValues(alpha: 0.4),
-                fontSize: AppSizes.fontMini,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          VSpace.x2,
-          Row(
-            children: [
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.actionCancel,
-                  isPrimary: false,
-                  onTap: () => _submit(context, ElicitationResponse.cancel()),
-                ),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.chatDecline,
-                  isPrimary: false,
-                  onTap: () => _submit(context, ElicitationResponse.decline()),
-                ),
-              ),
-              HSpace.x2,
-              Expanded(
-                child: TerminalButton(
-                  label: context.l10n.chatSubmit,
-                  onTap: () => _submit(
-                    context,
-                    ElicitationResponse.accept(_collectValues(properties)),
-                  ),
-                ),
-              ),
-            ],
           ),
         ],
-      ),
+        VSpace.x3,
+        for (final entry in fields) ...[
+          _buildField(
+            context,
+            name: entry.key,
+            spec: entry.value is Map
+                ? Map<String, dynamic>.from(entry.value as Map)
+                : const <String, dynamic>{},
+          ),
+          VSpace.x2,
+        ],
+        if (fields.isEmpty)
+          Text(
+            context.l10n.chatNoFieldsRequested,
+            style: TextStyle(
+              color: colors.onSurface.withValues(alpha: 0.4),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        VSpace.x2,
+        Row(
+          children: [
+            Expanded(
+              child: TerminalButton(
+                label: context.l10n.actionCancel,
+                kind: ActionKind.neutral,
+                onTap: () => _submit(context, ElicitationResponse.cancel()),
+              ),
+            ),
+            HSpace.x2,
+            Expanded(
+              child: TerminalButton(
+                label: context.l10n.chatDecline,
+                kind: ActionKind.neutral,
+                onTap: () => _submit(context, ElicitationResponse.decline()),
+              ),
+            ),
+            HSpace.x2,
+            Expanded(
+              child: TerminalButton(
+                label: context.l10n.chatSubmit,
+                onTap: () => _submit(
+                  context,
+                  ElicitationResponse.accept(_collectValues(properties)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -225,11 +195,10 @@ class _ElicitationCardState extends State<ElicitationCard> {
             HSpace.x1,
             Expanded(
               child: Text(
-                title.toUpperCase(),
+                title,
                 style: TextStyle(
                   color: colors.onSurface,
-                  fontFamily: AppFonts.bodyFamily,
-                  fontSize: AppSizes.fontStandard,
+                  fontFamily: AppFonts.family,
                 ),
               ),
             ),
@@ -248,14 +217,13 @@ class _ElicitationCardState extends State<ElicitationCard> {
             signed: true,
           ),
           decoration: InputDecoration(
-            labelText: title.toUpperCase(),
+            labelText: title,
             isDense: true,
             border: const OutlineInputBorder(),
           ),
           style: TextStyle(
             color: colors.onSurface,
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontStandard,
+            fontFamily: AppFonts.family,
           ),
         );
       case 'string':
@@ -267,14 +235,13 @@ class _ElicitationCardState extends State<ElicitationCard> {
         return TextField(
           controller: controller,
           decoration: InputDecoration(
-            labelText: title.toUpperCase(),
+            labelText: title,
             isDense: true,
             border: const OutlineInputBorder(),
           ),
           style: TextStyle(
             color: colors.onSurface,
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontStandard,
+            fontFamily: AppFonts.family,
           ),
         );
     }

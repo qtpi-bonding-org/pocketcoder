@@ -23,7 +23,13 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:ag_ui/ag_ui.dart'
-    show RunErrorEvent, RunFinishedEvent, RunStartedEvent, TextMessageContentEvent, TextMessageRole, TextMessageStartEvent;
+    show
+        RunErrorEvent,
+        RunFinishedEvent,
+        RunStartedEvent,
+        TextMessageContentEvent,
+        TextMessageRole,
+        TextMessageStartEvent;
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketbase/pocketbase.dart' as pocketbase;
@@ -36,15 +42,15 @@ void main() {
   final email = Platform.environment['API_TEST_EMAIL'];
   final password = Platform.environment['API_TEST_PASSWORD'];
   final realApiKey = Platform.environment['REAL_PROVIDER_API_KEY'];
-  final realProviderId = Platform.environment['REAL_PROVIDER_ID'] ?? 'openrouter';
+  final realProviderId =
+      Platform.environment['REAL_PROVIDER_ID'] ?? 'openrouter';
 
   test(
     'goose: harness-auth (none mode) with a real key -> chat -> first prompt '
     'gets a genuine assistant reply',
     () async {
       if (email == null || password == null) {
-        markTestSkipped(
-            'API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
+        markTestSkipped('API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
             'tests/compose/api/run.sh, not directly');
         return;
       }
@@ -61,8 +67,9 @@ void main() {
       final userId = client.authStore.record!.id;
       final token = client.authStore.token;
 
-      final harnesses =
-          await client.collection('harnesses').getFullList(filter: "cli_id = 'goose'");
+      final harnesses = await client
+          .collection('harnesses')
+          .getFullList(filter: "cli_id = 'goose'");
       expect(harnesses, isNotEmpty, reason: 'goose harness must be seeded');
       final harnessId = harnesses.first.id;
 
@@ -84,20 +91,25 @@ void main() {
       // (owner, provider) is unique -- replace any leftover key from a
       // previous run, matching how the real onboarding flow overwrites an
       // existing key rather than erroring.
-      final existingKeys = await client.collection('provider_api_keys').getFullList(
-          filter: "owner = '$userId' && provider = '$providerId'");
+      final existingKeys = await client
+          .collection('provider_api_keys')
+          .getFullList(filter: "owner = '$userId' && provider = '$providerId'");
       for (final key in existingKeys) {
         await client.collection('provider_api_keys').delete(key.id);
       }
-      final savedKey = await client.collection('provider_api_keys').create(body: {
+      final savedKey =
+          await client.collection('provider_api_keys').create(body: {
         'owner': userId,
         'provider': providerId,
         'api_key': realApiKey,
       });
-      addTearDown(() => client.collection('provider_api_keys').delete(savedKey.id));
+      addTearDown(
+          () => client.collection('provider_api_keys').delete(savedKey.id));
 
-      final dio = Dio(BaseOptions(baseUrl: baseUrl, headers: {'Authorization': token}));
-      final harnessAuthApi = generated.HarnessAuthApi(dio, generated.standardSerializers);
+      final dio =
+          Dio(BaseOptions(baseUrl: baseUrl, headers: {'Authorization': token}));
+      final harnessAuthApi =
+          generated.HarnessAuthApi(dio, generated.standardSerializers);
       final startResp = await harnessAuthApi.startHarnessAuth(
         harnessRequest: (generated.HarnessRequestBuilder()
               ..harness = harnessId
@@ -106,7 +118,8 @@ void main() {
               ..visibility = 'personal')
             .build(),
       );
-      expect(startResp.statusCode, 200, reason: 'harness-auth/start: ${startResp.data}');
+      expect(startResp.statusCode, 200,
+          reason: 'harness-auth/start: ${startResp.data}');
 
       final chat = await client.collection('chats').create(body: {
         'title': 'golden-path-real-reply-check',
@@ -128,7 +141,8 @@ void main() {
       String? runId;
       for (var attempt = 0; attempt < 15; attempt++) {
         try {
-          final resp = await agentApi.promptChat(chatId: chat.id, promptRequest: promptRequest);
+          final resp = await agentApi.promptChat(
+              chatId: chat.id, promptRequest: promptRequest);
           runId = resp.data?.runId;
           break;
         } on DioException catch (e) {
@@ -141,12 +155,15 @@ void main() {
         }
       }
       if (postError != null) {
-        fail('promptChat failed outright (HTTP ${postError.response?.statusCode}): '
+        fail(
+            'promptChat failed outright (HTTP ${postError.response?.statusCode}): '
             '${postError.response?.data}');
       }
-      expect(runId, isNotNull, reason: 'promptChat never returned 202 after 15 retries');
+      expect(runId, isNotNull,
+          reason: 'promptChat never returned 202 after 15 retries');
 
-      final streamClient = AgentStreamClient(pocketBase: client, httpClient: http.Client());
+      final streamClient =
+          AgentStreamClient(pocketBase: client, httpClient: http.Client());
       final frames = streamClient.connect(chat.id, cursor: 0);
       RunErrorEvent? runError;
       var finished = false;

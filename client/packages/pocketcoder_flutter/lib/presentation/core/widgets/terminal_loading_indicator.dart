@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'terminal_status_glyph.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 class TerminalLoadingIndicator extends StatelessWidget {
   final String? label;
@@ -12,26 +13,12 @@ class TerminalLoadingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        TerminalStatusGlyph(
-          status: TerminalStatus.running,
-          fontSize: AppSizes.fontLarge,
-        ),
-        if (label != null) ...[
-          VSpace.x1,
-          Text(
-            '[ ${label?.toUpperCase() ?? ''} ]',
-            style: TextStyle(
-              fontFamily: AppFonts.bodyFamily,
-              color: colors.secondary,
-              fontSize: AppSizes.fontTiny,
-              package: 'pocketcoder_flutter',
-            ),
-          ),
-        ],
+        const TerminalSpinner(),
+        if (label != null && label!.isNotEmpty)
+          TerminalText(label!, role: TextRole.body),
       ],
     );
   }

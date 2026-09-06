@@ -89,15 +89,15 @@ void main() {
     await repo.saveConfig(testConfig);
     verify(() => configDao.save(testConfig.id, testConfig.toJson())).called(1);
 
-    when(() => configDao.save(any(), any()))
-        .thenThrow(Exception('boom'));
+    when(() => configDao.save(any(), any())).thenThrow(Exception('boom'));
     await expectLater(
       () => repo.saveConfig(testConfig),
       throwsA(isA<AgentConfigException>()),
     );
   });
 
-  test('deleteConfig calls configDao.delete and wraps failures in AgentConfigException',
+  test(
+      'deleteConfig calls configDao.delete and wraps failures in AgentConfigException',
       () async {
     when(() => configDao.delete(any())).thenAnswer((_) async {});
 
@@ -114,7 +114,8 @@ void main() {
   test(
       'savePrompt calls promptDao.save with id and toJson, wraps failures in AgentConfigException',
       () async {
-    when(() => promptDao.save(any(), any())).thenAnswer((_) async => testPrompt);
+    when(() => promptDao.save(any(), any()))
+        .thenAnswer((_) async => testPrompt);
 
     await repo.savePrompt(testPrompt);
     verify(() => promptDao.save(testPrompt.id, testPrompt.toJson())).called(1);
@@ -126,7 +127,8 @@ void main() {
     );
   });
 
-  test('deletePrompt calls promptDao.delete and wraps failures in AgentConfigException',
+  test(
+      'deletePrompt calls promptDao.delete and wraps failures in AgentConfigException',
       () async {
     when(() => promptDao.delete(any())).thenAnswer((_) async {});
 

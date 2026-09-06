@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
@@ -32,8 +33,8 @@ class FakeProviderOptionService implements IProviderOptionService {
 
 void main() {
   setUp(() {
-    GetIt.I
-        .registerFactory<IProviderOptionService>(() => FakeProviderOptionService());
+    GetIt.I.registerFactory<IProviderOptionService>(
+        () => FakeProviderOptionService());
   });
 
   tearDown(() {
@@ -79,7 +80,7 @@ void main() {
 
     expect(find.byType(TerminalFooter), findsOneWidget);
 
-    await tester.tap(find.textContaining('LINODE'));
+    await tester.tap(find.textContaining('Linode'));
     await tester.pumpAndSettle();
 
     expect(capturedRoute, '/auth');
@@ -119,7 +120,7 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.textContaining('LINODE'));
+    await tester.tap(find.textContaining('Linode'));
     await tester.pumpAndSettle();
 
     expect(selectedProvider?.id, 'linode');
@@ -155,13 +156,13 @@ void main() {
 
     final unavailable = tester.widget<TerminalText>(
       find.byWidgetPredicate(
-        (widget) => widget is TerminalText && widget.text.contains('ELESTIO'),
+        (widget) => widget is TerminalText && widget.text.contains('Elestio'),
       ),
     );
-    expect(unavailable.text, contains('COMING SOON'));
-    expect(unavailable.alpha, 0.42);
+    expect(unavailable.text, contains('coming soon'));
+    expect(unavailable.role, TextRole.label);
 
-    await tester.tap(find.textContaining('ELESTIO'));
+    await tester.tap(find.textContaining('Elestio'));
     await tester.pump();
     expect(selectionChecks, 0);
   });

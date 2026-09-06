@@ -14,7 +14,13 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.da
 /// title, a back target, or footer actions, that's the signal to revisit
 /// this decision -- until then, stays a raw Scaffold on purpose.
 class BootView extends StatelessWidget {
-  const BootView({super.key, required this.logs, required this.logsDimmed, required this.pocoVisible, required this.pocoState, required this.scrollController});
+  const BootView(
+      {super.key,
+      required this.logs,
+      required this.logsDimmed,
+      required this.pocoVisible,
+      required this.pocoState,
+      required this.scrollController});
 
   final List<String> logs;
   final bool logsDimmed;
@@ -40,35 +46,55 @@ class BootView extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final logEntry = logs[index];
                   Color? textColor = colors.primary;
-                  if (logEntry.startsWith('[!]') || logEntry.contains('ERROR')) {
+                  if (logEntry.startsWith('[!]') ||
+                      logEntry.contains('ERROR')) {
                     textColor = context.terminalColors.warning;
                   } else if (logEntry.startsWith('[sys]')) {
                     textColor = colors.tertiary;
                   } else if (logEntry.startsWith('[net]')) {
                     textColor = colors.secondary;
                   }
-                  return Text(logEntry, style: context.textTheme.bodySmall?.copyWith(color: textColor));
+                  return Text(logEntry,
+                      style: context.textTheme.bodySmall
+                          ?.copyWith(color: textColor));
                 },
               ),
             ),
             if (pocoVisible)
               Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 500),
+                  constraints:
+                      BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Opaque backdrop so the dimmed log wall behind it
-                      // doesn't bleed through the face glyph.
-                      Center(
-                        child: Container(
-                          color: colors.surface,
-                          child: PocoFace(fontSize: AppSizes.fontMassive, sequence: pocoState.sequence),
+                      // doesn't bleed through the face glyph. Poco is sized
+                      // for the boot screen's empty middle, so on a short
+                      // viewport he scales down rather than overflowing.
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Container(
+                            color: colors.surface,
+                            child: PocoFace(
+                              sequence: pocoState.sequence,
+                              fontSize: 64.0,
+                            ),
+                          ),
                         ),
                       ),
                       VSpace.x4,
-                      PocoBubble(message: pocoState.message, history: pocoState.history, showFace: false),
+                      // The message needs the same opaque backdrop as the
+                      // face: the dimmed log wall runs behind both.
+                      Container(
+                        color: colors.surface,
+                        child: PocoBubble(
+                            message: pocoState.message,
+                            history: pocoState.history,
+                            showFace: false),
+                      ),
                     ],
                   ),
                 ),

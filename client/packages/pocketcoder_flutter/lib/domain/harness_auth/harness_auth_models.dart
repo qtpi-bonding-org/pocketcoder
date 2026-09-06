@@ -94,12 +94,14 @@ class HarnessAuthChallenge {
 }
 
 class HarnessAuthAttempt {
-  const HarnessAuthAttempt({required this.id, required this.status, this.lastError});
+  const HarnessAuthAttempt(
+      {required this.id, required this.status, this.lastError});
   final String id;
   final String status;
   final String? lastError;
 
-  factory HarnessAuthAttempt.fromJson(Map<String, dynamic> json) => HarnessAuthAttempt(
+  factory HarnessAuthAttempt.fromJson(Map<String, dynamic> json) =>
+      HarnessAuthAttempt(
         id: json['id']?.toString() ?? '',
         status: json['status']?.toString() ?? '',
         lastError: json['lastError']?.toString(),
@@ -138,16 +140,25 @@ class HarnessAuthStatus {
       provider: json['provider']?.toString() ?? '',
       accountId: json['accountId']?.toString() ?? '',
       accountName: json['accountName']?.toString() ?? '',
-      visibility: json['visibility']?.toString() ?? harnessAccountVisibilityPersonal,
+      visibility:
+          json['visibility']?.toString() ?? harnessAccountVisibilityPersonal,
       credentialMode: json['mode']?.toString() ?? '',
       status: json['status']?.toString() ?? '',
       lastError: json['lastError']?.toString(),
-      attempt: attemptJson is Map<String, dynamic> ? HarnessAuthAttempt.fromJson(attemptJson) : null,
-      challenge: challengeJson is Map<String, dynamic> ? HarnessAuthChallenge.fromJson(challengeJson) : null,
+      attempt: attemptJson is Map<String, dynamic>
+          ? HarnessAuthAttempt.fromJson(attemptJson)
+          : null,
+      challenge: challengeJson is Map<String, dynamic>
+          ? HarnessAuthChallenge.fromJson(challengeJson)
+          : null,
     );
   }
   bool get isConnected => status == 'connected';
-  bool get isConnecting => status == 'connecting' || status == 'awaiting_input' || status == 'starting';
+  bool get isConnecting =>
+      status == 'connecting' ||
+      status == 'awaiting_input' ||
+      status == 'starting';
   bool get isDisconnected => status == 'disconnected';
-  bool get isDeploymentVisible => visibility == harnessAccountVisibilityDeployment;
+  bool get isDeploymentVisible =>
+      visibility == harnessAccountVisibilityDeployment;
 }

@@ -19,6 +19,7 @@ class ChooseProviderAdapter
     this.credentials,
     required this.onHasProAccess,
     this.onProviderSelected,
+    this.wizardPosition,
   });
 
   final ServerCredentials? credentials;
@@ -26,6 +27,7 @@ class ChooseProviderAdapter
   /// Reads the current Pro entitlement without resolving billing from a view.
   final Future<bool> Function() onHasProAccess;
   final DeployProviderSelectionHandler? onProviderSelected;
+  final (int step, int total)? wizardPosition;
 
   @override
   Widget buildAdapter(BuildContext context,
@@ -37,6 +39,7 @@ class ChooseProviderAdapter
         builder: (context, value, _) => ChooseProviderView(
           options: value.options,
           onSelected: (option) => _select(context, option, adapter),
+          wizardPosition: wizardPosition,
         ),
       ),
     );

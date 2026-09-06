@@ -15,8 +15,7 @@ import 'package:pocketcoder_flutter/domain/release/i_release_content_service.dar
 /// verify GitHub Sigstore attestations before anything executes.
 @LazySingleton(as: IReleaseContentService)
 class ReleaseContentService implements IReleaseContentService {
-  ReleaseContentService(
-      this._http, this._storage, this._proofProvider,
+  ReleaseContentService(this._http, this._storage, this._proofProvider,
       @Named('releaseBaseUrl') this._baseUrl,
       [@Named('useTestingChannel') this._useTestingChannel = false,
       @Named('releaseChannel') this._defaultChannel = 'stable']);

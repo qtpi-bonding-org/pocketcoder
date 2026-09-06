@@ -15,7 +15,9 @@ void main() {
     expect(update.isTerminalError, isFalse);
   });
 
-  test('isTerminalError is false when errorCode is set but attempt < maxAttempts (transient error)', () {
+  test(
+      'isTerminalError is false when errorCode is set but attempt < maxAttempts (transient error)',
+      () {
     final doc = ServerStatusDocument.tryParse(
       '{"schema":3,"runId":"r1","operation":"loading_images","updatedAt":"2026-08-16T00:00:00Z",'
       '"errorCode":"release_install_failed","attempt":1,"maxAttempts":3}',
@@ -31,7 +33,9 @@ void main() {
     expect(update.isTerminalError, isFalse);
   });
 
-  test('isTerminalError is true when errorCode is set and attempt >= maxAttempts (terminal error)', () {
+  test(
+      'isTerminalError is true when errorCode is set and attempt >= maxAttempts (terminal error)',
+      () {
     final doc = ServerStatusDocument.tryParse(
       '{"schema":3,"runId":"r1","operation":"loading_images","updatedAt":"2026-08-16T00:00:00Z",'
       '"errorCode":"release_install_failed","attempt":3,"maxAttempts":3}',

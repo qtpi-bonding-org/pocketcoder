@@ -14,8 +14,6 @@ import 'package:pocketcoder_flutter/design_system/storybook/agent_config_view.st
     as _pocketcoder_flutter_design_system_storybook_agent_config_view_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/config_picker.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_config_picker_stories;
-import 'package:pocketcoder_flutter/design_system/storybook/mode_switcher.stories.dart'
-    as _pocketcoder_flutter_design_system_storybook_mode_switcher_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/notification_and_system.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_notification_and_system_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/paywall.stories.dart'
@@ -32,6 +30,8 @@ import 'package:pocketcoder_flutter/design_system/storybook/skills_view.stories.
     as _pocketcoder_flutter_design_system_storybook_skills_view_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/terminal_conversation.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories;
+import 'package:pocketcoder_flutter/design_system/storybook/terminal_dialog_actions.stories.dart'
+    as _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/tool_permissions_view.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
@@ -60,23 +60,6 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _pocketcoder_flutter_design_system_storybook_config_picker_stories
                             .configPickerEmpty,
-                  ),
-                ],
-              ),
-              _widgetbook.WidgetbookComponent(
-                name: 'ModeSwitcher',
-                useCases: [
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'no modes',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_mode_switcher_stories
-                            .modeSwitcherEmpty,
-                  ),
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'selectable modes',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_mode_switcher_stories
-                            .modeSwitcherPopulated,
                   ),
                 ],
               ),
@@ -234,6 +217,35 @@ final directories = <_widgetbook.WidgetbookNode>[
                   ),
                 ],
               ),
+              _widgetbook.WidgetbookComponent(
+                name: 'TerminalDialogActions',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'confirm and cancel',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
+                            .confirmAndCancel,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'confirm only',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
+                            .confirmOnly,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'destructive',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
+                            .destructive,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'disabled confirm',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
+                            .disabledConfirm,
+                  ),
+                ],
+              ),
             ],
           )
         ],
@@ -349,14 +361,19 @@ final directories = <_widgetbook.WidgetbookNode>[
       _widgetbook.WidgetbookFolder(
         name: 'system',
         children: [
-          _widgetbook.WidgetbookComponent(
-            name: 'SystemChecksView',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'empty checks',
-                builder:
-                    _pocketcoder_flutter_design_system_storybook_notification_and_system_stories
-                        .systemChecksEmpty,
+          _widgetbook.WidgetbookFolder(
+            name: 'widgets',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'SystemChecksView',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'empty checks',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_notification_and_system_stories
+                            .systemChecksEmpty,
+                  )
+                ],
               )
             ],
           )
@@ -365,21 +382,26 @@ final directories = <_widgetbook.WidgetbookNode>[
       _widgetbook.WidgetbookFolder(
         name: 'tool_permissions',
         children: [
-          _widgetbook.WidgetbookComponent(
-            name: 'ToolPermissionsView',
-            useCases: [
-              _widgetbook.WidgetbookUseCase(
-                name: 'no rules',
-                builder:
-                    _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
-                        .toolPermissionsViewEmpty,
-              ),
-              _widgetbook.WidgetbookUseCase(
-                name: 'populated rules',
-                builder:
-                    _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
-                        .toolPermissionsViewPopulated,
-              ),
+          _widgetbook.WidgetbookFolder(
+            name: 'widgets',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'ToolPermissionsView',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'no rules',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
+                            .toolPermissionsViewEmpty,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'populated rules',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
+                            .toolPermissionsViewPopulated,
+                  ),
+                ],
+              )
             ],
           )
         ],

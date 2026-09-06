@@ -31,8 +31,7 @@ Widget _app(MemoryCubit cubit) => MaterialApp(
     );
 
 void main() {
-  testWidgets('renders counts and recent entries once loaded',
-      (tester) async {
+  testWidgets('renders counts and recent entries once loaded', (tester) async {
     final cubit = MemoryCubit(_FakeMemoryRepository(
       stats: const MemoryStats(
         observations: 3,
@@ -78,7 +77,8 @@ void main() {
     await tester.pumpWidget(_app(cubit));
     await tester.pumpAndSettle();
 
-    expect(find.text('MEMORY UNAVAILABLE'), findsOneWidget);
+    final context = tester.element(find.byType(MemoryDashboardScreen));
+    expect(find.text(context.l10n.memoryDashboardUnavailable), findsOneWidget);
     await cubit.close();
   });
 }

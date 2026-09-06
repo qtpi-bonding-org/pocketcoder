@@ -52,7 +52,8 @@ void main() {
     }
   });
 
-  test('every captured frame yields the AG-UI event subtype its own '
+  test(
+      'every captured frame yields the AG-UI event subtype its own '
       '"type" field names', () {
     // This is the real parity assertion: decode each frame and confirm the
     // concrete Dart type ag_ui produced actually corresponds to the wire
@@ -78,7 +79,8 @@ void main() {
     };
 
     for (final line in lines) {
-      final wireType = (jsonDecode(line) as Map<String, dynamic>)['type'] as String;
+      final wireType =
+          (jsonDecode(line) as Map<String, dynamic>)['type'] as String;
       final decoded = decodeAguiFrame(line);
       final expected = expectedRuntimeType[wireType];
       expect(
@@ -101,18 +103,16 @@ void main() {
   });
 
   test('the fixture corpus includes the pocketcoder:sync replace marker', () {
-    final hasReplaceMarker = lines
-        .map(decodeAguiFrame)
-        .any((frame) => isReplaceMarker(frame.event));
+    final hasReplaceMarker =
+        lines.map(decodeAguiFrame).any((frame) => isReplaceMarker(frame.event));
     expect(hasReplaceMarker, isTrue,
         reason: 'fixture must include at least one cold-replay replace '
             'marker (plan Task 2) so isReplaceMarker has real coverage');
   });
 
   test('isReplaceMarker is false for an ordinary CUSTOM event', () {
-    final ordinaryCustom = lines
-        .map(decodeAguiFrame)
-        .firstWhere((frame) => frame.event is CustomEvent && !isReplaceMarker(frame.event));
+    final ordinaryCustom = lines.map(decodeAguiFrame).firstWhere(
+        (frame) => frame.event is CustomEvent && !isReplaceMarker(frame.event));
     expect(isReplaceMarker(ordinaryCustom.event), isFalse);
   });
 }

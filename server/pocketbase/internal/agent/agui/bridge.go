@@ -32,6 +32,10 @@ import (
 
 type toolMeta struct {
 	title, kind, status string
+	// ACP content can arrive while status is still in_progress; emitting
+	// it immediately would make the client treat the call as done early.
+	pendingResultText string
+	pendingHasResult  bool
 }
 
 // Bridge keeps only the open-event state needed to turn ACP chunks into AG-UI
@@ -170,12 +174,20 @@ func (b *Bridge) startTool(tc *acpsdk.SessionUpdateToolCall) []events.Event {
 	}
 	kind := string(tc.Kind)
 	status := string(tc.Status)
-	b.openTools[id] = toolMeta{title: tc.Title, kind: kind, status: status}
-	result = append(result, customTool(id, tc.Title, kind, status, tc.Locations))
-	if len(tc.Content) > 0 {
-		result = append(result, b.toolResult(id, tc.Content, tc.RawOutput)...)
+	progress, resultText, hasResult := b.toolProgressEvents(id, tc.Content, tc.RawOutput)
+	meta := toolMeta{title: tc.Title, kind: kind, status: status}
+	if hasResult {
+		meta.pendingResultText = resultText
+		meta.pendingHasResult = true
 	}
-	if isTerminalToolStatus(status) {
+	terminal := isTerminalToolStatus(status)
+	b.openTools[id] = meta
+	result = append(result, customTool(id, tc.Title, kind, status, tc.Locations))
+	if terminal && meta.pendingHasResult {
+		result = append(result, events.NewToolCallResultEvent("tool-result-"+id, id, meta.pendingResultText))
+	}
+	result = append(result, progress...)
+	if terminal {
 		result = append(result, b.endTool(id)...)
 	}
 	return result
@@ -198,10 +210,17 @@ func (b *Bridge) updateTool(u *acpsdk.SessionToolCallUpdate) []events.Event {
 			log.Printf("[AGUI] marshal tool call update input %q: %v", id, err)
 		}
 	}
-	if len(u.Content) > 0 {
-		result = append(result, b.toolResult(id, u.Content, u.RawOutput)...)
-	}
 	meta := b.openTools[id] // zero value if the tool is unknown; still emit an update
+	var progress []events.Event
+	var resultText string
+	var hasResult bool
+	if len(u.Content) > 0 {
+		progress, resultText, hasResult = b.toolProgressEvents(id, u.Content, u.RawOutput)
+		if hasResult {
+			meta.pendingResultText = resultText
+			meta.pendingHasResult = true
+		}
+	}
 	if u.Title != nil {
 		meta.title = *u.Title
 	}
@@ -211,37 +230,37 @@ func (b *Bridge) updateTool(u *acpsdk.SessionToolCallUpdate) []events.Event {
 	if u.Status != nil {
 		meta.status = string(*u.Status)
 	}
+	terminal := isTerminalToolStatus(meta.status)
+	if terminal && meta.pendingHasResult {
+		result = append(result, events.NewToolCallResultEvent("tool-result-"+id, id, meta.pendingResultText))
+	}
+	result = append(result, progress...)
 	b.openTools[id] = meta
 	result = append(result, customTool(id, meta.title, meta.kind, meta.status, u.Locations))
-	if u.Status != nil && isTerminalToolStatus(string(*u.Status)) {
+	if terminal {
 		result = append(result, b.endTool(id)...)
 	}
 	return result
 }
 
-// toolResult splits ACP tool result content into TOOL_CALL_RESULT (text/
-// rawOutput fallback) plus CUSTOM pocketcoder:{diff,terminal,content} for
-// structured results. Returns a single redacted RAW on render error so the
-// client still sees that something arrived, just not the malformed blob.
-func (b *Bridge) toolResult(id string, content []acpsdk.ToolCallContent, rawOutput any) []events.Event {
+// toolProgressEvents never signals completion to the client, unlike
+// TOOL_CALL_RESULT, so diff/terminal/media events are safe to emit
+// unconditionally here even while a tool call is still in_progress.
+func (b *Bridge) toolProgressEvents(id string, content []acpsdk.ToolCallContent, rawOutput any) (progress []events.Event, resultText string, hasResult bool) {
 	text, diffs, terms, medias, has, err := renderToolContent(content, rawOutput)
 	if err != nil {
-		return []events.Event{rawEvent("tool_call_content", nil)}
-	}
-	var out []events.Event
-	if has {
-		out = append(out, events.NewToolCallResultEvent("tool-result-"+id, id, text))
+		return []events.Event{rawEvent("tool_call_content", nil)}, "", false
 	}
 	for _, d := range diffs {
-		out = append(out, customDiff(id, d))
+		progress = append(progress, customDiff(id, d))
 	}
 	for _, tm := range terms {
-		out = append(out, customTerminal(id, tm))
+		progress = append(progress, customTerminal(id, tm))
 	}
 	for _, m := range medias {
-		out = append(out, customToolContent(id, m))
+		progress = append(progress, customToolContent(id, m))
 	}
-	return out
+	return progress, text, has
 }
 
 // endTool closes a single open tool id. Returns nil if the id is unknown so

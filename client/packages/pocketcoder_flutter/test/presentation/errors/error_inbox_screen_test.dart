@@ -15,8 +15,7 @@ import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.da
 import 'package:pocketcoder_flutter/presentation/errors/adapters/error_inbox_adapter.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 
 class MockErrorBoxStorage extends Mock implements ErrorBoxStorage {}
 
@@ -116,14 +115,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // BiosRow renders BIOS labels in its standard uppercase treatment.
-    expect(find.text('CHATCUBIT'), findsOneWidget);
+    expect(find.textContaining('ChatCubit'), findsOneWidget);
     expect(find.textContaining('CHAT_001'), findsOneWidget);
-    expect(find.byType(BiosCard), findsOneWidget);
-    expect(find.byType(BiosRow), findsWidgets);
+    expect(find.byType(DetailRow), findsWidgets);
     expect(find.text('#0 fake stack'), findsNothing);
 
-    await tester.tap(find.byType(BiosRow).first);
+    await tester.tap(find.byType(DetailRow).first);
     await tester.pumpAndSettle();
 
     expect(find.text('#0 fake stack'), findsOneWidget);
@@ -144,7 +141,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('NO ERRORS CAPTURED'), findsOneWidget);
+    expect(find.text('no errors captured'), findsOneWidget);
   });
 
   testWidgets('delete removes an entry', (tester) async {
@@ -163,7 +160,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('DELETE'));
+    await tester.tap(find.byType(DetailRow).first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('<delete>'));
     await tester.pumpAndSettle();
 
     verify(() => storage.deleteError('e1')).called(1);
@@ -198,9 +198,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(BiosRow).first);
+    await tester.tap(find.byType(DetailRow).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('REPORT ON GITHUB'));
+    await tester.tap(find.text('<report on GitHub>'));
     await tester.pumpAndSettle();
 
     expect(clipboardText, contains('App version: 1.2.3+45'));

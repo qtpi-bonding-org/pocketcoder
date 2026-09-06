@@ -2,7 +2,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/files/file_viewer_cubit.dart';
 import 'package:pocketcoder_flutter/application/files/file_viewer_state.dart';
-import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
+import 'package:pocketcoder_flutter/presentation/files/widgets/file_viewer_view.dart';
 
 class FileViewerAdapter extends CubitAdapter<FileViewerCubit, FileViewerState> {
   const FileViewerAdapter({super.key, required this.path});

@@ -1,36 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
-/// A configuration object for a single footer button
-class TerminalAction {
-  final String label; // e.g. "HELP"
-  final VoidCallback onTap;
-  final bool hasBadge;
-  final bool isActive;
-  final Color? color;
+// Re-export TerminalAction for backward compatibility
+export 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart'
+    show TerminalAction;
 
-  /// Overrides the emphasis derived from [isActive] -- lets a footer
-  /// button read as the recommended next action (.outlined) without being
-  /// the active tab. See the emphasis-states spec (2026-08-23).
-  final Emphasis? emphasis;
-
-  TerminalAction({
-    required this.label,
-    required this.onTap,
-    this.hasBadge = false,
-    this.isActive = false,
-    this.color,
-    this.emphasis,
-  });
-
-  BiosActionStripItem get _asStripItem => BiosActionStripItem(
+extension _TerminalActionExt on TerminalAction {
+  BiosActionStripItem asStripItem({bool bracketed = true}) =>
+      BiosActionStripItem(
         label: label,
         onTap: onTap,
         hasBadge: hasBadge,
         isActive: isActive,
-        color: color,
-        emphasis: emphasis,
+        kind: kind,
+        bracketed: bracketed,
       );
 }
 
@@ -45,39 +32,40 @@ class TerminalFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final children = actions.map((action) {
+      if (action.isLabel) {
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+            child: Center(
+              child: TerminalText(
+                action.label,
+                role: TextRole.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        );
+      }
+      // The page footer is a persistent status bar, not a row of discrete
+      // buttons: labels stay bare and reverse-video carries the state.
+      return Expanded(
+          child:
+              BiosActionButton(action: action.asStripItem(bracketed: false)));
+    }).toList();
+
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(
-          top: BorderSide(color: colors.onSurface, width: AppSizes.borderWidth),
-        ),
-      ),
+      color: colors.surface,
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: IntrinsicHeight(
+        child: IntrinsicHeight(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSizes.screenInset),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: actions.map((action) {
-                final stripItem = action._asStripItem;
-                final showDivider =
-                    stripItem.resolvedEmphasis != Emphasis.outlined;
-                return Container(
-                  decoration: BoxDecoration(
-                    border: showDivider
-                        ? Border(
-                            right: BorderSide(
-                              color: colors.onSurface.withValues(alpha: 0.1),
-                              width: AppSizes.borderWidth,
-                            ),
-                          )
-                        : null,
-                  ),
-                  child: BiosActionButton(action: stripItem),
-                );
-              }).toList(),
+              children: children,
             ),
           ),
         ),

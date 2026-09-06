@@ -4,7 +4,7 @@
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/chat/widgets/inline_approval.dart';
 import 'tool_command.dart';
 
 class PermissionCard extends StatelessWidget {
@@ -16,136 +16,26 @@ class PermissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _build(context, item);
-  }
-
-  Widget _build(
-      BuildContext context, PermissionRequestTimelineItem permission) {
-    final colors = context.colorScheme;
-    final terminalColors = context.terminalColors;
-
-    final options = permission.options;
-
-    final requestId = permission.requestId;
-    // toolTitle alone (ACP's optional Title) is often a generic "shell".
-    final toolTitle = commandFor(
-      name: permission.toolTitle ?? '',
-      args: permission.toolArgs ?? '',
-      toolKind: permission.toolKind,
-      fallback:
-          permission.description ?? context.l10n.permissionRequestedFallback,
+    final requestId = item.requestId;
+    // Preserve the real formatted command produced from the protocol fields.
+    // The fallback here is deliberately the generic placeholder, not
+    // item.description: description renders as its own line below the
+    // command, and using it as the command fallback too would show the
+    // same text twice when there is no real command.
+    final command = commandFor(
+      name: item.toolTitle ?? '',
+      args: item.toolArgs ?? '',
+      toolKind: item.toolKind,
+      fallback: context.l10n.permissionRequestedFallback,
     );
 
-    return Container(
-      margin: EdgeInsets.all(AppSizes.space),
-      padding: EdgeInsets.all(AppSizes.space * 2),
-      decoration: BoxDecoration(
-        color: terminalColors.warning.withValues(alpha: 0.05),
-        border: Border.all(
-          color: terminalColors.warning.withValues(alpha: 0.3),
-          width: AppSizes.borderWidth,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'SECURITY',
-                style: TextStyle(
-                  color: terminalColors.warning,
-                  fontSize: AppSizes.fontTiny,
-                  fontWeight: AppFonts.heavy,
-                  letterSpacing: 2,
-                ),
-              ),
-              HSpace.x1,
-              Expanded(
-                child: Text(
-                  context.l10n.permissionSignoffTitle,
-                  style: TextStyle(
-                    color: terminalColors.warning,
-                    fontSize: AppSizes.fontTiny,
-                    fontWeight: AppFonts.heavy,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          VSpace.x2,
-          if (toolTitle.isNotEmpty) ...[
-            VSpace.x1,
-            Container(
-              padding: EdgeInsets.all(AppSizes.space),
-              decoration: BoxDecoration(
-                color: colors.surface.withValues(alpha: 0.4),
-                border: Border.all(
-                  color: terminalColors.warning.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      toolTitle,
-                      style: TextStyle(
-                        color: terminalColors.warning,
-                        fontFamily: AppFonts.bodyFamily,
-                        fontSize: AppSizes.fontStandard,
-                        fontWeight: AppFonts.heavy,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (requestId.isNotEmpty) ...[
-            VSpace.x1,
-            Text(
-              '[$requestId]',
-              style: TextStyle(
-                color: terminalColors.warning.withValues(alpha: 0.5),
-                fontSize: AppSizes.fontMini,
-              ),
-            ),
-          ],
-          VSpace.x3,
-          if (options.isEmpty)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TerminalButton(
-                label: context.l10n.actionDeny,
-                isPrimary: false,
-                filled: false,
-                color: terminalColors.warning,
-                onTap: () => onSelect(requestId, cancelled: true),
-              ),
-            )
-          else
-            Wrap(
-              spacing: AppSizes.space,
-              runSpacing: AppSizes.space,
-              children: [
-                for (final option in options)
-                  TerminalButton(
-                    label: option.label,
-                    filled: false,
-                    color: option.kind.startsWith('reject')
-                        ? terminalColors.warning
-                        : colors.primary,
-                    onTap: () => onSelect(
-                      requestId,
-                      optionId: option.optionId,
-                    ),
-                  ),
-              ],
-            ),
-        ],
-      ),
+    return InlineApproval(
+      toolLabel: item.toolTitle?.trim() ?? '',
+      command: command,
+      requestId: requestId,
+      options: item.options,
+      description: item.description,
+      onSelect: onSelect,
     );
   }
 }

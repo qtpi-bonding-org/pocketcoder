@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart';
 import 'package:pocketcoder_flutter/application/files/file_browser_state.dart';
-import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
+import 'package:pocketcoder_flutter/presentation/files/widgets/file_browser_view.dart';
 
-class FileBrowserAdapter extends CubitAdapter<FileBrowserCubit, FileBrowserState> {
+class FileBrowserAdapter
+    extends CubitAdapter<FileBrowserCubit, FileBrowserState> {
   const FileBrowserAdapter({super.key, required this.onOpenFile});
 
   final void Function(BuildContext context, String path) onOpenFile;

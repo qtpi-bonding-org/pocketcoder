@@ -18,7 +18,8 @@ class PocketbaseInspectorCubit extends AppCubit<PocketbaseInspectorState> {
         final stats = await _repository.fetchStats();
         return state.copyWith(stats: stats, status: UiFlowStatus.success);
       } catch (e, stackTrace) {
-        logError('🗄️ [PocketbaseInspectorCubit] refresh failed', e, stackTrace);
+        logError(
+            '🗄️ [PocketbaseInspectorCubit] refresh failed', e, stackTrace);
         rethrow;
       }
     }, emitLoading: true);

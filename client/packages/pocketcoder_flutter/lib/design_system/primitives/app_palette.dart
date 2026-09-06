@@ -3,24 +3,38 @@ import 'package:flutter_color_palette/flutter_color_palette.dart';
 
 /// App core color palette
 class AppPalette {
+  // The six roles -- the source of truth from this task onward.
+  static const Color ground = Color(0xFF050505);
+
+  /// Non-text token only (1.58:1 against [ground]). The code-surface gutter
+  /// is the one place this may be used; no [TextRole] may resolve to it.
+  static const Color trace = Color(0xFF003B00);
+
+  /// Non-text token only (3.23:1 against [ground] -- fails WCAG AA for text).
+  /// The decision-dialog border is the one place this may be used; no
+  /// [TextRole] may resolve to it.
+  static const Color dim = Color(0xFF00701A);
+  static const Color body = Color(0xFF00B82A);
+  static const Color bright = Color(0xFF00FF41);
+  static const Color amber = Color(0xFFFFB100);
+  static const Color red = Color(0xFFFF5555);
+
+  /// Retained so `_buildTheme` and `ThemeService` keep working. The map is
+  /// now derived from the six roles rather than being the source of truth.
   static final IColorPalette primary = AppColorPalette(
     colors: const {
-      'color1': Color(0xFF050505),
-      'color2': Color(0xFF00FF41),
-      'color3': Color(0xFF00B82A),
-      'neutral1': Color(0xFF003B00),
-
-      'dangerRed': Color(0xFFFF3333),
-      'warningAmber': Color(0xFFFFB100),
-
-      'interactable': Color(0xFF00FF41),
-
-      'info': Color(0xFF00B82A),
-      'success': Color(0xFF00FF41),
-      'error': Color(0xFFFF3333),
-      'warning': Color(0xFFFFB100),
-
-      'destructive': Color(0xFFFF3333),
+      'color1': ground,
+      'color2': bright,
+      'color3': body,
+      'neutral1': trace,
+      'dangerRed': red,
+      'warningAmber': amber,
+      'interactable': bright,
+      'info': body,
+      'success': bright,
+      'error': red,
+      'warning': amber,
+      'destructive': red,
     },
     name: 'PocketCoder Terminal',
   );
@@ -37,26 +51,51 @@ class AppPalette {
 
 /// Extension for semantic color access
 extension AppColors on IColorPalette {
-  Color get backgroundPrimary => getColor('color1') ?? const Color(0xFF050505);
-  Color get black => getColor('color1') ?? const Color(0xFF050505);
+  @Deprecated('Use AppPalette.ground instead')
+  Color get backgroundPrimary => AppPalette.ground;
 
-  Color get vividGreen => getColor('color2') ?? const Color(0xFF00FF41);
-  Color get phosphorGreen => getColor('color3') ?? const Color(0xFF00B82A);
-  Color get traceGreen => getColor('neutral1') ?? const Color(0xFF003B00);
+  @Deprecated('Use AppPalette.ground instead')
+  Color get black => AppPalette.ground;
 
-  Color get textPrimary => vividGreen;
-  Color get textSecondary => traceGreen;
-  Color get primaryColor => phosphorGreen;
+  @Deprecated('Use AppPalette.bright instead')
+  Color get vividGreen => AppPalette.bright;
 
-  Color get dangerRed => getColor('dangerRed') ?? const Color(0xFFFF3333);
-  Color get warningAmber => getColor('warningAmber') ?? const Color(0xFFFFB100);
+  @Deprecated('Use AppPalette.body instead')
+  Color get phosphorGreen => AppPalette.body;
 
-  Color get interactableColor => getColor('interactable') ?? const Color(0xFF00FF41);
+  @Deprecated('Use AppPalette.trace instead')
+  Color get traceGreen => AppPalette.trace;
 
-  Color get infoColor => getColor('info') ?? const Color(0xFF00B82A);
-  Color get successColor => getColor('success') ?? const Color(0xFF00FF41);
-  Color get errorColor => getColor('error') ?? const Color(0xFFFF3333);
-  Color get warningColor => getColor('warning') ?? const Color(0xFFFFB100);
+  @Deprecated('Use AppPalette.bright instead')
+  Color get textPrimary => AppPalette.bright;
 
-  Color get destructiveColor => getColor('destructive') ?? const Color(0xFFFF3333);
+  @Deprecated('Use AppPalette.trace instead')
+  Color get textSecondary => AppPalette.trace;
+
+  @Deprecated('Use AppPalette.body instead')
+  Color get primaryColor => AppPalette.body;
+
+  @Deprecated('Use AppPalette.red instead')
+  Color get dangerRed => AppPalette.red;
+
+  @Deprecated('Use AppPalette.amber instead')
+  Color get warningAmber => AppPalette.amber;
+
+  @Deprecated('Use AppPalette.bright instead')
+  Color get interactableColor => AppPalette.bright;
+
+  @Deprecated('Use AppPalette.body instead')
+  Color get infoColor => AppPalette.body;
+
+  @Deprecated('Use AppPalette.bright instead')
+  Color get successColor => AppPalette.bright;
+
+  @Deprecated('Use AppPalette.red instead')
+  Color get errorColor => AppPalette.red;
+
+  @Deprecated('Use AppPalette.amber instead')
+  Color get warningColor => AppPalette.amber;
+
+  @Deprecated('Use AppPalette.red instead')
+  Color get destructiveColor => AppPalette.red;
 }

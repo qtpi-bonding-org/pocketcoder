@@ -8,7 +8,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
-import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
+import 'package:pocketcoder_flutter/presentation/system/widgets/system_checks_view.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_list_view.dart';
 
 Widget _localized(Widget child) => MaterialApp(

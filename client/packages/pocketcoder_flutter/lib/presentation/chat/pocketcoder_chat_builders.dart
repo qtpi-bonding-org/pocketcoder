@@ -10,15 +10,18 @@
 // until the user expands it.
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
 import 'package:flyer_chat_text_stream_message/flyer_chat_text_stream_message.dart'
     as chat_stream;
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
 import 'tool_command.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_terminal_response.dart';
 import 'widgets/terminal_command_card.dart';
@@ -51,16 +54,14 @@ StackedChatBuilders pocketcoderChatBuilders(
     receivedBackground: colors.surface.withValues(alpha: 0),
     textStyle: TextStyle(
       color: colors.onSurface,
-      fontFamily: AppFonts.bodyFamily,
+      fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
-      fontSize: AppSizes.fontStandard,
       height: 1.4,
     ),
     reasoningTextStyle: TextStyle(
       color: colors.onSurface.withValues(alpha: 0.7),
-      fontFamily: AppFonts.bodyFamily,
+      fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
-      fontSize: AppSizes.fontStandard,
       fontStyle: FontStyle.italic,
       height: 1.4,
     ),
@@ -89,10 +90,8 @@ StackedChatBuilders pocketcoderChatBuilders(
       animatedMessageIds, onMessageAnimated);
 }
 
-/// Intercepts only reasoning ("thinking") messages -- completed or still
-/// streaming -- to render them as a collapsible [ThinkingBlock] instead of
-/// the generic full-width bubble every other message kind still gets via the
-/// inherited [StackedChatBuilders] behavior.
+/// Reasoning ("thinking") messages render nothing here -- the caption
+/// above Poco owns their display, not the transcript's bubble list.
 class _PocketcoderChatBuilders extends StackedChatBuilders {
   _PocketcoderChatBuilders(super.style, super.callbacks, this.latestReasoningId,
       this.animatedMessageIds, this.onMessageAnimated);
@@ -116,10 +115,17 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           toolKind: toolKind,
           fallback: context.l10n.chatToolCallFallback,
         );
+        logDebug('🤖 [toolCallBuilder] building', {
+          'messageId': message.id,
+          'name': name,
+          'hasResult': result != null,
+          'wallClock': DateTime.now().toIso8601String(),
+        });
         return TerminalCommandCard(
           command: command,
-          status:
-              result == null ? TerminalStatus.running : TerminalStatus.success,
+          status: result == null
+              ? const TerminalSpinner()
+              : const StatusMarkerView(marker: StatusMarker.ok),
           outputLabel: context.l10n.chatCommandOutput,
           output: result,
           diffs: diffs,
@@ -142,12 +148,11 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
               TextSpan(
                 children: [
                   TextSpan(
-                    text: 'commander@pc \$ ',
+                    text: context.l10n.chatCommanderPrompt,
                     style: TextStyle(
                       color: color,
-                      fontFamily: AppFonts.bodyFamily,
+                      fontFamily: AppFonts.family,
                       package: 'pocketcoder_flutter',
-                      fontSize: AppSizes.fontStandard,
                       fontWeight: AppFonts.heavy,
                       height: 1.4,
                     ),
@@ -156,9 +161,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
                     text: message.text,
                     style: TextStyle(
                       color: color,
-                      fontFamily: AppFonts.bodyFamily,
+                      fontFamily: AppFonts.family,
                       package: 'pocketcoder_flutter',
-                      fontSize: AppSizes.fontStandard,
                       fontWeight: AppFonts.medium,
                       height: 1.4,
                     ),
@@ -199,7 +203,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           return TerminalConversationFrame(
             speaker: TerminalConversationSpeaker.user,
             child: TerminalTranscriptLine(
-              prefix: 'commander@pc \$ ',
+              prefix: context.l10n.chatCommanderPrompt,
               color: emphasize(context.colorScheme.secondary, Emphasis.selected)
                   .text,
               child: child,
@@ -209,7 +213,7 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         return TerminalConversationFrame(
           speaker: TerminalConversationSpeaker.poco,
           child: TerminalTranscriptLine(
-            prefix: '[poco] ',
+            prefix: context.l10n.chatPocoPrompt,
             color: context.colorScheme.primary,
             child: child,
           ),

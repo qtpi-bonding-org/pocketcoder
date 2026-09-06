@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_cubit.dart';
 import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
+import 'package:pocketcoder_flutter/presentation/tool_permissions/widgets/tool_permissions_view.dart';
 
 class ToolPermissionsAdapter
     extends CubitAdapter<ToolPermissionsCubit, ToolPermissionsState> {

@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
+import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/settings/local_settings_database.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'auth_aware_http_client.dart';
 import 'auth_store.dart';
@@ -190,4 +192,10 @@ abstract class ExternalModule {
   @lazySingleton
   InAppBrowserLauncher get inAppBrowserLauncher =>
       UrlLauncherInAppBrowserLauncher();
+
+  /// On-device-only settings (haptics, etc.) -- a separate local database
+  /// from pocketbase_drift's server-mirroring cache, never synced.
+  @lazySingleton
+  LocalSettingsDatabase get localSettingsDatabase =>
+      LocalSettingsDatabase(driftDatabase(name: 'local_settings'));
 }

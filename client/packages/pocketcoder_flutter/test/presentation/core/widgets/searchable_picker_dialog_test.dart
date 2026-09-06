@@ -2,10 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 Widget _app(Widget child) => MaterialApp(
       theme: AppTheme.lightTheme,
@@ -14,14 +15,29 @@ Widget _app(Widget child) => MaterialApp(
       home: Scaffold(body: child),
     );
 
-// Fixture items are upper-case since BiosRow renders label.toUpperCase().
+// A minimal test-only picker tile fixture -- exposes isSelected as a plain
+// field for assertions, independent of whatever row widget production code
+// happens to use.
+class _PickerTile extends StatelessWidget {
+  const _PickerTile(
+      {required this.label, required this.isSelected, required this.onTap});
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+      onTap: onTap, child: TerminalText(label, role: TextRole.body));
+}
+
 Widget _tile(
   BuildContext context,
   String item, {
   required bool isSelected,
   required VoidCallback onTap,
 }) =>
-    BiosRow(label: item, isSelected: isSelected, onTap: onTap);
+    _PickerTile(label: item, isSelected: isSelected, onTap: onTap);
 
 Future<String?> _open(
   WidgetTester tester, {
@@ -126,11 +142,11 @@ void main() {
     unawaited(_open(tester, items: ['A', 'B'], selected: 'B'));
     await tester.pumpAndSettle();
 
-    final aRow = tester.widget<BiosRow>(
-      find.ancestor(of: find.text('A'), matching: find.byType(BiosRow)),
+    final aRow = tester.widget<_PickerTile>(
+      find.ancestor(of: find.text('A'), matching: find.byType(_PickerTile)),
     );
-    final bRow = tester.widget<BiosRow>(
-      find.ancestor(of: find.text('B'), matching: find.byType(BiosRow)),
+    final bRow = tester.widget<_PickerTile>(
+      find.ancestor(of: find.text('B'), matching: find.byType(_PickerTile)),
     );
     expect(aRow.isSelected, isFalse);
     expect(bRow.isSelected, isTrue);
@@ -152,7 +168,7 @@ void main() {
         itemLabel: (s) => s.split('|').first,
         matches: (s, query) => s.toLowerCase().contains(query.toLowerCase()),
         itemBuilder: (context, s, {required isSelected, required onTap}) =>
-            BiosRow(
+            _PickerTile(
           label: s.split('|').first,
           isSelected: isSelected,
           onTap: onTap,

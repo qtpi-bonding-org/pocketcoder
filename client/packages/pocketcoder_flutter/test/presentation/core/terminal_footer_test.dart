@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart'
+    show TerminalFooter, TerminalAction;
 
 void main() {
-  testWidgets('an active action renders inverted: filled bg, dark text',
+  testWidgets('an active action renders inverted: filled bg in its role color',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -19,11 +21,18 @@ void main() {
       ),
     );
 
-    final text = tester.widget<Text>(find.text('CHAT'));
-    expect(text.style?.color, Colors.black);
+    expect(find.text('chat'), findsOneWidget);
+    final container = tester.widget<Container>(
+      find
+          .descendant(
+              of: find.byType(GestureDetector),
+              matching: find.byType(Container))
+          .first,
+    );
+    expect(container.color, ActionKind.neutral.role.color);
   });
 
-  testWidgets('an inactive action renders its own color on a transparent bg',
+  testWidgets('an inactive action renders on a transparent background',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -38,12 +47,17 @@ void main() {
       ),
     );
 
-    final text = tester.widget<Text>(find.text('CHAT'));
-    expect(text.style?.color, isNot(Colors.black));
+    final container = tester.widget<Container>(
+      find
+          .descendant(
+              of: find.byType(GestureDetector),
+              matching: find.byType(Container))
+          .first,
+    );
+    expect(container.color, Colors.transparent);
   });
 
-  testWidgets(
-      'an explicit outlined action renders a border in its own color, no fill, even when not active',
+  testWidgets('a primary-kind action renders in the primary role color',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -52,23 +66,24 @@ void main() {
           body: TerminalFooter(
             actions: [
               TerminalAction(
-                  label: 'connect', onTap: () {}, emphasis: Emphasis.outlined),
+                  label: 'connect', onTap: () {}, kind: ActionKind.primary),
             ],
           ),
         ),
       ),
     );
 
-    final text = tester.widget<Text>(find.text('CONNECT'));
-    expect(text.style?.color, isNot(Colors.black));
+    expect(find.text('connect'), findsOneWidget);
+    final text = tester.widget<Text>(find.text('connect'));
+    expect(text.style?.color, ActionKind.primary.role.color);
 
     final container = tester.widget<Container>(
       find
-          .descendant(of: find.byType(InkWell), matching: find.byType(Container))
+          .descendant(
+              of: find.byType(GestureDetector),
+              matching: find.byType(Container))
           .first,
     );
-    final decoration = container.decoration as BoxDecoration;
-    expect(decoration.color, anyOf(isNull, Colors.transparent));
-    expect(decoration.border, isNotNull);
+    expect(container.color, Colors.transparent);
   });
 }

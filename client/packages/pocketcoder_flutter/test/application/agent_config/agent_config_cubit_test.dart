@@ -82,10 +82,8 @@ void main() {
           await permissionModesCtrl.close();
         });
 
-        when(() => repo.watchConfigs())
-            .thenAnswer((_) => configsCtrl.stream);
-        when(() => repo.watchPrompts())
-            .thenAnswer((_) => promptsCtrl.stream);
+        when(() => repo.watchConfigs()).thenAnswer((_) => configsCtrl.stream);
+        when(() => repo.watchPrompts()).thenAnswer((_) => promptsCtrl.stream);
         when(() => repo.watchPermissionModes())
             .thenAnswer((_) => permissionModesCtrl.stream);
 
@@ -124,10 +122,8 @@ void main() {
           await permissionModesCtrl.close();
         });
 
-        when(() => repo.watchConfigs())
-            .thenAnswer((_) => configsCtrl.stream);
-        when(() => repo.watchPrompts())
-            .thenAnswer((_) => promptsCtrl.stream);
+        when(() => repo.watchConfigs()).thenAnswer((_) => configsCtrl.stream);
+        when(() => repo.watchPrompts()).thenAnswer((_) => promptsCtrl.stream);
         when(() => repo.watchPermissionModes())
             .thenAnswer((_) => permissionModesCtrl.stream);
 
@@ -157,8 +153,7 @@ void main() {
     });
 
     test('saveConfig surfaces repo failure as state error', () async {
-      when(() => repo.saveConfig(any()))
-          .thenThrow(Exception('save failed'));
+      when(() => repo.saveConfig(any())).thenThrow(Exception('save failed'));
 
       final cubit = buildCubit();
       await cubit.saveConfig(testConfig);

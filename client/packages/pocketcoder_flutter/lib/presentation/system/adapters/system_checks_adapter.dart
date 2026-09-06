@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/system/health_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/health_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
-import 'package:pocketcoder_flutter/presentation/system/system_checks_screen.dart';
+import 'package:pocketcoder_flutter/presentation/system/widgets/system_checks_view.dart';
 
 class SystemChecksAdapter extends CubitAdapter<HealthCubit, HealthState> {
   const SystemChecksAdapter({super.key});

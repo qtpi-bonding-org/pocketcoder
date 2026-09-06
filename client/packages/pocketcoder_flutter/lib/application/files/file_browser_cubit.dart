@@ -3,6 +3,7 @@ import 'package:pocketcoder_flutter/application/files/file_browser_state.dart';
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/file_entry.dart';
 import 'package:pocketcoder_flutter/domain/models/file_tree_entry.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 
 @injectable
@@ -16,11 +17,19 @@ class FileBrowserCubit extends AppCubit<FileBrowserState> {
 
   FileBrowserCubit(this._repository) : super(FileBrowserState.initial());
 
-  Future<void> open(String path) async {
+  /// Call with [refresh] true whenever the user lands on the files screen
+  /// (not just when this cubit happens to be newly constructed) so files
+  /// created after the tree was last fetched actually show up.
+  Future<void> open(String path, {bool refresh = false}) async {
+    logDebug('FileBrowserCubit: open(path: "$path", refresh: $refresh) -- '
+        'cached root: ${_root != null}');
     return tryOperation(() async {
+      if (refresh) _root = null;
       final root = _root ??= await _repository.listFileTree('');
-      return createSuccessState()
-          .copyWith(path: path, entries: _entriesAt(root, path));
+      final entries = _entriesAt(root, path);
+      logDebug('FileBrowserCubit: open(path: "$path") resolved '
+          '${entries.length} entries out of ${root.length} root entries');
+      return createSuccessState().copyWith(path: path, entries: entries);
     });
   }
 

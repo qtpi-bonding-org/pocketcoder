@@ -38,6 +38,7 @@ import 'logger.dart';
 /// unrelated to whatever actually called close().
 final class CaddyCaPinningHttpClient extends http.BaseClient {
   SecurityContext? _context;
+  String? _pinnedPem;
   http.Client _delegate = http.Client();
   final _pinChanges = StreamController<void>.broadcast();
   CaPinRecovery? _recovery;
@@ -80,8 +81,12 @@ final class CaddyCaPinningHttpClient extends http.BaseClient {
   /// CERTIFICATE_VERIFY_FAILED` immediately after a deployment's pin was
   /// fetched and applied for the first time.
   void updatePin(String certificatePem) {
+    // A no-op call must not swap/close the delegate: that would abort any
+    // request still in flight on it.
+    if (certificatePem == _pinnedPem) return;
     logDebug('CaddyCaPinningHttpClient: updatePin (${certificatePem.length} '
         'byte PEM)');
+    _pinnedPem = certificatePem;
     _context = SecurityContext(withTrustedRoots: true)
       ..setTrustedCertificatesBytes(utf8.encode(certificatePem));
     final previous = _delegate;
@@ -93,6 +98,7 @@ final class CaddyCaPinningHttpClient extends http.BaseClient {
   /// Return to normal platform/system certificate trust.
   void clearPin() {
     logDebug('CaddyCaPinningHttpClient: clearPin');
+    _pinnedPem = null;
     _context = null;
     final previous = _delegate;
     _delegate = http.Client();
@@ -141,14 +147,11 @@ final class CaddyCaPinningHttpClient extends http.BaseClient {
 
   @override
   void close() {
-    // Deliberately not closing _delegate either -- see class doc. Logging
-    // the caller's stack so a future spurious close() attempt is
-    // identifiable instead of silent.
-    logWarning(
+    // PocketBase calls close() after every request; this is routine, not
+    // spurious, so it's never actually closed.
+    logDebug(
       'CaddyCaPinningHttpClient: close() called on the shared singleton '
       '-- ignoring (this client is never meant to be closed)',
     );
-    logDebug('CaddyCaPinningHttpClient: close() call site',
-        {'stack': StackTrace.current.toString()});
   }
 }

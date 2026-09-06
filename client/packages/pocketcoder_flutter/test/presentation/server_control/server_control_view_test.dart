@@ -173,25 +173,35 @@ ServerControlResult _failure(ServerControlOperation operation) =>
       stderr: 'permission denied',
     );
 
+/// These tests assert what a command renders, not how much of it fits. The
+/// nav banner shortens the default viewport enough that a lazy ListView stops
+/// building the output rows.
+void _tallViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 2400);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
   testWidgets('renders all six controls and release status', (tester) async {
     final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     await tester.pumpWidget(_app(cubit));
 
-    expect(find.text('RELEASE STATUS: CHECKING'), findsOneWidget);
+    expect(find.text('release status: checking'), findsOneWidget);
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(find.text(l10n.serverControlGroupPocketCoder), findsOneWidget);
     expect(find.text(l10n.serverControlGroupNixOs), findsOneWidget);
     expect(find.text(l10n.serverControlGroupData), findsOneWidget);
-    expect(find.text(l10n.serverControlActionRestart), findsNWidgets(2));
-    expect(find.text(l10n.serverControlActionUpdate), findsNWidgets(2));
-    expect(find.text(l10n.serverControlActionSave), findsOneWidget);
-    expect(find.text(l10n.serverControlActionRestore), findsOneWidget);
+    expect(find.text('<${l10n.serverControlActionRestart.toLowerCase()}>'), findsNWidgets(2));
+    expect(find.text('<${l10n.serverControlActionUpdate.toLowerCase()}>'), findsNWidgets(2));
+    expect(find.text('<${l10n.serverControlActionSave.toLowerCase()}>'), findsOneWidget);
+    expect(find.text('<${l10n.serverControlActionRestore.toLowerCase()}>'), findsOneWidget);
     await cubit.inspectRelease();
     await tester.pump();
-    expect(find.textContaining('RELEASE STATUS: CURRENT'), findsOneWidget);
-    expect(find.textContaining('CURRENT: 2.0.0'), findsOneWidget);
+    expect(find.textContaining('release status: current'), findsOneWidget);
+    expect(find.textContaining('current: 2.0.0'), findsOneWidget);
     await cubit.close();
   });
 
@@ -215,12 +225,12 @@ void main() {
     await cubit.inspectRelease();
     await tester.pump();
 
-    expect(find.textContaining('AVAILABLE: 2.1.0'), findsOneWidget);
+    expect(find.textContaining('available: 2.1.0'), findsOneWidget);
     expect(
-      find.textContaining('CONTRACTS: APP v2 · SERVER v1 · DEPLOYMENT v3'),
+      find.textContaining('contracts: app v2 · server v1 · deployment v3'),
       findsOneWidget,
     );
-    expect(find.textContaining('NIXOS: 26.05'), findsOneWidget);
+    expect(find.textContaining('NixOS: 26.05'), findsOneWidget);
     await cubit.close();
   });
 
@@ -231,13 +241,14 @@ void main() {
     await cubit.inspectRelease();
     await tester.pump();
 
-    expect(find.textContaining('AVAILABLE:'), findsNothing);
-    expect(find.textContaining('CONTRACTS:'), findsNothing);
-    expect(find.textContaining('NIXOS:'), findsNothing);
+    expect(find.textContaining('available:'), findsNothing);
+    expect(find.textContaining('contracts:'), findsNothing);
+    expect(find.textContaining('NixOS:'), findsNothing);
     await cubit.close();
   });
 
-  testWidgets('shows the SSH public key with copy when present, nothing '
+  testWidgets(
+      'shows the SSH public key with copy when present, nothing '
       'when absent', (tester) async {
     final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
@@ -281,7 +292,7 @@ void main() {
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
     ));
-    expect(find.text('BACK'), findsNothing);
+    expect(find.text('back'), findsNothing);
     await cubit.close();
   });
 
@@ -293,24 +304,29 @@ void main() {
     service.pending[ServerControlOperation.saveBackup] = future;
     await tester.pumpWidget(_app(cubit));
 
-    await tester.tap(find.text('SAVE'));
+    await tester.tap(find.text('<save>'));
     await tester.pumpAndSettle();
-    expect(find.text('[ CONFIRM SERVER CONTROL ]'), findsOneWidget);
+    expect(find.text('confirm server control'), findsOneWidget);
     expect(service.calls, isEmpty);
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     await tester.pumpAndSettle();
     expect(service.calls, isEmpty);
 
-    await tester.tap(find.text('SAVE'));
+    await tester.tap(find.text('<save>'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CONFIRM'));
+    await tester.tap(find.text('<confirm>'));
     await tester.pump();
     expect(service.calls, [ServerControlOperation.saveBackup]);
     await cubit.close();
   });
 
   testWidgets('disables controls while busy', (tester) async {
-    final service = _FakeService();
+    // A release is set so inspectRelease() succeeds on its first attempt --
+    // otherwise the retry path's real 1s Future.delayed hangs forever under
+    // testWidgets' FakeAsync zone, since cubit.run() (and any Timer it
+    // schedules) is already bound to that zone by the time it's invoked
+    // below; wrapping the await afterward in runAsync does not move it.
+    final service = _FakeService()..release = _release();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final pending = Completer<ServerControlResult>();
     service.pending[ServerControlOperation.restartNixOs] = pending.future;
@@ -321,18 +337,28 @@ void main() {
     );
     await tester.pump();
     expect(cubit.state.status, UiFlowStatus.loading);
-    expect(
-      tester
-          .widgetList<IgnorePointer>(find.byType(IgnorePointer))
-          .every((widget) => widget.ignoring),
-      isTrue,
-    );
+    // The control-group IgnorePointers are what busy state disables --
+    // unrelated shell chrome (nav, etc.) also uses IgnorePointer for other
+    // reasons, so scope this to the actual operation buttons, not the tree.
+    for (final label in ['<restart>', '<update>', '<save>', '<restore>']) {
+      for (final finder in find.text(label).evaluate()) {
+        final ignorePointer = tester.widget<IgnorePointer>(find
+            .ancestor(
+              of: find.byWidget(finder.widget),
+              matching: find.byType(IgnorePointer),
+            )
+            .first);
+        expect(ignorePointer.ignoring, isTrue,
+            reason: '$label should be disabled while busy');
+      }
+    }
     pending.complete(_success(ServerControlOperation.restartNixOs));
     await run;
     await cubit.close();
   });
 
   testWidgets('renders command output and errors', (tester) async {
+    _tallViewport(tester);
     final service = _FakeService();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     final result = _success(ServerControlOperation.saveBackup);
@@ -344,26 +370,30 @@ void main() {
     );
     await tester.pump();
     expect(find.text(r'$ saveBackup'), findsOneWidget);
-    expect(find.text('OUTPUT'), findsOneWidget);
-    await tester.tap(find.text('OUTPUT'));
+    expect(find.text('output'), findsOneWidget);
+    await tester.tap(find.text('output'));
     await tester.pump();
     expect(find.text('backup complete'), findsOneWidget);
     await cubit.close();
   });
 
   testWidgets('renders failed command output', (tester) async {
+    _tallViewport(tester);
     final service = _FakeService();
     final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
     service.pending[ServerControlOperation.updateNixOs] =
         Future.value(_failure(ServerControlOperation.updateNixOs));
     await tester.pumpWidget(_app(cubit));
 
-    await cubit.run(
-      operation: ServerControlOperation.updateNixOs,
-      instanceId: 'instance-1',
-    );
+    // No release set on _FakeService, so inspectRelease()'s retry path hits
+    // a real 1s Future.delayed -- runAsync escapes the FakeAsync zone that
+    // testWidgets otherwise traps it in, where nothing ever advances it.
+    await tester.runAsync(() => cubit.run(
+          operation: ServerControlOperation.updateNixOs,
+          instanceId: 'instance-1',
+        ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('OUTPUT'));
+    await tester.tap(find.text('output'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('permission denied'), findsOneWidget);
@@ -382,16 +412,16 @@ void main() {
     await tester.pumpWidget(_app(cubit));
 
     expect(find.textContaining('•' * 'secret-pw'.length), findsOneWidget);
-    await tester.tap(find.text('SHOW'));
+    await tester.tap(find.text('<show>'));
     await tester.pumpAndSettle();
     expect(find.textContaining('secret-pw'), findsNothing);
 
     gate.approve = true;
-    await tester.tap(find.text('SHOW'));
+    await tester.tap(find.text('<show>'));
     await tester.pumpAndSettle();
     expect(find.textContaining('secret-pw'), findsOneWidget);
 
-    await tester.tap(find.text('HIDE'));
+    await tester.tap(find.text('<hide>'));
     await tester.pumpAndSettle();
     expect(find.textContaining('secret-pw'), findsNothing);
     await cubit.close();
@@ -407,12 +437,12 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('PRIVATE-KEY-PEM'), findsNothing);
-    await tester.tap(find.text('SHOW').last);
+    await tester.tap(find.text('<show>').last);
     await tester.pumpAndSettle();
     expect(find.textContaining('PRIVATE-KEY-PEM'), findsNothing);
 
     gate.approve = true;
-    await tester.tap(find.text('SHOW').last);
+    await tester.tap(find.text('<show>').last);
     await tester.pumpAndSettle();
     expect(find.textContaining('PRIVATE-KEY-PEM'), findsOneWidget);
     await cubit.close();
@@ -425,7 +455,7 @@ void main() {
       final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
       await tester.pumpWidget(_app(cubit));
 
-      expect(find.text('PROVIDER WEB PORTAL'), findsNothing);
+      expect(find.text('<provider web portal>'), findsNothing);
       await cubit.close();
     });
 
@@ -442,15 +472,16 @@ void main() {
         inAppBrowserLauncher: launcher,
       ));
 
-      expect(find.text('PROVIDER WEB PORTAL'), findsOneWidget);
-      await tester.tap(find.text('PROVIDER WEB PORTAL'));
+      expect(find.text('<provider web portal>'), findsOneWidget);
+      await tester.tap(find.text('<provider web portal>'));
       await tester.pumpAndSettle();
 
       expect(launcher.opened, Uri.parse('https://cloud.linode.com/linodes/42'));
       await cubit.close();
     });
 
-    testWidgets('shows a snackbar instead of opening a browser when there '
+    testWidgets(
+        'shows a snackbar instead of opening a browser when there '
         'is no active instance', (tester) async {
       final service = _FakeService()..release = _release();
       final cubit = ServerControlCubit(service, _FakeLocalAuthGate());
@@ -461,7 +492,7 @@ void main() {
         inAppBrowserLauncher: launcher,
       ));
 
-      await tester.tap(find.text('PROVIDER WEB PORTAL'));
+      await tester.tap(find.text('<provider web portal>'));
       await tester.pumpAndSettle();
 
       expect(launcher.opened, isNull);

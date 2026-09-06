@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
@@ -24,10 +25,12 @@ import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repositor
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/adapters/agent_auth_adapter.dart';
 
@@ -43,6 +46,8 @@ class MockChatListRepository extends Mock implements IChatListRepository {
       required ChatTurn turn,
       required bool isFirst}) async {}
 }
+
+class MockPushService extends Mock implements PushService {}
 
 class _RecordingLauncher implements InAppBrowserLauncher {
   _RecordingLauncher({this.result = true});
@@ -167,11 +172,20 @@ void main() {
   late MockProviderRepository providerRepo;
   late MockHarnessAuthRepository authRepo;
   late MockChatListRepository chatRepo;
+  late MockPushService pushService;
 
   setUp(() {
     providerRepo = MockProviderRepository();
     authRepo = MockHarnessAuthRepository();
     chatRepo = MockChatListRepository();
+    pushService = MockPushService();
+    when(() => pushService.requestPermissions()).thenAnswer((_) async => true);
+    GetIt.instance.registerSingleton<PushService>(pushService);
+    addTearDown(() {
+      if (GetIt.instance.isRegistered<PushService>()) {
+        GetIt.instance.unregister<PushService>();
+      }
+    });
 
     when(() => providerRepo.watchHarnesses())
         .thenAnswer((_) => Stream.value([_codex()]));
@@ -225,6 +239,34 @@ void main() {
   });
 
   testWidgets(
+      'connecting a harness and landing on its new chat asks for '
+      'notification permission', (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => _connected());
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+    await tester.tap(find.text('next'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
+    verify(() => pushService.requestPermissions()).called(1);
+  });
+
+  testWidgets(
       'tapping a Codex harness opens the authorization page through the '
       'injected launcher with the structured verification URI, with no '
       'app-side code field', (tester) async {
@@ -247,14 +289,14 @@ void main() {
       await tester.pump();
     }
 
-    expect(find.text('[OPEN AUTHORIZATION PAGE]'), findsOneWidget);
+    expect(find.text('<open authorization page>'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
 
-    await tester.tap(find.text('[OPEN AUTHORIZATION PAGE]'));
+    await tester.tap(find.text('<open authorization page>'));
     await tester.pump();
     expect(launcher.opened, [_verificationUri]);
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -319,7 +361,7 @@ void main() {
 
     // Close the dialog so the timer is cancelled and no pending Timer trips
     // flutter_test's teardown invariant check.
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -374,7 +416,7 @@ void main() {
     await tester.pump();
     expect(pollCount, greaterThanOrEqualTo(1));
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -434,7 +476,7 @@ void main() {
 
     expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), '  one-time-code  ');
-    await tester.tap(find.text('[SUBMIT]'));
+    await tester.tap(find.text('<submit>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -469,15 +511,109 @@ void main() {
       await tester.pump();
     }
 
-    await tester.tap(find.text('[OPEN AUTHORIZATION PAGE]'));
+    await tester.tap(find.text('<open authorization page>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
 
     expect(find.byType(SnackBar), findsOneWidget);
-    expect(find.text('CANCEL'), findsOneWidget);
+    expect(find.text('<cancel>'), findsOneWidget);
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+  });
+
+  testWidgets(
+      'a cancellation whose response is already connected does not crash '
+      'the dialog with a double pop', (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => _awaitingChallenge());
+    when(() => authRepo.cancel(
+          harnessId: _codexId,
+          provider: _providerId,
+          accountId: any(named: 'accountId'),
+          attemptId: any(named: 'attemptId'),
+        )).thenAnswer((_) async => _connected());
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+    await tester.tap(find.text('<cancel>'));
+    for (var i = 0; i < 8; i++) {
+      await tester.pump();
+    }
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'a status with a real error stops the loading glyph from claiming '
+      'the connection is still running', (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => const HarnessAuthStatus(
+          harness: _codexId,
+          provider: _providerId,
+          accountId: '',
+          accountName: '',
+          visibility: harnessAccountVisibilityPersonal,
+          credentialMode: 'account',
+          status: 'error',
+          lastError: 'invalid_grant',
+        ));
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
+    expect(find.byType(StatusMarkerView), findsOneWidget);
+    expect(find.text('invalid_grant'), findsOneWidget);
+  });
+
+  testWidgets('tapping COPY on a device code shows a confirmation snackbar',
+      (tester) async {
+    when(() => authRepo.start(
+          harnessId: _codexId,
+          provider: _providerId,
+          mode: 'oauth',
+          visibility: harnessAccountVisibilityPersonal,
+        )).thenAnswer((_) async => _awaitingChallenge());
+
+    await _pumpScreen(tester,
+        providerRepo: providerRepo,
+        authRepo: authRepo,
+        chatRepo: chatRepo,
+        launcher: _RecordingLauncher());
+    await tester.tap(find.text('Codex'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+    await tester.tap(find.text('<copy>'));
+    await tester.pump();
+
+    expect(find.byType(SnackBar), findsOneWidget);
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }

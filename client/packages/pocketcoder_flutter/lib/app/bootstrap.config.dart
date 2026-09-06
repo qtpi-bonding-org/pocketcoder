@@ -125,6 +125,8 @@ import 'package:pocketcoder_flutter/domain/server_control/i_server_connection_de
     as _i990;
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart'
     as _i789;
+import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart'
+    as _i957;
 import 'package:pocketcoder_flutter/domain/skills/i_skills_repository.dart'
     as _i165;
 import 'package:pocketcoder_flutter/domain/status/i_status_repository.dart'
@@ -233,6 +235,10 @@ import 'package:pocketcoder_flutter/infrastructure/security/local_auth_gate.dart
     as _i492;
 import 'package:pocketcoder_flutter/infrastructure/security/ssh_key_generator.dart'
     as _i346;
+import 'package:pocketcoder_flutter/infrastructure/settings/local_settings_database.dart'
+    as _i387;
+import 'package:pocketcoder_flutter/infrastructure/settings/local_settings_service.dart'
+    as _i685;
 import 'package:pocketcoder_flutter/infrastructure/skills/skill_dao.dart'
     as _i9;
 import 'package:pocketcoder_flutter/infrastructure/skills/skills_repository.dart'
@@ -283,6 +289,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => externalModule.errorBoxStorage);
     gh.lazySingleton<_i344.InAppBrowserLauncher>(
         () => externalModule.inAppBrowserLauncher);
+    gh.lazySingleton<_i387.LocalSettingsDatabase>(
+        () => externalModule.localSettingsDatabase);
     gh.lazySingleton<_i72.NetworkRecoverySignal>(
         () => _i72.NetworkRecoverySignal());
     gh.lazySingleton<_i12.ProvisioningLogDb>(() => _i12.ProvisioningLogDb());
@@ -363,6 +371,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => externalModule.useTestingChannel,
       instanceName: 'useTestingChannel',
     );
+    gh.lazySingleton<_i957.ILocalSettingsService>(
+        () => _i685.LocalSettingsService(gh<_i387.LocalSettingsDatabase>()));
     gh.lazySingleton<_i653.IFeedbackService>(() => _i214.AppFeedbackService());
     gh.lazySingleton<String>(
       () => externalModule.oauthRelayBaseUrl,
@@ -531,8 +541,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i710.ElicitationCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i225.PermissionCubit>(
         () => _i225.PermissionCubit(gh<_i763.AgentChatRepository>()));
-    gh.factory<_i312.SessionControlsCubit>(
-        () => _i312.SessionControlsCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i681.HarnessAuthCubit>(() => _i681.HarnessAuthCubit(
           providerRepository: gh<_i422.IProviderRepository>(),
           authRepository: gh<_i14.IHarnessAuthRepository>(),
@@ -543,6 +551,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
     gh.factory<_i718.ChatMonitoringCubit>(
         () => _i718.ChatMonitoringCubit(gh<_i34.IChatListRepository>()));
+    gh.factory<_i312.SessionControlsCubit>(() => _i312.SessionControlsCubit(
+          gh<_i763.AgentChatRepository>(),
+          gh<_i199.ChatDao>(),
+          gh<_i810.PocoConfigDao>(),
+          gh<_i810.PermissionModeDao>(),
+        ));
     gh.factory<_i1066.ChatCubit>(() => _i1066.ChatCubit(
           gh<_i763.AgentChatRepository>(),
           gh<_i72.NetworkRecoverySignal>(),

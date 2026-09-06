@@ -34,8 +34,9 @@ void main() {
       mutex.synchronized(() async => throw StateError('boom')),
       throwsA(isA<StateError>()),
     );
-    final result =
-        await mutex.synchronized(() async => 'ok').timeout(const Duration(seconds: 2));
+    final result = await mutex
+        .synchronized(() async => 'ok')
+        .timeout(const Duration(seconds: 2));
     expect(result, 'ok');
   });
 }

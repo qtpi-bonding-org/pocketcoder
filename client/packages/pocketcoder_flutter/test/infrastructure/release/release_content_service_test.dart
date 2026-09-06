@@ -62,8 +62,7 @@ void main() {
   });
 
   group('useTestingChannel', () {
-    test('false (the default) still fetches the plain channel path',
-        () async {
+    test('false (the default) still fetches the plain channel path', () async {
       final fixture = await _Fixture.create();
       final service = fixture.service();
 
@@ -75,7 +74,8 @@ void main() {
           isNot(contains('/v1/channels/stable-testing.json')));
     });
 
-    test('true fetches the -testing path, and still verifies against the '
+    test(
+        'true fetches the -testing path, and still verifies against the '
         "pointer's unqualified channel field", () async {
       final fixture = await _Fixture.create(testingVariant: true);
       final service = fixture.service(useTestingChannel: true);
@@ -83,13 +83,14 @@ void main() {
       final release = await service.resolve();
 
       expect(release.digest, fixture.digest);
-      expect(fixture.requestedPaths,
-          contains('/v1/channels/stable-testing.json'));
-      expect(fixture.requestedPaths,
-          isNot(contains('/v1/channels/stable.json')));
+      expect(
+          fixture.requestedPaths, contains('/v1/channels/stable-testing.json'));
+      expect(
+          fixture.requestedPaths, isNot(contains('/v1/channels/stable.json')));
     });
 
-    test('still rejects a pointer whose channel field does not match, even '
+    test(
+        'still rejects a pointer whose channel field does not match, even '
         'on the testing path', () async {
       final fixture = await _Fixture.create(
           testingVariant: true, mismatchedChannelField: true);

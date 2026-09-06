@@ -9,8 +9,20 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:acp_dart/acp_dart.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
+import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
+import 'package:pocketcoder_flutter/infrastructure/chat/chat_dao.dart';
+import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
+
+class MockChatDao extends Mock implements ChatDao {}
+
+class MockPocoConfigDao extends Mock implements PocoConfigDao {}
+
+class MockPermissionModeDao extends Mock implements PermissionModeDao {}
 
 class _FakeAgentChatRepository implements AgentChatRepository {
   final Map<String, StreamController<Conversation>> _controllers = {};
@@ -37,7 +49,8 @@ class _FakeAgentChatRepository implements AgentChatRepository {
 
   @override
   Future<String> sendPrompt(String chatId, String text,
-      {String? messageId}) async => 'run-1';
+          {String? messageId}) async =>
+      'run-1';
 
   @override
   Future<void> cancel(String chatId) async {}
@@ -66,7 +79,7 @@ class _FakeAgentChatRepository implements AgentChatRepository {
 
 Future<void> _settle() => Future<void>.delayed(Duration.zero);
 
-SessionState _modesConfigState() => SessionState(
+SessionState _modesConfigState({bool isRunning = false}) => SessionState(
       modes: {
         'currentModeId': 'auto',
         'availableModes': [
@@ -80,15 +93,27 @@ SessionState _modesConfigState() => SessionState(
           {'id': 'default', 'name': 'Default'},
         ],
       },
+      isRunning: isRunning,
     );
 
 void main() {
   late _FakeAgentChatRepository repo;
+  late MockChatDao chatDao;
+  late MockPocoConfigDao pocoConfigDao;
+  late MockPermissionModeDao permissionModeDao;
   late SessionControlsCubit cubit;
 
   setUp(() {
     repo = _FakeAgentChatRepository();
-    cubit = SessionControlsCubit(repo);
+    chatDao = MockChatDao();
+    pocoConfigDao = MockPocoConfigDao();
+    permissionModeDao = MockPermissionModeDao();
+    // .pb is used purely for its .filter() string helper (no network) --
+    // stub it with a real, unconnected PocketBase instance so selectMode's
+    // idle path can build a parameterized filter safely.
+    when(() => permissionModeDao.pb).thenReturn(PocketBase('http://localhost'));
+    cubit =
+        SessionControlsCubit(repo, chatDao, pocoConfigDao, permissionModeDao);
   });
 
   tearDown(() async {
@@ -100,7 +125,7 @@ void main() {
     await _settle();
 
     repo.controllerFor('chat-1').add(
-          Conversation(sessionState: _modesConfigState()),
+          Conversation(sessionState: _modesConfigState(isRunning: true)),
         );
     await _settle();
 
@@ -115,7 +140,7 @@ void main() {
     await _settle();
 
     repo.controllerFor('chat-1').add(
-          Conversation(sessionState: _modesConfigState()),
+          Conversation(sessionState: _modesConfigState(isRunning: true)),
         );
     await _settle();
 
@@ -133,7 +158,7 @@ void main() {
     await _settle();
 
     repo.controllerFor('chat-1').add(
-          Conversation(sessionState: _modesConfigState()),
+          Conversation(sessionState: _modesConfigState(isRunning: true)),
         );
     await _settle();
 
@@ -153,13 +178,13 @@ void main() {
     await _settle();
 
     repo.controllerFor('chat-1').add(
-          Conversation(sessionState: _modesConfigState()),
+          Conversation(sessionState: _modesConfigState(isRunning: true)),
         );
     await _settle();
 
     final req = SetSessionConfigOptionRequest(
       sessionId: 'chat-1',
-      configId: 'default',
+      configId: 'harnessModelOverride',
       value: 'custom',
     );
 
@@ -170,13 +195,102 @@ void main() {
     expect(repo.setConfigOptionCalls.single['req'], same(req));
   });
 
+  test('idle selectMode persists the permission mode on the agent profile',
+      () async {
+    final chat = Chat(
+      id: 'chat-1',
+      title: 'Chat',
+      user: 'user-1',
+      agentProfile: 'profile-1',
+    );
+    final mode = PermissionMode(
+      id: 'permission-1',
+      name: 'Chat',
+      baseSessionMode: PermissionModeBaseSessionMode.chat,
+    );
+    when(() => chatDao.getOne('chat-1')).thenAnswer((_) async => chat);
+    when(() =>
+            permissionModeDao.getFullList(filter: 'base_session_mode = "chat"'))
+        .thenAnswer((_) async => [mode]);
+    when(() => pocoConfigDao
+        .save('profile-1', {'permission_mode': 'permission-1'})).thenAnswer(
+      (_) async => throw UnimplementedError(),
+    );
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.selectMode('chat');
+
+    verify(() => pocoConfigDao
+        .save('profile-1', {'permission_mode': 'permission-1'})).called(1);
+    expect(repo.setModeCalls, isEmpty);
+  });
+
+  test('idle setOption persists a known chat override as a JSON array',
+      () async {
+    // workspace_override is a PocketBase JSON field the server unmarshals
+    // into []string (sessionprofile.go, using element 0 as cwd) -- writing
+    // the raw scalar value there is silently ignored server-side.
+    when(() => chatDao.save('chat-1', {
+          'workspace_override': ['/tmp/workspace']
+        })).thenAnswer(
+      (_) async => throw UnimplementedError(),
+    );
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'workspaceOverride',
+      value: '/tmp/workspace',
+    ));
+
+    verify(() => chatDao.save('chat-1', {
+          'workspace_override': ['/tmp/workspace']
+        })).called(1);
+    expect(repo.setConfigOptionCalls, isEmpty);
+  });
+
+  test('idle setOption clears the workspace override on an empty value',
+      () async {
+    when(() => chatDao.save('chat-1', {'workspace_override': <String>[]}))
+        .thenAnswer(
+      (_) async => throw UnimplementedError(),
+    );
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'workspaceOverride',
+      value: '',
+    ));
+
+    verify(() => chatDao.save('chat-1', {'workspace_override': <String>[]}))
+        .called(1);
+  });
+
+  test('idle unknown config option throws UnsupportedError', () async {
+    cubit.open('chat-1');
+    await _settle();
+
+    await expectLater(
+      cubit.setOption(SetSessionConfigOptionRequest(
+        sessionId: 'chat-1',
+        configId: 'unknown',
+        value: 'value',
+      )),
+      throwsA(isA<UnsupportedError>()),
+    );
+  });
+
   test('cleared modes/config (null) in a later emission clears state',
       () async {
     cubit.open('chat-1');
     await _settle();
 
     repo.controllerFor('chat-1').add(
-          Conversation(sessionState: _modesConfigState()),
+          Conversation(sessionState: _modesConfigState(isRunning: true)),
         );
     await _settle();
     expect(cubit.state.modes?['currentModeId'], 'auto');

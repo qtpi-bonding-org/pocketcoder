@@ -24,6 +24,7 @@ void main() {
     VoidCallback? onManageSubscription,
     VoidCallback? onOpenTermsOfService,
     VoidCallback? onOpenPrivacyPolicy,
+    VoidCallback? onContinue,
   }) {
     return MaterialApp(
       theme: AppTheme.terminalTheme,
@@ -36,11 +37,13 @@ void main() {
         onManageSubscription: onManageSubscription ?? () {},
         onOpenTermsOfService: onOpenTermsOfService ?? () {},
         onOpenPrivacyPolicy: onOpenPrivacyPolicy ?? () {},
+        onContinue: onContinue,
       ),
     );
   }
 
-  testWidgets('presents the trial offer and store-derived price for a '
+  testWidgets(
+      'presents the trial offer and store-derived price for a '
       'trial-eligible package', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -51,8 +54,9 @@ void main() {
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(find.text(l10n.proTrialNoPaymentInfo), findsOneWidget);
     expect(find.text(l10n.proTrialLapseExplainer), findsOneWidget);
-    expect(find.text(l10n.proStartTrial(7)), findsOneWidget);
-    expect(find.text(l10n.proRestore), findsOneWidget);
+    expect(
+        find.text('<${l10n.proStartTrial(7).toLowerCase()}>'), findsOneWidget);
+    expect(find.text('<${l10n.proRestore}>'), findsOneWidget);
     // Apple requires the auto-renewal disclosure visible for a trial offer
     // too, not just a plain subscription -- the trial-specific wording,
     // not the no-trial one.
@@ -75,10 +79,13 @@ void main() {
     await tester.pumpAndSettle();
 
     final l10n = lookupAppLocalizations(const Locale('en'));
-    await tester.ensureVisible(find.text(l10n.proTermsOfServiceLink));
-    await tester.tap(find.text(l10n.proTermsOfServiceLink));
-    await tester.ensureVisible(find.text(l10n.proPrivacyPolicyLink));
-    await tester.tap(find.text(l10n.proPrivacyPolicyLink));
+    // TerminalButton decorates every label as <label>; the call site must not.
+    final terms = find.text('<${l10n.proTermsOfServiceLink}>');
+    final privacy = find.text('<${l10n.proPrivacyPolicyLink}>');
+    await tester.ensureVisible(terms);
+    await tester.tap(terms);
+    await tester.ensureVisible(privacy);
+    await tester.tap(privacy);
 
     expect(termsOpened, 1);
     expect(privacyOpened, 1);
@@ -93,17 +100,16 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('START 7-DAY FREE TRIAL'));
-    await tester.tap(find.text('START 7-DAY FREE TRIAL'));
-    await tester.ensureVisible(find.text('RESTORE PURCHASES'));
-    await tester.tap(find.text('RESTORE PURCHASES'));
+    await tester.ensureVisible(find.text('<start 7-day free trial>'));
+    await tester.tap(find.text('<start 7-day free trial>'));
+    await tester.ensureVisible(find.text('<restore purchases>'));
+    await tester.tap(find.text('<restore purchases>'));
 
     expect(purchases, 1);
     expect(restores, 1);
   });
 
-  testWidgets(
-      'an active Pro subscriber sees and can tap Manage Subscription',
+  testWidgets('an active Pro subscriber sees and can tap Manage Subscription',
       (tester) async {
     var manageCalls = 0;
     await tester.pumpWidget(subject(
@@ -112,22 +118,50 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('MANAGE SUBSCRIPTION'), findsOneWidget);
-    await tester.tap(find.text('MANAGE SUBSCRIPTION'));
+    expect(find.text('<manage subscription>'), findsOneWidget);
+    await tester.tap(find.text('<manage subscription>'));
 
     expect(manageCalls, 1);
   });
 
-  testWidgets('keeps only the back action, whether reached during '
+  testWidgets(
+      'an already-unlocked subscriber sees a continue affordance only when '
+      'onContinue is supplied, and tapping it invokes the callback',
+      (tester) async {
+    var continues = 0;
+    await tester.pumpWidget(subject(
+      state: const BillingState(package: package, isPro: true),
+      onContinue: () => continues += 1,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('<continue setup>'), findsOneWidget);
+    await tester.tap(find.text('<continue setup>'));
+    expect(continues, 1);
+  });
+
+  testWidgets(
+      'an already-unlocked subscriber outside guided setup sees no '
+      'continue affordance', (tester) async {
+    await tester.pumpWidget(subject(
+      state: const BillingState(package: package, isPro: true),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('<continue setup>'), findsNothing);
+  });
+
+  testWidgets(
+      'keeps only the back action, whether reached during '
       'onboarding or standalone from Configure', (tester) async {
     await tester.pumpWidget(subject());
     await tester.pumpAndSettle();
 
     expect(find.byType(TerminalFooter), findsOneWidget);
-    expect(find.text('BACK'), findsOneWidget);
-    expect(find.text('CHATS'), findsNothing);
-    expect(find.text('MONITOR'), findsNothing);
-    expect(find.text('CONFIGURE'), findsNothing);
-    expect(find.text('MANAGE'), findsNothing);
+    expect(find.text('back'), findsOneWidget);
+    expect(find.text('chat'), findsNothing);
+    expect(find.text('status'), findsNothing);
+    expect(find.text('config'), findsNothing);
+    expect(find.text('control'), findsNothing);
   });
 }

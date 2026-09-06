@@ -17,7 +17,8 @@ void main() {
     ));
   });
 
-  test('billing-identify failure is captured with the right source and code', () async {
+  test('billing-identify failure is captured with the right source and code',
+      () async {
     final storage = MockErrorBoxStorage();
     when(() => storage.saveError(any())).thenAnswer((_) async {});
 

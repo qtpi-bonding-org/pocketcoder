@@ -13,7 +13,10 @@ import 'package:pocketcoder_flutter/infrastructure/system/health_daos.dart';
 String _token({required int expiry}) {
   String part(Map<String, dynamic> value) =>
       base64Url.encode(utf8.encode(jsonEncode(value))).replaceAll('=', '');
-  return '${part({'alg': 'none', 'typ': 'JWT'})}.${part({'exp': expiry, 'id': 'u1'})}.x';
+  return '${part({'alg': 'none', 'typ': 'JWT'})}.${part({
+        'exp': expiry,
+        'id': 'u1'
+      })}.x';
 }
 
 Future<$PocketBase> _client(String token) async {
@@ -104,7 +107,8 @@ void main() {
     await expectLater(dao.getOne('h1'), throwsA(isA<AuthException>()));
   });
 
-  test('no coordinator configured preserves the legacy cached-read path', () async {
+  test('no coordinator configured preserves the legacy cached-read path',
+      () async {
     client = await _client(_token(expiry: 4102444800));
     dao = HealthcheckDao(client);
     await _seed(client);
@@ -127,48 +131,56 @@ void main() {
     expect((await dao.watch().first).single.name, 'api');
   });
 
-  test('expired network watch emits cached row then keeps later cache updates', () async {
+  test('expired network watch emits cached row then keeps later cache updates',
+      () async {
     client = await _client(_token(expiry: 1));
     dao = HealthcheckDao(client);
     await _seed(client);
     final values = <List<Healthcheck>>[];
     final errors = <Object>[];
     dao.watch(requestPolicy: RequestPolicy.networkOnly).listen(
-      values.add,
-      onError: errors.add,
-    );
+          values.add,
+          onError: errors.add,
+        );
     await pumpEventQueue();
     expect(values, hasLength(1));
     expect(values.single.single.id, 'h1');
     expect(errors, hasLength(1));
     expect(errors.single, isA<AuthException>());
-    await client.db.setLocal('healthchecks', [
-      {
-        'id': 'h2',
-        'name': 'worker',
-        'status': 'ready',
-        'created': '2024-01-01 00:00:00.000Z',
-        'updated': '2024-01-01 00:00:00.000Z',
-      },
-    ], removeAll: false);
+    await client.db.setLocal(
+        'healthchecks',
+        [
+          {
+            'id': 'h2',
+            'name': 'worker',
+            'status': 'ready',
+            'created': '2024-01-01 00:00:00.000Z',
+            'updated': '2024-01-01 00:00:00.000Z',
+          },
+        ],
+        removeAll: false);
     await pumpEventQueue();
     expect(values.length, greaterThanOrEqualTo(2));
     expect(values.last.map((row) => row.id), contains('h2'));
   });
 
-  test('session sign-out injects an error, while temporary unavailability does not', () async {
+  test(
+      'session sign-out injects an error, while temporary unavailability does not',
+      () async {
     client = await _client(_token(expiry: 4102444800));
     dao = HealthcheckDao(client);
     await _seed(client);
-    final repository = _AuthRepository(authenticated: true, baseUrl: 'https://one');
+    final repository =
+        _AuthRepository(authenticated: true, baseUrl: 'https://one');
     final coordinator = AuthSessionCoordinator(repository);
     BaseDao.configureSessionCoordinator(coordinator);
     final errors = <Object>[];
     final values = <List<Healthcheck>>[];
-    final subscription = dao.watch(requestPolicy: RequestPolicy.cacheOnly).listen(
-      values.add,
-      onError: errors.add,
-    );
+    final subscription =
+        dao.watch(requestPolicy: RequestPolicy.cacheOnly).listen(
+              values.add,
+              onError: errors.add,
+            );
     await Future<void>.delayed(Duration.zero);
     repository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
     await coordinator.restore();
@@ -202,7 +214,8 @@ void main() {
       dao.save(null, {'name': 'new', 'status': 'ready'}),
       throwsA(anything),
     );
-    final cached = await dao.getFullList(requestPolicy: RequestPolicy.cacheOnly);
+    final cached =
+        await dao.getFullList(requestPolicy: RequestPolicy.cacheOnly);
     expect(cached.map((h) => h.name), isNot(contains('new')));
   });
 
@@ -213,7 +226,8 @@ void main() {
     dao = HealthcheckDao(client);
     await _seed(client);
     await expectLater(dao.delete('h1'), throwsA(anything));
-    final cached = await dao.getFullList(requestPolicy: RequestPolicy.cacheOnly);
+    final cached =
+        await dao.getFullList(requestPolicy: RequestPolicy.cacheOnly);
     expect(cached.map((h) => h.id), contains('h1'));
   });
 }

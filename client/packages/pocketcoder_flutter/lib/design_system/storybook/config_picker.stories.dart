@@ -3,7 +3,8 @@ import 'package:widgetbook_annotation/widgetbook_annotation.dart' as wb;
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
 
-Widget _app(Widget child) => MaterialApp(theme: AppTheme.lightTheme, home: Scaffold(body: child));
+Widget _app(Widget child) =>
+    MaterialApp(theme: AppTheme.lightTheme, home: Scaffold(body: child));
 
 @wb.UseCase(name: 'empty config', type: ConfigPicker)
 Widget configPickerEmpty(BuildContext context) => _app(ConfigPicker(

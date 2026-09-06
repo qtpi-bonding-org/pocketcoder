@@ -6,8 +6,9 @@ import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
 
 void main() {
-  testWidgets('CONNECT renders outlined: bordered in its own color, not filled/inverted',
-      (tester) async {
+  testWidgets(
+      'wizard <next> renders on a transparent background at rest, not '
+      'filled/inverted', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.lightTheme,
@@ -27,21 +28,19 @@ void main() {
       ),
     );
 
-    final text = tester.widget<Text>(find.text('CONNECT'));
+    final text = tester.widget<Text>(find.text('next'));
     expect(text.style?.color, isNot(Colors.black));
 
     final container = tester.widget<Container>(
       find
           .descendant(
               of: find.ancestor(
-                of: find.text('CONNECT'),
-                matching: find.byType(InkWell),
+                of: find.text('next'),
+                matching: find.byType(GestureDetector),
               ),
               matching: find.byType(Container))
           .first,
     );
-    final decoration = container.decoration as BoxDecoration;
-    expect(decoration.border, isNotNull);
-    expect(decoration.color, anyOf(isNull, Colors.transparent));
+    expect(container.color, Colors.transparent);
   });
 }

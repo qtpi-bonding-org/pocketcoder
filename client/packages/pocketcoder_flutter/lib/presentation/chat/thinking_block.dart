@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 
 class ThinkingBlock extends StatefulWidget {
   final String text;
@@ -38,18 +40,14 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
                   '[ THOUGHTS ]',
                   style: TextStyle(
                     color: colors.primary,
-                    fontFamily: AppFonts.bodyFamily,
-                    fontSize: AppSizes.fontSmall,
+                    fontFamily: AppFonts.family,
                     fontWeight: AppFonts.heavy,
                   ),
                 ),
                 HSpace.x1,
-                TerminalStatusGlyph(
-                  status: widget.isStreaming
-                      ? TerminalStatus.running
-                      : TerminalStatus.success,
-                  fontSize: AppSizes.fontSmall,
-                ),
+                widget.isStreaming
+                    ? const TerminalSpinner()
+                    : const StatusMarkerView(marker: StatusMarker.ok),
               ],
             ),
           ),
@@ -61,8 +59,7 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
               widget.text,
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.7),
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontStandard,
+                fontFamily: AppFonts.family,
                 fontStyle: FontStyle.italic,
                 height: 1.4,
               ),

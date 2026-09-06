@@ -86,8 +86,7 @@ void main() {
         .collection('harness_providers')
         .getFullList(filter: "harness = '$harnessId'", expand: 'provider');
     expect(edges, isNotEmpty,
-        reason:
-            '$cliId must have at least one harness_providers edge -- run '
+        reason: '$cliId must have at least one harness_providers edge -- run '
             'the modelcatalog sync, or this test cannot pick a provider');
     // modelcatalog syncs in hundreds of catalog providers (real backends
     // like openai/anthropic alongside routers, regional resellers, and
@@ -115,8 +114,9 @@ void main() {
     // previous run of this test against the same long-lived docker-compose
     // stack, matching how the real onboarding flow overwrites an existing
     // key rather than erroring.
-    final existingKeys = await client.collection('provider_api_keys').getFullList(
-        filter: "owner = '$userId' && provider = '$providerId'");
+    final existingKeys = await client
+        .collection('provider_api_keys')
+        .getFullList(filter: "owner = '$userId' && provider = '$providerId'");
     for (final key in existingKeys) {
       await client.collection('provider_api_keys').delete(key.id);
     }
@@ -131,7 +131,8 @@ void main() {
       baseUrl: baseUrl,
       headers: {'Authorization': token},
     ));
-    final harnessAuthApi = generated.HarnessAuthApi(dio, generated.standardSerializers);
+    final harnessAuthApi =
+        generated.HarnessAuthApi(dio, generated.standardSerializers);
 
     final startResp = await harnessAuthApi.startHarnessAuth(
       harnessRequest: (generated.HarnessRequestBuilder()
@@ -169,8 +170,8 @@ void main() {
     String? runId;
     for (var attempt = 0; attempt < 15; attempt++) {
       try {
-        final resp =
-            await agentApi.promptChat(chatId: chat.id, promptRequest: promptRequest);
+        final resp = await agentApi.promptChat(
+            chatId: chat.id, promptRequest: promptRequest);
         runId = resp.data?.runId;
         break;
       } on DioException catch (e) {
@@ -212,7 +213,8 @@ void main() {
           'rather than this file directly, and check the pocketbase '
           'container logs for the actual provisioning failure.');
     }
-    expect(runId, isNotNull, reason: 'promptChat never returned 202 after 15 retries');
+    expect(runId, isNotNull,
+        reason: 'promptChat never returned 202 after 15 retries');
 
     // The credential-resolution fixes only prove themselves once the
     // harness container actually calls the upstream provider with the
@@ -298,8 +300,7 @@ void main() {
       'a generic goose_unavailable',
       () async {
         if (email == null || password == null) {
-          markTestSkipped(
-              'API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
+          markTestSkipped('API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
               'tests/compose/api/run.sh, not directly');
           return;
         }
@@ -314,8 +315,7 @@ void main() {
       'required or a generic goose_unavailable',
       () async {
         if (email == null || password == null) {
-          markTestSkipped(
-              'API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
+          markTestSkipped('API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
               'tests/compose/api/run.sh, not directly');
           return;
         }

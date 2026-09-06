@@ -41,8 +41,8 @@ void main() {
   testWidgets('ordinary update notice is dismissible', (tester) async {
     await tester.pumpWidget(_app(_state(ServerReleaseStatus.updateAvailable)));
 
-    expect(find.text(r'$ UPDATE AVAILABLE'), findsOneWidget);
-    expect(find.text('DISMISS'), findsOneWidget);
+    expect(find.text(r'$ update available'), findsOneWidget);
+    expect(find.text('<dismiss>'), findsOneWidget);
   });
 
   testWidgets('critical warning is persistent', (tester) async {
@@ -50,7 +50,7 @@ void main() {
       _app(_state(ServerReleaseStatus.criticalReleaseWarning)),
     );
 
-    expect(find.textContaining(r'$ CRITICAL RELEASE WARNING'), findsOneWidget);
-    expect(find.text('DISMISS'), findsNothing);
+    expect(find.textContaining(r'$ critical release warning'), findsOneWidget);
+    expect(find.text('<dismiss>'), findsNothing);
   });
 }

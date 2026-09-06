@@ -29,8 +29,7 @@ class ChatCubit extends AppCubit<ChatState> {
     this._networkRecoverySignal,
     this._chatListRepository,
     this._seenMessages,
-  )
-      : super(const ChatState());
+  ) : super(const ChatState());
 
   final AgentChatRepository _repository;
   final NetworkRecoverySignal _networkRecoverySignal;
@@ -91,6 +90,21 @@ class ChatCubit extends AppCubit<ChatState> {
     _eventSub = transport.events.listen(
       (event) {
         if (myGeneration != _generation) return;
+        if (event is ToolCallStartEvent ||
+            event is ToolCallEndEvent ||
+            event is ToolCallResultEvent) {
+          logDebug('🤖 [ChatCubit] tool-call event', {
+            'type': event.runtimeType.toString(),
+            'toolCallId': switch (event) {
+              ToolCallStartEvent(:final toolCallId) => toolCallId,
+              ToolCallEndEvent(:final toolCallId) => toolCallId,
+              ToolCallResultEvent(:final toolCallId) => toolCallId,
+              _ => null,
+            },
+            'eventTimestamp': event.timestamp,
+            'wallClock': DateTime.now().toIso8601String(),
+          });
+        }
         final reducer = _reducer;
         if (reducer == null) return;
         reducer.apply(event);
@@ -101,8 +115,7 @@ class ChatCubit extends AppCubit<ChatState> {
           final finished = reducer.current.timeline
               .whereType<TextTimelineItem>()
               .firstWhereOrNull((item) => item.id == event.messageId);
-          if (finished != null &&
-              finished.kind != ChatMessageKind.reasoning) {
+          if (finished != null && finished.kind != ChatMessageKind.reasoning) {
             unawaited(_chatListRepository.recordMessagePreview(
               chatId,
               text: finished.text,

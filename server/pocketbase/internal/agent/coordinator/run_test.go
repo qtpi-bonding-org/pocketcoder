@@ -107,6 +107,7 @@ type fakeConn struct {
 	elicitationResolved         bool
 	lastMode                    string
 	lastModeSession             string
+	setModeErr                  error
 	requestPermission           bool
 	requestPermissionToolCallID string
 
@@ -139,6 +140,7 @@ type fakeConn struct {
 	// Task 3: SetSessionConfigOption captures (provider/model live delivery).
 	lastSetConfigOption  acpsdk.SetSessionConfigOptionRequest
 	setConfigOptionCalls []acpsdk.SetSessionConfigOptionRequest
+	setConfigOptionErrs []error
 
 	// Task 6: custom InitializeResponse for testing capability flags
 	initResp acpsdk.InitializeResponse
@@ -383,16 +385,22 @@ func (f *fakeConn) SetSessionMode(_ context.Context, req acpsdk.SetSessionModeRe
 	f.mu.Lock()
 	f.lastMode = string(req.ModeId)
 	f.lastModeSession = string(req.SessionId)
+	err := f.setModeErr
 	f.mu.Unlock()
-	return acpsdk.SetSessionModeResponse{}, nil
+	return acpsdk.SetSessionModeResponse{}, err
 }
 func (f *fakeConn) SetSessionConfigOption(_ context.Context, req acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) {
 	f.mu.Lock()
 	f.lastSetConfigOption = req
 	f.setConfigOptionCalls = append(f.setConfigOptionCalls, req)
 	f.callOrder = append(f.callOrder, "set_config_option")
+	var err error
+	if len(f.setConfigOptionErrs) > 0 {
+		err = f.setConfigOptionErrs[0]
+		f.setConfigOptionErrs = f.setConfigOptionErrs[1:]
+	}
 	f.mu.Unlock()
-	return acpsdk.SetSessionConfigOptionResponse{}, nil
+	return acpsdk.SetSessionConfigOptionResponse{}, err
 }
 func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.PromptResponse, error) {
 	if f.promptCalled != nil {

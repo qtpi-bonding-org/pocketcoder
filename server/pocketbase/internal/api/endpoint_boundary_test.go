@@ -30,7 +30,7 @@ func mountAllPocketCoderOperations(t testing.TB, app core.App, e *core.ServeEven
 	AddLogOperations(registry, LogsDeps{})
 	AddOllamaOperations(registry, OllamaDeps{})
 	AddReleaseStatusOperations(registry)
-	filesystem.AddFileOperations(registry)
+	filesystem.AddFileOperations(registry, filesystem.FileDeps{App: app})
 	hooks.AddPushOperations(app, registry)
 	hooks.AddProDataOperations(app, registry)
 	AddHarnessAuthOperations(app, registry, HarnessAuthDeps{})

@@ -13,8 +13,10 @@ import 'package:pocketcoder_flutter/presentation/foss/foss_server_setup_view.dar
 
 class _FakeKeyGenerator implements ISshKeyGenerator {
   @override
-  Future<({String publicKey, String privateKey})> generate() async =>
-      (publicKey: 'ssh-ed25519 AAAAtest pocketcoder', privateKey: 'PRIVATE-PEM');
+  Future<({String publicKey, String privateKey})> generate() async => (
+        publicKey: 'ssh-ed25519 AAAAtest pocketcoder',
+        privateKey: 'PRIVATE-PEM'
+      );
   @override
   Future<({String publicKey, String privateKey})> generateHostKeyPair() async =>
       throw UnimplementedError('not used by this view');
@@ -26,12 +28,14 @@ class _FakeTester implements IFossRootSshConnectionTester {
     required String host,
     required String privateKeyPem,
   }) async =>
-      const FossHostIdentity(hostKeyType: 'ssh-ed25519', hostKeyFingerprint: 'SHA256:abc');
+      const FossHostIdentity(
+          hostKeyType: 'ssh-ed25519', hostKeyFingerprint: 'SHA256:abc');
 }
 
 class _MockStore extends Mock implements FossRootSshCredentialsStore {}
 
-Widget _wrap(FossServerSetupCubit cubit, {required VoidCallback onSetupComplete}) =>
+Widget _wrap(FossServerSetupCubit cubit,
+        {required VoidCallback onSetupComplete}) =>
     MaterialApp(
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -74,7 +78,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_wrap(cubit, onSetupComplete: () {}));
 
-    expect(find.text('GENERATE KEY'), findsOneWidget);
+    expect(find.text('<generate key>'), findsOneWidget);
     expect(find.byType(SelectableText), findsNothing);
   });
 
@@ -83,10 +87,11 @@ void main() {
       'with no editable host field', (tester) async {
     await tester.pumpWidget(_wrap(cubit, onSetupComplete: () {}));
 
-    await tester.tap(find.text('GENERATE KEY'));
+    await tester.tap(find.text('<generate key>'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('ssh-ed25519 AAAAtest pocketcoder'), findsOneWidget);
+    expect(find.textContaining('ssh-ed25519 AAAAtest pocketcoder'),
+        findsOneWidget);
     expect(find.textContaining('my-server.example'), findsOneWidget);
     expect(find.byType(TextField), findsNothing,
         reason: 'the host is derived from PocketBase, never user-entered '
@@ -99,12 +104,13 @@ void main() {
     var completions = 0;
     await tester.pumpWidget(_wrap(cubit, onSetupComplete: () => completions++));
 
-    await tester.tap(find.text('GENERATE KEY'));
+    await tester.tap(find.text('<generate key>'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('TEST CONNECTION & SAVE'));
+    await tester.tap(find.text('<test connection & save>'));
     await tester.pumpAndSettle();
 
-    expect(find.text('CONNECTED -- YOUR SERVER IS NOW MANAGED'), findsOneWidget);
+    expect(
+        find.text('connected -- your server is now managed'), findsOneWidget);
     expect(completions, 1);
     verify(() => store.save(any())).called(1);
   });

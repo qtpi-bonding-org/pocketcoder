@@ -38,7 +38,8 @@ class _FakeAgentChatRepository implements AgentChatRepository {
 
   @override
   Future<String> sendPrompt(String chatId, String text,
-      {String? messageId}) async => 'run-1';
+          {String? messageId}) async =>
+      'run-1';
 
   @override
   Future<void> cancel(String chatId) async {}
@@ -159,10 +160,10 @@ void main() {
         await _settle(tester);
 
         expect(find.text('Pick a value'), findsOneWidget);
-        expect(find.text('SUBMIT'), findsOneWidget);
+        expect(find.text('<submit>'), findsOneWidget);
 
         await tester.enterText(find.byType(TextField), 'blue');
-        await tester.tap(find.text('SUBMIT'));
+        await tester.tap(find.text('<submit>'));
         await _settle(tester);
 
         expect(repo.respondElicitationCalls, hasLength(1));
@@ -235,10 +236,10 @@ void main() {
       ));
       await _settle(tester);
 
-      final form = tester.widget<Text>(find.text('FORM'));
+      final form = tester.widget<Text>(find.text('form'));
       expect(form.style?.color, const Color(0xFF00B82A));
 
-      final cancel = tester.widget<Text>(find.text('CANCEL'));
+      final cancel = tester.widget<Text>(find.text('<cancel>'));
       expect(cancel.style?.color, isNot(const Color(0xFFFF3333)));
     });
   });

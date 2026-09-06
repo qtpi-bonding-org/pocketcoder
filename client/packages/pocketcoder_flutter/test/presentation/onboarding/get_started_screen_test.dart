@@ -34,8 +34,8 @@ class MockAuthRepository extends Mock implements IAuthRepository {}
 class _NoopServerReadinessCheck implements IServerReadinessCheck {
   const _NoopServerReadinessCheck();
   @override
-  ServerReadinessSnapshot get current =>
-      const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned);
+  ServerReadinessSnapshot get current => const ServerReadinessSnapshot(
+      status: ServerReadinessStatus.notProvisioned);
   @override
   Stream<ServerReadinessSnapshot> get readinessChanges => const Stream.empty();
   @override
@@ -88,8 +88,8 @@ void main() {
       question.message,
       'Are you already part of the PocketCoder Initiative?',
     );
-    expect(find.textContaining('I HAVE A SERVER — LOG IN'), findsOneWidget);
-    expect(find.textContaining('I’M NEW — JOIN'), findsOneWidget);
+    expect(find.textContaining('Log in'), findsOneWidget);
+    expect(find.textContaining('Join'), findsOneWidget);
     expect(find.byType(TerminalPromptSuggestion), findsNWidgets(2));
     expect(find.textContaining('computer that stays online'), findsNothing);
     expect(find.byType(TextField), findsNothing);
@@ -104,12 +104,12 @@ void main() {
     )));
     await tester.pump();
 
-    expect(find.text('WELCOME'), findsOneWidget);
+    expect(find.text('welcome'), findsOneWidget);
     final welcome = tester.widget<PocoBubble>(find.byType(PocoBubble));
     expect(welcome.message, contains('a server—a computer that stays online'));
     expect(welcome.message, contains('accessible and ready'));
-    expect(find.textContaining('HELP ME WITH SETUP'), findsOneWidget);
-    expect(find.textContaining('I’LL SET IT UP'), findsOneWidget);
+    expect(find.textContaining('Help me with setup'), findsOneWidget);
+    expect(find.textContaining("I'll set it up"), findsOneWidget);
     expect(find.byType(TerminalPromptSuggestion), findsNWidgets(2));
   });
 
@@ -120,11 +120,11 @@ void main() {
     )));
     await tester.pump();
 
-    expect(find.text('SELF-HOST SETUP'), findsOneWidget);
-    expect(find.text('A LINUX SERVER OR VPS YOU CONTROL'), findsOneWidget);
-    expect(find.text('DOCKER COMPOSE V2'), findsOneWidget);
-    expect(find.text('GUIDE'), findsOneWidget);
-    expect(find.text('CONNECT'), findsOneWidget);
+    expect(find.text('self-host setup'), findsOneWidget);
+    expect(find.text('a Linux server or VPS you control'), findsOneWidget);
+    expect(find.text('Docker compose v2'), findsOneWidget);
+    expect(find.text('<guide>'), findsOneWidget);
+    expect(find.text('next'), findsOneWidget);
   });
 
   testWidgets('login adapter renders the challenge and form without a server',
@@ -134,7 +134,7 @@ void main() {
 
     expect(find.byType(PocoBubble), findsOneWidget);
     expect(find.byType(TextField), findsNWidgets(3));
-    expect(find.text('CONNECT'), findsOneWidget);
+    expect(find.text('next'), findsOneWidget);
   });
 
   testWidgets('prefilled login page shows server credentials', (tester) async {
@@ -187,7 +187,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
     await tester.pump();
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('next'));
     await tester.pumpAndSettle();
 
     expect(captured, isNotNull);
@@ -232,7 +232,7 @@ void main() {
 
     expect(find.text('Must be at least 8 characters'), findsOneWidget);
 
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('next'));
     await tester.pumpAndSettle();
 
     expect(captured, isNull,
@@ -278,7 +278,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'admin@example.com');
     await tester.enterText(find.byType(TextField).last, 'chosen-password');
     await tester.pump();
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('next'));
     await tester.pumpAndSettle();
 
     expect(captured?.email, 'admin@example.com');
@@ -289,8 +289,7 @@ void main() {
       'BACK falls back to the onboarding (ascii-art home) screen, not '
       'chats, when login screen is the router root (reachable server, '
       'not authenticated boots straight here) -- landing in chats with '
-      'no session at all was a confirmed live auth-bypass',
-      (tester) async {
+      'no session at all was a confirmed live auth-bypass', (tester) async {
     // Boot reaches this screen via context.goNamed (a stack replace), so
     // there is no previous route to pop back to.
     final router = GoRouter(
@@ -320,7 +319,7 @@ void main() {
     ));
     await tester.pump();
 
-    await tester.tap(find.text('BACK'));
+    await tester.tap(find.text('back'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);

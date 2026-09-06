@@ -5,18 +5,11 @@ import 'app_sizes.dart';
 ///
 /// Refers to font families that should be configured in pubspec.yaml.
 class AppFonts {
-  /// Header font family
-  static const List<String> headerFontFallbacks = [
-    'Share Tech Mono',
-  ];
+  /// The single font family used throughout the app
+  static const String family = 'Noto Sans Mono';
 
-  /// Body font family
-  static const List<String> bodyFontFallbacks = [
-    'Noto Sans Mono',
-  ];
-
-  static const String headerFamily = 'Share Tech Mono';
-  static const String bodyFamily = 'Noto Sans Mono';
+  /// All font families (single family for the terminal design)
+  static const List<String> all = [family];
 
   static const FontWeight heavy = FontWeight.w800;
   static const FontWeight medium = FontWeight.w400;
@@ -24,81 +17,94 @@ class AppFonts {
 
   static TextTheme get textTheme => TextTheme(
         displayLarge: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontMassive,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
         displayMedium: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontMassive,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
         displaySmall: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontMassive,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
         headlineLarge: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontMassive,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
         headlineMedium: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontLarge,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
         headlineSmall: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontLarge,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
         titleLarge: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontLarge,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
         titleMedium: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontStandard,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
         titleSmall: TextStyle(
-          fontFamilyFallback: headerFontFallbacks,
-          fontSize: AppSizes.fontSmall,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: heavy,
+          height: AppSizes.lineHeightFactor,
         ),
-
         bodyLarge: TextStyle(
-          fontFamilyFallback: bodyFontFallbacks,
-          fontSize: AppSizes.fontStandard,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: AppSizes.lineHeightFactor,
         ),
         bodyMedium: TextStyle(
-          fontFamilyFallback: bodyFontFallbacks,
-          fontSize: AppSizes.fontSmall,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: AppSizes.lineHeightFactor,
         ),
         bodySmall: TextStyle(
-          fontFamilyFallback: bodyFontFallbacks,
-          fontSize: AppSizes.fontMini,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: AppSizes.lineHeightFactor,
         ),
-
         labelLarge: TextStyle(
-          fontFamilyFallback: bodyFontFallbacks,
-          fontSize: AppSizes.fontStandard,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: AppSizes.lineHeightFactor,
         ),
         labelMedium: TextStyle(
-          fontFamilyFallback: bodyFontFallbacks,
-          fontSize: AppSizes.fontSmall,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: AppSizes.lineHeightFactor,
         ),
         labelSmall: TextStyle(
-          fontFamilyFallback: bodyFontFallbacks,
-          fontSize: AppSizes.fontMini,
+          fontFamily: family,
+          fontSize: AppSizes.fontBody,
           fontWeight: medium,
+          height: AppSizes.lineHeightFactor,
         ),
       );
 

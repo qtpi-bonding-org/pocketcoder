@@ -181,7 +181,8 @@ void main() {
         ),
         throwsA(isA<LiveActivityException>()),
       );
-      verify(() => dao.getFullList(filter: 'user = "user-1" && status = "active"'))
+      verify(() =>
+              dao.getFullList(filter: 'user = "user-1" && status = "active"'))
           .called(1);
       verifyNever(() => dao.save(any(), any()));
     });
@@ -205,8 +206,9 @@ void main() {
       final result = await repository.getActiveActivities();
 
       expect(result, [activeActivity]);
-      verify(() => dao.getFullList(
-          filter: 'user = "user-1" && status = "active"')).called(1);
+      verify(() =>
+              dao.getFullList(filter: 'user = "user-1" && status = "active"'))
+          .called(1);
     });
 
     test('wraps a DAO failure in LiveActivityException', () async {

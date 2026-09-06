@@ -87,9 +87,8 @@ class VimToast extends StatelessWidget {
             dashes,
             style: TextStyle(
               color: accentColor.withValues(alpha: 0.5),
-              fontFamily: AppFonts.bodyFamily,
+              fontFamily: AppFonts.family,
               package: 'pocketcoder_flutter',
-              fontSize: AppSizes.fontTiny,
               height: 0.5,
             ),
           ),
@@ -100,9 +99,8 @@ class VimToast extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: accentColor,
-                fontFamily: AppFonts.bodyFamily,
+                fontFamily: AppFonts.family,
                 package: 'pocketcoder_flutter',
-                fontSize: AppSizes.fontTiny,
                 fontWeight: AppFonts.heavy,
               ),
             ),
@@ -111,9 +109,8 @@ class VimToast extends StatelessWidget {
             dashes,
             style: TextStyle(
               color: accentColor.withValues(alpha: 0.5),
-              fontFamily: AppFonts.bodyFamily,
+              fontFamily: AppFonts.family,
               package: 'pocketcoder_flutter',
-              fontSize: AppSizes.fontTiny,
               height: 0.5,
             ),
           ),

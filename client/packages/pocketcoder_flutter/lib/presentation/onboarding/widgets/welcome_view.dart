@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 
 class WelcomeView extends StatelessWidget {
   const WelcomeView({
@@ -18,38 +21,36 @@ class WelcomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: context.l10n.onboardingWelcomeTitle,
-        activePillar: NavPillar.configure,
         showBack: true,
         backFallbackRoute: AppRoutes.onboarding,
-        body: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TerminalConversationTurn(
-                    speaker: TerminalConversationSpeaker.poco,
-                    message: context.l10n.onboardingWelcomePoco,
-                  ),
-                  VSpace.x3,
-                  if (showGuidedSetup) ...[
-                    TerminalPromptSuggestion(
-                      label: context.l10n.onboardingWelcomeActionGuided,
-                      onSelected: onGuidedSetup,
-                      emphasis: Emphasis.outlined,
-                    ),
-                    VSpace.x1,
-                  ],
-                  TerminalPromptSuggestion(
-                    label: context.l10n.onboardingWelcomeActionSelfHost,
-                    onSelected: onSelfHost,
-                  ),
-                ],
+        // Counted so the flow stays contiguous 1..6 -- but no onNext:
+        // the two prompts in the body are the choice, and a footer
+        // <next> would silently pick one of them.
+        footer: const WizardFooter(),
+        body: OnboardingContentShell(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SectionHeader(
+                  name: context.l10n.onboardingWelcomeTitle.toLowerCase()),
+              TerminalConversationTurn(
+                speaker: TerminalConversationSpeaker.poco,
+                message: context.l10n.onboardingWelcomePoco,
               ),
-            ),
+              VSpace.x3,
+              if (showGuidedSetup) ...[
+                TerminalPromptSuggestion(
+                  label: context.l10n.onboardingWelcomeActionGuided,
+                  onSelected: onGuidedSetup,
+                  emphasis: Emphasis.outlined,
+                ),
+                VSpace.x1,
+              ],
+              TerminalPromptSuggestion(
+                label: context.l10n.onboardingWelcomeActionSelfHost,
+                onSelected: onSelfHost,
+              ),
+            ],
           ),
         ),
       );

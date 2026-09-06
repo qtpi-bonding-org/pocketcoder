@@ -5,7 +5,8 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 part 'tool_permissions_state.freezed.dart';
 
 @freezed
-sealed class ToolPermissionsState with _$ToolPermissionsState, UiFlowStateMixin {
+sealed class ToolPermissionsState
+    with _$ToolPermissionsState, UiFlowStateMixin {
   const ToolPermissionsState._();
 
   const factory ToolPermissionsState({

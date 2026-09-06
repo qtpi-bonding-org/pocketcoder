@@ -114,7 +114,7 @@ void main() {
 
     await tester.longPress(find.text('Hello World'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ARCHIVE'));
+    await tester.tap(find.text('<archive>'));
     await tester.pumpAndSettle();
 
     verify(() => repo.archiveChat('chat-1')).called(1);
@@ -130,7 +130,7 @@ void main() {
     await tester.pumpWidget(_wrap(cubit, providerRepo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('NEW'));
+    await tester.tap(find.text('<new>'));
     await tester.pumpAndSettle();
 
     expect(find.byType(NewChatDialog), findsOneWidget);

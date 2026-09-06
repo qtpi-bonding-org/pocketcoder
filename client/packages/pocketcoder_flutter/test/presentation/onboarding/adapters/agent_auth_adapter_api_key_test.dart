@@ -226,6 +226,12 @@ void main() {
           mode: 'none',
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
+
+    await tester.tap(find.text('next'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
     verify(() => chatRepo.createChat(
           title: any(named: 'title'),
           harness: _gooseId,
@@ -285,13 +291,13 @@ void main() {
     // Only one provider is in the catalog for this harness -- pick it via
     // the target-picker's search dialog, matching how the existing
     // provider-management screen drives the same widget.
-    await tester.tap(find.text('SELECT PROVIDER'));
+    await tester.tap(find.text('select provider').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ANTHROPIC'));
+    await tester.tap(find.text('Anthropic'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'sk-test-key');
-    await tester.tap(find.text('SAVE'));
+    await tester.tap(find.text('<save>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -307,6 +313,12 @@ void main() {
           mode: 'none',
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
+
+    await tester.tap(find.text('next'));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
     verify(() => chatRepo.createChat(
           title: any(named: 'title'),
           harness: _gooseId,

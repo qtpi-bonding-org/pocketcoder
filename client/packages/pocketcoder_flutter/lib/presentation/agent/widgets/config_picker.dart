@@ -1,7 +1,12 @@
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
 class ConfigPicker extends StatefulWidget {
   const ConfigPicker(
@@ -23,38 +28,23 @@ class _ConfigPickerState extends State<ConfigPicker> {
             .toList() ??
         const <Map<String, dynamic>>[];
     if (options.isEmpty) return const SizedBox.shrink();
-    final colors = context.colorScheme;
-    return Container(
-        padding: EdgeInsets.all(AppSizes.space),
-        decoration: BoxDecoration(
-            border: Border(
-                top: BorderSide(
-                    color: colors.onSurface.withValues(alpha: .1),
-                    width: AppSizes.borderWidth))),
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          InkWell(
-              onTap: () => setState(() => _expanded = !_expanded),
-              child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
-                  child: Row(children: [
-                    Text(
-                        _expanded ? '[v]' : '[>]',
-                        style: TextStyle(
-                            color: colors.onSurface.withValues(alpha: .5),
-                            fontFamily: AppFonts.bodyFamily,
-                            fontSize: AppSizes.fontTiny)),
-                    Text(context.l10n.agentConfigLabel,
-                        style: TextStyle(
-                            color: colors.onSurface.withValues(alpha: .5),
-                            fontFamily: AppFonts.bodyFamily,
-                            fontSize: AppSizes.fontTiny,
-                            fontWeight: AppFonts.heavy,
-                            letterSpacing: 2))
-                  ]))),
-          if (_expanded) ...options.map((o) => _option(context, o)),
-        ]));
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      DetailRow(
+        label: context.l10n.agentSessionLabel,
+        value: _expanded ? null : _summary(options),
+        affordance:
+            _expanded ? RowAffordance.collapse : RowAffordance.expand,
+        onTap: () => setState(() => _expanded = !_expanded),
+      ),
+      if (_expanded) ...options.map((o) => _option(context, o)),
+    ]);
   }
+
+  String _summary(List<Map<String, dynamic>> options) => options
+      .where((o) => o['kind'] == 'select')
+      .map((o) => o['currentValue']?.toString() ?? '')
+      .where((value) => value.isNotEmpty)
+      .join(' · ');
 
   Widget _option(BuildContext context, Map<String, dynamic> o) {
     final id = o['id'] as String?;
@@ -62,11 +52,9 @@ class _ConfigPickerState extends State<ConfigPicker> {
     final name = (o['name'] as String?) ?? id,
         kind = o['kind'] as String?,
         value = o['currentValue'];
-    final label = Text(name.toUpperCase(),
+    final label = Text(name,
         style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontStandard));
+            color: context.colorScheme.onSurface, fontFamily: AppFonts.family));
     void submit(String v) => widget.onSetOption(
         SetSessionConfigOptionRequest(sessionId: '', configId: id, value: v));
     if (kind == 'boolean') {
@@ -74,7 +62,8 @@ class _ConfigPickerState extends State<ConfigPicker> {
           padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
           child: Row(children: [
             Expanded(child: label),
-            TerminalCheckbox(value: value == true, onChanged: (v) => submit('$v'))
+            TerminalCheckbox(
+                value: value == true, onChanged: (v) => submit('$v'))
           ]));
     }
     if (kind == 'select') {
@@ -84,27 +73,29 @@ class _ConfigPickerState extends State<ConfigPicker> {
               .toList() ??
           const <Map<String, dynamic>>[];
       final current = value?.toString() ?? '';
-      return Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
-          child: Row(children: [
-            Expanded(child: label),
-            DropdownButton<String>(
-                value: choices.any((c) => '${c['value']}' == current)
-                    ? current
-                    : null,
-                hint: Text(current.isEmpty ? '--' : current,
-                    style: TextStyle(color: context.colorScheme.onSurface)),
-                dropdownColor: context.colorScheme.surface,
+      final displayValue = choices.any((c) => '${c['value']}' == current)
+          ? current
+          : (current.isEmpty ? '--' : current);
+      return DetailRow(
+          label: name,
+          value: displayValue,
+          affordance: RowAffordance.expand,
+          onTap: () => showTerminalListPicker<String>(
+                context: context,
+                title: name,
                 items: choices
-                    .map((c) => DropdownMenuItem(
-                        value: '${c['value']}',
-                        child: Text((c['label'] as String? ?? '${c['value']}')
-                            .toUpperCase())))
+                    .map((c) => '${c['value']}')
                     .toList(),
-                onChanged: (v) {
-                  if (v != null) submit(v);
-                })
-          ]));
+                itemBuilder: (_, item) => TerminalText(
+                    (choices.firstWhere((c) => '${c['value']}' == item,
+                            orElse: () => {})['label'] as String? ?? item),
+                    role: TextRole.label),
+                selected: displayValue == '--' ? null : current,
+                emptyLabel: 'no options',
+                cancelLabel: 'cancel',
+              ).then((selected) {
+                if (selected != null) submit(selected);
+              }));
     }
     return Padding(
         padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),

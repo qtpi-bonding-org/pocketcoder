@@ -23,10 +23,8 @@ class CreateAccountAdapter
   final ProviderOption? provider;
 
   @override
-  Widget buildAdapter(
-      BuildContext context,
-      CubitAdapterState<CreateAccountCubit, CreateAccountState>
-          adapter) {
+  Widget buildAdapter(BuildContext context,
+      CubitAdapterState<CreateAccountCubit, CreateAccountState> adapter) {
     final state = adapter.cubitField((value) => value);
     final cubit = context.read<CreateAccountCubit>();
     return ValueListenableBuilder<CreateAccountState>(

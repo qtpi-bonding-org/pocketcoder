@@ -40,16 +40,12 @@ enum Emphasis { plain, outlined, selected }
 /// Extension for terminal-specific colors that don't fit into standard ColorScheme.
 class TerminalColors extends ThemeExtension<TerminalColors> {
   final Color glow;
-  final Color scanline;
-  final double scanlineOpacity;
 
   final Color danger;
   final Color warning;
 
   const TerminalColors({
     required this.glow,
-    required this.scanline,
-    required this.scanlineOpacity,
     required this.danger,
     required this.warning,
   });
@@ -57,15 +53,11 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
   @override
   TerminalColors copyWith({
     Color? glow,
-    Color? scanline,
-    double? scanlineOpacity,
     Color? danger,
     Color? warning,
   }) {
     return TerminalColors(
       glow: glow ?? this.glow,
-      scanline: scanline ?? this.scanline,
-      scanlineOpacity: scanlineOpacity ?? this.scanlineOpacity,
       danger: danger ?? this.danger,
       warning: warning ?? this.warning,
     );
@@ -76,19 +68,9 @@ class TerminalColors extends ThemeExtension<TerminalColors> {
     if (other is! TerminalColors) return this;
     return TerminalColors(
       glow: Color.lerp(glow, other.glow, t) ?? glow,
-      scanline: Color.lerp(scanline, other.scanline, t) ?? scanline,
-      scanlineOpacity: lerpDouble(scanlineOpacity, other.scanlineOpacity, t) ??
-          scanlineOpacity,
       danger: Color.lerp(danger, other.danger, t) ?? danger,
       warning: Color.lerp(warning, other.warning, t) ?? warning,
     );
-  }
-
-  double? lerpDouble(double? a, double? b, double t) {
-    if (a == null && b == null) return null;
-    a ??= 0.0;
-    b ??= 0.0;
-    return a + (b - a) * t;
   }
 }
 
@@ -120,8 +102,6 @@ class AppTheme {
       extensions: [
         TerminalColors(
           glow: palette.vividGreen.withValues(alpha: 0.1),
-          scanline: palette.vividGreen.withValues(alpha: 0.05),
-          scanlineOpacity: 0.05,
           danger: palette.dangerRed,
           warning: palette.warningAmber,
         ),
@@ -129,7 +109,7 @@ class AppTheme {
       textTheme: AppFonts.textTheme.apply(
         bodyColor: palette.phosphorGreen,
         displayColor: palette.vividGreen,
-        fontFamily: AppFonts.bodyFamily,
+        fontFamily: AppFonts.family,
         package: 'pocketcoder_flutter',
       ),
       colorScheme: ColorScheme(
@@ -159,15 +139,14 @@ class AppTheme {
             borderRadius: BorderRadius.zero,
           ),
           textStyle: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontStandard,
+            fontFamily: AppFonts.family,
+            fontSize: AppSizes.fontBody,
             fontWeight: AppFonts.heavy,
           ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
-        filled: true,
         fillColor: palette.backgroundPrimary,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.zero,
@@ -193,8 +172,8 @@ class AppTheme {
         contentPadding: EdgeInsets.all(AppSizes.space * 1.5),
         labelStyle: TextStyle(
           color: palette.vividGreen.withValues(alpha: 0.7),
-          fontFamily: AppFonts.headerFamily,
-          fontSize: AppSizes.fontTiny,
+          fontFamily: AppFonts.family,
+          fontSize: AppSizes.fontBody,
           fontWeight: AppFonts.heavy,
         ),
       ),

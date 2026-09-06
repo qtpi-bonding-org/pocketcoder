@@ -6,8 +6,8 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
-import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/tool_permissions/widgets/tool_permissions_view.dart';
 
 Widget _app(Widget child) => MaterialApp(
       theme: AppTheme.lightTheme,
@@ -18,7 +18,7 @@ Widget _app(Widget child) => MaterialApp(
 
 void main() {
   testWidgets(
-      'renders a rule as a BiosRow toggle header + BiosActionStrip selector',
+      'renders a rule as a DetailRow toggle header + BiosActionStrip selector',
       (tester) async {
     var setActiveCalled = false;
     await tester.pumpWidget(_app(ToolPermissionsView(
@@ -39,15 +39,12 @@ void main() {
       onCreateRule: (tool, action) async {},
     )));
 
-    expect(find.byType(BiosRow), findsWidgets);
+    expect(find.byType(DetailRow), findsWidgets);
     expect(find.byType(BiosActionStrip), findsOneWidget);
 
-    final toggleRow = tester
-        .widgetList<BiosRow>(find.byType(BiosRow))
-        .firstWhere((row) => row.variant == BiosRowVariant.toggle);
-    expect(toggleRow.toggleValue, isTrue);
+    expect(find.text('on'), findsOneWidget);
     expect(find.byType(Switch), findsNothing);
-    await tester.tap(find.text('[X]'));
+    await tester.tap(find.text('on'));
     expect(setActiveCalled, isTrue);
   });
 }

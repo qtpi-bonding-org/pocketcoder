@@ -40,8 +40,7 @@ class CaPinRetryInterceptor extends Interceptor {
       return;
     }
 
-    final recovered =
-        await recovery.recoverIfStale(requestUrl: request.uri);
+    final recovered = await recovery.recoverIfStale(requestUrl: request.uri);
     if (!recovered) {
       handler.next(err);
       return;

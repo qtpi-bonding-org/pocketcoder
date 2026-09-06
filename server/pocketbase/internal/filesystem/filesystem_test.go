@@ -19,208 +19,129 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package filesystem
 
 import (
+	"archive/tar"
+	"bytes"
+	"context"
+	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
-	"github.com/pocketbase/pocketbase/tools/filesystem/blob"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/operation"
 
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
 
-func mountFileOperations(e *core.ServeEvent) {
-	registry := operation.NewRegistry()
-	AddFileOperations(registry)
-	operation.MountForTests(e, registry.Routes())
+type fakeFile struct {
+	isDir   bool
+	content []byte
+	modTime time.Time
 }
 
-func withTestWorkspaceRoot(t *testing.T, dir string) {
+type fakeContainerFS struct {
+	containerName string
+	files         map[string]fakeFile
+}
+
+func newFakeContainerFS(containerName string) *fakeContainerFS {
+	return &fakeContainerFS{containerName: containerName, files: map[string]fakeFile{}}
+}
+
+func (f *fakeContainerFS) addFile(path, content string) {
+	f.files[path] = fakeFile{content: []byte(content), modTime: time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)}
+}
+
+func (f *fakeContainerFS) addDir(path string) {
+	f.files[path] = fakeFile{isDir: true}
+}
+
+func (f *fakeContainerFS) GetArchive(_ context.Context, containerName, path string) (io.ReadCloser, error) {
+	if containerName != f.containerName {
+		return nil, dockerapi.ErrContainerNotFound
+	}
+	file, ok := f.files[path]
+	if !ok {
+		return nil, dockerapi.ErrContainerNotFound
+	}
+
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	base := path[stringsLastIndexByte(path, '/')+1:]
+	if file.isDir {
+		// Docker's archive API for a directory emits every descendant
+		// (recursively) with names relative to the directory's own base
+		// name -- reproduce that shape from every fake entry nested under
+		// this path.
+		writeTarEntry(tw, base, fakeFile{isDir: true, modTime: time.Now()})
+		for p, entry := range f.files {
+			if p == path || len(p) <= len(path) || p[:len(path)+1] != path+"/" {
+				continue
+			}
+			rel := base + p[len(path):]
+			writeTarEntry(tw, rel, entry)
+		}
+	} else {
+		writeTarEntry(tw, base, file)
+	}
+	if err := tw.Close(); err != nil {
+		return nil, err
+	}
+	return io.NopCloser(&buf), nil
+}
+
+func writeTarEntry(tw *tar.Writer, name string, file fakeFile) {
+	if file.isDir {
+		_ = tw.WriteHeader(&tar.Header{Name: name + "/", Typeflag: tar.TypeDir, Mode: 0o755, ModTime: file.modTime})
+		return
+	}
+	_ = tw.WriteHeader(&tar.Header{Name: name, Typeflag: tar.TypeReg, Mode: 0o644, Size: int64(len(file.content)), ModTime: file.modTime})
+	_, _ = tw.Write(file.content)
+}
+
+func stringsLastIndexByte(s string, b byte) int {
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i] == b {
+			return i
+		}
+	}
+	return -1
+}
+
+func createTestHarness(t testing.TB, app core.App) *core.Record {
 	t.Helper()
-	original := workspaceRoot
-	workspaceRoot = dir
-	t.Cleanup(func() { workspaceRoot = original })
-}
-
-func TestResolveWorkspacePath_RejectsDotDot(t *testing.T) {
-	withTestWorkspaceRoot(t, t.TempDir())
-
-	_, ok := resolveWorkspacePath("../etc/passwd")
-	if ok {
-		t.Fatal("expected ok=false for a .. escape, got ok=true")
-	}
-}
-
-func TestResolveWorkspacePath_RejectsAbsolute(t *testing.T) {
-	withTestWorkspaceRoot(t, t.TempDir())
-
-	_, ok := resolveWorkspacePath("/etc/passwd")
-	if ok {
-		t.Fatal("expected ok=false for an absolute path, got ok=true")
-	}
-}
-
-func TestResolveWorkspacePath_AllowsNestedPath(t *testing.T) {
-	dir := t.TempDir()
-	withTestWorkspaceRoot(t, dir)
-	if err := os.Mkdir(filepath.Join(dir, "src"), 0o755); err != nil {
+	coll, err := app.FindCollectionByNameOrId("harnesses")
+	if err != nil {
 		t.Fatal(err)
 	}
-
-	cleanPath, ok := resolveWorkspacePath("src")
-	if !ok {
-		t.Fatal("expected ok=true for a legitimate nested path")
-	}
-	if cleanPath != "src" {
-		t.Fatalf("cleanPath = %q, want %q", cleanPath, "src")
-	}
-}
-
-func TestResolveWorkspacePath_AllowsNonExistentPath(t *testing.T) {
-	// A path that doesn't exist yet must still pass sanitization so the
-	// normal fs.GetReader/List call can return its own NotFound error.
-	withTestWorkspaceRoot(t, t.TempDir())
-
-	cleanPath, ok := resolveWorkspacePath("does/not/exist.go")
-	if !ok {
-		t.Fatal("expected ok=true for a non-existent (but non-escaping) path")
-	}
-	if cleanPath != "does/not/exist.go" {
-		t.Fatalf("cleanPath = %q, want %q", cleanPath, "does/not/exist.go")
-	}
-}
-
-func TestResolveWorkspacePath_RejectsSymlinkEscape(t *testing.T) {
-	root := t.TempDir()
-	outside := t.TempDir()
-	if err := os.WriteFile(filepath.Join(outside, "secret.txt"), []byte("top secret"), 0o644); err != nil {
+	rec := core.NewRecord(coll)
+	rec.Set("name", "Test Harness")
+	rec.Set("cli_id", "test-harness-"+uuid.NewString()[:8])
+	rec.Set("acp_transport", "websocket")
+	if err := app.Save(rec); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Symlink(outside, filepath.Join(root, "escape")); err != nil {
+	return rec
+}
+
+func createRunningHarnessInstance(t testing.TB, app core.App, userID, containerName string) *core.Record {
+	t.Helper()
+	coll, err := app.FindCollectionByNameOrId("harness_instances")
+	if err != nil {
 		t.Fatal(err)
 	}
-	withTestWorkspaceRoot(t, root)
-
-	_, ok := resolveWorkspacePath("escape/secret.txt")
-	if ok {
-		t.Fatal("expected ok=false for a path through a symlink that escapes workspaceRoot")
-	}
-}
-
-func TestResolveWorkspacePath_AllowsSymlinkWithinRoot(t *testing.T) {
-	root := t.TempDir()
-	if err := os.Mkdir(filepath.Join(root, "real"), 0o755); err != nil {
+	rec := core.NewRecord(coll)
+	rec.Set("harness", createTestHarness(t, app).Id)
+	rec.Set("user", userID)
+	rec.Set("container_name", containerName)
+	rec.Set("status", "running")
+	if err := app.Save(rec); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "real", "a.go"), []byte("package main"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(filepath.Join(root, "real"), filepath.Join(root, "alias")); err != nil {
-		t.Fatal(err)
-	}
-	withTestWorkspaceRoot(t, root)
-
-	_, ok := resolveWorkspacePath("alias/a.go")
-	if !ok {
-		t.Fatal("expected ok=true for a symlink whose target stays inside workspaceRoot")
-	}
-}
-
-func TestBuildFileTree_RootPrefix(t *testing.T) {
-	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
-	objects := []*blob.ListObject{
-		{Key: "main.go", Size: 1203, ModTime: mod},
-		{Key: "internal/filesystem/filesystem.go", Size: 900, ModTime: mod},
-		{Key: "internal/filesystem/filesystem_test.go", Size: 500, ModTime: mod},
-		{Key: "internal/hooks/mcp.go", Size: 300, ModTime: mod},
-		{Key: "go.mod", Size: 50, ModTime: mod},
-	}
-
-	got := buildFileTree("", objects)
-
-	if len(got) != 3 {
-		t.Fatalf("got %d top-level entries, want 3 (go.mod, internal, main.go); got=%+v", len(got), got)
-	}
-	if got[0].Name != "go.mod" || got[0].IsDir || got[0].Size != 50 {
-		t.Fatalf("entry[0] = %+v, want file go.mod size 50", got[0])
-	}
-	if got[1].Name != "internal" || !got[1].IsDir {
-		t.Fatalf("entry[1] = %+v, want dir internal", got[1])
-	}
-	if len(got[1].Children) != 2 {
-		t.Fatalf("internal.Children = %+v, want 2 (filesystem, hooks)", got[1].Children)
-	}
-	if got[1].Children[0].Name != "filesystem" || !got[1].Children[0].IsDir {
-		t.Fatalf("internal.Children[0] = %+v, want dir filesystem", got[1].Children[0])
-	}
-	if len(got[1].Children[0].Children) != 2 {
-		t.Fatalf("internal/filesystem.Children = %+v, want 2 files", got[1].Children[0].Children)
-	}
-	if got[1].Children[0].Children[0].Name != "filesystem.go" || got[1].Children[0].Children[0].Size != 900 {
-		t.Fatalf("internal/filesystem.Children[0] = %+v, want file filesystem.go size 900", got[1].Children[0].Children[0])
-	}
-	if got[1].Children[1].Name != "hooks" || !got[1].Children[1].IsDir {
-		t.Fatalf("internal.Children[1] = %+v, want dir hooks", got[1].Children[1])
-	}
-	if got[2].Name != "main.go" || got[2].IsDir || got[2].Size != 1203 {
-		t.Fatalf("entry[2] = %+v, want file main.go size 1203", got[2])
-	}
-}
-
-func TestBuildFileTree_EmptyInput(t *testing.T) {
-	got := buildFileTree("", nil)
-	if len(got) != 0 {
-		t.Fatalf("got %d entries, want 0 for empty input", len(got))
-	}
-}
-
-func TestBuildFileTree_ConflictResolvesToDirRegardlessOfOrder(t *testing.T) {
-	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
-
-	fileFirst := []*blob.ListObject{
-		{Key: "src", Size: 5, ModTime: mod},
-		{Key: "src/a.go", Size: 10, ModTime: mod},
-	}
-	got := buildFileTree("", fileFirst)
-	if len(got) != 1 || got[0].Name != "src" || !got[0].IsDir {
-		t.Fatalf("file-first order: got %+v, want single dir entry named src", got)
-	}
-	if got[0].Size != 0 || len(got[0].Children) != 1 {
-		t.Fatalf("file-first order: got %+v, want dir with 1 child, size 0", got[0])
-	}
-
-	dirFirst := []*blob.ListObject{
-		{Key: "src/a.go", Size: 10, ModTime: mod},
-		{Key: "src", Size: 5, ModTime: mod},
-	}
-	got = buildFileTree("", dirFirst)
-	if len(got) != 1 || got[0].Name != "src" || !got[0].IsDir || len(got[0].Children) != 1 {
-		t.Fatalf("dir-first order: got %+v, want single dir entry named src with 1 child", got)
-	}
-}
-
-func TestBuildFileTree_NestedPrefix(t *testing.T) {
-	mod := time.Date(2026, 7, 25, 10, 0, 0, 0, time.UTC)
-	objects := []*blob.ListObject{
-		{Key: "internal/filesystem/filesystem.go", Size: 900, ModTime: mod},
-		{Key: "internal/hooks/mcp.go", Size: 300, ModTime: mod},
-	}
-
-	got := buildFileTree("internal/", objects)
-
-	if len(got) != 2 {
-		t.Fatalf("got %d entries, want 2 (filesystem, hooks); got=%+v", len(got), got)
-	}
-	if got[0].Name != "filesystem" || !got[0].IsDir || len(got[0].Children) != 1 {
-		t.Fatalf("entry[0] = %+v, want dir filesystem with 1 child", got[0])
-	}
-	if got[0].Children[0].Name != "filesystem.go" {
-		t.Fatalf("entry[0].Children[0] = %+v, want filesystem.go", got[0].Children[0])
-	}
+	return rec
 }
 
 func newFilesTestUser(t testing.TB, app core.App, email string) *core.Record {
@@ -238,9 +159,97 @@ func newFilesTestUser(t testing.TB, app core.App, email string) *core.Record {
 	return u
 }
 
-func TestFilesTreeEndpoint_RequiresAuth(t *testing.T) {
-	withTestWorkspaceRoot(t, t.TempDir())
+func mountFileOperations(e *core.ServeEvent, app core.App, reader containerArchiveReader) {
+	registry := operation.NewRegistry()
+	AddFileOperations(registry, FileDeps{App: app, Reader: reader})
+	operation.MountForTests(e, registry.Routes())
+}
 
+func TestResolveWorkspacePath_RejectsDotDot(t *testing.T) {
+	_, ok := resolveWorkspacePath("../etc/passwd")
+	if ok {
+		t.Fatal("expected ok=false for a .. escape, got ok=true")
+	}
+}
+
+func TestResolveWorkspacePath_RejectsAbsolute(t *testing.T) {
+	_, ok := resolveWorkspacePath("/etc/passwd")
+	if ok {
+		t.Fatal("expected ok=false for an absolute path, got ok=true")
+	}
+}
+
+func TestResolveWorkspacePath_AllowsNestedPath(t *testing.T) {
+	cleanPath, ok := resolveWorkspacePath("src")
+	if !ok {
+		t.Fatal("expected ok=true for a legitimate nested path")
+	}
+	if cleanPath != "src" {
+		t.Fatalf("cleanPath = %q, want %q", cleanPath, "src")
+	}
+}
+
+func TestResolveWorkspacePath_AllowsNonExistentPath(t *testing.T) {
+	// A path that doesn't exist yet must still pass sanitization so the
+	// archive fetch is left to return its own NotFound error.
+	cleanPath, ok := resolveWorkspacePath("does/not/exist.go")
+	if !ok {
+		t.Fatal("expected ok=true for a non-existent (but non-escaping) path")
+	}
+	if cleanPath != "does/not/exist.go" {
+		t.Fatalf("cleanPath = %q, want %q", cleanPath, "does/not/exist.go")
+	}
+}
+
+func TestBuildFileTreeFromTar_NestedDirectory(t *testing.T) {
+	fs := newFakeContainerFS("c1")
+	fs.addDir("/workspace")
+	fs.addFile("/workspace/main.go", "package main")
+	fs.addDir("/workspace/internal")
+	fs.addFile("/workspace/internal/nested.go", "package internal")
+
+	archive, err := fs.GetArchive(context.Background(), "c1", "/workspace")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer archive.Close()
+	got, err := buildFileTreeFromTar(archive, "workspace")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != 2 {
+		t.Fatalf("got %d top-level entries, want 2 (internal, main.go); got=%+v", len(got), got)
+	}
+	if got[0].Name != "internal" || !got[0].IsDir {
+		t.Fatalf("entry[0] = %+v, want dir internal", got[0])
+	}
+	if len(got[0].Children) != 1 || got[0].Children[0].Name != "nested.go" {
+		t.Fatalf("internal.Children = %+v, want 1 (nested.go)", got[0].Children)
+	}
+	if got[1].Name != "main.go" || got[1].IsDir || got[1].Size != int64(len("package main")) {
+		t.Fatalf("entry[1] = %+v, want file main.go", got[1])
+	}
+}
+
+func TestBuildFileTreeFromTar_EmptyDirectory(t *testing.T) {
+	fs := newFakeContainerFS("c1")
+	fs.addDir("/workspace")
+	archive, err := fs.GetArchive(context.Background(), "c1", "/workspace")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer archive.Close()
+	got, err := buildFileTreeFromTar(archive, "workspace")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("got %d entries, want 0 for an empty directory", len(got))
+	}
+}
+
+func TestFilesTreeEndpoint_RequiresAuth(t *testing.T) {
 	scenario := tests.ApiScenario{
 		Name:            "files-tree without auth is rejected",
 		Method:          http.MethodGet,
@@ -248,25 +257,13 @@ func TestFilesTreeEndpoint_RequiresAuth(t *testing.T) {
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
+			mountFileOperations(e, app, newFakeContainerFS("unused"))
 		},
 	}
 	scenario.Test(t)
 }
 
 func TestFilesTreeEndpoint_ReturnsFullNestedTree(t *testing.T) {
-	dir := t.TempDir()
-	withTestWorkspaceRoot(t, dir)
-	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Mkdir(filepath.Join(dir, "internal"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "internal", "nested.go"), []byte("package internal"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
 	headers := map[string]string{}
 	scenario := tests.ApiScenario{
 		Name:           "files-tree returns the full recursive tree as JSON",
@@ -281,8 +278,17 @@ func TestFilesTreeEndpoint_ReturnsFullNestedTree(t *testing.T) {
 			`"name":"nested.go"`,
 		},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
 			user := newFilesTestUser(t, app, "files-tree@example.com")
+			containerName := "test-container-" + uuid.NewString()[:8]
+			createRunningHarnessInstance(t, app, user.Id, containerName)
+
+			fs := newFakeContainerFS(containerName)
+			fs.addDir("/workspace")
+			fs.addFile("/workspace/main.go", "package main")
+			fs.addDir("/workspace/internal")
+			fs.addFile("/workspace/internal/nested.go", "package internal")
+			mountFileOperations(e, app, fs)
+
 			token, err := user.NewAuthToken()
 			if err != nil {
 				t.Fatal(err)
@@ -293,28 +299,41 @@ func TestFilesTreeEndpoint_ReturnsFullNestedTree(t *testing.T) {
 	scenario.Test(t)
 }
 
-func TestFilesTreeEndpoint_RejectsSymlinkEscape(t *testing.T) {
-	root := t.TempDir()
-	outside := t.TempDir()
-	if err := os.WriteFile(filepath.Join(outside, "secret.txt"), []byte("top secret"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(outside, filepath.Join(root, "escape")); err != nil {
-		t.Fatal(err)
-	}
-	withTestWorkspaceRoot(t, root)
-
+func TestFilesTreeEndpoint_NoRunningHarnessIs404(t *testing.T) {
 	headers := map[string]string{}
 	scenario := tests.ApiScenario{
-		Name:            "files-tree rejects a symlink that escapes the workspace root",
+		Name:            "files-tree 404s when this user has no running harness",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/v1/files-tree?path=escape",
+		URL:             "/api/pocketcoder/v1/files-tree",
+		Headers:         headers,
+		ExpectedStatus:  404,
+		ExpectedContent: []string{"Workspace not available"},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			mountFileOperations(e, app, newFakeContainerFS("unused"))
+			user := newFilesTestUser(t, app, "no-harness@example.com")
+			token, err := user.NewAuthToken()
+			if err != nil {
+				t.Fatal(err)
+			}
+			headers["Authorization"] = token
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestFilesTreeEndpoint_RejectsPathEscape(t *testing.T) {
+	headers := map[string]string{}
+	scenario := tests.ApiScenario{
+		Name:            "files-tree rejects a .. path escape",
+		Method:          http.MethodGet,
+		URL:             "/api/pocketcoder/v1/files-tree?path=..%2Fetc",
 		Headers:         headers,
 		ExpectedStatus:  403,
 		ExpectedContent: []string{"escape attempt"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
-			user := newFilesTestUser(t, app, "tree-symlink-escape@example.com")
+			user := newFilesTestUser(t, app, "tree-path-escape@example.com")
+			createRunningHarnessInstance(t, app, user.Id, "test-container-escape")
+			mountFileOperations(e, app, newFakeContainerFS("test-container-escape"))
 			token, err := user.NewAuthToken()
 			if err != nil {
 				t.Fatal(err)
@@ -326,8 +345,6 @@ func TestFilesTreeEndpoint_RejectsSymlinkEscape(t *testing.T) {
 }
 
 func TestFilesReadEndpoint_RequiresAuth(t *testing.T) {
-	withTestWorkspaceRoot(t, t.TempDir())
-
 	scenario := tests.ApiScenario{
 		Name:            "files read without auth is rejected",
 		Method:          http.MethodGet,
@@ -335,19 +352,13 @@ func TestFilesReadEndpoint_RequiresAuth(t *testing.T) {
 		ExpectedStatus:  401,
 		ExpectedContent: []string{"requires valid record authorization token"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
+			mountFileOperations(e, app, newFakeContainerFS("unused"))
 		},
 	}
 	scenario.Test(t)
 }
 
 func TestFilesReadEndpoint_ReturnsFileContent(t *testing.T) {
-	dir := t.TempDir()
-	withTestWorkspaceRoot(t, dir)
-	if err := os.WriteFile(filepath.Join(dir, "hello.txt"), []byte("hello workspace"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
 	headers := map[string]string{}
 	scenario := tests.ApiScenario{
 		Name:            "files read returns the requested file's content",
@@ -357,8 +368,12 @@ func TestFilesReadEndpoint_ReturnsFileContent(t *testing.T) {
 		ExpectedStatus:  200,
 		ExpectedContent: []string{"hello workspace"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
 			user := newFilesTestUser(t, app, "files-read@example.com")
+			containerName := "test-container-" + uuid.NewString()[:8]
+			createRunningHarnessInstance(t, app, user.Id, containerName)
+			fs := newFakeContainerFS(containerName)
+			fs.addFile("/workspace/hello.txt", "hello workspace")
+			mountFileOperations(e, app, fs)
 			token, err := user.NewAuthToken()
 			if err != nil {
 				t.Fatal(err)
@@ -370,12 +385,6 @@ func TestFilesReadEndpoint_ReturnsFileContent(t *testing.T) {
 }
 
 func TestFilesReadEndpoint_SetsContentTypeByExtension(t *testing.T) {
-	dir := t.TempDir()
-	withTestWorkspaceRoot(t, dir)
-	if err := os.WriteFile(filepath.Join(dir, "notes.txt"), []byte("plain text notes"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
 	headers := map[string]string{}
 	scenario := tests.ApiScenario{
 		Name:            "files read sets Content-Type based on the file extension",
@@ -385,8 +394,12 @@ func TestFilesReadEndpoint_SetsContentTypeByExtension(t *testing.T) {
 		ExpectedStatus:  200,
 		ExpectedContent: []string{"plain text notes"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
 			user := newFilesTestUser(t, app, "files-read-content-type@example.com")
+			containerName := "test-container-" + uuid.NewString()[:8]
+			createRunningHarnessInstance(t, app, user.Id, containerName)
+			fs := newFakeContainerFS(containerName)
+			fs.addFile("/workspace/notes.txt", "plain text notes")
+			mountFileOperations(e, app, fs)
 			token, err := user.NewAuthToken()
 			if err != nil {
 				t.Fatal(err)
@@ -403,8 +416,6 @@ func TestFilesReadEndpoint_SetsContentTypeByExtension(t *testing.T) {
 }
 
 func TestFilesReadEndpoint_ReturnsNotFoundForMissingFile(t *testing.T) {
-	withTestWorkspaceRoot(t, t.TempDir())
-
 	headers := map[string]string{}
 	scenario := tests.ApiScenario{
 		Name:            "files read 404s for a file that does not exist",
@@ -414,8 +425,10 @@ func TestFilesReadEndpoint_ReturnsNotFoundForMissingFile(t *testing.T) {
 		ExpectedStatus:  404,
 		ExpectedContent: []string{"File not found"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
 			user := newFilesTestUser(t, app, "files-read-missing@example.com")
+			containerName := "test-container-" + uuid.NewString()[:8]
+			createRunningHarnessInstance(t, app, user.Id, containerName)
+			mountFileOperations(e, app, newFakeContainerFS(containerName))
 			token, err := user.NewAuthToken()
 			if err != nil {
 				t.Fatal(err)
@@ -426,29 +439,53 @@ func TestFilesReadEndpoint_ReturnsNotFoundForMissingFile(t *testing.T) {
 	scenario.Test(t)
 }
 
-func TestFilesReadEndpoint_RejectsSymlinkEscape(t *testing.T) {
-	root := t.TempDir()
-	outside := t.TempDir()
-	if err := os.WriteFile(filepath.Join(outside, "secret.txt"), []byte("top secret"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(outside, filepath.Join(root, "escape")); err != nil {
-		t.Fatal(err)
-	}
-	withTestWorkspaceRoot(t, root)
-
+func TestFilesReadEndpoint_RejectsPathEscape(t *testing.T) {
 	headers := map[string]string{}
 	scenario := tests.ApiScenario{
-		Name:            "files read rejects a symlink that escapes the workspace root",
+		Name:            "files read rejects a .. path escape",
 		Method:          http.MethodGet,
-		URL:             "/api/pocketcoder/v1/files?path=escape%2Fsecret.txt",
+		URL:             "/api/pocketcoder/v1/files?path=..%2Fetc%2Fpasswd",
 		Headers:         headers,
 		ExpectedStatus:  403,
 		ExpectedContent: []string{"escape attempt"},
 		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
-			mountFileOperations(e)
-			user := newFilesTestUser(t, app, "read-symlink-escape@example.com")
+			user := newFilesTestUser(t, app, "read-path-escape@example.com")
+			createRunningHarnessInstance(t, app, user.Id, "test-container-read-escape")
+			mountFileOperations(e, app, newFakeContainerFS("test-container-read-escape"))
 			token, err := user.NewAuthToken()
+			if err != nil {
+				t.Fatal(err)
+			}
+			headers["Authorization"] = token
+		},
+	}
+	scenario.Test(t)
+}
+
+func TestFilesReadEndpoint_ScopedToOwnContainer(t *testing.T) {
+	headers := map[string]string{}
+	scenario := tests.ApiScenario{
+		Name:            "files read only ever resolves to the authenticated user's own container",
+		Method:          http.MethodGet,
+		URL:             "/api/pocketcoder/v1/files?path=secret.txt",
+		Headers:         headers,
+		ExpectedStatus:  404,
+		ExpectedContent: []string{"File not found"},
+		BeforeTestFunc: func(t testing.TB, app *tests.TestApp, e *core.ServeEvent) {
+			other := newFilesTestUser(t, app, "other-user@example.com")
+			otherContainer := "other-users-container"
+			createRunningHarnessInstance(t, app, other.Id, otherContainer)
+			otherFS := newFakeContainerFS(otherContainer)
+			otherFS.addFile("/workspace/secret.txt", "someone else's secret")
+
+			me := newFilesTestUser(t, app, "me@example.com")
+			myContainer := "my-container"
+			createRunningHarnessInstance(t, app, me.Id, myContainer)
+			// No secret.txt in my own container -- a 404 here (not the
+			// other user's real content) is the only correct outcome.
+
+			mountFileOperations(e, app, otherFS)
+			token, err := me.NewAuthToken()
 			if err != nil {
 				t.Fatal(err)
 			}

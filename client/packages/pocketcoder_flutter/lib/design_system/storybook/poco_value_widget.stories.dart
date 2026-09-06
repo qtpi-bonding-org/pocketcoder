@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:widgetbook_annotation/widgetbook_annotation.dart' as wb;
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_value_widget.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 
 @wb.UseCase(name: 'happy message', type: PocoValueWidget)
 Widget pocoValueWidgetHappy(BuildContext context) {
@@ -9,6 +10,7 @@ Widget pocoValueWidgetHappy(BuildContext context) {
     sequence: ValueNotifier(const [('happy', 5000)]),
     history: ValueNotifier(const <String>[]),
     pocoSize: 48,
+    posture: PocoPosture.armored,
   );
 }
 
@@ -19,5 +21,6 @@ Widget pocoValueWidgetError(BuildContext context) {
     sequence: ValueNotifier(const [('nervous', 1000)]),
     history: ValueNotifier(const ['Connecting to server...']),
     pocoSize: 48,
+    posture: PocoPosture.armored,
   );
 }

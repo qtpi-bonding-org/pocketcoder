@@ -53,8 +53,7 @@ void main() {
     expect(snapshot.summary, 'This release can lose task output.');
   });
 
-  test('parses deployment/app/server contract versions from compatibility',
-      () {
+  test('parses deployment/app/server contract versions from compatibility', () {
     final snapshot = ServerReleaseStatusSnapshot.fromStatus({
       'current': {
         'releaseDigest': _digestA,

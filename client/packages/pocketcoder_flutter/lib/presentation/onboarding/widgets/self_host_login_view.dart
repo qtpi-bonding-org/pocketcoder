@@ -2,9 +2,10 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 
@@ -62,60 +63,44 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
   Widget build(BuildContext context) {
     final loading = widget.status == UiFlowStatus.loading;
     return PocketCoderShell(
-      title: context.l10n.onboardingServerLoginTitle,
-      activePillar: NavPillar.configure,
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
-      actions: [
-        TerminalAction(
-          label: loading
-              ? context.l10n.onboardingServerConnecting
-              : context.l10n.onboardingLogin,
-          onTap: loading ? () {} : _login,
-          emphasis: Emphasis.outlined,
-        ),
-      ],
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-            child: Column(
-              children: [
-                TerminalConversationTurn(
-                  speaker: TerminalConversationSpeaker.poco,
-                  message: widget.pocoMessage,
-                  sequence: widget.pocoSequence,
-                  history: widget.pocoHistory,
-                ),
-                VSpace.x4,
-                TerminalTextField(
-                  controller: _urlController,
-                  label: context.l10n.onboardingServerUrl,
-                  hint: context.l10n.onboardingServerUrlHint,
-                ),
-                VSpace.x2,
-                TerminalTextField(
-                  controller: _emailController,
-                  label: context.l10n.onboardingEmail,
-                  hint: context.l10n.onboardingEmailHintShort,
-                ),
-                VSpace.x2,
-                TerminalTextField(
-                  controller: _passwordController,
-                  label: context.l10n.onboardingPassword,
-                  obscureText: true,
-                  onSubmitted: (_) => loading ? null : _login(),
-                ),
-                if (loading) ...[
-                  VSpace.x2,
-                  TerminalLoadingIndicator(
-                    label: context.l10n.onboardingAuthenticating,
-                  ),
-                ],
-              ],
+      footer: WizardFooter(onNext: loading ? () {} : _login),
+      body: OnboardingContentShell(
+        child: Column(
+          children: [
+            TerminalConversationTurn(
+              speaker: TerminalConversationSpeaker.poco,
+              message: widget.pocoMessage,
+              sequence: widget.pocoSequence,
+              history: widget.pocoHistory,
             ),
-          ),
+            VSpace.x4,
+            TerminalTextField(
+              controller: _urlController,
+              label: context.l10n.onboardingServerUrl,
+              hint: context.l10n.onboardingServerUrlHint,
+            ),
+            VSpace.x2,
+            TerminalTextField(
+              controller: _emailController,
+              label: context.l10n.onboardingEmail,
+              hint: context.l10n.onboardingEmailHintShort,
+            ),
+            VSpace.x2,
+            TerminalTextField(
+              controller: _passwordController,
+              label: context.l10n.onboardingPassword,
+              obscureText: true,
+              onSubmitted: (_) => loading ? null : _login(),
+            ),
+            if (loading) ...[
+              VSpace.x2,
+              TerminalLoadingIndicator(
+                label: context.l10n.onboardingAuthenticating,
+              ),
+            ],
+          ],
         ),
       ),
     );

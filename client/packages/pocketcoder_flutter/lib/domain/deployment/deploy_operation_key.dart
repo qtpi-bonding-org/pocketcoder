@@ -21,11 +21,12 @@ extension DeployOperationKeyX on DeployOperationKey {
   /// default -- for anything unrecognized or absent, so the caller can
   /// hold its previous key instead of silently regressing to one.
   static DeployOperationKey? fromWireName(String? wire) => switch (wire) {
-    'configuring_operating_system' => DeployOperationKey.configuringOperatingSystem,
-    'fetching_release' => DeployOperationKey.fetchingRelease,
-    'loading_images' => DeployOperationKey.loadingImages,
-    'compose_up' => DeployOperationKey.composeUp,
-    'bootstrap_complete' => DeployOperationKey.bootstrapComplete,
-    _ => null,
-  };
+        'configuring_operating_system' =>
+          DeployOperationKey.configuringOperatingSystem,
+        'fetching_release' => DeployOperationKey.fetchingRelease,
+        'loading_images' => DeployOperationKey.loadingImages,
+        'compose_up' => DeployOperationKey.composeUp,
+        'bootstrap_complete' => DeployOperationKey.bootstrapComplete,
+        _ => null,
+      };
 }

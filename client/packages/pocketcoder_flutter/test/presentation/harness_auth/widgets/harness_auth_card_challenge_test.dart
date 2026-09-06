@@ -48,18 +48,17 @@ void main() {
               status: 'awaiting_input',
               challenge: challenge,
             ),
+            configuredApiKeyProvider: null,
             codeController: TextEditingController(),
             isBusy: false,
             onStartAccount: (_) {},
-            onStartNone: () {},
-            onPoll: () {},
+            onUseApiKey: () {},
             onSubmit: (_) async {},
             onCancel: () {},
             onDisconnect: () {},
             onRefresh: () {},
             onOpenAuthorizationPage: (_) {},
             onCopyCode: (_) {},
-            onRetry: () {},
           ),
         ),
       ),
@@ -83,9 +82,9 @@ void main() {
     );
 
     expect(find.text('ABCD-1234'), findsOneWidget);
-    expect(find.text('[OPEN AUTHORIZATION PAGE]'), findsOneWidget);
+    expect(find.text('<open authorization page>'), findsOneWidget);
     expect(find.byType(TerminalTextField), findsNothing);
-    expect(find.text('[SUBMIT]'), findsNothing);
+    expect(find.text('<submit>'), findsNothing);
   });
 
   testWidgets(
@@ -103,6 +102,6 @@ void main() {
 
     expect(find.textContaining('Visit the link'), findsOneWidget);
     expect(find.byType(TerminalTextField), findsNothing);
-    expect(find.text('[SUBMIT]'), findsNothing);
+    expect(find.text('<submit>'), findsNothing);
   });
 }

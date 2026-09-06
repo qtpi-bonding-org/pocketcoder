@@ -172,7 +172,7 @@ func Register(app core.App, e *core.ServeEvent, coord func() coordinator.AgentRu
 	api.AddOllamaOperations(registry, api.OllamaDeps{})
 	api.AddReleaseStatusOperations(registry)
 	agentCoordinator, agentErr := api.AddAgentOperations(app, registry, api.AgentDeps{})
-	filesystem.AddFileOperations(registry)
+	filesystem.AddFileOperations(registry, filesystem.FileDeps{App: app})
 	hooks.AddPushOperations(app, registry)
 	hooks.AddProDataOperations(app, registry)
 	api.AddLiveActivityOperations(app, registry)
@@ -314,7 +314,7 @@ func (s *server) SetChatConfigOption(ctx context.Context, request openapi.SetCha
 		return nil, re.BadRequestError("a config option value is required", nil)
 	}
 	req := acpsdk.SetSessionConfigOptionRequest{ValueId: &acpsdk.SetSessionConfigOptionValueId{ConfigId: acpsdk.SessionConfigId(request.Body.ConfigId), Value: acpsdk.SessionConfigValueId(request.Body.Value)}}
-	if err := api.SetChatConfigOption(re, s.agent, string(request.ChatId), req); err != nil {
+	if err := api.SetChatConfigOption(s.app, re, s.agent, string(request.ChatId), req); err != nil {
 		return nil, errorutil.Internal("set chat config option", err)
 	}
 	return openapi.SetChatConfigOption202Response{}, nil

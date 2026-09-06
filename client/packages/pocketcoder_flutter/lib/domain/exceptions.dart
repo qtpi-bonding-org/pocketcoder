@@ -105,8 +105,9 @@ class McpOAuthException extends DomainException {
       McpOAuthException._('Provider returned an error: $error');
   factory McpOAuthException.claimFailed([dynamic cause]) =>
       McpOAuthException._('Failed to claim OAuth token', cause: cause);
-  factory McpOAuthException.stateMismatch() => McpOAuthException._(
-      'OAuth state mismatch — possible spoofed callback', isCancelled: false);
+  factory McpOAuthException.stateMismatch() =>
+      McpOAuthException._('OAuth state mismatch — possible spoofed callback',
+          isCancelled: false);
 }
 
 /// Observability-related exceptions.

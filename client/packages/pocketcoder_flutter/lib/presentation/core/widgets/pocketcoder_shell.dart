@@ -1,159 +1,165 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
-import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/app_sizes.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
+import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_scaffold.dart';
 import 'package:pocketcoder_flutter/application/release_status/release_status_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/shell_footer_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_posture_scope.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
 
-/// The three navigation pillars of PocketCoder.
-enum NavPillar { chats, monitor, configure, manage }
+// Re-export TerminalAction for convenience
+export 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart'
+    show TerminalAction;
 
-/// Reusable layout shell that wraps every screen.
-///
-/// Screens never touch [TerminalScaffold], [TerminalFooter], or nav logic
-/// directly. Instead they declare their title, active pillar, and body content.
+void _navHaptic() {
+  if (GetIt.instance<ILocalSettingsService>().hapticsEnabledSync) {
+    HapticFeedback.selectionClick();
+  }
+}
+
+PillarFooter buildPillarFooter(
+  BuildContext context,
+  NavPillar active, {
+  bool configureBadge = false,
+  List<TerminalAction> extraActions = const [],
+}) {
+  return PillarFooter(
+    active: active,
+    onSelect: (pillar) {
+      if (pillar == active) return;
+      _navHaptic();
+      context.go(switch (pillar) {
+        NavPillar.chat => AppRoutes.chats,
+        NavPillar.config => AppRoutes.configure,
+        NavPillar.status => AppRoutes.monitor,
+        NavPillar.control => AppRoutes.serverControls,
+      });
+    },
+    available: [
+      NavPillar.chat,
+      NavPillar.config,
+      NavPillar.status,
+      if (GetIt.instance.isRegistered<IServerControlService>())
+        NavPillar.control,
+    ],
+    configureBadge: configureBadge,
+    extraActions: extraActions,
+  );
+}
+
 class PocketCoderShell extends StatelessWidget {
-  final String? title;
-  final NavPillar activePillar;
+  // footer: present on most routes. null on branch points (multiple choices,
+  // not a linear step).
+  final ShellFooter? footer;
   final Widget body;
   final bool showBack;
   final String? backLabel;
-
-  /// Passed to AppNavigation.back's `fallback` -- must be set on a
-  /// pre-auth screen, whose default (authenticated home) would be wrong.
   final String? backFallbackRoute;
-
-  /// Null defers to [showBack]: a screen reached via Back is a sub-screen
-  /// of whichever pillar it lives under, so the pillar row would just be
-  /// redundant chrome next to Back -- and pushes the footer past the
-  /// 4-button budget. Pass this explicitly only for the rare screen that is both
-  /// a back-target and wants the pillar row anyway.
-  final bool? showNavigation;
-  final bool configureBadge;
   final EdgeInsets? padding;
-  final List<TerminalAction>? actions;
+  // A ListView body needs default false: wrapping it in a scroll region
+  // hands it unbounded height and breaks its virtualisation.
+  final bool scrollable;
+  final EdgeInsets? scrollPadding;
 
   const PocketCoderShell({
     super.key,
-    required this.title,
-    required this.activePillar,
+    this.footer,
     required this.body,
     this.showBack = false,
     this.backLabel,
     this.backFallbackRoute,
-    this.showNavigation,
-    this.configureBadge = false,
     this.padding,
-    this.actions,
+    this.scrollable = false,
+    this.scrollPadding,
   });
-
-  bool get _effectiveShowNavigation => showNavigation ?? !showBack;
 
   @override
   Widget build(BuildContext context) {
-    // Back is always the leftmost button -- it is the one constant escape
-    // hatch, so it belongs in the one constant position.
-    final footerActions = <TerminalAction>[
-      if (showBack)
-        TerminalAction(
-          label: backLabel ?? context.l10n.actionBack,
-          onTap: () => backFallbackRoute == null
-              ? AppNavigation.back(context)
-              : AppNavigation.back(context, fallback: backFallbackRoute!),
-        ),
-      ...?actions,
-    ];
-
     final releaseScope = ReleaseStatusScope.maybeOf(context);
-    return _buildScaffold(
-      context,
-      releaseScope?.state ?? const ReleaseStatusState(),
-      footerActions,
-      releaseScope?.onDismiss,
-    );
-  }
+    final releaseState = releaseScope?.state ?? const ReleaseStatusState();
+    // A screen reached via Back is a sub-screen of whichever pillar it
+    // lives under, so the pillar row would just be redundant chrome next
+    // to Back -- suppress it here rather than at each of the ~20 call
+    // sites that rely on this.
+    final currentFooter = footer;
+    final effectiveFooter = showBack && currentFooter is PillarFooter
+        ? PillarFooter(
+            active: currentFooter.active,
+            onSelect: currentFooter.onSelect,
+            available: const [],
+            extraActions: currentFooter.extraActions,
+          )
+        : footer;
+    void goBack() => switch (backFallbackRoute) {
+          final fallback? => AppNavigation.back(context, fallback: fallback),
+          null => AppNavigation.back(context),
+        };
 
-  Widget _buildScaffold(
-    BuildContext context,
-    ReleaseStatusState releaseState,
-    List<TerminalAction> originalFooterActions,
-    VoidCallback? onDismiss,
-  ) {
-    final footerActions = <TerminalAction>[
-      for (final action in originalFooterActions) action,
-      if (_effectiveShowNavigation)
-        ..._buildPillarActions(context, releaseState.shouldShowNotice),
-    ];
-    return TerminalScaffold(
-      title: title,
-      padding: padding,
-      actions: footerActions.isNotEmpty ? footerActions : null,
-      body: Column(
-        children: [
-          // This is the banner slot:
-          // persistent, app-level, dismissible notices only. It is
-          // deliberately NOT exposed as a per-screen constructor parameter
-          // -- ReleaseStatusBanner is the only thing that has ever earned
-          // this slot. A screen-local, transient notice (an error, a
-          // status change, a one-off announcement) belongs in VimToast
-          // (lib/presentation/core/widgets/vim_toast.dart), not here.
-          ReleaseStatusBanner(
-            state: releaseState,
-            onDismiss: onDismiss ?? () {},
-          ),
-          Expanded(child: body),
-        ],
-      ),
-    );
-  }
-
-  List<TerminalAction> _buildPillarActions(
-    BuildContext context,
-    bool hasReleaseNotice,
-  ) {
-    return [
-      TerminalAction(
-        label: context.l10n.navChats,
-        isActive: activePillar == NavPillar.chats,
-        onTap: () {
-          if (activePillar != NavPillar.chats) {
-            context.go(AppRoutes.chats);
-          }
-        },
-      ),
-      TerminalAction(
-        label: context.l10n.navMonitor,
-        isActive: activePillar == NavPillar.monitor,
-        onTap: () {
-          if (activePillar != NavPillar.monitor) {
-            context.go(AppRoutes.monitor);
-          }
-        },
-      ),
-      TerminalAction(
-        label: context.l10n.navConfigure,
-        isActive: activePillar == NavPillar.configure,
-        hasBadge: configureBadge || hasReleaseNotice,
-        onTap: () {
-          if (activePillar != NavPillar.configure) {
-            context.go(AppRoutes.configure);
-          }
-        },
-      ),
-      if (GetIt.instance.isRegistered<IServerControlService>())
-        TerminalAction(
-          label: context.l10n.navManage,
-          isActive: activePillar == NavPillar.manage,
-          onTap: () {
-            if (activePillar != NavPillar.manage) {
-              context.go(AppRoutes.serverControls);
-            }
-          },
+    // A wizard's 3-slot layout can't be a flat TerminalAction row.
+    List<TerminalAction>? footerActions;
+    Widget? footerWidget;
+    if (effectiveFooter case final WizardFooter wizard) {
+      footerWidget = ShellFooterView(
+        footer: WizardFooter(
+          step: wizard.step,
+          totalSteps: wizard.totalSteps,
+          onNext: wizard.onNext,
+          onBack: wizard.onBack ?? (showBack ? goBack : null),
         ),
-    ];
+      );
+    } else {
+      footerActions = <TerminalAction>[
+        if (showBack) TerminalAction(label: backLabel ?? 'back', onTap: goBack),
+        ...ShellFooterView.actionsFor(effectiveFooter,
+            configureBadge: releaseState.shouldShowNotice),
+      ];
+    }
+    return PocoPostureScope(
+      posture: switch (footer) {
+        PillarFooter() => PocoPosture.fortified,
+        _ => PocoPosture.armored,
+      },
+      child: TerminalScaffold(
+        padding: padding,
+        actions: footerActions,
+        footer: footerWidget,
+        body: Column(children: [
+          ReleaseStatusBanner(
+              state: releaseState, onDismiss: releaseScope?.onDismiss ?? () {}),
+          // Top-left, never centered: a screen's content shouldn't float in
+          // the middle of a short viewport. Align only loosens the minimum
+          // constraints it hands down, so a body that fills (Expanded,
+          // ListView) is unaffected -- it still fills exactly as before.
+          Expanded(
+              child: scrollable
+                  ? ContentScrollRegion(padding: scrollPadding, child: body)
+                  : Align(alignment: Alignment.topLeft, child: body)),
+        ]),
+      ),
+    );
   }
+}
+
+class ContentScrollRegion extends StatelessWidget {
+  const ContentScrollRegion({super.key, required this.child, this.padding});
+
+  final Widget child;
+  final EdgeInsets? padding;
+
+  @override
+  Widget build(BuildContext context) => Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+          child: SingleChildScrollView(padding: padding, child: child),
+        ),
+      );
 }

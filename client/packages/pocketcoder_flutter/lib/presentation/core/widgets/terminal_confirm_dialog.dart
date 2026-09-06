@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 
 /// Screens needing stateful dialog content (a checkbox, etc.) should build
@@ -15,21 +16,18 @@ Future<bool?> showTerminalConfirmDialog(
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) => TerminalDialog(
-      title: title,
+      title: title.toLowerCase(),
       content: Text(body),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: Text(cancelLabel),
+        TerminalButton(
+          label: cancelLabel,
+          kind: ActionKind.refusal,
+          onTap: () => Navigator.of(dialogContext).pop(false),
         ),
-        TextButton(
-          style: danger
-              ? TextButton.styleFrom(
-                  foregroundColor: dialogContext.terminalColors.danger,
-                )
-              : null,
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: Text(confirmLabel),
+        TerminalButton(
+          label: confirmLabel,
+          kind: danger ? ActionKind.destructive : ActionKind.primary,
+          onTap: () => Navigator.of(dialogContext).pop(true),
         ),
       ],
     ),

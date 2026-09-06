@@ -6,11 +6,14 @@ const _allowedDangerSites = {
   'lib/presentation/core/widgets/terminal_confirm_dialog.dart',
   'lib/presentation/provider/adapters/provider_adapter.dart',
   'lib/presentation/mcp/widgets/mcp_management_view.dart',
+  'lib/presentation/settings/adapters/settings_adapter.dart',
+  'lib/presentation/errors/error_inbox_screen.dart',
+  'lib/presentation/errors/widgets/error_tile.dart',
+  'lib/design_system/storybook/tinted_alert_card.stories.dart',
 };
 
 void main() {
-  test('colorScheme.error / terminalColors.danger stays rare and reviewed',
-      () {
+  test('colorScheme.error / terminalColors.danger stays rare and reviewed', () {
     final result = Process.runSync(
       'grep',
       [

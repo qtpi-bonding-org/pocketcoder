@@ -136,6 +136,12 @@ abstract class AppLocalizations {
   /// **'Could not open the browser. Please try again.'**
   String get errorCouldNotOpenBrowser;
 
+  /// No description provided for @errorCouldNotOpenMailApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open a mail app. Please try again.'**
+  String get errorCouldNotOpenMailApp;
+
   /// No description provided for @authLoginFailed.
   ///
   /// In en, this message translates to:
@@ -277,97 +283,97 @@ abstract class AppLocalizations {
   /// No description provided for @actionCancel.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get actionCancel;
 
   /// No description provided for @actionSave.
   ///
   /// In en, this message translates to:
-  /// **'SAVE'**
+  /// **'save'**
   String get actionSave;
 
   /// No description provided for @actionClose.
   ///
   /// In en, this message translates to:
-  /// **'CLOSE'**
+  /// **'close'**
   String get actionClose;
 
   /// No description provided for @actionDeny.
   ///
   /// In en, this message translates to:
-  /// **'DENY'**
+  /// **'deny'**
   String get actionDeny;
 
   /// No description provided for @actionAuthorize.
   ///
   /// In en, this message translates to:
-  /// **'AUTHORIZE'**
+  /// **'authorize'**
   String get actionAuthorize;
 
   /// No description provided for @actionRefresh.
   ///
   /// In en, this message translates to:
-  /// **'REFRESH'**
+  /// **'refresh'**
   String get actionRefresh;
 
   /// No description provided for @actionBack.
   ///
   /// In en, this message translates to:
-  /// **'BACK'**
+  /// **'back'**
   String get actionBack;
 
   /// No description provided for @actionSkip.
   ///
   /// In en, this message translates to:
-  /// **'SKIP'**
+  /// **'skip'**
   String get actionSkip;
 
   /// No description provided for @actionContinue.
   ///
   /// In en, this message translates to:
-  /// **'NEXT'**
+  /// **'next'**
   String get actionContinue;
 
   /// No description provided for @actionChange.
   ///
   /// In en, this message translates to:
-  /// **'CHANGE'**
+  /// **'change'**
   String get actionChange;
 
   /// No description provided for @actionCreate.
   ///
   /// In en, this message translates to:
-  /// **'CREATE'**
+  /// **'create'**
   String get actionCreate;
 
   /// No description provided for @actionAddNew.
   ///
   /// In en, this message translates to:
-  /// **'ADD NEW'**
+  /// **'add new'**
   String get actionAddNew;
 
   /// No description provided for @actionRestore.
   ///
   /// In en, this message translates to:
-  /// **'RESTORE'**
+  /// **'restore'**
   String get actionRestore;
 
   /// No description provided for @actionConfigure.
   ///
   /// In en, this message translates to:
-  /// **'CONFIGURE'**
+  /// **'configure'**
   String get actionConfigure;
 
   /// No description provided for @actionReject.
   ///
   /// In en, this message translates to:
-  /// **'REJECT'**
+  /// **'reject'**
   String get actionReject;
 
   /// No description provided for @externalAuthTitle.
   ///
   /// In en, this message translates to:
-  /// **'EXTERNAL AUTHENTICATION'**
+  /// **'external authentication'**
   String get externalAuthTitle;
 
   /// No description provided for @externalAuthConnecting.
@@ -379,38 +385,14 @@ abstract class AppLocalizations {
   /// No description provided for @externalAuthRetry.
   ///
   /// In en, this message translates to:
-  /// **'RETRY'**
+  /// **'retry'**
   String get externalAuthRetry;
 
   /// No description provided for @externalAuthCancel.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get externalAuthCancel;
-
-  /// No description provided for @navChats.
-  ///
-  /// In en, this message translates to:
-  /// **'CHATS'**
-  String get navChats;
-
-  /// No description provided for @navMonitor.
-  ///
-  /// In en, this message translates to:
-  /// **'MONITOR'**
-  String get navMonitor;
-
-  /// No description provided for @navConfigure.
-  ///
-  /// In en, this message translates to:
-  /// **'CONFIGURE'**
-  String get navConfigure;
-
-  /// No description provided for @navManage.
-  ///
-  /// In en, this message translates to:
-  /// **'MANAGE'**
-  String get navManage;
 
   /// No description provided for @bootLoadError.
   ///
@@ -448,16 +430,46 @@ abstract class AppLocalizations {
   /// **'Connection failed. I\'ll take you back to the setup screen so we can check the server settings.'**
   String get bootConnectionFailed;
 
+  /// No description provided for @bootNoiseHeartbeat.
+  ///
+  /// In en, this message translates to:
+  /// **'[sys] heartbeat: ok'**
+  String get bootNoiseHeartbeat;
+
+  /// No description provided for @bootNoiseKeepalive.
+  ///
+  /// In en, this message translates to:
+  /// **'[net] keepalive sent'**
+  String get bootNoiseKeepalive;
+
+  /// No description provided for @bootNoiseGcMinor.
+  ///
+  /// In en, this message translates to:
+  /// **'[mem] gc_minor completed'**
+  String get bootNoiseGcMinor;
+
+  /// No description provided for @bootNoiseContextSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'[proc] context_switch: 1241'**
+  String get bootNoiseContextSwitch;
+
+  /// No description provided for @bootNoiseReasoningEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'[agent] reasoning_engine: idle'**
+  String get bootNoiseReasoningEngine;
+
   /// No description provided for @onboardingTitle.
   ///
   /// In en, this message translates to:
-  /// **'IDENTIFICATION UNLOCK'**
+  /// **'identification unlock'**
   String get onboardingTitle;
 
   /// No description provided for @onboardingPocoChallengeMessage.
   ///
   /// In en, this message translates to:
-  /// **'WHO GOES THERE? IDENTIFY YOURSELF AND PROVIDE THE SECRET PASSPHRASE.'**
+  /// **'Who goes there? Identify yourself and provide the secret passphrase.'**
   String get onboardingPocoChallengeMessage;
 
   /// No description provided for @onboardingPocoWelcome.
@@ -469,97 +481,97 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingAccessDenied.
   ///
   /// In en, this message translates to:
-  /// **'ACCESS DENIED.'**
+  /// **'Access denied.'**
   String get onboardingAccessDenied;
 
   /// No description provided for @onboardingProcessing.
   ///
   /// In en, this message translates to:
-  /// **'PROCESSING...'**
+  /// **'Processing...'**
   String get onboardingProcessing;
 
   /// No description provided for @onboardingLogin.
   ///
   /// In en, this message translates to:
-  /// **'CONNECT'**
+  /// **'connect'**
   String get onboardingLogin;
 
   /// No description provided for @onboardingDeploy.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOY'**
+  /// **'deploy'**
   String get onboardingDeploy;
 
   /// No description provided for @onboardingHomeServer.
   ///
   /// In en, this message translates to:
-  /// **'HOME SERVER'**
+  /// **'home server'**
   String get onboardingHomeServer;
 
   /// No description provided for @onboardingIdentityLabel.
   ///
   /// In en, this message translates to:
-  /// **'IDENTITY'**
+  /// **'identity'**
   String get onboardingIdentityLabel;
 
   /// No description provided for @onboardingEmailHint.
   ///
   /// In en, this message translates to:
-  /// **'ENTER EMAIL'**
+  /// **'enter email'**
   String get onboardingEmailHint;
 
   /// No description provided for @onboardingPassphraseLabel.
   ///
   /// In en, this message translates to:
-  /// **'PASSPHRASE'**
+  /// **'passphrase'**
   String get onboardingPassphraseLabel;
 
   /// No description provided for @onboardingPasswordHint.
   ///
   /// In en, this message translates to:
-  /// **'ENTER PASSWORD'**
+  /// **'enter password'**
   String get onboardingPasswordHint;
 
   /// No description provided for @onboardingAuthenticating.
   ///
   /// In en, this message translates to:
-  /// **'AUTHENTICATING'**
+  /// **'authenticating'**
   String get onboardingAuthenticating;
 
   /// No description provided for @onboardingSetupTitle.
   ///
   /// In en, this message translates to:
-  /// **'POCKETCODER SETUP'**
+  /// **'PocketCoder setup'**
   String get onboardingSetupTitle;
 
   /// No description provided for @onboardingConnectOrDeploy.
   ///
   /// In en, this message translates to:
-  /// **'ARE YOU ALREADY PART OF THE POCKETCODER INITIATIVE?'**
+  /// **'Are you already part of the PocketCoder initiative?'**
   String get onboardingConnectOrDeploy;
 
   /// No description provided for @onboardingExistingServer.
   ///
   /// In en, this message translates to:
-  /// **'USE AN EXISTING POCKETBASE SERVER'**
+  /// **'use an existing PocketBase server'**
   String get onboardingExistingServer;
 
   /// No description provided for @onboardingCreateServer.
   ///
   /// In en, this message translates to:
-  /// **'CREATE A NEW SERVER'**
+  /// **'create a new server'**
   String get onboardingCreateServer;
 
   /// No description provided for @onboardingServerLoginTitle.
   ///
   /// In en, this message translates to:
-  /// **'SERVER LOGIN'**
+  /// **'server login'**
   String get onboardingServerLoginTitle;
 
   /// No description provided for @onboardingServerUrl.
   ///
   /// In en, this message translates to:
-  /// **'SERVER URL'**
+  /// **'server URL'**
   String get onboardingServerUrl;
 
   /// No description provided for @onboardingServerUrlHint.
@@ -571,7 +583,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingEmail.
   ///
   /// In en, this message translates to:
-  /// **'EMAIL'**
+  /// **'email'**
   String get onboardingEmail;
 
   /// No description provided for @onboardingEmailHintShort.
@@ -583,61 +595,73 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPassword.
   ///
   /// In en, this message translates to:
-  /// **'PASSWORD'**
+  /// **'password'**
   String get onboardingPassword;
 
   /// No description provided for @onboardingServerConnecting.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTING...'**
+  /// **'Connecting...'**
   String get onboardingServerConnecting;
 
   /// No description provided for @onboardingRequiredFields.
   ///
   /// In en, this message translates to:
-  /// **'ENTER ALL REQUIRED FIELDS'**
+  /// **'enter all required fields'**
   String get onboardingRequiredFields;
 
   /// No description provided for @onboardingChooseHarnessTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE YOUR HARNESS'**
+  /// **'choose your harness'**
   String get onboardingChooseHarnessTitle;
 
   /// No description provided for @onboardingChooseHarnessBody.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE THE ACCOUNT-BASED AGENT TO CONNECT.'**
+  /// **'Choose the account-based agent to connect.'**
   String get onboardingChooseHarnessBody;
+
+  /// No description provided for @onboardingChooseHarnessLoadingProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading provider connections…'**
+  String get onboardingChooseHarnessLoadingProviders;
+
+  /// No description provided for @onboardingHarnessProvidersLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading harness providers…'**
+  String get onboardingHarnessProvidersLoading;
 
   /// No description provided for @onboardingHarnessNotFound.
   ///
   /// In en, this message translates to:
-  /// **'HARNESS NOT FOUND'**
+  /// **'harness not found'**
   String get onboardingHarnessNotFound;
 
   /// No description provided for @onboardingClaudeAccountLogin.
   ///
   /// In en, this message translates to:
-  /// **'CLAUDE ACCOUNT LOGIN'**
+  /// **'Claude account login'**
   String get onboardingClaudeAccountLogin;
 
   /// No description provided for @onboardingCodexAccountLogin.
   ///
   /// In en, this message translates to:
-  /// **'CHATGPT ACCOUNT LOGIN'**
+  /// **'ChatGPT account login'**
   String get onboardingCodexAccountLogin;
 
   /// No description provided for @onboardingHarnessAccountLogin.
   ///
   /// In en, this message translates to:
-  /// **'{harness} ACCOUNT LOGIN'**
+  /// **'{harness} account login'**
   String onboardingHarnessAccountLogin(String harness);
 
   /// No description provided for @onboardingHarnessLoginTitle.
   ///
   /// In en, this message translates to:
-  /// **'{provider} LOGIN'**
+  /// **'{provider} login'**
   String onboardingHarnessLoginTitle(String provider);
 
   /// No description provided for @onboardingHarnessAccountVisibilityTitle.
@@ -673,19 +697,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingConnected.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTED'**
+  /// **'connected'**
   String get onboardingConnected;
 
   /// No description provided for @onboardingAccountLogin.
   ///
   /// In en, this message translates to:
-  /// **'ACCOUNT LOGIN'**
+  /// **'account login'**
   String get onboardingAccountLogin;
 
   /// No description provided for @onboardingAuthorizationCode.
   ///
   /// In en, this message translates to:
-  /// **'AUTHORIZATION CODE'**
+  /// **'authorization code'**
   String get onboardingAuthorizationCode;
 
   /// No description provided for @onboardingAuthorizationCodeHint.
@@ -697,19 +721,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSubmitCode.
   ///
   /// In en, this message translates to:
-  /// **'SUBMIT CODE'**
+  /// **'submit code'**
   String get onboardingSubmitCode;
 
   /// No description provided for @onboardingOpenAuthorization.
   ///
   /// In en, this message translates to:
-  /// **'OPEN AUTHORIZATION'**
+  /// **'open authorization'**
   String get onboardingOpenAuthorization;
 
   /// No description provided for @onboardingCheckStatus.
   ///
   /// In en, this message translates to:
-  /// **'CHECK STATUS'**
+  /// **'check status'**
   String get onboardingCheckStatus;
 
   /// No description provided for @onboardingOpenChatFailed.
@@ -721,31 +745,31 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingServerCredentialsTitle.
   ///
   /// In en, this message translates to:
-  /// **'SERVER CREDENTIALS'**
+  /// **'server credentials'**
   String get onboardingServerCredentialsTitle;
 
   /// No description provided for @onboardingPocketbaseAdminEmail.
   ///
   /// In en, this message translates to:
-  /// **'POCKETCODER ADMIN EMAIL'**
+  /// **'PocketCoder admin email'**
   String get onboardingPocketbaseAdminEmail;
 
   /// No description provided for @onboardingPocketbaseAdminPassword.
   ///
   /// In en, this message translates to:
-  /// **'POCKETCODER ADMIN PASSWORD'**
+  /// **'PocketCoder admin password'**
   String get onboardingPocketbaseAdminPassword;
 
   /// No description provided for @homeTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHATS'**
+  /// **'chats'**
   String get homeTitle;
 
   /// No description provided for @homeLoadingChats.
   ///
   /// In en, this message translates to:
-  /// **'LOADING CHATS'**
+  /// **'loading chats'**
   String get homeLoadingChats;
 
   /// No description provided for @homeErrorPrefix.
@@ -757,7 +781,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeNewChat.
   ///
   /// In en, this message translates to:
-  /// **'NEW CHAT'**
+  /// **'new chat'**
   String get homeNewChat;
 
   /// No description provided for @homeNoChats.
@@ -769,19 +793,19 @@ abstract class AppLocalizations {
   /// No description provided for @chatSessionTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHAT SESSION'**
+  /// **'chat session'**
   String get chatSessionTitle;
 
   /// No description provided for @chatTerminalAction.
   ///
   /// In en, this message translates to:
-  /// **'TERMINAL'**
+  /// **'terminal'**
   String get chatTerminalAction;
 
   /// No description provided for @chatListNewChat.
   ///
   /// In en, this message translates to:
-  /// **'NEW'**
+  /// **'new'**
   String get chatListNewChat;
 
   /// No description provided for @chatListNoMessages.
@@ -829,25 +853,25 @@ abstract class AppLocalizations {
   /// No description provided for @newChatCreate.
   ///
   /// In en, this message translates to:
-  /// **'CREATE'**
+  /// **'create'**
   String get newChatCreate;
 
   /// No description provided for @newChatCancel.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get newChatCancel;
 
   /// No description provided for @newChatSelectHarness.
   ///
   /// In en, this message translates to:
-  /// **'SELECT HARNESS'**
+  /// **'select harness'**
   String get newChatSelectHarness;
 
   /// No description provided for @newChatSelectModel.
   ///
   /// In en, this message translates to:
-  /// **'SELECT MODEL'**
+  /// **'select model'**
   String get newChatSelectModel;
 
   /// No description provided for @newChatNoModelsAvailable.
@@ -871,14 +895,20 @@ abstract class AppLocalizations {
   /// No description provided for @chatListArchive.
   ///
   /// In en, this message translates to:
-  /// **'ARCHIVE'**
+  /// **'archive'**
   String get chatListArchive;
 
   /// No description provided for @chatListDelete.
   ///
   /// In en, this message translates to:
-  /// **'DELETE'**
+  /// **'delete'**
   String get chatListDelete;
+
+  /// No description provided for @chatListActionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'archive hides \"{title}\" from this list. delete removes it permanently.'**
+  String chatListActionsBody(String title);
 
   /// No description provided for @chatListTimestampNow.
   ///
@@ -907,37 +937,49 @@ abstract class AppLocalizations {
   /// No description provided for @chatFilesAction.
   ///
   /// In en, this message translates to:
-  /// **'FILES'**
+  /// **'files'**
   String get chatFilesAction;
 
   /// No description provided for @chatNewCapabilityRequest.
   ///
   /// In en, this message translates to:
-  /// **'[!] NEW CAPABILITY REQUEST RECEIVED'**
+  /// **'[!] new capability request received'**
   String get chatNewCapabilityRequest;
 
   /// No description provided for @chatThinking.
   ///
   /// In en, this message translates to:
-  /// **'THINKING'**
+  /// **'thinking'**
   String get chatThinking;
 
   /// No description provided for @chatThinkingLive.
   ///
   /// In en, this message translates to:
-  /// **'THINKING...'**
+  /// **'Thinking...'**
   String get chatThinkingLive;
 
   /// No description provided for @chatThought.
   ///
   /// In en, this message translates to:
-  /// **'THOUGHT'**
+  /// **'thought'**
   String get chatThought;
+
+  /// No description provided for @chatAwaitingHarnessStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting the harness -- this can take a minute or two on a fresh container.'**
+  String get chatAwaitingHarnessStart;
+
+  /// No description provided for @chatWorkingThroughRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Working through the request.'**
+  String get chatWorkingThroughRequest;
 
   /// No description provided for @chatCommandOutput.
   ///
   /// In en, this message translates to:
-  /// **'OUTPUT'**
+  /// **'output'**
   String get chatCommandOutput;
 
   /// No description provided for @chatToolCallFallback.
@@ -949,13 +991,13 @@ abstract class AppLocalizations {
   /// No description provided for @chatSessionAction.
   ///
   /// In en, this message translates to:
-  /// **'SESSION'**
+  /// **'session'**
   String get chatSessionAction;
 
   /// No description provided for @chatMonitorAction.
   ///
   /// In en, this message translates to:
-  /// **'WATCH'**
+  /// **'watch'**
   String get chatMonitorAction;
 
   /// No description provided for @chatSendTooltip.
@@ -967,37 +1009,67 @@ abstract class AppLocalizations {
   /// No description provided for @chatCommanderRole.
   ///
   /// In en, this message translates to:
-  /// **'COMMANDER'**
+  /// **'commander'**
   String get chatCommanderRole;
 
   /// No description provided for @chatThinkingRole.
   ///
   /// In en, this message translates to:
-  /// **'THINKING'**
+  /// **'thinking'**
   String get chatThinkingRole;
 
   /// No description provided for @chatPocoRole.
   ///
   /// In en, this message translates to:
-  /// **'POCO'**
+  /// **'Poco'**
   String get chatPocoRole;
 
   /// No description provided for @chatElicitationRequest.
   ///
   /// In en, this message translates to:
-  /// **'ELICITATION REQUEST'**
+  /// **'elicitation request'**
   String get chatElicitationRequest;
+
+  /// No description provided for @chatElicitationFormLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'form'**
+  String get chatElicitationFormLabel;
+
+  /// No description provided for @chatCommanderPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'commander@pc \$ '**
+  String get chatCommanderPrompt;
+
+  /// No description provided for @chatComposerPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'commander@pc \$'**
+  String get chatComposerPrompt;
+
+  /// No description provided for @chatPocoPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'[poco] '**
+  String get chatPocoPrompt;
+
+  /// No description provided for @chatPickerFieldIndicator.
+  ///
+  /// In en, this message translates to:
+  /// **'[v]'**
+  String get chatPickerFieldIndicator;
 
   /// No description provided for @chatDecline.
   ///
   /// In en, this message translates to:
-  /// **'DECLINE'**
+  /// **'decline'**
   String get chatDecline;
 
   /// No description provided for @chatSubmit.
   ///
   /// In en, this message translates to:
-  /// **'SUBMIT'**
+  /// **'submit'**
   String get chatSubmit;
 
   /// No description provided for @chatNoFieldsRequested.
@@ -1009,7 +1081,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatRunOutcomeInterruptedTitle.
   ///
   /// In en, this message translates to:
-  /// **'RUN INTERRUPTED'**
+  /// **'run interrupted'**
   String get chatRunOutcomeInterruptedTitle;
 
   /// No description provided for @chatRunOutcomeInterruptedBody.
@@ -1021,7 +1093,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatRunOutcomeCancelledTitle.
   ///
   /// In en, this message translates to:
-  /// **'RUN STOPPED'**
+  /// **'run stopped'**
   String get chatRunOutcomeCancelledTitle;
 
   /// No description provided for @chatRunOutcomeCancelledBody.
@@ -1033,7 +1105,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatRunOutcomeFailedTitle.
   ///
   /// In en, this message translates to:
-  /// **'RUN FAILED'**
+  /// **'run failed'**
   String get chatRunOutcomeFailedTitle;
 
   /// No description provided for @chatRunOutcomeFailedBody.
@@ -1045,151 +1117,151 @@ abstract class AppLocalizations {
   /// No description provided for @filesTitle.
   ///
   /// In en, this message translates to:
-  /// **'FILES'**
+  /// **'files'**
   String get filesTitle;
 
   /// No description provided for @filesEmpty.
   ///
   /// In en, this message translates to:
-  /// **'NO FILES'**
+  /// **'no files'**
   String get filesEmpty;
 
   /// No description provided for @filesTooLargeToPreview.
   ///
   /// In en, this message translates to:
-  /// **'FILE TOO LARGE TO PREVIEW'**
+  /// **'file too large to preview'**
   String get filesTooLargeToPreview;
 
   /// No description provided for @filesCantPreviewType.
   ///
   /// In en, this message translates to:
-  /// **'CAN\'T PREVIEW THIS FILE TYPE'**
+  /// **'can\'t preview this file type'**
   String get filesCantPreviewType;
 
   /// No description provided for @chatModelLabel.
   ///
   /// In en, this message translates to:
-  /// **'MODEL:'**
+  /// **'model:'**
   String get chatModelLabel;
 
   /// No description provided for @chatModelDefault.
   ///
   /// In en, this message translates to:
-  /// **'DEFAULT'**
+  /// **'default'**
   String get chatModelDefault;
 
   /// No description provided for @chatModelPerChat.
   ///
   /// In en, this message translates to:
-  /// **'[CHAT]'**
+  /// **'[chat]'**
   String get chatModelPerChat;
 
   /// No description provided for @chatSelectModelTitle.
   ///
   /// In en, this message translates to:
-  /// **'SELECT MODEL'**
+  /// **'select model'**
   String get chatSelectModelTitle;
 
   /// No description provided for @chatUseGlobalDefault.
   ///
   /// In en, this message translates to:
-  /// **'USE GLOBAL DEFAULT'**
+  /// **'use global default'**
   String get chatUseGlobalDefault;
 
   /// No description provided for @llmTitle.
   ///
   /// In en, this message translates to:
-  /// **'LLM MANAGEMENT'**
+  /// **'llm management'**
   String get llmTitle;
 
   /// No description provided for @llmLoadingProviders.
   ///
   /// In en, this message translates to:
-  /// **'LOADING PROVIDERS'**
+  /// **'loading providers'**
   String get llmLoadingProviders;
 
   /// No description provided for @llmActiveModelSection.
   ///
   /// In en, this message translates to:
-  /// **'ACTIVE MODEL'**
+  /// **'active model'**
   String get llmActiveModelSection;
 
   /// No description provided for @llmProvidersSection.
   ///
   /// In en, this message translates to:
-  /// **'PROVIDERS'**
+  /// **'providers'**
   String get llmProvidersSection;
 
   /// No description provided for @llmApiKeysSection.
   ///
   /// In en, this message translates to:
-  /// **'API KEYS'**
+  /// **'API keys'**
   String get llmApiKeysSection;
 
   /// No description provided for @llmGlobalDefault.
   ///
   /// In en, this message translates to:
-  /// **'GLOBAL DEFAULT'**
+  /// **'global default'**
   String get llmGlobalDefault;
 
   /// No description provided for @llmNotSet.
   ///
   /// In en, this message translates to:
-  /// **'NOT SET'**
+  /// **'not set'**
   String get llmNotSet;
 
   /// No description provided for @llmAddKeyHint.
   ///
   /// In en, this message translates to:
-  /// **'ADD AN API KEY TO ENABLE MODEL SELECTION'**
+  /// **'add an API key to enable model selection'**
   String get llmAddKeyHint;
 
   /// No description provided for @llmNoProviders.
   ///
   /// In en, this message translates to:
-  /// **'NO PROVIDERS AVAILABLE'**
+  /// **'no providers available'**
   String get llmNoProviders;
 
   /// No description provided for @llmConnected.
   ///
   /// In en, this message translates to:
-  /// **'[ CONNECTED ]'**
+  /// **'[ connected ]'**
   String get llmConnected;
 
   /// No description provided for @llmNoKey.
   ///
   /// In en, this message translates to:
-  /// **'[ NO KEY ]'**
+  /// **'[ no key ]'**
   String get llmNoKey;
 
   /// No description provided for @llmModelsAvailable.
   ///
   /// In en, this message translates to:
-  /// **'{count} MODEL(S) AVAILABLE'**
+  /// **'{count} model(s) available'**
   String llmModelsAvailable(int count);
 
   /// No description provided for @llmUpdateKey.
   ///
   /// In en, this message translates to:
-  /// **'UPDATE KEY'**
+  /// **'update key'**
   String get llmUpdateKey;
 
   /// No description provided for @llmAddKey.
   ///
   /// In en, this message translates to:
-  /// **'ADD KEY'**
+  /// **'add key'**
   String get llmAddKey;
 
   /// No description provided for @llmModelsButton.
   ///
   /// In en, this message translates to:
-  /// **'MODELS'**
+  /// **'models'**
   String get llmModelsButton;
 
   /// No description provided for @llmApiKeyDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'API KEY: {provider}'**
+  /// **'API key: {provider}'**
   String llmApiKeyDialogTitle(String provider);
 
   /// No description provided for @llmEnterCredentials.
@@ -1201,103 +1273,103 @@ abstract class AppLocalizations {
   /// No description provided for @llmSelectModelTitle.
   ///
   /// In en, this message translates to:
-  /// **'SELECT MODEL'**
+  /// **'select model'**
   String get llmSelectModelTitle;
 
   /// No description provided for @llmProviderModelsTitle.
   ///
   /// In en, this message translates to:
-  /// **'{provider} MODELS'**
+  /// **'{provider} models'**
   String llmProviderModelsTitle(String provider);
 
   /// No description provided for @llmNoModels.
   ///
   /// In en, this message translates to:
-  /// **'NO MODELS LISTED'**
+  /// **'no models listed'**
   String get llmNoModels;
 
   /// No description provided for @llmSelect.
   ///
   /// In en, this message translates to:
-  /// **'[ SELECT ]'**
+  /// **'[ select ]'**
   String get llmSelect;
 
   /// No description provided for @mcpTitle.
   ///
   /// In en, this message translates to:
-  /// **'MCP MANAGEMENT'**
+  /// **'MCP management'**
   String get mcpTitle;
 
   /// No description provided for @mcpCapabilitiesRegistry.
   ///
   /// In en, this message translates to:
-  /// **'CAPABILITIES REGISTRY'**
+  /// **'capabilities registry'**
   String get mcpCapabilitiesRegistry;
 
   /// No description provided for @mcpPendingApproval.
   ///
   /// In en, this message translates to:
-  /// **'PENDING APPROVAL'**
+  /// **'pending approval'**
   String get mcpPendingApproval;
 
   /// No description provided for @mcpActiveCapabilities.
   ///
   /// In en, this message translates to:
-  /// **'ACTIVE CAPABILITIES'**
+  /// **'active capabilities'**
   String get mcpActiveCapabilities;
 
   /// No description provided for @mcpNoCapabilities.
   ///
   /// In en, this message translates to:
-  /// **'NO CAPABILITIES REGISTERED'**
+  /// **'no capabilities registered'**
   String get mcpNoCapabilities;
 
   /// No description provided for @mcpImageLabel.
   ///
   /// In en, this message translates to:
-  /// **'IMAGE: {image}'**
+  /// **'image: {image}'**
   String mcpImageLabel(String image);
 
   /// No description provided for @mcpPurposeLabel.
   ///
   /// In en, this message translates to:
-  /// **'PURPOSE: {reason}'**
+  /// **'purpose: {reason}'**
   String mcpPurposeLabel(String reason);
 
   /// No description provided for @mcpRequiredConfig.
   ///
   /// In en, this message translates to:
-  /// **'REQUIRED CONFIG:'**
+  /// **'required config:'**
   String get mcpRequiredConfig;
 
   /// No description provided for @mcpAuthorizeCap.
   ///
   /// In en, this message translates to:
-  /// **'AUTHORIZE CAPABILITY'**
+  /// **'authorize capability'**
   String get mcpAuthorizeCap;
 
   /// No description provided for @mcpEditConfig.
   ///
   /// In en, this message translates to:
-  /// **'EDIT CONFIGURATION'**
+  /// **'edit configuration'**
   String get mcpEditConfig;
 
   /// No description provided for @mcpRevoke.
   ///
   /// In en, this message translates to:
-  /// **'REVOKE'**
+  /// **'revoke'**
   String get mcpRevoke;
 
   /// No description provided for @mcpAuthorizeDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'AUTHORIZE: {name}'**
+  /// **'authorize: {name}'**
   String mcpAuthorizeDialogTitle(String name);
 
   /// No description provided for @mcpUpdateConfigDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'UPDATE CONFIG: {name}'**
+  /// **'update config: {name}'**
   String mcpUpdateConfigDialogTitle(String name);
 
   /// No description provided for @mcpNoConfigRequired.
@@ -1315,19 +1387,19 @@ abstract class AppLocalizations {
   /// No description provided for @mcpAddDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'ADD MCP SERVER'**
+  /// **'add MCP server'**
   String get mcpAddDialogTitle;
 
   /// No description provided for @mcpServerNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'SERVER NAME'**
+  /// **'server name'**
   String get mcpServerNameLabel;
 
   /// No description provided for @mcpImageOptionalLabel.
   ///
   /// In en, this message translates to:
-  /// **'IMAGE (OPTIONAL)'**
+  /// **'image (optional)'**
   String get mcpImageOptionalLabel;
 
   /// No description provided for @mcpAddConfigOptional.
@@ -1339,139 +1411,145 @@ abstract class AppLocalizations {
   /// No description provided for @mcpConnectCap.
   ///
   /// In en, this message translates to:
-  /// **'CONNECT'**
+  /// **'connect'**
   String get mcpConnectCap;
 
   /// No description provided for @mcpRetryDeliveryCap.
   ///
   /// In en, this message translates to:
-  /// **'RETRY DELIVERY'**
+  /// **'retry delivery'**
   String get mcpRetryDeliveryCap;
 
   /// No description provided for @mcpOauthRequiredLabel.
   ///
   /// In en, this message translates to:
-  /// **'REQUIRES OAUTH: {provider}'**
+  /// **'requires OAuth: {provider}'**
   String mcpOauthRequiredLabel(String provider);
 
   /// No description provided for @mcpOauthProviderOptionalLabel.
   ///
   /// In en, this message translates to:
-  /// **'OAUTH PROVIDER (OPTIONAL)'**
+  /// **'OAuth provider (optional)'**
   String get mcpOauthProviderOptionalLabel;
 
   /// No description provided for @mcpOauthTokenEnvVarOptionalLabel.
   ///
   /// In en, this message translates to:
-  /// **'OAUTH TOKEN ENV VAR (OPTIONAL)'**
+  /// **'OAuth token env var (optional)'**
   String get mcpOauthTokenEnvVarOptionalLabel;
 
   /// No description provided for @mcpOauthProviderNotConfiguredLabel.
   ///
   /// In en, this message translates to:
-  /// **'{provider} NOT YET CONFIGURED'**
+  /// **'{provider} not yet configured'**
   String mcpOauthProviderNotConfiguredLabel(String provider);
 
   /// No description provided for @mcpAddNew.
   ///
   /// In en, this message translates to:
-  /// **'ADD NEW'**
+  /// **'add new'**
   String get mcpAddNew;
 
   /// No description provided for @mcpDeny.
   ///
   /// In en, this message translates to:
-  /// **'DENY'**
+  /// **'deny'**
   String get mcpDeny;
 
   /// No description provided for @mcpAuthorize.
   ///
   /// In en, this message translates to:
-  /// **'AUTHORIZE'**
+  /// **'authorize'**
   String get mcpAuthorize;
 
   /// No description provided for @actionAdd.
   ///
   /// In en, this message translates to:
-  /// **'ADD'**
+  /// **'add'**
   String get actionAdd;
 
   /// No description provided for @toolPermissionsScreenTitle.
   ///
   /// In en, this message translates to:
-  /// **'TOOL PERMISSIONS'**
+  /// **'tool permissions'**
   String get toolPermissionsScreenTitle;
 
   /// No description provided for @toolPermissionsRulesRegistry.
   ///
   /// In en, this message translates to:
-  /// **'PERMISSION RULES'**
+  /// **'permission rules'**
   String get toolPermissionsRulesRegistry;
 
   /// No description provided for @toolPermissionsNoRules.
   ///
   /// In en, this message translates to:
-  /// **'NO RULES CONFIGURED'**
+  /// **'no rules configured'**
   String get toolPermissionsNoRules;
 
   /// No description provided for @toolPermissionsAddRuleTitle.
   ///
   /// In en, this message translates to:
-  /// **'ADD PERMISSION RULE'**
+  /// **'add permission rule'**
   String get toolPermissionsAddRuleTitle;
 
   /// No description provided for @toolPermissionsToolNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'TOOL NAME'**
+  /// **'tool name'**
   String get toolPermissionsToolNameLabel;
 
   /// No description provided for @toolPermissionsAllowLabel.
   ///
   /// In en, this message translates to:
-  /// **'ALLOW'**
+  /// **'allow'**
   String get toolPermissionsAllowLabel;
 
   /// No description provided for @toolPermissionsAskLabel.
   ///
   /// In en, this message translates to:
-  /// **'ASK'**
+  /// **'ask'**
   String get toolPermissionsAskLabel;
 
   /// No description provided for @toolPermissionsDenyLabel.
   ///
   /// In en, this message translates to:
-  /// **'DENY'**
+  /// **'deny'**
   String get toolPermissionsDenyLabel;
+
+  /// No description provided for @toolPermissionsAddRuleButton.
+  ///
+  /// In en, this message translates to:
+  /// **'add rule'**
+  String get toolPermissionsAddRuleButton;
 
   /// No description provided for @notificationSettingsScreenTitle.
   ///
   /// In en, this message translates to:
-  /// **'NOTIFICATIONS'**
+  /// **'notifications'**
   String get notificationSettingsScreenTitle;
 
   /// No description provided for @notificationSettingsChatReplyLabel.
   ///
   /// In en, this message translates to:
-  /// **'CHAT REPLIES'**
+  /// **'chat replies'**
   String get notificationSettingsChatReplyLabel;
 
   /// No description provided for @notificationSettingsScheduleLabel.
   ///
   /// In en, this message translates to:
-  /// **'SCHEDULED TASKS'**
+  /// **'scheduled tasks'**
   String get notificationSettingsScheduleLabel;
 
   /// No description provided for @notificationSettingsTaskCompleteLabel.
   ///
   /// In en, this message translates to:
-  /// **'TASK COMPLETE'**
+  /// **'task complete'**
   String get notificationSettingsTaskCompleteLabel;
 
   /// No description provided for @notificationSettingsTaskErrorLabel.
   ///
   /// In en, this message translates to:
-  /// **'TASK ERRORS'**
+  /// **'task errors'**
   String get notificationSettingsTaskErrorLabel;
 
   /// No description provided for @notificationSettingsPoco.
@@ -1483,103 +1561,103 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsEnableDevice.
   ///
   /// In en, this message translates to:
-  /// **'ENABLE ON THIS DEVICE'**
+  /// **'enable on this device'**
   String get notificationSettingsEnableDevice;
 
   /// No description provided for @skillsTitle.
   ///
   /// In en, this message translates to:
-  /// **'SKILLS'**
+  /// **'skills'**
   String get skillsTitle;
 
   /// No description provided for @skillsRegistryTitle.
   ///
   /// In en, this message translates to:
-  /// **'SKILLS REGISTRY'**
+  /// **'skills registry'**
   String get skillsRegistryTitle;
 
   /// No description provided for @skillsGlobalSection.
   ///
   /// In en, this message translates to:
-  /// **'GLOBAL'**
+  /// **'global'**
   String get skillsGlobalSection;
 
   /// No description provided for @skillsProjectSection.
   ///
   /// In en, this message translates to:
-  /// **'PROJECT'**
+  /// **'project'**
   String get skillsProjectSection;
 
   /// No description provided for @skillsNoSkills.
   ///
   /// In en, this message translates to:
-  /// **'NO SKILLS CONFIGURED'**
+  /// **'no skills configured'**
   String get skillsNoSkills;
 
   /// No description provided for @skillsAddButton.
   ///
   /// In en, this message translates to:
-  /// **'ADD SKILL'**
+  /// **'add skill'**
   String get skillsAddButton;
 
   /// No description provided for @skillsEditButton.
   ///
   /// In en, this message translates to:
-  /// **'EDIT'**
+  /// **'edit'**
   String get skillsEditButton;
 
   /// No description provided for @skillsDeleteButton.
   ///
   /// In en, this message translates to:
-  /// **'DELETE'**
+  /// **'delete'**
   String get skillsDeleteButton;
 
   /// No description provided for @skillsSaveButton.
   ///
   /// In en, this message translates to:
-  /// **'SAVE'**
+  /// **'save'**
   String get skillsSaveButton;
 
   /// No description provided for @skillsNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'NAME'**
+  /// **'name'**
   String get skillsNameLabel;
 
   /// No description provided for @skillsDescriptionLabel.
   ///
   /// In en, this message translates to:
-  /// **'DESCRIPTION'**
+  /// **'description'**
   String get skillsDescriptionLabel;
 
   /// No description provided for @skillsContentLabel.
   ///
   /// In en, this message translates to:
-  /// **'CONTENT'**
+  /// **'content'**
   String get skillsContentLabel;
 
   /// No description provided for @skillsGlobalLabel.
   ///
   /// In en, this message translates to:
-  /// **'GLOBAL'**
+  /// **'global'**
   String get skillsGlobalLabel;
 
   /// No description provided for @skillsProjectLabel.
   ///
   /// In en, this message translates to:
-  /// **'PROJECT'**
+  /// **'project'**
   String get skillsProjectLabel;
 
   /// No description provided for @skillsAddDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'ADD SKILL'**
+  /// **'add skill'**
   String get skillsAddDialogTitle;
 
   /// No description provided for @skillsEditDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'EDIT: {name}'**
+  /// **'edit: {name}'**
   String skillsEditDialogTitle(String name);
 
   /// No description provided for @skillsNoEligibleConfig.
@@ -1588,142 +1666,232 @@ abstract class AppLocalizations {
   /// **'No agent config has a workspace folder configured.'**
   String get skillsNoEligibleConfig;
 
+  /// No description provided for @skillsBuiltInLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'built-in'**
+  String get skillsBuiltInLabel;
+
   /// No description provided for @schedulerTitle.
   ///
   /// In en, this message translates to:
-  /// **'SCHEDULER'**
+  /// **'scheduler'**
   String get schedulerTitle;
 
   /// No description provided for @schedulerRegistryTitle.
   ///
   /// In en, this message translates to:
-  /// **'SCHEDULED TASKS'**
+  /// **'scheduled tasks'**
   String get schedulerRegistryTitle;
 
   /// No description provided for @schedulerNoSchedules.
   ///
   /// In en, this message translates to:
-  /// **'NO SCHEDULES CONFIGURED'**
+  /// **'no schedules configured'**
   String get schedulerNoSchedules;
 
   /// No description provided for @schedulerAddButton.
   ///
   /// In en, this message translates to:
-  /// **'ADD SCHEDULE'**
+  /// **'add schedule'**
   String get schedulerAddButton;
 
   /// No description provided for @schedulerEditButton.
   ///
   /// In en, this message translates to:
-  /// **'EDIT'**
+  /// **'edit'**
   String get schedulerEditButton;
 
   /// No description provided for @schedulerDeleteButton.
   ///
   /// In en, this message translates to:
-  /// **'DELETE'**
+  /// **'delete'**
   String get schedulerDeleteButton;
 
   /// No description provided for @schedulerSaveButton.
   ///
   /// In en, this message translates to:
-  /// **'SAVE'**
+  /// **'save'**
   String get schedulerSaveButton;
 
   /// No description provided for @schedulerPauseButton.
   ///
   /// In en, this message translates to:
-  /// **'PAUSE'**
+  /// **'pause'**
   String get schedulerPauseButton;
 
   /// No description provided for @schedulerResumeButton.
   ///
   /// In en, this message translates to:
-  /// **'RESUME'**
+  /// **'resume'**
   String get schedulerResumeButton;
 
   /// No description provided for @schedulerRunNowButton.
   ///
   /// In en, this message translates to:
-  /// **'RUN NOW'**
+  /// **'run now'**
   String get schedulerRunNowButton;
 
   /// No description provided for @schedulerNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'NAME'**
+  /// **'name'**
   String get schedulerNameLabel;
 
   /// No description provided for @schedulerCronLabel.
   ///
   /// In en, this message translates to:
-  /// **'CRON EXPRESSION'**
+  /// **'cron expression'**
   String get schedulerCronLabel;
 
   /// No description provided for @schedulerPromptLabel.
   ///
   /// In en, this message translates to:
-  /// **'PROMPT'**
+  /// **'prompt'**
   String get schedulerPromptLabel;
 
   /// No description provided for @schedulerAddDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'ADD SCHEDULE'**
+  /// **'add schedule'**
   String get schedulerAddDialogTitle;
 
   /// No description provided for @schedulerEditDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'EDIT: {name}'**
+  /// **'edit: {name}'**
   String schedulerEditDialogTitle(String name);
 
   /// No description provided for @schedulerPausedBadge.
   ///
   /// In en, this message translates to:
-  /// **'PAUSED'**
+  /// **'paused'**
   String get schedulerPausedBadge;
 
   /// No description provided for @schedulerRunningBadge.
   ///
   /// In en, this message translates to:
-  /// **'RUNNING'**
+  /// **'running'**
   String get schedulerRunningBadge;
 
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:
-  /// **'CONFIGURE'**
+  /// **'configure'**
   String get settingsTitle;
 
   /// No description provided for @settingsAiAgentsSection.
   ///
   /// In en, this message translates to:
-  /// **'AGENTS & ACCESS'**
+  /// **'agents & access'**
   String get settingsAiAgentsSection;
 
   /// No description provided for @settingsReportAiContentLabel.
   ///
   /// In en, this message translates to:
-  /// **'REPORT AI CONTENT'**
+  /// **'report AI content'**
   String get settingsReportAiContentLabel;
 
   /// No description provided for @settingsSystemSection.
   ///
   /// In en, this message translates to:
-  /// **'SYSTEM'**
+  /// **'system'**
   String get settingsSystemSection;
 
   /// No description provided for @settingsAccountSection.
   ///
   /// In en, this message translates to:
-  /// **'ACCOUNT'**
+  /// **'account'**
   String get settingsAccountSection;
+
+  /// No description provided for @settingsMenuLlmManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'llm management'**
+  String get settingsMenuLlmManagement;
+
+  /// No description provided for @settingsMenuAgentRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'agent registry'**
+  String get settingsMenuAgentRegistry;
+
+  /// No description provided for @settingsMenuMcpManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP management'**
+  String get settingsMenuMcpManagement;
+
+  /// No description provided for @settingsMenuSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'skills'**
+  String get settingsMenuSkills;
+
+  /// No description provided for @settingsMenuToolPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'tool permissions'**
+  String get settingsMenuToolPermissions;
+
+  /// No description provided for @settingsMenuHarnessConnections.
+  ///
+  /// In en, this message translates to:
+  /// **'harness connections'**
+  String get settingsMenuHarnessConnections;
+
+  /// No description provided for @settingsMenuSystemChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'system checks'**
+  String get settingsMenuSystemChecks;
+
+  /// No description provided for @settingsMenuPocketMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'pocket memory'**
+  String get settingsMenuPocketMemory;
+
+  /// No description provided for @settingsMenuPocketbase.
+  ///
+  /// In en, this message translates to:
+  /// **'PocketBase'**
+  String get settingsMenuPocketbase;
+
+  /// No description provided for @settingsMenuScheduler.
+  ///
+  /// In en, this message translates to:
+  /// **'scheduler'**
+  String get settingsMenuScheduler;
+
+  /// No description provided for @settingsMenuNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'notifications'**
+  String get settingsMenuNotifications;
+
+  /// No description provided for @settingsMenuLogout.
+  ///
+  /// In en, this message translates to:
+  /// **'logout'**
+  String get settingsMenuLogout;
+
+  /// No description provided for @settingsMenuReset.
+  ///
+  /// In en, this message translates to:
+  /// **'reset'**
+  String get settingsMenuReset;
+
+  /// No description provided for @settingsMenuHapticFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'haptic feedback'**
+  String get settingsMenuHapticFeedback;
 
   /// No description provided for @settingsLogoutConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'SIGN OUT'**
+  /// **'sign out'**
   String get settingsLogoutConfirmTitle;
 
   /// No description provided for @settingsLogoutConfirmBody.
@@ -1735,19 +1903,19 @@ abstract class AppLocalizations {
   /// No description provided for @settingsLogoutCancel.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get settingsLogoutCancel;
 
   /// No description provided for @settingsLogoutConfirm.
   ///
   /// In en, this message translates to:
-  /// **'SIGN OUT'**
+  /// **'sign out'**
   String get settingsLogoutConfirm;
 
   /// No description provided for @settingsFactoryResetConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'RESET'**
+  /// **'reset'**
   String get settingsFactoryResetConfirmTitle;
 
   /// No description provided for @settingsFactoryResetConfirmBody.
@@ -1759,25 +1927,25 @@ abstract class AppLocalizations {
   /// No description provided for @settingsFactoryResetCancel.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get settingsFactoryResetCancel;
 
   /// No description provided for @settingsFactoryResetConfirm.
   ///
   /// In en, this message translates to:
-  /// **'RESET'**
+  /// **'reset'**
   String get settingsFactoryResetConfirm;
 
   /// No description provided for @settingsDeleteProDataLabel.
   ///
   /// In en, this message translates to:
-  /// **'DELETE POCKETCODER PRO DATA'**
+  /// **'delete PocketCoder Pro data'**
   String get settingsDeleteProDataLabel;
 
   /// No description provided for @settingsDeleteProDataConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'DELETE PRO DATA'**
+  /// **'delete pro data'**
   String get settingsDeleteProDataConfirmTitle;
 
   /// No description provided for @settingsDeleteProDataConfirmBody.
@@ -1789,193 +1957,205 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDeleteProDataCancel.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get settingsDeleteProDataCancel;
 
   /// No description provided for @settingsDeleteProDataConfirm.
   ///
   /// In en, this message translates to:
-  /// **'DELETE'**
+  /// **'delete'**
   String get settingsDeleteProDataConfirm;
 
   /// No description provided for @agentTitle.
   ///
   /// In en, this message translates to:
-  /// **'AGENT REGISTRY'**
+  /// **'agent registry'**
   String get agentTitle;
 
   /// No description provided for @agentModelsPersonas.
   ///
   /// In en, this message translates to:
-  /// **'MODELS & PERSONAS'**
+  /// **'models & personas'**
   String get agentModelsPersonas;
 
   /// No description provided for @agentSearching.
   ///
   /// In en, this message translates to:
-  /// **'SEARCHING...'**
+  /// **'Searching...'**
   String get agentSearching;
 
   /// No description provided for @agentRegistryEmpty.
   ///
   /// In en, this message translates to:
-  /// **'REGISTRY EMPTY.'**
+  /// **'Registry empty.'**
   String get agentRegistryEmpty;
 
   /// No description provided for @agentSelectToConfigure.
   ///
   /// In en, this message translates to:
-  /// **'SELECT AGENT TO CONFIGURE'**
+  /// **'select agent to configure'**
   String get agentSelectToConfigure;
 
   /// No description provided for @agentDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'AGENT: {name}'**
+  /// **'agent: {name}'**
   String agentDialogTitle(String name);
 
   /// No description provided for @agentNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'NAME'**
+  /// **'name'**
   String get agentNameLabel;
 
   /// No description provided for @agentDescriptionLabel.
   ///
   /// In en, this message translates to:
-  /// **'DESCRIPTION'**
+  /// **'description'**
   String get agentDescriptionLabel;
 
   /// No description provided for @agentPromptsLabel.
   ///
   /// In en, this message translates to:
-  /// **'PROMPTS'**
+  /// **'prompts'**
   String get agentPromptsLabel;
 
   /// No description provided for @agentModelsLabel.
   ///
   /// In en, this message translates to:
-  /// **'MODELS'**
+  /// **'models'**
   String get agentModelsLabel;
 
   /// No description provided for @agentParametersLabel.
   ///
   /// In en, this message translates to:
-  /// **'PARAMETERS'**
+  /// **'parameters'**
   String get agentParametersLabel;
 
   /// No description provided for @agentNone.
   ///
   /// In en, this message translates to:
-  /// **'NONE'**
+  /// **'none'**
   String get agentNone;
 
   /// No description provided for @agentNoneSelected.
   ///
   /// In en, this message translates to:
-  /// **'NONE SELECTED'**
+  /// **'none selected'**
   String get agentNoneSelected;
 
   /// No description provided for @agentDefaultTuned.
   ///
   /// In en, this message translates to:
-  /// **'DEFAULT [TUNED]'**
+  /// **'default [tuned]'**
   String get agentDefaultTuned;
+
+  /// No description provided for @agentPlanPanelBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'[plan]'**
+  String get agentPlanPanelBadge;
+
+  /// No description provided for @agentPlanPanelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'plan'**
+  String get agentPlanPanelLabel;
 
   /// No description provided for @agentConfigTitle.
   ///
   /// In en, this message translates to:
-  /// **'AGENT CONFIGURATION'**
+  /// **'agent configuration'**
   String get agentConfigTitle;
 
   /// No description provided for @agentConfigRegistry.
   ///
   /// In en, this message translates to:
-  /// **'AGENT CONFIGS'**
+  /// **'agent configs'**
   String get agentConfigRegistry;
 
   /// No description provided for @agentConfigEmpty.
   ///
   /// In en, this message translates to:
-  /// **'NO AGENT CONFIGS YET'**
+  /// **'no agent configs yet'**
   String get agentConfigEmpty;
 
   /// No description provided for @agentConfigDialogTitle.
   ///
   /// In en, this message translates to:
-  /// **'AGENT CONFIG: {name}'**
+  /// **'agent config: {name}'**
   String agentConfigDialogTitle(String name);
 
   /// No description provided for @agentConfigNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'NAME'**
+  /// **'name'**
   String get agentConfigNameLabel;
 
   /// No description provided for @agentConfigPromptLabel.
   ///
   /// In en, this message translates to:
-  /// **'SYSTEM PROMPT'**
+  /// **'system prompt'**
   String get agentConfigPromptLabel;
 
   /// No description provided for @agentConfigModeLabel.
   ///
   /// In en, this message translates to:
-  /// **'MODE'**
+  /// **'mode'**
   String get agentConfigModeLabel;
 
   /// No description provided for @agentConfigIsDefaultLabel.
   ///
   /// In en, this message translates to:
-  /// **'IS DEFAULT'**
+  /// **'is default'**
   String get agentConfigIsDefaultLabel;
 
   /// No description provided for @agentConfigNoPrompts.
   ///
   /// In en, this message translates to:
-  /// **'NO PROMPTS AVAILABLE'**
+  /// **'no prompts available'**
   String get agentConfigNoPrompts;
 
   /// No description provided for @agentConfigNoModes.
   ///
   /// In en, this message translates to:
-  /// **'NO MODES AVAILABLE'**
+  /// **'no modes available'**
   String get agentConfigNoModes;
 
   /// No description provided for @agentConfigSelectPrompt.
   ///
   /// In en, this message translates to:
-  /// **'SELECT PROMPT'**
+  /// **'select prompt'**
   String get agentConfigSelectPrompt;
 
   /// No description provided for @agentConfigSelectMode.
   ///
   /// In en, this message translates to:
-  /// **'SELECT MODE'**
+  /// **'select mode'**
   String get agentConfigSelectMode;
 
   /// No description provided for @agentConfigDelete.
   ///
   /// In en, this message translates to:
-  /// **'DELETE'**
+  /// **'delete'**
   String get agentConfigDelete;
 
   /// No description provided for @agentConfigDeleteConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'DELETE CONFIG?'**
+  /// **'Delete config?'**
   String get agentConfigDeleteConfirmTitle;
 
   /// No description provided for @agentConfigDeleteConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'DELETE {name}? THIS CANNOT BE UNDONE.'**
+  /// **'Delete {name}? This cannot be undone.'**
   String agentConfigDeleteConfirmBody(String name);
 
   /// No description provided for @agentConfigDefaultBadge.
   ///
   /// In en, this message translates to:
-  /// **'[ DEFAULT ]'**
+  /// **'[ default ]'**
   String get agentConfigDefaultBadge;
 
   /// No description provided for @agentConfigErrorPrefix.
@@ -1987,73 +2167,73 @@ abstract class AppLocalizations {
   /// No description provided for @providerScreenTitle.
   ///
   /// In en, this message translates to:
-  /// **'PROVIDER MANAGEMENT'**
+  /// **'provider management'**
   String get providerScreenTitle;
 
   /// No description provided for @providerScreenLoading.
   ///
   /// In en, this message translates to:
-  /// **'LOADING PROVIDERS'**
+  /// **'loading providers'**
   String get providerScreenLoading;
 
   /// No description provided for @providerScreenHarnessModelsSection.
   ///
   /// In en, this message translates to:
-  /// **'HARNESS MODELS'**
+  /// **'harness models'**
   String get providerScreenHarnessModelsSection;
 
   /// No description provided for @providerScreenApiKeysSection.
   ///
   /// In en, this message translates to:
-  /// **'API KEYS'**
+  /// **'API keys'**
   String get providerScreenApiKeysSection;
 
   /// No description provided for @providerScreenNoHarnessModels.
   ///
   /// In en, this message translates to:
-  /// **'NO HARNESS MODELS LISTED'**
+  /// **'no harness models listed'**
   String get providerScreenNoHarnessModels;
 
   /// No description provided for @providerScreenHarnessModelCount.
   ///
   /// In en, this message translates to:
-  /// **'{count} MODELS'**
+  /// **'{count} models'**
   String providerScreenHarnessModelCount(int count);
 
   /// No description provided for @providerScreenBrowseAllModels.
   ///
   /// In en, this message translates to:
-  /// **'BROWSE ALL {count} MODELS'**
+  /// **'browse all {count} models'**
   String providerScreenBrowseAllModels(int count);
 
   /// No description provided for @providerScreenNoApiKeys.
   ///
   /// In en, this message translates to:
-  /// **'NO API KEYS CONFIGURED'**
+  /// **'no API keys configured'**
   String get providerScreenNoApiKeys;
 
   /// No description provided for @providerScreenEmptyHint.
   ///
   /// In en, this message translates to:
-  /// **'NO HARNESS MODELS OR API KEYS YET'**
+  /// **'no harness models or API keys yet'**
   String get providerScreenEmptyHint;
 
   /// No description provided for @providerScreenAddKey.
   ///
   /// In en, this message translates to:
-  /// **'ADD KEY'**
+  /// **'add key'**
   String get providerScreenAddKey;
 
   /// No description provided for @providerScreenUpdateKey.
   ///
   /// In en, this message translates to:
-  /// **'UPDATE KEY'**
+  /// **'update key'**
   String get providerScreenUpdateKey;
 
   /// No description provided for @providerScreenAddKeyTitle.
   ///
   /// In en, this message translates to:
-  /// **'API KEY: {provider}'**
+  /// **'API key: {provider}'**
   String providerScreenAddKeyTitle(String provider);
 
   /// No description provided for @providerScreenAddKeyBody.
@@ -2065,19 +2245,19 @@ abstract class AppLocalizations {
   /// No description provided for @providerScreenSelectProvider.
   ///
   /// In en, this message translates to:
-  /// **'SELECT PROVIDER'**
+  /// **'select provider'**
   String get providerScreenSelectProvider;
 
   /// No description provided for @providerScreenNoProviders.
   ///
   /// In en, this message translates to:
-  /// **'NO PROVIDERS AVAILABLE'**
+  /// **'no providers available'**
   String get providerScreenNoProviders;
 
   /// No description provided for @providerScreenSearchLabel.
   ///
   /// In en, this message translates to:
-  /// **'SEARCH'**
+  /// **'search'**
   String get providerScreenSearchLabel;
 
   /// No description provided for @providerScreenSearchHint.
@@ -2089,13 +2269,13 @@ abstract class AppLocalizations {
   /// No description provided for @providerScreenSearchNoMatches.
   ///
   /// In en, this message translates to:
-  /// **'NO MATCHING PROVIDERS'**
+  /// **'no matching providers'**
   String get providerScreenSearchNoMatches;
 
   /// No description provided for @providerScreenDefaultBadge.
   ///
   /// In en, this message translates to:
-  /// **'[ DEFAULT ]'**
+  /// **'[ default ]'**
   String get providerScreenDefaultBadge;
 
   /// No description provided for @providerScreenErrorPrefix.
@@ -2104,52 +2284,88 @@ abstract class AppLocalizations {
   /// **'ERROR: {error}'**
   String providerScreenErrorPrefix(String error);
 
+  /// No description provided for @providerScreenApiKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get providerScreenApiKeyLabel;
+
+  /// No description provided for @providerScreenApiKeyLeaveBlankHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to keep the existing key'**
+  String get providerScreenApiKeyLeaveBlankHint;
+
+  /// No description provided for @providerScreenApiKeyNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'(not set)'**
+  String get providerScreenApiKeyNotSet;
+
+  /// No description provided for @providerScreenApiKeyStoredSecurely.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing key is stored securely; enter a new key to replace it.'**
+  String get providerScreenApiKeyStoredSecurely;
+
+  /// No description provided for @providerScreenProviderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'provider'**
+  String get providerScreenProviderLabel;
+
+  /// No description provided for @providerScreenDeleteKeyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'delete'**
+  String get providerScreenDeleteKeyAction;
+
   /// No description provided for @toolPermissionsTitle.
   ///
   /// In en, this message translates to:
-  /// **'GATEKEEPER CONFIGURATION'**
+  /// **'gatekeeper configuration'**
   String get toolPermissionsTitle;
 
   /// No description provided for @toolPermissionsFrameTitle.
   ///
   /// In en, this message translates to:
-  /// **'TOOL PERMISSIONS'**
+  /// **'tool permissions'**
   String get toolPermissionsFrameTitle;
 
   /// No description provided for @toolPermissionsLoading.
   ///
   /// In en, this message translates to:
-  /// **'LOADING PERMISSIONS'**
+  /// **'loading permissions'**
   String get toolPermissionsLoading;
 
   /// No description provided for @toolPermissionsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'NO PERMISSIONS DEFINED.'**
+  /// **'No permissions defined.'**
   String get toolPermissionsEmpty;
 
   /// No description provided for @toolPermissionsAdd.
   ///
   /// In en, this message translates to:
-  /// **'ADD PERMISSION'**
+  /// **'add permission'**
   String get toolPermissionsAdd;
 
   /// No description provided for @toolPermissionsScopeAgent.
   ///
   /// In en, this message translates to:
-  /// **'AGENT'**
+  /// **'agent'**
   String get toolPermissionsScopeAgent;
 
   /// No description provided for @toolPermissionsScopeGlobal.
   ///
   /// In en, this message translates to:
-  /// **'GLOBAL'**
+  /// **'global'**
   String get toolPermissionsScopeGlobal;
 
   /// No description provided for @toolPermissionsAddTitle.
   ///
   /// In en, this message translates to:
-  /// **'ADD TOOL PERMISSION'**
+  /// **'add tool permission'**
   String get toolPermissionsAddTitle;
 
   /// No description provided for @toolPermissionsToolLabel.
@@ -2167,193 +2383,193 @@ abstract class AppLocalizations {
   /// No description provided for @toolPermissionsActionLabel.
   ///
   /// In en, this message translates to:
-  /// **'ACTION:'**
+  /// **'action:'**
   String get toolPermissionsActionLabel;
 
   /// No description provided for @terminalTitle.
   ///
   /// In en, this message translates to:
-  /// **'TERMINAL MIRROR'**
+  /// **'terminal mirror'**
   String get terminalTitle;
 
   /// No description provided for @terminalTransfer.
   ///
   /// In en, this message translates to:
-  /// **'TRANSFER'**
+  /// **'transfer'**
   String get terminalTransfer;
 
   /// No description provided for @terminalReconnect.
   ///
   /// In en, this message translates to:
-  /// **'RECONNECT'**
+  /// **'reconnect'**
   String get terminalReconnect;
 
   /// No description provided for @terminalConnecting.
   ///
   /// In en, this message translates to:
-  /// **'ESTABLISHING SSH LINK'**
+  /// **'establishing SSH link'**
   String get terminalConnecting;
 
   /// No description provided for @terminalConnectionFailed.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTION FAILED'**
+  /// **'connection failed'**
   String get terminalConnectionFailed;
 
   /// No description provided for @terminalRetry.
   ///
   /// In en, this message translates to:
-  /// **'RETRY CONNECTION'**
+  /// **'retry connection'**
   String get terminalRetry;
 
   /// No description provided for @terminalSftpTitle.
   ///
   /// In en, this message translates to:
-  /// **'SFTP TRANSFER'**
+  /// **'SFTP transfer'**
   String get terminalSftpTitle;
 
   /// No description provided for @terminalDestinationPath.
   ///
   /// In en, this message translates to:
-  /// **'DESTINATION PATH'**
+  /// **'destination path'**
   String get terminalDestinationPath;
 
   /// No description provided for @terminalUpload.
   ///
   /// In en, this message translates to:
-  /// **'UPLOAD'**
+  /// **'upload'**
   String get terminalUpload;
 
   /// No description provided for @terminalConnectionStatus.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTION_STATUS'**
+  /// **'connection_status'**
   String get terminalConnectionStatus;
 
   /// No description provided for @terminalSshLink.
   ///
   /// In en, this message translates to:
-  /// **'SSH LINK: {host}:{port}'**
+  /// **'SSH link: {host}:{port}'**
   String terminalSshLink(String host, String port);
 
   /// No description provided for @terminalOnline.
   ///
   /// In en, this message translates to:
-  /// **'ONLINE'**
+  /// **'online'**
   String get terminalOnline;
 
   /// No description provided for @terminalOffline.
   ///
   /// In en, this message translates to:
-  /// **'OFFLINE'**
+  /// **'offline'**
   String get terminalOffline;
 
   /// No description provided for @monitorTitle.
   ///
   /// In en, this message translates to:
-  /// **'MONITOR'**
+  /// **'monitor'**
   String get monitorTitle;
 
   /// No description provided for @monitorTelemetryUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'TELEMETRY UNAVAILABLE'**
+  /// **'telemetry unavailable'**
   String get monitorTelemetryUnavailable;
 
   /// No description provided for @fileTitle.
   ///
   /// In en, this message translates to:
-  /// **'SOURCE OUTPUT MANIFEST'**
+  /// **'source output manifest'**
   String get fileTitle;
 
   /// No description provided for @fileDashboardAction.
   ///
   /// In en, this message translates to:
-  /// **'DASHBOARD'**
+  /// **'dashboard'**
   String get fileDashboardAction;
 
   /// No description provided for @fileClearAction.
   ///
   /// In en, this message translates to:
-  /// **'CLEAR'**
+  /// **'clear'**
   String get fileClearAction;
 
   /// No description provided for @fileNoFileSelected.
   ///
   /// In en, this message translates to:
-  /// **'NO FILE SELECTED.'**
+  /// **'No file selected.'**
   String get fileNoFileSelected;
 
   /// No description provided for @fileSelectFromChat.
   ///
   /// In en, this message translates to:
-  /// **'>> SELECT FROM CHAT TO VIEW'**
+  /// **'>> select from chat to view'**
   String get fileSelectFromChat;
 
   /// No description provided for @fileFetching.
   ///
   /// In en, this message translates to:
-  /// **'FETCHING DATA...'**
+  /// **'Fetching data...'**
   String get fileFetching;
 
   /// No description provided for @fileEmpty.
   ///
   /// In en, this message translates to:
-  /// **'EMPTY FILE'**
+  /// **'empty file'**
   String get fileEmpty;
 
   /// No description provided for @systemChecksTitle.
   ///
   /// In en, this message translates to:
-  /// **'SYSTEM CHECKS'**
+  /// **'system checks'**
   String get systemChecksTitle;
 
   /// No description provided for @systemChecksDiagnostics.
   ///
   /// In en, this message translates to:
-  /// **'SYSTEM DIAGNOSTICS'**
+  /// **'system diagnostics'**
   String get systemChecksDiagnostics;
 
   /// No description provided for @systemChecksEmpty.
   ///
   /// In en, this message translates to:
-  /// **'NO DIAGNOSTICS AVAILABLE'**
+  /// **'no diagnostics available'**
   String get systemChecksEmpty;
 
   /// No description provided for @observabilityRegistry.
   ///
   /// In en, this message translates to:
-  /// **'REGISTRY'**
+  /// **'registry'**
   String get observabilityRegistry;
 
   /// No description provided for @observabilityLogTerminal.
   ///
   /// In en, this message translates to:
-  /// **'SYSTEM LOG TERMINAL'**
+  /// **'system log terminal'**
   String get observabilityLogTerminal;
 
   /// No description provided for @observabilitySelectContainer.
   ///
   /// In en, this message translates to:
-  /// **'>> SELECT CONTAINER FOR LOG STREAM'**
+  /// **'>> select container for log stream'**
   String get observabilitySelectContainer;
 
   /// No description provided for @proTitle.
   ///
   /// In en, this message translates to:
-  /// **'POCKETCODER PRO'**
+  /// **'PocketCoder Pro'**
   String get proTitle;
 
   /// No description provided for @proPlanTitle.
   ///
   /// In en, this message translates to:
-  /// **'UNLOCK ALL SYSTEMS'**
+  /// **'unlock all systems'**
   String get proPlanTitle;
 
   /// No description provided for @proCheckingStatus.
   ///
   /// In en, this message translates to:
-  /// **'CHECKING PRO STATUS...'**
+  /// **'Checking pro status...'**
   String get proCheckingStatus;
 
   /// No description provided for @proUnlockCommand.
@@ -2365,7 +2581,7 @@ abstract class AppLocalizations {
   /// No description provided for @proSummary.
   ///
   /// In en, this message translates to:
-  /// **'ONE SUBSCRIPTION. EVERY POCKETCODER PRO CAPABILITY.'**
+  /// **'One subscription. Every PocketCoder Pro capability.'**
   String get proSummary;
 
   /// No description provided for @proFeatureReady.
@@ -2377,37 +2593,37 @@ abstract class AppLocalizations {
   /// No description provided for @proFeatureDeploy.
   ///
   /// In en, this message translates to:
-  /// **'PROVISION AND DEPLOY POCKETCODER SERVERS'**
+  /// **'provision and deploy PocketCoder servers'**
   String get proFeatureDeploy;
 
   /// No description provided for @proFeaturePush.
   ///
   /// In en, this message translates to:
-  /// **'RECEIVE HOSTED AGENT NOTIFICATIONS'**
+  /// **'receive hosted agent notifications'**
   String get proFeaturePush;
 
   /// No description provided for @proFeatureConsole.
   ///
   /// In en, this message translates to:
-  /// **'USE PRO CONSOLE CONTROLS AS THEY SHIP'**
+  /// **'use pro console controls as they ship'**
   String get proFeatureConsole;
 
   /// No description provided for @proTrialDuration.
   ///
   /// In en, this message translates to:
-  /// **'{days} DAYS FREE'**
+  /// **'{days} days free'**
   String proTrialDuration(int days);
 
   /// No description provided for @proTrialNoPaymentInfo.
   ///
   /// In en, this message translates to:
-  /// **'STARTS A FREE WEEK. NO PAYMENT INFO IS COLLECTED NOW.'**
+  /// **'Starts a free week. No payment info is collected now.'**
   String get proTrialNoPaymentInfo;
 
   /// No description provided for @proTrialLapseExplainer.
   ///
   /// In en, this message translates to:
-  /// **'IF YOU DO NOT KEEP PRO, ONLY HOSTED PUSH NOTIFICATIONS STOP. YOUR SERVER KEEPS RUNNING.'**
+  /// **'If you do not keep pro, only hosted push notifications stop. Your server keeps running.'**
   String get proTrialLapseExplainer;
 
   /// No description provided for @proPrice.
@@ -2419,205 +2635,211 @@ abstract class AppLocalizations {
   /// No description provided for @proPriceAfterTrial.
   ///
   /// In en, this message translates to:
-  /// **'THEN {price}'**
+  /// **'then {price}'**
   String proPriceAfterTrial(String price);
 
   /// No description provided for @proPricePerWeek.
   ///
   /// In en, this message translates to:
-  /// **'{price} / WEEK'**
+  /// **'{price} / week'**
   String proPricePerWeek(String price);
 
   /// No description provided for @proPricePerMonth.
   ///
   /// In en, this message translates to:
-  /// **'{price} / MONTH'**
+  /// **'{price} / month'**
   String proPricePerMonth(String price);
 
   /// No description provided for @proPricePerYear.
   ///
   /// In en, this message translates to:
-  /// **'{price} / YEAR'**
+  /// **'{price} / year'**
   String proPricePerYear(String price);
 
   /// No description provided for @proStartTrial.
   ///
   /// In en, this message translates to:
-  /// **'START {days}-DAY FREE TRIAL'**
+  /// **'start {days}-day free trial'**
   String proStartTrial(int days);
 
   /// No description provided for @proSubscribe.
   ///
   /// In en, this message translates to:
-  /// **'UNLOCK POCKETCODER PRO'**
+  /// **'unlock PocketCoder Pro'**
   String get proSubscribe;
+
+  /// No description provided for @proContinueSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'continue setup'**
+  String get proContinueSetup;
 
   /// No description provided for @proRestore.
   ///
   /// In en, this message translates to:
-  /// **'RESTORE PURCHASES'**
+  /// **'restore purchases'**
   String get proRestore;
 
   /// No description provided for @proManageSubscription.
   ///
   /// In en, this message translates to:
-  /// **'MANAGE SUBSCRIPTION'**
+  /// **'manage subscription'**
   String get proManageSubscription;
 
   /// No description provided for @proTerms.
   ///
   /// In en, this message translates to:
-  /// **'SUBSCRIPTION RENEWS AT {price} UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.'**
+  /// **'Subscription renews at {price} Until cancelled. Manage or cancel in your app store account.'**
   String proTerms(String price);
 
   /// No description provided for @proTrialTerms.
   ///
   /// In en, this message translates to:
-  /// **'FREE FOR {days} DAYS, THEN {price} UNTIL CANCELLED. MANAGE OR CANCEL IN YOUR APP STORE ACCOUNT.'**
+  /// **'Free for {days} Days, then {price} Until cancelled. Manage or cancel in your app store account.'**
   String proTrialTerms(int days, String price);
 
   /// No description provided for @proTermsOfServiceLink.
   ///
   /// In en, this message translates to:
-  /// **'TERMS OF SERVICE'**
+  /// **'terms of service'**
   String get proTermsOfServiceLink;
 
   /// No description provided for @proPrivacyPolicyLink.
   ///
   /// In en, this message translates to:
-  /// **'PRIVACY POLICY'**
+  /// **'privacy policy'**
   String get proPrivacyPolicyLink;
 
   /// No description provided for @proBenefitServerSetup.
   ///
   /// In en, this message translates to:
-  /// **'ONE-TAP SERVER SETUP -- NO MANUAL VPS CONFIGURATION'**
+  /// **'one-tap server setup -- no manual VPS configuration'**
   String get proBenefitServerSetup;
 
   /// No description provided for @proBenefitPushNotifications.
   ///
   /// In en, this message translates to:
-  /// **'PUSH NOTIFICATIONS FOR AGENT ACTIVITY -- APPROVALS, TASK COMPLETION'**
+  /// **'push notifications for agent activity -- approvals, task completion'**
   String get proBenefitPushNotifications;
 
   /// No description provided for @proBenefitLiveMonitoring.
   ///
   /// In en, this message translates to:
-  /// **'LIVE AGENT MONITORING'**
+  /// **'live agent monitoring'**
   String get proBenefitLiveMonitoring;
 
   /// No description provided for @proActive.
   ///
   /// In en, this message translates to:
-  /// **'> ENTITLEMENT: ACTIVE'**
+  /// **'> entitlement: active'**
   String get proActive;
 
   /// No description provided for @proActiveBody.
   ///
   /// In en, this message translates to:
-  /// **'POCKETCODER PRO IS ACTIVE. DEPLOYMENT AND HOSTED NOTIFICATIONS ARE UNLOCKED.'**
+  /// **'PocketCoder Pro is active. Deployment and hosted notifications are unlocked.'**
   String get proActiveBody;
 
   /// No description provided for @proUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'> OFFERING: UNAVAILABLE'**
+  /// **'> offering: unavailable'**
   String get proUnavailable;
 
   /// No description provided for @proUnavailableBody.
   ///
   /// In en, this message translates to:
-  /// **'THE APP STORE COULD NOT RETURN THE POCKETCODER PRO SUBSCRIPTION. CHECK YOUR CONNECTION OR RESTORE AN EXISTING PURCHASE.'**
+  /// **'The app store could not return the PocketCoder Pro subscription. Check your connection or restore an existing purchase.'**
   String get proUnavailableBody;
 
   /// No description provided for @proSelfHostedPushTitle.
   ///
   /// In en, this message translates to:
-  /// **'SELF-HOSTED NOTIFICATIONS'**
+  /// **'self-hosted notifications'**
   String get proSelfHostedPushTitle;
 
   /// No description provided for @proSelfHostedPushBody.
   ///
   /// In en, this message translates to:
-  /// **'YOU CAN CONNECT YOUR OWN NTFY OR UNIFIEDPUSH DISTRIBUTOR WITHOUT POCKETCODER PRO.'**
+  /// **'You can connect your own Ntfy or UnifiedPush distributor without PocketCoder Pro.'**
   String get proSelfHostedPushBody;
 
   /// No description provided for @proConfigureSelfHostedPush.
   ///
   /// In en, this message translates to:
-  /// **'CONFIGURE SELF-HOSTED PUSH'**
+  /// **'configure self-hosted push'**
   String get proConfigureSelfHostedPush;
 
   /// No description provided for @proSettingsLabel.
   ///
   /// In en, this message translates to:
-  /// **'POCKETCODER PRO'**
+  /// **'PocketCoder Pro'**
   String get proSettingsLabel;
 
   /// No description provided for @proSettingsStatus.
   ///
   /// In en, this message translates to:
-  /// **'[STATUS]'**
+  /// **'[status]'**
   String get proSettingsStatus;
 
   /// No description provided for @chooseProviderTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE PROVIDER'**
+  /// **'choose provider'**
   String get chooseProviderTitle;
 
   /// No description provided for @deploySelectProvider.
   ///
   /// In en, this message translates to:
-  /// **'SELECT PROVIDER'**
+  /// **'select provider'**
   String get deploySelectProvider;
 
   /// No description provided for @deployChooseProvider.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE WHERE TO DEPLOY YOUR INSTANCE'**
+  /// **'choose where to deploy your instance'**
   String get deployChooseProvider;
 
   /// No description provided for @chooseProviderProBadge.
   ///
   /// In en, this message translates to:
-  /// **'PRO'**
+  /// **'pro'**
   String get chooseProviderProBadge;
 
   /// No description provided for @chooseProviderComingSoon.
   ///
   /// In en, this message translates to:
-  /// **'COMING SOON'**
+  /// **'coming soon'**
   String get chooseProviderComingSoon;
 
   /// No description provided for @pocketCoderProgressProvisionServer.
   ///
   /// In en, this message translates to:
-  /// **'PROVISION SERVER'**
+  /// **'provision server'**
   String get pocketCoderProgressProvisionServer;
 
   /// No description provided for @pocketCoderProgressDeployPocketCoder.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOY POCKETCODER'**
+  /// **'deploy PocketCoder'**
   String get pocketCoderProgressDeployPocketCoder;
 
   /// No description provided for @pocketCoderProgressWaiting.
   ///
   /// In en, this message translates to:
-  /// **'WAITING'**
+  /// **'waiting'**
   String get pocketCoderProgressWaiting;
 
   /// No description provided for @pocketCoderProgressActive.
   ///
   /// In en, this message translates to:
-  /// **'ACTIVE'**
+  /// **'active'**
   String get pocketCoderProgressActive;
 
   /// No description provided for @pocketCoderProgressComplete.
   ///
   /// In en, this message translates to:
-  /// **'DONE'**
+  /// **'done'**
   String get pocketCoderProgressComplete;
 
   /// No description provided for @pocketCoderProgressFailed.
@@ -2629,7 +2851,7 @@ abstract class AppLocalizations {
   /// No description provided for @pocketCoderProgressInitializing.
   ///
   /// In en, this message translates to:
-  /// **'INITIALIZING'**
+  /// **'initializing'**
   String get pocketCoderProgressInitializing;
 
   /// No description provided for @deploymentStepCreateInstance.
@@ -2767,55 +2989,55 @@ abstract class AppLocalizations {
   /// No description provided for @initializationScreenTitle.
   ///
   /// In en, this message translates to:
-  /// **'INITIALIZING SERVER'**
+  /// **'initializing server'**
   String get initializationScreenTitle;
 
   /// No description provided for @initializationActionAbort.
   ///
   /// In en, this message translates to:
-  /// **'ABORT'**
+  /// **'abort'**
   String get initializationActionAbort;
 
   /// No description provided for @initializationActionRetry.
   ///
   /// In en, this message translates to:
-  /// **'RETRY'**
+  /// **'retry'**
   String get initializationActionRetry;
 
   /// No description provided for @initializationUnknown.
   ///
   /// In en, this message translates to:
-  /// **'UNKNOWN'**
+  /// **'unknown'**
   String get initializationUnknown;
 
   /// No description provided for @initializationTechnicalDetailsToggle.
   ///
   /// In en, this message translates to:
-  /// **'TECHNICAL DETAILS'**
+  /// **'technical details'**
   String get initializationTechnicalDetailsToggle;
 
   /// No description provided for @initializationNetworkIp.
   ///
   /// In en, this message translates to:
-  /// **'NETWORK IP'**
+  /// **'network IP'**
   String get initializationNetworkIp;
 
   /// No description provided for @initializationGeoGrid.
   ///
   /// In en, this message translates to:
-  /// **'GEO GRID'**
+  /// **'geo grid'**
   String get initializationGeoGrid;
 
   /// No description provided for @initializationFaultDetected.
   ///
   /// In en, this message translates to:
-  /// **'FAULT DETECTED: {error}'**
+  /// **'fault detected: {error}'**
   String initializationFaultDetected(Object error);
 
   /// No description provided for @initializationFaultGeneric.
   ///
   /// In en, this message translates to:
-  /// **'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.'**
+  /// **'Setup could not continue. Return and try again.'**
   String get initializationFaultGeneric;
 
   /// No description provided for @initializationFaultProvisionInterruptedNoResource.
@@ -2863,379 +3085,403 @@ abstract class AppLocalizations {
   /// No description provided for @initializationFailed.
   ///
   /// In en, this message translates to:
-  /// **'SETUP COULD NOT CONTINUE. RETURN AND TRY AGAIN.'**
+  /// **'Setup could not continue. Return and try again.'**
   String get initializationFailed;
 
   /// No description provided for @initializationReady.
   ///
   /// In en, this message translates to:
-  /// **'SERVER READY AT {ipAddress}.'**
+  /// **'Server ready at {ipAddress}.'**
   String initializationReady(Object ipAddress);
 
   /// No description provided for @initializationInProgress.
   ///
   /// In en, this message translates to:
-  /// **'SERVER SETUP STARTED.'**
+  /// **'Server setup started.'**
   String get initializationInProgress;
 
   /// No description provided for @deploymentStatusValidating.
   ///
   /// In en, this message translates to:
-  /// **'VALIDATING CONFIGURATION'**
+  /// **'validating configuration'**
   String get deploymentStatusValidating;
 
   /// No description provided for @deploymentStatusConstructing.
   ///
   /// In en, this message translates to:
-  /// **'CONSTRUCTING INSTANCE'**
+  /// **'constructing instance'**
   String get deploymentStatusConstructing;
 
   /// No description provided for @deploymentStatusPreparingOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'PREPARING OS'**
+  /// **'preparing OS'**
   String get deploymentStatusPreparingOperatingSystem;
 
   /// No description provided for @deploymentStatusSecuring.
   ///
   /// In en, this message translates to:
-  /// **'SECURING CONNECTION'**
+  /// **'securing connection'**
   String get deploymentStatusSecuring;
 
   /// No description provided for @deploymentStatusTlsReady.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTION SECURED'**
+  /// **'connection secured'**
   String get deploymentStatusTlsReady;
 
   /// No description provided for @deploymentStatusTlsZeroSsl.
   ///
   /// In en, this message translates to:
-  /// **'USING BACKUP CERTIFICATE AUTHORITY'**
+  /// **'using backup certificate authority'**
   String get deploymentStatusTlsZeroSsl;
 
   /// No description provided for @deploymentStatusTlsRateLimited.
   ///
   /// In en, this message translates to:
-  /// **'CERTIFICATE AUTHORITY RATE LIMITED'**
+  /// **'certificate authority rate limited'**
   String get deploymentStatusTlsRateLimited;
 
   /// No description provided for @deploymentStatusTlsFailed.
   ///
   /// In en, this message translates to:
-  /// **'CERTIFICATE ISSUANCE FAILED'**
+  /// **'certificate issuance failed'**
   String get deploymentStatusTlsFailed;
 
   /// No description provided for @deploymentStatusConfiguringOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'CONFIGURING OS'**
+  /// **'configuring OS'**
   String get deploymentStatusConfiguringOperatingSystem;
 
   /// No description provided for @deploymentStatusFetching.
   ///
   /// In en, this message translates to:
-  /// **'FETCHING RELEASE'**
+  /// **'fetching release'**
   String get deploymentStatusFetching;
 
   /// No description provided for @deploymentStatusLoadingImages.
   ///
   /// In en, this message translates to:
-  /// **'LOADING IMAGES'**
+  /// **'loading images'**
   String get deploymentStatusLoadingImages;
 
   /// No description provided for @deploymentStatusStarting.
   ///
   /// In en, this message translates to:
-  /// **'STARTING SERVICES'**
+  /// **'starting services'**
   String get deploymentStatusStarting;
 
   /// No description provided for @deploymentStatusFinishing.
   ///
   /// In en, this message translates to:
-  /// **'FINISHING UP'**
+  /// **'finishing up'**
   String get deploymentStatusFinishing;
 
   /// No description provided for @deploymentStatusReady.
   ///
   /// In en, this message translates to:
-  /// **'HANDSHAKE SUCCESSFUL'**
+  /// **'handshake successful'**
   String get deploymentStatusReady;
 
   /// No description provided for @deploymentStatusFailed.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOYMENT ABORTED'**
+  /// **'deployment aborted'**
   String get deploymentStatusFailed;
 
   /// No description provided for @initializationStatusInitializing.
   ///
   /// In en, this message translates to:
-  /// **'INITIALIZING STACK'**
+  /// **'initializing stack'**
   String get initializationStatusInitializing;
 
   /// No description provided for @deploymentDescriptionValidating.
   ///
   /// In en, this message translates to:
-  /// **'CHECKING THE PROVISIONING CONFIGURATION.'**
+  /// **'Checking the provisioning configuration.'**
   String get deploymentDescriptionValidating;
 
   /// No description provided for @deploymentDescriptionConstructing.
   ///
   /// In en, this message translates to:
-  /// **'ALLOCATING HARDWARE RESOURCES ON CLOUD GRID.'**
+  /// **'Allocating hardware resources on cloud grid.'**
   String get deploymentDescriptionConstructing;
 
   /// No description provided for @deploymentDescriptionPreparingOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'PREPARING THE OPERATING SYSTEM.'**
+  /// **'Preparing the operating system.'**
   String get deploymentDescriptionPreparingOperatingSystem;
 
   /// No description provided for @deploymentDescriptionSecuring.
   ///
   /// In en, this message translates to:
-  /// **'WAITING FOR THE NATIVE REVERSE PROXY.'**
+  /// **'Waiting for the native reverse proxy.'**
   String get deploymentDescriptionSecuring;
 
   /// No description provided for @deploymentDescriptionTlsReady.
   ///
   /// In en, this message translates to:
-  /// **'A BROWSER-TRUSTED CERTIFICATE IS ACTIVE.'**
+  /// **'A browser-trusted certificate is active.'**
   String get deploymentDescriptionTlsReady;
 
   /// No description provided for @deploymentDescriptionTlsZeroSsl.
   ///
   /// In en, this message translates to:
-  /// **'ISSUED VIA THE BACKUP AUTHORITY AFTER THE PRIMARY WAS UNAVAILABLE.'**
+  /// **'Issued via the backup authority after the primary was unavailable.'**
   String get deploymentDescriptionTlsZeroSsl;
 
   /// No description provided for @deploymentDescriptionTlsRateLimited.
   ///
   /// In en, this message translates to:
-  /// **'RETRYING AUTOMATICALLY WITH A BACKUP CERTIFICATE AUTHORITY.'**
+  /// **'Retrying automatically with a backup certificate authority.'**
   String get deploymentDescriptionTlsRateLimited;
 
   /// No description provided for @deploymentDescriptionTlsFailed.
   ///
   /// In en, this message translates to:
-  /// **'THE REVERSE PROXY COULD NOT OBTAIN A CERTIFICATE.'**
+  /// **'The reverse proxy could not obtain a certificate.'**
   String get deploymentDescriptionTlsFailed;
 
   /// No description provided for @deploymentDescriptionConfiguringOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'PREPARING NATIVE SERVICES AND DEPENDENCIES.'**
+  /// **'Preparing native services and dependencies.'**
   String get deploymentDescriptionConfiguringOperatingSystem;
 
   /// No description provided for @deploymentDescriptionFetching.
   ///
   /// In en, this message translates to:
-  /// **'FETCHING THE IMMUTABLE RELEASE.'**
+  /// **'Fetching the immutable release.'**
   String get deploymentDescriptionFetching;
 
   /// No description provided for @deploymentDescriptionLoadingImages.
   ///
   /// In en, this message translates to:
-  /// **'LOADING THE VERIFIED IMAGE BUNDLE.'**
+  /// **'Loading the verified image bundle.'**
   String get deploymentDescriptionLoadingImages;
 
   /// No description provided for @deploymentDescriptionStarting.
   ///
   /// In en, this message translates to:
-  /// **'STARTING APPLICATION SERVICES.'**
+  /// **'Starting application services.'**
   String get deploymentDescriptionStarting;
 
   /// No description provided for @deploymentDescriptionFinishing.
   ///
   /// In en, this message translates to:
-  /// **'FINISHING DEPLOYMENT.'**
+  /// **'Finishing deployment.'**
   String get deploymentDescriptionFinishing;
 
   /// No description provided for @deploymentDescriptionReady.
   ///
   /// In en, this message translates to:
-  /// **'THE SERVER IS FULLY OPERATIONAL.'**
+  /// **'The server is fully operational.'**
   String get deploymentDescriptionReady;
 
   /// No description provided for @deploymentDescriptionFailed.
   ///
   /// In en, this message translates to:
-  /// **'SETUP STOPPED BEFORE COMPLETION. NO LATER STEP WILL CONTINUE.'**
+  /// **'Setup stopped before completion. No later step will continue.'**
   String get deploymentDescriptionFailed;
 
   /// No description provided for @initializationDescriptionInitializing.
   ///
   /// In en, this message translates to:
-  /// **'PREPARING INITIALIZATION MANIFEST.'**
+  /// **'Preparing initialization manifest.'**
   String get initializationDescriptionInitializing;
 
   /// No description provided for @initializationStatusPrefix.
   ///
   /// In en, this message translates to:
-  /// **'STATUS: {status}'**
+  /// **'status: {status}'**
   String initializationStatusPrefix(Object status);
 
   /// No description provided for @initializationSecure.
   ///
   /// In en, this message translates to:
-  /// **'[SECURE]'**
+  /// **'[secure]'**
   String get initializationSecure;
 
   /// No description provided for @initializationConnectionParameters.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTION PARAMETERS'**
+  /// **'connection parameters'**
   String get initializationConnectionParameters;
 
   /// No description provided for @initializationMetadataRegistry.
   ///
   /// In en, this message translates to:
-  /// **'METADATA REGISTRY'**
+  /// **'metadata registry'**
   String get initializationMetadataRegistry;
 
   /// No description provided for @initializationActionLogin.
   ///
   /// In en, this message translates to:
-  /// **'LOGIN'**
+  /// **'login'**
   String get initializationActionLogin;
 
   /// No description provided for @deploymentActionRefresh.
   ///
   /// In en, this message translates to:
-  /// **'REFRESH'**
+  /// **'refresh'**
   String get deploymentActionRefresh;
 
   /// No description provided for @deploymentActionUpdate.
   ///
   /// In en, this message translates to:
-  /// **'UPDATE'**
+  /// **'update'**
   String get deploymentActionUpdate;
 
   /// No description provided for @deploymentActionDismiss.
   ///
   /// In en, this message translates to:
-  /// **'DISMISS'**
+  /// **'dismiss'**
   String get deploymentActionDismiss;
 
   /// No description provided for @initializationInstanceManifest.
   ///
   /// In en, this message translates to:
-  /// **'INSTANCE MANIFEST'**
+  /// **'instance manifest'**
   String get initializationInstanceManifest;
 
   /// No description provided for @initializationIpAddress.
   ///
   /// In en, this message translates to:
-  /// **'IP ADDRESS'**
+  /// **'IP address'**
   String get initializationIpAddress;
 
   /// No description provided for @initializationHttpsEndpoint.
   ///
   /// In en, this message translates to:
-  /// **'HTTPS ENDPOINT'**
+  /// **'HTTPS endpoint'**
   String get initializationHttpsEndpoint;
 
   /// No description provided for @initializationAdminIdentity.
   ///
   /// In en, this message translates to:
-  /// **'ADMIN IDENTITY'**
+  /// **'admin identity'**
   String get initializationAdminIdentity;
 
   /// No description provided for @initializationAdminPassword.
   ///
   /// In en, this message translates to:
-  /// **'ADMIN PASSWORD'**
+  /// **'admin password'**
   String get initializationAdminPassword;
+
+  /// No description provided for @initializationNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'n/a'**
+  String get initializationNotAvailable;
+
+  /// No description provided for @initializationCopyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'copy'**
+  String get initializationCopyAction;
+
+  /// No description provided for @initializationHideAction.
+  ///
+  /// In en, this message translates to:
+  /// **'hide'**
+  String get initializationHideAction;
+
+  /// No description provided for @initializationShowAction.
+  ///
+  /// In en, this message translates to:
+  /// **'show'**
+  String get initializationShowAction;
 
   /// No description provided for @deploymentProvisioned.
   ///
   /// In en, this message translates to:
-  /// **'PROVISIONED'**
+  /// **'provisioned'**
   String get deploymentProvisioned;
 
   /// No description provided for @initializationCloudRegion.
   ///
   /// In en, this message translates to:
-  /// **'CLOUD REGION'**
+  /// **'cloud region'**
   String get initializationCloudRegion;
 
   /// No description provided for @initializationHardwarePlan.
   ///
   /// In en, this message translates to:
-  /// **'HARDWARE PLAN'**
+  /// **'hardware plan'**
   String get initializationHardwarePlan;
 
   /// No description provided for @initializationSecurityNotice.
   ///
   /// In en, this message translates to:
-  /// **'SECURITY NOTICE: CREDENTIALS ARE STORED IN LOCAL SECURE ENCLAVE. PASSPHRASE RETAINS ENCRYPTION AT REST.'**
+  /// **'Security notice: credentials are stored in local secure enclave. Passphrase retains encryption at rest.'**
   String get initializationSecurityNotice;
 
   /// No description provided for @initializationCopiedToBuffer.
   ///
   /// In en, this message translates to:
-  /// **'{label} COPIED TO BUFFER'**
+  /// **'{label} copied to buffer'**
   String initializationCopiedToBuffer(Object label);
 
   /// No description provided for @initializationCopyLabel.
   ///
   /// In en, this message translates to:
-  /// **'COPY {label}'**
+  /// **'copy {label}'**
   String initializationCopyLabel(Object label);
 
   /// No description provided for @deploymentManifestConfiguration.
   ///
   /// In en, this message translates to:
-  /// **'MANIFEST CONFIGURATION'**
+  /// **'manifest configuration'**
   String get deploymentManifestConfiguration;
 
   /// No description provided for @deploymentActionBack.
   ///
   /// In en, this message translates to:
-  /// **'BACK'**
+  /// **'back'**
   String get deploymentActionBack;
 
   /// No description provided for @deploymentActionDeployInstance.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOY INSTANCE'**
+  /// **'deploy instance'**
   String get deploymentActionDeployInstance;
 
   /// No description provided for @deploymentActionInitialize.
   ///
   /// In en, this message translates to:
-  /// **'INITIALIZE'**
+  /// **'initialize'**
   String get deploymentActionInitialize;
 
   /// No description provided for @deploymentSystemParameters.
   ///
   /// In en, this message translates to:
-  /// **'SYSTEM PARAMETERS'**
+  /// **'system parameters'**
   String get deploymentSystemParameters;
 
   /// No description provided for @deploymentHardwareGeography.
   ///
   /// In en, this message translates to:
-  /// **'HARDWARE & GEOGRAPHY'**
+  /// **'hardware & geography'**
   String get deploymentHardwareGeography;
 
   /// No description provided for @deploymentInitializingHardware.
   ///
   /// In en, this message translates to:
-  /// **'INITIALIZING HW REGISTRY...'**
+  /// **'Initializing HW registry...'**
   String get deploymentInitializingHardware;
 
   /// No description provided for @deploymentScanningRegions.
   ///
   /// In en, this message translates to:
-  /// **'SCANNING GLOBAL REGIONS...'**
+  /// **'Scanning global regions...'**
   String get deploymentScanningRegions;
 
   /// No description provided for @deploymentCodingHarnesses.
   ///
   /// In en, this message translates to:
-  /// **'CODING HARNESSES'**
+  /// **'coding harnesses'**
   String get deploymentCodingHarnesses;
 
   /// No description provided for @deploymentHarnessSelectionDescription.
@@ -3247,37 +3493,37 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentOperatingSystem.
   ///
   /// In en, this message translates to:
-  /// **'OPERATING SYSTEM'**
+  /// **'operating system'**
   String get deploymentOperatingSystem;
 
   /// No description provided for @deploymentInstancePlan.
   ///
   /// In en, this message translates to:
-  /// **'INSTANCE PLAN'**
+  /// **'instance plan'**
   String get deploymentInstancePlan;
 
   /// No description provided for @deploymentMonthlyPrice.
   ///
   /// In en, this message translates to:
-  /// **'{price}/MO'**
+  /// **'{price}/mo'**
   String deploymentMonthlyPrice(String price);
 
   /// No description provided for @deploymentRegion.
   ///
   /// In en, this message translates to:
-  /// **'DEPLOYMENT REGION'**
+  /// **'deployment region'**
   String get deploymentRegion;
 
   /// No description provided for @deploymentBackend.
   ///
   /// In en, this message translates to:
-  /// **'BACKEND'**
+  /// **'backend'**
   String get deploymentBackend;
 
   /// No description provided for @deploymentDistribution.
   ///
   /// In en, this message translates to:
-  /// **'DISTRIBUTION'**
+  /// **'distribution'**
   String get deploymentDistribution;
 
   /// No description provided for @deploymentNixos.
@@ -3307,37 +3553,37 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentSetupTypeTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE YOUR SETUP'**
+  /// **'choose your setup'**
   String get deploymentSetupTypeTitle;
 
   /// No description provided for @deploymentServerSizeTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE YOUR SERVER SIZE'**
+  /// **'choose your server size'**
   String get deploymentServerSizeTitle;
 
   /// No description provided for @deploymentServerRegionTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE YOUR SERVER REGION'**
+  /// **'choose your server region'**
   String get deploymentServerRegionTitle;
 
   /// No description provided for @deploymentCodingAgentsTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE CODING AGENTS'**
+  /// **'choose coding agents'**
   String get deploymentCodingAgentsTitle;
 
   /// No description provided for @deploymentLinuxSystemTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE LINUX SYSTEM'**
+  /// **'Linux system'**
   String get deploymentLinuxSystemTitle;
 
   /// No description provided for @deploymentReviewTitle.
   ///
   /// In en, this message translates to:
-  /// **'REVIEW YOUR SERVER'**
+  /// **'review your server'**
   String get deploymentReviewTitle;
 
   /// No description provided for @deploymentWorkloadPoco.
@@ -3349,25 +3595,25 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentWorkloadCloudReply.
   ///
   /// In en, this message translates to:
-  /// **'Cloud models run inference through your online AI account. Your server mainly needs room for PocketCoder, your agents, and your projects.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.'**
+  /// **'Cloud models run inference through your online AI account. Your server mainly needs room for PocketCoder, your agents, and your projects.\n\nI\'ll show the minimum server size I recommend. You can choose a larger one.'**
   String get deploymentWorkloadCloudReply;
 
   /// No description provided for @deploymentWorkloadLocalReply.
   ///
   /// In en, this message translates to:
-  /// **'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI’ll show the minimum server size I recommend. You can choose a larger one.'**
+  /// **'A local model runs on your own server through Ollama. It needs more computing power, and is usually faster with a GPU.\n\nI\'ll show the minimum server size I recommend. You can choose a larger one.'**
   String get deploymentWorkloadLocalReply;
 
   /// No description provided for @deploymentUseCloudModels.
   ///
   /// In en, this message translates to:
-  /// **'USE CLOUD MODELS'**
+  /// **'use cloud models'**
   String get deploymentUseCloudModels;
 
   /// No description provided for @deploymentRunLocalModel.
   ///
   /// In en, this message translates to:
-  /// **'RUN A LOCAL MODEL'**
+  /// **'run a local model'**
   String get deploymentRunLocalModel;
 
   /// No description provided for @deploymentPlanPoco.
@@ -3385,13 +3631,13 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentHarnessPoco.
   ///
   /// In en, this message translates to:
-  /// **'Now choose which coding agents to have ready on your server.\n\nThis installs their software. You’ll connect any required accounts after your server is ready.'**
+  /// **'Now choose which coding agents to have ready on your server.\n\nThis installs their software. You\'ll connect any required accounts after your server is ready.'**
   String get deploymentHarnessPoco;
 
   /// No description provided for @deploymentLinuxPoco.
   ///
   /// In en, this message translates to:
-  /// **'Now choose the Linux system that will start your server.\n\nLinux is the operating system underneath PocketCoder.'**
+  /// **'PocketCoder deploys on NixOS -- chosen for reproducible, deterministic builds.'**
   String get deploymentLinuxPoco;
 
   /// No description provided for @deploymentReviewPoco.
@@ -3403,19 +3649,19 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentNoSuitablePlans.
   ///
   /// In en, this message translates to:
-  /// **'NO SUITABLE SERVER SIZES ARE AVAILABLE FOR THIS SETUP.'**
+  /// **'No suitable server sizes are available for this setup.'**
   String get deploymentNoSuitablePlans;
 
   /// No description provided for @deploymentMinimum.
   ///
   /// In en, this message translates to:
-  /// **'MINIMUM'**
+  /// **'minimum'**
   String get deploymentMinimum;
 
   /// No description provided for @deploymentRecommended.
   ///
   /// In en, this message translates to:
-  /// **'RECOMMENDED'**
+  /// **'recommended'**
   String get deploymentRecommended;
 
   /// No description provided for @deploymentGpuBadge.
@@ -3427,13 +3673,13 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentDefaultAgent.
   ///
   /// In en, this message translates to:
-  /// **'READY BY DEFAULT'**
+  /// **'ready by default'**
   String get deploymentDefaultAgent;
 
   /// No description provided for @deploymentPlanSpecs.
   ///
   /// In en, this message translates to:
-  /// **'{vcpus} CPU · {memory} RAM · {diskGb} GB DISK'**
+  /// **'{vcpus} CPU · {memory} RAM · {diskGb} GB disk'**
   String deploymentPlanSpecs(int vcpus, String memory, int diskGb);
 
   /// No description provided for @deploymentMemoryGb.
@@ -3463,109 +3709,127 @@ abstract class AppLocalizations {
   /// No description provided for @deploymentProvisioningSummary.
   ///
   /// In en, this message translates to:
-  /// **'PROVISIONING SUMMARY'**
+  /// **'provisioning summary'**
   String get deploymentProvisioningSummary;
 
   /// No description provided for @deploymentServerProvider.
   ///
   /// In en, this message translates to:
-  /// **'SERVER PROVIDER'**
+  /// **'server provider'**
   String get deploymentServerProvider;
 
   /// No description provided for @deploymentProviderLinode.
   ///
   /// In en, this message translates to:
-  /// **'LINODE'**
+  /// **'Linode'**
   String get deploymentProviderLinode;
+
+  /// No description provided for @deploymentProviderFake.
+  ///
+  /// In en, this message translates to:
+  /// **'fake'**
+  String get deploymentProviderFake;
+
+  /// No description provided for @deploymentConfigNotReadyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Deployment is not ready yet — configuration is still loading.'**
+  String get deploymentConfigNotReadyError;
+
+  /// No description provided for @deploymentAdminPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'The admin password must be at least {minLength} characters.'**
+  String deploymentAdminPasswordTooShort(int minLength);
 
   /// No description provided for @walkthroughLabel.
   ///
   /// In en, this message translates to:
-  /// **'WALKTHROUGH {current} / {total}'**
+  /// **'walkthrough {current}/{total}'**
   String walkthroughLabel(int current, int total);
 
   /// No description provided for @briefLabel.
   ///
   /// In en, this message translates to:
-  /// **'BRIEF {current} / {total}'**
+  /// **'brief {current}/{total}'**
   String briefLabel(int current, int total);
 
   /// No description provided for @walkthroughAskPoco.
   ///
   /// In en, this message translates to:
-  /// **'ASK POCO'**
+  /// **'ask Poco'**
   String get walkthroughAskPoco;
 
   /// No description provided for @walkthroughActionSkip.
   ///
   /// In en, this message translates to:
-  /// **'SKIP'**
+  /// **'skip'**
   String get walkthroughActionSkip;
 
   /// No description provided for @walkthroughBriefDivider.
   ///
   /// In en, this message translates to:
-  /// **'BRIEF'**
+  /// **'brief'**
   String get walkthroughBriefDivider;
 
   /// No description provided for @walkthroughTransitionProvisioning.
   ///
   /// In en, this message translates to:
-  /// **'Let’s follow this next part of the server setup together.'**
+  /// **'Let\'s follow this next part of the server setup together.'**
   String get walkthroughTransitionProvisioning;
 
   /// No description provided for @walkthroughTransitionDeployment.
   ///
   /// In en, this message translates to:
-  /// **'Now we’ll follow the verified release onto the host.'**
+  /// **'Now we\'ll follow the verified release onto the host.'**
   String get walkthroughTransitionDeployment;
 
   /// No description provided for @initializationSyncAttempt.
   ///
   /// In en, this message translates to:
-  /// **'SYNC ATTEMPT: {attempt}'**
+  /// **'sync attempt: {attempt}'**
   String initializationSyncAttempt(Object attempt);
 
   /// No description provided for @initializationCurrentOperation.
   ///
   /// In en, this message translates to:
-  /// **'CURRENT OPERATION'**
+  /// **'current operation'**
   String get initializationCurrentOperation;
 
   /// No description provided for @initializationSourceCommit.
   ///
   /// In en, this message translates to:
-  /// **'SOURCE COMMIT'**
+  /// **'source commit'**
   String get initializationSourceCommit;
 
   /// No description provided for @initializationRunId.
   ///
   /// In en, this message translates to:
-  /// **'INITIALIZATION RUN'**
+  /// **'initialization run'**
   String get initializationRunId;
 
   /// No description provided for @initializationStatusSchema.
   ///
   /// In en, this message translates to:
-  /// **'STATUS SCHEMA'**
+  /// **'status schema'**
   String get initializationStatusSchema;
 
   /// No description provided for @initializationLastSignal.
   ///
   /// In en, this message translates to:
-  /// **'LAST SERVER SIGNAL'**
+  /// **'last server signal'**
   String get initializationLastSignal;
 
   /// No description provided for @initializationErrorCode.
   ///
   /// In en, this message translates to:
-  /// **'SERVER ERROR CODE'**
+  /// **'server error code'**
   String get initializationErrorCode;
 
   /// No description provided for @pocoProvisioningTourTitle.
   ///
   /// In en, this message translates to:
-  /// **'POCO WALKTHROUGH'**
+  /// **'Poco walkthrough'**
   String get pocoProvisioningTourTitle;
 
   /// No description provided for @pocoProvisioningWaitingForSource.
@@ -3595,25 +3859,25 @@ abstract class AppLocalizations {
   /// No description provided for @pocoProvisioningPrevious.
   ///
   /// In en, this message translates to:
-  /// **'PREVIOUS'**
+  /// **'previous'**
   String get pocoProvisioningPrevious;
 
   /// No description provided for @pocoProvisioningNext.
   ///
   /// In en, this message translates to:
-  /// **'NEXT'**
+  /// **'next'**
   String get pocoProvisioningNext;
 
   /// No description provided for @pocoProvisioningShowFull.
   ///
   /// In en, this message translates to:
-  /// **'SHOW FULL SNIPPET'**
+  /// **'show full snippet'**
   String get pocoProvisioningShowFull;
 
   /// No description provided for @pocoProvisioningShowConcise.
   ///
   /// In en, this message translates to:
-  /// **'SHOW PREVIEW'**
+  /// **'show preview'**
   String get pocoProvisioningShowConcise;
 
   /// No description provided for @pocoLessonVpsStorageTitle.
@@ -3907,97 +4171,97 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingNoServerChipExisting.
   ///
   /// In en, this message translates to:
-  /// **'I HAVE A SERVER — LOG IN'**
+  /// **'Log in'**
   String get onboardingNoServerChipExisting;
 
   /// No description provided for @onboardingNoServerChipNew.
   ///
   /// In en, this message translates to:
-  /// **'I’M NEW — JOIN'**
+  /// **'Join'**
   String get onboardingNoServerChipNew;
 
   /// No description provided for @onboardingWelcomeTitle.
   ///
   /// In en, this message translates to:
-  /// **'WELCOME'**
+  /// **'welcome'**
   String get onboardingWelcomeTitle;
 
   /// No description provided for @onboardingWelcomePoco.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to the PocketCoder Initiative.\n\nI’ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.'**
+  /// **'Welcome to the PocketCoder Initiative.\n\nI\'ll help you set up PocketCoder on a server—a computer that stays online. That way, PocketCoder is accessible and ready whenever you need it.'**
   String get onboardingWelcomePoco;
 
   /// No description provided for @onboardingWelcomeActionGuided.
   ///
   /// In en, this message translates to:
-  /// **'HELP ME WITH SETUP'**
+  /// **'Help me with setup'**
   String get onboardingWelcomeActionGuided;
 
   /// No description provided for @onboardingWelcomeActionSelfHost.
   ///
   /// In en, this message translates to:
-  /// **'I’LL SET IT UP'**
+  /// **'I\'ll set it up'**
   String get onboardingWelcomeActionSelfHost;
 
   /// No description provided for @onboardingSelfHostTitle.
   ///
   /// In en, this message translates to:
-  /// **'SELF-HOST SETUP'**
+  /// **'self-host setup'**
   String get onboardingSelfHostTitle;
 
   /// No description provided for @onboardingSelfHostPoco.
   ///
   /// In en, this message translates to:
-  /// **'You’ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you’ll use to connect this app.'**
+  /// **'You\'ll set up PocketCoder on a server you control. The setup guide walks through preparing the server, deploying PocketCoder, and finding the address you\'ll use to connect this app.'**
   String get onboardingSelfHostPoco;
 
   /// No description provided for @onboardingSelfHostRequirementsTitle.
   ///
   /// In en, this message translates to:
-  /// **'WHAT YOU’LL NEED'**
+  /// **'what you\'ll need'**
   String get onboardingSelfHostRequirementsTitle;
 
   /// No description provided for @onboardingSelfHostRequirementServer.
   ///
   /// In en, this message translates to:
-  /// **'A LINUX SERVER OR VPS YOU CONTROL'**
+  /// **'a Linux server or VPS you control'**
   String get onboardingSelfHostRequirementServer;
 
   /// No description provided for @onboardingSelfHostRequirementDocker.
   ///
   /// In en, this message translates to:
-  /// **'DOCKER COMPOSE V2'**
+  /// **'Docker compose v2'**
   String get onboardingSelfHostRequirementDocker;
 
   /// No description provided for @onboardingSelfHostRequirementAccess.
   ///
   /// In en, this message translates to:
-  /// **'SSH ACCESS TO THE SERVER'**
+  /// **'SSH access to the server'**
   String get onboardingSelfHostRequirementAccess;
 
   /// No description provided for @onboardingSelfHostActionGuide.
   ///
   /// In en, this message translates to:
-  /// **'GUIDE'**
+  /// **'guide'**
   String get onboardingSelfHostActionGuide;
 
   /// No description provided for @onboardingSelfHostActionConnect.
   ///
   /// In en, this message translates to:
-  /// **'CONNECT'**
+  /// **'connect'**
   String get onboardingSelfHostActionConnect;
 
   /// No description provided for @onboardingSignInPoco.
   ///
   /// In en, this message translates to:
-  /// **'Welcome. We’ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you’ll use to sign in when it’s ready.'**
+  /// **'Welcome. We\'ll set up a server: a small computer that stays online and runs PocketCoder for you.\n\nStart by choosing the email and password you\'ll use to sign in when it\'s ready.'**
   String get onboardingSignInPoco;
 
   /// No description provided for @onboardingSignInTitle.
   ///
   /// In en, this message translates to:
-  /// **'SET UP YOUR SIGN-IN'**
+  /// **'set up your sign-in'**
   String get onboardingSignInTitle;
 
   /// No description provided for @onboardingServerCredentialsPoco.
@@ -4021,19 +4285,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingProviderTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE A SERVER PROVIDER'**
+  /// **'choose a server provider'**
   String get onboardingProviderTitle;
 
   /// No description provided for @onboardingProviderChipLinode.
   ///
   /// In en, this message translates to:
-  /// **'LINODE'**
+  /// **'Linode'**
   String get onboardingProviderChipLinode;
 
   /// No description provided for @onboardingProviderChipElestioComingSoon.
   ///
   /// In en, this message translates to:
-  /// **'ELESTIO — COMING SOON'**
+  /// **'Elestio — coming soon'**
   String get onboardingProviderChipElestioComingSoon;
 
   /// No description provided for @onboardingTrialPoco.
@@ -4045,13 +4309,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingTrialChipStart.
   ///
   /// In en, this message translates to:
-  /// **'START FREE TRIAL'**
+  /// **'start free trial'**
   String get onboardingTrialChipStart;
 
   /// No description provided for @onboardingTrialChipNotNow.
   ///
   /// In en, this message translates to:
-  /// **'NOT NOW'**
+  /// **'not now'**
   String get onboardingTrialChipNotNow;
 
   /// No description provided for @onboardingProviderAuthorizationPoco.
@@ -4063,25 +4327,25 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingProviderAuthorizationTitle.
   ///
   /// In en, this message translates to:
-  /// **'CONNECT YOUR SERVER PROVIDER'**
+  /// **'connect your server provider'**
   String get onboardingProviderAuthorizationTitle;
 
   /// No description provided for @onboardingProviderAuthorizationAction.
   ///
   /// In en, this message translates to:
-  /// **'CONTINUE'**
+  /// **'continue'**
   String get onboardingProviderAuthorizationAction;
 
   /// No description provided for @onboardingProviderAuthorizationWaiting.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTING'**
+  /// **'connecting'**
   String get onboardingProviderAuthorizationWaiting;
 
   /// No description provided for @onboardingProviderAuthorizationError.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTION STOPPED'**
+  /// **'connection stopped'**
   String get onboardingProviderAuthorizationError;
 
   /// No description provided for @onboardingProviderAuthorizationCancelled.
@@ -4105,13 +4369,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingIntentChipCloudModels.
   ///
   /// In en, this message translates to:
-  /// **'USE CLOUD MODELS'**
+  /// **'use cloud models'**
   String get onboardingIntentChipCloudModels;
 
   /// No description provided for @onboardingIntentChipLocalModels.
   ///
   /// In en, this message translates to:
-  /// **'RUN A LOCAL MODEL'**
+  /// **'run a local model'**
   String get onboardingIntentChipLocalModels;
 
   /// No description provided for @onboardingPlanPoco.
@@ -4123,7 +4387,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPlanTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE YOUR SERVER SIZE'**
+  /// **'choose your server size'**
   String get onboardingPlanTitle;
 
   /// No description provided for @onboardingRegionConsentPoco.
@@ -4135,13 +4399,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingRegionConsentChipUseLocation.
   ///
   /// In en, this message translates to:
-  /// **'USE MY LOCATION'**
+  /// **'use my location'**
   String get onboardingRegionConsentChipUseLocation;
 
   /// No description provided for @onboardingRegionConsentChipChooseMyself.
   ///
   /// In en, this message translates to:
-  /// **'I’LL CHOOSE MYSELF'**
+  /// **'I\'ll choose myself'**
   String get onboardingRegionConsentChipChooseMyself;
 
   /// No description provided for @onboardingRegionPoco.
@@ -4153,19 +4417,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingRegionTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE YOUR SERVER REGION'**
+  /// **'choose your server region'**
   String get onboardingRegionTitle;
 
   /// No description provided for @onboardingHarnessPoco.
   ///
   /// In en, this message translates to:
-  /// **'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you’ll connect any required accounts after your server is ready.'**
+  /// **'Now choose which coding agents to have ready on your server.\n\nA harness is the connection PocketCoder uses to work with a coding agent. This only installs the software; you\'ll connect any required accounts after your server is ready.'**
   String get onboardingHarnessPoco;
 
   /// No description provided for @onboardingHarnessTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE CODING AGENTS'**
+  /// **'choose coding agents'**
   String get onboardingHarnessTitle;
 
   /// No description provided for @onboardingOsPoco.
@@ -4177,13 +4441,13 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingOsTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHOOSE LINUX SYSTEM'**
+  /// **'choose Linux system'**
   String get onboardingOsTitle;
 
   /// No description provided for @onboardingOsNixosLabel.
   ///
   /// In en, this message translates to:
-  /// **'NIXOS — RECOMMENDED'**
+  /// **'NixOS — recommended'**
   String get onboardingOsNixosLabel;
 
   /// No description provided for @onboardingOsNixosDescription.
@@ -4195,7 +4459,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingOsDebianLabel.
   ///
   /// In en, this message translates to:
-  /// **'DEBIAN'**
+  /// **'Debian'**
   String get onboardingOsDebianLabel;
 
   /// No description provided for @onboardingOsDebianDescription.
@@ -4213,49 +4477,49 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingReviewTitle.
   ///
   /// In en, this message translates to:
-  /// **'REVIEW YOUR SERVER'**
+  /// **'review your server'**
   String get onboardingReviewTitle;
 
   /// No description provided for @onboardingReviewActionProvision.
   ///
   /// In en, this message translates to:
-  /// **'PROVISION SERVER'**
+  /// **'provision server'**
   String get onboardingReviewActionProvision;
 
   /// No description provided for @onboardingProvisioningPoco.
   ///
   /// In en, this message translates to:
-  /// **'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI’ll show you what we’re building, one piece at a time.'**
+  /// **'Provisioning is underway. While the new server comes online, welcome to PocketCoder Initiative orientation.\n\nI\'ll show you what we\'re building, one piece at a time.'**
   String get onboardingProvisioningPoco;
 
   /// No description provided for @onboardingOrientationTitle.
   ///
   /// In en, this message translates to:
-  /// **'INITIATIVE ORIENTATION'**
+  /// **'initiative orientation'**
   String get onboardingOrientationTitle;
 
   /// No description provided for @onboardingOrientationActionSkip.
   ///
   /// In en, this message translates to:
-  /// **'SKIP ORIENTATION'**
+  /// **'skip orientation'**
   String get onboardingOrientationActionSkip;
 
   /// No description provided for @onboardingOrientationActionContinue.
   ///
   /// In en, this message translates to:
-  /// **'CONTINUE ORIENTATION'**
+  /// **'continue orientation'**
   String get onboardingOrientationActionContinue;
 
   /// No description provided for @onboardingDockerIntroEyebrow.
   ///
   /// In en, this message translates to:
-  /// **'INTRODUCTION'**
+  /// **'introduction'**
   String get onboardingDockerIntroEyebrow;
 
   /// No description provided for @onboardingDockerIntroTitle.
   ///
   /// In en, this message translates to:
-  /// **'DOCKER AND CONTAINERS'**
+  /// **'Docker and containers'**
   String get onboardingDockerIntroTitle;
 
   /// No description provided for @onboardingDockerIntroPoco.
@@ -4267,31 +4531,31 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingDockerIntroActionStart.
   ///
   /// In en, this message translates to:
-  /// **'START WALKTHROUGH'**
+  /// **'start walkthrough'**
   String get onboardingDockerIntroActionStart;
 
   /// No description provided for @onboardingDockerIntroChipComponent.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS A COMPONENT?'**
+  /// **'What is a component?'**
   String get onboardingDockerIntroChipComponent;
 
   /// No description provided for @onboardingDockerIntroChipContainer.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS A CONTAINER?'**
+  /// **'What is a container?'**
   String get onboardingDockerIntroChipContainer;
 
   /// No description provided for @onboardingDockerIntroChipSavedData.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS SAVED DATA?'**
+  /// **'What is saved data?'**
   String get onboardingDockerIntroChipSavedData;
 
   /// No description provided for @onboardingDockerIntroChipConnections.
   ///
   /// In en, this message translates to:
-  /// **'WHAT ARE CONNECTIONS?'**
+  /// **'What are connections?'**
   String get onboardingDockerIntroChipConnections;
 
   /// No description provided for @onboardingReadyPoco.
@@ -4303,25 +4567,25 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingReadyActionLogin.
   ///
   /// In en, this message translates to:
-  /// **'LOG IN TO POCKETCODER'**
+  /// **'log in to PocketCoder'**
   String get onboardingReadyActionLogin;
 
   /// No description provided for @onboardingFailureConnectionPoco.
   ///
   /// In en, this message translates to:
-  /// **'I couldn’t confirm that PocketCoder finished setting up.\n\nYour server is still available in your {providerName} account.'**
+  /// **'I couldn\'t confirm that PocketCoder finished setting up.\n\nYour server is still available in your {providerName} account.'**
   String onboardingFailureConnectionPoco(String providerName);
 
   /// No description provided for @onboardingFailureActionRetryConnection.
   ///
   /// In en, this message translates to:
-  /// **'RETRY CONNECTION'**
+  /// **'retry connection'**
   String get onboardingFailureActionRetryConnection;
 
   /// No description provided for @onboardingFailureActionViewServerDetails.
   ///
   /// In en, this message translates to:
-  /// **'VIEW SERVER DETAILS'**
+  /// **'view server details'**
   String get onboardingFailureActionViewServerDetails;
 
   /// No description provided for @onboardingFailureCreatePoco.
@@ -4333,43 +4597,43 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingFailureActionBackToSetup.
   ///
   /// In en, this message translates to:
-  /// **'BACK TO SETUP'**
+  /// **'back to setup'**
   String get onboardingFailureActionBackToSetup;
 
   /// No description provided for @onboardingFailureActionTechnicalDetails.
   ///
   /// In en, this message translates to:
-  /// **'SHOW TECHNICAL DETAILS'**
+  /// **'show technical details'**
   String get onboardingFailureActionTechnicalDetails;
 
   /// No description provided for @walkthroughHeader.
   ///
   /// In en, this message translates to:
-  /// **'{os} SERVER SETUP · WALKTHROUGH {current} / {total}'**
+  /// **'{os} server setup · walkthrough {current} / {total}'**
   String walkthroughHeader(String os, int current, int total);
 
   /// No description provided for @walkthroughProgress.
   ///
   /// In en, this message translates to:
-  /// **'WALKTHROUGH {current}/{total} · BRIEF {brief}'**
+  /// **'walkthrough {current}/{total} · brief {brief}'**
   String walkthroughProgress(int current, int total, String brief);
 
   /// No description provided for @walkthroughActionShowFullCode.
   ///
   /// In en, this message translates to:
-  /// **'SHOW FULL CODE'**
+  /// **'show full code'**
   String get walkthroughActionShowFullCode;
 
   /// No description provided for @walkthroughActionShowConciseCode.
   ///
   /// In en, this message translates to:
-  /// **'SHOW CONCISE CODE'**
+  /// **'show concise code'**
   String get walkthroughActionShowConciseCode;
 
   /// No description provided for @walkthroughCaddyAddressTitle.
   ///
   /// In en, this message translates to:
-  /// **'YOUR HTTPS ADDRESS'**
+  /// **'your HTTPS address'**
   String get walkthroughCaddyAddressTitle;
 
   /// No description provided for @walkthroughCaddyAddressPoco.
@@ -4381,61 +4645,61 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughCaddyAddressChipIpAddress.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS AN IP ADDRESS?'**
+  /// **'What is an IP address?'**
   String get walkthroughCaddyAddressChipIpAddress;
 
   /// No description provided for @walkthroughCaddyAddressChipHttps.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS HTTPS?'**
+  /// **'What is HTTPS?'**
   String get walkthroughCaddyAddressChipHttps;
 
   /// No description provided for @walkthroughCaddyAddressChipSslip.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS SSLIP.IO?'**
+  /// **'What is sslip.io?'**
   String get walkthroughCaddyAddressChipSslip;
 
   /// No description provided for @walkthroughCaddyWebEntryTitle.
   ///
   /// In en, this message translates to:
-  /// **'THE SECURE WEB ENTRY'**
+  /// **'the secure web entry'**
   String get walkthroughCaddyWebEntryTitle;
 
   /// No description provided for @walkthroughCaddyWebEntryPoco.
   ///
   /// In en, this message translates to:
-  /// **'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder’s deployment status, and passes app requests to PocketBase without exposing PocketBase’s own port.'**
+  /// **'Caddy runs directly on the server. It sends regular web traffic to HTTPS, shares PocketCoder\'s deployment status, and passes app requests to PocketBase without exposing PocketBase\'s own port.'**
   String get walkthroughCaddyWebEntryPoco;
 
   /// No description provided for @walkthroughCaddyWebEntryChipCaddy.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS CADDY?'**
+  /// **'What is Caddy?'**
   String get walkthroughCaddyWebEntryChipCaddy;
 
   /// No description provided for @walkthroughCaddyWebEntryChipPrivatePort.
   ///
   /// In en, this message translates to:
-  /// **'WHY IS POCKETBASE\'S PORT PRIVATE?'**
+  /// **'Why is PocketBase\'s port private?'**
   String get walkthroughCaddyWebEntryChipPrivatePort;
 
   /// No description provided for @walkthroughNixosStorageTitle.
   ///
   /// In en, this message translates to:
-  /// **'YOUR SERVER DISK'**
+  /// **'your server disk'**
   String get walkthroughNixosStorageTitle;
 
   /// No description provided for @walkthroughNixosStoragePoco.
   ///
   /// In en, this message translates to:
-  /// **'This tells NixOS where PocketCoder’s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.'**
+  /// **'This tells NixOS where PocketCoder\'s main disk is and lets it expand to use the full size of the server you chose. Without autoResize, it could stay stuck at the smaller size of its original image.'**
   String get walkthroughNixosStoragePoco;
 
   /// No description provided for @walkthroughNixosNetworkTitle.
   ///
   /// In en, this message translates to:
-  /// **'NETWORK BOUNDARIES'**
+  /// **'network boundaries'**
   String get walkthroughNixosNetworkTitle;
 
   /// No description provided for @walkthroughNixosNetworkPoco.
@@ -4447,25 +4711,25 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughNixosNetworkChipPorts.
   ///
   /// In en, this message translates to:
-  /// **'WHAT ARE HTTP, HTTPS, AND SSH?'**
+  /// **'What are HTTP, HTTPS, and SSH?'**
   String get walkthroughNixosNetworkChipPorts;
 
   /// No description provided for @walkthroughNixosNetworkChipDockerRules.
   ///
   /// In en, this message translates to:
-  /// **'WHY DOES DOCKER NEED ITS OWN RULES?'**
+  /// **'Why does Docker need its own rules?'**
   String get walkthroughNixosNetworkChipDockerRules;
 
   /// No description provided for @walkthroughNixosNetworkChipIpVersions.
   ///
   /// In en, this message translates to:
-  /// **'WHAT ARE IPv4 AND IPv6?'**
+  /// **'What are IPv4 and IPv6?'**
   String get walkthroughNixosNetworkChipIpVersions;
 
   /// No description provided for @walkthroughNixosSshTitle.
   ///
   /// In en, this message translates to:
-  /// **'KEY-ONLY SSH'**
+  /// **'key-only SSH'**
   String get walkthroughNixosSshTitle;
 
   /// No description provided for @walkthroughNixosSshPoco.
@@ -4477,19 +4741,19 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughNixosDockerTitle.
   ///
   /// In en, this message translates to:
-  /// **'DOCKER'**
+  /// **'Docker'**
   String get walkthroughNixosDockerTitle;
 
   /// No description provided for @walkthroughNixosDockerPoco.
   ///
   /// In en, this message translates to:
-  /// **'This turns on Docker, the system that runs PocketCoder’s containers. It sends their logs to NixOS’s built-in system log, so there is one place to check what happened.'**
+  /// **'This turns on Docker, the system that runs PocketCoder\'s containers. It sends their logs to NixOS\'s built-in system log, so there is one place to check what happened.'**
   String get walkthroughNixosDockerPoco;
 
   /// No description provided for @walkthroughServerKeyTitle.
   ///
   /// In en, this message translates to:
-  /// **'YOUR SERVER KEY'**
+  /// **'your server key'**
   String get walkthroughServerKeyTitle;
 
   /// No description provided for @walkthroughServerKeyPoco.
@@ -4501,25 +4765,25 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughServerKeyChipPrivate.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS A PRIVATE SSH KEY?'**
+  /// **'What is a private SSH key?'**
   String get walkthroughServerKeyChipPrivate;
 
   /// No description provided for @walkthroughServerKeyChipPublic.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS A PUBLIC SSH KEY?'**
+  /// **'What is a public SSH key?'**
   String get walkthroughServerKeyChipPublic;
 
   /// No description provided for @walkthroughServerKeyChipSsh.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS SSH?'**
+  /// **'What is SSH?'**
   String get walkthroughServerKeyChipSsh;
 
   /// No description provided for @walkthroughVerifiedVersionTitle.
   ///
   /// In en, this message translates to:
-  /// **'VERIFIED POCKETCODER VERSION'**
+  /// **'verified PocketCoder version'**
   String get walkthroughVerifiedVersionTitle;
 
   /// No description provided for @walkthroughVerifiedVersionPoco.
@@ -4531,25 +4795,25 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughVerifiedVersionChipVerification.
   ///
   /// In en, this message translates to:
-  /// **'HOW IS THE VERSION VERIFIED?'**
+  /// **'How is the version verified?'**
   String get walkthroughVerifiedVersionChipVerification;
 
   /// No description provided for @walkthroughVerifiedVersionChipDownloadFailure.
   ///
   /// In en, this message translates to:
-  /// **'WHAT HAPPENS IF THE DOWNLOAD FAILS?'**
+  /// **'What happens if the download fails?'**
   String get walkthroughVerifiedVersionChipDownloadFailure;
 
   /// No description provided for @walkthroughVerifiedVersionChipUpdates.
   ///
   /// In en, this message translates to:
-  /// **'CAN I UPDATE LATER?'**
+  /// **'Can I update later?'**
   String get walkthroughVerifiedVersionChipUpdates;
 
   /// No description provided for @walkthroughStartPocketCoderTitle.
   ///
   /// In en, this message translates to:
-  /// **'START POCKETCODER'**
+  /// **'start PocketCoder'**
   String get walkthroughStartPocketCoderTitle;
 
   /// No description provided for @walkthroughStartPocketCoderPoco.
@@ -4561,19 +4825,19 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughStartPocketCoderChipWhatStarts.
   ///
   /// In en, this message translates to:
-  /// **'WHAT STARTS AFTER THIS?'**
+  /// **'What starts after this?'**
   String get walkthroughStartPocketCoderChipWhatStarts;
 
   /// No description provided for @walkthroughStartPocketCoderChipAddHarness.
   ///
   /// In en, this message translates to:
-  /// **'CAN I ADD A HARNESS LATER?'**
+  /// **'Can I add a harness later?'**
   String get walkthroughStartPocketCoderChipAddHarness;
 
   /// No description provided for @walkthroughNixosDockerRulesTitle.
   ///
   /// In en, this message translates to:
-  /// **'DOCKER FIREWALL RULES'**
+  /// **'Docker firewall rules'**
   String get walkthroughNixosDockerRulesTitle;
 
   /// No description provided for @walkthroughNixosDockerRulesPoco.
@@ -4585,25 +4849,25 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughRuntimeSettingsTitle.
   ///
   /// In en, this message translates to:
-  /// **'LOCAL SETTINGS'**
+  /// **'local settings'**
   String get walkthroughRuntimeSettingsTitle;
 
   /// No description provided for @walkthroughRuntimeSettingsPoco.
   ///
   /// In en, this message translates to:
-  /// **'This prepares PocketCoder’s local settings file and locks it so only its administrator—you—can read it. It creates the internal credentials PocketCoder needs to run.'**
+  /// **'This prepares PocketCoder\'s local settings file and locks it so only its administrator—you—can read it. It creates the internal credentials PocketCoder needs to run.'**
   String get walkthroughRuntimeSettingsPoco;
 
   /// No description provided for @walkthroughRuntimeSettingsChipLocalSettings.
   ///
   /// In en, this message translates to:
-  /// **'WHAT ARE LOCAL SETTINGS?'**
+  /// **'What are local settings?'**
   String get walkthroughRuntimeSettingsChipLocalSettings;
 
   /// No description provided for @walkthroughRuntimeVersionTitle.
   ///
   /// In en, this message translates to:
-  /// **'RUNNING VERSION'**
+  /// **'running version'**
   String get walkthroughRuntimeVersionTitle;
 
   /// No description provided for @walkthroughRuntimeVersionPoco.
@@ -4615,7 +4879,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughActivationPrepareTitle.
   ///
   /// In en, this message translates to:
-  /// **'PREPARE THE RELEASE'**
+  /// **'prepare the release'**
   String get walkthroughActivationPrepareTitle;
 
   /// No description provided for @walkthroughActivationPreparePoco.
@@ -4627,7 +4891,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughActivationSelectedSoftwareTitle.
   ///
   /// In en, this message translates to:
-  /// **'SELECTED SOFTWARE'**
+  /// **'selected software'**
   String get walkthroughActivationSelectedSoftwareTitle;
 
   /// No description provided for @walkthroughActivationSelectedSoftwarePoco.
@@ -4639,7 +4903,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughActivationSwitchTitle.
   ///
   /// In en, this message translates to:
-  /// **'MAKE IT ACTIVE'**
+  /// **'make it active'**
   String get walkthroughActivationSwitchTitle;
 
   /// No description provided for @walkthroughActivationSwitchPoco.
@@ -4651,7 +4915,7 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughActivationHealthTitle.
   ///
   /// In en, this message translates to:
-  /// **'CHECK THE DEPLOYMENT'**
+  /// **'check the deployment'**
   String get walkthroughActivationHealthTitle;
 
   /// No description provided for @walkthroughActivationHealthPoco.
@@ -4663,61 +4927,61 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughDebianSetupStatusTitle.
   ///
   /// In en, this message translates to:
-  /// **'SETUP STATUS'**
+  /// **'setup status'**
   String get walkthroughDebianSetupStatusTitle;
 
   /// No description provided for @walkthroughDebianSetupStatusPoco.
   ///
   /// In en, this message translates to:
-  /// **'This setup script keeps PocketCoder’s deployment status up to date as it runs. If something fails, it records where and cleans up temporary files so it can be checked or safely retried.'**
+  /// **'This setup script keeps PocketCoder\'s deployment status up to date as it runs. If something fails, it records where and cleans up temporary files so it can be checked or safely retried.'**
   String get walkthroughDebianSetupStatusPoco;
 
   /// No description provided for @walkthroughDebianSetupStatusChipStatus.
   ///
   /// In en, this message translates to:
-  /// **'HOW IS DEPLOYMENT STATUS SHOWN?'**
+  /// **'How is deployment status shown?'**
   String get walkthroughDebianSetupStatusChipStatus;
 
   /// No description provided for @walkthroughDebianSetupStatusChipFailure.
   ///
   /// In en, this message translates to:
-  /// **'WHAT HAPPENS IF SETUP FAILS?'**
+  /// **'What happens if setup fails?'**
   String get walkthroughDebianSetupStatusChipFailure;
 
   /// No description provided for @walkthroughServicesComposeTitle.
   ///
   /// In en, this message translates to:
-  /// **'THE DOCKER BLUEPRINT'**
+  /// **'the Docker blueprint'**
   String get walkthroughServicesComposeTitle;
 
   /// No description provided for @walkthroughServicesComposePoco.
   ///
   /// In en, this message translates to:
-  /// **'Docker Compose is PocketCoder’s blueprint. It keeps your data when we update the software, and gives each component only the connections it needs.'**
+  /// **'Docker Compose is PocketCoder\'s blueprint. It keeps your data when we update the software, and gives each component only the connections it needs.'**
   String get walkthroughServicesComposePoco;
 
   /// No description provided for @walkthroughServicesComposeChipDockerCompose.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS DOCKER COMPOSE?'**
+  /// **'What is Docker compose?'**
   String get walkthroughServicesComposeChipDockerCompose;
 
   /// No description provided for @walkthroughServicesComposeChipSavedData.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS SAVED DATA?'**
+  /// **'What is saved data?'**
   String get walkthroughServicesComposeChipSavedData;
 
   /// No description provided for @walkthroughServicesComposeChipPrivateConnections.
   ///
   /// In en, this message translates to:
-  /// **'WHAT ARE PRIVATE CONNECTIONS?'**
+  /// **'What are private connections?'**
   String get walkthroughServicesComposeChipPrivateConnections;
 
   /// No description provided for @walkthroughServicesPocketBaseTitle.
   ///
   /// In en, this message translates to:
-  /// **'POCKETBASE'**
+  /// **'PocketBase'**
   String get walkthroughServicesPocketBaseTitle;
 
   /// No description provided for @walkthroughServicesPocketBasePoco.
@@ -4729,25 +4993,25 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughServicesPocketBaseChipKeeps.
   ///
   /// In en, this message translates to:
-  /// **'WHAT DOES POCKETBASE KEEP?'**
+  /// **'What does PocketBase keep?'**
   String get walkthroughServicesPocketBaseChipKeeps;
 
   /// No description provided for @walkthroughServicesPocketBaseChipSignIn.
   ///
   /// In en, this message translates to:
-  /// **'HOW DO I SIGN IN SECURELY?'**
+  /// **'How do I sign in securely?'**
   String get walkthroughServicesPocketBaseChipSignIn;
 
   /// No description provided for @walkthroughServicesPocketBaseChipUpdates.
   ///
   /// In en, this message translates to:
-  /// **'WHAT HAPPENS WHEN POCKETCODER UPDATES?'**
+  /// **'What happens when PocketCoder updates?'**
   String get walkthroughServicesPocketBaseChipUpdates;
 
   /// No description provided for @walkthroughServicesHarnessesTitle.
   ///
   /// In en, this message translates to:
-  /// **'CODING HARNESSES'**
+  /// **'coding harnesses'**
   String get walkthroughServicesHarnessesTitle;
 
   /// No description provided for @walkthroughServicesHarnessesPoco.
@@ -4759,25 +5023,25 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughServicesHarnessesChipHarness.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS A CODING HARNESS?'**
+  /// **'What is a coding harness?'**
   String get walkthroughServicesHarnessesChipHarness;
 
   /// No description provided for @walkthroughServicesHarnessesChipWorkspace.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS A SAVED WORKSPACE?'**
+  /// **'What is a saved workspace?'**
   String get walkthroughServicesHarnessesChipWorkspace;
 
   /// No description provided for @walkthroughServicesHarnessesChipAdd.
   ///
   /// In en, this message translates to:
-  /// **'CAN I ADD A HARNESS LATER?'**
+  /// **'Can I add a harness later?'**
   String get walkthroughServicesHarnessesChipAdd;
 
   /// No description provided for @walkthroughServicesToolsTitle.
   ///
   /// In en, this message translates to:
-  /// **'TOOL CONNECTIONS'**
+  /// **'tool connections'**
   String get walkthroughServicesToolsTitle;
 
   /// No description provided for @walkthroughServicesToolsPoco.
@@ -4789,25 +5053,25 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughServicesToolsChipMcp.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS MCP?'**
+  /// **'What is MCP?'**
   String get walkthroughServicesToolsChipMcp;
 
   /// No description provided for @walkthroughServicesToolsChipHarnessTools.
   ///
   /// In en, this message translates to:
-  /// **'WHAT TOOLS CAN A HARNESS USE?'**
+  /// **'What tools can a harness use?'**
   String get walkthroughServicesToolsChipHarnessTools;
 
   /// No description provided for @walkthroughServicesToolsChipProxy.
   ///
   /// In en, this message translates to:
-  /// **'WHY DOES THIS HAVE A SEPARATE PROXY?'**
+  /// **'Why does this have a separate proxy?'**
   String get walkthroughServicesToolsChipProxy;
 
   /// No description provided for @walkthroughServicesOllamaTitle.
   ///
   /// In en, this message translates to:
-  /// **'LOCAL MODELS'**
+  /// **'local models'**
   String get walkthroughServicesOllamaTitle;
 
   /// No description provided for @walkthroughServicesOllamaPoco.
@@ -4819,50 +5083,44 @@ abstract class AppLocalizations {
   /// No description provided for @walkthroughServicesOllamaChipLocalModel.
   ///
   /// In en, this message translates to:
-  /// **'WHAT IS A LOCAL MODEL?'**
+  /// **'What is a local model?'**
   String get walkthroughServicesOllamaChipLocalModel;
 
   /// No description provided for @walkthroughServicesOllamaChipDownload.
   ///
   /// In en, this message translates to:
-  /// **'WHEN IS A MODEL DOWNLOADED?'**
+  /// **'When is a model downloaded?'**
   String get walkthroughServicesOllamaChipDownload;
 
   /// No description provided for @walkthroughServicesOllamaChipGpu.
   ///
   /// In en, this message translates to:
-  /// **'DOES THIS USE MY SERVER\'S GPU?'**
+  /// **'Does this use my server\'s GPU?'**
   String get walkthroughServicesOllamaChipGpu;
 
   /// No description provided for @walkthroughServicesSqlPageTitle.
   ///
   /// In en, this message translates to:
-  /// **'SERVER DASHBOARD'**
+  /// **'server dashboard'**
   String get walkthroughServicesSqlPageTitle;
 
   /// No description provided for @walkthroughServicesSqlPagePoco.
   ///
   /// In en, this message translates to:
-  /// **'SQLPage is PocketCoder’s built-in dashboard for showing what is happening on your server. It starts after PocketBase is ready and uses saved PocketCoder data to build those pages.'**
+  /// **'SQLPage is PocketCoder\'s built-in dashboard for showing what is happening on your server. It starts after PocketBase is ready and uses saved PocketCoder data to build those pages.'**
   String get walkthroughServicesSqlPagePoco;
 
   /// No description provided for @walkthroughServicesSqlPageChipContents.
   ///
   /// In en, this message translates to:
-  /// **'WHAT CAN THIS DASHBOARD SHOW?'**
+  /// **'What can this dashboard show?'**
   String get walkthroughServicesSqlPageChipContents;
 
   /// No description provided for @walkthroughServicesSqlPageChipStartOrder.
   ///
   /// In en, this message translates to:
-  /// **'WHY DOES IT START AFTER POCKETBASE?'**
+  /// **'Why does it start after PocketBase?'**
   String get walkthroughServicesSqlPageChipStartOrder;
-
-  /// No description provided for @permissionSignoffTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'COMMANDER\'S SIGNOFF'**
-  String get permissionSignoffTitle;
 
   /// No description provided for @permissionRequestedFallback.
   ///
@@ -4873,7 +5131,7 @@ abstract class AppLocalizations {
   /// No description provided for @permissionRequestingLabel.
   ///
   /// In en, this message translates to:
-  /// **'{source} IS REQUESTING PERMISSION:'**
+  /// **'{source} is requesting permission:'**
   String permissionRequestingLabel(String source);
 
   /// No description provided for @permissionPatternsLabel.
@@ -4885,91 +5143,91 @@ abstract class AppLocalizations {
   /// No description provided for @questionIncomingTitle.
   ///
   /// In en, this message translates to:
-  /// **'INCOMING QUERY'**
+  /// **'incoming query'**
   String get questionIncomingTitle;
 
   /// No description provided for @questionPocoAsking.
   ///
   /// In en, this message translates to:
-  /// **'POCO IS ASKING:'**
+  /// **'Poco is asking:'**
   String get questionPocoAsking;
 
   /// No description provided for @questionSendReply.
   ///
   /// In en, this message translates to:
-  /// **'SEND REPLY'**
+  /// **'send reply'**
   String get questionSendReply;
 
   /// No description provided for @thoughtsWaiting.
   ///
   /// In en, this message translates to:
-  /// **'[NEURAL LINK ACTIVE. WAITING FOR THOUGHTS...]'**
+  /// **'[neural link active. waiting for thoughts...]'**
   String get thoughtsWaiting;
 
   /// No description provided for @notificationSignalReceived.
   ///
   /// In en, this message translates to:
-  /// **'SIGNAL RECEIVED: {title}'**
+  /// **'signal received: {title}'**
   String notificationSignalReceived(String title);
 
   /// No description provided for @errorsTitle.
   ///
   /// In en, this message translates to:
-  /// **'ERROR REPORTS'**
+  /// **'error reports'**
   String get errorsTitle;
 
   /// No description provided for @errorsEmpty.
   ///
   /// In en, this message translates to:
-  /// **'NO ERRORS CAPTURED'**
+  /// **'no errors captured'**
   String get errorsEmpty;
 
   /// No description provided for @errorsCopy.
   ///
   /// In en, this message translates to:
-  /// **'COPY REPORT'**
+  /// **'copy report'**
   String get errorsCopy;
 
   /// No description provided for @errorsReportOnGithub.
   ///
   /// In en, this message translates to:
-  /// **'REPORT ON GITHUB'**
+  /// **'report on GitHub'**
   String get errorsReportOnGithub;
 
   /// No description provided for @errorsCopyAll.
   ///
   /// In en, this message translates to:
-  /// **'COPY ALL'**
+  /// **'copy all'**
   String get errorsCopyAll;
 
   /// No description provided for @errorsCopied.
   ///
   /// In en, this message translates to:
-  /// **'DIAGNOSTIC REPORT COPIED'**
+  /// **'diagnostic report copied'**
   String get errorsCopied;
 
   /// No description provided for @errorsClearAll.
   ///
   /// In en, this message translates to:
-  /// **'CLEAR ALL'**
+  /// **'clear all'**
   String get errorsClearAll;
 
   /// No description provided for @harnessAuthChallengeTargetCopied.
   ///
   /// In en, this message translates to:
-  /// **'CHALLENGE TARGET COPIED'**
+  /// **'challenge target copied'**
   String get harnessAuthChallengeTargetCopied;
 
   /// No description provided for @harnessAuthCopy.
   ///
   /// In en, this message translates to:
-  /// **'[COPY]'**
+  /// **'[copy]'**
   String get harnessAuthCopy;
 
   /// No description provided for @harnessAuthChallengeDetailsCopied.
   ///
   /// In en, this message translates to:
-  /// **'CODE COPIED'**
+  /// **'code copied'**
   String get harnessAuthChallengeDetailsCopied;
 
   /// No description provided for @harnessAuthLoading.
@@ -5013,6 +5271,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Account: {account} ({visibility})'**
   String harnessAuthAccount(String account, String visibility);
+
+  /// No description provided for @harnessAuthApiKeyConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'API key: {provider}'**
+  String harnessAuthApiKeyConfigured(String provider);
 
   /// No description provided for @harnessAuthShared.
   ///
@@ -5059,7 +5323,7 @@ abstract class AppLocalizations {
   /// No description provided for @harnessAuthAccountLogin.
   ///
   /// In en, this message translates to:
-  /// **'Account login'**
+  /// **'account login'**
   String get harnessAuthAccountLogin;
 
   /// No description provided for @harnessAuthApiKey.
@@ -5067,18 +5331,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'API key'**
   String get harnessAuthApiKey;
-
-  /// No description provided for @harnessAuthNone.
-  ///
-  /// In en, this message translates to:
-  /// **'None'**
-  String get harnessAuthNone;
-
-  /// No description provided for @harnessAuthPoll.
-  ///
-  /// In en, this message translates to:
-  /// **'Poll'**
-  String get harnessAuthPoll;
 
   /// No description provided for @harnessAuthDisconnect.
   ///
@@ -5149,13 +5401,13 @@ abstract class AppLocalizations {
   /// No description provided for @credentialConnectionCopy.
   ///
   /// In en, this message translates to:
-  /// **'[COPY]'**
+  /// **'copy'**
   String get credentialConnectionCopy;
 
   /// No description provided for @credentialConnectionOpenAuthorizationPage.
   ///
   /// In en, this message translates to:
-  /// **'[OPEN AUTHORIZATION PAGE]'**
+  /// **'open authorization page'**
   String get credentialConnectionOpenAuthorizationPage;
 
   /// No description provided for @credentialConnectionPasteCode.
@@ -5173,19 +5425,19 @@ abstract class AppLocalizations {
   /// No description provided for @credentialConnectionSubmit.
   ///
   /// In en, this message translates to:
-  /// **'[SUBMIT]'**
+  /// **'submit'**
   String get credentialConnectionSubmit;
 
   /// No description provided for @credentialConnectionCancel.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get credentialConnectionCancel;
 
   /// No description provided for @credentialConnectionRetry.
   ///
   /// In en, this message translates to:
-  /// **'RETRY'**
+  /// **'retry'**
   String get credentialConnectionRetry;
 
   /// No description provided for @credentialConnectionOpenFailed.
@@ -5203,49 +5455,55 @@ abstract class AppLocalizations {
   /// No description provided for @agentModeLabel.
   ///
   /// In en, this message translates to:
-  /// **'MODE:'**
+  /// **'mode:'**
   String get agentModeLabel;
 
   /// No description provided for @agentConfigLabel.
   ///
   /// In en, this message translates to:
-  /// **'CONFIG'**
+  /// **'config'**
   String get agentConfigLabel;
+
+  /// Collapsed label for the chat session's active configuration
+  ///
+  /// In en, this message translates to:
+  /// **'session'**
+  String get agentSessionLabel;
 
   /// No description provided for @pocketCoderUpdateChecking.
   ///
   /// In en, this message translates to:
-  /// **'\$ CHECKING VERIFIED RELEASE STATUS...'**
+  /// **'\$ Checking verified release status...'**
   String get pocketCoderUpdateChecking;
 
   /// No description provided for @pocketCoderUpdateCheckAgain.
   ///
   /// In en, this message translates to:
-  /// **'CHECK AGAIN'**
+  /// **'check again'**
   String get pocketCoderUpdateCheckAgain;
 
   /// No description provided for @pocketCoderUpdateNoDeployment.
   ///
   /// In en, this message translates to:
-  /// **'NO DEPLOYMENT FOUND ON THIS DEVICE.'**
+  /// **'No deployment found on this device.'**
   String get pocketCoderUpdateNoDeployment;
 
   /// No description provided for @actionDismiss.
   ///
   /// In en, this message translates to:
-  /// **'DISMISS'**
+  /// **'dismiss'**
   String get actionDismiss;
 
   /// No description provided for @pocketCoderUpdateWorking.
   ///
   /// In en, this message translates to:
-  /// **'UPGRADING...'**
+  /// **'Upgrading...'**
   String get pocketCoderUpdateWorking;
 
   /// No description provided for @pocketCoderUpdateUpgrade.
   ///
   /// In en, this message translates to:
-  /// **'UPGRADE POCKETCODER'**
+  /// **'upgrade PocketCoder'**
   String get pocketCoderUpdateUpgrade;
 
   /// No description provided for @pocketCoderUpdateCommand.
@@ -5257,97 +5515,97 @@ abstract class AppLocalizations {
   /// No description provided for @pocketCoderUpdateOutput.
   ///
   /// In en, this message translates to:
-  /// **'OUTPUT'**
+  /// **'output'**
   String get pocketCoderUpdateOutput;
 
   /// No description provided for @pocketCoderUpdateStderr.
   ///
   /// In en, this message translates to:
-  /// **'--- STDERR ---'**
+  /// **'--- stderr ---'**
   String get pocketCoderUpdateStderr;
 
   /// No description provided for @pocketCoderUpdateSucceeded.
   ///
   /// In en, this message translates to:
-  /// **'UPDATE SUCCEEDED (EXIT 0)'**
+  /// **'update succeeded (exit 0)'**
   String get pocketCoderUpdateSucceeded;
 
   /// No description provided for @pocketCoderUpdateFailed.
   ///
   /// In en, this message translates to:
-  /// **'UPDATE FAILED (EXIT {exitCode})'**
+  /// **'update failed (exit {exitCode})'**
   String pocketCoderUpdateFailed(int exitCode);
 
   /// No description provided for @pocketCoderUpdateReviewDataChange.
   ///
   /// In en, this message translates to:
-  /// **'REVIEW DATA CHANGE'**
+  /// **'review data change'**
   String get pocketCoderUpdateReviewDataChange;
 
   /// No description provided for @pocketCoderUpdateConfirmUpgrade.
   ///
   /// In en, this message translates to:
-  /// **'CONFIRM UPGRADE'**
+  /// **'confirm upgrade'**
   String get pocketCoderUpdateConfirmUpgrade;
 
   /// No description provided for @pocketCoderUpdateCurrent.
   ///
   /// In en, this message translates to:
-  /// **'CURRENT'**
+  /// **'current'**
   String get pocketCoderUpdateCurrent;
 
   /// No description provided for @pocketCoderUpdateAvailable.
   ///
   /// In en, this message translates to:
-  /// **'AVAILABLE'**
+  /// **'available'**
   String get pocketCoderUpdateAvailable;
 
   /// No description provided for @pocketCoderUpdateDownload.
   ///
   /// In en, this message translates to:
-  /// **'DOWNLOAD'**
+  /// **'download'**
   String get pocketCoderUpdateDownload;
 
   /// No description provided for @pocketCoderUpdateRequiredDisk.
   ///
   /// In en, this message translates to:
-  /// **'REQUIRED DISK'**
+  /// **'required disk'**
   String get pocketCoderUpdateRequiredDisk;
 
   /// No description provided for @pocketCoderUpdateCurrentStatus.
   ///
   /// In en, this message translates to:
-  /// **'\$ POCKETCODER IS CURRENT'**
+  /// **'\$ PocketCoder is current'**
   String get pocketCoderUpdateCurrentStatus;
 
   /// No description provided for @pocketCoderUpdateAvailableStatus.
   ///
   /// In en, this message translates to:
-  /// **'\$ UPDATE AVAILABLE'**
+  /// **'\$ update available'**
   String get pocketCoderUpdateAvailableStatus;
 
   /// No description provided for @pocketCoderUpdateCriticalStatus.
   ///
   /// In en, this message translates to:
-  /// **'\$ CRITICAL RELEASE WARNING'**
+  /// **'\$ critical release warning'**
   String get pocketCoderUpdateCriticalStatus;
 
   /// No description provided for @pocketCoderUpdateUnknownStatus.
   ///
   /// In en, this message translates to:
-  /// **'\$ RELEASE STATUS UNKNOWN'**
+  /// **'\$ release status unknown'**
   String get pocketCoderUpdateUnknownStatus;
 
   /// No description provided for @pocketCoderUpdateRollbackWarning.
   ///
   /// In en, this message translates to:
-  /// **'AFTER SUCCESS, NORMAL ROLLBACK IS UNAVAILABLE. RESTORING THE PRE-UPGRADE SNAPSHOT WOULD DISCARD DATA CREATED AFTERWARD.'**
+  /// **'After success, normal rollback is unavailable. Restoring the pre-upgrade snapshot would discard data created afterward.'**
   String get pocketCoderUpdateRollbackWarning;
 
   /// No description provided for @pocketCoderUpdateDataBoundary.
   ///
   /// In en, this message translates to:
-  /// **'DATA VERSION {currentVersion} → {availableVersion}'**
+  /// **'data version {currentVersion} → {availableVersion}'**
   String pocketCoderUpdateDataBoundary(
       int currentVersion, int availableVersion);
 
@@ -5357,10 +5615,16 @@ abstract class AppLocalizations {
   /// **'Occurred {count}x'**
   String errorsOccurred(int count);
 
+  /// No description provided for @errorsDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'delete'**
+  String get errorsDeleteAction;
+
   /// Label for the reset deployment state action on the config screen recovery section
   ///
   /// In en, this message translates to:
-  /// **'RESET'**
+  /// **'reset'**
   String get deploymentResetAction;
 
   /// Title of the reset confirmation dialog
@@ -5390,13 +5654,13 @@ abstract class AppLocalizations {
   /// Confirm button label on the reset dialog
   ///
   /// In en, this message translates to:
-  /// **'RESET'**
+  /// **'reset'**
   String get deploymentResetConfirm;
 
   /// Cancel button label on the reset dialog
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get deploymentResetCancel;
 
   /// Snack/banner shown after a successful reset
@@ -5408,7 +5672,7 @@ abstract class AppLocalizations {
   /// Label for manually disconnecting the current managed instance
   ///
   /// In en, this message translates to:
-  /// **'DISCONNECT'**
+  /// **'disconnect'**
   String get deploymentDisconnectAction;
 
   /// Title of the disconnect confirmation dialog
@@ -5426,13 +5690,13 @@ abstract class AppLocalizations {
   /// Confirm button label on the disconnect dialog
   ///
   /// In en, this message translates to:
-  /// **'DISCONNECT'**
+  /// **'disconnect'**
   String get deploymentDisconnectConfirm;
 
   /// Cancel button label on the disconnect dialog
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get deploymentDisconnectCancel;
 
   /// Title of the screen shown when the app can't reach the server and can't confirm with the cloud provider whether the instance still exists
@@ -5456,13 +5720,13 @@ abstract class AppLocalizations {
   /// Button label to sign in to (or re-verify via) the cloud provider and retry the existence check
   ///
   /// In en, this message translates to:
-  /// **'CHECK VIA {provider}'**
+  /// **'check via {provider}'**
   String instanceVerificationCheckAction(String provider);
 
   /// Button label for the destructive option that clears local deployment state
   ///
   /// In en, this message translates to:
-  /// **'RESET'**
+  /// **'reset'**
   String get instanceVerificationResetAction;
 
   /// Title of the confirmation dialog for the destructive reset option
@@ -5480,13 +5744,13 @@ abstract class AppLocalizations {
   /// Confirm button label on the reset confirmation dialog
   ///
   /// In en, this message translates to:
-  /// **'RESET'**
+  /// **'reset'**
   String get instanceVerificationResetConfirm;
 
   /// Cancel button label on the reset confirmation dialog
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get instanceVerificationResetCancel;
 
   /// Title for the screen shown when a cloud provider confirms the deployed instance was deleted.
@@ -5504,7 +5768,7 @@ abstract class AppLocalizations {
   /// Label for the destructive reset button on the instance-gone screen.
   ///
   /// In en, this message translates to:
-  /// **'RESET'**
+  /// **'reset'**
   String get instanceGoneResetAction;
 
   /// Confirm-dialog title before clearing local state on the instance-gone screen.
@@ -5522,19 +5786,19 @@ abstract class AppLocalizations {
   /// Cancel label for the instance-gone reset confirmation dialog.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get instanceGoneResetCancel;
 
   /// Confirm label for the instance-gone reset confirmation dialog.
   ///
   /// In en, this message translates to:
-  /// **'RESET'**
+  /// **'reset'**
   String get instanceGoneResetConfirm;
 
   /// Title of the confirmation dialog for discarding a stuck local deployment record
   ///
   /// In en, this message translates to:
-  /// **'DISCARD THIS DEPLOYMENT RECORD?'**
+  /// **'Discard this deployment record?'**
   String get deploymentDiscardAttemptTitle;
 
   /// Body copy explaining what discarding a stuck deployment record does and does not do
@@ -5564,13 +5828,13 @@ abstract class AppLocalizations {
   /// Cancel button on the discard-stale-attempt confirmation dialog
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get deploymentDiscardAttemptCancel;
 
   /// Confirm button on the discard-stale-attempt confirmation dialog
   ///
   /// In en, this message translates to:
-  /// **'DISCARD'**
+  /// **'discard'**
   String get deploymentDiscardAttemptConfirm;
 
   /// Cleanup outcome shown when the cloud server was deleted successfully
@@ -5600,49 +5864,49 @@ abstract class AppLocalizations {
   /// No description provided for @serverControlTitle.
   ///
   /// In en, this message translates to:
-  /// **'SERVER CONTROLS'**
+  /// **'server controls'**
   String get serverControlTitle;
 
   /// No description provided for @serverControlConnectionDetails.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTION DETAILS'**
+  /// **'connection details'**
   String get serverControlConnectionDetails;
 
   /// No description provided for @serverControlIpAddress.
   ///
   /// In en, this message translates to:
-  /// **'IP ADDRESS'**
+  /// **'IP address'**
   String get serverControlIpAddress;
 
   /// No description provided for @serverControlHttpsEndpoint.
   ///
   /// In en, this message translates to:
-  /// **'HTTPS ENDPOINT'**
+  /// **'HTTPS endpoint'**
   String get serverControlHttpsEndpoint;
 
   /// No description provided for @serverControlAdminIdentity.
   ///
   /// In en, this message translates to:
-  /// **'ADMIN IDENTITY'**
+  /// **'admin identity'**
   String get serverControlAdminIdentity;
 
   /// No description provided for @serverControlAdminPassword.
   ///
   /// In en, this message translates to:
-  /// **'ADMIN PASSWORD'**
+  /// **'admin password'**
   String get serverControlAdminPassword;
 
   /// No description provided for @serverControlShow.
   ///
   /// In en, this message translates to:
-  /// **'SHOW'**
+  /// **'show'**
   String get serverControlShow;
 
   /// No description provided for @serverControlHide.
   ///
   /// In en, this message translates to:
-  /// **'HIDE'**
+  /// **'hide'**
   String get serverControlHide;
 
   /// No description provided for @serverControlLocalAuthReason.
@@ -5654,19 +5918,19 @@ abstract class AppLocalizations {
   /// No description provided for @serverControlCopy.
   ///
   /// In en, this message translates to:
-  /// **'COPY'**
+  /// **'copy'**
   String get serverControlCopy;
 
   /// No description provided for @serverControlCopied.
   ///
   /// In en, this message translates to:
-  /// **'COPIED'**
+  /// **'copied'**
   String get serverControlCopied;
 
   /// No description provided for @serverControlConfirmTitle.
   ///
   /// In en, this message translates to:
-  /// **'CONFIRM SERVER CONTROL'**
+  /// **'confirm server control'**
   String get serverControlConfirmTitle;
 
   /// No description provided for @serverControlConfirmBody.
@@ -5678,19 +5942,19 @@ abstract class AppLocalizations {
   /// No description provided for @serverControlConfirmCancel.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
+  /// **'cancel'**
   String get serverControlConfirmCancel;
 
   /// No description provided for @serverControlConfirmConfirm.
   ///
   /// In en, this message translates to:
-  /// **'CONFIRM'**
+  /// **'confirm'**
   String get serverControlConfirmConfirm;
 
   /// No description provided for @serverControlConfirmRestoreTitle.
   ///
   /// In en, this message translates to:
-  /// **'RESTORE BACKUP?'**
+  /// **'Restore backup?'**
   String get serverControlConfirmRestoreTitle;
 
   /// No description provided for @serverControlConfirmRestoreBody.
@@ -5702,38 +5966,38 @@ abstract class AppLocalizations {
   /// No description provided for @serverControlReleaseChecking.
   ///
   /// In en, this message translates to:
-  /// **'RELEASE STATUS: CHECKING'**
+  /// **'release status: checking'**
   String get serverControlReleaseChecking;
 
   /// No description provided for @serverControlReleaseStatus.
   ///
   /// In en, this message translates to:
-  /// **'RELEASE STATUS: {status}'**
+  /// **'release status: {status}'**
   String serverControlReleaseStatus(String status);
 
   /// No description provided for @serverControlReleaseCurrent.
   ///
   /// In en, this message translates to:
-  /// **'CURRENT: {version}'**
+  /// **'current: {version}'**
   String serverControlReleaseCurrent(String version);
 
   /// No description provided for @serverControlReleaseAvailable.
   ///
   /// In en, this message translates to:
-  /// **'AVAILABLE: {version}'**
+  /// **'available: {version}'**
   String serverControlReleaseAvailable(String version);
 
   /// No description provided for @serverControlReleaseContracts.
   ///
   /// In en, this message translates to:
-  /// **'CONTRACTS: APP v{app} · SERVER v{server} · DEPLOYMENT v{deployment}'**
+  /// **'contracts: app v{app} · server v{server} · deployment v{deployment}'**
   String serverControlReleaseContracts(
       String app, String server, String deployment);
 
   /// No description provided for @serverControlReleaseNixos.
   ///
   /// In en, this message translates to:
-  /// **'NIXOS: {version}'**
+  /// **'NixOS: {version}'**
   String serverControlReleaseNixos(String version);
 
   /// No description provided for @serverControlOperationRestartPocketCoder.
@@ -5775,61 +6039,61 @@ abstract class AppLocalizations {
   /// No description provided for @serverControlActionRestart.
   ///
   /// In en, this message translates to:
-  /// **'RESTART'**
+  /// **'restart'**
   String get serverControlActionRestart;
 
   /// No description provided for @serverControlActionUpdate.
   ///
   /// In en, this message translates to:
-  /// **'UPDATE'**
+  /// **'update'**
   String get serverControlActionUpdate;
 
   /// No description provided for @serverControlActionSave.
   ///
   /// In en, this message translates to:
-  /// **'SAVE'**
+  /// **'save'**
   String get serverControlActionSave;
 
   /// No description provided for @serverControlActionRestore.
   ///
   /// In en, this message translates to:
-  /// **'RESTORE'**
+  /// **'restore'**
   String get serverControlActionRestore;
 
   /// No description provided for @serverControlGroupPocketCoder.
   ///
   /// In en, this message translates to:
-  /// **'POCKETCODER'**
+  /// **'app'**
   String get serverControlGroupPocketCoder;
 
   /// No description provided for @serverControlGroupNixOs.
   ///
   /// In en, this message translates to:
-  /// **'NIXOS'**
+  /// **'system'**
   String get serverControlGroupNixOs;
 
   /// No description provided for @serverControlGroupData.
   ///
   /// In en, this message translates to:
-  /// **'DATA'**
+  /// **'data'**
   String get serverControlGroupData;
 
   /// No description provided for @serverControlPublicKeyLabel.
   ///
   /// In en, this message translates to:
-  /// **'SSH PUBLIC KEY ON FILE'**
+  /// **'SSH public key on file'**
   String get serverControlPublicKeyLabel;
 
   /// No description provided for @serverControlPrivateKeyLabel.
   ///
   /// In en, this message translates to:
-  /// **'SSH PRIVATE KEY'**
+  /// **'SSH private key'**
   String get serverControlPrivateKeyLabel;
 
   /// No description provided for @serverControlProviderConsole.
   ///
   /// In en, this message translates to:
-  /// **'PROVIDER WEB PORTAL'**
+  /// **'provider web portal'**
   String get serverControlProviderConsole;
 
   /// No description provided for @serverControlProviderConsoleUnavailable.
@@ -5838,10 +6102,28 @@ abstract class AppLocalizations {
   /// **'No active provider-managed instance found.'**
   String get serverControlProviderConsoleUnavailable;
 
+  /// No description provided for @serverControlErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'ERROR: {error}'**
+  String serverControlErrorPrefix(String error);
+
+  /// No description provided for @serverControlRetryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'retry'**
+  String get serverControlRetryAction;
+
+  /// No description provided for @serverControlOutputLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'output'**
+  String get serverControlOutputLabel;
+
   /// No description provided for @fossServerSetupTitle.
   ///
   /// In en, this message translates to:
-  /// **'CONNECT YOUR SERVER'**
+  /// **'connect your server'**
   String get fossServerSetupTitle;
 
   /// No description provided for @fossServerSetupIntro.
@@ -5853,7 +6135,7 @@ abstract class AppLocalizations {
   /// No description provided for @fossServerSetupGenerateKey.
   ///
   /// In en, this message translates to:
-  /// **'GENERATE KEY'**
+  /// **'generate key'**
   String get fossServerSetupGenerateKey;
 
   /// No description provided for @fossServerSetupPublicKeyLabel.
@@ -5871,26 +6153,176 @@ abstract class AppLocalizations {
   /// No description provided for @fossServerSetupTestAndSave.
   ///
   /// In en, this message translates to:
-  /// **'TEST CONNECTION & SAVE'**
+  /// **'test connection & save'**
   String get fossServerSetupTestAndSave;
 
   /// No description provided for @fossServerSetupConnected.
   ///
   /// In en, this message translates to:
-  /// **'CONNECTED -- YOUR SERVER IS NOW MANAGED'**
+  /// **'connected -- your server is now managed'**
   String get fossServerSetupConnected;
+
+  /// No description provided for @fossServerSetupErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'ERROR: {error}'**
+  String fossServerSetupErrorPrefix(String error);
 
   /// No description provided for @initializationInstanceId.
   ///
   /// In en, this message translates to:
-  /// **'INSTANCE ID'**
+  /// **'instance ID'**
   String get initializationInstanceId;
 
   /// No description provided for @initializationRetryAttempt.
   ///
   /// In en, this message translates to:
-  /// **'RETRY ATTEMPT'**
+  /// **'retry attempt'**
   String get initializationRetryAttempt;
+
+  /// No description provided for @memoryDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'pocket memory'**
+  String get memoryDashboardTitle;
+
+  /// No description provided for @memoryDashboardUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'memory unavailable'**
+  String get memoryDashboardUnavailable;
+
+  /// No description provided for @memoryDashboardObservations.
+  ///
+  /// In en, this message translates to:
+  /// **'observations'**
+  String get memoryDashboardObservations;
+
+  /// No description provided for @memoryDashboardInterpretations.
+  ///
+  /// In en, this message translates to:
+  /// **'interpretations'**
+  String get memoryDashboardInterpretations;
+
+  /// No description provided for @memoryDashboardLinks.
+  ///
+  /// In en, this message translates to:
+  /// **'links'**
+  String get memoryDashboardLinks;
+
+  /// No description provided for @memoryDashboardByAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory by Account'**
+  String get memoryDashboardByAccount;
+
+  /// No description provided for @memoryDashboardNoMemoryRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'No memory recorded yet'**
+  String get memoryDashboardNoMemoryRecorded;
+
+  /// No description provided for @memoryDashboardRecentObservations.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Observations'**
+  String get memoryDashboardRecentObservations;
+
+  /// No description provided for @memoryDashboardNoObservationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No observations yet'**
+  String get memoryDashboardNoObservationsYet;
+
+  /// No description provided for @memoryDashboardRecentInterpretations.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Interpretations'**
+  String get memoryDashboardRecentInterpretations;
+
+  /// No description provided for @memoryDashboardNoInterpretationsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No interpretations yet'**
+  String get memoryDashboardNoInterpretationsYet;
+
+  /// No description provided for @memoryDashboardAccountSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{observations} obs / {interpretations} int'**
+  String memoryDashboardAccountSummary(int observations, int interpretations);
+
+  /// No description provided for @memoryDashboardLinkedPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked: {links}'**
+  String memoryDashboardLinkedPrefix(String links);
+
+  /// No description provided for @pocketbaseInspectorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PocketBase'**
+  String get pocketbaseInspectorTitle;
+
+  /// No description provided for @pocketbaseInspectorUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'database unavailable'**
+  String get pocketbaseInspectorUnavailable;
+
+  /// No description provided for @pocketbaseInspectorUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'users'**
+  String get pocketbaseInspectorUsers;
+
+  /// No description provided for @pocketbaseInspectorChats.
+  ///
+  /// In en, this message translates to:
+  /// **'chats'**
+  String get pocketbaseInspectorChats;
+
+  /// No description provided for @pocketbaseInspectorAgentProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'agent profiles'**
+  String get pocketbaseInspectorAgentProfiles;
+
+  /// No description provided for @pocketbaseInspectorHarnesses.
+  ///
+  /// In en, this message translates to:
+  /// **'harnesses'**
+  String get pocketbaseInspectorHarnesses;
+
+  /// No description provided for @pocketbaseInspectorMcpServers.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP servers'**
+  String get pocketbaseInspectorMcpServers;
+
+  /// No description provided for @pocketbaseInspectorSkills.
+  ///
+  /// In en, this message translates to:
+  /// **'skills'**
+  String get pocketbaseInspectorSkills;
+
+  /// No description provided for @pocketbaseInspectorRecentChats.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Chats'**
+  String get pocketbaseInspectorRecentChats;
+
+  /// No description provided for @pocketbaseInspectorNoChatsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No chats yet'**
+  String get pocketbaseInspectorNoChatsYet;
+
+  /// No description provided for @pocketbaseInspectorChatArchivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} (archived)'**
+  String pocketbaseInspectorChatArchivedTitle(String title);
 }
 
 class _AppLocalizationsDelegate

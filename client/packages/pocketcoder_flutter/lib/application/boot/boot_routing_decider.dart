@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
+import 'package:pocketcoder_flutter/domain/deployment/i_deployment_auth_status.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
@@ -18,11 +19,13 @@ class BootRoutingDecider {
     required IHarnessAuthRepository harnessAuthRepository,
     required GoRouter router,
     IInstanceExistenceResolver? instanceExistenceResolver,
+    IDeploymentAuthStatus? deploymentAuthStatus,
   })  : _readiness = readinessCheck,
         _auth = authCoordinator,
         _harness = harnessAuthRepository,
         _router = router,
-        _instanceExistence = instanceExistenceResolver;
+        _instanceExistence = instanceExistenceResolver,
+        _deploymentAuthStatus = deploymentAuthStatus;
 
   /// Must equal BootScreen's own scripted timeline length (2.5s + 6.5s),
   /// since nothing here observes BootScreen's actual animation state.
@@ -34,9 +37,11 @@ class BootRoutingDecider {
   final IHarnessAuthRepository _harness;
   final GoRouter _router;
   final IInstanceExistenceResolver? _instanceExistence;
+  final IDeploymentAuthStatus? _deploymentAuthStatus;
 
   StreamSubscription<ServerReadinessSnapshot>? _readinessSub;
   StreamSubscription<AuthSessionSnapshot>? _authSub;
+  StreamSubscription<void>? _deploymentAuthSub;
   _LatchKey? _confirmedLatchKey;
 
   int _readyEpoch = 0;
@@ -51,10 +56,13 @@ class BootRoutingDecider {
   int _generation = 0;
   final DateTime _bootStartedAt = DateTime.now();
   bool _hasLeftBootScreen = false;
+  String? _lastDeployProgressRoute;
 
   Future<void> start() async {
     _readinessSub = _readiness.readinessChanges.listen((_) => _reconcile());
     _authSub = _auth.sessionChanges.listen((_) => _reconcile());
+    _deploymentAuthSub =
+        _deploymentAuthStatus?.changes.listen((_) => _reconcile());
     await _readiness.initialize();
     await _reconcile();
   }
@@ -62,6 +70,7 @@ class BootRoutingDecider {
   void dispose() {
     _readinessSub?.cancel();
     _authSub?.cancel();
+    _deploymentAuthSub?.cancel();
   }
 
   Future<void> retryAuth() async {
@@ -151,12 +160,12 @@ class BootRoutingDecider {
             return; // superseded while awaiting
           }
         }
-        _navigate(RouteNames.onboarding);
+        _navigateDeployPhase(RouteNames.onboarding);
         return;
       case ServerReadinessStatus.provisioning:
       case ServerReadinessStatus.resumeUnrecoverable:
         _wasReady = false;
-        _navigate(RouteNames.deploymentProgress);
+        _navigateDeployPhase(RouteNames.deploymentProgress);
         return;
       case ServerReadinessStatus.ready:
         break;
@@ -170,6 +179,15 @@ class BootRoutingDecider {
     await _ensureRestoredFor(epoch);
     if (generation != _generation) {
       return; // superseded while awaiting
+    }
+
+    final deploymentAuth = _deploymentAuthStatus?.current;
+    if (deploymentAuth != null &&
+        deploymentAuth.instanceId == readiness.instanceId &&
+        (deploymentAuth.phase == DeploymentAuthPhase.waitingForCredentials ||
+            deploymentAuth.phase == DeploymentAuthPhase.signingIn)) {
+      // In-flight auto-login makes this auth reading transient.
+      return;
     }
 
     final session = _auth.current;
@@ -230,6 +248,25 @@ class BootRoutingDecider {
     _confirmedLatchKey = latchKey;
     _navigate(
         harnessConnected ? RouteNames.chats : RouteNames.onboardingHarnessAuth);
+  }
+
+  // Only set on an actual deploymentProgress push, not on onboarding --
+  // onboarding's own forward navigation must never poison this guard.
+  void _navigateDeployPhase(String routeName) {
+    final current = _currentRouteName();
+    if (_lastDeployProgressRoute != null &&
+        current != _lastDeployProgressRoute) {
+      AppLogger.debug('BootRoutingDecider deploy-phase nav suppressed', {
+        'requested': routeName,
+        'current': current,
+        'lastDeployProgressRoute': _lastDeployProgressRoute,
+      });
+      return;
+    }
+    _navigate(routeName);
+    if (routeName == RouteNames.deploymentProgress) {
+      _lastDeployProgressRoute = routeName;
+    }
   }
 
   void _navigate(String routeName) {

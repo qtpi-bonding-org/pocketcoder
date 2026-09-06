@@ -26,9 +26,8 @@ class TerminalCheckbox extends StatelessWidget {
         child: Text(
           value ? '[X]' : '[ ]',
           style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
+            fontFamily: AppFonts.family,
             color: color ?? context.colorScheme.onSurface,
-            fontSize: AppSizes.fontStandard,
             fontWeight: AppFonts.heavy,
           ),
         ),

@@ -1,26 +1,29 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_card.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/harness_choice_card.dart';
+import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 
 class AgentAuthView extends StatelessWidget {
-  const AgentAuthView({
-    super.key,
-    required this.status,
-    required this.harnesses,
-    required this.error,
-    required this.onSelected,
-    required this.harnessProvidersLoaded,
-    required this.onSkip,
-    this.onContinue,
-    this.connectedHarnessIds = const {},
-    this.selectedHarnesses = const [],
-  });
+  const AgentAuthView(
+      {super.key,
+      required this.status,
+      required this.harnesses,
+      required this.error,
+      required this.onSelected,
+      required this.harnessProvidersLoaded,
+      required this.onSkip,
+      this.onContinue,
+      this.connectedHarnessIds = const {},
+      this.selectedHarnesses = const []});
 
   final UiFlowStatus status;
   final List<Harnesse> harnesses;
@@ -58,21 +61,13 @@ class AgentAuthView extends StatelessWidget {
     }).toList();
 
     return PocketCoderShell(
-      title: context.l10n.onboardingChooseHarnessTitle,
-      activePillar: NavPillar.configure,
-      showBack: false,
-      showNavigation: false,
-      actions: [
-        TerminalAction(label: context.l10n.actionSkip, onTap: onSkip),
-        if (onContinue case final continueTap?)
-          TerminalAction(
-            label: context.l10n.actionContinue,
-            onTap: continueTap,
-            emphasis: Emphasis.outlined,
-          ),
-      ],
-      body: _buildBody(context, supported),
-    );
+        showBack: false,
+        // onContinue (once at least one harness is connected) takes over
+        // as the forward action; onSkip stays reachable via its own body
+        // button below rather than disappearing from the footer's single
+        // onNext slot.
+        footer: WizardFooter(onNext: onContinue ?? onSkip),
+        body: _buildBody(context, supported));
   }
 
   Widget _buildBody(BuildContext context, List<Harnesse> supported) {
@@ -86,102 +81,52 @@ class AgentAuthView extends StatelessWidget {
       return Center(
         child: TerminalText(
           context.l10n.errorGeneric,
-          color: context.terminalColors.warning,
-          textAlign: TextAlign.center,
+          role: TextRole.warn,
         ),
       );
     }
     if (supported.isEmpty) {
-      return Center(child: TerminalText(context.l10n.errorGeneric));
+      return Center(
+        child: TerminalText(
+          context.l10n.errorGeneric,
+          role: TextRole.body,
+        ),
+      );
     }
 
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-        child: ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.all(AppSizes.space * 2),
-          children: [
-            TerminalText(
-              context.l10n.onboardingChooseHarnessBody,
-              alpha: 0.7,
-            ),
-            VSpace.x3,
-            if (!harnessProvidersLoaded)
-              const TerminalText('Loading provider connections…'),
-            for (final harness in supported)
-              Padding(
-                padding: EdgeInsets.only(bottom: AppSizes.space),
-                child: _HarnessChoiceCard(
-                  harness: harness,
-                  connected: connectedHarnessIds.contains(harness.id),
-                  onTap:
-                      harnessProvidersLoaded ? () => onSelected(harness) : null,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _HarnessChoiceCard extends StatelessWidget {
-  const _HarnessChoiceCard({
-    required this.harness,
-    required this.connected,
-    required this.onTap,
-  });
-
-  final Harnesse harness;
-  final bool connected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return InkWell(
-      onTap: onTap,
-      child: TerminalCard(
-        child: Row(
-          children: [
-            TerminalText.label(r'$', color: colors.primary),
-            HSpace.x2,
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return OnboardingContentShell(
+        listBuilder: (context) => ListView(
+                shrinkWrap: true,
+                padding: EdgeInsets.all(AppSizes.space * 2),
                 children: [
-                  Text(
-                    harness.name,
-                    style: TextStyle(
-                      color: colors.onSurface,
-                      fontFamily: AppFonts.headerFamily,
-                      fontSize: AppSizes.fontStandard,
-                      fontWeight: AppFonts.heavy,
-                    ),
-                  ),
-                  VSpace.x1,
                   TerminalText(
-                    connected
-                        ? context.l10n.onboardingConnected
-                        : switch (harness.cliId.trim().toLowerCase()) {
-                            'codex' => context.l10n.onboardingCodexAccountLogin,
-                            'claude-code' =>
-                              context.l10n.onboardingClaudeAccountLogin,
-                            _ => context.l10n
-                                .onboardingHarnessAccountLogin(harness.name),
-                          },
-                    alpha: 0.6,
-                    color: connected ? colors.primary : null,
+                    context.l10n.onboardingChooseHarnessBody,
+                    role: TextRole.body,
                   ),
-                ],
-              ),
-            ),
-            Text(connected ? '[x]' : '[>]',
-                style: TextStyle(color: colors.primary)),
-          ],
-        ),
-      ),
-    );
+                  VSpace.x3,
+                  if (!harnessProvidersLoaded)
+                    TerminalText(
+                        context.l10n.onboardingChooseHarnessLoadingProviders,
+                        role: TextRole.body),
+                  for (final harness in supported)
+                    Padding(
+                        padding: EdgeInsets.only(bottom: AppSizes.space),
+                        child: HarnessChoiceCard(
+                            harness: harness,
+                            connected: connectedHarnessIds.contains(harness.id),
+                            onTap: harnessProvidersLoaded
+                                ? () => onSelected(harness)
+                                : null)),
+                  // onContinue occupies the footer's onNext slot once it's
+                  // available, so skip needs its own reachable affordance
+                  // here rather than vanishing.
+                  if (onContinue != null) ...[
+                    VSpace.x2,
+                    TerminalButton(
+                        label: context.l10n.actionSkip,
+                        kind: ActionKind.neutral,
+                        onTap: onSkip),
+                  ],
+                ]));
   }
 }

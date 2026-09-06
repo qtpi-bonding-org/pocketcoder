@@ -28,8 +28,7 @@ class NotificationRuleRepository implements INotificationRuleRepository {
         final userId = _pb.authStore.record?.id;
         if (userId == null) return;
 
-        final existing =
-            await _dao.getFullList(filter: 'user = "$userId"');
+        final existing = await _dao.getFullList(filter: 'user = "$userId"');
         final current = existing.isEmpty
             ? <String, bool>{}
             : _asBoolMap(existing.first.rules);

@@ -8,13 +8,19 @@ import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
+import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
+import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
+import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/harness_auth_view.dart';
+import 'package:pocketcoder_flutter/presentation/provider/widgets/provider_widgets.dart';
 
 class HarnessAuthAdapter
     extends CubitAdapter<HarnessAuthCubit, HarnessAuthState> {
@@ -36,6 +42,7 @@ class HarnessAuthAdapter
   ) {
     final state = adapter.cubitField(_selectState);
     final cubit = context.read<HarnessAuthCubit>();
+    final providerState = context.watch<ProviderCubit>().state;
     // Rechecked on every emission inside the listener below (not here in
     // buildAdapter, which only runs once per mount) so a challenge that
     // arrives after the initial build still starts its poll timer.
@@ -62,8 +69,7 @@ class HarnessAuthAdapter
         }
       }
       for (final id in pollTimers.keys.toList()) {
-        if (!awaiting.containsKey(id) ||
-            pollIntervals[id] != awaiting[id]) {
+        if (!awaiting.containsKey(id) || pollIntervals[id] != awaiting[id]) {
           pollTimers.remove(id)?.cancel();
           pollIntervals.remove(id);
         }
@@ -78,6 +84,7 @@ class HarnessAuthAdapter
         }
       }
     }
+
     syncPollTimers(state.value);
     // Whether a harness is connected lives in the per-harness `statuses`
     // map, not the cubit's top-level status/error -- those routinely stay
@@ -109,6 +116,8 @@ class HarnessAuthAdapter
           error: value.error,
           isLoading: value.isLoading,
           isHarnessBusy: value.isHarnessBusy,
+          providerCatalog: providerState.providerCatalog,
+          providerAPIKeys: providerState.providerAPIKeys,
           onStartAccount: (h, provider) async {
             final visibility = await _chooseVisibility(context);
             if (visibility != null) {
@@ -116,13 +125,7 @@ class HarnessAuthAdapter
                   harnessId: h.id, provider: provider, visibility: visibility);
             }
           },
-          onStartNone: (h) async {
-            final visibility = await _chooseVisibility(context);
-            if (visibility != null) {
-              cubit.startWithNone(h.id, visibility: visibility);
-            }
-          },
-          onPoll: (h) => cubit.poll(h.id),
+          onUseApiKey: (h) => _selectApiKey(context, h, value),
           onSubmit: (h, code) => cubit.submitCode(harnessId: h.id, code: code),
           onCancel: (h) => cubit.cancel(h.id),
           onDisconnect: (h) => cubit.disconnect(h.id),
@@ -190,25 +193,66 @@ class HarnessAuthAdapter
     }
   }
 
+  Future<void> _selectApiKey(
+    BuildContext context,
+    Harnesse harness,
+    HarnessAuthState state,
+  ) async {
+    final auth = context.read<HarnessAuthCubit>();
+    final providerCubit = context.read<ProviderCubit>();
+    final providerIds = state.harnessProviders
+        .where((edge) => edge.harness == harness.id)
+        .map((edge) => edge.provider)
+        .toSet();
+    if (providerIds.isEmpty) return; // this harness has no usable provider yet
+
+    final existing = providerCubit.state.providerAPIKeys
+        .where((key) => providerIds.contains(key.provider))
+        .firstOrNull;
+
+    final catalog = providerCubit.state.providerCatalog
+        .where((p) => providerIds.contains(p.id))
+        .toList();
+    if (catalog.isEmpty) return; // provider catalog hasn't loaded yet
+    final saved = await showDialog<ProviderApiKey>(
+      context: context,
+      builder: (dialogContext) => ProviderKeyEditorDialog(
+        providerCatalog: catalog,
+        existing: existing,
+        onSave: (key) => Navigator.of(dialogContext).pop(key),
+      ),
+    );
+    if (saved == null) return; // user cancelled
+    await providerCubit.saveProviderAPIKey(saved);
+    if (providerCubit.state.status == UiFlowStatus.failure) return;
+
+    if (!context.mounted) return;
+    await auth.startWithNone(harness.id,
+        provider: saved.provider, visibility: harnessAccountVisibilityPersonal);
+  }
+
   Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
         context: context,
         builder: (dialogContext) => TerminalDialog(
-          title: context.l10n.harnessAuthVisibilityTitle,
+          title: context.l10n.harnessAuthVisibilityTitle.toLowerCase(),
           content: Text(context.l10n.harnessAuthVisibilityBody),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext)
+            TerminalButton(
+              label: context.l10n.harnessAuthPersonal,
+              kind: ActionKind.primary,
+              onTap: () => Navigator.of(dialogContext)
                   .pop(harnessAccountVisibilityPersonal),
-              child: Text(context.l10n.harnessAuthPersonal),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext)
+            TerminalButton(
+              label: context.l10n.harnessAuthShared,
+              kind: ActionKind.primary,
+              onTap: () => Navigator.of(dialogContext)
                   .pop(harnessAccountVisibilityDeployment),
-              child: Text(context.l10n.harnessAuthShared),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(context.l10n.actionCancel),
+            TerminalButton(
+              label: context.l10n.actionCancel,
+              kind: ActionKind.refusal,
+              onTap: () => Navigator.of(dialogContext).pop(),
             ),
           ],
         ),
