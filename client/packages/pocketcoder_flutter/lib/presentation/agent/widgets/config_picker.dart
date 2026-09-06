@@ -1,7 +1,9 @@
 import 'package:acp_dart/acp_dart.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
@@ -10,9 +12,13 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
 class ConfigPicker extends StatelessWidget {
   const ConfigPicker(
-      {super.key, required this.config, required this.onSetOption});
+      {super.key,
+      required this.config,
+      required this.onSetOption,
+      this.onSearchModels});
   final Map<String, dynamic>? config;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
+  final Future<List<HarnessModel>> Function()? onSearchModels;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +53,10 @@ class ConfigPicker extends StatelessWidget {
             TerminalCheckbox(
                 value: value == true, onChanged: (v) => submit('$v'))
           ]));
+    }
+    if (kind == 'select' && id == 'model' && onSearchModels != null) {
+      return _modelSearchRow(context,
+          name: name, current: value?.toString(), submit: submit);
     }
     if (kind == 'select') {
       final choices = (o['options'] as List?)
@@ -98,4 +108,46 @@ class ConfigPicker extends StatelessWidget {
                   color: context.colorScheme.onSurface.withValues(alpha: .4)))
         ]));
   }
+
+  Widget _modelSearchRow(
+    BuildContext context, {
+    required String name,
+    required String? current,
+    required void Function(String) submit,
+  }) =>
+      DetailRow(
+          label: name,
+          value: current?.isEmpty ?? true ? '--' : current,
+          affordance: RowAffordance.expand,
+          onTap: () async {
+            final models = await onSearchModels!();
+            if (!context.mounted) return;
+            final selected = await showDialog<HarnessModel>(
+                context: context,
+                builder: (dialogContext) => SearchablePickerDialog<HarnessModel>(
+                    title: name,
+                    items: models,
+                    itemLabel: (hm) => hm.harnessModelId,
+                    itemBuilder: (context, hm,
+                            {required isSelected, required onTap}) =>
+                        InkWell(
+                            onTap: onTap,
+                            child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: AppSizes.space * .5),
+                                child: TerminalText(hm.harnessModelId,
+                                    role: isSelected
+                                        ? TextRole.label
+                                        : TextRole.body))),
+                    selectedItem: models
+                        .where((hm) => hm.harnessModelId == current)
+                        .firstOrNull,
+                    maxUnfilteredResults: 5,
+                    searchLabel: dialogContext.l10n.providerScreenSearchLabel,
+                    searchHint: dialogContext.l10n.agentModelSearchHint,
+                    emptyLabel:
+                        dialogContext.l10n.providerScreenNoHarnessModels,
+                    noMatchesLabel: dialogContext.l10n.agentModelSearchNoMatches));
+            if (selected != null) submit(selected.harnessModelId);
+          });
 }

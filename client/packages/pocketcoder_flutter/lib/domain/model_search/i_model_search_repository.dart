@@ -10,4 +10,8 @@ abstract class IModelSearchRepository {
   Future<List<domain.Provider>> credentialedProvidersFor(String harnessId);
 
   Future<List<HarnessModel>> modelsFor(String harnessId, {String? providerId});
+
+  /// A search UI must not offer a model whose provider has no stored
+  /// credential here -- picking one would fail at run time.
+  Future<List<HarnessModel>> modelsAvailableFor(String harnessId);
 }

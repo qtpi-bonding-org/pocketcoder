@@ -10,6 +10,7 @@ import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.d
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
 import 'package:pocketcoder_flutter/infrastructure/chat/chat_dao.dart';
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
+import 'package:pocketcoder_flutter/domain/model_search/i_model_search_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'session_controls_state.dart';
@@ -25,6 +26,7 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
     this._harnesseDao,
     this._modelDao,
     this._providerCatalogDao,
+    this._modelSearchRepository,
   ) : super(const SessionControlsState());
 
   final AgentChatRepository _repository;
@@ -35,6 +37,7 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
   final HarnesseDao _harnesseDao;
   final ModelDao _modelDao;
   final ProviderCatalogDao _providerCatalogDao;
+  final IModelSearchRepository _modelSearchRepository;
 
   StreamSubscription? _watchSub;
   String? _chatId;
@@ -75,6 +78,17 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
         emit(state.copyWith(error: e, status: UiFlowStatus.failure));
       },
     );
+  }
+
+  /// Empty (rather than throwing) before [open] or for a chat with no
+  /// harness -- there is nothing to search yet, not a failure.
+  Future<List<HarnessModel>> searchableModels() async {
+    final chatId = _chatId;
+    if (chatId == null) return const [];
+    final chat = await _chatDao.getOne(chatId);
+    final harnessId = chat.harness;
+    if (harnessId == null || harnessId.isEmpty) return const [];
+    return _modelSearchRepository.modelsAvailableFor(harnessId);
   }
 
   /// Selects [modeId] as the active session mode.

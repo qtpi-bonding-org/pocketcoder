@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/domain/exceptions/model_search_exception.dar
 import 'package:pocketcoder_flutter/domain/model_search/i_model_search_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
+import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
 
@@ -49,17 +50,8 @@ class ModelSearchRepository implements IModelSearchRepository {
         if (harnessModels.isEmpty) return const <domain.Provider>[];
 
         final models = await _modelDao.getFullList();
-        final modelById = {for (final m in models) m.id: m};
-        final providerAPIKeys = await _providerAPIKeyDao.getFullList();
-        final credentialedProviderIds =
-            providerAPIKeys.map((k) => k.provider).toSet();
-
-        final usableProviderIds = <String>{
-          for (final hm in harnessModels)
-            if (modelById[hm.model] != null &&
-                credentialedProviderIds.contains(modelById[hm.model]!.provider))
-              modelById[hm.model]!.provider,
-        };
+        final usableProviderIds =
+            await _usableProviderIds(harnessModels, models);
         if (usableProviderIds.isEmpty) return const <domain.Provider>[];
 
         final providers = await _providerCatalogDao.getFullList();
@@ -68,6 +60,24 @@ class ModelSearchRepository implements IModelSearchRepository {
             .toList();
       }, ModelSearchException.new, 'credentialedProvidersFor');
 
+  @override
+  Future<List<HarnessModel>> modelsAvailableFor(String harnessId) =>
+      tryMethod(() async {
+        final harness = await _harnesseDao.getOne(harnessId);
+        final harnessModels = await _harnessModelsForHarness(harnessId);
+        if (harness.providerFanout != true) return harnessModels;
+        if (harnessModels.isEmpty) return const <HarnessModel>[];
+
+        final models = await _modelDao.getFullList();
+        final modelById = {for (final m in models) m.id: m};
+        final usableProviderIds =
+            await _usableProviderIds(harnessModels, models);
+        return harnessModels
+            .where((hm) =>
+                usableProviderIds.contains(modelById[hm.model]?.provider))
+            .toList();
+      }, ModelSearchException.new, 'modelsAvailableFor');
+
   Future<List<HarnessModel>> _harnessModelsForHarness(String harnessId) =>
       _harnessModelDao.getFullList(
           filter:
@@ -75,6 +85,23 @@ class ModelSearchRepository implements IModelSearchRepository {
 
   Future<Set<String>> _modelIdsForProvider(String providerId) async {
     final models = await _modelDao.getFullList();
-    return {for (final m in models) if (m.provider == providerId) m.id};
+    return {
+      for (final m in models)
+        if (m.provider == providerId) m.id
+    };
+  }
+
+  Future<Set<String>> _usableProviderIds(
+      List<HarnessModel> harnessModels, List<Model> models) async {
+    final modelById = {for (final m in models) m.id: m};
+    final providerAPIKeys = await _providerAPIKeyDao.getFullList();
+    final credentialedProviderIds =
+        providerAPIKeys.map((k) => k.provider).toSet();
+    return {
+      for (final hm in harnessModels)
+        if (modelById[hm.model] != null &&
+            credentialedProviderIds.contains(modelById[hm.model]!.provider))
+          modelById[hm.model]!.provider,
+    };
   }
 }

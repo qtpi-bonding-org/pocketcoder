@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
@@ -37,6 +38,7 @@ class ChatView extends StatefulWidget {
     required this.onSendPrompt,
     required this.onCancel,
     required this.onSetOption,
+    this.onSearchModels,
     required this.onPermissionOptionSelected,
     required this.onElicitationRespond,
     required this.animatedMessageIds,
@@ -60,6 +62,7 @@ class ChatView extends StatefulWidget {
   final ValueChanged<String> onSendPrompt;
   final VoidCallback onCancel;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
+  final Future<List<HarnessModel>> Function()? onSearchModels;
   final void Function(String requestId, {String? optionId, bool cancelled})
       onPermissionOptionSelected;
   final void Function(String requestId, Map<String, dynamic> response)
@@ -287,7 +290,10 @@ class _ChatViewState extends State<ChatView> {
       body: Column(
         children: [
           PlanPanel(plan: widget.conversation.sessionState.plan),
-          ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
+          ConfigPicker(
+              config: widget.config,
+              onSetOption: widget.onSetOption,
+              onSearchModels: widget.onSearchModels),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

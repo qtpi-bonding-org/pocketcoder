@@ -20,7 +20,8 @@ class SearchablePickerDialog<T> extends StatefulWidget {
       this.searchLabel,
       this.searchHint,
       this.emptyLabel,
-      this.noMatchesLabel});
+      this.noMatchesLabel,
+      this.maxUnfilteredResults});
 
   final String title;
   final List<T> items;
@@ -39,6 +40,8 @@ class SearchablePickerDialog<T> extends StatefulWidget {
   final String? searchHint;
   final String? emptyLabel;
   final String? noMatchesLabel;
+
+  final int? maxUnfilteredResults;
 
   @override
   State<SearchablePickerDialog<T>> createState() =>
@@ -87,7 +90,10 @@ class _SearchablePickerDialogState<T> extends State<SearchablePickerDialog<T>> {
   }
 
   List<T> get _filtered {
-    if (_query.isEmpty) return _sortedItems;
+    if (_query.isEmpty) {
+      final cap = widget.maxUnfilteredResults;
+      return cap == null ? _sortedItems : _sortedItems.take(cap).toList();
+    }
     final matches = widget.matches ??
         (T item, String query) =>
             widget.itemLabel(item).toLowerCase().contains(query.toLowerCase());
@@ -153,8 +159,7 @@ class _SearchablePickerDialogState<T> extends State<SearchablePickerDialog<T>> {
                                                 padding: EdgeInsets.symmetric(
                                                     vertical:
                                                         AppSizes.space * 0.5),
-                                                child: Text(
-                                                    row.header!,
+                                                child: Text(row.header!,
                                                     style: TextStyle(
                                                         fontFamily:
                                                             AppFonts.family,

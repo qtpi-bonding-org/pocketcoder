@@ -208,4 +208,98 @@ void main() {
       );
     });
   });
+
+  group('modelsAvailableFor', () {
+    const nonFanoutHarness = Harnesse(
+      id: 'harness-1',
+      name: 'Claude Code',
+      cliId: 'claude-code',
+      acpTransport: HarnesseAcpTransport.stdio,
+      providerFanout: false,
+    );
+    const fanoutHarness = Harnesse(
+      id: 'harness-1',
+      name: 'OpenCode',
+      cliId: 'opencode',
+      acpTransport: HarnesseAcpTransport.stdio,
+      providerFanout: true,
+    );
+
+    test('returns every catalog row unfiltered for a non-fanout harness',
+        () async {
+      final rows = [
+        const HarnessModel(
+            id: 'hm-1', harness: 'harness-1', model: 'm-1', harnessModelId: 'a'),
+        const HarnessModel(
+            id: 'hm-2', harness: 'harness-1', model: 'm-2', harnessModelId: 'b'),
+      ];
+      when(() => harnesseDao.getOne('harness-1'))
+          .thenAnswer((_) async => nonFanoutHarness);
+      when(() => harnessModelDao.getFullList(filter: 'harness = "harness-1"'))
+          .thenAnswer((_) async => rows);
+
+      final result = await repo.modelsAvailableFor('harness-1');
+
+      expect(result, rows);
+      verifyNever(() => modelDao.getFullList());
+      verifyNever(() => providerAPIKeyDao.getFullList());
+    });
+
+    test(
+        'returns only the rows whose provider is credentialed for a fanout '
+        'harness', () async {
+      when(() => harnesseDao.getOne('harness-1'))
+          .thenAnswer((_) async => fanoutHarness);
+      when(() => harnessModelDao.getFullList(filter: 'harness = "harness-1"'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-openrouter',
+                    harness: 'harness-1',
+                    model: 'm-openrouter',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+                HarnessModel(
+                    id: 'hm-orca',
+                    harness: 'harness-1',
+                    model: 'm-orca',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+              ]);
+      when(() => modelDao.getFullList()).thenAnswer((_) async => const [
+            Model(id: 'm-openrouter', name: 'Sonnet 4.5', provider: 'prov-openrouter'),
+            Model(id: 'm-orca', name: 'Sonnet 4.5', provider: 'prov-orca'),
+          ]);
+      when(() => providerAPIKeyDao.getFullList()).thenAnswer((_) async => const [
+            ProviderApiKey(
+                id: 'key-1', owner: 'user-1', provider: 'prov-openrouter', apiKey: 'sk-x'),
+          ]);
+
+      final result = await repo.modelsAvailableFor('harness-1');
+
+      expect(result.map((hm) => hm.id), ['hm-openrouter']);
+      verifyNever(() => providerCatalogDao.getFullList());
+    });
+
+    test(
+        'returns nothing without hitting the model/key DAOs when a fanout '
+        'harness has no synced models', () async {
+      when(() => harnesseDao.getOne('harness-1'))
+          .thenAnswer((_) async => fanoutHarness);
+      when(() => harnessModelDao.getFullList(filter: 'harness = "harness-1"'))
+          .thenAnswer((_) async => const []);
+
+      final result = await repo.modelsAvailableFor('harness-1');
+
+      expect(result, isEmpty);
+      verifyNever(() => modelDao.getFullList());
+      verifyNever(() => providerAPIKeyDao.getFullList());
+    });
+
+    test('wraps a DAO failure as ModelSearchException', () async {
+      when(() => harnesseDao.getOne('harness-1')).thenThrow(Exception('boom'));
+
+      await expectLater(
+        repo.modelsAvailableFor('harness-1'),
+        throwsA(isA<ModelSearchException>()),
+      );
+    });
+  });
 }

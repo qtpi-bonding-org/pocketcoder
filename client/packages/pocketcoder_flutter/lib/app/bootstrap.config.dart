@@ -543,6 +543,17 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i619.AgentCacheDb>(),
           gh<_i300.AgentActionsApi>(),
         ));
+    gh.factory<_i312.SessionControlsCubit>(() => _i312.SessionControlsCubit(
+          gh<_i763.AgentChatRepository>(),
+          gh<_i199.ChatDao>(),
+          gh<_i810.PocoConfigDao>(),
+          gh<_i810.PermissionModeDao>(),
+          gh<_i294.HarnessModelDao>(),
+          gh<_i294.HarnesseDao>(),
+          gh<_i294.ModelDao>(),
+          gh<_i294.ProviderCatalogDao>(),
+          gh<_i563.IModelSearchRepository>(),
+        ));
     gh.factory<_i328.McpCubit>(() => _i328.McpCubit(
           gh<_i922.IMcpRepository>(),
           gh<_i904.IMcpOAuthService>(),
@@ -553,16 +564,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i710.ElicitationCubit(gh<_i763.AgentChatRepository>()));
     gh.factory<_i225.PermissionCubit>(
         () => _i225.PermissionCubit(gh<_i763.AgentChatRepository>()));
-    gh.factory<_i312.SessionControlsCubit>(() => _i312.SessionControlsCubit(
-          gh<_i763.AgentChatRepository>(),
-          gh<_i199.ChatDao>(),
-          gh<_i810.PocoConfigDao>(),
-          gh<_i810.PermissionModeDao>(),
-          gh<_i294.HarnessModelDao>(),
-          gh<_i294.HarnesseDao>(),
-          gh<_i294.ModelDao>(),
-          gh<_i294.ProviderCatalogDao>(),
-        ));
     gh.factory<_i681.HarnessAuthCubit>(() => _i681.HarnessAuthCubit(
           providerRepository: gh<_i422.IProviderRepository>(),
           authRepository: gh<_i14.IHarnessAuthRepository>(),

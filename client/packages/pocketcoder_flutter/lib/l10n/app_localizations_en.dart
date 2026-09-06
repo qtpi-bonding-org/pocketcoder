@@ -3035,6 +3035,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentSessionLabel => 'session';
 
   @override
+  String get agentModelSearchHint => 'Filter models';
+
+  @override
+  String get agentModelSearchNoMatches => 'no matching models';
+
+  @override
   String get pocketCoderUpdateChecking =>
       '\$ Checking verified release status...';
 

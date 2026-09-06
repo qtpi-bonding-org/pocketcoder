@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dart';
+import 'package:pocketcoder_flutter/domain/model_search/i_model_search_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
 import 'package:pocketcoder_flutter/infrastructure/chat/chat_dao.dart';
@@ -22,6 +23,8 @@ import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart' as domain_model;
 import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
+
+class MockModelSearchRepository extends Mock implements IModelSearchRepository {}
 
 class MockChatDao extends Mock implements ChatDao {}
 
@@ -130,6 +133,7 @@ void main() {
   late MockHarnesseDao harnesseDao;
   late MockModelDao modelDao;
   late MockProviderCatalogDao providerCatalogDao;
+  late MockModelSearchRepository modelSearchRepository;
   late SessionControlsCubit cubit;
 
   setUp(() {
@@ -141,13 +145,22 @@ void main() {
     harnesseDao = MockHarnesseDao();
     modelDao = MockModelDao();
     providerCatalogDao = MockProviderCatalogDao();
+    modelSearchRepository = MockModelSearchRepository();
     // .pb is used purely for its .filter() string helper (no network) --
     // stub it with a real, unconnected PocketBase instance so the idle
     // paths below can build a parameterized filter safely.
     when(() => permissionModeDao.pb).thenReturn(PocketBase('http://localhost'));
     when(() => harnessModelDao.pb).thenReturn(PocketBase('http://localhost'));
-    cubit = SessionControlsCubit(repo, chatDao, pocoConfigDao,
-        permissionModeDao, harnessModelDao, harnesseDao, modelDao, providerCatalogDao);
+    cubit = SessionControlsCubit(
+        repo,
+        chatDao,
+        pocoConfigDao,
+        permissionModeDao,
+        harnessModelDao,
+        harnesseDao,
+        modelDao,
+        providerCatalogDao,
+        modelSearchRepository);
   });
 
   tearDown(() async {
@@ -649,5 +662,48 @@ void main() {
 
     expect(cubit.state.modes, isNull);
     expect(cubit.state.config, isNull);
+  });
+
+  group('searchableModels', () {
+    test('returns the catalog for the open chat\'s harness', () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-1',
+                    harness: 'harness-1',
+                    model: 'm-1',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+              ]);
+
+      cubit.open('chat-1');
+      await _settle();
+      final result = await cubit.searchableModels();
+
+      expect(result.map((hm) => hm.id), ['hm-1']);
+    });
+
+    test('returns an empty list when the chat has no harness', () async {
+      when(() => chatDao.getOne('chat-1')).thenAnswer((_) async => const Chat(
+            id: 'chat-1',
+            title: 'Chat',
+            user: 'user-1',
+          ));
+
+      cubit.open('chat-1');
+      await _settle();
+      final result = await cubit.searchableModels();
+
+      expect(result, isEmpty);
+      verifyNever(() => modelSearchRepository.modelsAvailableFor(any()));
+    });
+
+    test('returns an empty list when called before open()', () async {
+      final result = await cubit.searchableModels();
+
+      expect(result, isEmpty);
+      verifyNever(() => chatDao.getOne(any()));
+    });
   });
 }

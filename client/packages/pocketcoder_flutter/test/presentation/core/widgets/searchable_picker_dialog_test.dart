@@ -44,6 +44,7 @@ Future<String?> _open(
   required List<String> items,
   String Function(String)? groupLabel,
   String? selected,
+  int? maxUnfilteredResults,
 }) {
   return showDialog<String>(
     context: tester.element(find.byType(Scaffold)),
@@ -54,6 +55,7 @@ Future<String?> _open(
       itemBuilder: _tile,
       groupLabel: groupLabel,
       selectedItem: selected,
+      maxUnfilteredResults: maxUnfilteredResults,
       emptyLabel: 'NOTHING TO PICK',
       noMatchesLabel: 'NO MATCHES',
     ),
@@ -186,5 +188,42 @@ void main() {
 
     expect(find.text('ANTHROPIC'), findsNothing);
     expect(find.text('OPENAI'), findsOneWidget);
+  });
+
+  testWidgets(
+      'maxUnfilteredResults caps the empty-query list to the first N sorted '
+      'items', (tester) async {
+    await tester.pumpWidget(_app(const SizedBox()));
+    unawaited(_open(
+      tester,
+      items: ['ZEBRA', 'APPLE', 'MANGO', 'BANANA'],
+      maxUnfilteredResults: 2,
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('APPLE'), findsOneWidget);
+    expect(find.text('BANANA'), findsOneWidget);
+    expect(find.text('MANGO'), findsNothing);
+    expect(find.text('ZEBRA'), findsNothing);
+  });
+
+  testWidgets(
+      'maxUnfilteredResults does not limit results once a search query is '
+      'entered', (tester) async {
+    await tester.pumpWidget(_app(const SizedBox()));
+    unawaited(_open(
+      tester,
+      items: ['ZEBRA', 'APPLE', 'MANGO', 'BANANA'],
+      maxUnfilteredResults: 2,
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'A');
+    await tester.pumpAndSettle();
+
+    expect(find.text('APPLE'), findsOneWidget);
+    expect(find.text('BANANA'), findsOneWidget);
+    expect(find.text('MANGO'), findsOneWidget);
+    expect(find.text('ZEBRA'), findsOneWidget);
   });
 }

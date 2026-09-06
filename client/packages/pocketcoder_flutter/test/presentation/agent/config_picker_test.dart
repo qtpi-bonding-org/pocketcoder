@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
@@ -71,5 +72,59 @@ void main() {
     expect(find.text('approve'), findsOneWidget);
     expect(find.byType(DetailRow), findsNWidgets(4));
     expect(find.text(RowAffordance.expand.glyph), findsNWidgets(3));
+  });
+
+  group('model row with onSearchModels provided', () {
+    const models = [
+      HarnessModel(
+          id: 'hm-1',
+          harness: 'harness-1',
+          model: 'm-1',
+          harnessModelId: 'anthropic/claude-sonnet-4.5'),
+      HarnessModel(
+          id: 'hm-2',
+          harness: 'harness-1',
+          model: 'm-2',
+          harnessModelId: 'x-ai/grok-code-fast-1'),
+    ];
+
+    testWidgets(
+        'tapping the model row opens a search dialog fed by onSearchModels, '
+        'and picking a result submits its harnessModelId', (tester) async {
+      Object? submitted;
+      await tester.pumpWidget(_wrap(ConfigPicker(
+        config: _config,
+        onSetOption: (req) => submitted = req.value,
+        onSearchModels: () async => models,
+      )));
+
+      await tester.tap(find.byType(DetailRow).first);
+      await tester.pump();
+      await tester.tap(find.text('a'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('anthropic/claude-sonnet-4.5'), findsOneWidget);
+      expect(find.text('x-ai/grok-code-fast-1'), findsOneWidget);
+      expect(find.text('b'), findsNothing);
+
+      await tester.tap(find.text('x-ai/grok-code-fast-1'));
+      await tester.pumpAndSettle();
+
+      expect(submitted, 'x-ai/grok-code-fast-1');
+    });
+
+    testWidgets('without onSearchModels, the plain live-options list is used',
+        (tester) async {
+      await tester.pumpWidget(
+        _wrap(ConfigPicker(config: _config, onSetOption: (_) {})),
+      );
+
+      await tester.tap(find.byType(DetailRow).first);
+      await tester.pump();
+      await tester.tap(find.text('a'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('b'), findsOneWidget);
+    });
   });
 }

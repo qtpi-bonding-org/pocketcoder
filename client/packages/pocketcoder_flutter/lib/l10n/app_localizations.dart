@@ -5488,6 +5488,18 @@ abstract class AppLocalizations {
   /// **'session'**
   String get agentSessionLabel;
 
+  /// Search field hint in the chat session's model-search dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Filter models'**
+  String get agentModelSearchHint;
+
+  /// Shown in the chat session's model-search dialog when the query matches nothing
+  ///
+  /// In en, this message translates to:
+  /// **'no matching models'**
+  String get agentModelSearchNoMatches;
+
   /// No description provided for @pocketCoderUpdateChecking.
   ///
   /// In en, this message translates to:

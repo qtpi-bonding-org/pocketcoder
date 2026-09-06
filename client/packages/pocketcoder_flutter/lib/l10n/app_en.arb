@@ -1222,6 +1222,14 @@
   "@agentSessionLabel": {
     "description": "Collapsed label for the chat session's active configuration"
   },
+  "agentModelSearchHint": "Filter models",
+  "@agentModelSearchHint": {
+    "description": "Search field hint in the chat session's model-search dialog"
+  },
+  "agentModelSearchNoMatches": "no matching models",
+  "@agentModelSearchNoMatches": {
+    "description": "Shown in the chat session's model-search dialog when the query matches nothing"
+  },
   "pocketCoderUpdateChecking": "$ Checking verified release status...",
   "pocketCoderUpdateCheckAgain": "check again",
   "pocketCoderUpdateNoDeployment": "No deployment found on this device.",
