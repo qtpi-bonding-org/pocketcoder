@@ -97,6 +97,8 @@ import 'package:pocketcoder_flutter/domain/mcp/i_mcp_oauth_service.dart'
 import 'package:pocketcoder_flutter/domain/mcp/i_mcp_repository.dart' as _i922;
 import 'package:pocketcoder_flutter/domain/memory/i_memory_repository.dart'
     as _i716;
+import 'package:pocketcoder_flutter/domain/model_search/i_model_search_repository.dart'
+    as _i563;
 import 'package:pocketcoder_flutter/domain/notifications/i_device_repository.dart'
     as _i148;
 import 'package:pocketcoder_flutter/domain/notifications/i_notification_rule_repository.dart'
@@ -203,6 +205,8 @@ import 'package:pocketcoder_flutter/infrastructure/mcp/mcp_repository.dart'
     as _i662;
 import 'package:pocketcoder_flutter/infrastructure/memory/memory_repository.dart'
     as _i102;
+import 'package:pocketcoder_flutter/infrastructure/model_search/model_search_repository.dart'
+    as _i719;
 import 'package:pocketcoder_flutter/infrastructure/notifications/device_daos.dart'
     as _i849;
 import 'package:pocketcoder_flutter/infrastructure/notifications/device_repository.dart'
@@ -410,6 +414,14 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i369.FilesRepository(gh<_i935.PocketCoderApiClient>()));
     gh.lazySingleton<_i190.IStatusRepository>(
         () => _i907.StatusRepository(gh<_i824.PocketBase>()));
+    gh.lazySingleton<_i563.IModelSearchRepository>(
+        () => _i719.ModelSearchRepository(
+              gh<_i294.HarnesseDao>(),
+              gh<_i294.HarnessModelDao>(),
+              gh<_i294.ModelDao>(),
+              gh<_i294.ProviderCatalogDao>(),
+              gh<_i294.ProviderAPIKeyDao>(),
+            ));
     gh.lazySingleton<_i810.OllamaApi>(() => _i810.OllamaApi(
           gh<_i169.PocketBase>(),
           gh<_i519.Client>(),
