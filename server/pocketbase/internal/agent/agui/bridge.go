@@ -343,9 +343,10 @@ func (b *Bridge) CloseOpenTools() []events.Event {
 		return nil
 	}
 	ids := make([]string, 0, len(b.openTools))
-	result := make([]events.Event, 0, len(b.openTools))
-	for id := range b.openTools {
+	result := make([]events.Event, 0, len(b.openTools)*2)
+	for id, meta := range b.openTools {
 		ids = append(ids, id)
+		result = append(result, customTool(id, meta.title, meta.kind, "failed", nil))
 		result = append(result, events.NewToolCallEndEvent(id))
 	}
 	log.Printf("[AGUI] force-closing %d still-open tool call(s) chat=%s run=%s ids=%v",

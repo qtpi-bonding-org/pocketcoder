@@ -940,13 +940,28 @@ func TestBridgeCloseOpenToolsEndsEveryStillOpenCall(t *testing.T) {
 
 	closed := bridge.CloseOpenTools()
 
-	if len(closed) != 2 {
-		t.Fatalf("expected 2 TOOL_CALL_END events, got %d: %#v", len(closed), closed)
+	if len(closed) != 4 {
+		t.Fatalf("expected a CUSTOM status update + TOOL_CALL_END per tool (4 events), got %d: %#v", len(closed), closed)
 	}
+	endCount := 0
 	for _, e := range closed {
-		if e.Type() != "TOOL_CALL_END" {
-			t.Fatalf("expected TOOL_CALL_END, got %s", e.Type())
+		switch e.Type() {
+		case "TOOL_CALL_END":
+			endCount++
+		case "CUSTOM":
+			b, err := json.Marshal(e)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(b), `"status":"failed"`) {
+				t.Fatalf("expected the CUSTOM tool status update to report failed, got: %s", b)
+			}
+		default:
+			t.Fatalf("unexpected event type %s: %#v", e.Type(), e)
 		}
+	}
+	if endCount != 2 {
+		t.Fatalf("expected 2 TOOL_CALL_END events, got %d: %#v", endCount, closed)
 	}
 
 	if again := bridge.CloseOpenTools(); len(again) != 0 {
@@ -966,7 +981,10 @@ func TestBridgeFinishedStillClosesOpenToolsAndEmitsRunFinished(t *testing.T) {
 
 	finished := bridge.Finished(acpsdk.StopReasonEndTurn)
 
-	if len(finished) != 2 || finished[0].Type() != "TOOL_CALL_END" || finished[1].Type() != "RUN_FINISHED" {
+	if len(finished) != 3 ||
+		finished[0].Type() != "CUSTOM" ||
+		finished[1].Type() != "TOOL_CALL_END" ||
+		finished[2].Type() != "RUN_FINISHED" {
 		t.Fatalf("unexpected terminal events: %#v", finished)
 	}
 }

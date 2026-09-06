@@ -11,12 +11,14 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/elicitation_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/permission_card.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/typewriter_text.dart';
 
@@ -346,5 +348,78 @@ void main() {
     final card =
         tester.widget<TerminalCommandCard>(find.byType(TerminalCommandCard));
     expect(card.command, 'edit_file {"path":"lib/foo.dart"}');
+  });
+
+  testWidgets(
+      'toolCallBuilder shows a failed status marker for a tool call the '
+      'harness reported (or the coordinator force-closed) as failed',
+      (tester) async {
+    late StackedChatBuilders builders;
+    await tester.pumpWidget(wrap(
+      Builder(builder: (context) {
+        builders = pocketcoderChatBuilders(
+          context,
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
+        );
+        return host(
+          context,
+          builders,
+          const Conversation(timeline: [
+            TimelineItem.toolCall(
+              id: 't1',
+              name: 'edit_file',
+              toolKind: 'edit',
+              hasEnded: true,
+              status: 'failed',
+              order: OrderKey(1),
+            ),
+          ]),
+        );
+      }),
+    ));
+    await tester.pumpAndSettle();
+
+    final marker =
+        tester.widget<StatusMarkerView>(find.byType(StatusMarkerView));
+    expect(marker.marker, StatusMarker.failed);
+  });
+
+  testWidgets(
+      'toolCallBuilder still shows the ok marker for a completed, non-failed '
+      'tool call', (tester) async {
+    late StackedChatBuilders builders;
+    await tester.pumpWidget(wrap(
+      Builder(builder: (context) {
+        builders = pocketcoderChatBuilders(
+          context,
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
+        );
+        return host(
+          context,
+          builders,
+          const Conversation(timeline: [
+            TimelineItem.toolCall(
+              id: 't1',
+              name: 'edit_file',
+              toolKind: 'edit',
+              hasEnded: true,
+              status: 'completed',
+              order: OrderKey(1),
+            ),
+          ]),
+        );
+      }),
+    ));
+    await tester.pumpAndSettle();
+
+    final marker =
+        tester.widget<StatusMarkerView>(find.byType(StatusMarkerView));
+    expect(marker.marker, StatusMarker.ok);
   });
 }

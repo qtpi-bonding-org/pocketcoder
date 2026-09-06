@@ -108,6 +108,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         final args = metadata['args'] as String? ?? '';
         final toolKind = metadata['toolKind'] as String?;
         final result = metadata['result'] as String?;
+        final hasEnded = metadata['hasEnded'] as bool? ?? false;
+        final isFailed = (metadata['status'] as String?) == 'failed';
         final diffs = (metadata['diffs'] as List<dynamic>?) ?? const [];
         final command = commandFor(
           name: name,
@@ -123,9 +125,11 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         });
         return TerminalCommandCard(
           command: command,
-          status: result == null
-              ? const TerminalSpinner()
-              : const StatusMarkerView(marker: StatusMarker.ok),
+          status: switch ((hasEnded, isFailed)) {
+            (false, _) => const TerminalSpinner(),
+            (true, true) => const StatusMarkerView(marker: StatusMarker.failed),
+            (true, false) => const StatusMarkerView(marker: StatusMarker.ok),
+          },
           outputLabel: context.l10n.chatCommandOutput,
           output: result,
           diffs: diffs,
