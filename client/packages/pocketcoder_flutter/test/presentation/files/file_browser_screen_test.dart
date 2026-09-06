@@ -94,6 +94,42 @@ void main() {
     expect(openedPath, 'src/main.go');
   });
 
+  testWidgets('tapping the path header navigates up one level',
+      (tester) async {
+    when(() => cubit.state).thenReturn(const FileBrowserState(
+      status: UiFlowStatus.success,
+      path: 'src/internal',
+      entries: [FileEntry(name: 'b.go', isDir: false, size: 3, modTime: '')],
+    ));
+    when(() => cubit.stream).thenAnswer((_) => const Stream.empty());
+    when(() => cubit.navigateUp()).thenAnswer((_) async {});
+
+    await tester.pumpWidget(buildTestable());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('/src/internal'));
+    await tester.pumpAndSettle();
+
+    verify(() => cubit.navigateUp()).called(1);
+  });
+
+  testWidgets('the path header at root is not tappable', (tester) async {
+    when(() => cubit.state).thenReturn(const FileBrowserState(
+      status: UiFlowStatus.success,
+      path: '',
+      entries: [FileEntry(name: 'main.go', isDir: false, size: 10, modTime: '')],
+    ));
+    when(() => cubit.stream).thenAnswer((_) => const Stream.empty());
+
+    await tester.pumpWidget(buildTestable());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('/'));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => cubit.navigateUp());
+  });
+
   testWidgets('shows an empty-state message when entries is empty',
       (tester) async {
     when(() => cubit.state)
