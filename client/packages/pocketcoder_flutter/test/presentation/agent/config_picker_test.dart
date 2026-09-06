@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
+      theme: AppTheme.lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: child),
@@ -32,6 +34,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('b'), findsOneWidget);
+  });
+
+  testWidgets('opening a select option shows a search field', (tester) async {
+    await tester.pumpWidget(
+      _wrap(ConfigPicker(config: _config, onSetOption: (_) {})),
+    );
+
+    await tester.tap(find.text('a'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TextField), findsOneWidget);
   });
 
   testWidgets('all options render as their own rows, not a collapsed summary',

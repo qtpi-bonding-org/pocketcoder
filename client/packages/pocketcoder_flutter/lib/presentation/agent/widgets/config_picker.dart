@@ -4,7 +4,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
@@ -58,23 +58,33 @@ class ConfigPicker extends StatelessWidget {
       final displayValue = choices.any((c) => '${c['value']}' == current)
           ? current
           : (current.isEmpty ? '--' : current);
+      String labelFor(String value) =>
+          choices.firstWhere((c) => '${c['value']}' == value,
+              orElse: () => {})['label'] as String? ??
+          value;
       return DetailRow(
           label: name,
           value: displayValue,
           affordance: RowAffordance.expand,
-          onTap: () => showTerminalListPicker<String>(
+          onTap: () => showDialog<String>(
                 context: context,
-                title: name,
-                items: choices
-                    .map((c) => '${c['value']}')
-                    .toList(),
-                itemBuilder: (_, item) => TerminalText(
-                    (choices.firstWhere((c) => '${c['value']}' == item,
-                            orElse: () => {})['label'] as String? ?? item),
-                    role: TextRole.label),
-                selected: displayValue == '--' ? null : current,
-                emptyLabel: 'no options',
-                cancelLabel: 'cancel',
+                builder: (_) => SearchablePickerDialog<String>(
+                  title: name,
+                  items: choices.map((c) => '${c['value']}').toList(),
+                  itemLabel: labelFor,
+                  selectedItem: displayValue == '--' ? null : current,
+                  searchLabel: context.l10n.chatPickerSearchLabel,
+                  searchHint: context.l10n.chatPickerSearchHint,
+                  noMatchesLabel: context.l10n.chatPickerNoMatches,
+                  itemBuilder: (_, item, {required isSelected, required onTap}) =>
+                      InkWell(
+                    onTap: onTap,
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSizes.space),
+                      child: TerminalText(labelFor(item), role: TextRole.label),
+                    ),
+                  ),
+                ),
               ).then((selected) {
                 if (selected != null) submit(selected);
               }));
