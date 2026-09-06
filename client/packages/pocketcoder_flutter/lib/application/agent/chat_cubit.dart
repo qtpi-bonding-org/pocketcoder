@@ -108,6 +108,29 @@ class ChatCubit extends AppCubit<ChatState> {
         final reducer = _reducer;
         if (reducer == null) return;
         reducer.apply(event);
+        if (event is ToolCallStartEvent ||
+            event is ToolCallEndEvent ||
+            event is ToolCallResultEvent ||
+            event is TextMessageEndEvent) {
+          logDebug('🤖 [ChatCubit] timeline order after apply', {
+            'triggeringEvent': event.runtimeType.toString(),
+            'wallClock': DateTime.now().toIso8601String(),
+            'timeline': reducer.current.timeline
+                .map((item) => switch (item) {
+                      TextTimelineItem(:final id) => 'text:$id',
+                      TextStreamTimelineItem(:final id) => 'textStream:$id',
+                      ToolCallTimelineItem(:final id, :final hasEnded) =>
+                        'tool:$id(hasEnded=$hasEnded)',
+                      PermissionRequestTimelineItem(:final requestId) =>
+                        'permission:$requestId',
+                      ElicitationRequestTimelineItem(:final requestId) =>
+                        'elicitation:$requestId',
+                      ToolRequestTimelineItem(:final requestId) =>
+                        'toolRequest:$requestId',
+                    })
+                .toList(),
+          });
+        }
         var animatedIds = state.animatedMessageIds;
         if (event is TextMessageEndEvent) {
           _seenMessages.markSeen(chatId, event.messageId);
