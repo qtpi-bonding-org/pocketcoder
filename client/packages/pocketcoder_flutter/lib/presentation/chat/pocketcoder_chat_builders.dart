@@ -55,14 +55,12 @@ StackedChatBuilders pocketcoderChatBuilders(
       color: colors.onSurface,
       fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
-      height: 1.4,
     ),
     reasoningTextStyle: TextStyle(
       color: colors.onSurface.withValues(alpha: 0.7),
       fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
       fontStyle: FontStyle.italic,
-      height: 1.4,
     ),
     roleHeaderBuilder: pocketcoderRoleHeader,
     padding: EdgeInsets.symmetric(
@@ -151,7 +149,6 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
                       fontFamily: AppFonts.family,
                       package: 'pocketcoder_flutter',
                       fontWeight: AppFonts.heavy,
-                      height: 1.4,
                     ),
                   ),
                   TextSpan(
@@ -161,7 +158,6 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
                       fontFamily: AppFonts.family,
                       package: 'pocketcoder_flutter',
                       fontWeight: AppFonts.medium,
-                      height: 1.4,
                     ),
                   ),
                 ],

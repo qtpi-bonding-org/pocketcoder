@@ -61,7 +61,6 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
                 color: colors.onSurface.withValues(alpha: 0.7),
                 fontFamily: AppFonts.family,
                 fontStyle: FontStyle.italic,
-                height: 1.4,
               ),
             ),
           ),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
     as ag_ui_widgets;
+import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
@@ -16,6 +17,7 @@ import 'package:pocketcoder_flutter/presentation/chat/widgets/reasoning_caption.
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 
 class ChatView extends StatefulWidget {
   const ChatView({
@@ -82,11 +84,15 @@ class _ChatViewState extends State<ChatView> {
   void initState() {
     super.initState();
     _openIfNeeded();
+    _logWidgetMessageOrder('initState');
   }
 
   @override
   void didUpdateWidget(covariant ChatView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.conversation, widget.conversation)) {
+      _logWidgetMessageOrder('didUpdateWidget');
+    }
     if (widget.chatId != oldWidget.chatId) {
       _opened = false;
       _openIfNeeded();
@@ -97,6 +103,22 @@ class _ChatViewState extends State<ChatView> {
     if (!widget.requiresProviderReauthentication) _reauthAnnounced = false;
     _announceReauthIfNeeded(oldWidget);
     _announceRunOutcomeIfNeeded(oldWidget);
+  }
+
+  void _logWidgetMessageOrder(String trigger) {
+    final messages = ag_ui_widgets.timelineToMessages(widget.conversation.timeline);
+    logDebug('🖼️ [ChatView] widget message order', {
+      'trigger': trigger,
+      'wallClock': DateTime.now().toIso8601String(),
+      'messages': messages
+          .map((m) => switch (m) {
+                chat_core.TextMessage(:final id) => 'text:$id',
+                chat_core.TextStreamMessage(:final id) => 'textStream:$id',
+                chat_core.CustomMessage(:final id) => 'custom:$id',
+                _ => 'other:${m.id}',
+              })
+          .toList(),
+    });
   }
 
   void _provideRunCompletionHaptic(ChatView oldWidget) {

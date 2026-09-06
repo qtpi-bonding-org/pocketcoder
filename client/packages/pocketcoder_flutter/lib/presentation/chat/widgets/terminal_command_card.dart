@@ -96,7 +96,6 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                     color: colors.secondary,
                     fontFamily: AppFonts.family,
                     fontWeight: AppFonts.heavy,
-                    height: 1.4,
                     package: 'pocketcoder_flutter',
                   ),
                 ),
@@ -149,7 +148,6 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.75),
                 fontFamily: AppFonts.family,
-                height: 1.4,
               ),
             ),
           ],
