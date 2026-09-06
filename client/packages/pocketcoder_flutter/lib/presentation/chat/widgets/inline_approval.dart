@@ -10,7 +10,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 class InlineApproval extends StatelessWidget {
   const InlineApproval({
     super.key,
-    required this.toolKindLabel,
+    required this.toolLabel,
     required this.command,
     required this.requestId,
     required this.options,
@@ -18,7 +18,8 @@ class InlineApproval extends StatelessWidget {
     this.onSelect,
   });
 
-  final String toolKindLabel;
+  /// The tool's own name -- `shell`, `edit` -- not its ACP kind.
+  final String toolLabel;
   final String command;
   final String requestId;
   final List<PermissionOption> options;
@@ -58,9 +59,17 @@ class InlineApproval extends StatelessWidget {
         // later task revisits the test harness.
         const TerminalText('[!] permission request', role: TextRole.warn),
         const SizedBox(height: 8),
-        TerminalText('poco wants to run $toolKindLabel:', role: TextRole.body),
+        const TerminalText('poco wants to run:', role: TextRole.body),
         const SizedBox(height: 8),
-        TerminalText(command, role: TextRole.value),
+        // `shell: python3 hello.py`. The label is dropped when it is absent,
+        // or when it is all the harness gave us and would only repeat the
+        // command back.
+        TerminalText(
+          toolLabel.isEmpty || toolLabel == command
+              ? command
+              : '$toolLabel: $command',
+          role: TextRole.value,
+        ),
         if (description != null && description!.isNotEmpty) ...[
           const SizedBox(height: 8),
           TerminalText(

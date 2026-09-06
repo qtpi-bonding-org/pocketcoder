@@ -30,7 +30,7 @@ class PermissionCard extends StatelessWidget {
     );
 
     return InlineApproval(
-      toolKindLabel: item.toolKind ?? '',
+      toolLabel: item.toolTitle?.trim() ?? '',
       command: command,
       requestId: requestId,
       options: item.options,

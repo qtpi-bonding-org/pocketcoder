@@ -9,7 +9,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
           body: InlineApproval(
-        toolKindLabel: 'a command',
+        toolLabel: 'a command',
         command: 'rm -rf /workspace/build',
         requestId: 'req_8f21c',
         options: [],
@@ -28,14 +28,14 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
           body: InlineApproval(
-        toolKindLabel: 'a command',
+        toolLabel: 'a command',
         command: 'rm -rf /workspace/build',
         requestId: 'req_8f21c',
         options: [],
       )),
     ));
     final cmd = tester.widget<TerminalText>(
-        find.widgetWithText(TerminalText, 'rm -rf /workspace/build'));
+        find.widgetWithText(TerminalText, 'a command: rm -rf /workspace/build'));
     expect(cmd.role, TextRole.value,
         reason: 'colouring it red would be deciding it is destructive, '
             'which is interpretation (spec section 2b)');
@@ -46,7 +46,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
           body: InlineApproval(
-        toolKindLabel: 'a command',
+        toolLabel: 'a command',
         command: 'ls',
         requestId: 'req_1',
         options: [],
