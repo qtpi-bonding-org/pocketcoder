@@ -1,3 +1,4 @@
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_fetcher.dart';
 
 /// Narrow lookup for "what deployment is the app currently talking to."
@@ -36,32 +37,70 @@ class CaPinRecovery {
   /// apply here at all, or the pin wasn't actually the problem.
   Future<bool> recoverIfStale({required Uri requestUrl}) async {
     final deployment = currentDeployment.current;
-    if (deployment == null) return false;
+    AppLogger.debug('CaPinRecovery.recoverIfStale called', {
+      'requestUrl': requestUrl.toString(),
+      'requestHost': requestUrl.host,
+      'currentDeployment': deployment == null
+          ? null
+          : {'instanceId': deployment.instanceId, 'host': deployment.host},
+    });
+    if (deployment == null) {
+      AppLogger.debug(
+          'CaPinRecovery.recoverIfStale: no current deployment -- bail');
+      return false;
+    }
 
     // Only ever re-pin for the deployment's own host. A cert failure
     // against Linode OAuth, the OAuth relay, or the image relay -- e.g. a
     // captive portal or corporate TLS-intercepting proxy -- must never
     // trigger an SSH attempt into the user's own VPS.
-    if (requestUrl.host != deployment.host) return false;
+    if (requestUrl.host != deployment.host) {
+      AppLogger.debug('CaPinRecovery.recoverIfStale: host mismatch -- bail', {
+        'requestHost': requestUrl.host,
+        'deploymentHost': deployment.host,
+      });
+      return false;
+    }
 
     // Recovery repairs a pin that already existed and went stale. A
     // deployment with no pin at all yet is fetchAndPin's job (run once
     // from DeploymentReadinessPollOperation), not recovery's.
     final existing =
         await caPinFetcher.pinStore.read(deploymentId: deployment.instanceId);
-    if (existing == null) return false;
+    if (existing == null) {
+      AppLogger.debug(
+          'CaPinRecovery.recoverIfStale: no existing durable pin -- bail', {
+        'instanceId': deployment.instanceId,
+      });
+      return false;
+    }
 
     final now = DateTime.now();
     final lastAttempt = _lastAttempt;
     if (lastAttempt != null && now.difference(lastAttempt) < cooldown) {
+      AppLogger.debug(
+          'CaPinRecovery.recoverIfStale: still in cooldown -- bail', {
+        'lastAttempt': lastAttempt.toIso8601String(),
+        'sinceLastAttempt': now.difference(lastAttempt).toString(),
+        'cooldown': cooldown.toString(),
+      });
       return false;
     }
     _lastAttempt = now;
 
-    return caPinFetcher.forceRefetch(
+    AppLogger.debug('CaPinRecovery.recoverIfStale: forcing SSH refetch', {
+      'instanceId': deployment.instanceId,
+      'host': deployment.host,
+    });
+    final refetched = await caPinFetcher.forceRefetch(
       instanceId: deployment.instanceId,
       host: deployment.host,
     );
+    AppLogger.debug('CaPinRecovery.recoverIfStale: forceRefetch result', {
+      'instanceId': deployment.instanceId,
+      'refetched': refetched,
+    });
+    return refetched;
   }
 
   /// [currentDeployment] may still be completing its own async load at
