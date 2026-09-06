@@ -176,6 +176,32 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 		}
 	}
 
+	// Synced independently of the harness loop below: a provider reachable
+	// only via an unkeyed fanout harness would otherwise never get a
+	// `models` row.
+	for _, p := range providers {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		providerRec, err := app.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": p.ID})
+		if err != nil {
+			continue
+		}
+		for _, m := range p.Models {
+			if _, err := upsertModel(app, providerRec, p, m); err != nil {
+				log.Printf("[ModelCatalog] skipping model %s/%s: %v", p.ID, m.ID, err)
+			}
+		}
+	}
+
+	// A fanout harness only gets harness_models rows for providers this
+	// deployment actually has a credential for, not every models.dev
+	// provider -- see SyncProviderForFanoutHarnesses for the on-demand path.
+	keyed, err := keyedProviderIDs(app)
+	if err != nil {
+		return fmt.Errorf("resolve keyed providers: %w", err)
+	}
+
 	harnesses, err := app.FindAllRecords("harnesses")
 	if err != nil {
 		return fmt.Errorf("list harnesses: %w", err)
@@ -187,6 +213,9 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 		var providerIDs []string
 		if h.GetBool("provider_fanout") {
 			for pid := range providers {
+				if !keyed[pid] {
+					continue
+				}
 				providerIDs = append(providerIDs, pid)
 			}
 		} else {
@@ -219,21 +248,7 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 				if err != nil {
 					continue
 				}
-				if h.GetBool("provider_fanout") {
-					if err := upsertHarnessProviderEdge(txApp, h, providerRec); err != nil {
-						log.Printf("[ModelCatalog] skipping harness_providers edge %s/%s: %v", h.GetString("cli_id"), pid, err)
-					}
-				}
-				for _, m := range p.Models {
-					modelRec, err := upsertModel(txApp, providerRec, p, m)
-					if err != nil {
-						log.Printf("[ModelCatalog] skipping model %s/%s: %v", p.ID, m.ID, err)
-						continue
-					}
-					if err := upsertHarnessModel(txApp, h, modelRec, harnessModelID(h, p.ID, m.ID)); err != nil {
-						log.Printf("[ModelCatalog] skipping harness_model %s/%s/%s: %v", h.GetString("cli_id"), p.ID, m.ID, err)
-					}
-				}
+				syncHarnessProvider(txApp, h, providerRec, p)
 			}
 			return nil
 		}); err != nil {
@@ -241,6 +256,105 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 		}
 	}
 	return nil
+}
+
+func syncHarnessProvider(txApp core.App, h, providerRec *core.Record, p ProviderInfo) {
+	if h.GetBool("provider_fanout") {
+		if err := upsertHarnessProviderEdge(txApp, h, providerRec); err != nil {
+			log.Printf("[ModelCatalog] skipping harness_providers edge %s/%s: %v", h.GetString("cli_id"), p.ID, err)
+		}
+	}
+	for _, m := range p.Models {
+		modelRec, err := upsertModel(txApp, providerRec, p, m)
+		if err != nil {
+			log.Printf("[ModelCatalog] skipping model %s/%s: %v", p.ID, m.ID, err)
+			continue
+		}
+		if err := upsertHarnessModel(txApp, h, modelRec, harnessModelID(h, p.ID, m.ID)); err != nil {
+			log.Printf("[ModelCatalog] skipping harness_model %s/%s/%s: %v", h.GetString("cli_id"), p.ID, m.ID, err)
+		}
+	}
+}
+
+// keyedProviderIDs is unscoped by owner: a deployment belongs to exactly
+// one user.
+func keyedProviderIDs(app core.App) (map[string]bool, error) {
+	keyed := map[string]bool{}
+	addProviderRefs := func(collection string) error {
+		recs, err := app.FindAllRecords(collection)
+		if err != nil {
+			return fmt.Errorf("list %s: %w", collection, err)
+		}
+		for _, r := range recs {
+			providerRec, err := app.FindRecordById("providers", r.GetString("provider"))
+			if err != nil {
+				continue
+			}
+			keyed[providerRec.GetString("provider_id")] = true
+		}
+		return nil
+	}
+	if err := addProviderRefs("provider_api_keys"); err != nil {
+		return nil, err
+	}
+	if err := addProviderRefs("credential_selections"); err != nil {
+		return nil, err
+	}
+	return keyed, nil
+}
+
+func SyncProviderForFanoutHarnesses(ctx context.Context, app core.App, client *http.Client, url string, providerID string) error {
+	providers, err := Fetch(ctx, client, url)
+	if err != nil {
+		return err
+	}
+	p, ok := providers[providerID]
+	if !ok {
+		return fmt.Errorf("provider %q not found in models.dev catalog", providerID)
+	}
+	if err := upsertProvider(app, p); err != nil {
+		return fmt.Errorf("upsert provider %s: %w", providerID, err)
+	}
+	providerRec, err := app.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": providerID})
+	if err != nil {
+		return fmt.Errorf("find provider %s: %w", providerID, err)
+	}
+	harnesses, err := app.FindRecordsByFilter("harnesses", "provider_fanout = true", "", 0, 0, nil)
+	if err != nil {
+		return fmt.Errorf("list fanout harnesses: %w", err)
+	}
+	for _, h := range harnesses {
+		if err := app.RunInTransaction(func(txApp core.App) error {
+			syncHarnessProvider(txApp, h, providerRec, p)
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func RegisterCredentialHooks(app core.App, client *http.Client, url string) {
+	syncByProviderRecordID := func(providerRecID string) {
+		providerRec, err := app.FindRecordById("providers", providerRecID)
+		if err != nil {
+			log.Printf("[ModelCatalog] credential hook: find provider %s: %v", providerRecID, err)
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := SyncProviderForFanoutHarnesses(ctx, app, client, url, providerRec.GetString("provider_id")); err != nil {
+			log.Printf("[ModelCatalog] credential hook: sync provider %s: %v", providerRec.GetString("provider_id"), err)
+		}
+	}
+	app.OnRecordAfterCreateSuccess("provider_api_keys").BindFunc(func(e *core.RecordEvent) error {
+		syncByProviderRecordID(e.Record.GetString("provider"))
+		return e.Next()
+	})
+	app.OnRecordAfterCreateSuccess("credential_selections").BindFunc(func(e *core.RecordEvent) error {
+		syncByProviderRecordID(e.Record.GetString("provider"))
+		return e.Next()
+	})
 }
 
 // cronJobID is the app.Cron() job name for the periodic resync.

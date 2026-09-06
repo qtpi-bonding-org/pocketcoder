@@ -20,6 +20,8 @@ package modelcatalog
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -92,6 +94,56 @@ func testApp(t *testing.T) core.App {
 	}
 	t.Cleanup(app.Cleanup)
 	return app
+}
+
+func randomSuffix() string {
+	return fmt.Sprintf("%d", rand.Int63())
+}
+
+func testUser(t *testing.T, app core.App, email string) *core.Record {
+	t.Helper()
+	col, err := app.FindCollectionByNameOrId("_pb_users_auth_")
+	if err != nil {
+		t.Fatal(err)
+	}
+	u := core.NewRecord(col)
+	u.SetEmail(email)
+	u.SetPassword("password123")
+	if err := app.Save(u); err != nil {
+		t.Fatal(err)
+	}
+	return u
+}
+
+func appWithSyncedProviders(t *testing.T) (core.App, string) {
+	t.Helper()
+	app := testApp(t)
+	srv := fixtureServer(t)
+	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+		t.Fatal(err)
+	}
+	return app, srv.URL
+}
+
+func keyProvider(t *testing.T, app core.App, providerSlug string) *core.Record {
+	t.Helper()
+	provider, err := app.FindFirstRecordByFilter("providers", "provider_id = {:id}", map[string]any{"id": providerSlug})
+	if err != nil {
+		t.Fatal(err)
+	}
+	userID := testUser(t, app, "keyed-"+providerSlug+"-"+randomSuffix()+"@example.com").Id
+	coll, err := app.FindCollectionByNameOrId("provider_api_keys")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := core.NewRecord(coll)
+	rec.Set("owner", userID)
+	rec.Set("provider", provider.Id)
+	rec.Set("api_key", "test-key-"+randomSuffix())
+	if err := app.Save(rec); err != nil {
+		t.Fatal(err)
+	}
+	return rec
 }
 
 func TestFetchParsesProvidersAndModels(t *testing.T) {
@@ -185,7 +237,10 @@ func TestSyncPopulatesModelsForSelfScopedHarnessFromItsPinnedProviderEdge(t *tes
 }
 
 func TestSyncFansOutOnProviderFanoutFlagNotLegacyProviderScope(t *testing.T) {
-	app := testApp(t)
+	app, url := appWithSyncedProviders(t)
+	for _, pid := range []string{"anthropic", "openai", "some-tiny-reseller"} {
+		keyProvider(t, app, pid)
+	}
 	coll, err := app.FindCollectionByNameOrId("harnesses")
 	if err != nil {
 		t.Fatal(err)
@@ -198,8 +253,7 @@ func TestSyncFansOutOnProviderFanoutFlagNotLegacyProviderScope(t *testing.T) {
 	if err := app.Save(future); err != nil {
 		t.Fatal(err)
 	}
-	srv := fixtureServer(t)
-	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+	if err := Sync(context.Background(), app, http.DefaultClient, url); err != nil {
 		t.Fatal(err)
 	}
 	hms, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": future.Id})
@@ -207,7 +261,7 @@ func TestSyncFansOutOnProviderFanoutFlagNotLegacyProviderScope(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(hms) != 3 {
-		t.Fatalf("got %d harness_models, want 3 (every fetched provider's models)", len(hms))
+		t.Fatalf("got %d harness_models, want 3 (every keyed provider's models)", len(hms))
 	}
 }
 
@@ -218,9 +272,11 @@ func TestSyncFansOutOnProviderFanoutFlagNotLegacyProviderScope(t *testing.T) {
 // place to cut it down; the client's own picker is expected to offer
 // search/filtering over the full list instead.
 func TestSyncPopulatesModelsForAnyScopedHarnessFromEveryProvider(t *testing.T) {
-	app := testApp(t)
-	srv := fixtureServer(t)
-	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+	app, url := appWithSyncedProviders(t)
+	for _, pid := range []string{"anthropic", "openai", "some-tiny-reseller"} {
+		keyProvider(t, app, pid)
+	}
+	if err := Sync(context.Background(), app, http.DefaultClient, url); err != nil {
 		t.Fatal(err)
 	}
 	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
@@ -248,9 +304,9 @@ func TestSyncPopulatesModelsForAnyScopedHarnessFromEveryProvider(t *testing.T) {
 }
 
 func TestSyncPrefixesOpenCodeModelIdsWithProviderButNotGoose(t *testing.T) {
-	app := testApp(t)
-	srv := fixtureServer(t)
-	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+	app, url := appWithSyncedProviders(t)
+	keyProvider(t, app, "anthropic")
+	if err := Sync(context.Background(), app, http.DefaultClient, url); err != nil {
 		t.Fatal(err)
 	}
 	anthropic, err := app.FindFirstRecordByFilter("providers", "provider_id = 'anthropic'", nil)
@@ -308,7 +364,10 @@ func TestHarnessModelIDDoesNotDoublePrefixAlreadyPrefixedID(t *testing.T) {
 // with provider_fanout=true (never mentioned anywhere in this package)
 // gets the exact same full-catalog treatment automatically.
 func TestSyncCoversAnyFutureAnyScopedHarnessNotJustGooseOrOpenCode(t *testing.T) {
-	app := testApp(t)
+	app, url := appWithSyncedProviders(t)
+	for _, pid := range []string{"anthropic", "openai", "some-tiny-reseller"} {
+		keyProvider(t, app, pid)
+	}
 	coll, err := app.FindCollectionByNameOrId("harnesses")
 	if err != nil {
 		t.Fatal(err)
@@ -322,8 +381,7 @@ func TestSyncCoversAnyFutureAnyScopedHarnessNotJustGooseOrOpenCode(t *testing.T)
 		t.Fatal(err)
 	}
 
-	srv := fixtureServer(t)
-	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+	if err := Sync(context.Background(), app, http.DefaultClient, url); err != nil {
 		t.Fatal(err)
 	}
 
@@ -432,6 +490,13 @@ func TestSyncNeverDeletesRowsForProvidersRemovedUpstream(t *testing.T) {
 	if _, err := app.FindFirstRecordByFilter("providers", "provider_id = 'some-tiny-reseller'", nil); err != nil {
 		t.Fatal("precondition failed: some-tiny-reseller should exist after the first sync")
 	}
+	// Key it so goose (fanout) actually picks up its model -- otherwise
+	// there is no harness_models row to prove survives the provider
+	// disappearing upstream.
+	keyProvider(t, app, "some-tiny-reseller")
+	if err := Sync(context.Background(), app, http.DefaultClient, full.URL); err != nil {
+		t.Fatal(err)
+	}
 
 	shrunk := smallerFixtureServer(t)
 	if err := Sync(context.Background(), app, http.DefaultClient, shrunk.URL); err != nil {
@@ -490,5 +555,191 @@ func TestSyncSkipsOneMalformedRowWithoutAbortingRestOfHarnessBatch(t *testing.T)
 	}
 	if _, err := app.FindFirstRecordByFilter("models", "name = ''", nil); err == nil {
 		t.Error("malformed (empty-id) model was saved despite failing required-field validation")
+	}
+}
+
+func TestKeyedProviderIDsUnionsProviderAPIKeysAndCredentialSelections(t *testing.T) {
+	app, _ := appWithSyncedProviders(t)
+	keyProvider(t, app, "anthropic")
+
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	userID := testUser(t, app, "cs-"+randomSuffix()+"@example.com").Id
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", goose.Id)
+	sel.Set("provider", openai.Id)
+	sel.Set("mode", "none")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+
+	keyed, err := keyedProviderIDs(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(keyed) != 2 || !keyed["anthropic"] || !keyed["openai"] {
+		t.Fatalf("keyedProviderIDs = %v, want exactly {anthropic, openai}", keyed)
+	}
+}
+
+func TestSyncGivesFanoutHarnessZeroHarnessModelsWhenNoProviderIsKeyed(t *testing.T) {
+	app, url := appWithSyncedProviders(t)
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Sync(context.Background(), app, http.DefaultClient, url); err != nil {
+		t.Fatal(err)
+	}
+	hms, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": goose.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hms) != 0 {
+		t.Fatalf("got %d harness_models for goose with zero keyed providers, want 0", len(hms))
+	}
+	edges, err := app.FindRecordsByFilter("harness_providers", "harness = {:h}", "", 0, 0, map[string]any{"h": goose.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(edges) != 0 {
+		t.Fatalf("got %d harness_providers edges for goose with zero keyed providers, want 0", len(edges))
+	}
+}
+
+func TestSyncOnlyFansOutToKeyedProviders(t *testing.T) {
+	app, url := appWithSyncedProviders(t)
+	keyProvider(t, app, "anthropic")
+	if err := Sync(context.Background(), app, http.DefaultClient, url); err != nil {
+		t.Fatal(err)
+	}
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hms, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": goose.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hms) != 1 || hms[0].GetString("harness_model_id") != "claude-sonnet-5" {
+		t.Fatalf("harness_models for goose = %+v, want exactly one row for claude-sonnet-5 (the only keyed provider)", hms)
+	}
+}
+
+func TestSyncProviderForFanoutHarnessesPopulatesOnlyRequestedProvider(t *testing.T) {
+	app, url := appWithSyncedProviders(t)
+	if err := SyncProviderForFanoutHarnesses(context.Background(), app, http.DefaultClient, url, "anthropic"); err != nil {
+		t.Fatal(err)
+	}
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	opencode, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'opencode'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	codex, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'codex'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, h := range []*core.Record{goose, opencode} {
+		hms, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": h.Id})
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := harnessModelID(h, "anthropic", "claude-sonnet-5")
+		if len(hms) != 1 || hms[0].GetString("harness_model_id") != want {
+			t.Fatalf("harness_models for %s = %+v, want exactly one %q row", h.GetString("cli_id"), hms, want)
+		}
+	}
+	// codex is curated/non-fanout, pinned to openai by the seed migration --
+	// a fanout-only provider sync must not touch it.
+	codexHMs, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": codex.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(codexHMs) != 1 || codexHMs[0].GetString("harness_model_id") != "gpt-5.2" {
+		t.Fatalf("codex harness_models changed by an anthropic-only fanout sync: %+v", codexHMs)
+	}
+	gooseOpenAI, err := app.FindRecordsByFilter("harness_models", "harness = {:h} && harness_model_id = 'gpt-5.2'", "", 0, 0, map[string]any{"h": goose.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(gooseOpenAI) != 0 {
+		t.Fatalf("goose got an openai row from an anthropic-only provider sync: %+v", gooseOpenAI)
+	}
+}
+
+func TestCredentialHookSyncsProviderImmediatelyOnProviderAPIKeyCreate(t *testing.T) {
+	app, url := appWithSyncedProviders(t)
+	RegisterCredentialHooks(app, http.DefaultClient, url)
+
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pre, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": goose.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pre) != 0 {
+		t.Fatalf("precondition failed: goose already has %d harness_models before any key exists", len(pre))
+	}
+
+	keyProvider(t, app, "anthropic")
+
+	post, err := app.FindRecordsByFilter("harness_models", "harness = {:h}", "", 0, 0, map[string]any{"h": goose.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(post) != 1 || post[0].GetString("harness_model_id") != "claude-sonnet-5" {
+		t.Fatalf("harness_models for goose right after keying anthropic = %+v, want exactly one claude-sonnet-5 row synchronously (no separate Sync() call)", post)
+	}
+}
+
+func TestCredentialHookSyncsProviderImmediatelyOnCredentialSelectionCreate(t *testing.T) {
+	app, url := appWithSyncedProviders(t)
+	RegisterCredentialHooks(app, http.DefaultClient, url)
+
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	openai, err := app.FindFirstRecordByFilter("providers", "provider_id = 'openai'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	userID := testUser(t, app, "cs-hook-"+randomSuffix()+"@example.com").Id
+	selColl, err := app.FindCollectionByNameOrId("credential_selections")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sel := core.NewRecord(selColl)
+	sel.Set("user", userID)
+	sel.Set("harness", goose.Id)
+	sel.Set("provider", openai.Id)
+	sel.Set("mode", "none")
+	if err := app.Save(sel); err != nil {
+		t.Fatal(err)
+	}
+
+	hms, err := app.FindRecordsByFilter("harness_models", "harness = {:h} && harness_model_id = 'gpt-5.2'", "", 0, 0, map[string]any{"h": goose.Id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hms) != 1 {
+		t.Fatalf("harness_models for goose right after a credential_selections create = %+v, want exactly one gpt-5.2 row", hms)
 	}
 }

@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -95,6 +96,7 @@ func main() {
 
 	hooks.RegisterAgentFileHooks(app)
 	hooks.RegisterGitSSHHooks(app)
+	modelcatalog.RegisterCredentialHooks(app, http.DefaultClient, modelcatalog.DefaultCatalogURL)
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
