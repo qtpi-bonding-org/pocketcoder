@@ -1046,10 +1046,14 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		hub.Publish(e)
 	}
 	applier := selectApplier(profile)
-	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
+	updatedConfig, err := applier.Apply(runCtx, conn, sessionID, profile, modes)
+	if err != nil {
 		log.Printf("coordinator: applier.Apply failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
 		hub.Publish(providerRunError(profile.AccountLogin, profile.HarnessName, "session init", err))
 		return
+	}
+	for _, e := range bridge.ConfigUpdated(updatedConfig) {
+		hub.Publish(e)
 	}
 	h.accepting.Store(true)
 	hub.Publish(bridge.Started())

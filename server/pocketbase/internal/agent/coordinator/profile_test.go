@@ -58,7 +58,7 @@ func (r *recordingConn) Close() error {
 
 func TestGlobalConfigApplier_SetsMode(t *testing.T) {
 	fc := &fakeConn{}
-	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+	_, err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
 		SessionProfile{Mode: acpsdk.SessionModeId("auto")}, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -73,7 +73,7 @@ func TestGlobalConfigApplier_ToleratesUnknownModeError(t *testing.T) {
 		Code: -32602, Message: "Invalid params: mode not found: approve",
 		Data: map[string]any{"mode": "approve"},
 	}}
-	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+	_, err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
 		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
 	if err != nil {
 		t.Fatalf("expected the unknown-mode error to be swallowed, got: %v", err)
@@ -85,7 +85,7 @@ func TestGlobalConfigApplier_UsesStructuredDataOverMessageText(t *testing.T) {
 		Code: -32602, Message: "Invalid params: totally different wording",
 		Data: map[string]any{"mode": "approve"},
 	}}
-	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+	_, err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
 		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
 	if err != nil {
 		t.Fatalf("expected Data.mode match to swallow the error regardless of message text, got: %v", err)
@@ -97,7 +97,7 @@ func TestGlobalConfigApplier_DoesNotSwallowMismatchedModeInData(t *testing.T) {
 		Code: -32602, Message: "Invalid params: mode not found: some-other-mode",
 		Data: map[string]any{"mode": "some-other-mode"},
 	}}
-	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+	_, err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
 		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
 	if err == nil {
 		t.Fatal("expected an error for a mode mismatch unrelated to the one we sent")
@@ -148,7 +148,7 @@ func TestSessionMetaContainsOptionalPromptExtension(t *testing.T) {
 
 func TestPerSessionApplierDeliversProviderLive(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+	_, err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
 		Provider: "anthropic", SupportsLiveConfig: true, SupportsLiveCredentialRegistration: true,
 	}, nil)
 	if err != nil {
@@ -171,7 +171,7 @@ func TestPerSessionApplierDeliversProviderLive(t *testing.T) {
 // supported configId, not SupportsLiveConfig alone.
 func TestPerSessionApplierSkipsProviderConfigForOpencodeShapedProfile(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+	_, err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
 		Provider: "openrouter", Model: "openrouter/auto",
 		SupportsLiveConfig: true, SupportsLiveCredentialRegistration: false,
 	}, nil)
@@ -196,7 +196,7 @@ func TestPerSessionApplierSkipsProviderConfigForOpencodeShapedProfile(t *testing
 
 func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 	fc := &fakeConn{}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Model: "claude-opus", SupportsLiveConfig: true}, nil)
+	_, err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{Model: "claude-opus", SupportsLiveConfig: true}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -211,6 +211,25 @@ func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 	}
 }
 
+// Apply must surface the harness's post-correction ConfigOptions so a
+// caller can republish the corrected value to the client.
+func TestPerSessionApplierReturnsConfigOptionsFromTheModelResponse(t *testing.T) {
+	fc := &fakeConn{setConfigOptionResp: acpsdk.SetSessionConfigOptionResponse{
+		ConfigOptions: []acpsdk.SessionConfigOption{{Select: &acpsdk.SessionConfigOptionSelect{
+			Id: "model", CurrentValue: "minimax/minimax-m2.7:free",
+		}}},
+	}}
+	options, err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Model: "minimax/minimax-m2.7:free", SupportsLiveConfig: true,
+	}, nil)
+	if err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	if len(options) != 1 || options[0].Select == nil || options[0].Select.CurrentValue != "minimax/minimax-m2.7:free" {
+		t.Fatalf("Apply options = %+v, want the fake's post-correction ConfigOptions passed through", options)
+	}
+}
+
 func TestPerSessionApplierRetriesModelNotFound(t *testing.T) {
 	originalPoll := modelRetryPollInterval
 	modelRetryPollInterval = 5 * time.Millisecond
@@ -221,7 +240,7 @@ func TestPerSessionApplierRetriesModelNotFound(t *testing.T) {
 		Data: map[string]any{"modelId": "openrouter/auto"},
 	}
 	fc := &fakeConn{setConfigOptionErrs: []error{modelNotFound, modelNotFound, nil}}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+	_, err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
 		Model: "openrouter/auto", SupportsLiveConfig: true,
 	}, nil)
 	if err != nil {
@@ -242,7 +261,7 @@ func TestPerSessionApplierRetriesOnDataModelIdRegardlessOfMessageText(t *testing
 		Data: map[string]any{"modelId": "openrouter/auto"},
 	}
 	fc := &fakeConn{setConfigOptionErrs: []error{modelNotFound, nil}}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+	_, err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
 		Model: "openrouter/auto", SupportsLiveConfig: true,
 	}, nil)
 	if err != nil {
@@ -259,7 +278,7 @@ func TestPerSessionApplierGivesUpOnGenuinelyUnknownModel(t *testing.T) {
 		Code: -32602, Message: "Invalid params: model not found: nonexistent-model",
 	}
 	fc := &fakeConnAlwaysErr{err: notFound}
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+	_, err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
 		Model: "nonexistent-model", SupportsLiveConfig: true,
 	}, nil)
 	if err == nil {
@@ -288,7 +307,7 @@ func TestPerSessionApplierSkipsEmptyFields(t *testing.T) {
 	// Empty SessionProfile — GlobalConfigApplier already returns nil for
 	// empty Mode (profile.go:76); PerSessionApplier must not call Goose
 	// at all for Provider/Model/Instructions when they're empty either.
-	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{}, nil)
+	_, err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{}, nil)
 	if err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
@@ -326,7 +345,7 @@ func TestApplySkipsSetConfigOptionWhenLiveConfigUnsupported(t *testing.T) {
 	conn := &recordingConn{}
 	p := SessionProfile{Provider: "anthropic", Model: "claude", SupportsLiveConfig: false}
 	applier := PerSessionApplier{}
-	if err := applier.Apply(context.Background(), conn, "sess1", p, nil); err != nil {
+	if _, err := applier.Apply(context.Background(), conn, "sess1", p, nil); err != nil {
 		t.Fatal(err)
 	}
 	if conn.calledSetConfigOption {
@@ -339,7 +358,7 @@ func TestApplySkipsSetSessionModeWhenModeNotAdvertised(t *testing.T) {
 	p := SessionProfile{Mode: "approve"}
 	modes := &acpsdk.SessionModeState{AvailableModes: []acpsdk.SessionMode{{Id: "chat"}}} // "approve" not in the list
 	applier := PerSessionApplier{}
-	if err := applier.Apply(context.Background(), conn, "sess1", p, modes); err != nil {
+	if _, err := applier.Apply(context.Background(), conn, "sess1", p, modes); err != nil {
 		t.Fatal(err)
 	}
 	if conn.calledSetSessionMode {
@@ -351,7 +370,7 @@ func TestApplyDoesNotSkipModeWhenModesIsNil(t *testing.T) {
 	conn := &recordingConn{}
 	p := SessionProfile{Mode: "approve"}
 	applier := PerSessionApplier{}
-	if err := applier.Apply(context.Background(), conn, "sess1", p, nil); err != nil {
+	if _, err := applier.Apply(context.Background(), conn, "sess1", p, nil); err != nil {
 		t.Fatal(err)
 	}
 	if !conn.calledSetSessionMode {

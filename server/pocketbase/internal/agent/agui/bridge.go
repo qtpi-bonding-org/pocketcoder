@@ -547,6 +547,13 @@ func (b *Bridge) SeedSession(modes *acpsdk.SessionModeState, config []acpsdk.Ses
 	return out
 }
 
+func (b *Bridge) ConfigUpdated(options []acpsdk.SessionConfigOption) []events.Event {
+	if len(options) == 0 {
+		return nil
+	}
+	return []events.Event{b.state.set("config", map[string]any{"options": configOptions(options)})}
+}
+
 // Snapshot returns the current /pocketcoder projection as a single
 // STATE_SNAPSHOT (or nil when nothing has been recorded). Intended for
 // subscriber attach so a late-joining client can catch up without re-emitting

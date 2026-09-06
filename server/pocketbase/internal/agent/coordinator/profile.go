@@ -194,19 +194,19 @@ type ProfileFunc func(context.Context) (SessionProfile, error)
 // ProfileApplier delivers the parts of a SessionProfile that ACP allows to
 // be set post session/new|load.
 type ProfileApplier interface {
-	Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) error
+	Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) ([]acpsdk.SessionConfigOption, error)
 }
 
 // GlobalConfigApplier delivers only what ACP allows post-create today: the
 // session mode. Permission enforcement remains in RequestPermission below.
 type GlobalConfigApplier struct{}
 
-func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) error {
+func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) ([]acpsdk.SessionConfigOption, error) {
 	if p.Mode == "" {
-		return nil
+		return nil, nil
 	}
 	if modes != nil && !modeAdvertised(modes, p.Mode) {
-		return nil // logging is the caller's job at the call site, per existing logging conventions in this file
+		return nil, nil // logging is the caller's job at the call site, per existing logging conventions in this file
 	}
 	_, err := conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{
 		SessionId: acpsdk.SessionId(sessionID), ModeId: p.Mode,
@@ -215,9 +215,9 @@ func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID s
 	// mode id must not fail the whole run.
 	if isModeNotFoundError(err, p.Mode) {
 		log.Printf("[coordinator] session %s: harness rejected mode %q as unknown, continuing without it", sessionID, p.Mode)
-		return nil
+		return nil, nil
 	}
-	return err
+	return nil, err
 }
 
 func requestErrorData(err error) (data map[string]any, code int, ok bool) {
@@ -270,14 +270,17 @@ func modeAdvertised(modes *acpsdk.SessionModeState, mode acpsdk.SessionModeId) b
 // are not sent through a harness-private RPC.
 type PerSessionApplier struct{}
 
-func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) error {
-	if err := (GlobalConfigApplier{}).Apply(ctx, conn, sessionID, p, modes); err != nil {
-		return err
+// The returned []acpsdk.SessionConfigOption is the harness's own
+// post-correction values, not an echo of the request.
+func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID string, p SessionProfile, modes *acpsdk.SessionModeState) ([]acpsdk.SessionConfigOption, error) {
+	if _, err := (GlobalConfigApplier{}).Apply(ctx, conn, sessionID, p, modes); err != nil {
+		return nil, err
 	}
 	// Provider-credential registration now happens in ProviderBootstrap,
 	// before this session ever existed (see establishSession in run.go) --
 	// SetSessionConfigOption below is always a genuine switch, never a
 	// bootstrap.
+	var latest []acpsdk.SessionConfigOption
 	if p.SupportsLiveConfig {
 		// A live-config harness's session/set_config_option support for
 		// configId "provider" is NOT implied by SupportsLiveConfig alone --
@@ -290,23 +293,29 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 		// SupportsLiveCredentialRegistration happens to be exactly the flag
 		// that's true only for goose today, so it doubles as this gate.
 		if p.SupportsLiveCredentialRegistration && p.Provider != "" {
-			if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
+			resp, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
 				ValueId: &acpsdk.SetSessionConfigOptionValueId{
 					SessionId: acpsdk.SessionId(sessionID),
 					ConfigId:  "provider",
 					Value:     acpsdk.SessionConfigValueId(p.Provider),
 				},
-			}); err != nil {
-				return fmt.Errorf("apply provider: %w", err)
+			})
+			if err != nil {
+				return nil, fmt.Errorf("apply provider: %w", err)
 			}
+			latest = resp.ConfigOptions
 		}
 		if p.Model != "" {
-			if err := setModelWithRetry(ctx, conn, sessionID, p.Model); err != nil {
-				return fmt.Errorf("apply model: %w", err)
+			opts, err := setModelWithRetry(ctx, conn, sessionID, p.Model)
+			if err != nil {
+				return nil, fmt.Errorf("apply model: %w", err)
+			}
+			if opts != nil {
+				latest = opts
 			}
 		}
 	}
-	return nil
+	return latest, nil
 }
 
 // Overridable by tests so TestPerSessionApplierGivesUpOnGenuinelyUnknownModel
@@ -319,10 +328,10 @@ var (
 // A "model not found" moments after connecting can mean a fresh stdio
 // subprocess's own catalog sync hasn't finished yet, not a real bad model
 // name. Retry for a bounded window before giving up.
-func setModelWithRetry(ctx context.Context, conn acp.Conn, sessionID, model string) error {
+func setModelWithRetry(ctx context.Context, conn acp.Conn, sessionID, model string) ([]acpsdk.SessionConfigOption, error) {
 	deadline := time.Now().Add(modelRetryTimeout)
 	for {
-		_, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
+		resp, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
 			ValueId: &acpsdk.SetSessionConfigOptionValueId{
 				SessionId: acpsdk.SessionId(sessionID),
 				ConfigId:  "model",
@@ -330,17 +339,17 @@ func setModelWithRetry(ctx context.Context, conn acp.Conn, sessionID, model stri
 			},
 		})
 		if err == nil {
-			return nil
+			return resp.ConfigOptions, nil
 		}
 		if !isModelNotFoundError(err, model) {
-			return err
+			return nil, err
 		}
 		if !time.Now().Before(deadline) {
-			return err
+			return nil, err
 		}
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil, ctx.Err()
 		case <-time.After(modelRetryPollInterval):
 		}
 	}

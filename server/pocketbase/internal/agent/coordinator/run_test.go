@@ -144,6 +144,7 @@ type fakeConn struct {
 	lastSetConfigOption  acpsdk.SetSessionConfigOptionRequest
 	setConfigOptionCalls []acpsdk.SetSessionConfigOptionRequest
 	setConfigOptionErrs []error
+	setConfigOptionResp  acpsdk.SetSessionConfigOptionResponse
 
 	// Task 6: custom InitializeResponse for testing capability flags
 	initResp acpsdk.InitializeResponse
@@ -402,8 +403,9 @@ func (f *fakeConn) SetSessionConfigOption(_ context.Context, req acpsdk.SetSessi
 		err = f.setConfigOptionErrs[0]
 		f.setConfigOptionErrs = f.setConfigOptionErrs[1:]
 	}
+	resp := f.setConfigOptionResp
 	f.mu.Unlock()
-	return acpsdk.SetSessionConfigOptionResponse{}, err
+	return resp, err
 }
 func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.PromptResponse, error) {
 	if f.promptCalled != nil {
@@ -810,6 +812,61 @@ func TestRequestPermissionForwardsToolCallID(t *testing.T) {
 		t.Fatal(err)
 	}
 	c.waitRunDone(t, "A")
+}
+
+// A successful live model correction must reach the client as a "config"
+// STATE_DELTA, not just the pre-correction snapshot SeedSession published.
+func TestLiveModelCorrectionReachesTheClientAsAStateDelta(t *testing.T) {
+	f := newFakeConn()
+	f.newSession = "sess-1"
+	f.setConfigOptionResp = acpsdk.SetSessionConfigOptionResponse{
+		ConfigOptions: []acpsdk.SessionConfigOption{{Select: &acpsdk.SessionConfigOptionSelect{
+			Id: "model", CurrentValue: "openrouter/minimax/minimax-m2.7:free",
+		}}},
+	}
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	att := c.hubFor("A").Attach(0)
+	defer att.Unsubscribe()
+
+	_, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "", nil },
+		func(context.Context) (SessionProfile, error) {
+			return SessionProfile{Model: "openrouter/minimax/minimax-m2.7:free", SupportsLiveConfig: true}, nil
+		},
+		func(context.Context, string) error { return nil },
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("StartPrompt err=%v", err)
+	}
+	c.waitRunDone(t, "A")
+
+	found := false
+	for i := 0; i < 20; i++ {
+		select {
+		case se := <-att.Live:
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(b), "minimax-m2.7:free") {
+				found = true
+			}
+		default:
+		}
+	}
+	for _, se := range att.Buffered {
+		b, err := json.Marshal(se.Ev)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(b), "minimax-m2.7:free") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected a published event carrying the post-correction model value, got none -- the client would still show the pre-correction boot placeholder")
+	}
 }
 
 func TestStartPromptWithUserMessageIDEchoesTextMessage(t *testing.T) {
