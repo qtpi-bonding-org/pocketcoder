@@ -62,6 +62,10 @@ class TerminalInput extends StatefulWidget {
   final bool enabled;
   final FocusNode? focusNode;
 
+  /// Sits at the right of the prompt line, top-aligned so it holds its place
+  /// as the entered text wraps onto further lines.
+  final Widget? trailing;
+
   const TerminalInput({
     super.key,
     required this.controller,
@@ -69,6 +73,7 @@ class TerminalInput extends StatefulWidget {
     this.prompt = '%',
     this.enabled = true,
     this.focusNode,
+    this.trailing,
   });
 
   @override
@@ -166,35 +171,43 @@ class _TerminalInputState extends State<TerminalInput> {
           ),
         ),
       ),
-      child: TextField(
-        enabled: widget.enabled,
-        controller: _displayController,
-        focusNode: widget.focusNode,
-        onSubmitted: (_) => widget.onSubmitted(),
-        autofocus: true,
-        minLines: 1,
-        maxLines: null,
-        keyboardType: TextInputType.multiline,
-        textInputAction: TextInputAction.send,
-        style: TextStyle(
-          color: colors.secondary,
-          fontFamily: AppFonts.family,
-          package: 'pocketcoder_flutter',
-        ),
-        // We simulate the terminal block cursor by using a custom color toggle
-        // and a wider cursor width.
-        cursorColor: _cursorVisible && widget.enabled
-            ? colors.secondary
-            : colors.surface.withValues(alpha: 0),
-        cursorWidth: 10,
-        cursorHeight: AppSizes.fontBody,
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.zero,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+              child: TextField(
+            enabled: widget.enabled,
+            controller: _displayController,
+            focusNode: widget.focusNode,
+            onSubmitted: (_) => widget.onSubmitted(),
+            autofocus: true,
+            minLines: 1,
+            maxLines: null,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.send,
+            style: TextStyle(
+              color: colors.secondary,
+              fontFamily: AppFonts.family,
+              package: 'pocketcoder_flutter',
+            ),
+            // Flutter's caret is a thin bar with a blink we cannot retime, so
+            // a block cursor has to be built: widen it, and drive its colour
+            // from our own timer.
+            cursorColor: _cursorVisible && widget.enabled
+                ? colors.secondary
+                : colors.surface.withValues(alpha: 0),
+            cursorWidth: 10,
+            cursorHeight: AppSizes.fontBody,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+            ),
+          )),
+          if (widget.trailing case final trailing?) trailing,
+        ],
       ),
     );
   }

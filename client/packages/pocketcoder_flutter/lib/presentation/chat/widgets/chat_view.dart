@@ -13,7 +13,6 @@ import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/reasoning_caption.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
@@ -312,11 +311,10 @@ class _ChatViewState extends State<ChatView> {
                       enabled: !widget.isLoading && widget.chatId != null,
                       isLoading: widget.isLoading,
                       onSubmitted: _submit,
+                      onInterrupt: widget.isRunning ? widget.onCancel : null,
                     ),
                   ),
                 ),
-                if (widget.isRunning)
-                  InterruptRow(onInterrupt: widget.onCancel),
               ],
             ),
           ),

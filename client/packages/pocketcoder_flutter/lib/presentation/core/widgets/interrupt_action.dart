@@ -7,8 +7,11 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 /// angle brackets: those mark a discrete choice a modal is offering, and this
 /// is the terminal's own control character. Amber, not red: stopping a turn
 /// interrupts work, it does not destroy anything.
-class InterruptRow extends StatelessWidget {
-  const InterruptRow({super.key, required this.onInterrupt});
+///
+/// It sits in the prompt line rather than a row of its own, so the one place
+/// a turn is started is the one place it is stopped.
+class InterruptAction extends StatelessWidget {
+  const InterruptAction({super.key, required this.onInterrupt});
 
   final VoidCallback onInterrupt;
 
@@ -17,14 +20,8 @@ class InterruptRow extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onInterrupt,
         child: Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: AppSizes.space * 2, vertical: AppSizes.space * 0.5),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TerminalText('^C', role: TextRole.warn),
-            ],
-          ),
+          padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+          child: TerminalText('^C', role: TextRole.warn),
         ),
       );
 }

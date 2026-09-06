@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_action.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
@@ -363,6 +363,18 @@ void main() {
         moreOrLessEquals(position?.maxScrollExtent ?? 0, epsilon: 1));
   });
 
+  testWidgets('the interrupt lives on the prompt line, not a row of its own',
+      (tester) async {
+    await tester.pumpWidget(buildChatView(
+        conversation: const ag_ui_widgets.Conversation(), isRunning: true));
+    await tester.pumpAndSettle();
+    expect(
+        find.descendant(
+            of: find.byType(ChatComposer),
+            matching: find.byType(InterruptAction)),
+        findsOneWidget);
+  });
+
   testWidgets('the interrupt offers itself only while a turn is running',
       (tester) async {
     const conversation = ag_ui_widgets.Conversation();
@@ -370,11 +382,11 @@ void main() {
     await tester.pumpWidget(
         buildChatView(conversation: conversation, isRunning: false));
     await tester.pumpAndSettle();
-    expect(find.byType(InterruptRow), findsNothing);
+    expect(find.byType(InterruptAction), findsNothing);
 
-    await tester.pumpWidget(
-        buildChatView(conversation: conversation, isRunning: true));
+    await tester
+        .pumpWidget(buildChatView(conversation: conversation, isRunning: true));
     await tester.pumpAndSettle();
-    expect(find.byType(InterruptRow), findsOneWidget);
+    expect(find.byType(InterruptAction), findsOneWidget);
   });
 }
