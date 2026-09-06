@@ -246,7 +246,8 @@ class HarnessTest {
         harnessAuthRepository: harness,
         router: router,
         instanceExistenceResolver: instanceExistenceResolver,
-        deploymentAuthStatus: deploymentAuthStatus);
+        deploymentAuthStatus: deploymentAuthStatus,
+        unknownExistenceRetryDelay: Duration.zero);
   }
   Future<void> start(WidgetTester tester, {bool settle = true}) async {
     addTearDown(decider.dispose);
@@ -657,15 +658,17 @@ void main() {
   });
 
   testWidgets(
-      'unconfirmed temporarilyUnavailable with an unknown existence check '
-      'routes to instanceUnverifiable instead of signing out', (tester) async {
+      'unconfirmed temporarilyUnavailable with a persistently unknown '
+      'existence check retries a few times before routing to '
+      'instanceUnverifiable', (tester) async {
     final resolver =
         FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
     final t = HarnessTest(
         signedIn: true, instanceId: 'i', instanceExistenceResolver: resolver);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
     await t.start(tester);
-    expect(resolver.calls, 1);
+
+    expect(resolver.calls, BootRoutingDecider.kMaxUnknownExistenceRetries);
     expect(t.router.state.name, RouteNames.instanceUnverifiable);
   });
 
@@ -706,8 +709,8 @@ void main() {
   });
 
   testWidgets(
-      'a resolver that throws is treated as unknown -- routes to '
-      'instanceUnverifiable and does not crash reconcile', (tester) async {
+      'a resolver that throws is treated as unknown -- retries, then routes '
+      'to instanceUnverifiable, and does not crash reconcile', (tester) async {
     final resolver =
         FakeInstanceExistenceResolver(InstanceExistenceResult.exists)
           ..throwError = Exception('provider unreachable');
@@ -715,6 +718,7 @@ void main() {
         signedIn: true, instanceId: 'i', instanceExistenceResolver: resolver);
     t.authRepository.refreshResult = AuthRefreshResult.temporarilyUnavailable;
     await t.start(tester);
+
     expect(t.router.state.name, RouteNames.instanceUnverifiable);
   });
 
@@ -745,7 +749,7 @@ void main() {
     gate.complete(InstanceExistenceResult.unknown);
     await tester.runAsync(() => pending);
     await t.settleReconcile(tester);
-    expect(resolver.calls, 1);
+    expect(resolver.calls, BootRoutingDecider.kMaxUnknownExistenceRetries);
     expect(t.router.state.name, RouteNames.instanceUnverifiable);
   });
 
@@ -760,16 +764,18 @@ void main() {
     expect(t.router.state.name, RouteNames.instanceGone);
   });
 
-  testWidgets('signedOut existence result is cached for the ready epoch',
-      (tester) async {
+  testWidgets(
+      'signedOut existence result is cached for the ready epoch once the '
+      'retry budget is exhausted', (tester) async {
     final resolver =
         FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
     final t = HarnessTest(instanceId: 'i', instanceExistenceResolver: resolver);
     await t.start(tester);
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    expect(resolver.calls, BootRoutingDecider.kMaxUnknownExistenceRetries);
+
     t.readiness.changes.add(t.readiness.current);
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
-    expect(resolver.calls, 1);
+    expect(resolver.calls, BootRoutingDecider.kMaxUnknownExistenceRetries);
   });
 
   testWidgets('readiness epoch change does not reuse existence answer',
@@ -786,7 +792,7 @@ void main() {
         status: ServerReadinessStatus.ready, instanceId: 'i'));
     await tester.pump();
     await t.settleReconcile(tester);
-    expect(resolver.calls, 2);
+    expect(resolver.calls, 2 * BootRoutingDecider.kMaxUnknownExistenceRetries);
   });
 
   testWidgets('retryAuth clears a cached unknown existence answer',
@@ -795,13 +801,13 @@ void main() {
         FakeInstanceExistenceResolver(InstanceExistenceResult.unknown);
     final t = HarnessTest(instanceId: 'i', instanceExistenceResolver: resolver);
     await t.start(tester);
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     expect(t.router.state.name, RouteNames.instanceUnverifiable);
+    final callsBeforeRetry = resolver.calls;
     resolver.result = InstanceExistenceResult.exists;
     final retried = t.decider.retryAuth();
     await t.settleReconcile(tester);
     await retried;
-    expect(resolver.calls, 2);
+    expect(resolver.calls, callsBeforeRetry + 1);
     expect(t.router.state.name, RouteNames.onboardingLogin);
   });
 

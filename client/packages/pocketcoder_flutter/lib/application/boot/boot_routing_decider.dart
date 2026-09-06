@@ -20,17 +20,27 @@ class BootRoutingDecider {
     required GoRouter router,
     IInstanceExistenceResolver? instanceExistenceResolver,
     IDeploymentAuthStatus? deploymentAuthStatus,
+    Duration unknownExistenceRetryDelay = kUnknownExistenceRetryDelay,
   })  : _readiness = readinessCheck,
         _auth = authCoordinator,
         _harness = harnessAuthRepository,
         _router = router,
         _instanceExistence = instanceExistenceResolver,
-        _deploymentAuthStatus = deploymentAuthStatus;
+        _deploymentAuthStatus = deploymentAuthStatus,
+        _unknownExistenceRetryDelay = unknownExistenceRetryDelay;
 
   /// Must equal BootScreen's own scripted timeline length (2.5s + 6.5s),
   /// since nothing here observes BootScreen's actual animation state.
   static const Duration kMinFreshInstallBootDuration =
       Duration(milliseconds: 9000);
+
+  /// A cloud-provider existence check is a last-resort fallback for a flaky
+  /// auth refresh, not an authority on whether the deployment is reachable
+  /// -- so an [InstanceExistenceResult.unknown] (the provider API itself
+  /// failed/timed out/lacks a token) gets a few retries before it's treated
+  /// as decisive enough to show instanceUnverifiable.
+  static const int kMaxUnknownExistenceRetries = 3;
+  static const Duration kUnknownExistenceRetryDelay = Duration(seconds: 2);
 
   final IServerReadinessCheck _readiness;
   final AuthSessionCoordinator _auth;
@@ -38,6 +48,7 @@ class BootRoutingDecider {
   final GoRouter _router;
   final IInstanceExistenceResolver? _instanceExistence;
   final IDeploymentAuthStatus? _deploymentAuthStatus;
+  final Duration _unknownExistenceRetryDelay;
 
   StreamSubscription<ServerReadinessSnapshot>? _readinessSub;
   StreamSubscription<AuthSessionSnapshot>? _authSub;
@@ -57,6 +68,9 @@ class BootRoutingDecider {
   final DateTime _bootStartedAt = DateTime.now();
   bool _hasLeftBootScreen = false;
   String? _lastDeployProgressRoute;
+  _ExistenceKey? _unknownRetryKey;
+  int _unknownRetryCount = 0;
+  Timer? _unknownRetryTimer;
 
   Future<void> start() async {
     _readinessSub = _readiness.readinessChanges.listen((_) => _reconcile());
@@ -71,11 +85,15 @@ class BootRoutingDecider {
     _readinessSub?.cancel();
     _authSub?.cancel();
     _deploymentAuthSub?.cancel();
+    _unknownRetryTimer?.cancel();
   }
 
   Future<void> retryAuth() async {
     _existenceAnswer = null;
     _restoredEpoch = null;
+    _unknownRetryKey = null;
+    _unknownRetryCount = 0;
+    _unknownRetryTimer?.cancel();
     await _reconcile();
   }
 
@@ -216,18 +234,43 @@ class BootRoutingDecider {
         _navigate(RouteNames.onboardingLogin);
         return;
       }
-      final result =
-          await _existenceFor((epoch, readiness.instanceId), resolver);
+      final existenceKey = (epoch, readiness.instanceId);
+      final result = await _existenceFor(existenceKey, resolver);
       if (generation != _generation) {
         return; // superseded while awaiting
       }
       switch (result) {
         case InstanceExistenceResult.exists:
+          _unknownRetryKey = null;
+          _unknownRetryCount = 0;
           _navigate(RouteNames.onboardingLogin);
         case InstanceExistenceResult.gone:
+          _unknownRetryKey = null;
+          _unknownRetryCount = 0;
           _navigate(RouteNames.instanceGone);
         case InstanceExistenceResult.unknown:
-          _navigate(RouteNames.instanceUnverifiable);
+          if (_unknownRetryKey != existenceKey) {
+            _unknownRetryKey = existenceKey;
+            _unknownRetryCount = 0;
+          }
+          _unknownRetryCount++;
+          if (_unknownRetryCount < kMaxUnknownExistenceRetries) {
+            AppLogger.debug('BootRoutingDecider existence unknown -- retrying', {
+              'generation': generation,
+              'attempt': _unknownRetryCount,
+            });
+            _unknownRetryTimer?.cancel();
+            _unknownRetryTimer = Timer(_unknownExistenceRetryDelay, () {
+              // Cleared here, not when scheduling: an unrelated reconcile
+              // (readiness/auth change) firing before this timer must still
+              // see the cached unknown answer, not force its own extra
+              // resolver call.
+              _existenceAnswer = null;
+              if (generation == _generation) unawaited(_reconcile());
+            });
+          } else {
+            _navigate(RouteNames.instanceUnverifiable);
+          }
       }
       return;
     }
