@@ -15,7 +15,11 @@ class PlanPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final value = plan;
     if (value == null) return const SizedBox.shrink();
-    final entries = (value['entries'] as List?)?.whereType<Map>().map((e) => Map<String,dynamic>.from(e)).toList() ?? const <Map<String,dynamic>>[];
+    final entries = (value['entries'] as List?)
+            ?.whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList() ??
+        const <Map<String, dynamic>>[];
     if (entries.isEmpty) return const SizedBox.shrink();
     return _buildPanel(context, entries);
   }
@@ -46,7 +50,6 @@ class PlanPanel extends StatelessWidget {
                 context.l10n.agentPlanPanelBadge,
                 style: TextStyle(
                   color: colors.primary,
-                  fontSize: AppSizes.fontTiny,
                   fontWeight: AppFonts.heavy,
                 ),
               ),
@@ -56,7 +59,6 @@ class PlanPanel extends StatelessWidget {
                   context.l10n.agentPlanPanelLabel,
                   style: TextStyle(
                     color: colors.primary,
-                    fontSize: AppSizes.fontTiny,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
                   ),
@@ -114,19 +116,17 @@ class PlanPanel extends StatelessWidget {
                   color: isDone
                       ? colors.onSurface.withValues(alpha: 0.4)
                       : colors.onSurface,
-                  fontFamily: AppFonts.bodyFamily,
-                  fontSize: AppSizes.fontStandard,
+                  fontFamily: AppFonts.family,
                   decoration:
                       isDone ? TextDecoration.lineThrough : TextDecoration.none,
                 ),
               ),
               if (priority.isNotEmpty || status.isNotEmpty)
                 Text(
-                  '[${priority.isNotEmpty ? '${priority.toUpperCase()} · ' : ''}${status.toUpperCase()}]',
+                  '[${priority.isNotEmpty ? '$priority · ' : ''}$status]',
                   style: TextStyle(
                     color: accent,
-                    fontFamily: AppFonts.bodyFamily,
-                    fontSize: AppSizes.fontTiny,
+                    fontFamily: AppFonts.family,
                     letterSpacing: 1,
                   ),
                 ),

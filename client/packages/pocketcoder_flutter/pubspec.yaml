@@ -122,9 +122,6 @@ flutter:
     - assets/deployment/Caddyfile.template
 
   fonts:
-    - family: Share Tech Mono
-      fonts:
-        - asset: assets/Share_Tech_Mono/ShareTechMono-Regular.ttf
     - family: Noto Sans Mono
       fonts:
         - asset: assets/Noto_Sans_Mono/static/NotoSansMono-Regular.ttf

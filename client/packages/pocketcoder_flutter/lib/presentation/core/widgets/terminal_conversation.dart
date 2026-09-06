@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 enum TerminalConversationSpeaker { user, poco }
 
@@ -20,8 +22,7 @@ class TerminalRoleLabel extends StatelessWidget {
       label,
       style: TextStyle(
         color: color,
-        fontFamily: AppFonts.bodyFamily,
-        fontSize: AppSizes.fontTiny,
+        fontFamily: AppFonts.family,
         fontWeight: AppFonts.heavy,
         letterSpacing: 2,
       ),
@@ -51,9 +52,8 @@ class TerminalTranscriptLine extends StatelessWidget {
           prefix,
           style: TextStyle(
             color: color,
-            fontFamily: AppFonts.bodyFamily,
+            fontFamily: AppFonts.family,
             package: 'pocketcoder_flutter',
-            fontSize: AppSizes.fontStandard,
             fontWeight: AppFonts.medium,
           ),
         ),
@@ -89,8 +89,8 @@ class TerminalConversationFrame extends StatelessWidget {
     final colors = context.colorScheme;
     final terminalColors = context.terminalColors;
     final isUser = speaker == TerminalConversationSpeaker.user;
-    final resolved =
-        emphasize(colors.secondary, isUser ? Emphasis.selected : Emphasis.plain);
+    final resolved = emphasize(
+        colors.secondary, isUser ? Emphasis.selected : Emphasis.plain);
     final accent = isReasoning ? terminalColors.warning : resolved.text;
 
     final content = Column(
@@ -108,9 +108,8 @@ class TerminalConversationFrame extends StatelessWidget {
     final frame = Container(
       constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
       padding: EdgeInsets.all(AppSizes.space),
-      decoration: isUser && showUserBorder
-          ? BoxDecoration(color: resolved.fill)
-          : null,
+      decoration:
+          isUser && showUserBorder ? BoxDecoration(color: resolved.fill) : null,
       child: content,
     );
 
@@ -145,6 +144,7 @@ class TerminalConversationTurn extends StatelessWidget {
     this.sequence = const [],
     this.history = const [],
     this.showPocoFace = true,
+    this.pocoSize,
   });
 
   final TerminalConversationSpeaker speaker;
@@ -152,6 +152,8 @@ class TerminalConversationTurn extends StatelessWidget {
   final List<(String, int)> sequence;
   final List<String> history;
   final bool showPocoFace;
+
+  final double? pocoSize;
 
   @override
   Widget build(BuildContext context) {
@@ -162,8 +164,8 @@ class TerminalConversationTurn extends StatelessWidget {
           message: message,
           sequence: sequence,
           history: history,
-          pocoSize: AppSizes.fontLarge,
           showFace: showPocoFace,
+          pocoSize: pocoSize,
         ),
       );
     }
@@ -173,18 +175,17 @@ class TerminalConversationTurn extends StatelessWidget {
       child: Text(
         '\$ $message',
         style: TextStyle(
-          color: emphasize(context.colorScheme.secondary, Emphasis.selected).text,
-          fontFamily: AppFonts.bodyFamily,
-          fontSize: AppSizes.fontStandard,
+          color:
+              emphasize(context.colorScheme.secondary, Emphasis.selected).text,
+          fontFamily: AppFonts.family,
         ),
       ),
     );
   }
 }
 
-/// A suggested local prompt. It intentionally looks like a terminal command
-/// row instead of a modern rounded chip.
-class TerminalPromptSuggestion extends StatelessWidget {
+/// A suggested local prompt with user's voice represented as a prompt marker (>).
+class TerminalPromptSuggestion extends StatefulWidget {
   const TerminalPromptSuggestion({
     super.key,
     required this.label,
@@ -195,43 +196,52 @@ class TerminalPromptSuggestion extends StatelessWidget {
   final String label;
   final VoidCallback onSelected;
 
-  /// When set, routes the border/text color through emphasize() instead
-  /// of the default alpha-0.3 border. See the emphasis-states spec
-  /// (2026-08-23).
   final Emphasis? emphasis;
 
   @override
+  State<TerminalPromptSuggestion> createState() =>
+      _TerminalPromptSuggestionState();
+}
+
+class _TerminalPromptSuggestionState extends State<TerminalPromptSuggestion> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    final resolvedEmphasis = emphasis;
-    final resolved = resolvedEmphasis == null
-        ? null
-        : emphasize(colors.primary, resolvedEmphasis);
-    final borderColor = resolved?.border ?? colors.primary.withValues(alpha: 0.3);
-    final textColor = resolved?.text ?? colors.primary;
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton(
-        onPressed: onSelected,
-        style: TextButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSizes.space,
-            vertical: AppSizes.space,
-          ),
-          shape: RoundedRectangleBorder(
-            side: BorderSide(color: borderColor),
-            borderRadius: BorderRadius.zero,
-          ),
+    final role = (widget.emphasis == Emphasis.outlined
+            ? ActionKind.primary
+            : ActionKind.neutral)
+        .role;
+    final reversed = _pressed;
+
+    return GestureDetector(
+      onTap: widget.onSelected,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      child: Container(
+        width: double.infinity,
+        color: reversed ? role.color : Colors.transparent,
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.space,
+          vertical: AppSizes.space * 0.75,
         ),
-        child: Text(
-          '> ${label.toUpperCase()}',
-          style: TextStyle(
-            color: textColor,
-            fontFamily: AppFonts.bodyFamily,
-            fontSize: AppSizes.fontTiny,
-            fontWeight: AppFonts.heavy,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            TerminalText(
+              '> ',
+              role: role,
+            ),
+            Expanded(
+              child: TerminalText(
+                widget.label,
+                role: role,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -278,6 +278,120 @@ func TestLiveNewSessionBootstrapsProviderCredentialOnFreshContainer(t *testing.T
 	t.Logf("provider bootstrap on fresh container ok: events=%d, last=%v, assistant reply=%q", len(got), got[len(got)-1], reply)
 }
 
+func TestLiveSetConfigOptionSwitchesModel(t *testing.T) {
+	profile := liveProfile()
+	if !profile.SupportsLiveConfig {
+		t.Skip("set GOOSE_LIVE_PROVIDER and GOOSE_LIVE_MODEL to run this test")
+	}
+
+	c, err := New(liveConfig(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chatID := "live-chat-config-switch"
+	resolve := func(context.Context) (string, error) { return "", nil }
+	profileFn := func(context.Context) (SessionProfile, error) { return profile, nil }
+	created := func(context.Context, string) error { return nil }
+	finished := func(context.Context, acpsdk.StopReason) error { return nil }
+
+	// A slow prompt keeps the run active long enough for the polling loop
+	// below to catch it before RUN_FINISHED.
+	if _, err := c.StartPrompt(chatID, "Count slowly from 1 to 12, one number per line.", resolve, profileFn, created, finished); err != nil {
+		t.Fatalf("StartPrompt failed: %v", err)
+	}
+	defer func() { _ = c.Cancel(context.Background(), chatID) }()
+
+	var h *runHandle
+	deadline := time.Now().Add(liveTimeout())
+	for time.Now().Before(deadline) {
+		h = c.runFor(chatID)
+		if h != nil && h.conn != nil {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	if h == nil || h.conn == nil {
+		t.Fatal("run never reached an established session")
+	}
+
+	selfSet := func(value acpsdk.SessionConfigValueId) acpsdk.SetSessionConfigOptionResponse {
+		resp, err := h.conn.SetSessionConfigOption(context.Background(), acpsdk.SetSessionConfigOptionRequest{
+			ValueId: &acpsdk.SetSessionConfigOptionValueId{
+				SessionId: acpsdk.SessionId(h.sessionID),
+				ConfigId:  "model",
+				Value:     value,
+			},
+		})
+		if err != nil {
+			t.Fatalf("session/set_config_option for configId \"model\"=%q failed: %v", value, err)
+		}
+		return resp
+	}
+
+	baseline := selfSet(acpsdk.SessionConfigValueId(profile.Model))
+	current, choices := modelOptionState(t, baseline)
+	swapTo := ""
+	for _, choice := range choices {
+		if choice != current {
+			swapTo = choice
+			break
+		}
+	}
+	if swapTo == "" {
+		t.Skipf("only one model option (%q) advertised for this provider; cannot exercise a genuine swap", current)
+	}
+
+	if err := c.SetConfigOption(context.Background(), chatID, acpsdk.SetSessionConfigOptionRequest{
+		ValueId: &acpsdk.SetSessionConfigOptionValueId{ConfigId: "model", Value: acpsdk.SessionConfigValueId(swapTo)},
+	}); err != nil {
+		t.Fatalf("Coordinator.SetConfigOption(model=%q) failed: %v", swapTo, err)
+	}
+
+	confirmed := selfSet(acpsdk.SessionConfigValueId(swapTo))
+	after, _ := modelOptionState(t, confirmed)
+	if after != swapTo {
+		t.Fatalf("goose reports current model %q after switching, want %q", after, swapTo)
+	}
+	t.Logf("live model swap confirmed: %q -> %q", current, after)
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	got := drainEventTypes(t, att, liveTimeout())
+	if len(got) == 0 {
+		t.Fatal("expected at least one event")
+	}
+	if last := got[len(got)-1]; last == events.EventTypeRunError {
+		t.Fatalf("run ended in RUN_ERROR after a live model switch: %v", got)
+	}
+	t.Logf("run continued after model swap: events=%d", len(got))
+}
+
+func modelOptionState(t *testing.T, resp acpsdk.SetSessionConfigOptionResponse) (current string, choices []string) {
+	t.Helper()
+	for _, opt := range resp.ConfigOptions {
+		if opt.Select == nil || opt.Select.Id != "model" {
+			continue
+		}
+		current = string(opt.Select.CurrentValue)
+		if opt.Select.Options.Ungrouped != nil {
+			for _, o := range *opt.Select.Options.Ungrouped {
+				choices = append(choices, string(o.Value))
+			}
+		}
+		if opt.Select.Options.Grouped != nil {
+			for _, group := range *opt.Select.Options.Grouped {
+				for _, o := range group.Options {
+					choices = append(choices, string(o.Value))
+				}
+			}
+		}
+		return current, choices
+	}
+	t.Fatal("response has no \"model\" select config option")
+	return "", nil
+}
+
 // TestLiveWrongSecretRejected proves the WS endpoint enforces auth: a bad
 // token must fail the handshake, so the detached run publishes RUN_ERROR
 // instead of driving goose.

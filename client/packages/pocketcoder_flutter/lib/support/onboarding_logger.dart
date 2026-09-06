@@ -17,5 +17,4 @@ abstract final class OnboardingLogger {
   ]) {
     AppLogger.error('[Onboarding] $message', error, stackTrace);
   }
-
 }

@@ -11,7 +11,8 @@ void main() {
     const store = CaddyCaPinStore(storage);
     const pin = CaddyCaPin(
       fingerprint: 'SHA256:abc123',
-      certificatePem: '-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----',
+      certificatePem:
+          '-----BEGIN CERTIFICATE-----\nCA\n-----END CERTIFICATE-----',
     );
 
     await store.write(deploymentId: 'deployment-1', pin: pin);

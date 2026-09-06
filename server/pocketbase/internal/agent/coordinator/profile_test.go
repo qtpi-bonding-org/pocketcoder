@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 )
@@ -64,6 +65,42 @@ func TestGlobalConfigApplier_SetsMode(t *testing.T) {
 	}
 	if fc.lastModeSession != "sess-1" || fc.lastMode != "auto" {
 		t.Fatalf("set_mode not forwarded: sess=%q mode=%q", fc.lastModeSession, fc.lastMode)
+	}
+}
+
+func TestGlobalConfigApplier_ToleratesUnknownModeError(t *testing.T) {
+	fc := &fakeConn{setModeErr: &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: mode not found: approve",
+		Data: map[string]any{"mode": "approve"},
+	}}
+	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
+	if err != nil {
+		t.Fatalf("expected the unknown-mode error to be swallowed, got: %v", err)
+	}
+}
+
+func TestGlobalConfigApplier_UsesStructuredDataOverMessageText(t *testing.T) {
+	fc := &fakeConn{setModeErr: &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: totally different wording",
+		Data: map[string]any{"mode": "approve"},
+	}}
+	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
+	if err != nil {
+		t.Fatalf("expected Data.mode match to swallow the error regardless of message text, got: %v", err)
+	}
+}
+
+func TestGlobalConfigApplier_DoesNotSwallowMismatchedModeInData(t *testing.T) {
+	fc := &fakeConn{setModeErr: &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: mode not found: some-other-mode",
+		Data: map[string]any{"mode": "some-other-mode"},
+	}}
+	err := GlobalConfigApplier{}.Apply(context.Background(), fc, "sess-1",
+		SessionProfile{Mode: acpsdk.SessionModeId("approve")}, nil)
+	if err == nil {
+		t.Fatal("expected an error for a mode mismatch unrelated to the one we sent")
 	}
 }
 
@@ -172,6 +209,78 @@ func TestPerSessionApplierDeliversModelLive(t *testing.T) {
 	if !found {
 		t.Errorf("expected a configId=model value=claude-opus call, got %+v", fc.setConfigOptionCalls)
 	}
+}
+
+func TestPerSessionApplierRetriesModelNotFound(t *testing.T) {
+	originalPoll := modelRetryPollInterval
+	modelRetryPollInterval = 5 * time.Millisecond
+	defer func() { modelRetryPollInterval = originalPoll }()
+
+	modelNotFound := &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: model not found: openrouter/auto",
+		Data: map[string]any{"modelId": "openrouter/auto"},
+	}
+	fc := &fakeConn{setConfigOptionErrs: []error{modelNotFound, modelNotFound, nil}}
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Model: "openrouter/auto", SupportsLiveConfig: true,
+	}, nil)
+	if err != nil {
+		t.Fatalf("expected the model to be applied after retrying, got: %v", err)
+	}
+	if len(fc.setConfigOptionCalls) != 3 {
+		t.Fatalf("set_config_option calls = %d, want 3 (2 failures + 1 success)", len(fc.setConfigOptionCalls))
+	}
+}
+
+func TestPerSessionApplierRetriesOnDataModelIdRegardlessOfMessageText(t *testing.T) {
+	originalPoll := modelRetryPollInterval
+	modelRetryPollInterval = 5 * time.Millisecond
+	defer func() { modelRetryPollInterval = originalPoll }()
+
+	modelNotFound := &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: totally different wording",
+		Data: map[string]any{"modelId": "openrouter/auto"},
+	}
+	fc := &fakeConn{setConfigOptionErrs: []error{modelNotFound, nil}}
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Model: "openrouter/auto", SupportsLiveConfig: true,
+	}, nil)
+	if err != nil {
+		t.Fatalf("expected Data.modelId match to trigger a retry regardless of message text, got: %v", err)
+	}
+}
+
+func TestPerSessionApplierGivesUpOnGenuinelyUnknownModel(t *testing.T) {
+	originalTimeout, originalPoll := modelRetryTimeout, modelRetryPollInterval
+	modelRetryTimeout, modelRetryPollInterval = 30*time.Millisecond, 5*time.Millisecond
+	defer func() { modelRetryTimeout, modelRetryPollInterval = originalTimeout, originalPoll }()
+
+	notFound := &acpsdk.RequestError{
+		Code: -32602, Message: "Invalid params: model not found: nonexistent-model",
+	}
+	fc := &fakeConnAlwaysErr{err: notFound}
+	err := PerSessionApplier{}.Apply(context.Background(), fc, "sess-1", SessionProfile{
+		Model: "nonexistent-model", SupportsLiveConfig: true,
+	}, nil)
+	if err == nil {
+		t.Fatal("expected an error for a model that never becomes available, got nil")
+	}
+	if fc.calls < 2 {
+		t.Fatalf("set_config_option calls = %d, want at least 2 (proves it actually retried before giving up)", fc.calls)
+	}
+}
+
+// fakeConnAlwaysErr avoids a bounded scripted-error queue that would panic
+// once exhausted.
+type fakeConnAlwaysErr struct {
+	fakeConn
+	err   error
+	calls int
+}
+
+func (f *fakeConnAlwaysErr) SetSessionConfigOption(ctx context.Context, req acpsdk.SetSessionConfigOptionRequest) (acpsdk.SetSessionConfigOptionResponse, error) {
+	f.calls++
+	return acpsdk.SetSessionConfigOptionResponse{}, f.err
 }
 
 func TestPerSessionApplierSkipsEmptyFields(t *testing.T) {

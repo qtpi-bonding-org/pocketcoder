@@ -5,7 +5,13 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 
 class SkillEditorDialog extends StatefulWidget {
   const SkillEditorDialog({super.key, this.skill, required this.onSubmit});
@@ -45,8 +51,10 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
     final skillName = widget.skill?.name ?? '';
     return TerminalDialog(
       title: editing
-          ? context.l10n.skillsEditDialogTitle(skillName.toUpperCase())
-          : context.l10n.skillsAddDialogTitle,
+          ? context.l10n
+              .skillsEditDialogTitle(skillName)
+              .toLowerCase()
+          : context.l10n.skillsAddDialogTitle.toLowerCase(),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,20 +77,20 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
         ],
       ),
       actions: [
-        TerminalDialogActions(
-          confirmLabel:
+        TerminalDialogActions(actions: [
+          TerminalActionSpec(context.l10n.actionCancel, ActionKind.refusal,
+              () => Navigator.of(context).pop()),
+          TerminalActionSpec(
               editing ? context.l10n.skillsSaveButton : context.l10n.actionAdd,
-          onConfirm: () {
+              ActionKind.primary, () {
             final name = _name.text.trim();
             final description = _description.text.trim();
             final content = _content.text.trim();
             if (name.isEmpty || description.isEmpty || content.isEmpty) return;
             widget.onSubmit(name, description, content);
             Navigator.of(context).pop();
-          },
-          cancelLabel: context.l10n.actionCancel,
-          onCancel: () => Navigator.of(context).pop(),
-        ),
+          }),
+        ]),
       ],
     );
   }
@@ -124,7 +132,7 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
         .toList();
     final selected = configs.contains(_selectedConfig) ? _selectedConfig : null;
     return TerminalDialog(
-      title: context.l10n.skillsAddDialogTitle,
+      title: context.l10n.skillsAddDialogTitle.toLowerCase(),
       content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -149,7 +157,7 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
               Expanded(
                   child: TerminalButton(
                       label: context.l10n.skillsGlobalLabel,
-                      isPrimary: _global,
+                      kind: _global ? ActionKind.primary : ActionKind.neutral,
                       onTap: () => setState(() {
                             _global = true;
                             _selectedConfig = null;
@@ -158,7 +166,7 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
               Expanded(
                   child: TerminalButton(
                       label: context.l10n.skillsProjectLabel,
-                      isPrimary: !_global,
+                      kind: !_global ? ActionKind.primary : ActionKind.neutral,
                       onTap: configs.isEmpty
                           ? () {}
                           : () => setState(() {
@@ -172,39 +180,45 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
             ],
             if (!_global && configs.isNotEmpty) ...[
               VSpace.x1,
-              DropdownButton<PocoConfig>(
-                  isExpanded: true,
-                  value: selected,
-                  items: configs
-                      .map((config) => DropdownMenuItem(
-                          value: config,
-                          child: Text(config.name.toUpperCase())))
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => _selectedConfig = value)),
+              DetailRow(
+                label: context.l10n.skillsProjectLabel,
+                value: selected?.name ?? '',
+                affordance: RowAffordance.expand,
+                onTap: () => showTerminalListPicker<PocoConfig>(
+                  context: context,
+                  title: context.l10n.skillsProjectLabel,
+                  items: configs,
+                  itemBuilder: (_, config) => TerminalText(config.name, role: TextRole.label),
+                  selected: selected,
+                  emptyLabel: 'no projects',
+                  cancelLabel: 'cancel',
+                ).then((config) {
+                  if (config != null) setState(() => _selectedConfig = config);
+                }),
+              ),
             ],
           ]),
       actions: [
-        TerminalDialogActions(
-            confirmLabel: context.l10n.actionAdd,
-            onConfirm: () {
-              final name = _name.text.trim();
-              final description = _description.text.trim();
-              final content = _content.text.trim();
-              if (name.isEmpty || description.isEmpty || content.isEmpty) {
-                return;
-              }
-              String? projectDir;
-              if (!_global) {
-                final folders = _selectedConfig?.workspaceFolders;
-                if (folders is! List || folders.isEmpty) return;
-                projectDir = folders.first as String;
-              }
-              widget.onSubmit(name, description, content, _global, projectDir);
-              Navigator.of(context).pop();
-            },
-            cancelLabel: context.l10n.actionCancel,
-            onCancel: () => Navigator.of(context).pop()),
+        TerminalDialogActions(actions: [
+          TerminalActionSpec(context.l10n.actionCancel, ActionKind.refusal,
+              () => Navigator.of(context).pop()),
+          TerminalActionSpec(context.l10n.actionAdd, ActionKind.primary, () {
+            final name = _name.text.trim();
+            final description = _description.text.trim();
+            final content = _content.text.trim();
+            if (name.isEmpty || description.isEmpty || content.isEmpty) {
+              return;
+            }
+            String? projectDir;
+            if (!_global) {
+              final folders = _selectedConfig?.workspaceFolders;
+              if (folders is! List || folders.isEmpty) return;
+              projectDir = folders.first as String;
+            }
+            widget.onSubmit(name, description, content, _global, projectDir);
+            Navigator.of(context).pop();
+          }),
+        ]),
       ],
     );
   }

@@ -75,7 +75,6 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                 isRunning: value.conversation.sessionState.isRunning,
                 requiresProviderReauthentication:
                     value.error is ProviderReauthenticationRequired,
-                modes: c.modes,
                 config: c.config,
                 showMonitorAction: showMonitorAction,
                 monitored: m.monitored,
@@ -89,7 +88,6 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                 onToggleMonitored: monitoring.toggle,
                 onSendPrompt: chatCubit.sendPrompt,
                 onCancel: chatCubit.cancel,
-                onSelectMode: controls.selectMode,
                 onSetOption: controls.setOption,
                 onPermissionOptionSelected: (requestId,
                     {optionId, cancelled = false}) {

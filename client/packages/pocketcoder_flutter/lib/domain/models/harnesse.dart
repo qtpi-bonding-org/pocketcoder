@@ -12,7 +12,8 @@ abstract class Harnesse with _$Harnesse {
     required String cliId,
     String? version,
     String? description,
-    @JsonKey(unknownEnumValue: HarnesseAcpTransport.unknown) required HarnesseAcpTransport acpTransport,
+    @JsonKey(unknownEnumValue: HarnesseAcpTransport.unknown)
+    required HarnesseAcpTransport acpTransport,
     String? containerImage,
     dynamic launchTemplate,
     bool? supportsLiveConfig,

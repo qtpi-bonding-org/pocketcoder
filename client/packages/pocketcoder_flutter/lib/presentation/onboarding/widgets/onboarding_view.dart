@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_logo.dart';
@@ -20,37 +21,35 @@ class OnboardingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: null,
-        activePillar: NavPillar.chats,
-        showNavigation: false,
+        // Entry point, so no back. Counted so the flow reads 1..6; no
+        // onNext because the two prompts in the body are the choice.
+        footer: const WizardFooter(),
         body: OnboardingContentShell(
           paddingMultiplier: 4,
           mainAxisAlignment: MainAxisAlignment.center,
           child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AsciiLogo(
-                      text: AppAscii.pocketCoderLogo,
-                      fontSize: AppSizes.fontTiny),
-                  VSpace.x6,
-                  TerminalConversationTurn(
-                    speaker: TerminalConversationSpeaker.poco,
-                    message: context.l10n.onboardingNoServerPoco,
-                    sequence: pocoState.sequence,
-                    history: pocoState.history,
-                  ),
-                  VSpace.x4,
-                  TerminalPromptSuggestion(
-                    label: context.l10n.onboardingNoServerChipExisting,
-                    onSelected: onLogin,
-                  ),
-                  VSpace.x1,
-                  TerminalPromptSuggestion(
-                    label: context.l10n.onboardingNoServerChipNew,
-                    onSelected: onDeploy,
-                  ),
-                ],
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AsciiLogo(text: AppAscii.pocketCoderLogo),
+              VSpace.x6,
+              TerminalConversationTurn(
+                speaker: TerminalConversationSpeaker.poco,
+                message: context.l10n.onboardingNoServerPoco,
+                sequence: pocoState.sequence,
+                history: pocoState.history,
+              ),
+              VSpace.x4,
+              TerminalPromptSuggestion(
+                label: context.l10n.onboardingNoServerChipExisting,
+                onSelected: onLogin,
+              ),
+              VSpace.x1,
+              TerminalPromptSuggestion(
+                label: context.l10n.onboardingNoServerChipNew,
+                onSelected: onDeploy,
+              ),
+            ],
           ),
         ),
       );

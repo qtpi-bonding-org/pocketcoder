@@ -49,7 +49,8 @@ void main() {
     expect(service.hapticsEnabledSync, isFalse);
   });
 
-  test('a second service instance over the same database sees the '
+  test(
+      'a second service instance over the same database sees the '
       'persisted value', () async {
     await service.setHapticsEnabled(false);
 

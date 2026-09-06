@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class ChatListTile extends StatelessWidget {
   const ChatListTile({
@@ -18,6 +22,8 @@ class ChatListTile extends StatelessWidget {
   final ValueChanged<String> onOpen;
   final ValueChanged<String> onArchive;
   final ValueChanged<String> onDelete;
+
+  bool get _agentWorking => chat.turn == ChatTurn.user;
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +41,11 @@ class ChatListTile extends StatelessWidget {
             firstMessage.isNotEmpty)
         ? preview
         : null;
+    final timestamp = _formatRelativeTime(context, chat.lastActive);
 
     return Semantics(
       button: true,
-      label: '$headline. ${_formatRelativeTime(context, chat.lastActive)}',
+      label: '$headline. $timestamp',
       child: InkWell(
         onTap: () => onOpen(chat.id),
         onLongPress: () => _showActions(context),
@@ -47,22 +54,33 @@ class ChatListTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TerminalText.label(
-                headline,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  _bullet(),
+                  SizedBox(width: AppSizes.ch),
+                  Expanded(
+                    child: TerminalText(
+                      headline,
+                      role: TextRole.value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (timestamp.isNotEmpty) ...[
+                    SizedBox(width: AppSizes.ch),
+                    TerminalText(timestamp, role: TextRole.label),
+                  ],
+                ],
               ),
               if (previewLine != null)
-                TerminalText.mini(
-                  previewLine,
-                  alpha: 0.6,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              if (chat.lastActive != null)
-                TerminalText.mini(
-                  _formatRelativeTime(context, chat.lastActive),
-                  alpha: 0.4,
+                Padding(
+                  padding: EdgeInsets.only(left: AppSizes.ch * 2),
+                  child: TerminalText(
+                    previewLine,
+                    role: TextRole.body,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
             ],
           ),
@@ -71,25 +89,30 @@ class ChatListTile extends StatelessWidget {
     );
   }
 
+  Widget _bullet() =>
+      _agentWorking ? const TerminalSpinner() : _StateBullet();
+
   void _showActions(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => TerminalDialog(
-        title: chat.title,
-        content: const SizedBox.shrink(),
+        title: chat.title.toLowerCase(),
+        content: TerminalText(
+          context.l10n.chatListActionsBody(chat.title),
+          role: TextRole.body,
+        ),
         actions: [
           TerminalButton(
             label: context.l10n.chatListArchive,
-            isPrimary: false,
+            kind: ActionKind.neutral,
             onTap: () {
               Navigator.of(dialogContext).pop();
               onArchive(chat.id);
             },
           ),
-          HSpace.x2,
           TerminalButton(
             label: context.l10n.chatListDelete,
-            isPrimary: false,
+            kind: ActionKind.destructive,
             onTap: () {
               Navigator.of(dialogContext).pop();
               onDelete(chat.id);
@@ -99,6 +122,14 @@ class ChatListTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _StateBullet extends StatelessWidget {
+  const _StateBullet();
+
+  @override
+  Widget build(BuildContext context) =>
+      TerminalText('●', role: SectionState.nominal.role);
 }
 
 String _formatRelativeTime(BuildContext context, DateTime? time) {

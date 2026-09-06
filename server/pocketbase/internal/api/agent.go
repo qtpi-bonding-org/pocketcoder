@@ -325,7 +325,7 @@ func AddAgentOperations(app core.App, registry *operation.Registry, deps AgentDe
 		if req.Boolean == nil && req.ValueId == nil {
 			return re.BadRequestError("a config option value is required", nil)
 		}
-		if err := SetChatConfigOption(re, service, chatID, req); err != nil {
+		if err := SetChatConfigOption(app, re, service, chatID, req); err != nil {
 			return err
 		}
 		return re.NoContent(http.StatusAccepted)
@@ -438,14 +438,58 @@ func SetChatMode(re *core.RequestEvent, service coordinator.AgentRuntime, chatID
 
 // SetChatConfigOption changes a single session config option on the active
 // run. Shared by the registry action and the strict operation adapter.
-func SetChatConfigOption(re *core.RequestEvent, service coordinator.AgentRuntime, chatID string, req acpsdk.SetSessionConfigOptionRequest) error {
+func SetChatConfigOption(app core.App, re *core.RequestEvent, service coordinator.AgentRuntime, chatID string, req acpsdk.SetSessionConfigOptionRequest) error {
 	if err := service.SetConfigOption(re.Request.Context(), chatID, req); err != nil {
 		if errors.Is(err, coordinator.ErrNoActiveRun) {
 			return re.BadRequestError("No active run to set config on", nil)
 		}
 		return apis.NewApiError(http.StatusBadGateway, "Unable to set config option", err)
 	}
+
+	// Synchronous, not backgrounded: a client reloading the chat right after
+	// this call returns must already see the override, and sessionprofile.go's
+	// Build() otherwise re-resolves the pre-change model on the next run.
+	if req.ValueId != nil && req.ValueId.ConfigId == "model" {
+		PersistModelOverride(app, chatID, string(req.ValueId.Value))
+	}
+
 	return nil
+}
+
+// PersistModelOverride is best-effort: the live RPC already succeeded, so a
+// lookup/save failure here is logged, not returned.
+func PersistModelOverride(app core.App, chatID string, modelID string) {
+	chat, err := app.FindRecordById("chats", chatID)
+	if err != nil {
+		log.Printf("[SetChatConfigOption] load chat %s: %v", chatID, err)
+		return
+	}
+
+	harnessID := chat.GetString("harness")
+	if harnessID == "" {
+		log.Printf("[SetChatConfigOption] chat %s has no harness", chatID)
+		return
+	}
+
+	hm, err := app.FindFirstRecordByFilter(
+		"harness_models",
+		"harness = {:h} && harness_model_id = {:m}",
+		map[string]any{"h": harnessID, "m": modelID},
+	)
+	if err != nil {
+		log.Printf("[SetChatConfigOption] lookup harness_models for %s/%s: %v", harnessID, modelID, err)
+		return
+	}
+	if hm == nil {
+		log.Printf("[SetChatConfigOption] no harness_models row for %s/%s", harnessID, modelID)
+		return
+	}
+
+	chat.Set("harness_model_override", hm.Id)
+	if err := app.Save(chat); err != nil {
+		log.Printf("[SetChatConfigOption] save chat %s: %v", chatID, err)
+		return
+	}
 }
 
 // RespondToPermission resolves a pending permission request with the

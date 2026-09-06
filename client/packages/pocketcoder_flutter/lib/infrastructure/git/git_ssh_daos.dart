@@ -8,11 +8,12 @@ import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
 @lazySingleton
 class GitSshCredentialDao extends BaseDao<GitSshCredential> {
   GitSshCredentialDao(PocketBase pb)
-    : super(pb, Collections.gitSshCredentials, GitSshCredential.fromJson);
+      : super(pb, Collections.gitSshCredentials, GitSshCredential.fromJson);
 }
 
 @lazySingleton
 class GitRepositoryAccessDao extends BaseDao<GitRepositoryAccess> {
   GitRepositoryAccessDao(PocketBase pb)
-    : super(pb, Collections.gitRepositoryAccess, GitRepositoryAccess.fromJson);
+      : super(
+            pb, Collections.gitRepositoryAccess, GitRepositoryAccess.fromJson);
 }

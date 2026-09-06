@@ -29,8 +29,7 @@ class FileBrowserCubit extends AppCubit<FileBrowserState> {
       final entries = _entriesAt(root, path);
       logDebug('FileBrowserCubit: open(path: "$path") resolved '
           '${entries.length} entries out of ${root.length} root entries');
-      return createSuccessState()
-          .copyWith(path: path, entries: entries);
+      return createSuccessState().copyWith(path: path, entries: entries);
     });
   }
 

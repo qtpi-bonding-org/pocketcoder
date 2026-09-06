@@ -31,7 +31,9 @@ void main() {
     expect(cubit.state.containers.first.name, 'pocketcoder-sqlpage');
   });
 
-  test('loadContainers surfaces a failure via UiFlowStatus.failure without touching stats', () async {
+  test(
+      'loadContainers surfaces a failure via UiFlowStatus.failure without touching stats',
+      () async {
     when(() => repository.listContainers()).thenThrow(Exception('boom'));
     final cubit = ObservabilityCubit(repository);
     addTearDown(cubit.close);

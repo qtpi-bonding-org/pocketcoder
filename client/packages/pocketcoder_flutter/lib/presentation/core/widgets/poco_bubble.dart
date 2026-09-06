@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'poco_animator.dart';
+import 'poco_posture_scope.dart';
 import 'typewriter_text.dart';
 
 class PocoBubble extends StatelessWidget {
@@ -10,10 +13,14 @@ class PocoBubble extends StatelessWidget {
   final double? pocoSize;
   final TextAlign textAlign;
   final bool showFace;
+  final PocoPosture? posture;
+  final PocoMood? mood;
 
   const PocoBubble({
     super.key,
     required this.message,
+    this.posture,
+    this.mood,
     this.sequence = const [],
     this.history = const [],
     this.pocoSize,
@@ -23,118 +30,95 @@ class PocoBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colorScheme;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bubbleWidth = constraints.maxWidth.isFinite
-            ? constraints.maxWidth.clamp(0.0, AppSizes.contentMaxWidth)
-            : AppSizes.contentMaxWidth;
-        return SizedBox(
-          width: double.infinity,
-          child: Align(
-            alignment: Alignment.center,
-            child: SizedBox(
-              width: bubbleWidth.toDouble(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (showFace) ...[
-                    SizedBox(
-                      height: (pocoSize ?? AppSizes.fontLarge) * 3,
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: PocoFace(
-                          key: ValueKey(sequence),
-                          fontSize: pocoSize ?? AppSizes.fontLarge,
-                          sequence: sequence,
-                        ),
-                      ),
-                    ),
-                    VSpace.x4,
-                  ],
-                  SizedBox(
-                    width: double.infinity,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppSizes.space * 2,
-                        vertical: AppSizes.space,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        border: Border.all(color: colors.primary),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: crossAxisAlignment(textAlign),
-                        children: [
-                          ...history.map((msg) => Padding(
-                                padding: const EdgeInsets.only(bottom: 4.0),
-                                child: Text(
-                                  msg,
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.bodyFamily,
-                                    package: 'pocketcoder_flutter',
-                                    color:
-                                        colors.onSurface.withValues(alpha: 0.5),
-                                    fontSize: AppSizes.fontStandard,
-                                  ),
-                                  textAlign: textAlign,
-                                ),
-                              )),
-                          TypewriterText(
-                            key: ValueKey(message),
-                            text: message,
-                            style: TextStyle(
-                              fontFamily: AppFonts.bodyFamily,
-                              package: 'pocketcoder_flutter',
-                              color: colors.onSurface,
-                              fontSize: AppSizes.fontStandard,
-                            ),
-                            speed: const Duration(milliseconds: 10),
-                          ),
-                        ],
-                      ),
+    final resolvedPosture = posture ?? PocoPostureScope.of(context);
+    return LayoutBuilder(builder: (context, constraints) {
+      final bubbleWidth = constraints.maxWidth.isFinite
+          ? constraints.maxWidth.clamp(0.0, AppSizes.contentMaxWidth)
+          : AppSizes.contentMaxWidth;
+      return SizedBox(
+        width: double.infinity,
+        child: Align(
+          alignment: Alignment.center,
+          child: SizedBox(
+            width: bubbleWidth.toDouble(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (showFace) ...[
+                  Align(
+                    alignment: Alignment.center,
+                    child: PocoFace(
+                      key: ValueKey(sequence),
+                      fontSize: pocoSize ?? AppSizes.fontPoco,
+                      sequence: sequence,
+                      posture: resolvedPosture,
+                      mood: mood,
                     ),
                   ),
+                  VSpace.x1,
                 ],
-              ),
+                Column(
+                  crossAxisAlignment: crossAxisAlignment(textAlign),
+                  children: [
+                    ...history.map((msg) => Padding(
+                          padding: EdgeInsets.only(bottom: AppSizes.line),
+                          child: Text(msg,
+                              style: TextRole.label.style.copyWith(
+                                fontFamily: AppFonts.family,
+                                package: 'pocketcoder_flutter',
+                              ),
+                              textAlign: textAlign),
+                        )),
+                    TypewriterText(
+                      key: ValueKey(message),
+                      text: message,
+                      style: TextRole.body.style.copyWith(
+                        fontFamily: AppFonts.family,
+                        package: 'pocketcoder_flutter',
+                      ),
+                      speed: const Duration(milliseconds: 10),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
-  CrossAxisAlignment crossAxisAlignment(TextAlign textAlign) {
-    switch (textAlign) {
-      case TextAlign.center:
-        return CrossAxisAlignment.center;
-      case TextAlign.right:
-        return CrossAxisAlignment.end;
-      default:
-        return CrossAxisAlignment.start;
-    }
-  }
+  CrossAxisAlignment crossAxisAlignment(TextAlign textAlign) =>
+      switch (textAlign) {
+        TextAlign.center => CrossAxisAlignment.center,
+        TextAlign.right => CrossAxisAlignment.end,
+        _ => CrossAxisAlignment.start,
+      };
 }
 
-/// Poco's animated face, separated from the message surface so a
-/// multi-turn conversation can show one face and several replies.
 class PocoFace extends StatelessWidget {
   const PocoFace({
     super.key,
     this.fontSize,
     this.color,
+    this.mood,
+    this.posture,
     this.sequence = const [],
   });
 
   final double? fontSize;
   final Color? color;
+  final PocoMood? mood;
+  final PocoPosture? posture;
   final List<(String, int)> sequence;
 
   @override
   Widget build(BuildContext context) => PocoAnimator(
         fontSize: fontSize,
         color: color,
+        mood: mood,
+        posture: posture ?? PocoPostureScope.of(context),
         sequence: sequence,
       );
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'poco_bubble.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 
 /// A Cubit-free Poco renderer for adapters, previews, and Widgetbook.
 class PocoValueWidget extends StatelessWidget {
@@ -11,6 +12,8 @@ class PocoValueWidget extends StatelessWidget {
     required this.history,
     this.pocoSize,
     this.textAlign = TextAlign.start,
+    required this.posture,
+    this.mood,
   });
 
   final ValueListenable<String> message;
@@ -18,6 +21,8 @@ class PocoValueWidget extends StatelessWidget {
   final ValueListenable<List<String>> history;
   final double? pocoSize;
   final TextAlign textAlign;
+  final PocoPosture posture;
+  final PocoMood? mood;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +39,8 @@ class PocoValueWidget extends StatelessWidget {
             history: history,
             pocoSize: pocoSize,
             textAlign: textAlign,
+            posture: posture,
+            mood: mood,
           ),
         ),
       ),

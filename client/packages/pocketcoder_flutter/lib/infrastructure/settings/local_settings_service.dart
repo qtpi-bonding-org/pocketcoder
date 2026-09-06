@@ -49,8 +49,7 @@ class LocalSettingsService implements ILocalSettingsService {
   @override
   Future<void> setHapticsEnabled(bool enabled) async {
     await _ensureRow();
-    await (_db.update(_db.localSettings)
-          ..where((t) => t.id.equals(_rowId)))
+    await (_db.update(_db.localSettings)..where((t) => t.id.equals(_rowId)))
         .write(LocalSettingsCompanion(hapticsEnabled: Value(enabled)));
   }
 }

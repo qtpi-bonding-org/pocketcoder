@@ -9,7 +9,8 @@ abstract class HarnessOauthAttempt with _$HarnessOauthAttempt {
   const factory HarnessOauthAttempt({
     required String id,
     required String account,
-    @JsonKey(unknownEnumValue: HarnessOauthAttemptStatus.unknown) required HarnessOauthAttemptStatus status,
+    @JsonKey(unknownEnumValue: HarnessOauthAttemptStatus.unknown)
+    required HarnessOauthAttemptStatus status,
     String? lastError,
     DateTime? expiresAt,
     DateTime? created,

@@ -13,7 +13,8 @@ sealed class Permission with _$Permission {
     required String permission,
     dynamic patterns,
     dynamic metadata,
-    @JsonKey(unknownEnumValue: PermissionStatus.unknown) required PermissionStatus status,
+    @JsonKey(unknownEnumValue: PermissionStatus.unknown)
+    required PermissionStatus status,
     String? message,
     String? source,
     String? messageId,
@@ -30,7 +31,8 @@ sealed class Permission with _$Permission {
     dynamic toolInput,
     String? description,
     dynamic permissionOptions,
-    @JsonKey(unknownEnumValue: PermissionAcpStatus.unknown) PermissionAcpStatus? acpStatus,
+    @JsonKey(unknownEnumValue: PermissionAcpStatus.unknown)
+    PermissionAcpStatus? acpStatus,
     String? selectedOptionId,
     String? acpMessageId,
     String? toolCallId,

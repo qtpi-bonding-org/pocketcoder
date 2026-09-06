@@ -12,7 +12,8 @@ Widget _app(Widget child) => MaterialApp(
     );
 
 @wb.UseCase(name: 'no provider selected', type: ProviderKeyEditorDialog)
-Widget providerEditorEmpty(BuildContext context) => _app(ProviderKeyEditorDialog(
+Widget providerEditorEmpty(BuildContext context) =>
+    _app(ProviderKeyEditorDialog(
       providerCatalog: const [],
       onSave: (_) {},
     ));

@@ -9,10 +9,12 @@ import 'package:pocketcoder_flutter/application/chat/chat_list_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
@@ -67,8 +69,7 @@ class HarnessAuthAdapter
         }
       }
       for (final id in pollTimers.keys.toList()) {
-        if (!awaiting.containsKey(id) ||
-            pollIntervals[id] != awaiting[id]) {
+        if (!awaiting.containsKey(id) || pollIntervals[id] != awaiting[id]) {
           pollTimers.remove(id)?.cancel();
           pollIntervals.remove(id);
         }
@@ -83,6 +84,7 @@ class HarnessAuthAdapter
         }
       }
     }
+
     syncPollTimers(state.value);
     // Whether a harness is connected lives in the per-harness `statuses`
     // map, not the cubit's top-level status/error -- those routinely stay
@@ -232,22 +234,25 @@ class HarnessAuthAdapter
   Future<String?> _chooseVisibility(BuildContext context) => showDialog<String>(
         context: context,
         builder: (dialogContext) => TerminalDialog(
-          title: context.l10n.harnessAuthVisibilityTitle,
+          title: context.l10n.harnessAuthVisibilityTitle.toLowerCase(),
           content: Text(context.l10n.harnessAuthVisibilityBody),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext)
+            TerminalButton(
+              label: context.l10n.harnessAuthPersonal,
+              kind: ActionKind.primary,
+              onTap: () => Navigator.of(dialogContext)
                   .pop(harnessAccountVisibilityPersonal),
-              child: Text(context.l10n.harnessAuthPersonal),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext)
+            TerminalButton(
+              label: context.l10n.harnessAuthShared,
+              kind: ActionKind.primary,
+              onTap: () => Navigator.of(dialogContext)
                   .pop(harnessAccountVisibilityDeployment),
-              child: Text(context.l10n.harnessAuthShared),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(context.l10n.actionCancel),
+            TerminalButton(
+              label: context.l10n.actionCancel,
+              kind: ActionKind.refusal,
+              onTap: () => Navigator.of(dialogContext).pop(),
             ),
           ],
         ),

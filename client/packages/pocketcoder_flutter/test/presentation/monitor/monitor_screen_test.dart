@@ -4,8 +4,8 @@ import 'package:pocketcoder_flutter/application/observability/observability_stat
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/monitor_screen.dart';
 
 Widget _app(Widget child) => MaterialApp(
@@ -16,36 +16,42 @@ Widget _app(Widget child) => MaterialApp(
     );
 
 void main() {
-  testWidgets('renders the discovered container registry',
-      (tester) async {
+  testWidgets('renders the discovered container registry', (tester) async {
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
         containers: [
-          ContainerInfo(name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h'),
-          ContainerInfo(name: 'pocketcoder-ollama', state: 'exited', status: 'Exited (0)'),
+          ContainerInfo(
+              name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h'),
+          ContainerInfo(
+              name: 'pocketcoder-ollama',
+              state: 'exited',
+              status: 'Exited (0)'),
         ],
       ),
       onSelectContainer: (_) {},
     )));
 
-    expect(find.byType(BiosRow), findsWidgets);
-    // BiosRow uppercases its label before rendering; the shared
+    expect(find.byType(DetailRow), findsWidgets);
+    // DetailRow renders labels as passed, sentence case; the shared
     // "pocketcoder-" compose prefix is stripped since every container on
     // this screen belongs to the same deployment.
-    expect(find.text('SQLPAGE'), findsOneWidget);
-    expect(find.text('OLLAMA'), findsOneWidget);
+    expect(find.text('sqlpage'), findsOneWidget);
+    expect(find.text('ollama'), findsOneWidget);
   });
 
   testWidgets('selecting a container drives onSelectContainer', (tester) async {
     String? selected;
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
-        containers: [ContainerInfo(name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h')],
+        containers: [
+          ContainerInfo(
+              name: 'pocketcoder-sqlpage', state: 'running', status: 'Up 1h')
+        ],
       ),
       onSelectContainer: (c) => selected = c,
     )));
 
-    await tester.tap(find.text('SQLPAGE'));
+    await tester.tap(find.text('sqlpage'));
     expect(selected, 'pocketcoder-sqlpage');
   });
 
@@ -64,21 +70,23 @@ void main() {
 
     expect(find.textContaining('line one'), findsOneWidget);
     expect(find.textContaining('line two'), findsOneWidget);
-    // Logs render plainly -- the only BiosFrame left on screen is the
-    // Registry list; the log terminal is no longer boxed.
-    expect(find.byType(BiosFrame), findsOneWidget);
+    expect(find.byType(SectionHeader), findsOneWidget);
   });
 
-  testWidgets('leaves container names without the pocketcoder- prefix unchanged',
+  testWidgets(
+      'leaves container names without the pocketcoder- prefix unchanged',
       (tester) async {
     await tester.pumpWidget(_app(MonitorView(
       state: const ObservabilityState(
-        containers: [ContainerInfo(name: 'custom-service', state: 'running', status: 'Up 1h')],
+        containers: [
+          ContainerInfo(
+              name: 'custom-service', state: 'running', status: 'Up 1h')
+        ],
       ),
       onSelectContainer: (_) {},
     )));
 
-    expect(find.text('CUSTOM-SERVICE'), findsOneWidget);
+    expect(find.text('custom-service'), findsOneWidget);
   });
 
   testWidgets('no key metrics, token usage, or agent activity sections remain',

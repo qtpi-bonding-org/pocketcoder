@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/summary_field.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -16,9 +17,8 @@ void main() {
       value: longValue,
     )));
 
-    final labelFinder = find.text('SERVER PROVIDER');
-    final valueFinder = find.text('A VERY LONG VALUE THAT WOULD OTHERWISE BE '
-        'TRUNCATED');
+    final labelFinder = find.text('server provider');
+    final valueFinder = find.text(longValue);
     expect(labelFinder, findsOneWidget);
     expect(valueFinder, findsOneWidget);
     expect(tester.getTopLeft(valueFinder).dy,
@@ -34,7 +34,7 @@ void main() {
     final label = tester.widget<TerminalText>(find.byType(TerminalText).at(0));
     final value = tester.widget<TerminalText>(find.byType(TerminalText).at(1));
 
-    expect(label.alpha, lessThan(1.0));
-    expect(value.weight, TerminalTextWeight.heavy);
+    expect(label.role, TextRole.label);
+    expect(value.role, TextRole.value);
   });
 }

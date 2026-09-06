@@ -11,7 +11,8 @@ abstract class Device with _$Device {
     required String user,
     required String name,
     required String pushToken,
-    @JsonKey(unknownEnumValue: DevicePushService.unknown) required DevicePushService pushService,
+    @JsonKey(unknownEnumValue: DevicePushService.unknown)
+    required DevicePushService pushService,
     bool? isActive,
     DateTime? created,
     DateTime? updated,
@@ -22,8 +23,7 @@ abstract class Device with _$Device {
   factory Device.fromRecord(RecordModel record) =>
       Device.fromJson(record.toJson());
 
-  factory Device.fromJson(Map<String, dynamic> json) =>
-      _$DeviceFromJson(json);
+  factory Device.fromJson(Map<String, dynamic> json) => _$DeviceFromJson(json);
 }
 
 enum DevicePushService {

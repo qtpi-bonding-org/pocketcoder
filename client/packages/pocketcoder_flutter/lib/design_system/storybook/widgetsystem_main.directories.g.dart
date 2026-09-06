@@ -14,8 +14,6 @@ import 'package:pocketcoder_flutter/design_system/storybook/agent_config_view.st
     as _pocketcoder_flutter_design_system_storybook_agent_config_view_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/config_picker.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_config_picker_stories;
-import 'package:pocketcoder_flutter/design_system/storybook/mode_switcher.stories.dart'
-    as _pocketcoder_flutter_design_system_storybook_mode_switcher_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/notification_and_system.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_notification_and_system_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/paywall.stories.dart'
@@ -34,8 +32,6 @@ import 'package:pocketcoder_flutter/design_system/storybook/terminal_conversatio
     as _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/terminal_dialog_actions.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories;
-import 'package:pocketcoder_flutter/design_system/storybook/tinted_alert_card.stories.dart'
-    as _pocketcoder_flutter_design_system_storybook_tinted_alert_card_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/tool_permissions_view.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
@@ -64,23 +60,6 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _pocketcoder_flutter_design_system_storybook_config_picker_stories
                             .configPickerEmpty,
-                  ),
-                ],
-              ),
-              _widgetbook.WidgetbookComponent(
-                name: 'ModeSwitcher',
-                useCases: [
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'no modes',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_mode_switcher_stories
-                            .modeSwitcherEmpty,
-                  ),
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'selectable modes',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_mode_switcher_stories
-                            .modeSwitcherPopulated,
                   ),
                 ],
               ),
@@ -264,23 +243,6 @@ final directories = <_widgetbook.WidgetbookNode>[
                     builder:
                         _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories
                             .disabledConfirm,
-                  ),
-                ],
-              ),
-              _widgetbook.WidgetbookComponent(
-                name: 'TintedAlertCard',
-                useCases: [
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'error tint',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_tinted_alert_card_stories
-                            .errorTint,
-                  ),
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'warning tint',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_tinted_alert_card_stories
-                            .warningTint,
                   ),
                 ],
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'screen_metrics.dart';
 
 /// Singleton utility for responsive UI scaling.
 ///
@@ -17,8 +18,12 @@ class UiScaler {
   bool _initialized = false;
 
   /// Initialize the scaler. Call from MaterialApp.builder.
-  void init(BuildContext context) {
-    _screenWidth = MediaQuery.of(context).size.width;
+  void init(BuildContext context) => initFrom(MediaQueryScreenMetrics(context));
+
+  /// Initialize from any [ScreenMetrics] source. Production uses
+  /// [MediaQueryScreenMetrics]; the Storybook uses [FixedScreenMetrics].
+  void initFrom(ScreenMetrics metrics) {
+    _screenWidth = metrics.width;
 
     // Clamp to prevent extreme scaling on very small/large devices
     const double minScale = 0.85;

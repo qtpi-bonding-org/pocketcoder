@@ -24,7 +24,8 @@ void main() {
 
   group('ToolPermissionRepository.watchRules', () {
     test('watches with poco_config="" filter, sorted by tool', () async {
-      when(() => dao.watch(filter: any(named: 'filter'), sort: any(named: 'sort')))
+      when(() =>
+              dao.watch(filter: any(named: 'filter'), sort: any(named: 'sort')))
           .thenAnswer((_) => const Stream.empty());
 
       repo.watchRules();

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/observability/observability_state.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/monitor/widgets/log_terminal.dart';
 
@@ -25,36 +26,42 @@ class MonitorRegistryAndLogs extends StatelessWidget {
   Widget build(BuildContext context) {
     if (state.hasError && state.containers.isEmpty) {
       return Center(
-        child: TerminalText.label(
+        child: TerminalText(
           context.l10n.monitorTelemetryUnavailable,
-          color: context.terminalColors.warning,
+          role: TextRole.warn,
         ),
       );
     }
-    final registry = BiosFrame(
-      title: context.l10n.observabilityRegistry,
-      child: ListView(
-        padding: EdgeInsets.all(AppSizes.space),
-        children: state.containers
-            .map(
-              (container) => MonitorContainerTile(
-                container: container,
-                isSelected: state.currentContainer == container.name,
-                displayName: displayName,
-                onSelectContainer: onSelectContainer,
-              ),
-            )
-            .toList(),
-      ),
+    final registry = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(name: context.l10n.observabilityRegistry.toLowerCase()),
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.all(AppSizes.space),
+            children: state.containers
+                .map(
+                  (container) => MonitorContainerTile(
+                    container: container,
+                    isSelected: state.currentContainer == container.name,
+                    displayName: displayName,
+                    onSelectContainer: onSelectContainer,
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ],
     );
     final currentContainer = state.currentContainer;
     final logs = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TerminalText.label(
+        TerminalText(
           currentContainer != null
               ? displayName(currentContainer)
               : context.l10n.observabilityLogTerminal,
+          role: TextRole.label,
         ),
         VSpace.x1,
         Expanded(
@@ -113,11 +120,10 @@ class MonitorContainerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BiosRow(
+    return DetailRow(
       label: displayName(container.name),
-      value: container.state.toUpperCase(),
+      value: container.state,
       isSelected: isSelected,
-      labelFontSize: AppSizes.fontSmall,
       onTap: () => onSelectContainer(isSelected ? null : container.name),
     );
   }

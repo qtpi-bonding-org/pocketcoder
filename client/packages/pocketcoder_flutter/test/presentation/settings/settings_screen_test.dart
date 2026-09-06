@@ -39,8 +39,8 @@ class _FakeProEdition implements IAppEdition {
 class _NoopServerReadinessCheck implements IServerReadinessCheck {
   const _NoopServerReadinessCheck();
   @override
-  ServerReadinessSnapshot get current =>
-      const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned);
+  ServerReadinessSnapshot get current => const ServerReadinessSnapshot(
+      status: ServerReadinessStatus.notProvisioned);
   @override
   Stream<ServerReadinessSnapshot> get readinessChanges => const Stream.empty();
   @override
@@ -59,6 +59,9 @@ class _FakeLocalSettingsService implements ILocalSettingsService {
     hapticsEnabledSync = enabled;
   }
 }
+
+AppLocalizations l10nOf(WidgetTester tester) =>
+    AppLocalizations.of(tester.element(find.byType(SettingsScreen)))!;
 
 void main() {
   late MockAuthRepository authRepo;
@@ -92,8 +95,7 @@ void main() {
           const _NoopServerReadinessCheck(),
         ));
     getIt.registerSingleton<IAppEdition>(const FossAppEdition());
-    getIt.registerSingleton<ILocalSettingsService>(
-        _FakeLocalSettingsService());
+    getIt.registerSingleton<ILocalSettingsService>(_FakeLocalSettingsService());
   });
 
   tearDown(() {
@@ -117,7 +119,7 @@ void main() {
           builder: (context, state) => const SizedBox(),
         ),
         GoRoute(
-          path: AppRoutes.configureErrors,
+          path: AppRoutes.statusErrors,
           builder: (context, state) => const Text('errors-placeholder'),
         ),
       ],
@@ -139,17 +141,18 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('LOGOUT'),
+      find.text('logout'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('LOGOUT'));
+    await tester.tap(find.text('logout'));
     await tester.pumpAndSettle();
 
-    expect(find.text('SIGN OUT'), findsWidgets);
+    final signOutLabel = '<${l10nOf(tester).settingsLogoutConfirm}>';
+    expect(find.text(signOutLabel), findsWidgets);
 
-    await tester.tap(find.text('SIGN OUT').last);
+    await tester.tap(find.text(signOutLabel).last);
     await tester.pumpAndSettle();
 
     verify(() => authRepo.logout()).called(1);
@@ -160,15 +163,15 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('LOGOUT'),
+      find.text('logout'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('LOGOUT'));
+    await tester.tap(find.text('logout'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<${l10nOf(tester).settingsLogoutCancel}>'));
     await tester.pumpAndSettle();
 
     verifyNever(() => authRepo.logout());
@@ -185,23 +188,24 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('DELETE POCKETCODER PRO DATA'),
+      find.text('delete pocketcoder pro data'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DELETE POCKETCODER PRO DATA'));
+    await tester.tap(find.text('delete pocketcoder pro data'));
     await tester.pumpAndSettle();
 
-    expect(find.text('DELETE'), findsWidgets);
+    final deleteLabel = '<${l10nOf(tester).settingsDeleteProDataConfirm}>';
+    expect(find.text(deleteLabel), findsWidgets);
 
-    await tester.tap(find.text('DELETE').last);
+    await tester.tap(find.text(deleteLabel).last);
     await tester.pumpAndSettle();
 
     verify(() => proDataDeletionHook.deleteProData()).called(1);
     // Unlike LOGOUT/RESET, a successful deleteProData must not navigate
     // away from Settings -- it never touches the local session.
-    expect(find.text('DELETE POCKETCODER PRO DATA'), findsOneWidget);
+    expect(find.text('delete pocketcoder pro data'), findsOneWidget);
   });
 
   testWidgets(
@@ -214,15 +218,16 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('DELETE POCKETCODER PRO DATA'),
+      find.text('delete pocketcoder pro data'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('DELETE POCKETCODER PRO DATA'));
+    await tester.tap(find.text('delete pocketcoder pro data'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('CANCEL'));
+    await tester
+        .tap(find.text('<${l10nOf(tester).settingsDeleteProDataCancel}>'));
     await tester.pumpAndSettle();
 
     verifyNever(() => proDataDeletionHook.deleteProData());
@@ -234,12 +239,12 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('ERROR REPORTS'),
+      find.text('error reports'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ERROR REPORTS'));
+    await tester.tap(find.text('error reports'));
     await tester.pumpAndSettle();
 
     expect(find.text('errors-placeholder'), findsOneWidget);

@@ -113,8 +113,7 @@ void main() {
 
   testWidgets(
       'reasoning messages render nothing inline -- the caption above Poco '
-      'owns their display now, not the transcript bubble list',
-      (tester) async {
+      'owns their display now, not the transcript bubble list', (tester) async {
     late StackedChatBuilders builders;
     await tester.pumpWidget(wrap(
       Builder(builder: (context) {
@@ -274,8 +273,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    final card = tester.widget<TerminalCommandCard>(
-        find.byType(TerminalCommandCard));
+    final card =
+        tester.widget<TerminalCommandCard>(find.byType(TerminalCommandCard));
     expect(card.command, 'ls -la');
   });
 
@@ -309,8 +308,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    final card = tester.widget<TerminalCommandCard>(
-        find.byType(TerminalCommandCard));
+    final card =
+        tester.widget<TerminalCommandCard>(find.byType(TerminalCommandCard));
     expect(card.command, 'Tool call');
   });
 
@@ -344,8 +343,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    final card = tester.widget<TerminalCommandCard>(
-        find.byType(TerminalCommandCard));
+    final card =
+        tester.widget<TerminalCommandCard>(find.byType(TerminalCommandCard));
     expect(card.command, 'edit_file {"path":"lib/foo.dart"}');
   });
 }

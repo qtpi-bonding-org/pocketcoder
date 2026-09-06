@@ -4,17 +4,17 @@ import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart'
     as ag_ui_widgets;
 import 'package:acp_dart/acp_dart.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/config_picker.dart';
-import 'package:pocketcoder_flutter/presentation/agent/widgets/mode_switcher.dart';
 import 'package:pocketcoder_flutter/presentation/agent/widgets/plan_panel.dart';
 import 'package:pocketcoder_flutter/presentation/chat/pocketcoder_chat_builders.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_composer.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/reasoning_caption.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 class ChatView extends StatefulWidget {
@@ -27,7 +27,6 @@ class ChatView extends StatefulWidget {
     this.awaitingHarnessStart = false,
     required this.isRunning,
     required this.requiresProviderReauthentication,
-    required this.modes,
     required this.config,
     required this.showMonitorAction,
     required this.monitored,
@@ -35,7 +34,6 @@ class ChatView extends StatefulWidget {
     required this.onOpen,
     required this.onSendPrompt,
     required this.onCancel,
-    required this.onSelectMode,
     required this.onSetOption,
     required this.onPermissionOptionSelected,
     required this.onElicitationRespond,
@@ -52,7 +50,6 @@ class ChatView extends StatefulWidget {
   final bool awaitingHarnessStart;
   final bool isRunning;
   final bool requiresProviderReauthentication;
-  final Map<String, dynamic>? modes;
   final Map<String, dynamic>? config;
   final bool showMonitorAction;
   final bool monitored;
@@ -60,7 +57,6 @@ class ChatView extends StatefulWidget {
   final ValueChanged<String> onOpen;
   final ValueChanged<String> onSendPrompt;
   final VoidCallback onCancel;
-  final ValueChanged<String> onSelectMode;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
   final void Function(String requestId, {String? optionId, bool cancelled})
       onPermissionOptionSelected;
@@ -242,28 +238,33 @@ class _ChatViewState extends State<ChatView> {
       animatedMessageIds: widget.animatedMessageIds,
       onMessageAnimated: widget.onMessageAnimated,
     );
-    return PocketCoderShell(
-      title: widget.title,
-      activePillar: NavPillar.chats,
-      showBack: true,
-      actions: [
+
+    final extraFooterActions = [
+      TerminalAction(
+        label: context.l10n.chatFilesAction,
+        onTap: widget.onFiles,
+        kind: ActionKind.neutral,
+      ),
+      if (widget.showMonitorAction)
         TerminalAction(
-            label: context.l10n.chatFilesAction, onTap: widget.onFiles),
-        if (widget.showMonitorAction)
-          TerminalAction(
-            label: context.l10n.chatMonitorAction,
-            isActive: widget.monitored,
-            onTap: widget.onToggleMonitored,
-          ),
-        if (widget.isRunning)
-          TerminalAction(
-              label: context.l10n.actionCancel, onTap: widget.onCancel),
-      ],
+          label: context.l10n.chatMonitorAction,
+          onTap: widget.onToggleMonitored,
+          isActive: widget.monitored,
+          kind: ActionKind.neutral,
+        ),
+    ];
+
+    return PocketCoderShell(
+      footer: buildPillarFooter(
+        context,
+        NavPillar.chat,
+        extraActions: extraFooterActions,
+      ),
+      showBack: true,
       padding: EdgeInsets.zero,
       body: Column(
         children: [
           PlanPanel(plan: widget.conversation.sessionState.plan),
-          ModeSwitcher(modes: widget.modes, onSelectMode: widget.onSelectMode),
           ConfigPicker(config: widget.config, onSetOption: widget.onSetOption),
           Expanded(
             child: Column(
@@ -286,7 +287,7 @@ class _ChatViewState extends State<ChatView> {
                   Padding(
                     padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
                     child: Center(
-                      child: PocoFace(fontSize: AppSizes.fontLarge),
+                      child: PocoFace(),
                     ),
                   ),
                 Expanded(
@@ -310,6 +311,7 @@ class _ChatViewState extends State<ChatView> {
                       enabled: !widget.isLoading && widget.chatId != null,
                       isLoading: widget.isLoading,
                       onSubmitted: _submit,
+                      onInterrupt: widget.isRunning ? widget.onCancel : null,
                     ),
                   ),
                 ),

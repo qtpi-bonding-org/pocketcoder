@@ -3,12 +3,13 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
 import 'package:pocketcoder_flutter/domain/models/prompt.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_row.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/agent_config_option_picker.dart';
 import 'package:pocketcoder_flutter/presentation/agent_config/widgets/is_default_toggle.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 
 class AgentConfigEditorDialog extends StatefulWidget {
   const AgentConfigEditorDialog({
@@ -72,8 +73,10 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
     final existing = widget.existing;
     return TerminalDialog(
       title: existing == null
-          ? context.l10n.agentConfigTitle
-          : context.l10n.agentConfigDialogTitle(existing.name.toUpperCase()),
+          ? context.l10n.agentConfigTitle.toLowerCase()
+          : context.l10n
+              .agentConfigDialogTitle(existing.name)
+              .toLowerCase(),
       content: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: AppSizes.pickerHeight,
@@ -96,9 +99,9 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
                 emptyLabel: context.l10n.agentConfigNoPrompts,
                 itemId: (prompt) => prompt.id,
                 itemLabel: (prompt) => prompt.name,
-                itemBuilder: (_, prompt, selected) => BiosRow(
+                itemBuilder: (_, prompt, selected) => DetailRow(
                   label: prompt.name,
-                  isSelected: selected == prompt,
+                  isSelected: selected?.id == prompt.id,
                 ),
                 onSelected: (id) => setState(() => _systemPromptId = id),
               ),
@@ -111,9 +114,9 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
                 emptyLabel: context.l10n.agentConfigNoModes,
                 itemId: (mode) => mode.id,
                 itemLabel: (mode) => mode.name,
-                itemBuilder: (_, mode, selected) => BiosRow(
+                itemBuilder: (_, mode, selected) => DetailRow(
                   label: mode.name,
-                  isSelected: selected == mode,
+                  isSelected: selected?.id == mode.id,
                 ),
                 onSelected: (id) => setState(() => _permissionModeId = id),
               ),
@@ -126,7 +129,7 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
                 VSpace.x2,
                 TerminalButton(
                   label: context.l10n.agentConfigDelete,
-                  isPrimary: false,
+                  kind: ActionKind.neutral,
                   onTap: onDelete,
                 ),
               ],
@@ -137,10 +140,9 @@ class AgentConfigEditorDialogState extends State<AgentConfigEditorDialog> {
       actions: [
         TerminalButton(
           label: context.l10n.actionCancel,
-          isPrimary: false,
+          kind: ActionKind.neutral,
           onTap: () => Navigator.of(context).pop(),
         ),
-        HSpace.x2,
         TerminalButton(
           label: context.l10n.actionSave,
           onTap: _handleSave,

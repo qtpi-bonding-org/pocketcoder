@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -49,8 +50,7 @@ void main() {
       );
     });
 
-    test('updatePin swaps the delegate and closes the previous one',
-        () async {
+    test('updatePin swaps the delegate and closes the previous one', () async {
       final client = CaddyCaPinningHttpClient();
 
       // A real (if throwaway) self-signed cert -- SecurityContext parses
@@ -108,6 +108,49 @@ vOlqkW8uk4vrxfTyo29hA6Pu8X6rAA==
           fail('a certificate-related failure survived updatePin(): $e');
         }
       }
+    }, testOn: 'vm');
+
+    test(
+        'updatePin() with the same PEM already pinned does not abort a '
+        'request already in flight -- CaPinFetcher.fetchAndPin() calls '
+        'updatePin() unconditionally on every deploy-readiness poll tick '
+        '(every ~3s) even when the pin has not changed; updatePin() used '
+        'to unconditionally swap and close the delegate every time, which '
+        'killed whatever request happened to still be in flight on the '
+        'old delegate with "Connection closed before full header was '
+        'received" -- confirmed live against a real deployment stuck '
+        'looping on this exact error', () async {
+      const testCertPem = '''
+-----BEGIN CERTIFICATE-----
+MIIBMjCB5aADAgECAhQEeK4yBFpowWqdINB6u4kuF/Iz9jAFBgMrZXAwDzENMAsG
+A1UEAwwEdGVzdDAeFw0yNjA4MjExODA1MTdaFw0yNjA4MjIxODA1MTdaMA8xDTAL
+BgNVBAMMBHRlc3QwKjAFBgMrZXADIQA35AkzbEObtQCfD0Bfmfw1V0U5hAQsLvDy
+v3ZBh8EKSKNTMFEwHQYDVR0OBBYEFL73wLSIVrASXvmulnz3JMbaOmX6MB8GA1Ud
+IwQYMBaAFL73wLSIVrASXvmulnz3JMbaOmX6MA8GA1UdEwEB/wQFMAMBAf8wBQYD
+K2VwA0EAd4JrQT53rhIpnCRb36y3SHuu7skZZRD9TYiF/AsmeMyXwvsk20WSup9M
+vOlqkW8uk4vrxfTyo29hA6Pu8X6rAA==
+-----END CERTIFICATE-----
+''';
+
+      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(server.close);
+      unawaited(server.first.then((request) async {
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        request.response.statusCode = 200;
+        await request.response.close();
+      }));
+
+      final client = CaddyCaPinningHttpClient();
+      client.updatePin(testCertPem);
+
+      final responseFuture =
+          client.get(Uri.parse('http://127.0.0.1:${server.port}/'));
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      client.updatePin(testCertPem);
+
+      final response = await responseFuture;
+      expect(response.statusCode, 200);
     }, testOn: 'vm');
   });
 }

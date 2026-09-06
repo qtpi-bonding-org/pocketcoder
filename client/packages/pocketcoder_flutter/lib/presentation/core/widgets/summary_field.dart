@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
@@ -10,17 +11,13 @@ class SummaryField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TerminalText.mini(label.toUpperCase(), alpha: 0.5),
-        VSpace.x0_5,
-        TerminalText(
-          value.toUpperCase(),
-          size: TerminalTextSize.base,
-          weight: TerminalTextWeight.heavy,
-        ),
-      ],
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      TerminalText(label.toLowerCase(), role: TextRole.label),
+      VSpace.x0_5,
+      TerminalText(
+        value,
+        role: TextRole.value,
+      ),
+    ]);
   }
 }

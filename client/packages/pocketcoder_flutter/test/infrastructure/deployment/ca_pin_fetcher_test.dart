@@ -185,11 +185,13 @@ void main() {
   });
 
   group('forceRefetch', () {
-    test('re-fetches over SSH even when a pin is already stored, and '
+    test(
+        're-fetches over SSH even when a pin is already stored, and '
         'reports true when the fingerprint actually changed', () async {
       await pinStore.write(
         deploymentId: '999',
-        pin: const CaddyCaPin(fingerprint: 'old-fingerprint', certificatePem: 'old-pem'),
+        pin: const CaddyCaPin(
+            fingerprint: 'old-fingerprint', certificatePem: 'old-pem'),
       );
       when(() => sshRunner.run(
             instanceId: any(named: 'instanceId'),
@@ -218,7 +220,8 @@ void main() {
       verify(() => pinningHttpClient.updatePin('new-pem')).called(1);
     });
 
-    test('reports false when the freshly-fetched CA matches what was '
+    test(
+        'reports false when the freshly-fetched CA matches what was '
         'already stored -- the pin was not the actual problem', () async {
       await pinStore.write(
         deploymentId: '999',
@@ -245,11 +248,12 @@ void main() {
 
     test('reports false when the SSH fetch itself fails', () async {
       when(() => sshRunner.run(
-            instanceId: any(named: 'instanceId'),
-            host: any(named: 'host'),
-            command: RootSshCommand.exportCaddyCaFingerprint,
-          )).thenAnswer(
-              (_) async => const RootSshCommandResult(exitCode: 1, stdout: '', stderr: 'boom'));
+                instanceId: any(named: 'instanceId'),
+                host: any(named: 'host'),
+                command: RootSshCommand.exportCaddyCaFingerprint,
+              ))
+          .thenAnswer((_) async => const RootSshCommandResult(
+              exitCode: 1, stdout: '', stderr: 'boom'));
 
       final changed = await fetcher.forceRefetch(
         instanceId: '999',

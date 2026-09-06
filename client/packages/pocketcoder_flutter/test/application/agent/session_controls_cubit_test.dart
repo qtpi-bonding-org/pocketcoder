@@ -231,9 +231,9 @@ void main() {
     // workspace_override is a PocketBase JSON field the server unmarshals
     // into []string (sessionprofile.go, using element 0 as cwd) -- writing
     // the raw scalar value there is silently ignored server-side.
-    when(() => chatDao
-            .save('chat-1', {'workspace_override': ['/tmp/workspace']}))
-        .thenAnswer(
+    when(() => chatDao.save('chat-1', {
+          'workspace_override': ['/tmp/workspace']
+        })).thenAnswer(
       (_) async => throw UnimplementedError(),
     );
 
@@ -245,16 +245,15 @@ void main() {
       value: '/tmp/workspace',
     ));
 
-    verify(() => chatDao
-            .save('chat-1', {'workspace_override': ['/tmp/workspace']}))
-        .called(1);
+    verify(() => chatDao.save('chat-1', {
+          'workspace_override': ['/tmp/workspace']
+        })).called(1);
     expect(repo.setConfigOptionCalls, isEmpty);
   });
 
   test('idle setOption clears the workspace override on an empty value',
       () async {
-    when(() =>
-            chatDao.save('chat-1', {'workspace_override': <String>[]}))
+    when(() => chatDao.save('chat-1', {'workspace_override': <String>[]}))
         .thenAnswer(
       (_) async => throw UnimplementedError(),
     );

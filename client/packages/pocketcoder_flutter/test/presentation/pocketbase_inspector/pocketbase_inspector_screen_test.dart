@@ -61,7 +61,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('5'), findsOneWidget);
-    expect(find.text('Fix the login bug'), findsOneWidget);
+    expect(find.text('fix the login bug'), findsOneWidget);
     await cubit.close();
   });
 
@@ -73,11 +73,11 @@ void main() {
     await tester.pumpWidget(_app(cubit));
     await tester.pumpAndSettle();
 
-    expect(find.text('DATABASE UNAVAILABLE'), findsOneWidget);
+    expect(find.text('database unavailable'), findsOneWidget);
     await cubit.close();
   });
 
-  testWidgets('fits count cards at the shell content width', (tester) async {
+  testWidgets('fits detail rows at the shell content width', (tester) async {
     await tester.binding.setSurfaceSize(const Size(480, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final cubit = PocketbaseInspectorCubit(

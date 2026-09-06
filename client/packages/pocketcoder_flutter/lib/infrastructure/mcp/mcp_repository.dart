@@ -62,8 +62,10 @@ class McpRepository implements IMcpRepository {
           'status': 'approved',
           if (image != null && image.isNotEmpty) 'image': image,
           if (config != null) 'config': config,
-          if (oauthProvider != null && oauthProvider.isNotEmpty) 'oauth_provider': oauthProvider,
-          if (oauthTokenEnvVar != null && oauthTokenEnvVar.isNotEmpty) 'oauth_token_env_var': oauthTokenEnvVar,
+          if (oauthProvider != null && oauthProvider.isNotEmpty)
+            'oauth_provider': oauthProvider,
+          if (oauthTokenEnvVar != null && oauthTokenEnvVar.isNotEmpty)
+            'oauth_token_env_var': oauthTokenEnvVar,
         });
       },
       McpException.new,

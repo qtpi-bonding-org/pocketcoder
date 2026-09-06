@@ -16,7 +16,8 @@ abstract class HarnessInstance with _$HarnessInstance {
     required String containerName,
     String? acpEndpoint,
     String? secret,
-    @JsonKey(unknownEnumValue: HarnessInstanceStatus.unknown) required HarnessInstanceStatus status,
+    @JsonKey(unknownEnumValue: HarnessInstanceStatus.unknown)
+    required HarnessInstanceStatus status,
     String? lastError,
     bool? managed,
     bool? retryable,

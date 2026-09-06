@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'poco_bubble.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 
 /// Dumb presentation widget for Poco. State orchestration belongs to callers.
 class PocoWidget extends StatelessWidget {
@@ -11,6 +12,8 @@ class PocoWidget extends StatelessWidget {
     this.history = const <String>[],
     this.pocoSize,
     this.textAlign = TextAlign.start,
+    required this.posture,
+    this.mood,
   });
 
   final ValueListenable<String> message;
@@ -18,6 +21,8 @@ class PocoWidget extends StatelessWidget {
   final List<String> history;
   final double? pocoSize;
   final TextAlign textAlign;
+  final PocoPosture posture;
+  final PocoMood? mood;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +39,8 @@ class PocoWidget extends StatelessWidget {
       history: history,
       pocoSize: pocoSize,
       textAlign: textAlign,
+      posture: posture,
+      mood: mood,
     );
   }
 }

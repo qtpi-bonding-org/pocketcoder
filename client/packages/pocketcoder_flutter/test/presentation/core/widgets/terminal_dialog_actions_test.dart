@@ -1,66 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 
-Widget _app(Widget child) => MaterialApp(
-      theme: AppTheme.lightTheme,
-      home: Scaffold(body: child),
-    );
-
 void main() {
-  testWidgets('renders confirm label and calls onConfirm when tapped',
-      (tester) async {
-    var confirmed = false;
-    await tester.pumpWidget(_app(
-      TerminalDialogActions(
-        confirmLabel: 'SAVE',
-        onConfirm: () => confirmed = true,
-      ),
+  testWidgets('labels are angle-bracketed and lowercase', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+          body: TerminalDialogActions(actions: [
+        TerminalActionSpec('restart', ActionKind.primary, () {}),
+        TerminalActionSpec('cancel', ActionKind.refusal, () {}),
+      ])),
     ));
-
-    expect(find.text('SAVE'), findsOneWidget);
-    await tester.tap(find.text('SAVE'));
-    await tester.pump();
-    expect(confirmed, isTrue);
+    expect(find.text('<restart>'), findsOneWidget);
+    expect(find.text('<cancel>'), findsOneWidget);
   });
 
-  testWidgets('renders cancel label only when provided', (tester) async {
-    await tester.pumpWidget(_app(
-      const TerminalDialogActions(
-        confirmLabel: 'SAVE',
-        onConfirm: null,
-      ),
+  testWidgets('a destructive action is never first', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+          body: TerminalDialogActions(actions: [
+        TerminalActionSpec('delete', ActionKind.destructive, () {}),
+        TerminalActionSpec('cancel', ActionKind.refusal, () {}),
+      ])),
     ));
-    expect(find.text('CANCEL'), findsNothing);
-
-    var cancelled = false;
-    await tester.pumpWidget(_app(
-      TerminalDialogActions(
-        confirmLabel: 'SAVE',
-        onConfirm: () {},
-        cancelLabel: 'CANCEL',
-        onCancel: () => cancelled = true,
-      ),
-    ));
-    expect(find.text('CANCEL'), findsOneWidget);
-    await tester.tap(find.text('CANCEL'));
-    await tester.pump();
-    expect(cancelled, isTrue);
-  });
-
-  testWidgets('disables confirm when confirmEnabled is false', (tester) async {
-    var confirmed = false;
-    await tester.pumpWidget(_app(
-      TerminalDialogActions(
-        confirmLabel: 'SAVE',
-        onConfirm: () => confirmed = true,
-        confirmEnabled: false,
-      ),
-    ));
-
-    await tester.tap(find.text('SAVE'));
-    await tester.pump();
-    expect(confirmed, isFalse);
+    // NOTE: widgetList returns build order, not painted position. That is
+    // the right check ONLY because the implementation reorders the
+    // List<TerminalActionSpec> before building the Wrap (see Step 3) -- so
+    // build order IS the visual order here. If a future implementation ever
+    // reorders visually instead (alignment tricks, Directionality), this
+    // test silently stops guarding anything. Keep the sort in the list.
+    final labels =
+        tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).toList();
+    expect(labels.first, isNot('<delete>'),
+        reason: 'spec section 7: destructive never in first position');
   });
 }

@@ -15,14 +15,14 @@ Widget _app(Widget child) => MaterialApp(
 
 @wb.UseCase(name: 'empty registry', type: AgentConfigView)
 Widget agentConfigEmpty(BuildContext context) => _app(AgentConfigView(
-  state: const AgentConfigState(status: UiFlowStatus.success),
-  onSave: (_) async {},
-  onDelete: (_) async {},
-));
+      state: const AgentConfigState(status: UiFlowStatus.success),
+      onSave: (_) async {},
+      onDelete: (_) async {},
+    ));
 
 @wb.UseCase(name: 'loading registry', type: AgentConfigView)
 Widget agentConfigLoading(BuildContext context) => _app(AgentConfigView(
-  state: const AgentConfigState(status: UiFlowStatus.loading),
-  onSave: (_) async {},
-  onDelete: (_) async {},
-));
+      state: const AgentConfigState(status: UiFlowStatus.loading),
+      onSave: (_) async {},
+      onDelete: (_) async {},
+    ));

@@ -20,9 +20,12 @@ package coordinator
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"path"
 	"strings"
+	"time"
 
 	acpsdk "github.com/coder/acp-go-sdk"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/acp"
@@ -208,7 +211,48 @@ func (GlobalConfigApplier) Apply(ctx context.Context, conn acp.Conn, sessionID s
 	_, err := conn.SetSessionMode(ctx, acpsdk.SetSessionModeRequest{
 		SessionId: acpsdk.SessionId(sessionID), ModeId: p.Mode,
 	})
+	// Mode is a preference, not a required session parameter -- an unknown
+	// mode id must not fail the whole run.
+	if isModeNotFoundError(err, p.Mode) {
+		log.Printf("[coordinator] session %s: harness rejected mode %q as unknown, continuing without it", sessionID, p.Mode)
+		return nil
+	}
 	return err
+}
+
+func requestErrorData(err error) (data map[string]any, code int, ok bool) {
+	var reqErr *acpsdk.RequestError
+	if !errors.As(err, &reqErr) {
+		return nil, 0, false
+	}
+	m, _ := reqErr.Data.(map[string]any)
+	return m, reqErr.Code, true
+}
+
+// Data.mode is checked before the message text, which can drift.
+func isModeNotFoundError(err error, mode acpsdk.SessionModeId) bool {
+	data, code, ok := requestErrorData(err)
+	if !ok || code != -32602 {
+		return false
+	}
+	if m, ok := data["mode"].(string); ok {
+		return m == string(mode)
+	}
+	var reqErr *acpsdk.RequestError
+	return errors.As(err, &reqErr) && strings.Contains(reqErr.Message, "mode not found")
+}
+
+// Data.modelId is checked before the message text, which can drift.
+func isModelNotFoundError(err error, model string) bool {
+	data, code, ok := requestErrorData(err)
+	if !ok || code != -32602 {
+		return false
+	}
+	if m, ok := data["modelId"].(string); ok {
+		return m == model
+	}
+	var reqErr *acpsdk.RequestError
+	return errors.As(err, &reqErr) && strings.Contains(reqErr.Message, "model not found")
 }
 
 func modeAdvertised(modes *acpsdk.SessionModeState, mode acpsdk.SessionModeId) bool {
@@ -257,18 +301,49 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 			}
 		}
 		if p.Model != "" {
-			if _, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
-				ValueId: &acpsdk.SetSessionConfigOptionValueId{
-					SessionId: acpsdk.SessionId(sessionID),
-					ConfigId:  "model",
-					Value:     acpsdk.SessionConfigValueId(p.Model),
-				},
-			}); err != nil {
+			if err := setModelWithRetry(ctx, conn, sessionID, p.Model); err != nil {
 				return fmt.Errorf("apply model: %w", err)
 			}
 		}
 	}
 	return nil
+}
+
+// Overridable by tests so TestPerSessionApplierGivesUpOnGenuinelyUnknownModel
+// doesn't have to wait out the real production timeout.
+var (
+	modelRetryTimeout      = 90 * time.Second
+	modelRetryPollInterval = time.Second
+)
+
+// A "model not found" moments after connecting can mean a fresh stdio
+// subprocess's own catalog sync hasn't finished yet, not a real bad model
+// name. Retry for a bounded window before giving up.
+func setModelWithRetry(ctx context.Context, conn acp.Conn, sessionID, model string) error {
+	deadline := time.Now().Add(modelRetryTimeout)
+	for {
+		_, err := conn.SetSessionConfigOption(ctx, acpsdk.SetSessionConfigOptionRequest{
+			ValueId: &acpsdk.SetSessionConfigOptionValueId{
+				SessionId: acpsdk.SessionId(sessionID),
+				ConfigId:  "model",
+				Value:     acpsdk.SessionConfigValueId(model),
+			},
+		})
+		if err == nil {
+			return nil
+		}
+		if !isModelNotFoundError(err, model) {
+			return err
+		}
+		if !time.Now().Before(deadline) {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(modelRetryPollInterval):
+		}
+	}
 }
 
 // selectApplier always returns PerSessionApplier — the branching that used

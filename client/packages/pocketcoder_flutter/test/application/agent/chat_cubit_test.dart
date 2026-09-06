@@ -257,7 +257,8 @@ void main() {
     expect(item.text, 'hello agent');
   });
 
-  test('sendPrompt records the user message as the chat preview, marking '
+  test(
+      'sendPrompt records the user message as the chat preview, marking '
       'the very first message as isFirst', () async {
     cubit.open('chat-1');
     await pumpEventQueue();
@@ -273,7 +274,8 @@ void main() {
         (text: 'a second message', turn: ChatTurn.user, isFirst: false));
   });
 
-  test('a completed Poco reply records the chat preview as assistant turn, '
+  test(
+      'a completed Poco reply records the chat preview as assistant turn, '
       'never as isFirst', () async {
     cubit.open('chat-1');
     await pumpEventQueue();

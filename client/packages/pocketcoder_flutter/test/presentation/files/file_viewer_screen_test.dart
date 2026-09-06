@@ -52,7 +52,8 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
   });
 
-  testWidgets('renders an unsupported-type message for non-UTF8 binary', (tester) async {
+  testWidgets('renders an unsupported-type message for non-UTF8 binary',
+      (tester) async {
     // Invalid UTF-8 byte sequence, and not an image extension.
     when(() => repo.readFile('data.bin'))
         .thenAnswer((_) async => Uint8List.fromList([0xFF, 0xFE, 0xFD]));
@@ -61,10 +62,11 @@ void main() {
         _wrap(FileViewerScreen(path: 'data.bin', repository: repo)));
     await tester.pumpAndSettle();
 
-    expect(find.text("CAN'T PREVIEW THIS FILE TYPE"), findsOneWidget);
+    expect(find.text("can't preview this file type"), findsOneWidget);
   });
 
-  testWidgets('shows a too-large message instead of decoding a huge file', (tester) async {
+  testWidgets('shows a too-large message instead of decoding a huge file',
+      (tester) async {
     final hugeBytes = Uint8List(11 * 1024 * 1024); // 11 MB, over the 10 MB cap
     when(() => repo.readFile('huge.log')).thenAnswer((_) async => hugeBytes);
 
@@ -72,6 +74,6 @@ void main() {
         _wrap(FileViewerScreen(path: 'huge.log', repository: repo)));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('TOO LARGE'), findsOneWidget);
+    expect(find.textContaining('too large'), findsOneWidget);
   });
 }

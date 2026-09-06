@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/billing/billing_cubit.dart';
@@ -6,7 +7,6 @@ import 'package:pocketcoder_flutter/application/billing/billing_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/billing/adapters/paywall_adapter.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/bios_frame.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/billing/widgets/active_pro_status.dart';
@@ -52,6 +52,7 @@ class PaywallView extends StatelessWidget {
     required this.onManageSubscription,
     required this.onOpenTermsOfService,
     required this.onOpenPrivacyPolicy,
+    this.onContinue,
   });
 
   final BillingState state;
@@ -60,24 +61,20 @@ class PaywallView extends StatelessWidget {
   final VoidCallback onManageSubscription;
   final VoidCallback onOpenTermsOfService;
   final VoidCallback onOpenPrivacyPolicy;
+  final VoidCallback? onContinue;
 
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
-      title: context.l10n.proTitle,
-      activePillar: NavPillar.configure,
+      footer: buildPillarFooter(context, NavPillar.config),
       showBack: true,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(vertical: AppSizes.space * 2),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-            child: BiosFrame(
-              title: context.l10n.proPlanTitle,
-              child: _buildContent(context),
-            ),
-          ),
-        ),
+      scrollable: true,
+      scrollPadding: EdgeInsets.symmetric(vertical: AppSizes.line),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildContent(context),
+        ],
       ),
     );
   }
@@ -90,6 +87,7 @@ class PaywallView extends StatelessWidget {
       return ActiveProStatus(
         onRestore: onRestore,
         onManageSubscription: onManageSubscription,
+        onContinue: onContinue,
       );
     }
 

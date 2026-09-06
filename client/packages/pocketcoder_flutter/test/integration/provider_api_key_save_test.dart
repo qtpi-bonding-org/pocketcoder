@@ -83,8 +83,7 @@ void main() {
       'saveProviderAPIKey persists a real key through the drift-backed '
       'client and it reads back correctly', () async {
     if (email == null || password == null) {
-      markTestSkipped(
-          'API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
+      markTestSkipped('API_TEST_EMAIL/API_TEST_PASSWORD not set -- run via '
           'tests/compose/api/run.sh, not directly');
       return;
     }
@@ -104,8 +103,10 @@ void main() {
     // (owner, provider) is unique -- clear any leftover key from a previous
     // run of this test, matching how a real user re-saving their key
     // overwrites rather than errors.
-    final existing = await verifyClient.collection('provider_api_keys').getFullList(
-        filter: "owner = '$userId' && provider = '${provider.id}'");
+    final existing = await verifyClient
+        .collection('provider_api_keys')
+        .getFullList(
+            filter: "owner = '$userId' && provider = '${provider.id}'");
     for (final key in existing) {
       await verifyClient.collection('provider_api_keys').delete(key.id);
     }
@@ -131,7 +132,9 @@ void main() {
     // not found in local database", never reaching the network at all.
     final schemaJson = await rootBundle.loadString('assets/pb_schema.json');
     final decoded = jsonDecode(schemaJson);
-    final schemaList = decoded is Map ? decoded['items'] as List<dynamic> : decoded as List<dynamic>;
+    final schemaList = decoded is Map
+        ? decoded['items'] as List<dynamic>
+        : decoded as List<dynamic>;
     await client.setSchema(jsonEncode(schemaList));
 
     final repository = ProviderRepository(

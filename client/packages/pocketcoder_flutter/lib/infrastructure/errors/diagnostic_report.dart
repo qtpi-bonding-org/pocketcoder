@@ -29,8 +29,7 @@ class DiagnosticReportFormatter {
   }) {
     final lines = <String>[
       'PocketCoder diagnostic report',
-      if (environment.platform case final platform?)
-        'Platform: $platform',
+      if (environment.platform case final platform?) 'Platform: $platform',
       if (environment.osVersion case final version?) 'OS version: $version',
       if (environment.appVersion case final version?) 'App version: $version',
       if (environment.serverVersion case final version?)

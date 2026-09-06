@@ -8,11 +8,13 @@ import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
 @lazySingleton
 class HarnessOAuthAccountDao extends BaseDao<HarnessOauthAccount> {
   HarnessOAuthAccountDao(PocketBase pb)
-      : super(pb, Collections.harnessOauthAccounts, HarnessOauthAccount.fromJson);
+      : super(
+            pb, Collections.harnessOauthAccounts, HarnessOauthAccount.fromJson);
 }
 
 @lazySingleton
 class CredentialSelectionDao extends BaseDao<CredentialSelection> {
   CredentialSelectionDao(PocketBase pb)
-      : super(pb, Collections.credentialSelections, CredentialSelection.fromJson);
+      : super(
+            pb, Collections.credentialSelections, CredentialSelection.fromJson);
 }

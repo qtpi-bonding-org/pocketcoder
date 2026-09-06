@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_action.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/chat_view.dart';
@@ -41,7 +42,6 @@ void main() {
         isLoading: isLoading,
         isRunning: isRunning,
         requiresProviderReauthentication: false,
-        modes: null,
         config: null,
         showMonitorAction: showMonitorAction,
         monitored: monitored,
@@ -49,7 +49,6 @@ void main() {
         onOpen: (_) {},
         onSendPrompt: onSendPrompt ?? (_) {},
         onCancel: () {},
-        onSelectMode: (_) {},
         onSetOption: (_) {},
         onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
         onElicitationRespond: (_, __) {},
@@ -78,7 +77,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('WATCH'));
+    await tester.tap(find.text('watch'));
     await tester.pump();
 
     expect(toggled, isTrue);
@@ -92,7 +91,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('WATCH'), findsNothing);
+    expect(find.textContaining('watch'), findsNothing);
   });
 
   testWidgets('exactly one composer is rendered', (tester) async {
@@ -137,7 +136,6 @@ void main() {
           isLoading: false,
           isRunning: false,
           requiresProviderReauthentication: false,
-          modes: null,
           config: null,
           showMonitorAction: true,
           monitored: false,
@@ -145,7 +143,6 @@ void main() {
           onOpen: (_) {},
           onSendPrompt: (_) {},
           onCancel: () {},
-          onSelectMode: (_) {},
           onSetOption: (_) {},
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
@@ -166,7 +163,6 @@ void main() {
       isLoading: false,
       isRunning: false,
       requiresProviderReauthentication: false,
-      modes: null,
       config: null,
       showMonitorAction: true,
       monitored: false,
@@ -174,7 +170,6 @@ void main() {
       onOpen: (_) {},
       onSendPrompt: (_) {},
       onCancel: () {},
-      onSelectMode: (_) {},
       onSetOption: (_) {},
       onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
       onElicitationRespond: (_, __) {},
@@ -184,7 +179,7 @@ void main() {
     )));
     await tester.pump();
     expect(find.byType(VimToast), findsOneWidget);
-    expect(find.textContaining('RUN INTERRUPTED'), findsOneWidget);
+    expect(find.textContaining('run interrupted'), findsOneWidget);
     // VimToast self-dismisses via Future.delayed(3s) -- drain it before the
     // widget tree tears down, or flutter_test's teardown invariant check
     // fails with "A Timer is still pending".
@@ -202,7 +197,6 @@ void main() {
           isLoading: false,
           isRunning: false,
           requiresProviderReauthentication: requiresReauth,
-          modes: null,
           config: null,
           showMonitorAction: true,
           monitored: false,
@@ -210,7 +204,6 @@ void main() {
           onOpen: (_) {},
           onSendPrompt: (_) {},
           onCancel: () {},
-          onSelectMode: (_) {},
           onSetOption: (_) {},
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
@@ -249,7 +242,6 @@ void main() {
           isLoading: isRunning,
           isRunning: isRunning,
           requiresProviderReauthentication: false,
-          modes: null,
           config: null,
           showMonitorAction: true,
           monitored: false,
@@ -257,7 +249,6 @@ void main() {
           onOpen: (_) {},
           onSendPrompt: (_) {},
           onCancel: () {},
-          onSelectMode: (_) {},
           onSetOption: (_) {},
           onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
           onElicitationRespond: (_, __) {},
@@ -370,5 +361,32 @@ void main() {
         ?.position;
     expect(position?.pixels,
         moreOrLessEquals(position?.maxScrollExtent ?? 0, epsilon: 1));
+  });
+
+  testWidgets('the interrupt lives on the prompt line, not a row of its own',
+      (tester) async {
+    await tester.pumpWidget(buildChatView(
+        conversation: const ag_ui_widgets.Conversation(), isRunning: true));
+    await tester.pumpAndSettle();
+    expect(
+        find.descendant(
+            of: find.byType(ChatComposer),
+            matching: find.byType(InterruptAction)),
+        findsOneWidget);
+  });
+
+  testWidgets('the interrupt offers itself only while a turn is running',
+      (tester) async {
+    const conversation = ag_ui_widgets.Conversation();
+
+    await tester.pumpWidget(
+        buildChatView(conversation: conversation, isRunning: false));
+    await tester.pumpAndSettle();
+    expect(find.byType(InterruptAction), findsNothing);
+
+    await tester
+        .pumpWidget(buildChatView(conversation: conversation, isRunning: true));
+    await tester.pumpAndSettle();
+    expect(find.byType(InterruptAction), findsOneWidget);
   });
 }

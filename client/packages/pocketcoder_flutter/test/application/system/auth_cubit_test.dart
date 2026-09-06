@@ -99,7 +99,8 @@ void main() {
   });
 
   group('AuthCubit.login', () {
-    test('checks compatibility before sending credentials, persists the '
+    test(
+        'checks compatibility before sending credentials, persists the '
         'URL only after a successful login', () async {
       when(() => repo.updateBaseUrl('https://server.example'))
           .thenAnswer((_) async {});
@@ -127,7 +128,8 @@ void main() {
       expect(cubit.state.status, UiFlowStatus.success);
     });
 
-    test('does not send credentials to an incompatible server, and never '
+    test(
+        'does not send credentials to an incompatible server, and never '
         'persists the unverified URL', () async {
       when(() => repo.updateBaseUrl('https://server.example'))
           .thenAnswer((_) async {});
@@ -179,7 +181,8 @@ void main() {
   });
 
   group('AuthCubit.factoryReset', () {
-    test('clears the auth session, every stored CA pin, the '
+    test(
+        'clears the auth session, every stored CA pin, the '
         'app-specific hook, and the billing identity, and emits success',
         () async {
       when(() => repo.clearSession()).thenAnswer((_) async {});
@@ -260,8 +263,7 @@ void main() {
   group('AuthCubit.deleteProData', () {
     test('calls the hook and emits success, without touching the session',
         () async {
-      when(() => proDataDeletionHook.deleteProData())
-          .thenAnswer((_) async {});
+      when(() => proDataDeletionHook.deleteProData()).thenAnswer((_) async {});
       final cubit = buildCubit();
 
       await cubit.deleteProData();

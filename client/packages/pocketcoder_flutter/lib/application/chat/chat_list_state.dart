@@ -14,5 +14,4 @@ sealed class ChatListState with _$ChatListState, UiFlowStateMixin {
     String? lastCreatedChatId,
     Object? error,
   }) = _ChatListState;
-
 }

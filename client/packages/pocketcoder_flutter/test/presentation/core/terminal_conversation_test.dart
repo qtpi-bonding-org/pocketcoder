@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
@@ -22,10 +23,13 @@ void main() {
       ),
     );
 
-    expect(find.text('> WHAT IS A CONTAINER?'), findsOneWidget);
+    // A suggested reply reads as the user's own voice answering Poco -- a
+    // prompt marker ("> "), not a bracketed button the machine offers.
+    expect(find.text('> '), findsOneWidget);
+    expect(find.text('What is a container?'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
 
-    await tester.tap(find.text('> WHAT IS A CONTAINER?'));
+    await tester.tap(find.text('What is a container?'));
     expect(selected, isTrue);
   });
 
@@ -86,6 +90,7 @@ void main() {
             child: SizedBox(
               width: 180,
               child: PocoBubble(
+                posture: PocoPosture.armored,
                 message: message,
                 pocoSize: 16,
               ),
@@ -132,7 +137,8 @@ void main() {
     expect(bubble.left, AppSizes.space);
   });
 
-  testWidgets('a user turn renders as a full-bleed phosphor fill with black text',
+  testWidgets(
+      'a user turn renders as a full-bleed phosphor fill with black text',
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -152,10 +158,12 @@ void main() {
     expect(text.style?.color, Colors.black);
 
     final frame = tester.widget<Container>(
-      find.descendant(
-        of: find.byType(TerminalConversationFrame),
-        matching: find.byType(Container),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(TerminalConversationFrame),
+            matching: find.byType(Container),
+          )
+          .first,
     );
     final decoration = frame.decoration as BoxDecoration;
     expect(decoration.color, isNot(anyOf(isNull, Colors.transparent)));
@@ -176,10 +184,12 @@ void main() {
     );
 
     final frame = tester.widget<Container>(
-      find.descendant(
-        of: find.byType(TerminalConversationFrame),
-        matching: find.byType(Container),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(TerminalConversationFrame),
+            matching: find.byType(Container),
+          )
+          .first,
     );
     final decoration = frame.decoration as BoxDecoration?;
     expect(decoration?.color, anyOf(isNull, Colors.transparent));

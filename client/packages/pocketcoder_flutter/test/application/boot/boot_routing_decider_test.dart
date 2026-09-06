@@ -389,8 +389,7 @@ void main() {
       'attempt starts does not suppress the first real push to '
       'deploymentProgress once one does -- regression for the live bug '
       'where Initialize silently did nothing after the user had already '
-      'clicked through provider/OAuth/plan-selection screens',
-      (tester) async {
+      'clicked through provider/OAuth/plan-selection screens', (tester) async {
     final t = HarnessTest(status: ServerReadinessStatus.notProvisioned);
     addTearDown(t.decider.dispose);
     await tester.pumpWidget(Directionality(

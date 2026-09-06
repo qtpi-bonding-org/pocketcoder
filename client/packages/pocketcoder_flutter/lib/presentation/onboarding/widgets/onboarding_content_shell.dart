@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 
 class OnboardingContentShell extends StatelessWidget {
   const OnboardingContentShell({
@@ -17,25 +18,27 @@ class OnboardingContentShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = child == null
-        ? listBuilder!(context)
-        : SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              vertical: AppSizes.space * paddingMultiplier,
-            ),
-            child: mainAxisAlignment == MainAxisAlignment.start
-                ? child
-                : Column(
-                    mainAxisAlignment: mainAxisAlignment,
-                    children: [child!],
-                  ),
-          );
-
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-        child: content,
+    // listBuilder hands back a self-scrolling ListView: clamp its width
+    // only, same as a `scrollable: false` PocketCoderShell body would.
+    if (listBuilder != null) {
+      return Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+          child: listBuilder!(context),
+        ),
+      );
+    }
+    return ContentScrollRegion(
+      padding: EdgeInsets.symmetric(
+        vertical: AppSizes.space * paddingMultiplier,
       ),
+      child: mainAxisAlignment == MainAxisAlignment.start
+          ? child!
+          : Column(
+              mainAxisAlignment: mainAxisAlignment,
+              children: [child!],
+            ),
     );
   }
 }

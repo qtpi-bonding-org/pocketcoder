@@ -59,7 +59,7 @@ void main() {
 
   testWidgets('cancel returns null and creates nothing', (tester) async {
     await pumpAndOpen(tester);
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     await tester.pumpAndSettle();
     expect(find.byType(NewChatDialog), findsNothing);
   });
@@ -70,7 +70,7 @@ void main() {
     // The harness field itself only shows the "select harness" placeholder
     // until tapped — tap it to open the nested picker dialog, then the
     // harness name should be visible as an option.
-    await tester.tap(find.text('SELECT HARNESS'));
+    await tester.tap(find.text('select harness'));
     await tester.pumpAndSettle();
     expect(find.text('Goose'), findsOneWidget);
   });
@@ -99,18 +99,18 @@ void main() {
     await tester.pumpAndSettle();
 
     // Open the harness picker and select it.
-    await tester.tap(find.text('SELECT HARNESS'));
+    await tester.tap(find.text('select harness'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Goose'));
     await tester.pumpAndSettle();
 
     // Open the model picker (now populated) and select it.
-    await tester.tap(find.text('SELECT MODEL'));
+    await tester.tap(find.text('select model'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Claude'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('CREATE'));
+    await tester.tap(find.text('<create>'));
     await tester.pumpAndSettle();
 
     final result = await resultFuture;
@@ -139,15 +139,15 @@ void main() {
     ));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('SELECT HARNESS'));
+    await tester.tap(find.text('select harness'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Goose'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('SELECT MODEL'));
+    await tester.tap(find.text('select model'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('qwen2.5:0.5b (LOCAL)'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('CREATE'));
+    await tester.tap(find.text('<create>'));
     await tester.pumpAndSettle();
 
     final result = await resultFuture;

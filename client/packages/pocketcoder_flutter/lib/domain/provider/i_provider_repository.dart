@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 abstract class IProviderRepository {
   Stream<List<Harnesse>> watchHarnesses();
   Stream<List<Model>> watchModels();
+
   /// One-shot, never-cached fetch -- harness_models is a read-only catalog
   /// (harness x model.dev-synced models) that can run to 16,000+ rows.
   /// Deliberately not a Stream: with RequestPolicy.networkOnly there is no

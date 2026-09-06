@@ -7,8 +7,7 @@ import 'package:pocketcoder_flutter/app_router.dart';
 void main() {
   tearDown(GetIt.instance.reset);
 
-  test('serverControls resolves to a registered route in the base router',
-      () {
+  test('serverControls resolves to a registered route in the base router', () {
     final router = AppRouter.router;
     final match = router.configuration.findMatch(
       Uri.parse(AppRoutes.serverControls),

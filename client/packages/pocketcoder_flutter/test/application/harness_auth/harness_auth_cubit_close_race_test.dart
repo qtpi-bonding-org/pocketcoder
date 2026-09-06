@@ -34,8 +34,7 @@ Harnesse _harness(String id) => Harnesse(
       acpTransport: HarnesseAcpTransport.stdio,
     );
 
-HarnessAuthStatus _status(String harnessId, String status) =>
-    HarnessAuthStatus(
+HarnessAuthStatus _status(String harnessId, String status) => HarnessAuthStatus(
       harness: harnessId,
       provider: _providerId,
       accountId: 'acct-1',
@@ -55,14 +54,15 @@ void main() {
 
     when(() => providerRepository.watchHarnesses())
         .thenAnswer((_) => Stream.value([_harness('harness-1')]));
-    when(() => providerRepository.watchHarnessProviders()).thenAnswer((_) => Stream.value([
-          const HarnessProvider(
-            id: 'edge-1',
-            harness: 'harness-1',
-            provider: _providerId,
-            supportsOauth: true,
-          ),
-        ]));
+    when(() => providerRepository.watchHarnessProviders())
+        .thenAnswer((_) => Stream.value([
+              const HarnessProvider(
+                id: 'edge-1',
+                harness: 'harness-1',
+                provider: _providerId,
+                supportsOauth: true,
+              ),
+            ]));
     when(() => authRepository.status(
           harnessId: 'harness-1',
           provider: any(named: 'provider'),

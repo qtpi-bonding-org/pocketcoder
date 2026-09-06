@@ -44,14 +44,15 @@ void main() {
     ));
     when(() => providerRepository.watchHarnesses())
         .thenAnswer((_) => const Stream.empty());
-    when(() => providerRepository.watchHarnessProviders()).thenAnswer((_) => Stream.value([
-          const HarnessProvider(
-            id: 'edge-1',
-            harness: 'harness-1',
-            provider: 'provider-1',
-            supportsOauth: true,
-          ),
-        ]));
+    when(() => providerRepository.watchHarnessProviders())
+        .thenAnswer((_) => Stream.value([
+              const HarnessProvider(
+                id: 'edge-1',
+                harness: 'harness-1',
+                provider: 'provider-1',
+                supportsOauth: true,
+              ),
+            ]));
     cubit = HarnessAuthCubit(
       providerRepository: providerRepository,
       authRepository: authRepository,
@@ -95,8 +96,7 @@ void main() {
           mode: 'none',
           visibility: harnessAccountVisibilityPersonal,
         )).called(1);
-    expect(
-        cubit.state.statusFor('goose-1', 'provider-anthropic')?.status,
+    expect(cubit.state.statusFor('goose-1', 'provider-anthropic')?.status,
         'disconnected');
   });
 

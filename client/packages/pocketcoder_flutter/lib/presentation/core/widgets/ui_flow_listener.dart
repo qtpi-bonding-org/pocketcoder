@@ -80,8 +80,7 @@ class UiFlowListener<B extends StateStreamable<S>, S extends IUiFlowState>
       } else {
         loadingService.hide();
       }
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   void _handleMappedState(S state) {

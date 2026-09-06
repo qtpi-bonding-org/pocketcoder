@@ -13,8 +13,7 @@ const _allowedDangerSites = {
 };
 
 void main() {
-  test('colorScheme.error / terminalColors.danger stays rare and reviewed',
-      () {
+  test('colorScheme.error / terminalColors.danger stays rare and reviewed', () {
     final result = Process.runSync(
       'grep',
       [

@@ -240,7 +240,8 @@ void main() {
       );
     });
 
-    test('cancelling the returned stream before HTTP connect completes '
+    test(
+        'cancelling the returned stream before HTTP connect completes '
         'cancels the response body', () async {
       var bodyCancelled = false;
       final body = StreamController<List<int>>(

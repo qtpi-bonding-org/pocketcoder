@@ -32,8 +32,9 @@ void main() {
 
     await store.save(credentials);
 
-    verify(() => storage.write(key: 'foss.root_ssh.credentials', value: any(named: 'value')))
-        .called(1);
+    verify(() => storage.write(
+        key: 'foss.root_ssh.credentials',
+        value: any(named: 'value'))).called(1);
     when(() => storage.read(key: 'foss.root_ssh.credentials'))
         .thenAnswer((_) async => written);
     expect(await store.load(), credentials);
@@ -46,7 +47,8 @@ void main() {
     expect(await store.load(), isNull);
   });
 
-  test('load returns null for a corrupted/partial stored value rather than '
+  test(
+      'load returns null for a corrupted/partial stored value rather than '
       'throwing', () async {
     when(() => storage.read(key: 'foss.root_ssh.credentials'))
         .thenAnswer((_) async => 'not valid json');

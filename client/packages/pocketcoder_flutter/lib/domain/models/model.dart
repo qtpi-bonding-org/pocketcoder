@@ -18,6 +18,5 @@ abstract class Model with _$Model {
   factory Model.fromRecord(RecordModel record) =>
       Model.fromJson(record.toJson());
 
-  factory Model.fromJson(Map<String, dynamic> json) =>
-      _$ModelFromJson(json);
+  factory Model.fromJson(Map<String, dynamic> json) => _$ModelFromJson(json);
 }

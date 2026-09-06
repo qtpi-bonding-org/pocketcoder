@@ -10,7 +10,8 @@ abstract class ToolPermission with _$ToolPermission {
     required String id,
     required String tool,
     required String pattern,
-    @JsonKey(unknownEnumValue: ToolPermissionAction.unknown) required ToolPermissionAction action,
+    @JsonKey(unknownEnumValue: ToolPermissionAction.unknown)
+    required ToolPermissionAction action,
     bool? active,
     String? pocoConfig,
   }) = _ToolPermission;

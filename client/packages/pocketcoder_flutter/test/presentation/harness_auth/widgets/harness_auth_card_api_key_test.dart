@@ -67,10 +67,10 @@ void main() {
       onUseApiKey: () => tapped = true,
     );
 
-    expect(find.text('ACCOUNT LOGIN'), findsNothing);
-    expect(find.text('ADD KEY'), findsOneWidget);
+    expect(find.text('<account login>'), findsNothing);
+    expect(find.text('<add key>'), findsOneWidget);
 
-    await tester.tap(find.text('ADD KEY'));
+    await tester.tap(find.text('<add key>'));
     expect(tapped, isTrue);
   });
 
@@ -84,8 +84,8 @@ void main() {
           id: 'provider-1', providerId: 'anthropic', name: 'Anthropic'),
     );
 
-    expect(find.textContaining('ANTHROPIC'), findsOneWidget);
-    expect(find.text('ADD KEY'), findsOneWidget);
+    expect(find.textContaining('Anthropic'), findsOneWidget);
+    expect(find.text('<add key>'), findsOneWidget);
   });
 
   testWidgets(
@@ -103,7 +103,7 @@ void main() {
       ],
     );
 
-    expect(find.text('ACCOUNT LOGIN'), findsOneWidget);
-    expect(find.text('ADD KEY'), findsNothing);
+    expect(find.text('<account login>'), findsOneWidget);
+    expect(find.text('<add key>'), findsNothing);
   });
 }

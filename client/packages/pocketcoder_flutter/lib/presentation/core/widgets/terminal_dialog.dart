@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'bios_frame.dart';
+import 'decision_frame.dart';
 
 class TerminalDialog extends StatelessWidget {
   final String title;
@@ -20,7 +20,7 @@ class TerminalDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       insetPadding: EdgeInsets.all(AppSizes.space * 2),
-      child: BiosFrame(
+      child: DecisionFrame(
         title: title,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -35,8 +35,9 @@ class TerminalDialog extends StatelessWidget {
             VSpace.x2,
             Padding(
               padding: EdgeInsets.all(AppSizes.space * 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: AppSizes.space * 2,
                 children: actions,
               ),
             ),

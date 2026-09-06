@@ -19,7 +19,8 @@ void main() {
     expect((json['prompt'] as List).first['text'], 'hello');
   });
 
-  test('RequestPermissionResponse.toJson() is standalone-serializable '
+  test(
+      'RequestPermissionResponse.toJson() is standalone-serializable '
       '(selected + cancelled outcomes)', () {
     final selected = RequestPermissionResponse(
       outcome: SelectedOutcome(optionId: 'allow_once'),

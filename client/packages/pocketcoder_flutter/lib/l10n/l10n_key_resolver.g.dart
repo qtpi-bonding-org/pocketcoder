@@ -1,6 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-09-03T16:39:54.756262
 
 import 'app_localizations.dart';
 
@@ -73,6 +72,7 @@ class L10nKeyResolver {
       'agent.registry.empty' => _l10n.agentRegistryEmpty,
       'agent.searching' => _l10n.agentSearching,
       'agent.select.to.configure' => _l10n.agentSelectToConfigure,
+      'agent.session.label' => _l10n.agentSessionLabel,
       'agent.title' => _l10n.agentTitle,
       'ai.error' => _l10n.aiError,
       'ai.fetch.failed' => _l10n.aiFetchFailed,
@@ -287,6 +287,7 @@ class L10nKeyResolver {
       'error.auth.failed' => _l10n.errorAuthFailed,
       'error.auth.unauthorized' => _l10n.errorAuthUnauthorized,
       'error.could.not.open.browser' => _l10n.errorCouldNotOpenBrowser,
+      'error.could.not.open.mail.app' => _l10n.errorCouldNotOpenMailApp,
       'error.generic' => _l10n.errorGeneric,
       'error.network' => _l10n.errorNetwork,
       'error.timeout' => _l10n.errorTimeout,
@@ -454,10 +455,6 @@ class L10nKeyResolver {
       'memory.dashboard.unavailable' => _l10n.memoryDashboardUnavailable,
       'monitor.telemetry.unavailable' => _l10n.monitorTelemetryUnavailable,
       'monitor.title' => _l10n.monitorTitle,
-      'nav.chats' => _l10n.navChats,
-      'nav.configure' => _l10n.navConfigure,
-      'nav.manage' => _l10n.navManage,
-      'nav.monitor' => _l10n.navMonitor,
       'new.chat.cancel' => _l10n.newChatCancel,
       'new.chat.create' => _l10n.newChatCreate,
       'new.chat.cwd.field' => _l10n.newChatCwdField,
@@ -602,8 +599,6 @@ class L10nKeyResolver {
       'permission.fetch.failed' => _l10n.permissionFetchFailed,
       'permission.patterns.label' => _l10n.permissionPatternsLabel,
       'permission.requested.fallback' => _l10n.permissionRequestedFallback,
-      'permission.security.title' => _l10n.permissionSecurityTitle,
-      'permission.signoff.title' => _l10n.permissionSignoffTitle,
       'permission.update.failed' => _l10n.permissionUpdateFailed,
       'pocket.coder.progress.active' => _l10n.pocketCoderProgressActive,
       'pocket.coder.progress.complete' => _l10n.pocketCoderProgressComplete,
@@ -704,6 +699,7 @@ class L10nKeyResolver {
       'pro.benefit.server.setup' => _l10n.proBenefitServerSetup,
       'pro.checking.status' => _l10n.proCheckingStatus,
       'pro.configure.self.hosted.push' => _l10n.proConfigureSelfHostedPush,
+      'pro.continue.setup' => _l10n.proContinueSetup,
       'pro.feature.console' => _l10n.proFeatureConsole,
       'pro.feature.deploy' => _l10n.proFeatureDeploy,
       'pro.feature.push' => _l10n.proFeaturePush,
@@ -985,6 +981,7 @@ class L10nKeyResolver {
       'agent.config.error.prefix' => _l10n.agentConfigErrorPrefix(args?['error'] as String? ?? ''),
       'agent.dialog.title' => _l10n.agentDialogTitle(args?['name'] as String? ?? ''),
       'brief.label' => _l10n.briefLabel(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
+      'chat.list.actions.body' => _l10n.chatListActionsBody(args?['title'] as String? ?? ''),
       'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.hours.ago' => _l10n.chatListTimestampHoursAgo(args?['count'] as int? ?? 0),
       'chat.list.timestamp.minutes.ago' => _l10n.chatListTimestampMinutesAgo(args?['count'] as int? ?? 0),
@@ -1126,6 +1123,7 @@ class L10nKeyResolver {
     'agent.registry.empty',
     'agent.searching',
     'agent.select.to.configure',
+    'agent.session.label',
     'agent.title',
     'ai.error',
     'ai.fetch.failed',
@@ -1161,6 +1159,7 @@ class L10nKeyResolver {
     'chat.error',
     'chat.fetch.failed',
     'chat.files.action',
+    'chat.list.actions.body',
     'chat.list.archive',
     'chat.list.delete',
     'chat.list.error',
@@ -1352,6 +1351,7 @@ class L10nKeyResolver {
     'error.auth.failed',
     'error.auth.unauthorized',
     'error.could.not.open.browser',
+    'error.could.not.open.mail.app',
     'error.generic',
     'error.network',
     'error.timeout',
@@ -1550,10 +1550,6 @@ class L10nKeyResolver {
     'memory.dashboard.unavailable',
     'monitor.telemetry.unavailable',
     'monitor.title',
-    'nav.chats',
-    'nav.configure',
-    'nav.manage',
-    'nav.monitor',
     'new.chat.cancel',
     'new.chat.create',
     'new.chat.cwd.field',
@@ -1708,8 +1704,6 @@ class L10nKeyResolver {
     'permission.patterns.label',
     'permission.requested.fallback',
     'permission.requesting.label',
-    'permission.security.title',
-    'permission.signoff.title',
     'permission.update.failed',
     'pocket.coder.progress.active',
     'pocket.coder.progress.complete',
@@ -1813,6 +1807,7 @@ class L10nKeyResolver {
     'pro.benefit.server.setup',
     'pro.checking.status',
     'pro.configure.self.hosted.push',
+    'pro.continue.setup',
     'pro.feature.console',
     'pro.feature.deploy',
     'pro.feature.push',
@@ -2173,6 +2168,7 @@ class L10nKeyResolver {
     'agentRegistryEmpty': 'agent.registry.empty',
     'agentSearching': 'agent.searching',
     'agentSelectToConfigure': 'agent.select.to.configure',
+    'agentSessionLabel': 'agent.session.label',
     'agentTitle': 'agent.title',
     'aiError': 'ai.error',
     'aiFetchFailed': 'ai.fetch.failed',
@@ -2208,6 +2204,7 @@ class L10nKeyResolver {
     'chatError': 'chat.error',
     'chatFetchFailed': 'chat.fetch.failed',
     'chatFilesAction': 'chat.files.action',
+    'chatListActionsBody': 'chat.list.actions.body',
     'chatListArchive': 'chat.list.archive',
     'chatListDelete': 'chat.list.delete',
     'chatListError': 'chat.list.error',
@@ -2399,6 +2396,7 @@ class L10nKeyResolver {
     'errorAuthFailed': 'error.auth.failed',
     'errorAuthUnauthorized': 'error.auth.unauthorized',
     'errorCouldNotOpenBrowser': 'error.could.not.open.browser',
+    'errorCouldNotOpenMailApp': 'error.could.not.open.mail.app',
     'errorGeneric': 'error.generic',
     'errorNetwork': 'error.network',
     'errorTimeout': 'error.timeout',
@@ -2597,10 +2595,6 @@ class L10nKeyResolver {
     'memoryDashboardUnavailable': 'memory.dashboard.unavailable',
     'monitorTelemetryUnavailable': 'monitor.telemetry.unavailable',
     'monitorTitle': 'monitor.title',
-    'navChats': 'nav.chats',
-    'navConfigure': 'nav.configure',
-    'navManage': 'nav.manage',
-    'navMonitor': 'nav.monitor',
     'newChatCancel': 'new.chat.cancel',
     'newChatCreate': 'new.chat.create',
     'newChatCwdField': 'new.chat.cwd.field',
@@ -2755,8 +2749,6 @@ class L10nKeyResolver {
     'permissionPatternsLabel': 'permission.patterns.label',
     'permissionRequestedFallback': 'permission.requested.fallback',
     'permissionRequestingLabel': 'permission.requesting.label',
-    'permissionSecurityTitle': 'permission.security.title',
-    'permissionSignoffTitle': 'permission.signoff.title',
     'permissionUpdateFailed': 'permission.update.failed',
     'pocketCoderProgressActive': 'pocket.coder.progress.active',
     'pocketCoderProgressComplete': 'pocket.coder.progress.complete',
@@ -2860,6 +2852,7 @@ class L10nKeyResolver {
     'proBenefitServerSetup': 'pro.benefit.server.setup',
     'proCheckingStatus': 'pro.checking.status',
     'proConfigureSelfHostedPush': 'pro.configure.self.hosted.push',
+    'proContinueSetup': 'pro.continue.setup',
     'proFeatureConsole': 'pro.feature.console',
     'proFeatureDeploy': 'pro.feature.deploy',
     'proFeaturePush': 'pro.feature.push',
@@ -3217,6 +3210,7 @@ class L10nKeyResolver {
     'agent.registry.empty': 'agentRegistryEmpty',
     'agent.searching': 'agentSearching',
     'agent.select.to.configure': 'agentSelectToConfigure',
+    'agent.session.label': 'agentSessionLabel',
     'agent.title': 'agentTitle',
     'ai.error': 'aiError',
     'ai.fetch.failed': 'aiFetchFailed',
@@ -3252,6 +3246,7 @@ class L10nKeyResolver {
     'chat.error': 'chatError',
     'chat.fetch.failed': 'chatFetchFailed',
     'chat.files.action': 'chatFilesAction',
+    'chat.list.actions.body': 'chatListActionsBody',
     'chat.list.archive': 'chatListArchive',
     'chat.list.delete': 'chatListDelete',
     'chat.list.error': 'chatListError',
@@ -3443,6 +3438,7 @@ class L10nKeyResolver {
     'error.auth.failed': 'errorAuthFailed',
     'error.auth.unauthorized': 'errorAuthUnauthorized',
     'error.could.not.open.browser': 'errorCouldNotOpenBrowser',
+    'error.could.not.open.mail.app': 'errorCouldNotOpenMailApp',
     'error.generic': 'errorGeneric',
     'error.network': 'errorNetwork',
     'error.timeout': 'errorTimeout',
@@ -3641,10 +3637,6 @@ class L10nKeyResolver {
     'memory.dashboard.unavailable': 'memoryDashboardUnavailable',
     'monitor.telemetry.unavailable': 'monitorTelemetryUnavailable',
     'monitor.title': 'monitorTitle',
-    'nav.chats': 'navChats',
-    'nav.configure': 'navConfigure',
-    'nav.manage': 'navManage',
-    'nav.monitor': 'navMonitor',
     'new.chat.cancel': 'newChatCancel',
     'new.chat.create': 'newChatCreate',
     'new.chat.cwd.field': 'newChatCwdField',
@@ -3799,8 +3791,6 @@ class L10nKeyResolver {
     'permission.patterns.label': 'permissionPatternsLabel',
     'permission.requested.fallback': 'permissionRequestedFallback',
     'permission.requesting.label': 'permissionRequestingLabel',
-    'permission.security.title': 'permissionSecurityTitle',
-    'permission.signoff.title': 'permissionSignoffTitle',
     'permission.update.failed': 'permissionUpdateFailed',
     'pocket.coder.progress.active': 'pocketCoderProgressActive',
     'pocket.coder.progress.complete': 'pocketCoderProgressComplete',
@@ -3904,6 +3894,7 @@ class L10nKeyResolver {
     'pro.benefit.server.setup': 'proBenefitServerSetup',
     'pro.checking.status': 'proCheckingStatus',
     'pro.configure.self.hosted.push': 'proConfigureSelfHostedPush',
+    'pro.continue.setup': 'proContinueSetup',
     'pro.feature.console': 'proFeatureConsole',
     'pro.feature.deploy': 'proFeatureDeploy',
     'pro.feature.push': 'proFeaturePush',
@@ -4268,6 +4259,7 @@ abstract class L10nKeys {
   static const agentRegistryEmpty = 'agent.registry.empty';
   static const agentSearching = 'agent.searching';
   static const agentSelectToConfigure = 'agent.select.to.configure';
+  static const agentSessionLabel = 'agent.session.label';
   static const agentTitle = 'agent.title';
   static const aiError = 'ai.error';
   static const aiFetchFailed = 'ai.fetch.failed';
@@ -4303,6 +4295,7 @@ abstract class L10nKeys {
   static const chatError = 'chat.error';
   static const chatFetchFailed = 'chat.fetch.failed';
   static const chatFilesAction = 'chat.files.action';
+  static (String, Map<String, dynamic>) chatListActionsBody(String title) => ('chat.list.actions.body', {'title': title});
   static const chatListArchive = 'chat.list.archive';
   static const chatListDelete = 'chat.list.delete';
   static const chatListError = 'chat.list.error';
@@ -4494,6 +4487,7 @@ abstract class L10nKeys {
   static const errorAuthFailed = 'error.auth.failed';
   static const errorAuthUnauthorized = 'error.auth.unauthorized';
   static const errorCouldNotOpenBrowser = 'error.could.not.open.browser';
+  static const errorCouldNotOpenMailApp = 'error.could.not.open.mail.app';
   static const errorGeneric = 'error.generic';
   static const errorNetwork = 'error.network';
   static const errorTimeout = 'error.timeout';
@@ -4692,10 +4686,6 @@ abstract class L10nKeys {
   static const memoryDashboardUnavailable = 'memory.dashboard.unavailable';
   static const monitorTelemetryUnavailable = 'monitor.telemetry.unavailable';
   static const monitorTitle = 'monitor.title';
-  static const navChats = 'nav.chats';
-  static const navConfigure = 'nav.configure';
-  static const navManage = 'nav.manage';
-  static const navMonitor = 'nav.monitor';
   static const newChatCancel = 'new.chat.cancel';
   static const newChatCreate = 'new.chat.create';
   static const newChatCwdField = 'new.chat.cwd.field';
@@ -4850,8 +4840,6 @@ abstract class L10nKeys {
   static const permissionPatternsLabel = 'permission.patterns.label';
   static const permissionRequestedFallback = 'permission.requested.fallback';
   static (String, Map<String, dynamic>) permissionRequestingLabel(String source) => ('permission.requesting.label', {'source': source});
-  static const permissionSecurityTitle = 'permission.security.title';
-  static const permissionSignoffTitle = 'permission.signoff.title';
   static const permissionUpdateFailed = 'permission.update.failed';
   static const pocketCoderProgressActive = 'pocket.coder.progress.active';
   static const pocketCoderProgressComplete = 'pocket.coder.progress.complete';
@@ -4955,6 +4943,7 @@ abstract class L10nKeys {
   static const proBenefitServerSetup = 'pro.benefit.server.setup';
   static const proCheckingStatus = 'pro.checking.status';
   static const proConfigureSelfHostedPush = 'pro.configure.self.hosted.push';
+  static const proContinueSetup = 'pro.continue.setup';
   static const proFeatureConsole = 'pro.feature.console';
   static const proFeatureDeploy = 'pro.feature.deploy';
   static const proFeaturePush = 'pro.feature.push';

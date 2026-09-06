@@ -19,7 +19,8 @@ class ChatScreen extends StatelessWidget {
       providers: [
         BlocProvider<ChatCubit>(create: (_) => getIt<ChatCubit>()),
         BlocProvider<PermissionCubit>(create: (_) => getIt<PermissionCubit>()),
-        BlocProvider<ElicitationCubit>(create: (_) => getIt<ElicitationCubit>()),
+        BlocProvider<ElicitationCubit>(
+            create: (_) => getIt<ElicitationCubit>()),
         BlocProvider<SessionControlsCubit>(
           create: (_) => getIt<SessionControlsCubit>(),
         ),

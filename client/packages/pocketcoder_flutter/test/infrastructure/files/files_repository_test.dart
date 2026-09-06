@@ -44,7 +44,8 @@ void main() {
     repository = FilesRepository(PocketCoderApiClient(dio: dio));
   });
 
-  test('lists the full recursive file tree through the generated operation '
+  test(
+      'lists the full recursive file tree through the generated operation '
       'client, nesting children under their parent directory', () async {
     final result = await repository.listFileTree('src');
 

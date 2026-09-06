@@ -10,6 +10,9 @@
 // until the user expands it.
 import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
 import 'package:flyer_chat_text_stream_message/flyer_chat_text_stream_message.dart'
     as chat_stream;
@@ -19,7 +22,6 @@ import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
 import 'tool_command.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_terminal_response.dart';
 import 'widgets/terminal_command_card.dart';
@@ -52,16 +54,14 @@ StackedChatBuilders pocketcoderChatBuilders(
     receivedBackground: colors.surface.withValues(alpha: 0),
     textStyle: TextStyle(
       color: colors.onSurface,
-      fontFamily: AppFonts.bodyFamily,
+      fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
-      fontSize: AppSizes.fontStandard,
       height: 1.4,
     ),
     reasoningTextStyle: TextStyle(
       color: colors.onSurface.withValues(alpha: 0.7),
-      fontFamily: AppFonts.bodyFamily,
+      fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
-      fontSize: AppSizes.fontStandard,
       fontStyle: FontStyle.italic,
       height: 1.4,
     ),
@@ -123,8 +123,9 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         });
         return TerminalCommandCard(
           command: command,
-          status:
-              result == null ? TerminalStatus.running : TerminalStatus.success,
+          status: result == null
+              ? const TerminalSpinner()
+              : const StatusMarkerView(marker: StatusMarker.ok),
           outputLabel: context.l10n.chatCommandOutput,
           output: result,
           diffs: diffs,
@@ -150,9 +151,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
                     text: context.l10n.chatCommanderPrompt,
                     style: TextStyle(
                       color: color,
-                      fontFamily: AppFonts.bodyFamily,
+                      fontFamily: AppFonts.family,
                       package: 'pocketcoder_flutter',
-                      fontSize: AppSizes.fontStandard,
                       fontWeight: AppFonts.heavy,
                       height: 1.4,
                     ),
@@ -161,9 +161,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
                     text: message.text,
                     style: TextStyle(
                       color: color,
-                      fontFamily: AppFonts.bodyFamily,
+                      fontFamily: AppFonts.family,
                       package: 'pocketcoder_flutter',
-                      fontSize: AppSizes.fontStandard,
                       fontWeight: AppFonts.medium,
                       height: 1.4,
                     ),

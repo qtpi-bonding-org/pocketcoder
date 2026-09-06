@@ -29,8 +29,8 @@ class _MockBillingService extends Mock implements BillingService {}
 class _NoopServerReadinessCheck implements IServerReadinessCheck {
   const _NoopServerReadinessCheck();
   @override
-  ServerReadinessSnapshot get current =>
-      const ServerReadinessSnapshot(status: ServerReadinessStatus.notProvisioned);
+  ServerReadinessSnapshot get current => const ServerReadinessSnapshot(
+      status: ServerReadinessStatus.notProvisioned);
   @override
   Stream<ServerReadinessSnapshot> get readinessChanges => const Stream.empty();
   @override
@@ -69,8 +69,13 @@ void main() {
           wOptions: any(named: 'wOptions'),
         )).thenAnswer((_) async => {});
 
-    final authCubit = AuthCubit(repository, CaddyCaPinStore(storage),
-        factoryResetHook, deletionHook, billing, const _NoopServerReadinessCheck());
+    final authCubit = AuthCubit(
+        repository,
+        CaddyCaPinStore(storage),
+        factoryResetHook,
+        deletionHook,
+        billing,
+        const _NoopServerReadinessCheck());
     addTearDown(authCubit.close);
     final router = GoRouter(
       initialLocation: '/login',

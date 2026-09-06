@@ -30,7 +30,7 @@ import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/release_status_banner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/adapters/agent_auth_adapter.dart';
 
@@ -179,8 +179,7 @@ void main() {
     authRepo = MockHarnessAuthRepository();
     chatRepo = MockChatListRepository();
     pushService = MockPushService();
-    when(() => pushService.requestPermissions())
-        .thenAnswer((_) async => true);
+    when(() => pushService.requestPermissions()).thenAnswer((_) async => true);
     GetIt.instance.registerSingleton<PushService>(pushService);
     addTearDown(() {
       if (GetIt.instance.isRegistered<PushService>()) {
@@ -259,7 +258,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('NEXT'));
+    await tester.tap(find.text('next'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -290,14 +289,14 @@ void main() {
       await tester.pump();
     }
 
-    expect(find.text('[OPEN AUTHORIZATION PAGE]'), findsOneWidget);
+    expect(find.text('<open authorization page>'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
 
-    await tester.tap(find.text('[OPEN AUTHORIZATION PAGE]'));
+    await tester.tap(find.text('<open authorization page>'));
     await tester.pump();
     expect(launcher.opened, [_verificationUri]);
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -362,7 +361,7 @@ void main() {
 
     // Close the dialog so the timer is cancelled and no pending Timer trips
     // flutter_test's teardown invariant check.
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -417,7 +416,7 @@ void main() {
     await tester.pump();
     expect(pollCount, greaterThanOrEqualTo(1));
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -477,7 +476,7 @@ void main() {
 
     expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), '  one-time-code  ');
-    await tester.tap(find.text('[SUBMIT]'));
+    await tester.tap(find.text('<submit>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -512,15 +511,15 @@ void main() {
       await tester.pump();
     }
 
-    await tester.tap(find.text('[OPEN AUTHORIZATION PAGE]'));
+    await tester.tap(find.text('<open authorization page>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
 
     expect(find.byType(SnackBar), findsOneWidget);
-    expect(find.text('CANCEL'), findsOneWidget);
+    expect(find.text('<cancel>'), findsOneWidget);
 
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
@@ -551,7 +550,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 8; i++) {
       await tester.pump();
     }
@@ -588,9 +587,7 @@ void main() {
       await tester.pump();
     }
 
-    final glyph =
-        tester.widget<TerminalStatusGlyph>(find.byType(TerminalStatusGlyph));
-    expect(glyph.status, isNot(TerminalStatus.running));
+    expect(find.byType(StatusMarkerView), findsOneWidget);
     expect(find.text('invalid_grant'), findsOneWidget);
   });
 
@@ -612,11 +609,11 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }
-    await tester.tap(find.text('[COPY]'));
+    await tester.tap(find.text('<copy>'));
     await tester.pump();
 
     expect(find.byType(SnackBar), findsOneWidget);
-    await tester.tap(find.text('CANCEL'));
+    await tester.tap(find.text('<cancel>'));
     for (var i = 0; i < 5; i++) {
       await tester.pump();
     }

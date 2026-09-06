@@ -34,13 +34,15 @@ class FilesRepository implements IFilesRepository {
     );
   }
 
-  FileTreeEntry _convertTreeEntry(generated.FileTreeEntry entry) => FileTreeEntry(
+  FileTreeEntry _convertTreeEntry(generated.FileTreeEntry entry) =>
+      FileTreeEntry(
         name: entry.name,
         isDir: entry.isDir,
         size: entry.size,
         modTime: entry.modTime,
-        children: entry.children?.map(_convertTreeEntry).toList(growable: false) ??
-            const [],
+        children:
+            entry.children?.map(_convertTreeEntry).toList(growable: false) ??
+                const [],
       );
 
   @override

@@ -32,11 +32,10 @@ class TerminalTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label.toUpperCase(),
+          label.toLowerCase(),
           style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
+            fontFamily: AppFonts.family,
             color: colors.onSurface,
-            fontSize: AppSizes.fontTiny,
             fontWeight: AppFonts.heavy,
             package: 'pocketcoder_flutter',
           ),
@@ -50,19 +49,17 @@ class TerminalTextField extends StatelessWidget {
           enabled: enabled,
           maxLines: maxLines,
           style: TextStyle(
-            fontFamily: AppFonts.bodyFamily,
+            fontFamily: AppFonts.family,
             package: 'pocketcoder_flutter',
             color: colors.onSurface,
-            fontSize: AppSizes.fontStandard,
           ),
           cursorColor: colors.onSurface,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
               color: colors.onSurface.withValues(alpha: 0.3),
-              fontFamily: AppFonts.bodyFamily,
+              fontFamily: AppFonts.family,
               package: 'pocketcoder_flutter',
-              fontSize: AppSizes.fontSmall,
             ),
             fillColor: colors.surface,
             filled: true,
@@ -74,7 +71,9 @@ class TerminalTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: errorText != null ? context.terminalColors.warning : colors.onSurface,
+                color: errorText != null
+                    ? context.terminalColors.warning
+                    : colors.onSurface,
               ),
               borderRadius: BorderRadius.zero,
             ),
@@ -89,9 +88,8 @@ class TerminalTextField extends StatelessWidget {
             errorText: errorText,
             errorStyle: TextStyle(
               color: context.terminalColors.warning,
-              fontFamily: AppFonts.bodyFamily,
+              fontFamily: AppFonts.family,
               package: 'pocketcoder_flutter',
-              fontSize: AppSizes.fontMini,
             ),
             contentPadding: EdgeInsets.all(AppSizes.space * 2),
             isDense: true,

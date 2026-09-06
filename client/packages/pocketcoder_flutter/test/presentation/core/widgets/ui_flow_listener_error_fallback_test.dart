@@ -20,8 +20,7 @@ class _TestState implements IUiFlowState {
   final Object? error;
 
   @override
-  IUiFlowState withLoading() =>
-      const _TestState(status: UiFlowStatus.loading);
+  IUiFlowState withLoading() => const _TestState(status: UiFlowStatus.loading);
   @override
   IUiFlowState withError(Object error) =>
       _TestState(status: UiFlowStatus.failure, error: error);

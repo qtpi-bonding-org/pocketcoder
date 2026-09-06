@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/harness_auth/harness_auth_models.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
@@ -7,6 +10,7 @@ import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_state.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
@@ -14,25 +18,24 @@ import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/harness_au
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/harness_auth_status_block.dart';
 
 class HarnessAuthScreenView extends StatelessWidget {
-  const HarnessAuthScreenView({
-    super.key,
-    required this.onboarding,
-    required this.harnesses,
-    required this.harnessProviders,
-    required this.statuses,
-    required this.error,
-    required this.isLoading,
-    required this.isHarnessBusy,
-    required this.providerCatalog,
-    required this.providerAPIKeys,
-    required this.onStartAccount,
-    required this.onUseApiKey,
-    required this.onSubmit,
-    required this.onCancel,
-    required this.onDisconnect,
-    required this.onRefresh,
-    required this.onOpenAuthorizationPage,
-  });
+  const HarnessAuthScreenView(
+      {super.key,
+      required this.onboarding,
+      required this.harnesses,
+      required this.harnessProviders,
+      required this.statuses,
+      required this.error,
+      required this.isLoading,
+      required this.isHarnessBusy,
+      required this.providerCatalog,
+      required this.providerAPIKeys,
+      required this.onStartAccount,
+      required this.onUseApiKey,
+      required this.onSubmit,
+      required this.onCancel,
+      required this.onDisconnect,
+      required this.onRefresh,
+      required this.onOpenAuthorizationPage});
 
   final bool onboarding;
   final List<Harnesse> harnesses;
@@ -51,14 +54,16 @@ class HarnessAuthScreenView extends StatelessWidget {
   final void Function(Harnesse) onRefresh;
   final void Function(Harnesse, Uri) onOpenAuthorizationPage;
 
+  // This step auto-advances once a harness connects (see
+  // harness_auth_adapter.dart's onboarding listener) -- there is no
+  // separate manual "continue" action, so onNext is null.
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        title: onboarding
-            ? context.l10n.onboardingChooseHarnessTitle
-            : context.l10n.harnessAuthConnections,
-        activePillar: NavPillar.configure,
-        showBack: true,
-        body: HarnessAuthView(
+      footer: onboarding
+          ? const WizardFooter()
+          : buildPillarFooter(context, NavPillar.config),
+      showBack: true,
+      body: HarnessAuthView(
           onboarding: onboarding,
           harnesses: harnesses,
           harnessProviders: harnessProviders,
@@ -74,31 +79,28 @@ class HarnessAuthScreenView extends StatelessWidget {
           onCancel: onCancel,
           onDisconnect: onDisconnect,
           onRefresh: onRefresh,
-          onOpenAuthorizationPage: onOpenAuthorizationPage,
-        ),
-      );
+          onOpenAuthorizationPage: onOpenAuthorizationPage));
 }
 
 class HarnessAuthView extends StatefulWidget {
-  const HarnessAuthView({
-    super.key,
-    required this.onboarding,
-    required this.harnesses,
-    required this.harnessProviders,
-    required this.statuses,
-    required this.error,
-    required this.isLoading,
-    required this.isHarnessBusy,
-    required this.providerCatalog,
-    required this.providerAPIKeys,
-    required this.onStartAccount,
-    required this.onUseApiKey,
-    required this.onSubmit,
-    required this.onCancel,
-    required this.onDisconnect,
-    required this.onRefresh,
-    required this.onOpenAuthorizationPage,
-  });
+  const HarnessAuthView(
+      {super.key,
+      required this.onboarding,
+      required this.harnesses,
+      required this.harnessProviders,
+      required this.statuses,
+      required this.error,
+      required this.isLoading,
+      required this.isHarnessBusy,
+      required this.providerCatalog,
+      required this.providerAPIKeys,
+      required this.onStartAccount,
+      required this.onUseApiKey,
+      required this.onSubmit,
+      required this.onCancel,
+      required this.onDisconnect,
+      required this.onRefresh,
+      required this.onOpenAuthorizationPage});
   final bool onboarding;
   final List<Harnesse> harnesses;
   final List<HarnessProvider> harnessProviders;
@@ -173,17 +175,24 @@ class _HarnessAuthViewState extends State<HarnessAuthView> {
     if (harnesses.isEmpty) {
       return Center(
           child: TerminalText(
-              widget.onboarding
-                  ? context.l10n.harnessAuthUnavailable
-                  : context.l10n.harnessAuthEmpty,
-              alpha: .6));
+        widget.onboarding
+            ? context.l10n.harnessAuthUnavailable
+            : context.l10n.harnessAuthEmpty,
+        role: TextRole.label,
+      ));
     }
     return ListView(padding: EdgeInsets.all(AppSizes.space), children: [
+      SectionHeader(
+        name: (widget.onboarding
+                ? context.l10n.onboardingChooseHarnessTitle
+                : context.l10n.harnessAuthConnections)
+            .toLowerCase(),
+      ),
       if (widget.error != null)
         Padding(
             padding: EdgeInsets.only(bottom: AppSizes.space),
             child: TerminalText(safeErrorMessage(widget.error),
-                color: context.terminalColors.warning, alpha: .9)),
+                role: TextRole.warn)),
       for (final h in harnesses)
         HarnessAuthCard(
             harness: h,
@@ -255,24 +264,22 @@ class HarnessAuthCard extends StatelessWidget {
             credentialMode: 'none',
             status: 'disconnected');
     return HarnessAuthStatusBlock(
-      harness: harness,
-      status: status,
-      configuredApiKeyProvider: configuredApiKeyProvider,
-      child: HarnessAuthActionsBlock(
         harness: harness,
-        status: s,
-        edges: edges,
-        codeController: codeController,
-        isBusy: isBusy,
-        onStartAccount: onStartAccount,
-        onUseApiKey: onUseApiKey,
-        onSubmit: onSubmit,
-        onCancel: onCancel,
-        onDisconnect: onDisconnect,
-        onRefresh: onRefresh,
-        onOpenAuthorizationPage: onOpenAuthorizationPage,
-        onCopyCode: onCopyCode,
-      ),
-    );
+        status: status,
+        configuredApiKeyProvider: configuredApiKeyProvider,
+        child: HarnessAuthActionsBlock(
+            harness: harness,
+            status: s,
+            edges: edges,
+            codeController: codeController,
+            isBusy: isBusy,
+            onStartAccount: onStartAccount,
+            onUseApiKey: onUseApiKey,
+            onSubmit: onSubmit,
+            onCancel: onCancel,
+            onDisconnect: onDisconnect,
+            onRefresh: onRefresh,
+            onOpenAuthorizationPage: onOpenAuthorizationPage,
+            onCopyCode: onCopyCode));
   }
 }

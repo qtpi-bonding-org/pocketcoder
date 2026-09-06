@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
@@ -18,8 +19,9 @@ import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/harness_auth/widgets/credential_connection_view.dart';
@@ -36,10 +38,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   static List<Harnesse> selectHarnesses(ProviderState state) => state.harnesses;
 
   @override
-  Widget buildAdapter(
-    BuildContext context,
-    CubitAdapterState<ProviderCubit, ProviderState> adapter,
-  ) {
+  Widget buildAdapter(BuildContext context,
+      CubitAdapterState<ProviderCubit, ProviderState> adapter) {
     final harnesses = adapter.cubitField(selectHarnesses);
     final auth = context.read<HarnessAuthCubit>();
     final status = adapter.cubitStatus();
@@ -49,39 +49,37 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
             ?.selectedHarnesses ??
         const [];
     final connected = adapter.keep<ValueNotifier<Set<String>>>(
-      'connectedHarnessIds',
-      () => ValueNotifier(<String>{}),
-      dispose: (notifier) => notifier.dispose(),
-    );
+        'connectedHarnessIds', () => ValueNotifier(<String>{}),
+        dispose: (notifier) => notifier.dispose());
     return ValueListenableBuilder<UiFlowStatus>(
-      valueListenable: status,
-      builder: (context, status, _) => ValueListenableBuilder<List<Harnesse>>(
-        valueListenable: harnesses,
-        builder: (context, harnesses, _) => ValueListenableBuilder<Set<String>>(
-          valueListenable: connected,
-          builder: (context, connectedIds, _) {
-            // connectedIds is monotonic for this screen's lifetime, but
-            // harnesses is live and can drop an id it once contained --
-            // NEXT must disappear rather than throw if that happens.
-            final connectedHarness =
-                harnesses.where((h) => connectedIds.contains(h.id)).firstOrNull;
-            return AgentAuthView(
-              status: status,
-              harnesses: harnesses,
-              error: context.read<ProviderCubit>().state.error,
-              onSelected: (harness) => _select(context, harness, connected),
-              harnessProvidersLoaded: auth.state.harnessProvidersLoaded,
-              selectedHarnesses: selectedHarnesses,
-              connectedHarnessIds: connectedIds,
-              onSkip: () => context.go(AppRoutes.chats),
-              onContinue: connectedHarness == null
-                  ? null
-                  : () => _openChat(context, connectedHarness),
-            );
-          },
-        ),
-      ),
-    );
+        valueListenable: status,
+        builder: (context, status, _) => ValueListenableBuilder<List<Harnesse>>(
+            valueListenable: harnesses,
+            builder: (context, harnesses, _) =>
+                ValueListenableBuilder<Set<String>>(
+                    valueListenable: connected,
+                    builder: (context, connectedIds, _) {
+                      // connectedIds is monotonic for this screen's lifetime, but
+                      // harnesses is live and can drop an id it once contained --
+                      // NEXT must disappear rather than throw if that happens.
+                      final connectedHarness = harnesses
+                          .where((h) => connectedIds.contains(h.id))
+                          .firstOrNull;
+                      return AgentAuthView(
+                          status: status,
+                          harnesses: harnesses,
+                          error: context.read<ProviderCubit>().state.error,
+                          onSelected: (harness) =>
+                              _select(context, harness, connected),
+                          harnessProvidersLoaded:
+                              auth.state.harnessProvidersLoaded,
+                          selectedHarnesses: selectedHarnesses,
+                          connectedHarnessIds: connectedIds,
+                          onSkip: () => context.go(AppRoutes.chats),
+                          onContinue: connectedHarness == null
+                              ? null
+                              : () => _openChat(context, connectedHarness));
+                    })));
   }
 
   /// The one harness_providers edge this harness supports account login for
@@ -98,11 +96,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     return null;
   }
 
-  Future<void> _select(
-    BuildContext context,
-    Harnesse harness,
-    ValueNotifier<Set<String>> connected,
-  ) async {
+  Future<void> _select(BuildContext context, Harnesse harness,
+      ValueNotifier<Set<String>> connected) async {
     final auth = context.read<HarnessAuthCubit>();
     if (!auth.state.harnessProvidersLoaded) {
       VimToast.show(context, context.l10n.onboardingHarnessProvidersLoading);
@@ -123,21 +118,17 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     // Decision 4: selecting an agent is the authorization action. The former
     // visibility confirmation is intentionally not part of this golden path.
     unawaited(auth.startWithAccount(
-      harnessId: harness.id,
-      provider: provider,
-      visibility: harnessAccountVisibilityPersonal,
-    ));
+        harnessId: harness.id,
+        provider: provider,
+        visibility: harnessAccountVisibilityPersonal));
     if (!context.mounted) return;
     await _showAuthDialog(context, auth, harness, provider, connected);
   }
 
   /// mode: none is synchronous (harness_auth.go's StartHarnessAuth just
   /// records the credential, no connecting/polling phase), so no dialog.
-  Future<void> _selectWithApiKey(
-    BuildContext context,
-    Harnesse harness,
-    ValueNotifier<Set<String>> connected,
-  ) async {
+  Future<void> _selectWithApiKey(BuildContext context, Harnesse harness,
+      ValueNotifier<Set<String>> connected) async {
     final auth = context.read<HarnessAuthCubit>();
     final providerCubit = context.read<ProviderCubit>();
     final providerIds = auth.state.harnessProviders
@@ -157,12 +148,10 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
           .toList();
       if (catalog.isEmpty) return; // provider catalog hasn't loaded yet
       final saved = await showDialog<ProviderApiKey>(
-        context: context,
-        builder: (dialogContext) => ProviderKeyEditorDialog(
-          providerCatalog: catalog,
-          onSave: (key) => Navigator.of(dialogContext).pop(key),
-        ),
-      );
+          context: context,
+          builder: (dialogContext) => ProviderKeyEditorDialog(
+              providerCatalog: catalog,
+              onSave: (key) => Navigator.of(dialogContext).pop(key)));
       if (saved == null) return; // user cancelled
       await providerCubit.saveProviderAPIKey(saved);
       // saveProviderAPIKey goes through tryOperation, which records a
@@ -214,131 +203,120 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   }
 
   Future<void> _showAuthDialog(
-    BuildContext context,
-    HarnessAuthCubit auth,
-    Harnesse harness,
-    String provider,
-    ValueNotifier<Set<String>> connected,
-  ) async {
+      BuildContext context,
+      HarnessAuthCubit auth,
+      Harnesse harness,
+      String provider,
+      ValueNotifier<Set<String>> connected) async {
     Timer? timer;
     int? timerInterval;
     var dialogClosing = false;
     await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) =>
-          BlocBuilder<HarnessAuthCubit, HarnessAuthState>(
-        bloc: auth,
-        builder: (context, state) {
-          final status = state.statusFor(harness.id, provider);
-          if (status?.isConnecting == true) {
-            final interval = status?.challenge?.pollIntervalSeconds ?? 4;
-            if (timer == null || timerInterval != interval) {
-              timer?.cancel();
-              timerInterval = interval;
-              timer = Timer.periodic(Duration(seconds: interval), (_) {
-                if (!auth.state.isHarnessBusy(harness.id)) {
-                  unawaited(auth.poll(harness.id, provider));
-                }
-              });
-            }
-          } else {
-            // A terminal response (failure, cancellation, or disconnect)
-            // must stop polling before the dialog is dismissed.  In
-            // particular, a failure can leave this builder mounted so that
-            // the user can retry.
-            timer?.cancel();
-            timer = null;
-            timerInterval = null;
-          }
-          if (status?.isConnected == true && !dialogClosing) {
-            timer?.cancel();
-            timer = null;
-            timerInterval = null;
-            dialogClosing = true;
-            // Deferred: connected has its own ValueListenableBuilder
-            // listener elsewhere, which cannot rebuild while this
-            // BlocBuilder is still mid-build.
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              connected.value = {...connected.value, harness.id};
-              Navigator.of(dialogContext).pop();
-            });
-          }
-          final challenge = status?.challenge;
-          final uri = challenge?.verificationUri;
-          final destination = challenge?.codeDestination;
-          final step = uri != null &&
-                  (destination == HarnessAuthCodeDestination.browser ||
-                      destination == HarnessAuthCodeDestination.app)
-              ? BrowserVerificationConnectionStep(
-                  verificationUri: uri,
-                  codeDestination:
-                      destination ?? HarnessAuthCodeDestination.unknown,
-                  userCode: challenge?.userCode,
-                  expiresAt: challenge?.expiresAt,
-                )
-              : const ApiKeyConnectionStep();
-          final errorMessage = status?.lastError ??
-              (state.status == UiFlowStatus.failure
-                  ? context.l10n.errorGeneric
-                  : null);
-          return TerminalDialog(
-            title: context.l10n.externalAuthTitle,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TerminalLoadingIndicator(
-                  label: harness.name,
-                  status: status?.isConnecting == true
-                      ? TerminalStatus.running
-                      : errorMessage != null
-                          ? TerminalStatus.failure
-                          : TerminalStatus.running,
-                ),
-                TerminalText(
-                  context.l10n.externalAuthConnecting(harness.name),
-                  alpha: status?.isConnecting == true ? 1 : .6,
-                ),
-                if (errorMessage case final message?) TerminalText(message),
-                if (step is ApiKeyConnectionStep && challenge != null)
-                  if (challenge.legacyText case final legacyText?
-                      when legacyText.isNotEmpty)
-                    TerminalText(legacyText),
-                CredentialConnectionView(
-                  step: step,
-                  onOpenAuthorizationPage: () {
-                    if (uri != null) unawaited(_openChallenge(context, uri));
-                  },
-                  onCopyCode: (code) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(context.l10n.serverControlCopied)),
-                    );
-                  },
-                  onSubmitCode: (code) => auth.submitCode(
-                      harnessId: harness.id, code: code, provider: provider),
-                  onCancel: () async {
-                    timer?.cancel();
-                    timer = null;
-                    timerInterval = null;
-                    await auth.cancel(harness.id, provider);
-                    if (dialogContext.mounted && !dialogClosing) {
-                      dialogClosing = true;
-                      Navigator.of(dialogContext).pop();
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => BlocBuilder<HarnessAuthCubit,
+                HarnessAuthState>(
+            bloc: auth,
+            builder: (context, state) {
+              final status = state.statusFor(harness.id, provider);
+              if (status?.isConnecting == true) {
+                final interval = status?.challenge?.pollIntervalSeconds ?? 4;
+                if (timer == null || timerInterval != interval) {
+                  timer?.cancel();
+                  timerInterval = interval;
+                  timer = Timer.periodic(Duration(seconds: interval), (_) {
+                    if (!auth.state.isHarnessBusy(harness.id)) {
+                      unawaited(auth.poll(harness.id, provider));
                     }
-                  },
-                  onRetry: () => auth.startWithAccount(
-                    harnessId: harness.id,
-                    provider: provider,
-                    visibility: harnessAccountVisibilityPersonal,
-                  ),
-                ),
-              ],
-            ),
-            actions: const [],
-          );
-        },
-      ),
-    );
+                  });
+                }
+              } else {
+                // A terminal response (failure, cancellation, or disconnect)
+                // must stop polling before the dialog is dismissed.  In
+                // particular, a failure can leave this builder mounted so that
+                // the user can retry.
+                timer?.cancel();
+                timer = null;
+                timerInterval = null;
+              }
+              if (status?.isConnected == true && !dialogClosing) {
+                timer?.cancel();
+                timer = null;
+                timerInterval = null;
+                dialogClosing = true;
+                // Deferred: connected has its own ValueListenableBuilder
+                // listener elsewhere, which cannot rebuild while this
+                // BlocBuilder is still mid-build.
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  connected.value = {...connected.value, harness.id};
+                  Navigator.of(dialogContext).pop();
+                });
+              }
+              final challenge = status?.challenge;
+              final uri = challenge?.verificationUri;
+              final destination = challenge?.codeDestination;
+              final step = uri != null &&
+                      (destination == HarnessAuthCodeDestination.browser ||
+                          destination == HarnessAuthCodeDestination.app)
+                  ? BrowserVerificationConnectionStep(
+                      verificationUri: uri,
+                      codeDestination:
+                          destination ?? HarnessAuthCodeDestination.unknown,
+                      userCode: challenge?.userCode,
+                      expiresAt: challenge?.expiresAt)
+                  : const ApiKeyConnectionStep();
+              final errorMessage = status?.lastError ??
+                  (state.status == UiFlowStatus.failure
+                      ? context.l10n.errorGeneric
+                      : null);
+              return TerminalDialog(
+                  title: context.l10n.externalAuthTitle.toLowerCase(),
+                  content: Column(mainAxisSize: MainAxisSize.min, children: [
+                    if (errorMessage != null)
+                      const StatusMarkerView(marker: StatusMarker.failed)
+                    else
+                      TerminalLoadingIndicator(label: harness.name),
+                    TerminalText(
+                      context.l10n.externalAuthConnecting(harness.name),
+                      role: TextRole.body,
+                    ),
+                    if (errorMessage case final message?)
+                      TerminalText(message, role: TextRole.body),
+                    if (step is ApiKeyConnectionStep && challenge != null)
+                      if (challenge.legacyText case final legacyText?
+                          when legacyText.isNotEmpty)
+                        TerminalText(legacyText, role: TextRole.body),
+                    CredentialConnectionView(
+                        step: step,
+                        onOpenAuthorizationPage: () {
+                          if (uri != null)
+                            unawaited(_openChallenge(context, uri));
+                        },
+                        onCopyCode: (code) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(context.l10n.serverControlCopied)));
+                        },
+                        onSubmitCode: (code) => auth.submitCode(
+                            harnessId: harness.id,
+                            code: code,
+                            provider: provider),
+                        onCancel: () async {
+                          timer?.cancel();
+                          timer = null;
+                          timerInterval = null;
+                          await auth.cancel(harness.id, provider);
+                          if (dialogContext.mounted && !dialogClosing) {
+                            dialogClosing = true;
+                            Navigator.of(dialogContext).pop();
+                          }
+                        },
+                        onRetry: () => auth.startWithAccount(
+                            harnessId: harness.id,
+                            provider: provider,
+                            visibility: harnessAccountVisibilityPersonal)),
+                  ]),
+                  actions: const []);
+            }));
     timer?.cancel();
   }
 

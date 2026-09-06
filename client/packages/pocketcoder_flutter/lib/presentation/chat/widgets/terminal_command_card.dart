@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_status_glyph.dart';
 
 /// A read-only terminal transcript for a command Poco ran.
 ///
@@ -19,7 +19,7 @@ class TerminalCommandCard extends StatefulWidget {
   });
 
   final String command;
-  final TerminalStatus status;
+  final Widget status;
   final String outputLabel;
   final String? output;
   final List<dynamic> diffs;
@@ -87,15 +87,14 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TerminalStatusGlyph(status: widget.status),
+              widget.status,
               HSpace.x1,
               Expanded(
                 child: Text(
                   '\$ ${widget.command}',
                   style: TextStyle(
                     color: colors.secondary,
-                    fontFamily: AppFonts.bodyFamily,
-                    fontSize: AppSizes.fontSmall,
+                    fontFamily: AppFonts.family,
                     fontWeight: AppFonts.heavy,
                     height: 1.4,
                     package: 'pocketcoder_flutter',
@@ -114,11 +113,17 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                 child: Row(
                   children: [
                     Text(
-                      _outputExpanded ? '▾' : '▸',
+                      // The glyph names the ACTION, not the state: collapsed
+                      // offers `expand`, expanded offers `collapse`. It used
+                      // to render `navigate` when collapsed, which is the
+                      // one confusion RowAffordance exists to prevent.
+                      (_outputExpanded
+                              ? RowAffordance.collapse
+                              : RowAffordance.expand)
+                          .glyph,
                       style: TextStyle(
                         color: colors.secondary,
-                        fontFamily: AppFonts.bodyFamily,
-                        fontSize: AppSizes.fontSmall,
+                        fontFamily: AppFonts.family,
                         fontWeight: AppFonts.heavy,
                       ),
                     ),
@@ -127,8 +132,7 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
                       widget.outputLabel,
                       style: TextStyle(
                         color: colors.onSurface.withValues(alpha: 0.7),
-                        fontFamily: AppFonts.bodyFamily,
-                        fontSize: AppSizes.fontTiny,
+                        fontFamily: AppFonts.family,
                         fontWeight: AppFonts.heavy,
                         letterSpacing: 1,
                       ),
@@ -144,8 +148,7 @@ class _TerminalCommandCardState extends State<TerminalCommandCard> {
               combinedOutput,
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.75),
-                fontFamily: AppFonts.bodyFamily,
-                fontSize: AppSizes.fontMini,
+                fontFamily: AppFonts.family,
                 height: 1.4,
               ),
             ),

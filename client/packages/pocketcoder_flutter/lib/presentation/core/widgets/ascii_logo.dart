@@ -20,7 +20,7 @@ class AsciiLogo extends StatelessWidget {
     final colors = context.colorScheme;
     final effectiveColor = color ?? colors.onSurface;
     final effectiveSize =
-        fontSize ?? AppSizes.fontTiny; // Default to tiny for logo blocks
+        fontSize ?? AppSizes.fontBody; // Default to tiny for logo blocks
 
     return FittedBox(
       fit: BoxFit.scaleDown,
@@ -33,14 +33,8 @@ class AsciiLogo extends StatelessWidget {
           height: 1.0,
           leadingDistribution: TextLeadingDistribution.even,
           fontWeight: AppFonts.heavy,
-          fontFamily: AppFonts.bodyFamily,
+          fontFamily: AppFonts.family,
           package: 'pocketcoder_flutter',
-          shadows: [
-            Shadow(
-              color: effectiveColor.withValues(alpha: 0.5),
-              blurRadius: 4,
-            ),
-          ],
         ),
       ),
     );

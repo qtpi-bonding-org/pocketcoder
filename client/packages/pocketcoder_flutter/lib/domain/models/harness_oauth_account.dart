@@ -12,8 +12,10 @@ abstract class HarnessOauthAccount with _$HarnessOauthAccount {
     required String provider,
     required String owner,
     required String name,
-    @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown) required HarnessOauthAccountVisibility visibility,
-    @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown) required HarnessOauthAccountStatus status,
+    @JsonKey(unknownEnumValue: HarnessOauthAccountVisibility.unknown)
+    required HarnessOauthAccountVisibility visibility,
+    @JsonKey(unknownEnumValue: HarnessOauthAccountStatus.unknown)
+    required HarnessOauthAccountStatus status,
     String? lastError,
     DateTime? created,
     DateTime? updated,
