@@ -9,6 +9,7 @@ import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dar
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
 import 'package:pocketcoder_flutter/infrastructure/chat/chat_dao.dart';
+import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'session_controls_state.dart';
 
@@ -19,12 +20,16 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
     this._chatDao,
     this._pocoConfigDao,
     this._permissionModeDao,
+    this._harnessModelDao,
+    this._harnesseDao,
   ) : super(const SessionControlsState());
 
   final AgentChatRepository _repository;
   final ChatDao _chatDao;
   final PocoConfigDao _pocoConfigDao;
   final PermissionModeDao _permissionModeDao;
+  final HarnessModelDao _harnessModelDao;
+  final HarnesseDao _harnesseDao;
 
   StreamSubscription? _watchSub;
   String? _chatId;
@@ -115,14 +120,16 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
       'ollamaModelOverride': 'ollama_model_override',
       'workspaceOverride': 'workspace_override',
     };
-    if (!state.sessionState.isRunning &&
-        !persistedFields.containsKey(req.configId)) {
-      throw UnsupportedError(
-          'Config option "${req.configId}" can only be changed while a session is running');
-    }
     await tryOperation(() async {
       if (state.sessionState.isRunning) {
         await _repository.setConfigOption(chatId, req);
+      } else if (req.configId == 'model') {
+        // The live ACP configId "model" only exists on an active run's
+        // connection (coordinator.SetConfigOption -> ErrNoActiveRun once the
+        // run finishes, run.go) -- there's no live session to send it to
+        // between turns. Persist it as the chat's model override instead, so
+        // it takes effect on the next run (sessionprofile.go).
+        await _persistModelOverride(chatId, req.value);
       } else {
         final field = persistedFields[req.configId];
         if (field == null) {
@@ -143,6 +150,49 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
         status: UiFlowStatus.success,
         lastOperation: SessionControlsOperation.setOption,
       );
+    });
+  }
+
+  /// `harness_model_override` and `ollama_model_override` are mutually
+  /// exclusive server-side (sessionprofile.go: ollama wins when both are
+  /// set), so setting one must explicitly clear the other.
+  Future<void> _persistModelOverride(String chatId, String value) async {
+    if (value.isEmpty) {
+      throw StateError('Config option "model" requires a non-empty value');
+    }
+    final chat = await _chatDao.getOne(chatId);
+    final harnessId = chat.harness;
+    if (harnessId == null || harnessId.isEmpty) {
+      throw StateError(
+          'Chat $chatId has no harness to resolve model "$value" against');
+    }
+    final matches = await _harnessModelDao.getFullList(
+        filter: _harnessModelDao.pb.filter(
+            'harness = {:h} && harness_model_id = {:m}',
+            {'h': harnessId, 'm': value}));
+    if (matches.isNotEmpty) {
+      await _chatDao.save(chatId, {
+        'harness_model_override': matches.first.id,
+        'ollama_model_override': '',
+      });
+      return;
+    }
+    // No harness_models catalog row -- only treat this as an Ollama model
+    // name (no catalog entries exist for those) when the chat's harness
+    // actually supports Ollama; otherwise this is most likely a stale
+    // catalog or a typo, and silently writing it to ollama_model_override
+    // would poison the next run with an unusable model (ollama_model_override
+    // takes priority over harness_model_override server-side) with no error
+    // ever surfaced to the user.
+    final harness = await _harnesseDao.getOne(harnessId);
+    if (harness.supportsOllama != true) {
+      throw StateError(
+          'No harness_models catalog row for harness_model_id "$value" on '
+          'harness $harnessId, and harness does not support Ollama models');
+    }
+    await _chatDao.save(chatId, {
+      'ollama_model_override': value,
+      'harness_model_override': '',
     });
   }
 }

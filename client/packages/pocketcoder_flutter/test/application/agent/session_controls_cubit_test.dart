@@ -15,7 +15,10 @@ import 'package:pocketcoder_flutter/application/agent/session_controls_cubit.dar
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
 import 'package:pocketcoder_flutter/infrastructure/chat/chat_dao.dart';
+import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
+import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
 import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 
 class MockChatDao extends Mock implements ChatDao {}
@@ -23,6 +26,10 @@ class MockChatDao extends Mock implements ChatDao {}
 class MockPocoConfigDao extends Mock implements PocoConfigDao {}
 
 class MockPermissionModeDao extends Mock implements PermissionModeDao {}
+
+class MockHarnessModelDao extends Mock implements HarnessModelDao {}
+
+class MockHarnesseDao extends Mock implements HarnesseDao {}
 
 class _FakeAgentChatRepository implements AgentChatRepository {
   final Map<String, StreamController<Conversation>> _controllers = {};
@@ -101,6 +108,8 @@ void main() {
   late MockChatDao chatDao;
   late MockPocoConfigDao pocoConfigDao;
   late MockPermissionModeDao permissionModeDao;
+  late MockHarnessModelDao harnessModelDao;
+  late MockHarnesseDao harnesseDao;
   late SessionControlsCubit cubit;
 
   setUp(() {
@@ -108,12 +117,15 @@ void main() {
     chatDao = MockChatDao();
     pocoConfigDao = MockPocoConfigDao();
     permissionModeDao = MockPermissionModeDao();
+    harnessModelDao = MockHarnessModelDao();
+    harnesseDao = MockHarnesseDao();
     // .pb is used purely for its .filter() string helper (no network) --
-    // stub it with a real, unconnected PocketBase instance so selectMode's
-    // idle path can build a parameterized filter safely.
+    // stub it with a real, unconnected PocketBase instance so the idle
+    // paths below can build a parameterized filter safely.
     when(() => permissionModeDao.pb).thenReturn(PocketBase('http://localhost'));
-    cubit =
-        SessionControlsCubit(repo, chatDao, pocoConfigDao, permissionModeDao);
+    when(() => harnessModelDao.pb).thenReturn(PocketBase('http://localhost'));
+    cubit = SessionControlsCubit(repo, chatDao, pocoConfigDao,
+        permissionModeDao, harnessModelDao, harnesseDao);
   });
 
   tearDown(() async {
@@ -270,18 +282,213 @@ void main() {
         .called(1);
   });
 
-  test('idle unknown config option throws UnsupportedError', () async {
+  test(
+      'idle unknown config option surfaces as a failure state instead of '
+      'throwing', () async {
+    // Every setOption failure must be caught by tryOperation and surfaced
+    // in state, never left to escape as an unhandled exception.
     cubit.open('chat-1');
     await _settle();
 
-    await expectLater(
-      cubit.setOption(SetSessionConfigOptionRequest(
-        sessionId: 'chat-1',
-        configId: 'unknown',
-        value: 'value',
-      )),
-      throwsA(isA<UnsupportedError>()),
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'unknown',
+      value: 'value',
+    ));
+
+    expect(cubit.state.status, UiFlowStatus.failure);
+    expect(cubit.state.error, isA<UnsupportedError>());
+    expect(repo.setConfigOptionCalls, isEmpty);
+  });
+
+  test(
+      'running setOption for configId "model" still forwards live via '
+      'repository (unaffected by the idle catalog lookup)', () async {
+    cubit.open('chat-1');
+    await _settle();
+
+    repo.controllerFor('chat-1').add(
+          Conversation(sessionState: _modesConfigState(isRunning: true)),
+        );
+    await _settle();
+
+    final req = SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'model',
+      value: 'anthropic/claude-sonnet-4-5',
     );
+
+    await cubit.setOption(req);
+
+    expect(repo.setConfigOptionCalls, hasLength(1));
+    expect(repo.setConfigOptionCalls.single['req'], same(req));
+    verifyNever(() => chatDao.save(any(), any()));
+    verifyNever(() => harnessModelDao.getFullList(filter: any(named: 'filter')));
+    verifyNever(() => harnesseDao.getOne(any()));
+  });
+
+  const chatWithHarness = Chat(
+    id: 'chat-1',
+    title: 'Chat',
+    user: 'user-1',
+    harness: 'harness-1',
+  );
+  const ollamaHarness = Harnesse(
+    id: 'harness-1',
+    name: 'Goose',
+    cliId: 'goose',
+    acpTransport: HarnesseAcpTransport.stdio,
+    supportsOllama: true,
+  );
+  const nonOllamaHarness = Harnesse(
+    id: 'harness-1',
+    name: 'Claude Code',
+    cliId: 'claude-code',
+    acpTransport: HarnesseAcpTransport.stdio,
+    supportsOllama: false,
+  );
+
+  test(
+      'idle setOption for configId "model" persists the matching '
+      'harness_models catalog row as harness_model_override, clearing any '
+      'stale ollama_model_override', () async {
+    when(() => chatDao.getOne('chat-1'))
+        .thenAnswer((_) async => chatWithHarness);
+    when(() => harnessModelDao.getFullList(
+            filter: 'harness = "harness-1" && '
+                'harness_model_id = "anthropic/claude-sonnet-4-5"'))
+        .thenAnswer((_) async => const [
+              HarnessModel(
+                id: 'hm-sonnet',
+                harness: 'harness-1',
+                model: 'model-rec-1',
+                harnessModelId: 'anthropic/claude-sonnet-4-5',
+              ),
+            ]);
+    when(() => chatDao.save('chat-1', {
+          'harness_model_override': 'hm-sonnet',
+          'ollama_model_override': '',
+        })).thenAnswer((_) async => chatWithHarness);
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'model',
+      value: 'anthropic/claude-sonnet-4-5',
+    ));
+
+    verify(() => chatDao.save('chat-1', {
+          'harness_model_override': 'hm-sonnet',
+          'ollama_model_override': '',
+        })).called(1);
+    expect(cubit.state.status, UiFlowStatus.success);
+    expect(repo.setConfigOptionCalls, isEmpty);
+    verifyNever(() => harnesseDao.getOne(any()));
+  });
+
+  test(
+      'idle setOption for configId "model" falls back to '
+      'ollama_model_override when no catalog row matches and the chat\'s '
+      'harness supports Ollama, clearing any stale harness_model_override',
+      () async {
+    when(() => chatDao.getOne('chat-1'))
+        .thenAnswer((_) async => chatWithHarness);
+    when(() => harnessModelDao.getFullList(
+            filter: 'harness = "harness-1" && '
+                'harness_model_id = "llama3"'))
+        .thenAnswer((_) async => const []);
+    when(() => harnesseDao.getOne('harness-1'))
+        .thenAnswer((_) async => ollamaHarness);
+    when(() => chatDao.save('chat-1', {
+          'ollama_model_override': 'llama3',
+          'harness_model_override': '',
+        })).thenAnswer((_) async => chatWithHarness);
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'model',
+      value: 'llama3',
+    ));
+
+    verify(() => chatDao.save('chat-1', {
+          'ollama_model_override': 'llama3',
+          'harness_model_override': '',
+        })).called(1);
+    expect(cubit.state.status, UiFlowStatus.success);
+    expect(repo.setConfigOptionCalls, isEmpty);
+  });
+
+  test(
+      'idle setOption for configId "model" fails gracefully -- rather than '
+      'silently persisting a bogus Ollama override -- when no catalog row '
+      'matches and the chat\'s harness does not support Ollama', () async {
+    when(() => chatDao.getOne('chat-1'))
+        .thenAnswer((_) async => chatWithHarness);
+    when(() => harnessModelDao.getFullList(
+            filter: 'harness = "harness-1" && '
+                'harness_model_id = "not-a-real-model"'))
+        .thenAnswer((_) async => const []);
+    when(() => harnesseDao.getOne('harness-1'))
+        .thenAnswer((_) async => nonOllamaHarness);
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'model',
+      value: 'not-a-real-model',
+    ));
+
+    expect(cubit.state.status, UiFlowStatus.failure);
+    expect(cubit.state.error, isA<StateError>());
+    verifyNever(() => chatDao.save(any(), any()));
+  });
+
+  test(
+      'idle setOption for configId "model" fails gracefully when the chat '
+      'has no harness to resolve the catalog lookup against', () async {
+    when(() => chatDao.getOne('chat-1')).thenAnswer((_) async => const Chat(
+          id: 'chat-1',
+          title: 'Chat',
+          user: 'user-1',
+        ));
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'model',
+      value: 'anthropic/claude-sonnet-4-5',
+    ));
+
+    expect(cubit.state.status, UiFlowStatus.failure);
+    expect(cubit.state.error, isA<StateError>());
+    verifyNever(() => harnessModelDao.getFullList(filter: any(named: 'filter')));
+    verifyNever(() => harnesseDao.getOne(any()));
+    verifyNever(() => chatDao.save(any(), any()));
+  });
+
+  test(
+      'idle setOption for configId "model" fails gracefully on an empty '
+      'value instead of persisting a blank Ollama override', () async {
+    when(() => chatDao.getOne('chat-1'))
+        .thenAnswer((_) async => chatWithHarness);
+
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'model',
+      value: '',
+    ));
+
+    expect(cubit.state.status, UiFlowStatus.failure);
+    expect(cubit.state.error, isA<StateError>());
+    verifyNever(() => harnessModelDao.getFullList(filter: any(named: 'filter')));
+    verifyNever(() => chatDao.save(any(), any()));
   });
 
   test('cleared modes/config (null) in a later emission clears state',
