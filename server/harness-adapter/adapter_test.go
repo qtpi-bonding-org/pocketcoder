@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -248,4 +249,82 @@ func TestAdapterEnforcesAuthUsingEnvResolvedSecret(t *testing.T) {
 		t.Fatalf("expected the upgrade to succeed with the env-resolved secret as the token, got: %v", err)
 	}
 	conn.Close(websocket.StatusNormalClosure, "")
+}
+
+func TestResolveLogRawLinesFromEnv(t *testing.T) {
+	getenv := func(k string) string {
+		if k == "HARNESS_ADAPTER_LOG_RAW_LINES" {
+			return "1"
+		}
+		return ""
+	}
+	if !resolveLogRawLines(false, getenv) {
+		t.Error("expected env=1 to enable raw-line logging when the flag wasn't set")
+	}
+	if !resolveLogRawLines(true, func(string) string { return "" }) {
+		t.Error("expected the flag alone to enable raw-line logging with no env var set")
+	}
+	if resolveLogRawLines(false, func(string) string { return "" }) {
+		t.Error("expected raw-line logging disabled by default (no flag, no env)")
+	}
+}
+
+func bridgeConnectionOnce(t *testing.T, cfg adapterConfig, msg string) string {
+	t.Helper()
+	var logBuf strings.Builder
+	oldOutput := log.Writer()
+	oldFlags := log.Flags()
+	log.SetOutput(&logBuf)
+	log.SetFlags(0)
+	defer func() {
+		log.SetOutput(oldOutput)
+		log.SetFlags(oldFlags)
+	}()
+
+	srv := httptest.NewServer(newAdapterHandler(cfg))
+	defer srv.Close()
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/acp"
+	if cfg.Secret != "" {
+		wsURL += "?token=" + cfg.Secret
+	}
+	conn, _, err := websocket.Dial(context.Background(), wsURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	conn.SetReadLimit(64 << 20)
+	if err := conn.Write(context.Background(), websocket.MessageText, []byte(msg)); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if _, _, err := conn.Read(ctx); err != nil {
+		t.Fatal(err)
+	}
+	conn.Close(websocket.StatusNormalClosure, "")
+	return logBuf.String()
+}
+
+func TestBridgeConnectionLogsLineLengthNotContentByDefault(t *testing.T) {
+	secretMsg := `{"jsonrpc":"2.0","method":"tool_call","params":{"secretMarker":"should-not-appear-in-logs"}}`
+	logged := bridgeConnectionOnce(t, adapterConfig{
+		Cmd: []string{"cat"}, MaxLineBytes: 64 << 20,
+	}, secretMsg)
+
+	if strings.Contains(logged, "should-not-appear-in-logs") {
+		t.Fatalf("raw ACP content leaked into logs by default: %s", logged)
+	}
+	if !strings.Contains(logged, "bytes") {
+		t.Fatalf("expected byte-count traffic logging by default, got: %s", logged)
+	}
+}
+
+func TestBridgeConnectionLogsRawContentWhenEnabled(t *testing.T) {
+	msg := `{"jsonrpc":"2.0","method":"tool_call","params":{"marker":"visible-with-flag"}}`
+	logged := bridgeConnectionOnce(t, adapterConfig{
+		Cmd: []string{"cat"}, MaxLineBytes: 64 << 20, LogRawLines: true,
+	}, msg)
+
+	if !strings.Contains(logged, "visible-with-flag") {
+		t.Fatalf("expected raw line content in logs when LogRawLines is set, got: %s", logged)
+	}
 }

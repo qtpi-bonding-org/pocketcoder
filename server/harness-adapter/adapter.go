@@ -37,6 +37,8 @@ type adapterConfig struct {
 	Cmd          []string
 	Secret       string
 	MaxLineBytes int64
+	// Off by default: tool args/results would otherwise land in container logs.
+	LogRawLines bool
 }
 
 func newAdapterHandler(cfg adapterConfig) http.Handler {
@@ -124,6 +126,7 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 			if len(line) == 0 {
 				continue
 			}
+			logRelayedLine(cfg, "subprocess->ws", line)
 			if err := conn.Write(ctx, websocket.MessageText, line); err != nil {
 				log.Printf("harness-adapter: write stdout to websocket failed: %v", err)
 				return
@@ -142,6 +145,7 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 				log.Printf("harness-adapter: read websocket failed: %v", err)
 				return
 			}
+			logRelayedLine(cfg, "ws->subprocess", data)
 			if _, err := stdin.Write(append(data, '\n')); err != nil {
 				log.Printf("harness-adapter: write websocket data to stdin failed: %v", err)
 				return
@@ -149,10 +153,18 @@ func bridgeConnection(ctx context.Context, conn *websocket.Conn, cfg adapterConf
 		}
 	}()
 
-	wg.Wait()  // both directions have stopped — guaranteed by teardown() unblocking whichever side didn't exit on its own
+	wg.Wait() // both directions have stopped — guaranteed by teardown() unblocking whichever side didn't exit on its own
 	if err := cmd.Wait(); err != nil && !killed {
 		log.Printf("harness-adapter: subprocess exited unexpectedly: %v", err)
 	}
+}
+
+func logRelayedLine(cfg adapterConfig, direction string, line []byte) {
+	if cfg.LogRawLines {
+		log.Printf("harness-adapter: %s %d bytes: %s", direction, len(line), line)
+		return
+	}
+	log.Printf("harness-adapter: %s %d bytes", direction, len(line))
 }
 
 // readUnboundedLine reads up to a '\n' without Go's bufio.Scanner 64KB

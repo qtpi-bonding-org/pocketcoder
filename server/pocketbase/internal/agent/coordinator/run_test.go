@@ -132,6 +132,8 @@ type fakeConn struct {
 	resumeErr                  error
 	done                       chan struct{}
 	closeDoneBeforePromptError bool
+	emitToolCallBeforePromptError bool // only takes effect alongside closeDoneBeforePromptError
+	emitToolCallID                string
 
 	// Task 2: capture dial/handshake counts.
 	initializeCalls int
@@ -414,8 +416,23 @@ func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.P
 	}
 	f.mu.Lock()
 	closeDone := f.closeDoneBeforePromptError
+	emitToolCall := f.emitToolCallBeforePromptError
+	toolCallID := f.emitToolCallID
 	f.mu.Unlock()
 	if closeDone {
+		if emitToolCall {
+			if su, ok := f.client.(interface {
+				SessionUpdate(context.Context, acpsdk.SessionNotification) error
+			}); ok {
+				_ = su.SessionUpdate(ctx, acpsdk.SessionNotification{
+					Update: acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+						ToolCallId: acpsdk.ToolCallId(toolCallID),
+						Title:      "run tests",
+						Status:     acpsdk.ToolCallStatusInProgress,
+					}},
+				})
+			}
+		}
 		f.closeConnDone()
 		return acpsdk.PromptResponse{}, errors.New("simulated peer disconnect")
 	}
@@ -651,6 +668,53 @@ func TestPromptFailureAfterConnDoneEmitsInterrupted(t *testing.T) {
 			}
 		case <-deadline:
 			t.Fatal("timed out waiting for connection_interrupted")
+		}
+	}
+}
+
+func TestErrorPathForceClosesOpenToolCall(t *testing.T) {
+	f := newFakeConn()
+	f.closeDoneBeforePromptError = true
+	f.emitToolCallBeforePromptError = true
+	f.emitToolCallID = "tool-stuck"
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	chatID := "stuck-tool-chat"
+
+	if _, err := c.StartPrompt(chatID, "hello",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil); err != nil {
+		t.Fatalf("StartPrompt: %v", err)
+	}
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	deadline := time.After(2 * time.Second)
+	for {
+		for _, se := range att.Buffered {
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(b), `"toolCallId":"tool-stuck"`) && strings.Contains(string(b), `"type":"TOOL_CALL_END"`) {
+				return
+			}
+		}
+		select {
+		case se, ok := <-att.Live:
+			if !ok {
+				t.Fatal("event stream closed before TOOL_CALL_END for tool-stuck")
+			}
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(b), `"toolCallId":"tool-stuck"`) && strings.Contains(string(b), `"type":"TOOL_CALL_END"`) {
+				return
+			}
+		case <-deadline:
+			t.Fatal("timed out waiting for TOOL_CALL_END on tool-stuck after connection_interrupted error path")
 		}
 	}
 }

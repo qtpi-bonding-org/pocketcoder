@@ -958,6 +958,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 			onRunEnded(runCtx, chatID, outcome)
 		}
 	}()
+	var bridge *agui.Bridge
 	var once sync.Once
 	teardown := func() {
 		once.Do(func() {
@@ -967,6 +968,11 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 				_ = h.conn.Close()
 			}
 			c.dropPendingForChat(chatID)
+			if bridge != nil {
+				for _, e := range bridge.CloseOpenTools() {
+					hub.Publish(e)
+				}
+			}
 			hub.FinishRun()
 			h.cancel()
 			c.clearRun(chatID, runID)
@@ -983,7 +989,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		}
 	}()
 
-	bridge := agui.NewBridge(chatID, runID)
+	bridge = agui.NewBridge(chatID, runID)
 	hub.StartRun(runID, bridge.Snapshot)
 
 	if userMessageID != "" {

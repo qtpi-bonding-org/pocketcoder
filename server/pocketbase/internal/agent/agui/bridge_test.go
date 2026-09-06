@@ -925,3 +925,48 @@ func TestBridgeResolveElicitationEmitsRemoveDelta(t *testing.T) {
 		t.Fatalf("expected a remove delta for /pocketcoder/elicitation, got: %s", b)
 	}
 }
+
+func TestBridgeCloseOpenToolsEndsEveryStillOpenCall(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	for _, id := range []string{"tool-1", "tool-2"} {
+		if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+			SessionUpdate: "tool_call",
+			ToolCallId:    acpsdk.ToolCallId(id),
+			Title:         "read_file",
+		}}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	closed := bridge.CloseOpenTools()
+
+	if len(closed) != 2 {
+		t.Fatalf("expected 2 TOOL_CALL_END events, got %d: %#v", len(closed), closed)
+	}
+	for _, e := range closed {
+		if e.Type() != "TOOL_CALL_END" {
+			t.Fatalf("expected TOOL_CALL_END, got %s", e.Type())
+		}
+	}
+
+	if again := bridge.CloseOpenTools(); len(again) != 0 {
+		t.Fatalf("expected no events on a second call, got %#v", again)
+	}
+}
+
+func TestBridgeFinishedStillClosesOpenToolsAndEmitsRunFinished(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call",
+		ToolCallId:    "tool-1",
+		Title:         "read_file",
+	}}); err != nil {
+		t.Fatal(err)
+	}
+
+	finished := bridge.Finished(acpsdk.StopReasonEndTurn)
+
+	if len(finished) != 2 || finished[0].Type() != "TOOL_CALL_END" || finished[1].Type() != "RUN_FINISHED" {
+		t.Fatalf("unexpected terminal events: %#v", finished)
+	}
+}

@@ -336,15 +336,32 @@ func PermissionPayload(requestID string, options []acpsdk.PermissionOption, tool
 	return payload
 }
 
+// CloseOpenTools emits TOOL_CALL_END for every still-open tool call without
+// emitting RUN_FINISHED, so it's safe on any exit path, not just Finished()'s.
+func (b *Bridge) CloseOpenTools() []events.Event {
+	if len(b.openTools) == 0 {
+		return nil
+	}
+	ids := make([]string, 0, len(b.openTools))
+	result := make([]events.Event, 0, len(b.openTools))
+	for id := range b.openTools {
+		ids = append(ids, id)
+		result = append(result, events.NewToolCallEndEvent(id))
+	}
+	log.Printf("[AGUI] force-closing %d still-open tool call(s) chat=%s run=%s ids=%v",
+		len(ids), b.threadID, b.runID, ids)
+	b.openTools = map[string]toolMeta{}
+	return result
+}
+
 // Finished closes all lifecycle events. Call this only after the correlated
 // session/prompt response, never by guessing from the final text chunk.
 func (b *Bridge) Finished(stopReason acpsdk.StopReason) []events.Event {
+	log.Printf("[AGUI] run finished chat=%s run=%s stopReason=%s openTools=%d",
+		b.threadID, b.runID, stopReason, len(b.openTools))
 	result := b.closeReasoning()
 	result = append(result, b.closeMessage()...)
-	for id := range b.openTools {
-		result = append(result, events.NewToolCallEndEvent(id))
-	}
-	b.openTools = map[string]toolMeta{}
+	result = append(result, b.CloseOpenTools()...)
 	var opts []events.RunFinishedOption
 	if stopReason == acpsdk.StopReasonEndTurn {
 		opts = []events.RunFinishedOption{events.WithSuccessOutcome()}
