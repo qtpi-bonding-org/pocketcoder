@@ -385,7 +385,9 @@ func (b *Bridge) closeMessage() []events.Event {
 		return nil
 	}
 	b.messageOpen = false
-	return []events.Event{events.NewTextMessageEndEvent(b.messageID)}
+	id := b.messageID
+	b.messageID = ""
+	return []events.Event{events.NewTextMessageEndEvent(id)}
 }
 
 func (b *Bridge) closeReasoning() []events.Event {
@@ -393,7 +395,9 @@ func (b *Bridge) closeReasoning() []events.Event {
 		return nil
 	}
 	b.reasoningOpen = false
-	return []events.Event{events.NewReasoningMessageEndEvent(b.reasoningID)}
+	id := b.reasoningID
+	b.reasoningID = ""
+	return []events.Event{events.NewReasoningMessageEndEvent(id)}
 }
 
 func (b *Bridge) ensureReasoningID(messageID *string) string {

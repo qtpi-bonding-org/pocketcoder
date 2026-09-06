@@ -1035,3 +1035,38 @@ func TestBridgeFinishedStillClosesOpenToolsAndEmitsRunFinished(t *testing.T) {
 		t.Fatalf("unexpected terminal events: %#v", finished)
 	}
 }
+
+func TestBridgeGeneratesFreshMessageIDAfterToolCallWhenACPSendsNoID(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+
+	firstEvents, err := bridge.Update(acpsdk.SessionUpdate{AgentMessageChunk: &acpsdk.SessionUpdateAgentMessageChunk{
+		SessionUpdate: "agent_message_chunk",
+		Content:       acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "announcing"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstID := firstEvents[0].(*events.TextMessageStartEvent).MessageID
+
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call",
+		ToolCallId:    "t1",
+		Title:         "shell",
+		Status:        acpsdk.ToolCallStatusCompleted,
+	}}); err != nil {
+		t.Fatal(err)
+	}
+
+	secondEvents, err := bridge.Update(acpsdk.SessionUpdate{AgentMessageChunk: &acpsdk.SessionUpdateAgentMessageChunk{
+		SessionUpdate: "agent_message_chunk",
+		Content:       acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "summary"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondID := secondEvents[0].(*events.TextMessageStartEvent).MessageID
+
+	if firstID == secondID {
+		t.Fatalf("expected a fresh message id after the intervening tool call, both messages got %q", firstID)
+	}
+}
