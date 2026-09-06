@@ -41,6 +41,19 @@ void main() {
             'which is interpretation (spec section 2b)');
   });
 
+  testWidgets('the request id stays out of the transcript', (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+          body: InlineApproval(
+        toolLabel: 'shell',
+        command: 'ls',
+        requestId: '0e013a72-717a-42da-a3be-3bf84a600a41',
+        options: [],
+      )),
+    ));
+    expect(find.textContaining('0e013a72'), findsNothing);
+  });
+
   testWidgets('no description line when the harness supplied none',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(

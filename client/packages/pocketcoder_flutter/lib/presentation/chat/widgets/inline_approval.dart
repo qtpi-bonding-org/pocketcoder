@@ -79,11 +79,9 @@ class InlineApproval extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 12),
+        // The request id never reaches the screen: it addresses the reply
+        // this widget sends back, and means nothing to whoever is approving.
         TerminalDialogActions(actions: actions),
-        if (requestId.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          TerminalText('[$requestId]', role: TextRole.label),
-        ],
       ],
     );
   }
