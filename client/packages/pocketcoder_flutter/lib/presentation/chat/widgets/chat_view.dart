@@ -315,7 +315,7 @@ class _ChatViewState extends State<ChatView> {
                   Padding(
                     padding: EdgeInsets.only(bottom: AppSizes.space * 0.5),
                     child: Center(
-                      child: PocoFace(),
+                      child: PocoFace(isAgentTurn: widget.isLoading),
                     ),
                   ),
                 Expanded(

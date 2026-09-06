@@ -105,6 +105,7 @@ class PocoFace extends StatelessWidget {
     this.mood,
     this.posture,
     this.sequence = const [],
+    this.isAgentTurn,
   });
 
   final double? fontSize;
@@ -112,6 +113,7 @@ class PocoFace extends StatelessWidget {
   final PocoMood? mood;
   final PocoPosture? posture;
   final List<(String, int)> sequence;
+  final bool? isAgentTurn;
 
   @override
   Widget build(BuildContext context) => PocoAnimator(
@@ -120,5 +122,6 @@ class PocoFace extends StatelessWidget {
         mood: mood,
         posture: posture ?? PocoPostureScope.of(context),
         sequence: sequence,
+        isAgentTurn: isAgentTurn,
       );
 }

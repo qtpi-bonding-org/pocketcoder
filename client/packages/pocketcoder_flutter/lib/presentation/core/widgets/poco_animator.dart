@@ -16,6 +16,9 @@ class PocoAnimator extends StatefulWidget {
 
   /// Empty means random idle cycling, not "no animation."
   final List<(String, int)> sequence;
+
+  /// Null means [sequence] governs the face instead.
+  final bool? isAgentTurn;
   const PocoAnimator({
     super.key,
     this.fontSize,
@@ -23,6 +26,7 @@ class PocoAnimator extends StatefulWidget {
     this.mood,
     this.posture,
     this.sequence = const [],
+    this.isAgentTurn,
   });
   @override
   State<PocoAnimator> createState() => _PocoAnimatorState();
@@ -34,17 +38,35 @@ class _PocoAnimatorState extends State<PocoAnimator> {
   int _currentIndex = 0;
   final _random = Random();
 
-  bool get _isRandomIdle => widget.sequence.isEmpty;
+  bool get _isTurnDriven => widget.isAgentTurn != null;
+  bool get _isRandomIdle => !_isTurnDriven && widget.sequence.isEmpty;
 
   @override
   void initState() {
     super.initState();
-    if (_isRandomIdle) {
+    if (_isTurnDriven) {
+      _currentFace = widget.isAgentTurn!
+          ? PocoExpression.thinking
+          : _randomGreenHappyFace();
+    } else if (_isRandomIdle) {
       _currentFace = _randomGreenHappyFace();
     } else {
       _currentFace = widget.sequence[0].$1;
     }
-    _scheduleNextFrame();
+    if (!_isTurnDriven) _scheduleNextFrame();
+  }
+
+  @override
+  void didUpdateWidget(covariant PocoAnimator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_isTurnDriven && widget.isAgentTurn != oldWidget.isAgentTurn) {
+      _timer?.cancel();
+      setState(() {
+        _currentFace = widget.isAgentTurn!
+            ? PocoExpression.thinking
+            : _randomGreenHappyFace();
+      });
+    }
   }
 
   @override
@@ -57,9 +79,9 @@ class _PocoAnimatorState extends State<PocoAnimator> {
       .greenHappy[_random.nextInt(PocoExpression.greenHappy.length)];
 
   void _scheduleNextFrame() {
-    final delay =
-        _isRandomIdle ? _idleFrameDuration : Duration(
-            milliseconds: widget.sequence[_currentIndex].$2);
+    final delay = _isRandomIdle
+        ? _idleFrameDuration
+        : Duration(milliseconds: widget.sequence[_currentIndex].$2);
     _timer = Timer(delay, _advanceFrame);
   }
 
@@ -81,6 +103,7 @@ class _PocoAnimatorState extends State<PocoAnimator> {
       expression: _currentFace,
       fontSize: widget.fontSize ?? AppSizes.fontPoco,
       color: widget.color,
-      mood: widget.mood,
+      mood: widget.mood ??
+          (_isTurnDriven && widget.isAgentTurn! ? PocoMood.thinking : null),
       posture: widget.posture ?? PocoPostureScope.of(context));
 }
