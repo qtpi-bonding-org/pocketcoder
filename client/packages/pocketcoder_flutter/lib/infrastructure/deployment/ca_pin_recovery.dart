@@ -63,4 +63,30 @@ class CaPinRecovery {
       host: deployment.host,
     );
   }
+
+  /// [currentDeployment] may still be completing its own async load at
+  /// boot, so a null read is polled rather than treated as final; bounded by
+  /// [timeout] since there may genuinely be no deployment yet.
+  Future<void> warmUp({Duration timeout = const Duration(seconds: 5)}) async {
+    final deadline = DateTime.now().add(timeout);
+    var deployment = currentDeployment.current;
+    while (deployment == null && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      deployment = currentDeployment.current;
+    }
+    if (deployment == null) {
+      AppLogger.debug(
+          'CaPinRecovery.warmUp: no deployment available before timeout -- skipping');
+      return;
+    }
+    AppLogger.debug('CaPinRecovery.warmUp: fetching/pinning cached CA', {
+      'instanceId': deployment.instanceId,
+      'host': deployment.host,
+    });
+    await caPinFetcher.fetchAndPin(
+      instanceId: deployment.instanceId,
+      host: deployment.host,
+      isCurrentAttemptStillLive: () async => true,
+    );
+  }
 }

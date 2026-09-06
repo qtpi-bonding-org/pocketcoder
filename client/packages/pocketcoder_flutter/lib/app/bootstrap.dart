@@ -21,6 +21,8 @@ import 'package:pocketcoder_flutter/domain/deployment/i_deployment_auth_status.d
 import 'package:pocketcoder_flutter/infrastructure/deployment/self_host_server_readiness_check.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/auth_aware_http_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/caddy_ca_pinning_http_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_recovery.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
@@ -96,6 +98,17 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
     getIt<PocketCoderApiClient>().setAuthSessionCoordinator(
       getIt<AuthSessionCoordinator>(),
     );
+    if (getIt.isRegistered<CaPinRecovery>()) {
+      final caPinRecovery = getIt<CaPinRecovery>();
+      getIt<CaddyCaPinningHttpClient>().attachRecovery(caPinRecovery);
+      getIt<PocketCoderApiClient>().attachCaPinRecovery(caPinRecovery);
+      debugPrint('Bootstrap: CaPinRecovery wired to both HTTP transports');
+      await caPinRecovery.warmUp();
+      debugPrint('Bootstrap: CA pin warm-up complete');
+    } else {
+      debugPrint(
+          'Bootstrap: CaPinRecovery not registered -- skipping (expected on FOSS)');
+    }
     BaseDao.configureSessionCoordinator(getIt<AuthSessionCoordinator>());
     if (!getIt.isRegistered<DeploymentCacheEffects>()) {
       getIt.registerLazySingleton<DeploymentCacheEffects>(
