@@ -336,9 +336,15 @@ func PermissionPayload(requestID string, options []acpsdk.PermissionOption, tool
 	return payload
 }
 
-// CloseOpenTools emits TOOL_CALL_END for every still-open tool call without
-// emitting RUN_FINISHED, so it's safe on any exit path, not just Finished()'s.
 func (b *Bridge) CloseOpenTools() []events.Event {
+	return b.closeOpenTools(false)
+}
+
+func (b *Bridge) CloseOpenToolsAsFailed() []events.Event {
+	return b.closeOpenTools(true)
+}
+
+func (b *Bridge) closeOpenTools(failed bool) []events.Event {
 	if len(b.openTools) == 0 {
 		return nil
 	}
@@ -346,11 +352,13 @@ func (b *Bridge) CloseOpenTools() []events.Event {
 	result := make([]events.Event, 0, len(b.openTools)*2)
 	for id, meta := range b.openTools {
 		ids = append(ids, id)
-		result = append(result, customTool(id, meta.title, meta.kind, "failed", nil))
+		if failed && !meta.pendingHasResult {
+			result = append(result, customTool(id, meta.title, meta.kind, "failed", nil))
+		}
 		result = append(result, events.NewToolCallEndEvent(id))
 	}
-	log.Printf("[AGUI] force-closing %d still-open tool call(s) chat=%s run=%s ids=%v",
-		len(ids), b.threadID, b.runID, ids)
+	log.Printf("[AGUI] force-closing %d still-open tool call(s) chat=%s run=%s ids=%v failed=%v",
+		len(ids), b.threadID, b.runID, ids, failed)
 	b.openTools = map[string]toolMeta{}
 	return result
 }

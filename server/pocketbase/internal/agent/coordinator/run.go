@@ -814,11 +814,13 @@ func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID st
 	}
 	profile, err := profileFn(ctx)
 	if err != nil {
+		_ = emitAll(emitSeq, bridge.CloseOpenToolsAsFailed())
 		return fmt.Errorf("resolve session profile: %w", err)
 	}
 	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emitSeq, accepting: &atomic.Bool{}}
 	conn, _, _, _, _, _, err := c.establishSession(ctx, sc, profile, sessionID, func() { sc.accepting.Store(true) })
 	if err != nil {
+		_ = emitAll(emitSeq, bridge.CloseOpenToolsAsFailed())
 		return err
 	}
 	defer conn.Close()
@@ -969,7 +971,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 			}
 			c.dropPendingForChat(chatID)
 			if bridge != nil {
-				for _, e := range bridge.CloseOpenTools() {
+				for _, e := range bridge.CloseOpenToolsAsFailed() {
 					hub.Publish(e)
 				}
 			}
