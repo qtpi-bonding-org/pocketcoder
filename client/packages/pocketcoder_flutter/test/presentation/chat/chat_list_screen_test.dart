@@ -65,6 +65,8 @@ void main() {
         .thenAnswer((_) => Stream.value(const []));
     when(() => providerRepo.watchHarnessProviders())
         .thenAnswer((_) => Stream.value(const []));
+    when(() => providerRepo.watchProviderCatalog())
+        .thenAnswer((_) => Stream.value(const []));
   });
 
   tearDown(() {

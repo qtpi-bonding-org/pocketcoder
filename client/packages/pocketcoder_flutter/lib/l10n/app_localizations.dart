@@ -880,6 +880,24 @@ abstract class AppLocalizations {
   /// **'No models available for this harness'**
   String get newChatNoModelsAvailable;
 
+  /// No description provided for @chatPickerSearchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'search'**
+  String get chatPickerSearchLabel;
+
+  /// No description provided for @chatPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter options'**
+  String get chatPickerSearchHint;
+
+  /// No description provided for @chatPickerNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'no matching options'**
+  String get chatPickerNoMatches;
+
   /// No description provided for @newChatWorkspaceErrorEmpty.
   ///
   /// In en, this message translates to:

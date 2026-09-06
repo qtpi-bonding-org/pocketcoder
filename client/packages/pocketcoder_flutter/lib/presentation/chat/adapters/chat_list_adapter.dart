@@ -14,6 +14,7 @@ import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repositor
 import 'package:pocketcoder_flutter/domain/models/credential_selection.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_oauth_account.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart';
@@ -110,6 +111,7 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
       providerRepository.fetchHarnessModels(),
       providerRepository.watchProviderAPIKeys().first,
       providerRepository.watchHarnessProviders().first,
+      providerRepository.watchProviderCatalog().first,
       if (harnessAuthRepository != null)
         harnessAuthRepository.watchCredentialSelections().first,
       if (harnessAuthRepository != null)
@@ -121,7 +123,8 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
     final harnessModels = futures[2] as List<HarnessModel>;
     final providerAPIKeys = futures[3] as List<ProviderApiKey>;
     final harnessProviders = futures[4] as List<HarnessProvider>;
-    var index = 5;
+    final providers = futures[5] as List<domain.Provider>;
+    var index = 6;
     final credentialSelections = harnessAuthRepository == null
         ? const <CredentialSelection>[]
         : futures[index++] as List<CredentialSelection>;
@@ -141,6 +144,7 @@ class ChatListAdapter extends CubitAdapter<ChatListCubit, ChatListState> {
         models: models,
         harnessModels: harnessModels,
         harnessProviders: harnessProviders,
+        providers: providers,
         providerAPIKeys: providerAPIKeys,
         credentialSelections: credentialSelections,
         harnessOAuthAccounts: harnessOAuthAccounts,

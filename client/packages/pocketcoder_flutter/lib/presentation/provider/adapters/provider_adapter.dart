@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart';
 import 'package:pocketcoder_flutter/application/provider/provider_state.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
+import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/section_header.dart';
@@ -132,37 +133,29 @@ class ProviderView extends StatelessWidget {
     for (final hm in state.harnessModels) {
       (byHarness[hm.harness] ??= []).add(hm);
     }
+    final harnessNameById = {for (final h in state.harnesses) h.id: h.name};
+    final modelById = {for (final m in state.models) m.id: m};
     final harnessIds = byHarness.keys.toList()
-      ..sort((a, b) =>
-          _harnessNameFor(state, a).compareTo(_harnessNameFor(state, b)));
+      ..sort((a, b) => (harnessNameById[a] ?? a)
+          .compareTo(harnessNameById[b] ?? b));
 
     return Column(children: [
       for (final harnessId in harnessIds)
         _HarnessGroupSection(
-            harnessName: _harnessNameFor(state, harnessId),
+            harnessName: harnessNameById[harnessId] ?? harnessId,
             models: byHarness[harnessId]!,
-            modelNameFor: (hm) => _modelNameFor(state, hm)),
+            modelNameFor: (hm) => _modelNameFor(modelById, hm)),
     ]);
   }
 
-  String _harnessNameFor(ProviderState state, String harnessId) {
-    for (final h in state.harnesses) {
-      if (h.id == harnessId) return h.name;
+  String _modelNameFor(Map<String, Model> modelById, HarnessModel hm) {
+    final m = modelById[hm.model];
+    if (m == null) {
+      // Falls back to the harness-specific id when the model record hasn't arrived yet.
+      return hm.harnessModelId;
     }
-    return harnessId;
-  }
-
-  String _modelNameFor(ProviderState state, HarnessModel hm) {
-    for (final m in state.models) {
-      if (m.id == hm.model) {
-        final dn = m.displayName;
-        return dn != null && dn.isNotEmpty ? dn : m.name;
-      }
-    }
-    // A catalog row can arrive before its referenced model record. In that
-    // case the harness-specific id is the useful display value (and is also
-    // what the picker exposes), rather than the opaque model foreign key.
-    return hm.harnessModelId;
+    final dn = m.displayName;
+    return dn != null && dn.isNotEmpty ? dn : m.name;
   }
 
   Widget _buildProviderKeyList(BuildContext context, ProviderState state) {

@@ -17,6 +17,11 @@ void main() {
       final dao = ModelDao(pb);
       expect(dao.pb, same(pb));
     });
+
+    test('uses a longer getFullList timeout than the 10s default', () {
+      final dao = ModelDao(PocketBase('http://unused.local'));
+      expect(dao.getFullListTimeout, greaterThan(const Duration(seconds: 10)));
+    });
   });
 
   group('HarnessModelDao', () {
@@ -24,6 +29,11 @@ void main() {
       final pb = PocketBase('http://unused.local');
       final dao = HarnessModelDao(pb);
       expect(dao.pb, same(pb));
+    });
+
+    test('uses a longer getFullList timeout than the 10s default', () {
+      final dao = HarnessModelDao(PocketBase('http://unused.local'));
+      expect(dao.getFullListTimeout, greaterThan(const Duration(seconds: 10)));
     });
   });
 

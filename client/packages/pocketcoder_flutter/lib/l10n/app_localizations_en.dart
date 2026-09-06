@@ -425,6 +425,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newChatNoModelsAvailable => 'No models available for this harness';
 
   @override
+  String get chatPickerSearchLabel => 'search';
+
+  @override
+  String get chatPickerSearchHint => 'Filter options';
+
+  @override
+  String get chatPickerNoMatches => 'no matching options';
+
+  @override
   String get newChatWorkspaceErrorEmpty => 'Path cannot be empty';
 
   @override

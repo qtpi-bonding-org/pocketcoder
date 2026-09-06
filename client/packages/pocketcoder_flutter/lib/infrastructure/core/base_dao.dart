@@ -26,14 +26,17 @@ abstract class BaseDao<T> {
   final PocketBase _pb;
   final String _collection;
   final T Function(Map<String, dynamic> json) _fromJson;
+  final Duration _getFullListTimeout;
 
   BaseDao(
     this._pb,
     this._collection,
-    this._fromJson,
-  );
+    this._fromJson, {
+    Duration getFullListTimeout = const Duration(seconds: 10),
+  }) : _getFullListTimeout = getFullListTimeout;
 
   PocketBase get pb => _pb;
+  Duration get getFullListTimeout => _getFullListTimeout;
 
   /// Access to the underlying PocketBase collection service.
   /// We cast to $RecordService to access drift-enabled features like watchRecords.
@@ -134,8 +137,9 @@ abstract class BaseDao<T> {
         expand: expand,
         requestPolicy: requestPolicy,
       )
-          .timeout(const Duration(seconds: 10), onTimeout: () {
-        logWarning('DAO [$_collection]: getFullList TIMEOUT after 10s');
+          .timeout(_getFullListTimeout, onTimeout: () {
+        logWarning(
+            'DAO [$_collection]: getFullList TIMEOUT after $_getFullListTimeout');
         throw TimeoutException('PocketBase getFullList timed out');
       });
       logDebug(

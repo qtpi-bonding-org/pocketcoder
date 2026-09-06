@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 /// Shared picker field used for chat creation choices.
@@ -15,7 +15,8 @@ class ChatPickerField<T> extends StatelessWidget {
       required this.selected,
       required this.optionLabel,
       required this.onSelected,
-      this.noOptionsLabel});
+      this.noOptionsLabel,
+      this.groupLabel});
 
   final String label;
   final String dialogTitle;
@@ -24,6 +25,7 @@ class ChatPickerField<T> extends StatelessWidget {
   final List<T> options;
   final T? selected;
   final String Function(T) optionLabel;
+  final String Function(T)? groupLabel;
   final ValueChanged<T> onSelected;
 
   @override
@@ -61,15 +63,27 @@ class ChatPickerField<T> extends StatelessWidget {
   }
 
   Future<void> _openPicker(BuildContext context) async {
-    final picked = await showTerminalListPicker<T>(
+    final picked = await showDialog<T>(
       context: context,
-      title: dialogTitle,
-      items: options,
-      emptyLabel: noOptionsLabel ?? emptyLabel,
-      cancelLabel: context.l10n.newChatCancel,
-      itemBuilder: (_, option) => Padding(
-          padding: EdgeInsets.all(AppSizes.space),
-          child: TerminalText(optionLabel(option), role: TextRole.body)),
+      builder: (_) => SearchablePickerDialog<T>(
+        title: dialogTitle,
+        items: options,
+        itemLabel: optionLabel,
+        groupLabel: groupLabel,
+        selectedItem: selected,
+        searchLabel: context.l10n.chatPickerSearchLabel,
+        searchHint: context.l10n.chatPickerSearchHint,
+        emptyLabel: noOptionsLabel ?? emptyLabel,
+        noMatchesLabel: context.l10n.chatPickerNoMatches,
+        itemBuilder: (_, option, {required isSelected, required onTap}) =>
+            InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(AppSizes.space),
+            child: TerminalText(optionLabel(option), role: TextRole.body),
+          ),
+        ),
+      ),
     );
 
     if (picked != null) {
