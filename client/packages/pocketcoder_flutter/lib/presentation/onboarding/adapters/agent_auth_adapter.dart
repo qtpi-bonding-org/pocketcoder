@@ -289,8 +289,9 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                     CredentialConnectionView(
                         step: step,
                         onOpenAuthorizationPage: () {
-                          if (uri != null)
+                          if (uri != null) {
                             unawaited(_openChallenge(context, uri));
+                          }
                         },
                         onCopyCode: (code) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
