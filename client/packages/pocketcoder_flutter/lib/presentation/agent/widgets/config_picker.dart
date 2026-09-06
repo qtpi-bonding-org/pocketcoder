@@ -8,20 +8,14 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_pick
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
-class ConfigPicker extends StatefulWidget {
+class ConfigPicker extends StatelessWidget {
   const ConfigPicker(
       {super.key, required this.config, required this.onSetOption});
   final Map<String, dynamic>? config;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
-  @override
-  State<ConfigPicker> createState() => _ConfigPickerState();
-}
 
-class _ConfigPickerState extends State<ConfigPicker> {
-  bool _expanded = false;
   @override
   Widget build(BuildContext context) {
-    final config = widget.config;
     final options = (config?['options'] as List?)
             ?.whereType<Map>()
             .map(Map<String, dynamic>.from)
@@ -29,22 +23,10 @@ class _ConfigPickerState extends State<ConfigPicker> {
         const <Map<String, dynamic>>[];
     if (options.isEmpty) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      DetailRow(
-        label: context.l10n.agentSessionLabel,
-        value: _expanded ? null : _summary(options),
-        affordance:
-            _expanded ? RowAffordance.collapse : RowAffordance.expand,
-        onTap: () => setState(() => _expanded = !_expanded),
-      ),
-      if (_expanded) ...options.map((o) => _option(context, o)),
+      DetailRow(label: context.l10n.agentSessionLabel),
+      ...options.map((o) => _option(context, o)),
     ]);
   }
-
-  String _summary(List<Map<String, dynamic>> options) => options
-      .where((o) => o['kind'] == 'select')
-      .map((o) => o['currentValue']?.toString() ?? '')
-      .where((value) => value.isNotEmpty)
-      .join(' · ');
 
   Widget _option(BuildContext context, Map<String, dynamic> o) {
     final id = o['id'] as String?;
@@ -55,7 +37,7 @@ class _ConfigPickerState extends State<ConfigPicker> {
     final label = Text(name,
         style: TextStyle(
             color: context.colorScheme.onSurface, fontFamily: AppFonts.family));
-    void submit(String v) => widget.onSetOption(
+    void submit(String v) => onSetOption(
         SetSessionConfigOptionRequest(sessionId: '', configId: id, value: v));
     if (kind == 'boolean') {
       return Padding(

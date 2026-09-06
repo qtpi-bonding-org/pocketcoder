@@ -19,30 +19,22 @@ const _config = {
 };
 
 void main() {
-  testWidgets('the disclosure glyph states what the tap will do',
+  testWidgets('each option is visible and directly tappable with no expand step first',
       (tester) async {
     await tester.pumpWidget(
       _wrap(ConfigPicker(config: _config, onSetOption: (_) {})),
     );
 
-    Finder header(String glyph) => find.descendant(
-          of: find.byType(DetailRow).first,
-          matching: find.text(glyph),
-        );
+    // The option's own row is already on screen -- one tap opens its
+    // picker, no collapse/expand row to tap through first.
+    expect(find.text('a'), findsOneWidget);
+    await tester.tap(find.text('a'));
+    await tester.pumpAndSettle();
 
-    // Collapsed: tapping reveals, so the row offers "expand".
-    expect(header(RowAffordance.expand.glyph), findsOneWidget);
-    expect(header(RowAffordance.collapse.glyph), findsNothing);
-
-    await tester.tap(header(RowAffordance.expand.glyph));
-    await tester.pump();
-
-    // Expanded: tapping hides, so the row offers "collapse".
-    expect(header(RowAffordance.collapse.glyph), findsOneWidget);
-    expect(header(RowAffordance.expand.glyph), findsNothing);
+    expect(find.text('b'), findsOneWidget);
   });
 
-  testWidgets('collapsed, it is one row summarising the active session',
+  testWidgets('all options render as their own rows, not a collapsed summary',
       (tester) async {
     const config = {
       'options': [
@@ -61,8 +53,10 @@ void main() {
       _wrap(ConfigPicker(config: config, onSetOption: (_) {})),
     );
 
-    expect(find.text('openrouter · aion-2.0 · approve'), findsOneWidget);
-    // The individual rows stay hidden until asked for.
-    expect(find.byType(DetailRow), findsOneWidget);
+    expect(find.text('openrouter'), findsOneWidget);
+    expect(find.text('aion-2.0'), findsOneWidget);
+    expect(find.text('approve'), findsOneWidget);
+    expect(find.byType(DetailRow), findsNWidgets(4));
+    expect(find.text(RowAffordance.expand.glyph), findsNWidgets(3));
   });
 }
