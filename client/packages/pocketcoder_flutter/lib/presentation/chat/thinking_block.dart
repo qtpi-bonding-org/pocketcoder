@@ -41,6 +41,7 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
                   style: TextStyle(
                     color: colors.primary,
                     fontFamily: AppFonts.family,
+                    package: 'pocketcoder_flutter',
                     fontWeight: AppFonts.heavy,
                   ),
                 ),
@@ -60,6 +61,7 @@ class _ThinkingBlockState extends State<ThinkingBlock> {
               style: TextStyle(
                 color: colors.onSurface.withValues(alpha: 0.7),
                 fontFamily: AppFonts.family,
+                package: 'pocketcoder_flutter',
                 fontStyle: FontStyle.italic,
               ),
             ),

@@ -23,6 +23,7 @@ class TerminalRoleLabel extends StatelessWidget {
       style: TextStyle(
         color: color,
         fontFamily: AppFonts.family,
+        package: 'pocketcoder_flutter',
         fontWeight: AppFonts.heavy,
         letterSpacing: 2,
       ),
@@ -178,6 +179,7 @@ class TerminalConversationTurn extends StatelessWidget {
           color:
               emphasize(context.colorScheme.secondary, Emphasis.selected).text,
           fontFamily: AppFonts.family,
+          package: 'pocketcoder_flutter',
         ),
       ),
     );

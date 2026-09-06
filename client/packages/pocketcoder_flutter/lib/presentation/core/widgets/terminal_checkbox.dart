@@ -27,6 +27,7 @@ class TerminalCheckbox extends StatelessWidget {
           value ? '[X]' : '[ ]',
           style: TextStyle(
             fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter',
             color: color ?? context.colorScheme.onSurface,
             fontWeight: AppFonts.heavy,
           ),

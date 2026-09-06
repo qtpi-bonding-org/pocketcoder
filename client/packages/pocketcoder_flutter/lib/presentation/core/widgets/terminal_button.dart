@@ -39,13 +39,16 @@ class _TerminalButtonState extends State<TerminalButton> {
           HSpace.x2,
         ],
         Flexible(
-          child: _pressed
-              ? ColorFiltered(
-                  colorFilter: const ColorFilter.mode(
-                      AppPalette.ground, BlendMode.srcIn),
-                  child: label,
-                )
-              : label,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: _pressed
+                ? ColorFiltered(
+                    colorFilter: const ColorFilter.mode(
+                        AppPalette.ground, BlendMode.srcIn),
+                    child: label,
+                  )
+                : label,
+          ),
         ),
       ],
     );

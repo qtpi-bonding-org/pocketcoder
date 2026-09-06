@@ -57,8 +57,14 @@ class _ServerControlScreenState extends State<ServerControlScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(context.l10n
-                      .serverControlErrorPrefix(snapshot.error.toString())),
+                  Text(
+                    context.l10n
+                        .serverControlErrorPrefix(snapshot.error.toString()),
+                    style: TextStyle(
+                      fontFamily: AppFonts.family,
+                      package: 'pocketcoder_flutter',
+                    ),
+                  ),
                   TerminalButton(
                     label: context.l10n.serverControlRetryAction,
                     kind: ActionKind.primary,

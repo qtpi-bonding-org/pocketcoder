@@ -176,7 +176,13 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
             ]),
             if (!_global && configs.isEmpty) ...[
               VSpace.x1,
-              Text(context.l10n.skillsNoEligibleConfig)
+              Text(
+                context.l10n.skillsNoEligibleConfig,
+                style: TextRole.label.style.copyWith(
+                  fontFamily: AppFonts.family,
+                  package: 'pocketcoder_flutter',
+                ),
+              ),
             ],
             if (!_global && configs.isNotEmpty) ...[
               VSpace.x1,

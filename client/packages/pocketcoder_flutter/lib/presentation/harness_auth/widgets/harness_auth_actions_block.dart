@@ -44,11 +44,12 @@ class HarnessAuthActionsBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      if (status.challenge case final challenge?)
+      if (status.challenge case final challenge?) ...[
         _connectionView(context, challenge),
-      VSpace.x2,
+        VSpace.x2,
+      ],
       _actions(context),
-      VSpace.x2,
+      VSpace.x1,
       TerminalButton(
           label: l10n.harnessAuthRefresh,
           kind: ActionKind.neutral,

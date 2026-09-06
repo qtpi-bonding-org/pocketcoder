@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:get_it/get_it.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_list_screen.dart';
 import 'package:pocketcoder_flutter/presentation/chat/chat_screen.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/get_started_screen.dart';
@@ -412,7 +413,13 @@ class AppRouter {
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
-        child: Text('Page not found: ${state.matchedLocation}'),
+        child: Text(
+          'Page not found: ${state.matchedLocation}',
+          style: TextStyle(
+            fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter',
+          ),
+        ),
       ),
     ),
   );

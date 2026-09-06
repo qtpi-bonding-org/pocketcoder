@@ -42,7 +42,9 @@ class ConfigPicker extends StatelessWidget {
         value = o['currentValue'];
     final label = Text(name,
         style: TextStyle(
-            color: context.colorScheme.onSurface, fontFamily: AppFonts.family));
+            color: context.colorScheme.onSurface,
+            fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter'));
     void submit(String v) => onSetOption(
         SetSessionConfigOptionRequest(sessionId: '', configId: id, value: v));
     if (kind == 'boolean') {

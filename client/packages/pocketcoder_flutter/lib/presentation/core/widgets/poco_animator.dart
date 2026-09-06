@@ -1,30 +1,29 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/poco.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'ascii_art.dart';
 import 'poco_posture_scope.dart';
 
+const _idleFrameDuration = Duration(milliseconds: 2000);
+
 class PocoAnimator extends StatefulWidget {
   final double? fontSize;
   final Color? color;
   final PocoMood? mood;
   final PocoPosture? posture;
+
+  /// Empty means random idle cycling, not "no animation."
   final List<(String, int)> sequence;
-  const PocoAnimator(
-      {super.key,
-      this.fontSize,
-      this.color,
-      this.mood,
-      this.posture,
-      this.sequence = const [
-        (PocoExpression.awake, 2000),
-        (PocoExpression.sleepy, 150),
-        (PocoExpression.thinking, 3000),
-        (PocoExpression.happy, 2000),
-        (PocoExpression.awake, 2500),
-        (PocoExpression.sleepy, 150)
-      ]});
+  const PocoAnimator({
+    super.key,
+    this.fontSize,
+    this.color,
+    this.mood,
+    this.posture,
+    this.sequence = const [],
+  });
   @override
   State<PocoAnimator> createState() => _PocoAnimatorState();
 }
@@ -33,15 +32,19 @@ class _PocoAnimatorState extends State<PocoAnimator> {
   late String _currentFace;
   Timer? _timer;
   int _currentIndex = 0;
+  final _random = Random();
+
+  bool get _isRandomIdle => widget.sequence.isEmpty;
+
   @override
   void initState() {
     super.initState();
-    if (widget.sequence.isNotEmpty) {
-      _currentFace = widget.sequence[0].$1;
-      _scheduleNextFrame();
+    if (_isRandomIdle) {
+      _currentFace = _randomGreenHappyFace();
     } else {
-      _currentFace = PocoExpression.awake;
+      _currentFace = widget.sequence[0].$1;
     }
+    _scheduleNextFrame();
   }
 
   @override
@@ -50,17 +53,25 @@ class _PocoAnimatorState extends State<PocoAnimator> {
     super.dispose();
   }
 
+  String _randomGreenHappyFace() => PocoExpression
+      .greenHappy[_random.nextInt(PocoExpression.greenHappy.length)];
+
   void _scheduleNextFrame() {
-    if (widget.sequence.isEmpty) return;
-    _timer = Timer(Duration(milliseconds: widget.sequence[_currentIndex].$2),
-        _advanceFrame);
+    final delay =
+        _isRandomIdle ? _idleFrameDuration : Duration(
+            milliseconds: widget.sequence[_currentIndex].$2);
+    _timer = Timer(delay, _advanceFrame);
   }
 
   void _advanceFrame() {
     if (!mounted) return;
     setState(() {
-      _currentIndex = (_currentIndex + 1) % widget.sequence.length;
-      _currentFace = widget.sequence[_currentIndex].$1;
+      if (_isRandomIdle) {
+        _currentFace = _randomGreenHappyFace();
+      } else {
+        _currentIndex = (_currentIndex + 1) % widget.sequence.length;
+        _currentFace = widget.sequence[_currentIndex].$1;
+      }
     });
     _scheduleNextFrame();
   }

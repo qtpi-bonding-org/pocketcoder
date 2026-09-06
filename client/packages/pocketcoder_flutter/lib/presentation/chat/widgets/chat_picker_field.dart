@@ -57,7 +57,11 @@ class ChatPickerField<T> extends StatelessWidget {
                             role: TextRole.body,
                             overflow: TextOverflow.ellipsis)),
                     Text(context.l10n.chatPickerFieldIndicator,
-                        style: TextStyle(color: context.colorScheme.onSurface)),
+                        style: TextStyle(
+                          color: context.colorScheme.onSurface,
+                          fontFamily: AppFonts.family,
+                          package: 'pocketcoder_flutter',
+                        )),
                   ]))),
     ]);
   }

@@ -67,7 +67,6 @@ class HarnessAuthStatusBlock extends StatelessWidget {
             role: TextRole.body,
           ),
         ],
-        VSpace.x2,
         child,
       ]),
     ]);
