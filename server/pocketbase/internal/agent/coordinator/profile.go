@@ -310,7 +310,7 @@ func (PerSessionApplier) Apply(ctx context.Context, conn acp.Conn, sessionID str
 			if err != nil {
 				return nil, fmt.Errorf("apply model: %w", err)
 			}
-			if opts != nil {
+			if len(opts) > 0 {
 				latest = opts
 			}
 		}
