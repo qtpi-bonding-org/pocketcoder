@@ -24,6 +24,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -679,6 +680,34 @@ func TestSyncProviderForFanoutHarnessesPopulatesOnlyRequestedProvider(t *testing
 	}
 	if len(gooseOpenAI) != 0 {
 		t.Fatalf("goose got an openai row from an anthropic-only provider sync: %+v", gooseOpenAI)
+	}
+}
+
+// A credential save must not trigger a fresh models.dev download.
+func TestCredentialHookReusesTheCachedCatalogInsteadOfRefetching(t *testing.T) {
+	var requests int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&requests, 1)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(fixtureCatalog))
+	}))
+	t.Cleanup(srv.Close)
+
+	app := testApp(t)
+	if err := Sync(context.Background(), app, http.DefaultClient, srv.URL); err != nil {
+		t.Fatal(err)
+	}
+	afterSync := atomic.LoadInt32(&requests)
+	if afterSync == 0 {
+		t.Fatal("precondition failed: Sync() never hit the fixture server")
+	}
+
+	RegisterCredentialHooks(app, http.DefaultClient, srv.URL)
+	keyProvider(t, app, "anthropic")
+	keyProvider(t, app, "openai")
+
+	if got := atomic.LoadInt32(&requests); got != afterSync {
+		t.Fatalf("requests after two credential hooks = %d, want unchanged from %d (post-Sync catalog should be cached, not refetched)", got, afterSync)
 	}
 }
 

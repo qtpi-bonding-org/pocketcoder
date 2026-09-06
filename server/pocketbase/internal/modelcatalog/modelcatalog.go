@@ -41,6 +41,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -103,6 +104,32 @@ type rawModel struct {
 	} `json:"limit"`
 }
 
+var (
+	catalogCacheMu sync.RWMutex
+	catalogCache   = map[string]map[string]ProviderInfo{}
+)
+
+func fetchCached(ctx context.Context, client *http.Client, url string) (map[string]ProviderInfo, error) {
+	catalogCacheMu.RLock()
+	cached, ok := catalogCache[url]
+	catalogCacheMu.RUnlock()
+	if ok {
+		return cached, nil
+	}
+	return fetchAndCache(ctx, client, url)
+}
+
+func fetchAndCache(ctx context.Context, client *http.Client, url string) (map[string]ProviderInfo, error) {
+	providers, err := Fetch(ctx, client, url)
+	if err != nil {
+		return nil, err
+	}
+	catalogCacheMu.Lock()
+	catalogCache[url] = providers
+	catalogCacheMu.Unlock()
+	return providers, nil
+}
+
 // Fetch retrieves and parses the models.dev provider catalog from url.
 func Fetch(ctx context.Context, client *http.Client, url string) (map[string]ProviderInfo, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -163,7 +190,7 @@ func Fetch(ctx context.Context, client *http.Client, url string) (map[string]Pro
 // each unit of work so a cancelled sync actually stops promptly instead of
 // grinding through the full catalog regardless.
 func Sync(ctx context.Context, app core.App, client *http.Client, url string) error {
-	providers, err := Fetch(ctx, client, url)
+	providers, err := fetchAndCache(ctx, client, url)
 	if err != nil {
 		return err
 	}
@@ -304,7 +331,7 @@ func keyedProviderIDs(app core.App) (map[string]bool, error) {
 }
 
 func SyncProviderForFanoutHarnesses(ctx context.Context, app core.App, client *http.Client, url string, providerID string) error {
-	providers, err := Fetch(ctx, client, url)
+	providers, err := fetchCached(ctx, client, url)
 	if err != nil {
 		return err
 	}
