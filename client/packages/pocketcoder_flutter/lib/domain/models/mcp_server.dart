@@ -9,8 +9,7 @@ abstract class McpServer with _$McpServer {
   const factory McpServer({
     required String id,
     required String name,
-    @JsonKey(unknownEnumValue: McpServerStatus.unknown)
-    required McpServerStatus status,
+    @JsonKey(unknownEnumValue: McpServerStatus.unknown) required McpServerStatus status,
     String? requestedBy,
     String? approvedBy,
     DateTime? approvedAt,
@@ -23,8 +22,7 @@ abstract class McpServer with _$McpServer {
     String? oauthTokenEnvVar,
     DateTime? created,
     DateTime? updated,
-    @JsonKey(unknownEnumValue: McpServerAcpTransport.unknown)
-    McpServerAcpTransport? acpTransport,
+    @JsonKey(unknownEnumValue: McpServerAcpTransport.unknown) McpServerAcpTransport? acpTransport,
   }) = _McpServer;
 
   factory McpServer.fromRecord(RecordModel record) =>

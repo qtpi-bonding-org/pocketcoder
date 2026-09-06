@@ -11,8 +11,7 @@ abstract class CredentialSelection with _$CredentialSelection {
     required String user,
     required String harness,
     required String provider,
-    @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown)
-    required CredentialSelectionMode mode,
+    @JsonKey(unknownEnumValue: CredentialSelectionMode.unknown) required CredentialSelectionMode mode,
     String? oauthAccount,
     DateTime? created,
     DateTime? updated,

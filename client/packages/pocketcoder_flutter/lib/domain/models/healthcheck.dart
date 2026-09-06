@@ -9,8 +9,7 @@ abstract class Healthcheck with _$Healthcheck {
   const factory Healthcheck({
     required String id,
     required String name,
-    @JsonKey(unknownEnumValue: HealthcheckStatus.unknown)
-    required HealthcheckStatus status,
+    @JsonKey(unknownEnumValue: HealthcheckStatus.unknown) required HealthcheckStatus status,
     DateTime? lastPing,
   }) = _Healthcheck;
 

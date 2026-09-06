@@ -27,9 +27,11 @@ abstract class Chat with _$Chat {
     bool? monitored,
   }) = _Chat;
 
-  factory Chat.fromRecord(RecordModel record) => Chat.fromJson(record.toJson());
+  factory Chat.fromRecord(RecordModel record) =>
+      Chat.fromJson(record.toJson());
 
-  factory Chat.fromJson(Map<String, dynamic> json) => _$ChatFromJson(json);
+  factory Chat.fromJson(Map<String, dynamic> json) =>
+      _$ChatFromJson(json);
 }
 
 enum ChatTurn {

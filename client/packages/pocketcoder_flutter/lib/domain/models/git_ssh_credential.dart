@@ -10,16 +10,12 @@ abstract class GitSshCredential with _$GitSshCredential {
     required String id,
     required String user,
     required String label,
-    @JsonKey(unknownEnumValue: GitSshCredentialKind.unknown)
-    required GitSshCredentialKind kind,
-    @JsonKey(unknownEnumValue: GitSshCredentialSource.unknown)
-    required GitSshCredentialSource source,
-    @JsonKey(unknownEnumValue: GitSshCredentialAlgorithm.unknown)
-    required GitSshCredentialAlgorithm algorithm,
+    @JsonKey(unknownEnumValue: GitSshCredentialKind.unknown) required GitSshCredentialKind kind,
+    @JsonKey(unknownEnumValue: GitSshCredentialSource.unknown) required GitSshCredentialSource source,
+    @JsonKey(unknownEnumValue: GitSshCredentialAlgorithm.unknown) required GitSshCredentialAlgorithm algorithm,
     String? publicKey,
     String? fingerprint,
-    @JsonKey(unknownEnumValue: GitSshCredentialStatus.unknown)
-    required GitSshCredentialStatus status,
+    @JsonKey(unknownEnumValue: GitSshCredentialStatus.unknown) required GitSshCredentialStatus status,
     String? lastError,
     String? materializedGeneration,
   }) = _GitSshCredential;

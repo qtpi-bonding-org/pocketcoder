@@ -10,8 +10,7 @@ abstract class PermissionMode with _$PermissionMode {
     required String id,
     required String name,
     String? description,
-    @JsonKey(unknownEnumValue: PermissionModeBaseSessionMode.unknown)
-    required PermissionModeBaseSessionMode baseSessionMode,
+    @JsonKey(unknownEnumValue: PermissionModeBaseSessionMode.unknown) required PermissionModeBaseSessionMode baseSessionMode,
     String? user,
     bool? isSystem,
     bool? isDefault,

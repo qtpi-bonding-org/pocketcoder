@@ -11,10 +11,8 @@ abstract class LiveActivitie with _$LiveActivitie {
     required String device,
     required String chat,
     required String user,
-    @JsonKey(unknownEnumValue: LiveActivitiePlatform.unknown)
-    required LiveActivitiePlatform platform,
-    @JsonKey(unknownEnumValue: LiveActivitieStatus.unknown)
-    required LiveActivitieStatus status,
+    @JsonKey(unknownEnumValue: LiveActivitiePlatform.unknown) required LiveActivitiePlatform platform,
+    @JsonKey(unknownEnumValue: LiveActivitieStatus.unknown) required LiveActivitieStatus status,
     String? activityPushToken,
     required double contentStateVersion,
     DateTime? created,

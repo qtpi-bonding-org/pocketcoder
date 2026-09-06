@@ -17,5 +17,6 @@ abstract class Prompt with _$Prompt {
   factory Prompt.fromRecord(RecordModel record) =>
       Prompt.fromJson(record.toJson());
 
-  factory Prompt.fromJson(Map<String, dynamic> json) => _$PromptFromJson(json);
+  factory Prompt.fromJson(Map<String, dynamic> json) =>
+      _$PromptFromJson(json);
 }
