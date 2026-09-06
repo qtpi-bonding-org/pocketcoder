@@ -95,11 +95,10 @@ void main() {
 
   group('ProviderCubit.watchAll', () {
     test(
-      'subscribe yields loading then loaded with all five streamed '
-      'collections plus the one-shot harness models fetch',
+      'subscribe yields loading then loaded with three streamed collections '
+      'plus the one-shot models and harness models fetches',
       () async {
         final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
-        final modelsCtrl = StreamController<List<Model>>.broadcast();
         final harnessProvidersCtrl =
             StreamController<List<HarnessProvider>>.broadcast();
         final providerAPIKeysCtrl =
@@ -108,7 +107,6 @@ void main() {
             StreamController<List<domain.Provider>>.broadcast();
         addTearDown(() async {
           await harnessesCtrl.close();
-          await modelsCtrl.close();
           await harnessProvidersCtrl.close();
           await providerAPIKeysCtrl.close();
           await providerCatalogCtrl.close();
@@ -116,7 +114,7 @@ void main() {
 
         when(() => repo.watchHarnesses())
             .thenAnswer((_) => harnessesCtrl.stream);
-        when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
+        when(() => repo.fetchModels()).thenAnswer((_) async => [testModel]);
         when(() => repo.fetchHarnessModels())
             .thenAnswer((_) async => [testHarnessModel]);
         when(() => repo.watchHarnessProviders())
@@ -131,7 +129,6 @@ void main() {
         expect(cubit.state.status, UiFlowStatus.loading);
 
         harnessesCtrl.add([testHarnesse]);
-        modelsCtrl.add([testModel]);
         harnessProvidersCtrl.add(const []);
         providerAPIKeysCtrl.add([testProviderApiKey]);
         providerCatalogCtrl.add([testProviderCatalogEntry]);
@@ -145,7 +142,7 @@ void main() {
         expect(cubit.state.providerCatalog, [testProviderCatalogEntry]);
         expect(cubit.state.isSuccess, isTrue);
         verify(() => repo.watchHarnesses()).called(1);
-        verify(() => repo.watchModels()).called(1);
+        verify(() => repo.fetchModels()).called(1);
         verify(() => repo.fetchHarnessModels()).called(1);
         verify(() => repo.watchHarnessProviders()).called(1);
         verify(() => repo.watchProviderAPIKeys()).called(1);
@@ -157,7 +154,6 @@ void main() {
       'harnesses stream error surfaces as failure with the error in state',
       () async {
         final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
-        final modelsCtrl = StreamController<List<Model>>.broadcast();
         final harnessProvidersCtrl =
             StreamController<List<HarnessProvider>>.broadcast();
         final providerAPIKeysCtrl =
@@ -166,14 +162,13 @@ void main() {
             StreamController<List<domain.Provider>>.broadcast();
         addTearDown(() async {
           await harnessesCtrl.close();
-          await modelsCtrl.close();
           await harnessProvidersCtrl.close();
           await providerAPIKeysCtrl.close();
           await providerCatalogCtrl.close();
         });
         when(() => repo.watchHarnesses())
             .thenAnswer((_) => harnessesCtrl.stream);
-        when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
+        when(() => repo.fetchModels()).thenAnswer((_) async => const []);
         when(() => repo.fetchHarnessModels()).thenAnswer((_) async => const []);
         when(() => repo.watchHarnessProviders())
             .thenAnswer((_) => harnessProvidersCtrl.stream);
@@ -192,10 +187,9 @@ void main() {
     );
 
     test(
-      'fetchHarnessModels failure surfaces as failure with the error in state, same as any other collection',
+      'fetchModels failure surfaces as failure with the error in state, same as any other collection',
       () async {
         final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
-        final modelsCtrl = StreamController<List<Model>>.broadcast();
         final harnessProvidersCtrl =
             StreamController<List<HarnessProvider>>.broadcast();
         final providerAPIKeysCtrl =
@@ -204,14 +198,49 @@ void main() {
             StreamController<List<domain.Provider>>.broadcast();
         addTearDown(() async {
           await harnessesCtrl.close();
-          await modelsCtrl.close();
           await harnessProvidersCtrl.close();
           await providerAPIKeysCtrl.close();
           await providerCatalogCtrl.close();
         });
         when(() => repo.watchHarnesses())
             .thenAnswer((_) => harnessesCtrl.stream);
-        when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
+        when(() => repo.fetchModels())
+            .thenThrow(Exception('network unreachable'));
+        when(() => repo.fetchHarnessModels()).thenAnswer((_) async => const []);
+        when(() => repo.watchHarnessProviders())
+            .thenAnswer((_) => harnessProvidersCtrl.stream);
+        when(() => repo.watchProviderAPIKeys())
+            .thenAnswer((_) => providerAPIKeysCtrl.stream);
+        when(() => repo.watchProviderCatalog())
+            .thenAnswer((_) => providerCatalogCtrl.stream);
+        final cubit = buildCubit();
+        cubit.watchAll();
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.status, UiFlowStatus.failure);
+        expect(cubit.state.isFailure, isTrue);
+        expect(cubit.state.error, isA<Exception>());
+      },
+    );
+
+    test(
+      'fetchHarnessModels failure surfaces as failure with the error in state, same as any other collection',
+      () async {
+        final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
+        final harnessProvidersCtrl =
+            StreamController<List<HarnessProvider>>.broadcast();
+        final providerAPIKeysCtrl =
+            StreamController<List<ProviderApiKey>>.broadcast();
+        final providerCatalogCtrl =
+            StreamController<List<domain.Provider>>.broadcast();
+        addTearDown(() async {
+          await harnessesCtrl.close();
+          await harnessProvidersCtrl.close();
+          await providerAPIKeysCtrl.close();
+          await providerCatalogCtrl.close();
+        });
+        when(() => repo.watchHarnesses())
+            .thenAnswer((_) => harnessesCtrl.stream);
+        when(() => repo.fetchModels()).thenAnswer((_) async => const []);
         when(() => repo.fetchHarnessModels())
             .thenThrow(Exception('network unreachable'));
         when(() => repo.watchHarnessProviders())
@@ -230,10 +259,9 @@ void main() {
     );
 
     test(
-      'a stale fetchHarnessModels result from an earlier watchAll() call never overwrites a newer one',
+      'a stale fetchModels result from an earlier watchAll() call never overwrites a newer one',
       () async {
         final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
-        final modelsCtrl = StreamController<List<Model>>.broadcast();
         final harnessProvidersCtrl =
             StreamController<List<HarnessProvider>>.broadcast();
         final providerAPIKeysCtrl =
@@ -242,14 +270,60 @@ void main() {
             StreamController<List<domain.Provider>>.broadcast();
         addTearDown(() async {
           await harnessesCtrl.close();
-          await modelsCtrl.close();
           await harnessProvidersCtrl.close();
           await providerAPIKeysCtrl.close();
           await providerCatalogCtrl.close();
         });
         when(() => repo.watchHarnesses())
             .thenAnswer((_) => harnessesCtrl.stream);
-        when(() => repo.watchModels()).thenAnswer((_) => modelsCtrl.stream);
+        when(() => repo.fetchHarnessModels())
+            .thenAnswer((_) async => const []);
+        when(() => repo.watchHarnessProviders())
+            .thenAnswer((_) => harnessProvidersCtrl.stream);
+        when(() => repo.watchProviderAPIKeys())
+            .thenAnswer((_) => providerAPIKeysCtrl.stream);
+        when(() => repo.watchProviderCatalog())
+            .thenAnswer((_) => providerCatalogCtrl.stream);
+        final staleModel = testModel;
+        final freshModel =
+            Model(id: 'm-2', name: 'Fresh Model', provider: 'anthropic');
+        final staleCompleter = Completer<List<Model>>();
+        final freshCompleter = Completer<List<Model>>();
+        var call = 0;
+        when(() => repo.fetchModels()).thenAnswer((_) {
+          call++;
+          return call == 1 ? staleCompleter.future : freshCompleter.future;
+        });
+        final cubit = buildCubit();
+        cubit.watchAll();
+        cubit.watchAll();
+        freshCompleter.complete([freshModel]);
+        await Future<void>.delayed(Duration.zero);
+        staleCompleter.complete([staleModel]);
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.models, [freshModel]);
+      },
+    );
+
+    test(
+      'a stale fetchHarnessModels result from an earlier watchAll() call never overwrites a newer one',
+      () async {
+        final harnessesCtrl = StreamController<List<Harnesse>>.broadcast();
+        final harnessProvidersCtrl =
+            StreamController<List<HarnessProvider>>.broadcast();
+        final providerAPIKeysCtrl =
+            StreamController<List<ProviderApiKey>>.broadcast();
+        final providerCatalogCtrl =
+            StreamController<List<domain.Provider>>.broadcast();
+        addTearDown(() async {
+          await harnessesCtrl.close();
+          await harnessProvidersCtrl.close();
+          await providerAPIKeysCtrl.close();
+          await providerCatalogCtrl.close();
+        });
+        when(() => repo.watchHarnesses())
+            .thenAnswer((_) => harnessesCtrl.stream);
+        when(() => repo.fetchModels()).thenAnswer((_) async => const []);
         when(() => repo.watchHarnessProviders())
             .thenAnswer((_) => harnessProvidersCtrl.stream);
         when(() => repo.watchProviderAPIKeys())

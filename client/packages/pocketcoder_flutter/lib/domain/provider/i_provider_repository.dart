@@ -7,7 +7,10 @@ import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 
 abstract class IProviderRepository {
   Stream<List<Harnesse>> watchHarnesses();
-  Stream<List<Model>> watchModels();
+
+  /// One-shot, memoized fetch -- models is a 7,500+ row read-only,
+  /// migration-seeded catalog with no need for live reactivity.
+  Future<List<Model>> fetchModels();
 
   /// One-shot, never-cached fetch -- harness_models is a read-only catalog
   /// (harness x model.dev-synced models) that can run to 16,000+ rows.

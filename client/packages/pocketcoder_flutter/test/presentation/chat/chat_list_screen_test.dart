@@ -58,8 +58,7 @@ void main() {
     getIt.registerSingleton<IProviderRepository>(providerRepo);
     when(() => providerRepo.watchHarnesses())
         .thenAnswer((_) => Stream.value(const []));
-    when(() => providerRepo.watchModels())
-        .thenAnswer((_) => Stream.value(const []));
+    when(() => providerRepo.fetchModels()).thenAnswer((_) async => const []);
     when(() => providerRepo.fetchHarnessModels())
         .thenAnswer((_) async => const []);
     when(() => providerRepo.watchProviderAPIKeys())

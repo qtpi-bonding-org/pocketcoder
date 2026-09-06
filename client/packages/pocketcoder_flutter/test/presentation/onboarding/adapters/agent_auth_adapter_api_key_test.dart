@@ -155,8 +155,7 @@ void main() {
 
     when(() => providerRepo.watchHarnesses())
         .thenAnswer((_) => Stream.value([_goose()]));
-    when(() => providerRepo.watchModels())
-        .thenAnswer((_) => const Stream.empty());
+    when(() => providerRepo.fetchModels()).thenAnswer((_) async => const []);
     when(() => providerRepo.fetchHarnessModels())
         .thenAnswer((_) async => const []);
     when(() => providerRepo.watchHarnessProviders())
