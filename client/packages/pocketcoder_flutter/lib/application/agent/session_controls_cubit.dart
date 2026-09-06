@@ -10,6 +10,7 @@ import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.d
 import 'package:pocketcoder_flutter/infrastructure/agent_config/agent_config_daos.dart';
 import 'package:pocketcoder_flutter/infrastructure/chat/chat_dao.dart';
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'session_controls_state.dart';
 
@@ -22,6 +23,8 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
     this._permissionModeDao,
     this._harnessModelDao,
     this._harnesseDao,
+    this._modelDao,
+    this._providerCatalogDao,
   ) : super(const SessionControlsState());
 
   final AgentChatRepository _repository;
@@ -30,6 +33,8 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
   final PermissionModeDao _permissionModeDao;
   final HarnessModelDao _harnessModelDao;
   final HarnesseDao _harnesseDao;
+  final ModelDao _modelDao;
+  final ProviderCatalogDao _providerCatalogDao;
 
   StreamSubscription? _watchSub;
   String? _chatId;
@@ -171,8 +176,11 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
             'harness = {:h} && harness_model_id = {:m}',
             {'h': harnessId, 'm': value}));
     if (matches.isNotEmpty) {
+      final match = matches.length == 1
+          ? matches.first
+          : await _preferMatchingProvider(matches) ?? matches.first;
       await _chatDao.save(chatId, {
-        'harness_model_override': matches.first.id,
+        'harness_model_override': match.id,
         'ollama_model_override': '',
       });
       return;
@@ -194,5 +202,34 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
       'ollama_model_override': value,
       'harness_model_override': '',
     });
+  }
+
+  /// [matches] may span several providers for the same harness_model_id;
+  /// sessionprofile.go resolves p.Provider from the exact row id we save,
+  /// so an arbitrary pick can select a provider with no credentials here.
+  /// Returns null (ambiguous) if the session has no live "provider" value
+  /// to match against yet.
+  Future<HarnessModel?> _preferMatchingProvider(
+      List<HarnessModel> matches) async {
+    final activeProviderId = _activeProviderId();
+    if (activeProviderId == null) return null;
+    for (final candidate in matches) {
+      final model = await _modelDao.getOne(candidate.model);
+      final provider = await _providerCatalogDao.getOne(model.provider);
+      if (provider.providerId == activeProviderId) return candidate;
+    }
+    return null;
+  }
+
+  String? _activeProviderId() {
+    final options = state.config?['options'];
+    if (options is! List) return null;
+    for (final option in options) {
+      if (option is Map && option['id'] == 'provider') {
+        final value = option['currentValue'];
+        return value is String && value.isNotEmpty ? value : null;
+      }
+    }
+    return null;
   }
 }

@@ -19,7 +19,9 @@ import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart';
 import 'package:pocketcoder_flutter/domain/models/chat.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/harnesse.dart';
+import 'package:pocketcoder_flutter/domain/models/model.dart' as domain_model;
 import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 
 class MockChatDao extends Mock implements ChatDao {}
 
@@ -30,6 +32,10 @@ class MockPermissionModeDao extends Mock implements PermissionModeDao {}
 class MockHarnessModelDao extends Mock implements HarnessModelDao {}
 
 class MockHarnesseDao extends Mock implements HarnesseDao {}
+
+class MockModelDao extends Mock implements ModelDao {}
+
+class MockProviderCatalogDao extends Mock implements ProviderCatalogDao {}
 
 class _FakeAgentChatRepository implements AgentChatRepository {
   final Map<String, StreamController<Conversation>> _controllers = {};
@@ -103,6 +109,18 @@ SessionState _modesConfigState({bool isRunning = false}) => SessionState(
       isRunning: isRunning,
     );
 
+/// Matches config_picker.dart's shape: an "options" list of maps with
+/// `id`/`currentValue`, not the `_modesConfigState` fixture's shape above.
+SessionState _idleConfigWithActiveProvider(String providerId) => SessionState(
+      config: {
+        'options': [
+          {'id': 'provider', 'kind': 'select', 'currentValue': providerId},
+          {'id': 'model', 'kind': 'select', 'currentValue': 'placeholder'},
+        ],
+      },
+      isRunning: false,
+    );
+
 void main() {
   late _FakeAgentChatRepository repo;
   late MockChatDao chatDao;
@@ -110,6 +128,8 @@ void main() {
   late MockPermissionModeDao permissionModeDao;
   late MockHarnessModelDao harnessModelDao;
   late MockHarnesseDao harnesseDao;
+  late MockModelDao modelDao;
+  late MockProviderCatalogDao providerCatalogDao;
   late SessionControlsCubit cubit;
 
   setUp(() {
@@ -119,13 +139,15 @@ void main() {
     permissionModeDao = MockPermissionModeDao();
     harnessModelDao = MockHarnessModelDao();
     harnesseDao = MockHarnesseDao();
+    modelDao = MockModelDao();
+    providerCatalogDao = MockProviderCatalogDao();
     // .pb is used purely for its .filter() string helper (no network) --
     // stub it with a real, unconnected PocketBase instance so the idle
     // paths below can build a parameterized filter safely.
     when(() => permissionModeDao.pb).thenReturn(PocketBase('http://localhost'));
     when(() => harnessModelDao.pb).thenReturn(PocketBase('http://localhost'));
     cubit = SessionControlsCubit(repo, chatDao, pocoConfigDao,
-        permissionModeDao, harnessModelDao, harnesseDao);
+        permissionModeDao, harnessModelDao, harnesseDao, modelDao, providerCatalogDao);
   });
 
   tearDown(() async {
@@ -385,6 +407,124 @@ void main() {
     expect(cubit.state.status, UiFlowStatus.success);
     expect(repo.setConfigOptionCalls, isEmpty);
     verifyNever(() => harnesseDao.getOne(any()));
+    // A single unambiguous catalog match needs no provider disambiguation.
+    verifyNever(() => modelDao.getOne(any()));
+    verifyNever(() => providerCatalogDao.getOne(any()));
+  });
+
+  test(
+      'idle setOption for configId "model" picks the harness_models row '
+      'whose provider matches the session\'s currently active provider, '
+      'not just the first duplicate returned by the catalog filter',
+      () async {
+    // Two harness_models rows share this harness_model_id (provider
+    // fanout); the wrong one has no credentials configured here.
+    when(() => chatDao.getOne('chat-1'))
+        .thenAnswer((_) async => chatWithHarness);
+    when(() => harnessModelDao.getFullList(
+            filter: 'harness = "harness-1" && '
+                'harness_model_id = "anthropic/claude-sonnet-4.5"'))
+        .thenAnswer((_) async => const [
+              HarnessModel(
+                id: 'hm-orca',
+                harness: 'harness-1',
+                model: 'model-orca',
+                harnessModelId: 'anthropic/claude-sonnet-4.5',
+              ),
+              HarnessModel(
+                id: 'hm-openrouter',
+                harness: 'harness-1',
+                model: 'model-openrouter',
+                harnessModelId: 'anthropic/claude-sonnet-4.5',
+              ),
+            ]);
+    when(() => modelDao.getOne('model-orca')).thenAnswer((_) async =>
+        const domain_model.Model(
+            id: 'model-orca', name: 'Claude Sonnet 4.5', provider: 'prov-orca'));
+    when(() => modelDao.getOne('model-openrouter')).thenAnswer((_) async =>
+        const domain_model.Model(
+            id: 'model-openrouter',
+            name: 'Claude Sonnet 4.5',
+            provider: 'prov-openrouter'));
+    when(() => providerCatalogDao.getOne('prov-orca')).thenAnswer((_) async =>
+        const domain.Provider(
+            id: 'prov-orca', providerId: 'orcarouter', name: 'OrcaRouter'));
+    when(() => providerCatalogDao.getOne('prov-openrouter')).thenAnswer(
+        (_) async => const domain.Provider(
+            id: 'prov-openrouter', providerId: 'openrouter', name: 'OpenRouter'));
+    when(() => chatDao.save('chat-1', {
+          'harness_model_override': 'hm-openrouter',
+          'ollama_model_override': '',
+        })).thenAnswer((_) async => chatWithHarness);
+
+    cubit.open('chat-1');
+    await _settle();
+    repo.controllerFor('chat-1').add(
+          Conversation(sessionState: _idleConfigWithActiveProvider('openrouter')),
+        );
+    await _settle();
+
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'model',
+      value: 'anthropic/claude-sonnet-4.5',
+    ));
+
+    verify(() => chatDao.save('chat-1', {
+          'harness_model_override': 'hm-openrouter',
+          'ollama_model_override': '',
+        })).called(1);
+    verifyNever(() => chatDao.save('chat-1', {
+          'harness_model_override': 'hm-orca',
+          'ollama_model_override': '',
+        }));
+    expect(cubit.state.status, UiFlowStatus.success);
+  });
+
+  test(
+      'idle setOption for configId "model" falls back to the first catalog '
+      'match when no active provider can be determined from session state',
+      () async {
+    when(() => chatDao.getOne('chat-1'))
+        .thenAnswer((_) async => chatWithHarness);
+    when(() => harnessModelDao.getFullList(
+            filter: 'harness = "harness-1" && '
+                'harness_model_id = "anthropic/claude-sonnet-4.5"'))
+        .thenAnswer((_) async => const [
+              HarnessModel(
+                id: 'hm-orca',
+                harness: 'harness-1',
+                model: 'model-orca',
+                harnessModelId: 'anthropic/claude-sonnet-4.5',
+              ),
+              HarnessModel(
+                id: 'hm-openrouter',
+                harness: 'harness-1',
+                model: 'model-openrouter',
+                harnessModelId: 'anthropic/claude-sonnet-4.5',
+              ),
+            ]);
+    when(() => chatDao.save('chat-1', {
+          'harness_model_override': 'hm-orca',
+          'ollama_model_override': '',
+        })).thenAnswer((_) async => chatWithHarness);
+
+    // state.sessionState.config is still null -- no provider signal exists.
+    cubit.open('chat-1');
+    await _settle();
+    await cubit.setOption(SetSessionConfigOptionRequest(
+      sessionId: 'chat-1',
+      configId: 'model',
+      value: 'anthropic/claude-sonnet-4.5',
+    ));
+
+    verify(() => chatDao.save('chat-1', {
+          'harness_model_override': 'hm-orca',
+          'ollama_model_override': '',
+        })).called(1);
+    expect(cubit.state.status, UiFlowStatus.success);
+    verifyNever(() => modelDao.getOne(any()));
+    verifyNever(() => providerCatalogDao.getOne(any()));
   });
 
   test(
