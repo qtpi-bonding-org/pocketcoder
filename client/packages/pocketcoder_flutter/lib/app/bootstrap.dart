@@ -30,6 +30,8 @@ import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dar
 import 'package:pocketcoder_flutter/infrastructure/auth/auth_session_effects.dart';
 import 'package:pocketcoder_flutter/infrastructure/auth/deployment_cache_effects.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/base_dao.dart';
+import 'package:pocketcoder_flutter/infrastructure/provider/provider_catalog_warmup.dart';
+import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 
 /// Global service locator instance
@@ -143,6 +145,16 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
       );
     }
     getIt<AuthSessionEffects>().start();
+
+    if (!getIt.isRegistered<ProviderCatalogWarmup>()) {
+      getIt.registerLazySingleton<ProviderCatalogWarmup>(
+        () => ProviderCatalogWarmup(
+          getIt<AuthSessionCoordinator>(),
+          getIt<IProviderRepository>(),
+        ),
+      );
+    }
+    getIt<ProviderCatalogWarmup>().start();
 
     debugPrint('Bootstrap: Registering UI flow service...');
     _registerUiFlowService();
