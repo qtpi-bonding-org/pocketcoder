@@ -32,8 +32,6 @@ import 'package:pocketcoder_flutter/design_system/storybook/terminal_conversatio
     as _pocketcoder_flutter_design_system_storybook_terminal_conversation_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/terminal_dialog_actions.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_terminal_dialog_actions_stories;
-import 'package:pocketcoder_flutter/design_system/storybook/tool_permissions_view.stories.dart'
-    as _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories;
 import 'package:widgetbook/widgetbook.dart' as _widgetbook;
 
 final directories = <_widgetbook.WidgetbookNode>[
@@ -373,33 +371,6 @@ final directories = <_widgetbook.WidgetbookNode>[
                         _pocketcoder_flutter_design_system_storybook_notification_and_system_stories
                             .systemChecksEmpty,
                   )
-                ],
-              )
-            ],
-          )
-        ],
-      ),
-      _widgetbook.WidgetbookFolder(
-        name: 'tool_permissions',
-        children: [
-          _widgetbook.WidgetbookFolder(
-            name: 'widgets',
-            children: [
-              _widgetbook.WidgetbookComponent(
-                name: 'ToolPermissionsView',
-                useCases: [
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'no rules',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
-                            .toolPermissionsViewEmpty,
-                  ),
-                  _widgetbook.WidgetbookUseCase(
-                    name: 'populated rules',
-                    builder:
-                        _pocketcoder_flutter_design_system_storybook_tool_permissions_view_stories
-                            .toolPermissionsViewPopulated,
-                  ),
                 ],
               )
             ],

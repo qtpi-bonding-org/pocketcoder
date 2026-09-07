@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-09-07T04:44:28.047050
 
 import 'app_localizations.dart';
 
@@ -35,6 +36,7 @@ class L10nKeyResolver {
       'action.configure' => _l10n.actionConfigure,
       'action.continue' => _l10n.actionContinue,
       'action.create' => _l10n.actionCreate,
+      'action.delete' => _l10n.actionDelete,
       'action.deny' => _l10n.actionDeny,
       'action.dismiss' => _l10n.actionDismiss,
       'action.done' => _l10n.actionDone,
@@ -635,6 +637,13 @@ class L10nKeyResolver {
       'onboarding.welcome.title' => _l10n.onboardingWelcomeTitle,
       'permission.error' => _l10n.permissionError,
       'permission.fetch.failed' => _l10n.permissionFetchFailed,
+      'permission.modes.add.button' => _l10n.permissionModesAddButton,
+      'permission.modes.description.label' => _l10n.permissionModesDescriptionLabel,
+      'permission.modes.duplicate.source.title' => _l10n.permissionModesDuplicateSourceTitle,
+      'permission.modes.editor.title' => _l10n.permissionModesEditorTitle,
+      'permission.modes.name.label' => _l10n.permissionModesNameLabel,
+      'permission.modes.no.modes' => _l10n.permissionModesNoModes,
+      'permission.modes.registry' => _l10n.permissionModesRegistry,
       'permission.patterns.label' => _l10n.permissionPatternsLabel,
       'permission.requested.fallback' => _l10n.permissionRequestedFallback,
       'permission.update.failed' => _l10n.permissionUpdateFailed,
@@ -1135,6 +1144,7 @@ class L10nKeyResolver {
     'action.configure',
     'action.continue',
     'action.create',
+    'action.delete',
     'action.deny',
     'action.dismiss',
     'action.done',
@@ -1792,6 +1802,13 @@ class L10nKeyResolver {
     'onboarding.welcome.title',
     'permission.error',
     'permission.fetch.failed',
+    'permission.modes.add.button',
+    'permission.modes.description.label',
+    'permission.modes.duplicate.source.title',
+    'permission.modes.editor.title',
+    'permission.modes.name.label',
+    'permission.modes.no.modes',
+    'permission.modes.registry',
     'permission.patterns.label',
     'permission.requested.fallback',
     'permission.requesting.label',
@@ -2233,6 +2250,7 @@ class L10nKeyResolver {
     'actionConfigure': 'action.configure',
     'actionContinue': 'action.continue',
     'actionCreate': 'action.create',
+    'actionDelete': 'action.delete',
     'actionDeny': 'action.deny',
     'actionDismiss': 'action.dismiss',
     'actionDone': 'action.done',
@@ -2890,6 +2908,13 @@ class L10nKeyResolver {
     'onboardingWelcomeTitle': 'onboarding.welcome.title',
     'permissionError': 'permission.error',
     'permissionFetchFailed': 'permission.fetch.failed',
+    'permissionModesAddButton': 'permission.modes.add.button',
+    'permissionModesDescriptionLabel': 'permission.modes.description.label',
+    'permissionModesDuplicateSourceTitle': 'permission.modes.duplicate.source.title',
+    'permissionModesEditorTitle': 'permission.modes.editor.title',
+    'permissionModesNameLabel': 'permission.modes.name.label',
+    'permissionModesNoModes': 'permission.modes.no.modes',
+    'permissionModesRegistry': 'permission.modes.registry',
     'permissionPatternsLabel': 'permission.patterns.label',
     'permissionRequestedFallback': 'permission.requested.fallback',
     'permissionRequestingLabel': 'permission.requesting.label',
@@ -3328,6 +3353,7 @@ class L10nKeyResolver {
     'action.configure': 'actionConfigure',
     'action.continue': 'actionContinue',
     'action.create': 'actionCreate',
+    'action.delete': 'actionDelete',
     'action.deny': 'actionDeny',
     'action.dismiss': 'actionDismiss',
     'action.done': 'actionDone',
@@ -3985,6 +4011,13 @@ class L10nKeyResolver {
     'onboarding.welcome.title': 'onboardingWelcomeTitle',
     'permission.error': 'permissionError',
     'permission.fetch.failed': 'permissionFetchFailed',
+    'permission.modes.add.button': 'permissionModesAddButton',
+    'permission.modes.description.label': 'permissionModesDescriptionLabel',
+    'permission.modes.duplicate.source.title': 'permissionModesDuplicateSourceTitle',
+    'permission.modes.editor.title': 'permissionModesEditorTitle',
+    'permission.modes.name.label': 'permissionModesNameLabel',
+    'permission.modes.no.modes': 'permissionModesNoModes',
+    'permission.modes.registry': 'permissionModesRegistry',
     'permission.patterns.label': 'permissionPatternsLabel',
     'permission.requested.fallback': 'permissionRequestedFallback',
     'permission.requesting.label': 'permissionRequestingLabel',
@@ -4430,6 +4463,7 @@ abstract class L10nKeys {
   static const actionConfigure = 'action.configure';
   static const actionContinue = 'action.continue';
   static const actionCreate = 'action.create';
+  static const actionDelete = 'action.delete';
   static const actionDeny = 'action.deny';
   static const actionDismiss = 'action.dismiss';
   static const actionDone = 'action.done';
@@ -5087,6 +5121,13 @@ abstract class L10nKeys {
   static const onboardingWelcomeTitle = 'onboarding.welcome.title';
   static const permissionError = 'permission.error';
   static const permissionFetchFailed = 'permission.fetch.failed';
+  static const permissionModesAddButton = 'permission.modes.add.button';
+  static const permissionModesDescriptionLabel = 'permission.modes.description.label';
+  static const permissionModesDuplicateSourceTitle = 'permission.modes.duplicate.source.title';
+  static const permissionModesEditorTitle = 'permission.modes.editor.title';
+  static const permissionModesNameLabel = 'permission.modes.name.label';
+  static const permissionModesNoModes = 'permission.modes.no.modes';
+  static const permissionModesRegistry = 'permission.modes.registry';
   static const permissionPatternsLabel = 'permission.patterns.label';
   static const permissionRequestedFallback = 'permission.requested.fallback';
   static (String, Map<String, dynamic>) permissionRequestingLabel(String source) => ('permission.requesting.label', {'source': source});
