@@ -1592,6 +1592,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get initializationActionRetry => 'retry';
 
   @override
+  String get initializationAbortConfirmationTitle => 'Abort setup?';
+
+  @override
+  String get initializationAbortConfirmationBody =>
+      'This cancels setup and deletes the cloud server being created. This cannot be undone.';
+
+  @override
+  String get initializationAbortConfirm => 'abort';
+
+  @override
+  String get initializationAbortCancel => 'cancel';
+
+  @override
   String get initializationUnknown => 'unknown';
 
   @override

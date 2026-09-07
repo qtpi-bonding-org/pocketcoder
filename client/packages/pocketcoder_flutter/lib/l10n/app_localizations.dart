@@ -3022,6 +3022,30 @@ abstract class AppLocalizations {
   /// **'retry'**
   String get initializationActionRetry;
 
+  /// Confirm-dialog title before aborting an in-progress deployment.
+  ///
+  /// In en, this message translates to:
+  /// **'Abort setup?'**
+  String get initializationAbortConfirmationTitle;
+
+  /// Confirm-dialog body before aborting an in-progress deployment.
+  ///
+  /// In en, this message translates to:
+  /// **'This cancels setup and deletes the cloud server being created. This cannot be undone.'**
+  String get initializationAbortConfirmationBody;
+
+  /// Confirm button label on the abort-setup confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'abort'**
+  String get initializationAbortConfirm;
+
+  /// Cancel button label on the abort-setup confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'cancel'**
+  String get initializationAbortCancel;
+
   /// No description provided for @initializationUnknown.
   ///
   /// In en, this message translates to:
