@@ -1026,6 +1026,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.17.6"
+  nav_snapshot:
+    dependency: transitive
+    description:
+      path: "."
+      ref: "704a9dd4df2a10bd24a045c8741d521445a14c31"
+      resolved-ref: "704a9dd4df2a10bd24a045c8741d521445a14c31"
+      url: "https://github.com/qtpi-bonding-org/flutter_nav_snapshot.git"
+    source: git
+    version: "0.1.0"
   nested:
     dependency: transitive
     description:
