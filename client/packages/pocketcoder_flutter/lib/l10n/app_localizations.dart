@@ -1546,6 +1546,138 @@ abstract class AppLocalizations {
   /// **'add rule'**
   String get toolPermissionsAddRuleButton;
 
+  /// No description provided for @gitSshScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'git ssh access'**
+  String get gitSshScreenTitle;
+
+  /// No description provided for @gitSshAccountKeysHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'account keys'**
+  String get gitSshAccountKeysHeader;
+
+  /// No description provided for @gitSshAddAccountKeyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'generate account key'**
+  String get gitSshAddAccountKeyButton;
+
+  /// No description provided for @gitSshAddAccountKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'generate account key'**
+  String get gitSshAddAccountKeyTitle;
+
+  /// No description provided for @gitSshLabelField.
+  ///
+  /// In en, this message translates to:
+  /// **'label'**
+  String get gitSshLabelField;
+
+  /// No description provided for @gitSshRepositoriesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'repository access'**
+  String get gitSshRepositoriesHeader;
+
+  /// No description provided for @gitSshAddRepositoryAccessButton.
+  ///
+  /// In en, this message translates to:
+  /// **'add repository access'**
+  String get gitSshAddRepositoryAccessButton;
+
+  /// No description provided for @gitSshAddRepositoryAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'add repository access'**
+  String get gitSshAddRepositoryAccessTitle;
+
+  /// No description provided for @gitSshRepositoryField.
+  ///
+  /// In en, this message translates to:
+  /// **'repository (owner/repo)'**
+  String get gitSshRepositoryField;
+
+  /// No description provided for @gitSshPurposeField.
+  ///
+  /// In en, this message translates to:
+  /// **'purpose'**
+  String get gitSshPurposeField;
+
+  /// No description provided for @gitSshHostField.
+  ///
+  /// In en, this message translates to:
+  /// **'host'**
+  String get gitSshHostField;
+
+  /// No description provided for @gitSshPortField.
+  ///
+  /// In en, this message translates to:
+  /// **'port'**
+  String get gitSshPortField;
+
+  /// No description provided for @gitSshCredentialModeDeploy.
+  ///
+  /// In en, this message translates to:
+  /// **'new deploy key'**
+  String get gitSshCredentialModeDeploy;
+
+  /// No description provided for @gitSshCredentialModeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'existing account key'**
+  String get gitSshCredentialModeAccount;
+
+  /// No description provided for @gitSshNoAccountKeysWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'generate an account key first'**
+  String get gitSshNoAccountKeysWarning;
+
+  /// No description provided for @gitSshAccessReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'read only'**
+  String get gitSshAccessReadOnly;
+
+  /// No description provided for @gitSshAccessReadWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'read/write'**
+  String get gitSshAccessReadWrite;
+
+  /// No description provided for @gitSshEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'no keys or repositories yet'**
+  String get gitSshEmptyState;
+
+  /// No description provided for @gitSshShowPublicKeyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'show public key'**
+  String get gitSshShowPublicKeyButton;
+
+  /// No description provided for @gitSshPublicKeyDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'add this key to your git host, then come back and confirm below.'**
+  String get gitSshPublicKeyDialogBody;
+
+  /// No description provided for @gitSshMarkRegisteredButton.
+  ///
+  /// In en, this message translates to:
+  /// **'i\'ve added this key'**
+  String get gitSshMarkRegisteredButton;
+
+  /// No description provided for @gitSshRemoveAccessButton.
+  ///
+  /// In en, this message translates to:
+  /// **'remove'**
+  String get gitSshRemoveAccessButton;
+
   /// No description provided for @notificationSettingsScreenTitle.
   ///
   /// In en, this message translates to:
@@ -1947,6 +2079,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'harness connections'**
   String get settingsMenuHarnessConnections;
+
+  /// No description provided for @settingsMenuGitSsh.
+  ///
+  /// In en, this message translates to:
+  /// **'git ssh access'**
+  String get settingsMenuGitSsh;
 
   /// No description provided for @settingsMenuSystemChecks.
   ///

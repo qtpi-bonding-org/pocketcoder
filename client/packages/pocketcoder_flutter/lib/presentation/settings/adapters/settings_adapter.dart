@@ -180,6 +180,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
       'configureHarnessAuth' => AppRoutes.configureHarnessAuth,
       'configureScheduler' => AppRoutes.configureScheduler,
       'manageUsers' => AppRoutes.manageUsers,
+      'configureGitSsh' => AppRoutes.configureGitSsh,
       'configureNotifications' => AppRoutes.configureNotifications,
       'statusErrors' => AppRoutes.statusErrors,
       _ => null,

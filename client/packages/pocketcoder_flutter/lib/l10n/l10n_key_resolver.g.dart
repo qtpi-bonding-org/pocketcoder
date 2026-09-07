@@ -326,6 +326,28 @@ class L10nKeyResolver {
       'foss.server.setup.public.key.label' => _l10n.fossServerSetupPublicKeyLabel,
       'foss.server.setup.test.and.save' => _l10n.fossServerSetupTestAndSave,
       'foss.server.setup.title' => _l10n.fossServerSetupTitle,
+      'git.ssh.access.read.only' => _l10n.gitSshAccessReadOnly,
+      'git.ssh.access.read.write' => _l10n.gitSshAccessReadWrite,
+      'git.ssh.account.keys.header' => _l10n.gitSshAccountKeysHeader,
+      'git.ssh.add.account.key.button' => _l10n.gitSshAddAccountKeyButton,
+      'git.ssh.add.account.key.title' => _l10n.gitSshAddAccountKeyTitle,
+      'git.ssh.add.repository.access.button' => _l10n.gitSshAddRepositoryAccessButton,
+      'git.ssh.add.repository.access.title' => _l10n.gitSshAddRepositoryAccessTitle,
+      'git.ssh.credential.mode.account' => _l10n.gitSshCredentialModeAccount,
+      'git.ssh.credential.mode.deploy' => _l10n.gitSshCredentialModeDeploy,
+      'git.ssh.empty.state' => _l10n.gitSshEmptyState,
+      'git.ssh.host.field' => _l10n.gitSshHostField,
+      'git.ssh.label.field' => _l10n.gitSshLabelField,
+      'git.ssh.mark.registered.button' => _l10n.gitSshMarkRegisteredButton,
+      'git.ssh.no.account.keys.warning' => _l10n.gitSshNoAccountKeysWarning,
+      'git.ssh.port.field' => _l10n.gitSshPortField,
+      'git.ssh.public.key.dialog.body' => _l10n.gitSshPublicKeyDialogBody,
+      'git.ssh.purpose.field' => _l10n.gitSshPurposeField,
+      'git.ssh.remove.access.button' => _l10n.gitSshRemoveAccessButton,
+      'git.ssh.repositories.header' => _l10n.gitSshRepositoriesHeader,
+      'git.ssh.repository.field' => _l10n.gitSshRepositoryField,
+      'git.ssh.screen.title' => _l10n.gitSshScreenTitle,
+      'git.ssh.show.public.key.button' => _l10n.gitSshShowPublicKeyButton,
       'harness.auth.account.login' => _l10n.harnessAuthAccountLogin,
       'harness.auth.api.key' => _l10n.harnessAuthApiKey,
       'harness.auth.cancel' => _l10n.harnessAuthCancel,
@@ -830,6 +852,7 @@ class L10nKeyResolver {
       'settings.logout.confirm.body' => _l10n.settingsLogoutConfirmBody,
       'settings.logout.confirm.title' => _l10n.settingsLogoutConfirmTitle,
       'settings.menu.agent.registry' => _l10n.settingsMenuAgentRegistry,
+      'settings.menu.git.ssh' => _l10n.settingsMenuGitSsh,
       'settings.menu.haptic.feedback' => _l10n.settingsMenuHapticFeedback,
       'settings.menu.harness.connections' => _l10n.settingsMenuHarnessConnections,
       'settings.menu.llm.management' => _l10n.settingsMenuLlmManagement,
@@ -1423,6 +1446,28 @@ class L10nKeyResolver {
     'foss.server.setup.public.key.label',
     'foss.server.setup.test.and.save',
     'foss.server.setup.title',
+    'git.ssh.access.read.only',
+    'git.ssh.access.read.write',
+    'git.ssh.account.keys.header',
+    'git.ssh.add.account.key.button',
+    'git.ssh.add.account.key.title',
+    'git.ssh.add.repository.access.button',
+    'git.ssh.add.repository.access.title',
+    'git.ssh.credential.mode.account',
+    'git.ssh.credential.mode.deploy',
+    'git.ssh.empty.state',
+    'git.ssh.host.field',
+    'git.ssh.label.field',
+    'git.ssh.mark.registered.button',
+    'git.ssh.no.account.keys.warning',
+    'git.ssh.port.field',
+    'git.ssh.public.key.dialog.body',
+    'git.ssh.purpose.field',
+    'git.ssh.remove.access.button',
+    'git.ssh.repositories.header',
+    'git.ssh.repository.field',
+    'git.ssh.screen.title',
+    'git.ssh.show.public.key.button',
     'harness.auth.account',
     'harness.auth.account.login',
     'harness.auth.api.key',
@@ -1990,6 +2035,7 @@ class L10nKeyResolver {
     'settings.logout.confirm.body',
     'settings.logout.confirm.title',
     'settings.menu.agent.registry',
+    'settings.menu.git.ssh',
     'settings.menu.haptic.feedback',
     'settings.menu.harness.connections',
     'settings.menu.llm.management',
@@ -2498,6 +2544,28 @@ class L10nKeyResolver {
     'fossServerSetupPublicKeyLabel': 'foss.server.setup.public.key.label',
     'fossServerSetupTestAndSave': 'foss.server.setup.test.and.save',
     'fossServerSetupTitle': 'foss.server.setup.title',
+    'gitSshAccessReadOnly': 'git.ssh.access.read.only',
+    'gitSshAccessReadWrite': 'git.ssh.access.read.write',
+    'gitSshAccountKeysHeader': 'git.ssh.account.keys.header',
+    'gitSshAddAccountKeyButton': 'git.ssh.add.account.key.button',
+    'gitSshAddAccountKeyTitle': 'git.ssh.add.account.key.title',
+    'gitSshAddRepositoryAccessButton': 'git.ssh.add.repository.access.button',
+    'gitSshAddRepositoryAccessTitle': 'git.ssh.add.repository.access.title',
+    'gitSshCredentialModeAccount': 'git.ssh.credential.mode.account',
+    'gitSshCredentialModeDeploy': 'git.ssh.credential.mode.deploy',
+    'gitSshEmptyState': 'git.ssh.empty.state',
+    'gitSshHostField': 'git.ssh.host.field',
+    'gitSshLabelField': 'git.ssh.label.field',
+    'gitSshMarkRegisteredButton': 'git.ssh.mark.registered.button',
+    'gitSshNoAccountKeysWarning': 'git.ssh.no.account.keys.warning',
+    'gitSshPortField': 'git.ssh.port.field',
+    'gitSshPublicKeyDialogBody': 'git.ssh.public.key.dialog.body',
+    'gitSshPurposeField': 'git.ssh.purpose.field',
+    'gitSshRemoveAccessButton': 'git.ssh.remove.access.button',
+    'gitSshRepositoriesHeader': 'git.ssh.repositories.header',
+    'gitSshRepositoryField': 'git.ssh.repository.field',
+    'gitSshScreenTitle': 'git.ssh.screen.title',
+    'gitSshShowPublicKeyButton': 'git.ssh.show.public.key.button',
     'harnessAuthAccount': 'harness.auth.account',
     'harnessAuthAccountLogin': 'harness.auth.account.login',
     'harnessAuthApiKey': 'harness.auth.api.key',
@@ -3065,6 +3133,7 @@ class L10nKeyResolver {
     'settingsLogoutConfirmBody': 'settings.logout.confirm.body',
     'settingsLogoutConfirmTitle': 'settings.logout.confirm.title',
     'settingsMenuAgentRegistry': 'settings.menu.agent.registry',
+    'settingsMenuGitSsh': 'settings.menu.git.ssh',
     'settingsMenuHapticFeedback': 'settings.menu.haptic.feedback',
     'settingsMenuHarnessConnections': 'settings.menu.harness.connections',
     'settingsMenuLlmManagement': 'settings.menu.llm.management',
@@ -3570,6 +3639,28 @@ class L10nKeyResolver {
     'foss.server.setup.public.key.label': 'fossServerSetupPublicKeyLabel',
     'foss.server.setup.test.and.save': 'fossServerSetupTestAndSave',
     'foss.server.setup.title': 'fossServerSetupTitle',
+    'git.ssh.access.read.only': 'gitSshAccessReadOnly',
+    'git.ssh.access.read.write': 'gitSshAccessReadWrite',
+    'git.ssh.account.keys.header': 'gitSshAccountKeysHeader',
+    'git.ssh.add.account.key.button': 'gitSshAddAccountKeyButton',
+    'git.ssh.add.account.key.title': 'gitSshAddAccountKeyTitle',
+    'git.ssh.add.repository.access.button': 'gitSshAddRepositoryAccessButton',
+    'git.ssh.add.repository.access.title': 'gitSshAddRepositoryAccessTitle',
+    'git.ssh.credential.mode.account': 'gitSshCredentialModeAccount',
+    'git.ssh.credential.mode.deploy': 'gitSshCredentialModeDeploy',
+    'git.ssh.empty.state': 'gitSshEmptyState',
+    'git.ssh.host.field': 'gitSshHostField',
+    'git.ssh.label.field': 'gitSshLabelField',
+    'git.ssh.mark.registered.button': 'gitSshMarkRegisteredButton',
+    'git.ssh.no.account.keys.warning': 'gitSshNoAccountKeysWarning',
+    'git.ssh.port.field': 'gitSshPortField',
+    'git.ssh.public.key.dialog.body': 'gitSshPublicKeyDialogBody',
+    'git.ssh.purpose.field': 'gitSshPurposeField',
+    'git.ssh.remove.access.button': 'gitSshRemoveAccessButton',
+    'git.ssh.repositories.header': 'gitSshRepositoriesHeader',
+    'git.ssh.repository.field': 'gitSshRepositoryField',
+    'git.ssh.screen.title': 'gitSshScreenTitle',
+    'git.ssh.show.public.key.button': 'gitSshShowPublicKeyButton',
     'harness.auth.account': 'harnessAuthAccount',
     'harness.auth.account.login': 'harnessAuthAccountLogin',
     'harness.auth.api.key': 'harnessAuthApiKey',
@@ -4137,6 +4228,7 @@ class L10nKeyResolver {
     'settings.logout.confirm.body': 'settingsLogoutConfirmBody',
     'settings.logout.confirm.title': 'settingsLogoutConfirmTitle',
     'settings.menu.agent.registry': 'settingsMenuAgentRegistry',
+    'settings.menu.git.ssh': 'settingsMenuGitSsh',
     'settings.menu.haptic.feedback': 'settingsMenuHapticFeedback',
     'settings.menu.harness.connections': 'settingsMenuHarnessConnections',
     'settings.menu.llm.management': 'settingsMenuLlmManagement',
@@ -4649,6 +4741,28 @@ abstract class L10nKeys {
   static const fossServerSetupPublicKeyLabel = 'foss.server.setup.public.key.label';
   static const fossServerSetupTestAndSave = 'foss.server.setup.test.and.save';
   static const fossServerSetupTitle = 'foss.server.setup.title';
+  static const gitSshAccessReadOnly = 'git.ssh.access.read.only';
+  static const gitSshAccessReadWrite = 'git.ssh.access.read.write';
+  static const gitSshAccountKeysHeader = 'git.ssh.account.keys.header';
+  static const gitSshAddAccountKeyButton = 'git.ssh.add.account.key.button';
+  static const gitSshAddAccountKeyTitle = 'git.ssh.add.account.key.title';
+  static const gitSshAddRepositoryAccessButton = 'git.ssh.add.repository.access.button';
+  static const gitSshAddRepositoryAccessTitle = 'git.ssh.add.repository.access.title';
+  static const gitSshCredentialModeAccount = 'git.ssh.credential.mode.account';
+  static const gitSshCredentialModeDeploy = 'git.ssh.credential.mode.deploy';
+  static const gitSshEmptyState = 'git.ssh.empty.state';
+  static const gitSshHostField = 'git.ssh.host.field';
+  static const gitSshLabelField = 'git.ssh.label.field';
+  static const gitSshMarkRegisteredButton = 'git.ssh.mark.registered.button';
+  static const gitSshNoAccountKeysWarning = 'git.ssh.no.account.keys.warning';
+  static const gitSshPortField = 'git.ssh.port.field';
+  static const gitSshPublicKeyDialogBody = 'git.ssh.public.key.dialog.body';
+  static const gitSshPurposeField = 'git.ssh.purpose.field';
+  static const gitSshRemoveAccessButton = 'git.ssh.remove.access.button';
+  static const gitSshRepositoriesHeader = 'git.ssh.repositories.header';
+  static const gitSshRepositoryField = 'git.ssh.repository.field';
+  static const gitSshScreenTitle = 'git.ssh.screen.title';
+  static const gitSshShowPublicKeyButton = 'git.ssh.show.public.key.button';
   static (String, Map<String, dynamic>) harnessAuthAccount(String account, String visibility) => ('harness.auth.account', {'account': account, 'visibility': visibility});
   static const harnessAuthAccountLogin = 'harness.auth.account.login';
   static const harnessAuthApiKey = 'harness.auth.api.key';
@@ -5216,6 +5330,7 @@ abstract class L10nKeys {
   static const settingsLogoutConfirmBody = 'settings.logout.confirm.body';
   static const settingsLogoutConfirmTitle = 'settings.logout.confirm.title';
   static const settingsMenuAgentRegistry = 'settings.menu.agent.registry';
+  static const settingsMenuGitSsh = 'settings.menu.git.ssh';
   static const settingsMenuHapticFeedback = 'settings.menu.haptic.feedback';
   static const settingsMenuHarnessConnections = 'settings.menu.harness.connections';
   static const settingsMenuLlmManagement = 'settings.menu.llm.management';

@@ -40,6 +40,8 @@ import 'package:pocketcoder_flutter/application/files/file_browser_cubit.dart'
     as _i110;
 import 'package:pocketcoder_flutter/application/files/file_viewer_cubit.dart'
     as _i90;
+import 'package:pocketcoder_flutter/application/git_ssh/git_ssh_cubit.dart'
+    as _i918;
 import 'package:pocketcoder_flutter/application/harness_auth/harness_auth_cubit.dart'
     as _i681;
 import 'package:pocketcoder_flutter/application/mcp/mcp_cubit.dart' as _i328;
@@ -88,6 +90,8 @@ import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.d
     as _i220;
 import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart'
     as _i209;
+import 'package:pocketcoder_flutter/domain/git_ssh/i_git_ssh_repository.dart'
+    as _i877;
 import 'package:pocketcoder_flutter/domain/harness_auth/i_harness_auth_repository.dart'
     as _i14;
 import 'package:pocketcoder_flutter/domain/healthcheck/i_healthcheck_repository.dart'
@@ -192,6 +196,8 @@ import 'package:pocketcoder_flutter/infrastructure/files/files_repository.dart'
     as _i369;
 import 'package:pocketcoder_flutter/infrastructure/git/git_ssh_daos.dart'
     as _i920;
+import 'package:pocketcoder_flutter/infrastructure/git/git_ssh_repository.dart'
+    as _i799;
 import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_account_daos.dart'
     as _i730;
 import 'package:pocketcoder_flutter/infrastructure/harness_auth/harness_auth_repository.dart'
@@ -463,6 +469,10 @@ extension GetItInjectableX on _i174.GetIt {
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),
             ));
+    gh.lazySingleton<_i877.IGitSshRepository>(() => _i799.GitSshRepository(
+          gh<_i920.GitSshCredentialDao>(),
+          gh<_i920.GitRepositoryAccessDao>(),
+        ));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
           httpClient: gh<_i519.Client>(),
@@ -536,6 +546,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i490.SchedulerCubit(gh<_i470.ISchedulerRepository>()));
     gh.factory<_i614.ReleaseStatusCubit>(() =>
         _i614.ReleaseStatusCubit(gh<_i472.IServerReleaseStatusService>()));
+    gh.factory<_i918.GitSshCubit>(
+        () => _i918.GitSshCubit(gh<_i877.IGitSshRepository>()));
     gh.lazySingleton<_i422.IProviderRepository>(() => _i549.ProviderRepository(
           gh<_i294.HarnesseDao>(),
           gh<_i294.ModelDao>(),

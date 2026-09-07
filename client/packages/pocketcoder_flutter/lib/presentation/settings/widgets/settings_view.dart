@@ -47,6 +47,7 @@ class SettingsView extends StatelessWidget {
             'configureToolPermissions'
           ),
           (context.l10n.settingsMenuHarnessConnections, 'configureHarnessAuth'),
+          (context.l10n.settingsMenuGitSsh, 'configureGitSsh'),
           (context.l10n.settingsReportAiContentLabel, 'reportAiContent'),
         ]
       ),

@@ -18,6 +18,7 @@ import 'package:pocketcoder_flutter/application/memory/memory_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/pocketbase_inspector/pocketbase_inspector_screen.dart';
 import 'package:pocketcoder_flutter/application/pocketbase_inspector/pocketbase_inspector_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
+import 'package:pocketcoder_flutter/presentation/git_ssh/git_ssh_screen.dart';
 import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/skills/skills_screen.dart';
@@ -274,6 +275,15 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.configureGitSsh,
+        name: RouteNames.configureGitSsh,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const GitSshScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.statusSystemChecks,
         name: RouteNames.statusSystemChecks,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -461,6 +471,7 @@ class AppRoutes {
   static const String configureSkills = '/configure/skills';
   static const String configureScheduler = '/configure/scheduler';
   static const String manageUsers = '/configure/manage-users';
+  static const String configureGitSsh = '/configure/git-ssh';
   static const String configureMcp = '/configure/mcp';
   static const String statusSystemChecks = '/status/system-checks';
   static const String configurePaywall = '/configure/paywall';
@@ -513,6 +524,7 @@ class RouteNames {
   static const String configureSkills = 'configureSkills';
   static const String configureScheduler = 'configureScheduler';
   static const String manageUsers = 'manageUsers';
+  static const String configureGitSsh = 'configureGitSsh';
   static const String configureMcp = 'configureMcp';
   static const String statusSystemChecks = 'statusSystemChecks';
   static const String configurePaywall = 'configurePaywall';

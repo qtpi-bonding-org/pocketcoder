@@ -63,6 +63,15 @@ class ToolPermissionsException extends DomainException {
       ToolPermissionsException('Failed to update tool permissions', cause);
 }
 
+class GitSshException extends DomainException {
+  GitSshException(super.message, [super.cause]);
+
+  factory GitSshException.fetchFailed([dynamic cause]) =>
+      GitSshException('Failed to fetch git SSH access', cause);
+  factory GitSshException.saveFailed([dynamic cause]) =>
+      GitSshException('Failed to save git SSH access', cause);
+}
+
 class BillingException extends DomainException {
   BillingException(super.message, [super.cause]);
 

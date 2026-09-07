@@ -792,6 +792,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolPermissionsAddRuleButton => 'add rule';
 
   @override
+  String get gitSshScreenTitle => 'git ssh access';
+
+  @override
+  String get gitSshAccountKeysHeader => 'account keys';
+
+  @override
+  String get gitSshAddAccountKeyButton => 'generate account key';
+
+  @override
+  String get gitSshAddAccountKeyTitle => 'generate account key';
+
+  @override
+  String get gitSshLabelField => 'label';
+
+  @override
+  String get gitSshRepositoriesHeader => 'repository access';
+
+  @override
+  String get gitSshAddRepositoryAccessButton => 'add repository access';
+
+  @override
+  String get gitSshAddRepositoryAccessTitle => 'add repository access';
+
+  @override
+  String get gitSshRepositoryField => 'repository (owner/repo)';
+
+  @override
+  String get gitSshPurposeField => 'purpose';
+
+  @override
+  String get gitSshHostField => 'host';
+
+  @override
+  String get gitSshPortField => 'port';
+
+  @override
+  String get gitSshCredentialModeDeploy => 'new deploy key';
+
+  @override
+  String get gitSshCredentialModeAccount => 'existing account key';
+
+  @override
+  String get gitSshNoAccountKeysWarning => 'generate an account key first';
+
+  @override
+  String get gitSshAccessReadOnly => 'read only';
+
+  @override
+  String get gitSshAccessReadWrite => 'read/write';
+
+  @override
+  String get gitSshEmptyState => 'no keys or repositories yet';
+
+  @override
+  String get gitSshShowPublicKeyButton => 'show public key';
+
+  @override
+  String get gitSshPublicKeyDialogBody =>
+      'add this key to your git host, then come back and confirm below.';
+
+  @override
+  String get gitSshMarkRegisteredButton => 'i\'ve added this key';
+
+  @override
+  String get gitSshRemoveAccessButton => 'remove';
+
+  @override
   String get notificationSettingsScreenTitle => 'notifications';
 
   @override
@@ -1003,6 +1070,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsMenuHarnessConnections => 'harness connections';
+
+  @override
+  String get settingsMenuGitSsh => 'git ssh access';
 
   @override
   String get settingsMenuSystemChecks => 'system checks';
