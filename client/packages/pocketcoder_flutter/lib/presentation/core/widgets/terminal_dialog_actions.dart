@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/grid_wrap.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 
 class TerminalActionSpec {
@@ -17,7 +18,7 @@ class TerminalDialogActions extends StatelessWidget {
   final List<TerminalActionSpec> actions;
 
   @override
-  Widget build(BuildContext context) => Wrap(
+  Widget build(BuildContext context) => GridWrap(
         alignment: WrapAlignment.center,
         spacing: AppSizes.space * 2,
         runSpacing: AppSizes.space,

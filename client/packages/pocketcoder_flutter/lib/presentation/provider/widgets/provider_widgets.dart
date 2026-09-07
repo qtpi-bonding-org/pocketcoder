@@ -110,7 +110,6 @@ class ProviderKeyEditorDialogState extends State<ProviderKeyEditorDialog> {
               label: context.l10n.actionCancel,
               kind: ActionKind.neutral,
               onTap: () => Navigator.of(context).pop()),
-          HSpace.x2,
           TerminalButton(label: context.l10n.actionSave, onTap: _handleSave),
         ]);
   }

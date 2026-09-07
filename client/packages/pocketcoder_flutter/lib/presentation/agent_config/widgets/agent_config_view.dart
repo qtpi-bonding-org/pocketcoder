@@ -138,7 +138,6 @@ class AgentConfigView extends StatelessWidget {
                       label: dialogContext.l10n.actionCancel,
                       kind: ActionKind.neutral,
                       onTap: () => Navigator.of(confirmContext).pop(false)),
-                  HSpace.x2,
                   TerminalButton(
                       label: dialogContext.l10n.agentConfigDelete,
                       onTap: () => Navigator.of(confirmContext).pop(true)),
