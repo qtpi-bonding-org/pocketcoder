@@ -78,3 +78,20 @@ req = urllib.request.Request(
 with urllib.request.urlopen(req) as resp:
     print("saved provider_api_keys record:", json.load(resp)["id"])
 '
+
+# A running harness container has this credential baked into its env at
+# creation time and is never live-updated -- if one is already up for this
+# user+harness from before, the fresh credential above would silently
+# never reach it. Clear it so the next test run provisions fresh.
+STALE=$(curl -fsS "$PB_URL/api/collections/harness_instances/records?filter=user='$USER_ID'%20%26%26%20harness='$HARNESS_ID'" \
+  -H "Authorization: $SUPERUSER_TOKEN")
+python3 -c 'import json,sys
+for i in json.load(sys.stdin)["items"]: print(i["id"], i.get("container_name",""))' <<EOF |
+$STALE
+EOF
+while read -r instance_id container_name; do
+  [ -n "$container_name" ] && docker rm -f "$container_name" >/dev/null 2>&1
+  curl -fsS -X DELETE "$PB_URL/api/collections/harness_instances/records/$instance_id" \
+    -H "Authorization: $SUPERUSER_TOKEN" >/dev/null
+  echo "cleared stale harness instance: $instance_id ($container_name)"
+done
