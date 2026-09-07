@@ -109,7 +109,8 @@ class _ChatViewState extends State<ChatView> {
   }
 
   void _logWidgetMessageOrder(String trigger) {
-    final messages = ag_ui_widgets.timelineToMessages(widget.conversation.timeline);
+    final messages =
+        ag_ui_widgets.timelineToMessages(widget.conversation.timeline);
     logDebug('🖼️ [ChatView] widget message order', {
       'trigger': trigger,
       'wallClock': DateTime.now().toIso8601String(),
@@ -319,27 +320,30 @@ class _ChatViewState extends State<ChatView> {
                     ),
                   ),
                 Expanded(
-                  child: ag_ui_widgets.AgUiTranscript(
-                    key: _transcriptKey,
-                    conversation: widget.conversation,
-                    currentUserId: 'user',
-                    placement: ag_ui_widgets.ComposerPlacement.inline,
-                    onTapEmptySpace: _inputFocusNode.unfocus,
-                    theme: ag_ui_widgets.ChatTheme.fromThemeData(
-                        Theme.of(context)),
-                    textMessageBuilder: builders.textMessageBuilder,
-                    textStreamMessageBuilder: builders.textStreamMessageBuilder,
-                    toolCallBuilder: builders.toolCallBuilder,
-                    permissionBuilder: builders.permissionBuilder,
-                    elicitationBuilder: builders.elicitationBuilder,
-                    toolRequestBuilder: builders.toolRequestBuilder,
-                    composerBuilder: (context) => ChatComposer(
-                      controller: _inputController,
-                      focusNode: _inputFocusNode,
-                      enabled: !widget.isLoading && widget.chatId != null,
-                      isLoading: widget.isLoading,
-                      onSubmitted: _submit,
-                      onInterrupt: widget.isRunning ? widget.onCancel : null,
+                  child: SelectionArea(
+                    child: ag_ui_widgets.AgUiTranscript(
+                      key: _transcriptKey,
+                      conversation: widget.conversation,
+                      currentUserId: 'user',
+                      placement: ag_ui_widgets.ComposerPlacement.inline,
+                      onTapEmptySpace: _inputFocusNode.unfocus,
+                      theme: ag_ui_widgets.ChatTheme.fromThemeData(
+                          Theme.of(context)),
+                      textMessageBuilder: builders.textMessageBuilder,
+                      textStreamMessageBuilder:
+                          builders.textStreamMessageBuilder,
+                      toolCallBuilder: builders.toolCallBuilder,
+                      permissionBuilder: builders.permissionBuilder,
+                      elicitationBuilder: builders.elicitationBuilder,
+                      toolRequestBuilder: builders.toolRequestBuilder,
+                      composerBuilder: (context) => ChatComposer(
+                        controller: _inputController,
+                        focusNode: _inputFocusNode,
+                        enabled: !widget.isLoading && widget.chatId != null,
+                        isLoading: widget.isLoading,
+                        onSubmitted: _submit,
+                        onInterrupt: widget.isRunning ? widget.onCancel : null,
+                      ),
                     ),
                   ),
                 ),
