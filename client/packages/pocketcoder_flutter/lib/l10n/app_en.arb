@@ -44,6 +44,7 @@
 
   "actionCancel": "cancel",
   "actionSave": "save",
+  "actionDelete": "delete",
   "actionClose": "close",
   "actionDeny": "deny",
   "actionDone": "done",
@@ -344,6 +345,13 @@
   "toolPermissionsAskLabel": "ask",
   "toolPermissionsDenyLabel": "deny",
   "toolPermissionsAddRuleButton": "add rule",
+  "permissionModesRegistry": "permission modes",
+  "permissionModesAddButton": "add mode",
+  "permissionModesDuplicateSourceTitle": "duplicate which mode?",
+  "permissionModesNoModes": "no modes",
+  "permissionModesEditorTitle": "permission mode",
+  "permissionModesNameLabel": "name",
+  "permissionModesDescriptionLabel": "description",
 
   "gitSshScreenTitle": "git ssh access",
   "gitSshAccountKeysHeader": "account keys",

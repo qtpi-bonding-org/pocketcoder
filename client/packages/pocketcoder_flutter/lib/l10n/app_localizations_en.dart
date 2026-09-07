@@ -112,6 +112,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionSave => 'save';
 
   @override
+  String get actionDelete => 'delete';
+
+  @override
   String get actionClose => 'close';
 
   @override
@@ -790,6 +793,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toolPermissionsAddRuleButton => 'add rule';
+
+  @override
+  String get permissionModesRegistry => 'permission modes';
+
+  @override
+  String get permissionModesAddButton => 'add mode';
+
+  @override
+  String get permissionModesDuplicateSourceTitle => 'duplicate which mode?';
+
+  @override
+  String get permissionModesNoModes => 'no modes';
+
+  @override
+  String get permissionModesEditorTitle => 'permission mode';
+
+  @override
+  String get permissionModesNameLabel => 'name';
+
+  @override
+  String get permissionModesDescriptionLabel => 'description';
 
   @override
   String get gitSshScreenTitle => 'git ssh access';
