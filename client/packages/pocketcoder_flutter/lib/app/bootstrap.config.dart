@@ -51,6 +51,8 @@ import 'package:pocketcoder_flutter/application/notifications/notification_rule_
     as _i921;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
     as _i273;
+import 'package:pocketcoder_flutter/application/permission_modes/permission_mode_rules_cubit.dart'
+    as _i643;
 import 'package:pocketcoder_flutter/application/permission_modes/permission_modes_cubit.dart'
     as _i954;
 import 'package:pocketcoder_flutter/application/pocketbase_inspector/pocketbase_inspector_cubit.dart'
@@ -610,6 +612,8 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i34.IChatListRepository>(),
           gh<_i313.SeenMessagesRegistry>(),
         ));
+    gh.factory<_i643.PermissionModeRulesCubit>(() =>
+        _i643.PermissionModeRulesCubit(gh<_i268.IPermissionModeRepository>()));
     gh.factory<_i954.PermissionModesCubit>(() =>
         _i954.PermissionModesCubit(gh<_i268.IPermissionModeRepository>()));
     return this;
