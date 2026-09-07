@@ -1,8 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart' as pocketbase;
+import 'package:pocketbase_drift/pocketbase_drift.dart';
+import 'package:pocketcoder_flutter/domain/models/git_repository_access.dart';
+import 'package:pocketcoder_flutter/infrastructure/git/git_ssh_daos.dart';
+import 'package:pocketcoder_flutter/infrastructure/git/git_ssh_repository.dart';
 
 Future<ProcessResult> _run(String exe, List<String> args,
     {String? input}) async {
@@ -67,6 +73,8 @@ Future<pocketbase.RecordModel> _waitForStatus(
 }
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
   final baseUrl = Platform.environment['PB_URL'] ?? 'http://127.0.0.1:8090';
   final superuserEmail = Platform.environment['POCKETBASE_SUPERUSER_EMAIL'];
   final superuserPassword =
@@ -109,15 +117,37 @@ void main() {
       final userId = user.id;
       addTearDown(() => admin.collection('users').delete(userId));
 
-      final client = pocketbase.PocketBase(baseUrl);
-      await client.collection('users').authWithPassword(email, password);
+      final verifyClient = pocketbase.PocketBase(baseUrl);
+      await verifyClient.collection('users').authWithPassword(email, password);
+      final token = verifyClient.authStore.token;
+      final authRecord = verifyClient.authStore.record;
 
-      final accountCred =
-          await client.collection('git_ssh_credentials').create(body: {
-        'user': userId,
-        'label': 'e2e account key',
-        'kind': 'account',
-      });
+      final store = $AuthStore(save: (_) async {});
+      store.save(token, authRecord);
+      final client = $PocketBase.database(
+        baseUrl,
+        inMemory: true,
+        authStore: store,
+        requestPolicy: RequestPolicy.networkFirst,
+      );
+      addTearDown(client.close);
+      final schemaJson = await rootBundle.loadString('assets/pb_schema.json');
+      final decoded = jsonDecode(schemaJson);
+      final schemaList =
+          decoded is Map ? decoded['items'] as List<dynamic> : decoded as List<dynamic>;
+      await client.setSchema(jsonEncode(schemaList));
+
+      final repo = GitSshRepository(
+        GitSshCredentialDao(client),
+        GitRepositoryAccessDao(client),
+        client,
+      );
+
+      await repo.createAccountKey('e2e account key');
+      final accountCred = (await client
+              .collection('git_ssh_credentials')
+              .getFullList(filter: "user = '$userId'"))
+          .single;
       final readyAccount = await _waitForStatus(client, 'git_ssh_credentials',
           accountCred.id, 'status', {'ready', 'error'});
       expect(readyAccount.get<String>('status'), 'ready',
@@ -132,15 +162,17 @@ void main() {
           reason: 'expected keys/${accountCred.id} in docker volume $volume');
       expect(firstKeyFile, contains('PRIVATE KEY'));
 
-      final githubAccess =
-          await client.collection('git_repository_access').create(body: {
-        'user': userId,
-        'provider': 'github',
-        'repository': 'octocat/hello-world',
-        'purpose': 'e2e deploy key',
-        'credential_mode': 'generated_deploy',
-        'requested_access': 'read_only',
-      });
+      await repo.addRepositoryAccess(
+        provider: GitRepositoryAccessProvider.github,
+        repository: 'octocat/hello-world',
+        purpose: 'e2e deploy key',
+        credentialMode: GitRepositoryAccessCredentialMode.generatedDeploy,
+        requestedAccess: GitRepositoryAccessRequestedAccess.readOnly,
+      );
+      final githubAccess = await client
+          .collection('git_repository_access')
+          .getFirstListItem(
+              "user = '$userId' && repository = 'octocat/hello-world'");
       final readyGithubAccess = await _waitForStatus(client,
           'git_repository_access', githubAccess.id, 'status', {'ready', 'error'});
       expect(readyGithubAccess.get<String>('status'), 'ready',
@@ -198,18 +230,19 @@ void main() {
       }
       expect(hostPort, isNotNull, reason: 'sshd never came up in $sshdName');
 
-      final customAccess =
-          await client.collection('git_repository_access').create(body: {
-        'user': userId,
-        'provider': 'custom',
-        'repository': 'e2e/repo',
-        'purpose': 'e2e custom host',
-        'credential_mode': 'existing_account',
-        'credential': accountCred.id,
-        'requested_access': 'read_only',
-        'host': sshdName,
-        'port': 22,
-      });
+      await repo.addRepositoryAccess(
+        provider: GitRepositoryAccessProvider.custom,
+        repository: 'e2e/repo',
+        purpose: 'e2e custom host',
+        credentialMode: GitRepositoryAccessCredentialMode.existingAccount,
+        credential: accountCred.id,
+        requestedAccess: GitRepositoryAccessRequestedAccess.readOnly,
+        host: sshdName,
+        port: 22,
+      );
+      final customAccess = await client
+          .collection('git_repository_access')
+          .getFirstListItem("user = '$userId' && repository = 'e2e/repo'");
       final readyCustomAccess = await _waitForStatus(client,
           'git_repository_access', customAccess.id, 'status', {'ready', 'error'});
       expect(readyCustomAccess.get<String>('status'), 'ready',
