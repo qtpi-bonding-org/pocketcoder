@@ -130,3 +130,22 @@ func TestAgentSessionsUniqueIndexes(t *testing.T) {
 		t.Fatal("expected unique-index violation for duplicate chat")
 	}
 }
+
+func TestUsersCollectionGrantsAdminManageAccess(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	usersCol, err := app.FindCollectionByNameOrId("users")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if usersCol.ManageRule == nil {
+		t.Fatal("users.manageRule must not be nil -- an app-level admin needs manage access to reset another user's password without supplying their oldPassword (see forms/record_upsert.go)")
+	}
+	if *usersCol.ManageRule != "@request.auth.role = 'admin'" {
+		t.Errorf("users.manageRule = %q, want %q", *usersCol.ManageRule, "@request.auth.role = 'admin'")
+	}
+}

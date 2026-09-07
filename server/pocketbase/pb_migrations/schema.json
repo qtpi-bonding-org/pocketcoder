@@ -157,7 +157,7 @@
     "updated": "2026-07-24 05:34:49.744Z",
     "system": false,
     "authRule": "",
-    "manageRule": null,
+    "manageRule": "@request.auth.role = 'admin'",
     "authAlert": {
       "enabled": true,
       "emailTemplate": {
