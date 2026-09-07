@@ -227,6 +227,22 @@ class HarnessTest {
   late final FakeHarness harness;
   late final GoRouter router;
   late final BootRoutingDecider decider;
+  /// Every route the router settled on, in order, without consecutive
+  /// duplicates. This is the observable behaviour the migration must preserve.
+  final List<String> journey = <String>[];
+
+  void _recordJourney() {
+    final String? name;
+    try {
+      name = router.state.name;
+    } on StateError {
+      return;
+    }
+    if (name == null) return;
+    if (journey.isNotEmpty && journey.last == name) return;
+    journey.add(name);
+  }
+
   HarnessTest(
       {ServerReadinessStatus status = ServerReadinessStatus.ready,
       String? instanceId,
@@ -240,6 +256,8 @@ class HarnessTest {
     auth = AuthSessionCoordinator(authRepository);
     harness = FakeHarness(connected: harnessConnected);
     router = makeRouter();
+    router.routerDelegate.addListener(_recordJourney);
+    _recordJourney();
     decider = BootRoutingDecider(
         readinessCheck: readiness,
         authCoordinator: auth,
