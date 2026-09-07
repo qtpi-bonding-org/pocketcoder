@@ -367,6 +367,12 @@ void main() {
     final t = HarnessTest(instanceId: 'i', deploymentAuthStatus: authStatus);
     await t.start(tester);
     expect(t.router.state.name, RouteNames.boot);
+
+    // The boot floor is a deadline armed at launch, so it is still pending
+    // here. Letting it elapse must shake nothing loose: Q2 is held by the
+    // in-flight deployment auth, not by the floor.
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
+    expect(t.router.state.name, RouteNames.boot);
   });
 
   testWidgets('deployment auth completion wakes a held reconcile',
@@ -567,6 +573,11 @@ void main() {
       'navigation yet, not a guess to be corrected later', (tester) async {
     final t = HarnessTest(status: ServerReadinessStatus.resolving);
     await t.start(tester);
+    expect(t.router.state.name, RouteNames.boot);
+
+    // The floor elapsing is not an answer to Q1. Resolving still means wait,
+    // so the boot screen holds rather than guessing at a destination.
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
     expect(t.router.state.name, RouteNames.boot);
   });
   testWidgets(
