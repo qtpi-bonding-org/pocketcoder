@@ -56,6 +56,7 @@ func matchesAuthFailureMarker(err error) bool {
 		"reauthenticate",
 		"re-authenticate",
 		"invalid api key",
+		"incorrect api key",
 		"invalid token",
 		"token expired",
 		"unauthorized",
