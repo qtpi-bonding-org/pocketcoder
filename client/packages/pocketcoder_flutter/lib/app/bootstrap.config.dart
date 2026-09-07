@@ -460,6 +460,11 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i300.AgentActionsApi>(
         () => _i300.AgentActionsApi(gh<_i935.PocketCoderApiClient>()));
+    gh.lazySingleton<_i877.IGitSshRepository>(() => _i799.GitSshRepository(
+          gh<_i920.GitSshCredentialDao>(),
+          gh<_i920.GitRepositoryAccessDao>(),
+          gh<_i169.PocketBase>(),
+        ));
     gh.lazySingleton<_i1033.IReleaseContentService>(
         () => _i456.ReleaseContentService(
               gh<_i519.Client>(),
@@ -469,10 +474,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),
             ));
-    gh.lazySingleton<_i877.IGitSshRepository>(() => _i799.GitSshRepository(
-          gh<_i920.GitSshCredentialDao>(),
-          gh<_i920.GitRepositoryAccessDao>(),
-        ));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
           httpClient: gh<_i519.Client>(),

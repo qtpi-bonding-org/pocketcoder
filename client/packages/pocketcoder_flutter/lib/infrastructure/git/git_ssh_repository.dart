@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/git_ssh/i_git_ssh_repository.dart';
@@ -10,8 +11,14 @@ import 'git_ssh_daos.dart';
 class GitSshRepository implements IGitSshRepository {
   final GitSshCredentialDao _credentialDao;
   final GitRepositoryAccessDao _accessDao;
+  final PocketBase _pb;
 
-  GitSshRepository(this._credentialDao, this._accessDao);
+  GitSshRepository(this._credentialDao, this._accessDao, this._pb);
+
+  // Required by the collections' own create rules (evaluated against the
+  // submitted payload, not the record the hook later overwrites it onto).
+  String get _ownUserId => requireNonNull(
+      _pb.authStore.record?.id, 'authenticated user id', GitSshException.new);
 
   @override
   Stream<List<GitSshCredential>> watchCredentials() =>
@@ -26,6 +33,7 @@ class GitSshRepository implements IGitSshRepository {
     return tryMethod(
       () async {
         await _credentialDao.save(null, {
+          'user': _ownUserId,
           'label': label,
           'kind': 'account',
           'source': 'generated',
@@ -51,6 +59,7 @@ class GitSshRepository implements IGitSshRepository {
     return tryMethod(
       () async {
         await _accessDao.save(null, {
+          'user': _ownUserId,
           'provider': _providerValue(provider),
           'repository': repository,
           'purpose': purpose,

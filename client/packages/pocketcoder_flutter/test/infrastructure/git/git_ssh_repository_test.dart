@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/models/git_repository_access.dart';
 import 'package:pocketcoder_flutter/domain/models/git_ssh_credential.dart';
@@ -11,9 +12,15 @@ class MockGitSshCredentialDao extends Mock implements GitSshCredentialDao {}
 class MockGitRepositoryAccessDao extends Mock
     implements GitRepositoryAccessDao {}
 
+class MockPocketBase extends Mock implements PocketBase {}
+
+class MockAuthStore extends Mock implements AuthStore {}
+
 class _FakeCredential extends Fake implements GitSshCredential {}
 
 class _FakeAccess extends Fake implements GitRepositoryAccess {}
+
+const _ownUserId = 'user-1';
 
 void main() {
   late GitSshRepository repo;
@@ -27,7 +34,12 @@ void main() {
   setUp(() {
     credentialDao = MockGitSshCredentialDao();
     accessDao = MockGitRepositoryAccessDao();
-    repo = GitSshRepository(credentialDao, accessDao);
+    final authStore = MockAuthStore();
+    when(() => authStore.record)
+        .thenReturn(RecordModel.fromJson({'id': _ownUserId}));
+    final pb = MockPocketBase();
+    when(() => pb.authStore).thenReturn(authStore);
+    repo = GitSshRepository(credentialDao, accessDao, pb);
   });
 
   group('GitSshRepository.createAccountKey', () {
@@ -38,6 +50,7 @@ void main() {
       await repo.createAccountKey('my laptop key');
 
       verify(() => credentialDao.save(null, {
+            'user': _ownUserId,
             'label': 'my laptop key',
             'kind': 'account',
             'source': 'generated',
@@ -70,6 +83,7 @@ void main() {
       );
 
       verify(() => accessDao.save(null, {
+            'user': _ownUserId,
             'provider': 'github',
             'repository': 'octo/hello',
             'purpose': 'push CI fixes',
@@ -93,6 +107,7 @@ void main() {
       );
 
       verify(() => accessDao.save(null, {
+            'user': _ownUserId,
             'provider': 'custom',
             'repository': 'org/repo',
             'purpose': 'clone my self-hosted repo',
@@ -117,6 +132,7 @@ void main() {
       );
 
       verify(() => accessDao.save(null, {
+            'user': _ownUserId,
             'provider': 'gitlab',
             'repository': 'org/repo',
             'purpose': 'read the repo',
