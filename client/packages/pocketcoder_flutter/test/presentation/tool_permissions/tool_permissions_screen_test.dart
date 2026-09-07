@@ -31,6 +31,7 @@ void main() {
             pattern: '.*',
             action: ToolPermissionAction.allow,
             active: true,
+            permissionMode: 'mode-1',
           ),
         ],
       ),

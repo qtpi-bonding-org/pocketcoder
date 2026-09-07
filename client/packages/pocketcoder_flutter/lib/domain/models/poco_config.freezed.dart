@@ -16,6 +16,8 @@ T _$identity<T>(T value) => value;
 mixin _$PocoConfig {
   String get id;
   String get name;
+  String? get user;
+  bool? get isSystem;
   String? get systemPrompt;
   dynamic get workspaceFolders;
   dynamic get acpMcpServers;
@@ -39,6 +41,9 @@ mixin _$PocoConfig {
             other is PocoConfig &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
+            (identical(other.user, user) || other.user == user) &&
+            (identical(other.isSystem, isSystem) ||
+                other.isSystem == isSystem) &&
             (identical(other.systemPrompt, systemPrompt) ||
                 other.systemPrompt == systemPrompt) &&
             const DeepCollectionEquality()
@@ -57,6 +62,8 @@ mixin _$PocoConfig {
       runtimeType,
       id,
       name,
+      user,
+      isSystem,
       systemPrompt,
       const DeepCollectionEquality().hash(workspaceFolders),
       const DeepCollectionEquality().hash(acpMcpServers),
@@ -65,7 +72,7 @@ mixin _$PocoConfig {
 
   @override
   String toString() {
-    return 'PocoConfig(id: $id, name: $name, systemPrompt: $systemPrompt, workspaceFolders: $workspaceFolders, acpMcpServers: $acpMcpServers, isDefault: $isDefault, permissionMode: $permissionMode)';
+    return 'PocoConfig(id: $id, name: $name, user: $user, isSystem: $isSystem, systemPrompt: $systemPrompt, workspaceFolders: $workspaceFolders, acpMcpServers: $acpMcpServers, isDefault: $isDefault, permissionMode: $permissionMode)';
   }
 }
 
@@ -78,6 +85,8 @@ abstract mixin class $PocoConfigCopyWith<$Res> {
   $Res call(
       {String id,
       String name,
+      String? user,
+      bool? isSystem,
       String? systemPrompt,
       dynamic workspaceFolders,
       dynamic acpMcpServers,
@@ -99,6 +108,8 @@ class _$PocoConfigCopyWithImpl<$Res> implements $PocoConfigCopyWith<$Res> {
   $Res call({
     Object? id = null,
     Object? name = null,
+    Object? user = freezed,
+    Object? isSystem = freezed,
     Object? systemPrompt = freezed,
     Object? workspaceFolders = freezed,
     Object? acpMcpServers = freezed,
@@ -114,6 +125,14 @@ class _$PocoConfigCopyWithImpl<$Res> implements $PocoConfigCopyWith<$Res> {
           ? _self.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
+      user: freezed == user
+          ? _self.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isSystem: freezed == isSystem
+          ? _self.isSystem
+          : isSystem // ignore: cast_nullable_to_non_nullable
+              as bool?,
       systemPrompt: freezed == systemPrompt
           ? _self.systemPrompt
           : systemPrompt // ignore: cast_nullable_to_non_nullable
@@ -234,6 +253,8 @@ extension PocoConfigPatterns on PocoConfig {
     TResult Function(
             String id,
             String name,
+            String? user,
+            bool? isSystem,
             String? systemPrompt,
             dynamic workspaceFolders,
             dynamic acpMcpServers,
@@ -248,6 +269,8 @@ extension PocoConfigPatterns on PocoConfig {
         return $default(
             _that.id,
             _that.name,
+            _that.user,
+            _that.isSystem,
             _that.systemPrompt,
             _that.workspaceFolders,
             _that.acpMcpServers,
@@ -276,6 +299,8 @@ extension PocoConfigPatterns on PocoConfig {
     TResult Function(
             String id,
             String name,
+            String? user,
+            bool? isSystem,
             String? systemPrompt,
             dynamic workspaceFolders,
             dynamic acpMcpServers,
@@ -289,6 +314,8 @@ extension PocoConfigPatterns on PocoConfig {
         return $default(
             _that.id,
             _that.name,
+            _that.user,
+            _that.isSystem,
             _that.systemPrompt,
             _that.workspaceFolders,
             _that.acpMcpServers,
@@ -316,6 +343,8 @@ extension PocoConfigPatterns on PocoConfig {
     TResult? Function(
             String id,
             String name,
+            String? user,
+            bool? isSystem,
             String? systemPrompt,
             dynamic workspaceFolders,
             dynamic acpMcpServers,
@@ -329,6 +358,8 @@ extension PocoConfigPatterns on PocoConfig {
         return $default(
             _that.id,
             _that.name,
+            _that.user,
+            _that.isSystem,
             _that.systemPrompt,
             _that.workspaceFolders,
             _that.acpMcpServers,
@@ -346,6 +377,8 @@ class _PocoConfig implements PocoConfig {
   const _PocoConfig(
       {required this.id,
       required this.name,
+      this.user,
+      this.isSystem,
       this.systemPrompt,
       this.workspaceFolders,
       this.acpMcpServers,
@@ -358,6 +391,10 @@ class _PocoConfig implements PocoConfig {
   final String id;
   @override
   final String name;
+  @override
+  final String? user;
+  @override
+  final bool? isSystem;
   @override
   final String? systemPrompt;
   @override
@@ -391,6 +428,9 @@ class _PocoConfig implements PocoConfig {
             other is _PocoConfig &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
+            (identical(other.user, user) || other.user == user) &&
+            (identical(other.isSystem, isSystem) ||
+                other.isSystem == isSystem) &&
             (identical(other.systemPrompt, systemPrompt) ||
                 other.systemPrompt == systemPrompt) &&
             const DeepCollectionEquality()
@@ -409,6 +449,8 @@ class _PocoConfig implements PocoConfig {
       runtimeType,
       id,
       name,
+      user,
+      isSystem,
       systemPrompt,
       const DeepCollectionEquality().hash(workspaceFolders),
       const DeepCollectionEquality().hash(acpMcpServers),
@@ -417,7 +459,7 @@ class _PocoConfig implements PocoConfig {
 
   @override
   String toString() {
-    return 'PocoConfig(id: $id, name: $name, systemPrompt: $systemPrompt, workspaceFolders: $workspaceFolders, acpMcpServers: $acpMcpServers, isDefault: $isDefault, permissionMode: $permissionMode)';
+    return 'PocoConfig(id: $id, name: $name, user: $user, isSystem: $isSystem, systemPrompt: $systemPrompt, workspaceFolders: $workspaceFolders, acpMcpServers: $acpMcpServers, isDefault: $isDefault, permissionMode: $permissionMode)';
   }
 }
 
@@ -432,6 +474,8 @@ abstract mixin class _$PocoConfigCopyWith<$Res>
   $Res call(
       {String id,
       String name,
+      String? user,
+      bool? isSystem,
       String? systemPrompt,
       dynamic workspaceFolders,
       dynamic acpMcpServers,
@@ -453,6 +497,8 @@ class __$PocoConfigCopyWithImpl<$Res> implements _$PocoConfigCopyWith<$Res> {
   $Res call({
     Object? id = null,
     Object? name = null,
+    Object? user = freezed,
+    Object? isSystem = freezed,
     Object? systemPrompt = freezed,
     Object? workspaceFolders = freezed,
     Object? acpMcpServers = freezed,
@@ -468,6 +514,14 @@ class __$PocoConfigCopyWithImpl<$Res> implements _$PocoConfigCopyWith<$Res> {
           ? _self.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
+      user: freezed == user
+          ? _self.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isSystem: freezed == isSystem
+          ? _self.isSystem
+          : isSystem // ignore: cast_nullable_to_non_nullable
+              as bool?,
       systemPrompt: freezed == systemPrompt
           ? _self.systemPrompt
           : systemPrompt // ignore: cast_nullable_to_non_nullable

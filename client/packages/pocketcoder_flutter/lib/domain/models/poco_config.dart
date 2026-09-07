@@ -9,6 +9,8 @@ abstract class PocoConfig with _$PocoConfig {
   const factory PocoConfig({
     required String id,
     required String name,
+    String? user,
+    bool? isSystem,
     String? systemPrompt,
     dynamic workspaceFolders,
     dynamic acpMcpServers,
