@@ -51,6 +51,8 @@ import 'package:pocketcoder_flutter/application/notifications/notification_rule_
     as _i921;
 import 'package:pocketcoder_flutter/application/observability/observability_cubit.dart'
     as _i273;
+import 'package:pocketcoder_flutter/application/permission_modes/permission_modes_cubit.dart'
+    as _i954;
 import 'package:pocketcoder_flutter/application/pocketbase_inspector/pocketbase_inspector_cubit.dart'
     as _i939;
 import 'package:pocketcoder_flutter/application/provider/provider_cubit.dart'
@@ -73,8 +75,6 @@ import 'package:pocketcoder_flutter/application/system/poco_cubit.dart'
     as _i992;
 import 'package:pocketcoder_flutter/application/system/status_cubit.dart'
     as _i506;
-import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_cubit.dart'
-    as _i89;
 import 'package:pocketcoder_flutter/application/users/user_management_cubit.dart'
     as _i351;
 import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart'
@@ -111,6 +111,8 @@ import 'package:pocketcoder_flutter/domain/notifications/i_notification_rule_rep
     as _i821;
 import 'package:pocketcoder_flutter/domain/observability/i_observability_repository.dart'
     as _i611;
+import 'package:pocketcoder_flutter/domain/permission_modes/i_permission_mode_repository.dart'
+    as _i268;
 import 'package:pocketcoder_flutter/domain/pocketbase_inspector/i_pocketbase_inspector_repository.dart'
     as _i398;
 import 'package:pocketcoder_flutter/domain/provider/i_provider_repository.dart'
@@ -145,8 +147,6 @@ import 'package:pocketcoder_flutter/domain/system/i_health_repository.dart'
     as _i800;
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart'
     as _i131;
-import 'package:pocketcoder_flutter/domain/tool_permissions/i_tool_permission_repository.dart'
-    as _i767;
 import 'package:pocketcoder_flutter/domain/users/i_user_management_repository.dart'
     as _i1047;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
@@ -229,6 +229,10 @@ import 'package:pocketcoder_flutter/infrastructure/observability/observability_r
     as _i310;
 import 'package:pocketcoder_flutter/infrastructure/ollama/ollama_api.dart'
     as _i810;
+import 'package:pocketcoder_flutter/infrastructure/permission_modes/permission_mode_repository.dart'
+    as _i935;
+import 'package:pocketcoder_flutter/infrastructure/permission_modes/tool_permission_dao.dart'
+    as _i777;
 import 'package:pocketcoder_flutter/infrastructure/pocketbase_inspector/pocketbase_inspector_repository.dart'
     as _i212;
 import 'package:pocketcoder_flutter/infrastructure/provider/provider_daos.dart'
@@ -263,10 +267,6 @@ import 'package:pocketcoder_flutter/infrastructure/system/health_daos.dart'
     as _i1065;
 import 'package:pocketcoder_flutter/infrastructure/system/health_repository.dart'
     as _i700;
-import 'package:pocketcoder_flutter/infrastructure/tool_permissions/tool_permission_daos.dart'
-    as _i398;
-import 'package:pocketcoder_flutter/infrastructure/tool_permissions/tool_permission_repository.dart'
-    as _i220;
 import 'package:pocketcoder_flutter/infrastructure/users/user_dao.dart'
     as _i389;
 import 'package:pocketcoder_flutter/infrastructure/users/user_management_repository.dart'
@@ -343,6 +343,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i849.DeviceDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i870.NotificationRuleDao>(
         () => _i870.NotificationRuleDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i777.ToolPermissionDao>(
+        () => _i777.ToolPermissionDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i294.HarnesseDao>(
         () => _i294.HarnesseDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i294.ModelDao>(
@@ -360,8 +362,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i9.SkillDao>(() => _i9.SkillDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i1065.HealthcheckDao>(
         () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
-    gh.lazySingleton<_i398.ToolPermissionDao>(
-        () => _i398.ToolPermissionDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i389.UserDao>(
         () => _i389.UserDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i935.PocketCoderApiClient>(
@@ -527,8 +527,6 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i849.DeviceDao>(),
           gh<_i169.PocketBase>(),
         ));
-    gh.lazySingleton<_i767.IToolPermissionRepository>(
-        () => _i220.ToolPermissionRepository(gh<_i398.ToolPermissionDao>()));
     gh.factory<_i967.HealthCubit>(
         () => _i967.HealthCubit(gh<_i800.IHealthRepository>()));
     gh.factory<_i464.AuthCubit>(() => _i464.AuthCubit(
@@ -596,18 +594,24 @@ extension GetItInjectableX on _i174.GetIt {
           providerRepository: gh<_i422.IProviderRepository>(),
           authRepository: gh<_i14.IHarnessAuthRepository>(),
         ));
-    gh.factory<_i89.ToolPermissionsCubit>(
-        () => _i89.ToolPermissionsCubit(gh<_i767.IToolPermissionRepository>()));
     gh.factory<_i606.ChatListCubit>(
         () => _i606.ChatListCubit(gh<_i34.IChatListRepository>()));
     gh.factory<_i718.ChatMonitoringCubit>(
         () => _i718.ChatMonitoringCubit(gh<_i34.IChatListRepository>()));
+    gh.lazySingleton<_i268.IPermissionModeRepository>(
+        () => _i935.PermissionModeRepository(
+              gh<_i810.PermissionModeDao>(),
+              gh<_i777.ToolPermissionDao>(),
+              gh<_i50.IAuthRepository>(),
+            ));
     gh.factory<_i1066.ChatCubit>(() => _i1066.ChatCubit(
           gh<_i763.AgentChatRepository>(),
           gh<_i72.NetworkRecoverySignal>(),
           gh<_i34.IChatListRepository>(),
           gh<_i313.SeenMessagesRegistry>(),
         ));
+    gh.factory<_i954.PermissionModesCubit>(() =>
+        _i954.PermissionModesCubit(gh<_i268.IPermissionModeRepository>()));
     return this;
   }
 }
