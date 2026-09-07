@@ -1090,7 +1090,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMenuSkills => 'skills';
 
   @override
-  String get settingsMenuToolPermissions => 'tool permissions';
+  String get settingsMenuToolPermissions => 'permission modes';
 
   @override
   String get settingsMenuHarnessConnections => 'harness connections';

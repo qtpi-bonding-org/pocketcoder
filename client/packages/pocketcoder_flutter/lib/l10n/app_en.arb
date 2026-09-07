@@ -458,7 +458,7 @@
   "settingsMenuAgentRegistry": "agent registry",
   "settingsMenuMcpManagement": "MCP management",
   "settingsMenuSkills": "skills",
-  "settingsMenuToolPermissions": "tool permissions",
+  "settingsMenuToolPermissions": "permission modes",
   "settingsMenuHarnessConnections": "harness connections",
   "settingsMenuGitSsh": "git ssh access",
   "settingsMenuSystemChecks": "system checks",

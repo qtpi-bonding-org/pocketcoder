@@ -1,5 +1,6 @@
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
@@ -36,6 +37,7 @@ class PermissionModeRulesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PocketCoderShell(
+        footer: buildPillarFooter(context, NavPillar.config),
         showBack: true,
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

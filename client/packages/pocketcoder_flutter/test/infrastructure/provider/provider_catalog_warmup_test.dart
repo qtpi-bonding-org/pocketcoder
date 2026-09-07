@@ -42,12 +42,6 @@ void main() {
     await pumpEventQueue();
   }
 
-  Future<void> signOut() async {
-    userId = null;
-    changes.add(null);
-    await pumpEventQueue();
-  }
-
   test('signing in warms both catalog fetches', () async {
     final warmup = ProviderCatalogWarmup(coordinator, providerRepository);
     warmup.start();

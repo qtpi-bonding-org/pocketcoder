@@ -19,7 +19,7 @@ import 'package:pocketcoder_flutter/presentation/pocketbase_inspector/pocketbase
 import 'package:pocketcoder_flutter/application/pocketbase_inspector/pocketbase_inspector_cubit.dart';
 import 'package:pocketcoder_flutter/presentation/mcp/mcp_management_screen.dart';
 import 'package:pocketcoder_flutter/presentation/git_ssh/git_ssh_screen.dart';
-import 'package:pocketcoder_flutter/presentation/tool_permissions/tool_permissions_screen.dart';
+import 'package:pocketcoder_flutter/presentation/permission_modes/permission_modes_screen.dart';
 import 'package:pocketcoder_flutter/presentation/notifications/notification_settings_screen.dart';
 import 'package:pocketcoder_flutter/presentation/skills/skills_screen.dart';
 import 'package:pocketcoder_flutter/presentation/scheduler/scheduler_screen.dart';
@@ -235,7 +235,7 @@ class AppRouter {
         pageBuilder: (context, state) => TerminalTransition.buildPage(
           context: context,
           state: state,
-          child: const ToolPermissionsScreen(),
+          child: const PermissionModesScreen(),
         ),
       ),
       GoRoute(

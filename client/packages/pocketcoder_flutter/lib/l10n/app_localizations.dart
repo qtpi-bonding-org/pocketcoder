@@ -2119,7 +2119,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMenuToolPermissions.
   ///
   /// In en, this message translates to:
-  /// **'tool permissions'**
+  /// **'permission modes'**
   String get settingsMenuToolPermissions;
 
   /// No description provided for @settingsMenuHarnessConnections.

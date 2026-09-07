@@ -18,6 +18,8 @@ import 'package:pocketcoder_flutter/design_system/storybook/notification_and_sys
     as _pocketcoder_flutter_design_system_storybook_notification_and_system_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/paywall.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_paywall_stories;
+import 'package:pocketcoder_flutter/design_system/storybook/permission_mode_rules_view.stories.dart'
+    as _pocketcoder_flutter_design_system_storybook_permission_mode_rules_view_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/plan_panel.stories.dart'
     as _pocketcoder_flutter_design_system_storybook_plan_panel_stories;
 import 'package:pocketcoder_flutter/design_system/storybook/poco_value_widget.stories.dart'
@@ -260,6 +262,44 @@ final directories = <_widgetbook.WidgetbookNode>[
                     _pocketcoder_flutter_design_system_storybook_notification_and_system_stories
                         .notificationSettingsLoaded,
               )
+            ],
+          )
+        ],
+      ),
+      _widgetbook.WidgetbookFolder(
+        name: 'permission_modes',
+        children: [
+          _widgetbook.WidgetbookFolder(
+            name: 'widgets',
+            children: [
+              _widgetbook.WidgetbookComponent(
+                name: 'PermissionModeRulesView',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'no rules',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_permission_mode_rules_view_stories
+                            .permissionModeRulesViewEmpty,
+                  ),
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'populated rules',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_permission_mode_rules_view_stories
+                            .permissionModeRulesViewPopulated,
+                  ),
+                ],
+              ),
+              _widgetbook.WidgetbookComponent(
+                name: 'PermissionModesView',
+                useCases: [
+                  _widgetbook.WidgetbookUseCase(
+                    name: 'mode registry',
+                    builder:
+                        _pocketcoder_flutter_design_system_storybook_permission_mode_rules_view_stories
+                            .permissionModesViewPopulated,
+                  )
+                ],
+              ),
             ],
           )
         ],
