@@ -62,6 +62,7 @@ class WelcomeView extends StatelessWidget {
                 TerminalPromptSuggestion(
                   label: context.l10n.onboardingWelcomeActionReset,
                   onSelected: onReset!,
+                  danger: true,
                 ),
               ],
             ],

@@ -193,12 +193,15 @@ class TerminalPromptSuggestion extends StatefulWidget {
     required this.label,
     required this.onSelected,
     this.emphasis,
+    this.danger = false,
   });
 
   final String label;
   final VoidCallback onSelected;
 
   final Emphasis? emphasis;
+
+  final bool danger;
 
   @override
   State<TerminalPromptSuggestion> createState() =>
@@ -210,9 +213,11 @@ class _TerminalPromptSuggestionState extends State<TerminalPromptSuggestion> {
 
   @override
   Widget build(BuildContext context) {
-    final role = (widget.emphasis == Emphasis.outlined
-            ? ActionKind.primary
-            : ActionKind.neutral)
+    final role = (widget.danger
+            ? ActionKind.destructive
+            : widget.emphasis == Emphasis.outlined
+                ? ActionKind.primary
+                : ActionKind.neutral)
         .role;
     final reversed = _pressed;
 

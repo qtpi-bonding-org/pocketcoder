@@ -82,4 +82,32 @@ void main() {
 
     expect(resetCount, 1);
   });
+
+  testWidgets('the reset escape hatch renders as destructive (danger)',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: WelcomeView(
+          showGuidedSetup: true,
+          onGuidedSetup: () {},
+          onSelfHost: () {},
+          showReset: true,
+          onReset: () {},
+        ),
+      ),
+    );
+
+    final resetLabel = AppLocalizations.of(
+        tester.element(find.byType(WelcomeView)))!.onboardingWelcomeActionReset;
+    final resetSuggestion = tester.widget<TerminalPromptSuggestion>(
+      find.ancestor(
+        of: find.text(resetLabel),
+        matching: find.byType(TerminalPromptSuggestion),
+      ),
+    );
+    expect(resetSuggestion.danger, isTrue);
+  });
 }
