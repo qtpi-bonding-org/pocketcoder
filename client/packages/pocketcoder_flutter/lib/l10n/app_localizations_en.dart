@@ -2301,6 +2301,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingWelcomeActionSelfHost => 'I\'ll set it up';
 
   @override
+  String get onboardingWelcomeActionReset => 'Something\'s stuck -- reset';
+
+  @override
+  String get onboardingWelcomeResetConfirmationTitle => 'Reset local state?';
+
+  @override
+  String get onboardingWelcomeResetConfirmationBody =>
+      'This clears any in-progress or stuck deployment state on this device and starts over. It does not delete an existing cloud server.';
+
+  @override
+  String get onboardingWelcomeResetConfirm => 'reset';
+
+  @override
+  String get onboardingWelcomeResetCancel => 'cancel';
+
+  @override
   String get onboardingSelfHostTitle => 'self-host setup';
 
   @override

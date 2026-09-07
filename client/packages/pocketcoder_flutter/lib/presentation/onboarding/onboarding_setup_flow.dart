@@ -13,6 +13,11 @@ abstract interface class OnboardingSetupFlow {
   Future<void> startGuidedSetup(BuildContext context);
 
   void showSelfHostInformation(BuildContext context);
+
+  bool get offersReset;
+
+  /// Must show its own confirmation before actually resetting anything.
+  Future<void> reset(BuildContext context);
 }
 
 class SelfHostedOnboardingSetupFlow implements OnboardingSetupFlow {
@@ -30,4 +35,10 @@ class SelfHostedOnboardingSetupFlow implements OnboardingSetupFlow {
   void showSelfHostInformation(BuildContext context) {
     context.pushNamed(RouteNames.onboardingSelfHost);
   }
+
+  @override
+  bool get offersReset => false;
+
+  @override
+  Future<void> reset(BuildContext context) async {}
 }

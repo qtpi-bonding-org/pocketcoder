@@ -4246,6 +4246,36 @@ abstract class AppLocalizations {
   /// **'I\'ll set it up'**
   String get onboardingWelcomeActionSelfHost;
 
+  /// No description provided for @onboardingWelcomeActionReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Something\'s stuck -- reset'**
+  String get onboardingWelcomeActionReset;
+
+  /// Confirm-dialog title for the welcome screen's escape-hatch reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset local state?'**
+  String get onboardingWelcomeResetConfirmationTitle;
+
+  /// Confirm-dialog body for the welcome screen's escape-hatch reset.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears any in-progress or stuck deployment state on this device and starts over. It does not delete an existing cloud server.'**
+  String get onboardingWelcomeResetConfirmationBody;
+
+  /// Confirm button label for the welcome screen's escape-hatch reset dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'reset'**
+  String get onboardingWelcomeResetConfirm;
+
+  /// Cancel button label for the welcome screen's escape-hatch reset dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'cancel'**
+  String get onboardingWelcomeResetCancel;
+
   /// No description provided for @onboardingSelfHostTitle.
   ///
   /// In en, this message translates to:

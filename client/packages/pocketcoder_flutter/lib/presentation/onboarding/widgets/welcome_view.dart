@@ -13,11 +13,18 @@ class WelcomeView extends StatelessWidget {
     required this.showGuidedSetup,
     required this.onGuidedSetup,
     required this.onSelfHost,
+    this.showReset = false,
+    this.onReset,
   });
 
   final bool showGuidedSetup;
   final VoidCallback onGuidedSetup;
   final VoidCallback onSelfHost;
+
+  /// Welcome screen's escape hatch: only offered by app targets that can
+  /// leave behind a stuck deployment/session state to clear.
+  final bool showReset;
+  final VoidCallback? onReset;
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
@@ -50,6 +57,13 @@ class WelcomeView extends StatelessWidget {
                 label: context.l10n.onboardingWelcomeActionSelfHost,
                 onSelected: onSelfHost,
               ),
+              if (showReset && onReset != null) ...[
+                VSpace.x2,
+                TerminalPromptSuggestion(
+                  label: context.l10n.onboardingWelcomeActionReset,
+                  onSelected: onReset!,
+                ),
+              ],
             ],
           ),
         ),

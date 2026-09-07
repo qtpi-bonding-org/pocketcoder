@@ -38,4 +38,48 @@ void main() {
     );
     expect(selfHostSuggestion.emphasis, isNot(Emphasis.outlined));
   });
+
+  testWidgets('the reset escape hatch is hidden by default', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: WelcomeView(
+          showGuidedSetup: true,
+          onGuidedSetup: () {},
+          onSelfHost: () {},
+        ),
+      ),
+    );
+
+    expect(find.textContaining('reset'), findsNothing);
+  });
+
+  testWidgets(
+      'the reset escape hatch shows and fires onReset when showReset is '
+      'true', (tester) async {
+    var resetCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: WelcomeView(
+          showGuidedSetup: true,
+          onGuidedSetup: () {},
+          onSelfHost: () {},
+          showReset: true,
+          onReset: () => resetCount++,
+        ),
+      ),
+    );
+
+    final resetLabel = AppLocalizations.of(
+        tester.element(find.byType(WelcomeView)))!.onboardingWelcomeActionReset;
+    await tester.tap(find.text(resetLabel));
+    await tester.pump();
+
+    expect(resetCount, 1);
+  });
 }
