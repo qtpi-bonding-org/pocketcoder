@@ -304,6 +304,12 @@ abstract class AppLocalizations {
   /// **'deny'**
   String get actionDeny;
 
+  /// No description provided for @actionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'done'**
+  String get actionDone;
+
   /// No description provided for @actionAuthorize.
   ///
   /// In en, this message translates to:
@@ -1689,6 +1695,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'built-in'**
   String get skillsBuiltInLabel;
+
+  /// No description provided for @settingsMenuManageUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'manage users'**
+  String get settingsMenuManageUsers;
+
+  /// No description provided for @usersScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'manage users'**
+  String get usersScreenTitle;
+
+  /// No description provided for @usersAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'add user'**
+  String get usersAddButton;
+
+  /// No description provided for @usersAddDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'add user'**
+  String get usersAddDialogTitle;
+
+  /// No description provided for @usersEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'email'**
+  String get usersEmailLabel;
+
+  /// No description provided for @usersNoUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'no users yet'**
+  String get usersNoUsers;
+
+  /// No description provided for @usersRevealDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'temporary password'**
+  String get usersRevealDialogTitle;
+
+  /// No description provided for @usersRevealDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'share this password with {email} outside the app -- it will not be shown again.'**
+  String usersRevealDialogBody(String email);
+
+  /// No description provided for @usersResetPasswordButton.
+  ///
+  /// In en, this message translates to:
+  /// **'reset password'**
+  String get usersResetPasswordButton;
+
+  /// No description provided for @usersResetPasswordConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'reset password'**
+  String get usersResetPasswordConfirmTitle;
+
+  /// No description provided for @usersResetPasswordConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'generate a new temporary password for {email}? their current password stops working immediately.'**
+  String usersResetPasswordConfirmBody(String email);
+
+  /// No description provided for @usersDeleteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'delete'**
+  String get usersDeleteButton;
+
+  /// No description provided for @usersDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'delete user'**
+  String get usersDeleteConfirmTitle;
+
+  /// No description provided for @usersDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'permanently delete {email}? this cannot be undone.'**
+  String usersDeleteConfirmBody(String email);
 
   /// No description provided for @schedulerTitle.
   ///

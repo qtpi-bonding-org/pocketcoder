@@ -73,6 +73,8 @@ import 'package:pocketcoder_flutter/application/system/status_cubit.dart'
     as _i506;
 import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_cubit.dart'
     as _i89;
+import 'package:pocketcoder_flutter/application/users/user_management_cubit.dart'
+    as _i351;
 import 'package:pocketcoder_flutter/design_system/theme/theme_service.dart'
     as _i704;
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart'
@@ -141,6 +143,8 @@ import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart'
     as _i131;
 import 'package:pocketcoder_flutter/domain/tool_permissions/i_tool_permission_repository.dart'
     as _i767;
+import 'package:pocketcoder_flutter/domain/users/i_user_management_repository.dart'
+    as _i1047;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_actions_api.dart'
     as _i300;
 import 'package:pocketcoder_flutter/infrastructure/agent/agent_chat_repository.dart'
@@ -257,6 +261,10 @@ import 'package:pocketcoder_flutter/infrastructure/tool_permissions/tool_permiss
     as _i398;
 import 'package:pocketcoder_flutter/infrastructure/tool_permissions/tool_permission_repository.dart'
     as _i220;
+import 'package:pocketcoder_flutter/infrastructure/users/user_dao.dart'
+    as _i389;
+import 'package:pocketcoder_flutter/infrastructure/users/user_management_repository.dart'
+    as _i943;
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart'
     as _i344;
 
@@ -348,6 +356,8 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1065.HealthcheckDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i398.ToolPermissionDao>(
         () => _i398.ToolPermissionDao(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i389.UserDao>(
+        () => _i389.UserDao(gh<_i169.PocketBase>()));
     gh.lazySingleton<_i935.PocketCoderApiClient>(
         () => externalModule.pocketCoderApiClient(
               gh<_i824.PocketBase>(),
@@ -384,6 +394,8 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i398.IPocketbaseInspectorRepository>(
         () => _i212.PocketbaseInspectorRepository(gh<_i169.PocketBase>()));
+    gh.lazySingleton<_i1047.IUserManagementRepository>(
+        () => _i943.UserManagementRepository(gh<_i389.UserDao>()));
     gh.lazySingleton<_i165.ISkillsRepository>(
         () => _i675.SkillsRepository(gh<_i9.SkillDao>()));
     gh.lazySingleton<_i653.ILoadingService>(() => _i976.AppLoadingService());
@@ -392,6 +404,8 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i824.PocketBase>(),
               gh<_i935.PocketCoderApiClient>(),
             ));
+    gh.factory<_i351.UserManagementCubit>(() =>
+        _i351.UserManagementCubit(gh<_i1047.IUserManagementRepository>()));
     gh.lazySingleton<String>(
       () => externalModule.releaseBaseUrl,
       instanceName: 'releaseBaseUrl',

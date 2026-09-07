@@ -37,6 +37,7 @@ class L10nKeyResolver {
       'action.create' => _l10n.actionCreate,
       'action.deny' => _l10n.actionDeny,
       'action.dismiss' => _l10n.actionDismiss,
+      'action.done' => _l10n.actionDone,
       'action.refresh' => _l10n.actionRefresh,
       'action.reject' => _l10n.actionReject,
       'action.restore' => _l10n.actionRestore,
@@ -60,6 +61,8 @@ class L10nKeyResolver {
       'agent.default.tuned' => _l10n.agentDefaultTuned,
       'agent.description.label' => _l10n.agentDescriptionLabel,
       'agent.mode.label' => _l10n.agentModeLabel,
+      'agent.model.search.hint' => _l10n.agentModelSearchHint,
+      'agent.model.search.no.matches' => _l10n.agentModelSearchNoMatches,
       'agent.models.label' => _l10n.agentModelsLabel,
       'agent.models.personas' => _l10n.agentModelsPersonas,
       'agent.name.label' => _l10n.agentNameLabel,
@@ -122,6 +125,9 @@ class L10nKeyResolver {
       'chat.no.fields.requested' => _l10n.chatNoFieldsRequested,
       'chat.not.found' => _l10n.chatNotFound,
       'chat.picker.field.indicator' => _l10n.chatPickerFieldIndicator,
+      'chat.picker.no.matches' => _l10n.chatPickerNoMatches,
+      'chat.picker.search.hint' => _l10n.chatPickerSearchHint,
+      'chat.picker.search.label' => _l10n.chatPickerSearchLabel,
       'chat.poco.prompt' => _l10n.chatPocoPrompt,
       'chat.poco.role' => _l10n.chatPocoRole,
       'chat.run.outcome.cancelled.body' => _l10n.chatRunOutcomeCancelledBody,
@@ -347,6 +353,10 @@ class L10nKeyResolver {
       'home.new.chat' => _l10n.homeNewChat,
       'home.no.chats' => _l10n.homeNoChats,
       'home.title' => _l10n.homeTitle,
+      'initialization.abort.cancel' => _l10n.initializationAbortCancel,
+      'initialization.abort.confirm' => _l10n.initializationAbortConfirm,
+      'initialization.abort.confirmation.body' => _l10n.initializationAbortConfirmationBody,
+      'initialization.abort.confirmation.title' => _l10n.initializationAbortConfirmationTitle,
       'initialization.action.abort' => _l10n.initializationActionAbort,
       'initialization.action.login' => _l10n.initializationActionLogin,
       'initialization.action.retry' => _l10n.initializationActionRetry,
@@ -504,6 +514,7 @@ class L10nKeyResolver {
       'onboarding.email' => _l10n.onboardingEmail,
       'onboarding.email.hint' => _l10n.onboardingEmailHint,
       'onboarding.email.hint.short' => _l10n.onboardingEmailHintShort,
+      'onboarding.email.invalid.format' => _l10n.onboardingEmailInvalidFormat,
       'onboarding.existing.server' => _l10n.onboardingExistingServer,
       'onboarding.failure.action.back.to.setup' => _l10n.onboardingFailureActionBackToSetup,
       'onboarding.failure.action.retry.connection' => _l10n.onboardingFailureActionRetryConnection,
@@ -592,8 +603,13 @@ class L10nKeyResolver {
       'onboarding.trial.chip.not.now' => _l10n.onboardingTrialChipNotNow,
       'onboarding.trial.chip.start' => _l10n.onboardingTrialChipStart,
       'onboarding.welcome.action.guided' => _l10n.onboardingWelcomeActionGuided,
+      'onboarding.welcome.action.reset' => _l10n.onboardingWelcomeActionReset,
       'onboarding.welcome.action.self.host' => _l10n.onboardingWelcomeActionSelfHost,
       'onboarding.welcome.poco' => _l10n.onboardingWelcomePoco,
+      'onboarding.welcome.reset.cancel' => _l10n.onboardingWelcomeResetCancel,
+      'onboarding.welcome.reset.confirm' => _l10n.onboardingWelcomeResetConfirm,
+      'onboarding.welcome.reset.confirmation.body' => _l10n.onboardingWelcomeResetConfirmationBody,
+      'onboarding.welcome.reset.confirmation.title' => _l10n.onboardingWelcomeResetConfirmationTitle,
       'onboarding.welcome.title' => _l10n.onboardingWelcomeTitle,
       'permission.error' => _l10n.permissionError,
       'permission.fetch.failed' => _l10n.permissionFetchFailed,
@@ -818,6 +834,7 @@ class L10nKeyResolver {
       'settings.menu.harness.connections' => _l10n.settingsMenuHarnessConnections,
       'settings.menu.llm.management' => _l10n.settingsMenuLlmManagement,
       'settings.menu.logout' => _l10n.settingsMenuLogout,
+      'settings.menu.manage.users' => _l10n.settingsMenuManageUsers,
       'settings.menu.mcp.management' => _l10n.settingsMenuMcpManagement,
       'settings.menu.notifications' => _l10n.settingsMenuNotifications,
       'settings.menu.pocket.memory' => _l10n.settingsMenuPocketMemory,
@@ -886,6 +903,16 @@ class L10nKeyResolver {
       'tool.permissions.tool.label' => _l10n.toolPermissionsToolLabel,
       'tool.permissions.tool.name.label' => _l10n.toolPermissionsToolNameLabel,
       'tool.permissions.update.failed' => _l10n.toolPermissionsUpdateFailed,
+      'users.add.button' => _l10n.usersAddButton,
+      'users.add.dialog.title' => _l10n.usersAddDialogTitle,
+      'users.delete.button' => _l10n.usersDeleteButton,
+      'users.delete.confirm.title' => _l10n.usersDeleteConfirmTitle,
+      'users.email.label' => _l10n.usersEmailLabel,
+      'users.no.users' => _l10n.usersNoUsers,
+      'users.reset.password.button' => _l10n.usersResetPasswordButton,
+      'users.reset.password.confirm.title' => _l10n.usersResetPasswordConfirmTitle,
+      'users.reveal.dialog.title' => _l10n.usersRevealDialogTitle,
+      'users.screen.title' => _l10n.usersScreenTitle,
       'walkthrough.action.show.concise.code' => _l10n.walkthroughActionShowConciseCode,
       'walkthrough.action.show.full.code' => _l10n.walkthroughActionShowFullCode,
       'walkthrough.action.skip' => _l10n.walkthroughActionSkip,
@@ -1061,6 +1088,9 @@ class L10nKeyResolver {
       'server.control.release.status' => _l10n.serverControlReleaseStatus(args?['status'] as String? ?? ''),
       'skills.edit.dialog.title' => _l10n.skillsEditDialogTitle(args?['name'] as String? ?? ''),
       'terminal.ssh.link' => _l10n.terminalSshLink(args?['host'] as String? ?? '', args?['port'] as String? ?? ''),
+      'users.delete.confirm.body' => _l10n.usersDeleteConfirmBody(args?['email'] as String? ?? ''),
+      'users.reset.password.confirm.body' => _l10n.usersResetPasswordConfirmBody(args?['email'] as String? ?? ''),
+      'users.reveal.dialog.body' => _l10n.usersRevealDialogBody(args?['email'] as String? ?? ''),
       'walkthrough.header' => _l10n.walkthroughHeader(args?['os'] as String? ?? '', args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
       'walkthrough.label' => _l10n.walkthroughLabel(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
       'walkthrough.progress' => _l10n.walkthroughProgress(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0, args?['brief'] as String? ?? ''),
@@ -1084,6 +1114,7 @@ class L10nKeyResolver {
     'action.create',
     'action.deny',
     'action.dismiss',
+    'action.done',
     'action.refresh',
     'action.reject',
     'action.restore',
@@ -1111,6 +1142,8 @@ class L10nKeyResolver {
     'agent.description.label',
     'agent.dialog.title',
     'agent.mode.label',
+    'agent.model.search.hint',
+    'agent.model.search.no.matches',
     'agent.models.label',
     'agent.models.personas',
     'agent.name.label',
@@ -1178,6 +1211,9 @@ class L10nKeyResolver {
     'chat.no.fields.requested',
     'chat.not.found',
     'chat.picker.field.indicator',
+    'chat.picker.no.matches',
+    'chat.picker.search.hint',
+    'chat.picker.search.label',
     'chat.poco.prompt',
     'chat.poco.role',
     'chat.run.outcome.cancelled.body',
@@ -1422,6 +1458,10 @@ class L10nKeyResolver {
     'home.new.chat',
     'home.no.chats',
     'home.title',
+    'initialization.abort.cancel',
+    'initialization.abort.confirm',
+    'initialization.abort.confirmation.body',
+    'initialization.abort.confirmation.title',
     'initialization.action.abort',
     'initialization.action.login',
     'initialization.action.retry',
@@ -1600,6 +1640,7 @@ class L10nKeyResolver {
     'onboarding.email',
     'onboarding.email.hint',
     'onboarding.email.hint.short',
+    'onboarding.email.invalid.format',
     'onboarding.existing.server',
     'onboarding.failure.action.back.to.setup',
     'onboarding.failure.action.retry.connection',
@@ -1696,8 +1737,13 @@ class L10nKeyResolver {
     'onboarding.trial.chip.start',
     'onboarding.trial.poco',
     'onboarding.welcome.action.guided',
+    'onboarding.welcome.action.reset',
     'onboarding.welcome.action.self.host',
     'onboarding.welcome.poco',
+    'onboarding.welcome.reset.cancel',
+    'onboarding.welcome.reset.confirm',
+    'onboarding.welcome.reset.confirmation.body',
+    'onboarding.welcome.reset.confirmation.title',
     'onboarding.welcome.title',
     'permission.error',
     'permission.fetch.failed',
@@ -1948,6 +1994,7 @@ class L10nKeyResolver {
     'settings.menu.harness.connections',
     'settings.menu.llm.management',
     'settings.menu.logout',
+    'settings.menu.manage.users',
     'settings.menu.mcp.management',
     'settings.menu.notifications',
     'settings.menu.pocket.memory',
@@ -2018,6 +2065,19 @@ class L10nKeyResolver {
     'tool.permissions.tool.label',
     'tool.permissions.tool.name.label',
     'tool.permissions.update.failed',
+    'users.add.button',
+    'users.add.dialog.title',
+    'users.delete.button',
+    'users.delete.confirm.body',
+    'users.delete.confirm.title',
+    'users.email.label',
+    'users.no.users',
+    'users.reset.password.button',
+    'users.reset.password.confirm.body',
+    'users.reset.password.confirm.title',
+    'users.reveal.dialog.body',
+    'users.reveal.dialog.title',
+    'users.screen.title',
     'walkthrough.action.show.concise.code',
     'walkthrough.action.show.full.code',
     'walkthrough.action.skip',
@@ -2129,6 +2189,7 @@ class L10nKeyResolver {
     'actionCreate': 'action.create',
     'actionDeny': 'action.deny',
     'actionDismiss': 'action.dismiss',
+    'actionDone': 'action.done',
     'actionRefresh': 'action.refresh',
     'actionReject': 'action.reject',
     'actionRestore': 'action.restore',
@@ -2156,6 +2217,8 @@ class L10nKeyResolver {
     'agentDescriptionLabel': 'agent.description.label',
     'agentDialogTitle': 'agent.dialog.title',
     'agentModeLabel': 'agent.mode.label',
+    'agentModelSearchHint': 'agent.model.search.hint',
+    'agentModelSearchNoMatches': 'agent.model.search.no.matches',
     'agentModelsLabel': 'agent.models.label',
     'agentModelsPersonas': 'agent.models.personas',
     'agentNameLabel': 'agent.name.label',
@@ -2223,6 +2286,9 @@ class L10nKeyResolver {
     'chatNoFieldsRequested': 'chat.no.fields.requested',
     'chatNotFound': 'chat.not.found',
     'chatPickerFieldIndicator': 'chat.picker.field.indicator',
+    'chatPickerNoMatches': 'chat.picker.no.matches',
+    'chatPickerSearchHint': 'chat.picker.search.hint',
+    'chatPickerSearchLabel': 'chat.picker.search.label',
     'chatPocoPrompt': 'chat.poco.prompt',
     'chatPocoRole': 'chat.poco.role',
     'chatRunOutcomeCancelledBody': 'chat.run.outcome.cancelled.body',
@@ -2467,6 +2533,10 @@ class L10nKeyResolver {
     'homeNewChat': 'home.new.chat',
     'homeNoChats': 'home.no.chats',
     'homeTitle': 'home.title',
+    'initializationAbortCancel': 'initialization.abort.cancel',
+    'initializationAbortConfirm': 'initialization.abort.confirm',
+    'initializationAbortConfirmationBody': 'initialization.abort.confirmation.body',
+    'initializationAbortConfirmationTitle': 'initialization.abort.confirmation.title',
     'initializationActionAbort': 'initialization.action.abort',
     'initializationActionLogin': 'initialization.action.login',
     'initializationActionRetry': 'initialization.action.retry',
@@ -2645,6 +2715,7 @@ class L10nKeyResolver {
     'onboardingEmail': 'onboarding.email',
     'onboardingEmailHint': 'onboarding.email.hint',
     'onboardingEmailHintShort': 'onboarding.email.hint.short',
+    'onboardingEmailInvalidFormat': 'onboarding.email.invalid.format',
     'onboardingExistingServer': 'onboarding.existing.server',
     'onboardingFailureActionBackToSetup': 'onboarding.failure.action.back.to.setup',
     'onboardingFailureActionRetryConnection': 'onboarding.failure.action.retry.connection',
@@ -2741,8 +2812,13 @@ class L10nKeyResolver {
     'onboardingTrialChipStart': 'onboarding.trial.chip.start',
     'onboardingTrialPoco': 'onboarding.trial.poco',
     'onboardingWelcomeActionGuided': 'onboarding.welcome.action.guided',
+    'onboardingWelcomeActionReset': 'onboarding.welcome.action.reset',
     'onboardingWelcomeActionSelfHost': 'onboarding.welcome.action.self.host',
     'onboardingWelcomePoco': 'onboarding.welcome.poco',
+    'onboardingWelcomeResetCancel': 'onboarding.welcome.reset.cancel',
+    'onboardingWelcomeResetConfirm': 'onboarding.welcome.reset.confirm',
+    'onboardingWelcomeResetConfirmationBody': 'onboarding.welcome.reset.confirmation.body',
+    'onboardingWelcomeResetConfirmationTitle': 'onboarding.welcome.reset.confirmation.title',
     'onboardingWelcomeTitle': 'onboarding.welcome.title',
     'permissionError': 'permission.error',
     'permissionFetchFailed': 'permission.fetch.failed',
@@ -2993,6 +3069,7 @@ class L10nKeyResolver {
     'settingsMenuHarnessConnections': 'settings.menu.harness.connections',
     'settingsMenuLlmManagement': 'settings.menu.llm.management',
     'settingsMenuLogout': 'settings.menu.logout',
+    'settingsMenuManageUsers': 'settings.menu.manage.users',
     'settingsMenuMcpManagement': 'settings.menu.mcp.management',
     'settingsMenuNotifications': 'settings.menu.notifications',
     'settingsMenuPocketMemory': 'settings.menu.pocket.memory',
@@ -3063,6 +3140,19 @@ class L10nKeyResolver {
     'toolPermissionsToolLabel': 'tool.permissions.tool.label',
     'toolPermissionsToolNameLabel': 'tool.permissions.tool.name.label',
     'toolPermissionsUpdateFailed': 'tool.permissions.update.failed',
+    'usersAddButton': 'users.add.button',
+    'usersAddDialogTitle': 'users.add.dialog.title',
+    'usersDeleteButton': 'users.delete.button',
+    'usersDeleteConfirmBody': 'users.delete.confirm.body',
+    'usersDeleteConfirmTitle': 'users.delete.confirm.title',
+    'usersEmailLabel': 'users.email.label',
+    'usersNoUsers': 'users.no.users',
+    'usersResetPasswordButton': 'users.reset.password.button',
+    'usersResetPasswordConfirmBody': 'users.reset.password.confirm.body',
+    'usersResetPasswordConfirmTitle': 'users.reset.password.confirm.title',
+    'usersRevealDialogBody': 'users.reveal.dialog.body',
+    'usersRevealDialogTitle': 'users.reveal.dialog.title',
+    'usersScreenTitle': 'users.screen.title',
     'walkthroughActionShowConciseCode': 'walkthrough.action.show.concise.code',
     'walkthroughActionShowFullCode': 'walkthrough.action.show.full.code',
     'walkthroughActionSkip': 'walkthrough.action.skip',
@@ -3171,6 +3261,7 @@ class L10nKeyResolver {
     'action.create': 'actionCreate',
     'action.deny': 'actionDeny',
     'action.dismiss': 'actionDismiss',
+    'action.done': 'actionDone',
     'action.refresh': 'actionRefresh',
     'action.reject': 'actionReject',
     'action.restore': 'actionRestore',
@@ -3198,6 +3289,8 @@ class L10nKeyResolver {
     'agent.description.label': 'agentDescriptionLabel',
     'agent.dialog.title': 'agentDialogTitle',
     'agent.mode.label': 'agentModeLabel',
+    'agent.model.search.hint': 'agentModelSearchHint',
+    'agent.model.search.no.matches': 'agentModelSearchNoMatches',
     'agent.models.label': 'agentModelsLabel',
     'agent.models.personas': 'agentModelsPersonas',
     'agent.name.label': 'agentNameLabel',
@@ -3265,6 +3358,9 @@ class L10nKeyResolver {
     'chat.no.fields.requested': 'chatNoFieldsRequested',
     'chat.not.found': 'chatNotFound',
     'chat.picker.field.indicator': 'chatPickerFieldIndicator',
+    'chat.picker.no.matches': 'chatPickerNoMatches',
+    'chat.picker.search.hint': 'chatPickerSearchHint',
+    'chat.picker.search.label': 'chatPickerSearchLabel',
     'chat.poco.prompt': 'chatPocoPrompt',
     'chat.poco.role': 'chatPocoRole',
     'chat.run.outcome.cancelled.body': 'chatRunOutcomeCancelledBody',
@@ -3509,6 +3605,10 @@ class L10nKeyResolver {
     'home.new.chat': 'homeNewChat',
     'home.no.chats': 'homeNoChats',
     'home.title': 'homeTitle',
+    'initialization.abort.cancel': 'initializationAbortCancel',
+    'initialization.abort.confirm': 'initializationAbortConfirm',
+    'initialization.abort.confirmation.body': 'initializationAbortConfirmationBody',
+    'initialization.abort.confirmation.title': 'initializationAbortConfirmationTitle',
     'initialization.action.abort': 'initializationActionAbort',
     'initialization.action.login': 'initializationActionLogin',
     'initialization.action.retry': 'initializationActionRetry',
@@ -3687,6 +3787,7 @@ class L10nKeyResolver {
     'onboarding.email': 'onboardingEmail',
     'onboarding.email.hint': 'onboardingEmailHint',
     'onboarding.email.hint.short': 'onboardingEmailHintShort',
+    'onboarding.email.invalid.format': 'onboardingEmailInvalidFormat',
     'onboarding.existing.server': 'onboardingExistingServer',
     'onboarding.failure.action.back.to.setup': 'onboardingFailureActionBackToSetup',
     'onboarding.failure.action.retry.connection': 'onboardingFailureActionRetryConnection',
@@ -3783,8 +3884,13 @@ class L10nKeyResolver {
     'onboarding.trial.chip.start': 'onboardingTrialChipStart',
     'onboarding.trial.poco': 'onboardingTrialPoco',
     'onboarding.welcome.action.guided': 'onboardingWelcomeActionGuided',
+    'onboarding.welcome.action.reset': 'onboardingWelcomeActionReset',
     'onboarding.welcome.action.self.host': 'onboardingWelcomeActionSelfHost',
     'onboarding.welcome.poco': 'onboardingWelcomePoco',
+    'onboarding.welcome.reset.cancel': 'onboardingWelcomeResetCancel',
+    'onboarding.welcome.reset.confirm': 'onboardingWelcomeResetConfirm',
+    'onboarding.welcome.reset.confirmation.body': 'onboardingWelcomeResetConfirmationBody',
+    'onboarding.welcome.reset.confirmation.title': 'onboardingWelcomeResetConfirmationTitle',
     'onboarding.welcome.title': 'onboardingWelcomeTitle',
     'permission.error': 'permissionError',
     'permission.fetch.failed': 'permissionFetchFailed',
@@ -4035,6 +4141,7 @@ class L10nKeyResolver {
     'settings.menu.harness.connections': 'settingsMenuHarnessConnections',
     'settings.menu.llm.management': 'settingsMenuLlmManagement',
     'settings.menu.logout': 'settingsMenuLogout',
+    'settings.menu.manage.users': 'settingsMenuManageUsers',
     'settings.menu.mcp.management': 'settingsMenuMcpManagement',
     'settings.menu.notifications': 'settingsMenuNotifications',
     'settings.menu.pocket.memory': 'settingsMenuPocketMemory',
@@ -4105,6 +4212,19 @@ class L10nKeyResolver {
     'tool.permissions.tool.label': 'toolPermissionsToolLabel',
     'tool.permissions.tool.name.label': 'toolPermissionsToolNameLabel',
     'tool.permissions.update.failed': 'toolPermissionsUpdateFailed',
+    'users.add.button': 'usersAddButton',
+    'users.add.dialog.title': 'usersAddDialogTitle',
+    'users.delete.button': 'usersDeleteButton',
+    'users.delete.confirm.body': 'usersDeleteConfirmBody',
+    'users.delete.confirm.title': 'usersDeleteConfirmTitle',
+    'users.email.label': 'usersEmailLabel',
+    'users.no.users': 'usersNoUsers',
+    'users.reset.password.button': 'usersResetPasswordButton',
+    'users.reset.password.confirm.body': 'usersResetPasswordConfirmBody',
+    'users.reset.password.confirm.title': 'usersResetPasswordConfirmTitle',
+    'users.reveal.dialog.body': 'usersRevealDialogBody',
+    'users.reveal.dialog.title': 'usersRevealDialogTitle',
+    'users.screen.title': 'usersScreenTitle',
     'walkthrough.action.show.concise.code': 'walkthroughActionShowConciseCode',
     'walkthrough.action.show.full.code': 'walkthroughActionShowFullCode',
     'walkthrough.action.skip': 'walkthroughActionSkip',
@@ -4220,6 +4340,7 @@ abstract class L10nKeys {
   static const actionCreate = 'action.create';
   static const actionDeny = 'action.deny';
   static const actionDismiss = 'action.dismiss';
+  static const actionDone = 'action.done';
   static const actionRefresh = 'action.refresh';
   static const actionReject = 'action.reject';
   static const actionRestore = 'action.restore';
@@ -4247,6 +4368,8 @@ abstract class L10nKeys {
   static const agentDescriptionLabel = 'agent.description.label';
   static (String, Map<String, dynamic>) agentDialogTitle(String name) => ('agent.dialog.title', {'name': name});
   static const agentModeLabel = 'agent.mode.label';
+  static const agentModelSearchHint = 'agent.model.search.hint';
+  static const agentModelSearchNoMatches = 'agent.model.search.no.matches';
   static const agentModelsLabel = 'agent.models.label';
   static const agentModelsPersonas = 'agent.models.personas';
   static const agentNameLabel = 'agent.name.label';
@@ -4314,6 +4437,9 @@ abstract class L10nKeys {
   static const chatNoFieldsRequested = 'chat.no.fields.requested';
   static const chatNotFound = 'chat.not.found';
   static const chatPickerFieldIndicator = 'chat.picker.field.indicator';
+  static const chatPickerNoMatches = 'chat.picker.no.matches';
+  static const chatPickerSearchHint = 'chat.picker.search.hint';
+  static const chatPickerSearchLabel = 'chat.picker.search.label';
   static const chatPocoPrompt = 'chat.poco.prompt';
   static const chatPocoRole = 'chat.poco.role';
   static const chatRunOutcomeCancelledBody = 'chat.run.outcome.cancelled.body';
@@ -4558,6 +4684,10 @@ abstract class L10nKeys {
   static const homeNewChat = 'home.new.chat';
   static const homeNoChats = 'home.no.chats';
   static const homeTitle = 'home.title';
+  static const initializationAbortCancel = 'initialization.abort.cancel';
+  static const initializationAbortConfirm = 'initialization.abort.confirm';
+  static const initializationAbortConfirmationBody = 'initialization.abort.confirmation.body';
+  static const initializationAbortConfirmationTitle = 'initialization.abort.confirmation.title';
   static const initializationActionAbort = 'initialization.action.abort';
   static const initializationActionLogin = 'initialization.action.login';
   static const initializationActionRetry = 'initialization.action.retry';
@@ -4736,6 +4866,7 @@ abstract class L10nKeys {
   static const onboardingEmail = 'onboarding.email';
   static const onboardingEmailHint = 'onboarding.email.hint';
   static const onboardingEmailHintShort = 'onboarding.email.hint.short';
+  static const onboardingEmailInvalidFormat = 'onboarding.email.invalid.format';
   static const onboardingExistingServer = 'onboarding.existing.server';
   static const onboardingFailureActionBackToSetup = 'onboarding.failure.action.back.to.setup';
   static const onboardingFailureActionRetryConnection = 'onboarding.failure.action.retry.connection';
@@ -4832,8 +4963,13 @@ abstract class L10nKeys {
   static const onboardingTrialChipStart = 'onboarding.trial.chip.start';
   static (String, Map<String, dynamic>) onboardingTrialPoco(int trialDuration) => ('onboarding.trial.poco', {'trialDuration': trialDuration});
   static const onboardingWelcomeActionGuided = 'onboarding.welcome.action.guided';
+  static const onboardingWelcomeActionReset = 'onboarding.welcome.action.reset';
   static const onboardingWelcomeActionSelfHost = 'onboarding.welcome.action.self.host';
   static const onboardingWelcomePoco = 'onboarding.welcome.poco';
+  static const onboardingWelcomeResetCancel = 'onboarding.welcome.reset.cancel';
+  static const onboardingWelcomeResetConfirm = 'onboarding.welcome.reset.confirm';
+  static const onboardingWelcomeResetConfirmationBody = 'onboarding.welcome.reset.confirmation.body';
+  static const onboardingWelcomeResetConfirmationTitle = 'onboarding.welcome.reset.confirmation.title';
   static const onboardingWelcomeTitle = 'onboarding.welcome.title';
   static const permissionError = 'permission.error';
   static const permissionFetchFailed = 'permission.fetch.failed';
@@ -5084,6 +5220,7 @@ abstract class L10nKeys {
   static const settingsMenuHarnessConnections = 'settings.menu.harness.connections';
   static const settingsMenuLlmManagement = 'settings.menu.llm.management';
   static const settingsMenuLogout = 'settings.menu.logout';
+  static const settingsMenuManageUsers = 'settings.menu.manage.users';
   static const settingsMenuMcpManagement = 'settings.menu.mcp.management';
   static const settingsMenuNotifications = 'settings.menu.notifications';
   static const settingsMenuPocketMemory = 'settings.menu.pocket.memory';
@@ -5154,6 +5291,19 @@ abstract class L10nKeys {
   static const toolPermissionsToolLabel = 'tool.permissions.tool.label';
   static const toolPermissionsToolNameLabel = 'tool.permissions.tool.name.label';
   static const toolPermissionsUpdateFailed = 'tool.permissions.update.failed';
+  static const usersAddButton = 'users.add.button';
+  static const usersAddDialogTitle = 'users.add.dialog.title';
+  static const usersDeleteButton = 'users.delete.button';
+  static (String, Map<String, dynamic>) usersDeleteConfirmBody(String email) => ('users.delete.confirm.body', {'email': email});
+  static const usersDeleteConfirmTitle = 'users.delete.confirm.title';
+  static const usersEmailLabel = 'users.email.label';
+  static const usersNoUsers = 'users.no.users';
+  static const usersResetPasswordButton = 'users.reset.password.button';
+  static (String, Map<String, dynamic>) usersResetPasswordConfirmBody(String email) => ('users.reset.password.confirm.body', {'email': email});
+  static const usersResetPasswordConfirmTitle = 'users.reset.password.confirm.title';
+  static (String, Map<String, dynamic>) usersRevealDialogBody(String email) => ('users.reveal.dialog.body', {'email': email});
+  static const usersRevealDialogTitle = 'users.reveal.dialog.title';
+  static const usersScreenTitle = 'users.screen.title';
   static const walkthroughActionShowConciseCode = 'walkthrough.action.show.concise.code';
   static const walkthroughActionShowFullCode = 'walkthrough.action.show.full.code';
   static const walkthroughActionSkip = 'walkthrough.action.skip';

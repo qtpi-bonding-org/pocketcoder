@@ -118,6 +118,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionDeny => 'deny';
 
   @override
+  String get actionDone => 'done';
+
+  @override
   String get actionAuthorize => 'authorize';
 
   @override
@@ -866,6 +869,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get skillsBuiltInLabel => 'built-in';
+
+  @override
+  String get settingsMenuManageUsers => 'manage users';
+
+  @override
+  String get usersScreenTitle => 'manage users';
+
+  @override
+  String get usersAddButton => 'add user';
+
+  @override
+  String get usersAddDialogTitle => 'add user';
+
+  @override
+  String get usersEmailLabel => 'email';
+
+  @override
+  String get usersNoUsers => 'no users yet';
+
+  @override
+  String get usersRevealDialogTitle => 'temporary password';
+
+  @override
+  String usersRevealDialogBody(String email) {
+    return 'share this password with $email outside the app -- it will not be shown again.';
+  }
+
+  @override
+  String get usersResetPasswordButton => 'reset password';
+
+  @override
+  String get usersResetPasswordConfirmTitle => 'reset password';
+
+  @override
+  String usersResetPasswordConfirmBody(String email) {
+    return 'generate a new temporary password for $email? their current password stops working immediately.';
+  }
+
+  @override
+  String get usersDeleteButton => 'delete';
+
+  @override
+  String get usersDeleteConfirmTitle => 'delete user';
+
+  @override
+  String usersDeleteConfirmBody(String email) {
+    return 'permanently delete $email? this cannot be undone.';
+  }
 
   @override
   String get schedulerTitle => 'scheduler';
