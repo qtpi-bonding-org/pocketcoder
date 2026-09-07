@@ -10,6 +10,7 @@ import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
@@ -62,6 +63,8 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
             builder: (context, hapticsSnapshot) => SettingsView(
               hasPendingMcp: _hasPendingMcp(mcpSnapshot.data ?? mcpCubit.state),
               isPro: GetIt.instance<IAppEdition>().isPro,
+              isAdmin:
+                  GetIt.instance<IAuthRepository>().currentUserRole == 'admin',
               hapticsEnabled:
                   hapticsSnapshot.data ?? localSettings.hapticsEnabledSync,
               onNavigate: (routeKey) => _navigateTo(context, routeKey),
@@ -176,6 +179,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
       'configureLlm' => AppRoutes.configureLlm,
       'configureHarnessAuth' => AppRoutes.configureHarnessAuth,
       'configureScheduler' => AppRoutes.configureScheduler,
+      'manageUsers' => AppRoutes.manageUsers,
       'configureNotifications' => AppRoutes.configureNotifications,
       'statusErrors' => AppRoutes.statusErrors,
       _ => null,

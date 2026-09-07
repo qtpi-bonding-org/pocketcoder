@@ -20,6 +20,7 @@ void main() {
       home: SettingsView(
         hasPendingMcp: false,
         isPro: true,
+        isAdmin: false,
         onNavigate: (_) {},
         onLogout: () {},
         onFactoryReset: () {},
@@ -55,6 +56,7 @@ void main() {
       home: SettingsView(
         hasPendingMcp: false,
         isPro: true,
+        isAdmin: false,
         onNavigate: (_) {},
         onLogout: () {},
         onFactoryReset: () {},
@@ -82,6 +84,7 @@ void main() {
       home: SettingsView(
         hasPendingMcp: false,
         isPro: false,
+        isAdmin: false,
         onNavigate: (_) {},
         onLogout: () {},
         onFactoryReset: () {},
@@ -93,5 +96,47 @@ void main() {
     ));
 
     expect(find.textContaining('PRO'), findsNothing);
+  });
+
+  testWidgets('shows manage-users row only for admins', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: SettingsView(
+        hasPendingMcp: false,
+        isPro: false,
+        isAdmin: true,
+        hapticsEnabled: false,
+        onNavigate: (_) {},
+        onLogout: () {},
+        onFactoryReset: () {},
+        onDeleteProData: () {},
+        onReportAiContent: () {},
+        onHapticsChanged: (_) {},
+      ),
+    ));
+    expect(find.text('manage users'), findsOneWidget);
+  });
+
+  testWidgets('hides manage-users row for non-admins', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.lightTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: SettingsView(
+        hasPendingMcp: false,
+        isPro: false,
+        isAdmin: false,
+        hapticsEnabled: false,
+        onNavigate: (_) {},
+        onLogout: () {},
+        onFactoryReset: () {},
+        onDeleteProData: () {},
+        onReportAiContent: () {},
+        onHapticsChanged: (_) {},
+      ),
+    ));
+    expect(find.text('manage users'), findsNothing);
   });
 }

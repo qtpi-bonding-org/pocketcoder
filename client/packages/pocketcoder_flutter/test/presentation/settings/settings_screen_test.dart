@@ -85,7 +85,9 @@ void main() {
           mOptions: any(named: 'mOptions'),
           wOptions: any(named: 'wOptions'),
         )).thenAnswer((_) async => {});
+    when(() => authRepo.currentUserRole).thenReturn('user');
 
+    getIt.registerSingleton<IAuthRepository>(authRepo);
     getIt.registerFactory<AuthCubit>(() => AuthCubit(
           authRepo,
           CaddyCaPinStore(secureStorage),

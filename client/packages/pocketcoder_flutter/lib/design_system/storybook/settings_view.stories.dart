@@ -15,6 +15,7 @@ Widget _app(Widget child) => MaterialApp(
 Widget settingsDefault(BuildContext context) => _app(SettingsView(
       hasPendingMcp: false,
       isPro: true,
+      isAdmin: false,
       onNavigate: (_) {},
       onLogout: () {},
       onFactoryReset: () {},
@@ -28,6 +29,7 @@ Widget settingsDefault(BuildContext context) => _app(SettingsView(
 Widget settingsPendingMcp(BuildContext context) => _app(SettingsView(
       hasPendingMcp: true,
       isPro: true,
+      isAdmin: false,
       onNavigate: (_) {},
       onLogout: () {},
       onFactoryReset: () {},

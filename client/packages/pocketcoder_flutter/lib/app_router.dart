@@ -34,6 +34,7 @@ import 'package:pocketcoder_flutter/presentation/files/file_browser_screen.dart'
 import 'package:pocketcoder_flutter/presentation/files/file_viewer_screen.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_box_page_builder.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/server_control_screen.dart';
+import 'package:pocketcoder_flutter/presentation/users/user_management_screen.dart';
 
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_transition.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -264,6 +265,15 @@ class AppRouter {
         ),
       ),
       GoRoute(
+        path: AppRoutes.manageUsers,
+        name: RouteNames.manageUsers,
+        pageBuilder: (context, state) => TerminalTransition.buildPage(
+          context: context,
+          state: state,
+          child: const UserManagementScreen(),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.statusSystemChecks,
         name: RouteNames.statusSystemChecks,
         pageBuilder: (context, state) => TerminalTransition.buildPage(
@@ -450,6 +460,7 @@ class AppRoutes {
   static const String configureNotifications = '/configure/notifications';
   static const String configureSkills = '/configure/skills';
   static const String configureScheduler = '/configure/scheduler';
+  static const String manageUsers = '/configure/manage-users';
   static const String configureMcp = '/configure/mcp';
   static const String statusSystemChecks = '/status/system-checks';
   static const String configurePaywall = '/configure/paywall';
@@ -501,6 +512,7 @@ class RouteNames {
   static const String configureNotifications = 'configureNotifications';
   static const String configureSkills = 'configureSkills';
   static const String configureScheduler = 'configureScheduler';
+  static const String manageUsers = 'manageUsers';
   static const String configureMcp = 'configureMcp';
   static const String statusSystemChecks = 'statusSystemChecks';
   static const String configurePaywall = 'configurePaywall';
