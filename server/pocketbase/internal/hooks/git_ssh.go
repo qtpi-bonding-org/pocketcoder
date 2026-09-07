@@ -8,10 +8,15 @@ import (
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/gitssh"
 )
 
-// RegisterGitSSHHooks enforces the non-secret invariants at the collection
-// boundary. Secret generation/materialization is deliberately asynchronous;
-// these hooks only establish safe desired state and prevent client forgery.
-func RegisterGitSSHHooks(app core.App) {
+func RegisterGitSSHHooks(app core.App, queue *gitssh.Queue) {
+	enqueueOwner := func(e *core.RecordEvent) error {
+		queue.Enqueue(e.Record.GetString("user"))
+		return e.Next()
+	}
+	app.OnRecordAfterCreateSuccess("git_ssh_credentials").BindFunc(enqueueOwner)
+	app.OnRecordAfterUpdateSuccess("git_ssh_credentials").BindFunc(enqueueOwner)
+	app.OnRecordAfterCreateSuccess("git_repository_access").BindFunc(enqueueOwner)
+	app.OnRecordAfterUpdateSuccess("git_repository_access").BindFunc(enqueueOwner)
 	protectRequest := func(e *core.RecordRequestEvent) error {
 		name := e.Record.Collection().Name
 		if name != "git_ssh_credentials" && name != "git_repository_access" {

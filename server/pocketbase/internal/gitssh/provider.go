@@ -19,11 +19,15 @@ var providers = map[string]Provider{
 
 var repoPattern = regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`)
 
+const CustomProviderID = "custom"
+
 func ProviderByID(id string) (Provider, bool) { p, ok := providers[strings.ToLower(id)]; return p, ok }
 
 func CanonicalRepository(provider, repository string) (string, error) {
-	if _, ok := ProviderByID(provider); !ok {
-		return "", fmt.Errorf("unsupported git provider %q", provider)
+	if provider != CustomProviderID {
+		if _, ok := ProviderByID(provider); !ok {
+			return "", fmt.Errorf("unsupported git provider %q", provider)
+		}
 	}
 	r := strings.TrimSuffix(strings.TrimSpace(repository), ".git")
 	if !repoPattern.MatchString(r) || strings.ContainsAny(r, "\r\n") {

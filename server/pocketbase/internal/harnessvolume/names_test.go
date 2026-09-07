@@ -60,6 +60,20 @@ func TestResolveRejectsBindSyntax(t *testing.T) {
 	}
 }
 
+func TestGitSSHVolumeNameMatchesResolveWithoutNeedingAHarness(t *testing.T) {
+	got, err := GitSSHVolumeName("pocketcoder_workspace", "userid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	names, err := Resolve("pocketcoder_workspace", "userid", "codex", "account")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != names.GitSSH {
+		t.Fatalf("GitSSHVolumeName = %q, Resolve().GitSSH = %q", got, names.GitSSH)
+	}
+}
+
 func TestResolveGitVolumeUsesFullUserID(t *testing.T) {
 	first, _ := Resolve("base", "abcdefghijklmnop", "codex", "account")
 	second, _ := Resolve("base", "abcdefghijklmnoq", "codex", "account")

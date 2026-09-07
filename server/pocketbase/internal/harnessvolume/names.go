@@ -43,21 +43,45 @@ func Resolve(base, userID, harnessCLI, accountID string) (Names, error) {
 	if len(userSuffix) > 8 {
 		userSuffix = userSuffix[:8]
 	}
-	namespace := strings.TrimSuffix(base, "_workspace")
-	if namespace == "" {
-		return Names{}, fmt.Errorf("invalid base volume %q", base)
+	namespace, err := namespaceOf(base)
+	if err != nil {
+		return Names{}, err
 	}
 	authName := fmt.Sprintf("%s_harness_%s_account_%s_auth_home", namespace, harnessCLI, accountID)
 	if accountID == "" {
 		authName = fmt.Sprintf("%s_harness_%s_user_%s_auth_home", namespace, harnessCLI, userID)
 	}
+	gitSSH, err := GitSSHVolumeName(base, userID)
+	if err != nil {
+		return Names{}, err
+	}
 	names := Names{
 		Workspace: fmt.Sprintf("%s_user_%s_workspace", namespace, userSuffix),
 		Auth:      authName,
-		GitSSH:    fmt.Sprintf("%s_git_ssh_%s", namespace, userID),
-	}
-	if len(names.GitSSH) > 255 {
-		return Names{}, fmt.Errorf("git volume name is too long")
+		GitSSH:    gitSSH,
 	}
 	return names, nil
+}
+
+func namespaceOf(base string) (string, error) {
+	namespace := strings.TrimSuffix(base, "_workspace")
+	if namespace == "" {
+		return "", fmt.Errorf("invalid base volume %q", base)
+	}
+	return namespace, nil
+}
+
+func GitSSHVolumeName(base, userID string) (string, error) {
+	if !nameComponent.MatchString(userID) {
+		return "", fmt.Errorf("invalid user id %q", userID)
+	}
+	namespace, err := namespaceOf(base)
+	if err != nil {
+		return "", err
+	}
+	name := fmt.Sprintf("%s_git_ssh_%s", namespace, userID)
+	if len(name) > 255 {
+		return "", fmt.Errorf("git volume name is too long")
+	}
+	return name, nil
 }
