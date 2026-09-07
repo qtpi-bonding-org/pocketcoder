@@ -99,6 +99,10 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   Future<void> _select(BuildContext context, Harnesse harness,
       ValueNotifier<Set<String>> connected) async {
     final auth = context.read<HarnessAuthCubit>();
+    OnboardingLogger.event('harness tapped', {
+      'harness': harness.id,
+      'harnessProvidersLoaded': auth.state.harnessProvidersLoaded,
+    });
     if (!auth.state.harnessProvidersLoaded) {
       VimToast.show(context, context.l10n.onboardingHarnessProvidersLoading);
       return;
@@ -135,7 +139,11 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
         .where((edge) => edge.harness == harness.id)
         .map((edge) => edge.provider)
         .toSet();
-    if (providerIds.isEmpty) return; // this harness has no usable provider yet
+    if (providerIds.isEmpty) {
+      OnboardingLogger.event('api-key select: no provider edge for harness',
+          {'harness': harness.id});
+      return; // this harness has no usable provider yet
+    }
 
     var providerId = providerCubit.state.providerAPIKeys
         .where((key) => providerIds.contains(key.provider))
@@ -146,13 +154,26 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
       final catalog = providerCubit.state.providerCatalog
           .where((p) => providerIds.contains(p.id))
           .toList();
-      if (catalog.isEmpty) return; // provider catalog hasn't loaded yet
+      if (catalog.isEmpty) {
+        OnboardingLogger.event(
+            'api-key select: provider catalog has no match', {
+          'harness': harness.id,
+          'providerIds': providerIds.toList(),
+          'catalogSize': providerCubit.state.providerCatalog.length,
+        });
+        return; // provider catalog hasn't loaded yet
+      }
       final saved = await showDialog<ProviderApiKey>(
           context: context,
           builder: (dialogContext) => ProviderKeyEditorDialog(
               providerCatalog: catalog,
               onSave: (key) => Navigator.of(dialogContext).pop(key)));
-      if (saved == null) return; // user cancelled
+      if (saved == null) {
+        OnboardingLogger.event(
+            'api-key select: dialog dismissed without saving',
+            {'harness': harness.id});
+        return; // user cancelled
+      }
       await providerCubit.saveProviderAPIKey(saved);
       // saveProviderAPIKey goes through tryOperation, which records a
       // failure in cubit state instead of throwing -- awaiting it alone
@@ -162,7 +183,13 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
       // no credential actually persisted, so the harness could never be
       // provisioned and every chat prompt failed with a permanent
       // "Harness is starting" retry loop.
-      if (providerCubit.state.status == UiFlowStatus.failure) return;
+      if (providerCubit.state.status == UiFlowStatus.failure) {
+        OnboardingLogger.event('api-key select: saveProviderAPIKey failed', {
+          'harness': harness.id,
+          'error': providerCubit.state.error?.toString(),
+        });
+        return;
+      }
       providerId = saved.provider;
     }
 
@@ -174,7 +201,14 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
     // startWithNone goes through _withBusy, which records a failure in
     // cubit state instead of throwing -- same swallowed-failure hazard as
     // saveProviderAPIKey above.
-    if (auth.state.status == UiFlowStatus.failure) return;
+    if (auth.state.status == UiFlowStatus.failure) {
+      OnboardingLogger.event('api-key select: startWithNone failed', {
+        'harness': harness.id,
+        'provider': providerId,
+        'error': auth.state.error?.toString(),
+      });
+      return;
+    }
     connected.value = {...connected.value, harness.id};
   }
 

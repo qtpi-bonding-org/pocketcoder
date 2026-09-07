@@ -239,10 +239,9 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 		}
 		var providerIDs []string
 		if h.GetBool("provider_fanout") {
+			// harness_providers edges must exist before a first credential
+			// can be added, so this list is not scoped to keyed providers.
 			for pid := range providers {
-				if !keyed[pid] {
-					continue
-				}
 				providerIDs = append(providerIDs, pid)
 			}
 		} else {
@@ -275,7 +274,8 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 				if err != nil {
 					continue
 				}
-				syncHarnessProvider(txApp, h, providerRec, p)
+				syncModels := !h.GetBool("provider_fanout") || keyed[pid]
+				syncHarnessProvider(txApp, h, providerRec, p, syncModels)
 			}
 			return nil
 		}); err != nil {
@@ -285,11 +285,14 @@ func Sync(ctx context.Context, app core.App, client *http.Client, url string) er
 	return nil
 }
 
-func syncHarnessProvider(txApp core.App, h, providerRec *core.Record, p ProviderInfo) {
+func syncHarnessProvider(txApp core.App, h, providerRec *core.Record, p ProviderInfo, syncModels bool) {
 	if h.GetBool("provider_fanout") {
 		if err := upsertHarnessProviderEdge(txApp, h, providerRec); err != nil {
 			log.Printf("[ModelCatalog] skipping harness_providers edge %s/%s: %v", h.GetString("cli_id"), p.ID, err)
 		}
+	}
+	if !syncModels {
+		return
 	}
 	for _, m := range p.Models {
 		modelRec, err := upsertModel(txApp, providerRec, p, m)
@@ -352,7 +355,7 @@ func SyncProviderForFanoutHarnesses(ctx context.Context, app core.App, client *h
 	}
 	for _, h := range harnesses {
 		if err := app.RunInTransaction(func(txApp core.App) error {
-			syncHarnessProvider(txApp, h, providerRec, p)
+			syncHarnessProvider(txApp, h, providerRec, p, true)
 			return nil
 		}); err != nil {
 			return err

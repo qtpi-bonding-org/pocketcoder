@@ -610,12 +610,23 @@ func TestSyncGivesFanoutHarnessZeroHarnessModelsWhenNoProviderIsKeyed(t *testing
 	if len(hms) != 0 {
 		t.Fatalf("got %d harness_models for goose with zero keyed providers, want 0", len(hms))
 	}
+}
+
+func TestSyncGivesFanoutHarnessProviderEdgesEvenWithZeroKeyedProviders(t *testing.T) {
+	app, url := appWithSyncedProviders(t)
+	goose, err := app.FindFirstRecordByFilter("harnesses", "cli_id = 'goose'", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Sync(context.Background(), app, http.DefaultClient, url); err != nil {
+		t.Fatal(err)
+	}
 	edges, err := app.FindRecordsByFilter("harness_providers", "harness = {:h}", "", 0, 0, map[string]any{"h": goose.Id})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(edges) != 0 {
-		t.Fatalf("got %d harness_providers edges for goose with zero keyed providers, want 0", len(edges))
+	if len(edges) != 4 {
+		t.Fatalf("got %d harness_providers edges for goose with zero keyed providers, want 4 (one per fixture provider)", len(edges))
 	}
 }
 
