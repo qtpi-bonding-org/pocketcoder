@@ -11,6 +11,9 @@ abstract class GitRepositoryAccess with _$GitRepositoryAccess {
     required String user,
     @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown) required GitRepositoryAccessProvider provider,
     required String repository,
+    String? host,
+    double? port,
+    String? knownHostKey,
     required String purpose,
     @JsonKey(unknownEnumValue: GitRepositoryAccessCredentialMode.unknown) required GitRepositoryAccessCredentialMode credentialMode,
     String? credential,
@@ -34,6 +37,8 @@ enum GitRepositoryAccessProvider {
   gitlab,
   @JsonValue('codeberg')
   codeberg,
+  @JsonValue('custom')
+  custom,
   @JsonValue('__unknown__')
   unknown,
 }

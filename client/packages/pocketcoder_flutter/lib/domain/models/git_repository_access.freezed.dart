@@ -19,6 +19,9 @@ mixin _$GitRepositoryAccess {
   @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown)
   GitRepositoryAccessProvider get provider;
   String get repository;
+  String? get host;
+  double? get port;
+  String? get knownHostKey;
   String get purpose;
   @JsonKey(unknownEnumValue: GitRepositoryAccessCredentialMode.unknown)
   GitRepositoryAccessCredentialMode get credentialMode;
@@ -53,6 +56,10 @@ mixin _$GitRepositoryAccess {
                 other.provider == provider) &&
             (identical(other.repository, repository) ||
                 other.repository == repository) &&
+            (identical(other.host, host) || other.host == host) &&
+            (identical(other.port, port) || other.port == port) &&
+            (identical(other.knownHostKey, knownHostKey) ||
+                other.knownHostKey == knownHostKey) &&
             (identical(other.purpose, purpose) || other.purpose == purpose) &&
             (identical(other.credentialMode, credentialMode) ||
                 other.credentialMode == credentialMode) &&
@@ -75,6 +82,9 @@ mixin _$GitRepositoryAccess {
       user,
       provider,
       repository,
+      host,
+      port,
+      knownHostKey,
       purpose,
       credentialMode,
       credential,
@@ -85,7 +95,7 @@ mixin _$GitRepositoryAccess {
 
   @override
   String toString() {
-    return 'GitRepositoryAccess(id: $id, user: $user, provider: $provider, repository: $repository, purpose: $purpose, credentialMode: $credentialMode, credential: $credential, requestedAccess: $requestedAccess, registrationStatus: $registrationStatus, status: $status, lastError: $lastError)';
+    return 'GitRepositoryAccess(id: $id, user: $user, provider: $provider, repository: $repository, host: $host, port: $port, knownHostKey: $knownHostKey, purpose: $purpose, credentialMode: $credentialMode, credential: $credential, requestedAccess: $requestedAccess, registrationStatus: $registrationStatus, status: $status, lastError: $lastError)';
   }
 }
 
@@ -101,6 +111,9 @@ abstract mixin class $GitRepositoryAccessCopyWith<$Res> {
       @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown)
       GitRepositoryAccessProvider provider,
       String repository,
+      String? host,
+      double? port,
+      String? knownHostKey,
       String purpose,
       @JsonKey(unknownEnumValue: GitRepositoryAccessCredentialMode.unknown)
       GitRepositoryAccessCredentialMode credentialMode,
@@ -131,6 +144,9 @@ class _$GitRepositoryAccessCopyWithImpl<$Res>
     Object? user = null,
     Object? provider = null,
     Object? repository = null,
+    Object? host = freezed,
+    Object? port = freezed,
+    Object? knownHostKey = freezed,
     Object? purpose = null,
     Object? credentialMode = null,
     Object? credential = freezed,
@@ -156,6 +172,18 @@ class _$GitRepositoryAccessCopyWithImpl<$Res>
           ? _self.repository
           : repository // ignore: cast_nullable_to_non_nullable
               as String,
+      host: freezed == host
+          ? _self.host
+          : host // ignore: cast_nullable_to_non_nullable
+              as String?,
+      port: freezed == port
+          ? _self.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as double?,
+      knownHostKey: freezed == knownHostKey
+          ? _self.knownHostKey
+          : knownHostKey // ignore: cast_nullable_to_non_nullable
+              as String?,
       purpose: null == purpose
           ? _self.purpose
           : purpose // ignore: cast_nullable_to_non_nullable
@@ -287,6 +315,9 @@ extension GitRepositoryAccessPatterns on GitRepositoryAccess {
             @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown)
             GitRepositoryAccessProvider provider,
             String repository,
+            String? host,
+            double? port,
+            String? knownHostKey,
             String purpose,
             @JsonKey(
                 unknownEnumValue: GitRepositoryAccessCredentialMode.unknown)
@@ -312,6 +343,9 @@ extension GitRepositoryAccessPatterns on GitRepositoryAccess {
             _that.user,
             _that.provider,
             _that.repository,
+            _that.host,
+            _that.port,
+            _that.knownHostKey,
             _that.purpose,
             _that.credentialMode,
             _that.credential,
@@ -345,6 +379,9 @@ extension GitRepositoryAccessPatterns on GitRepositoryAccess {
             @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown)
             GitRepositoryAccessProvider provider,
             String repository,
+            String? host,
+            double? port,
+            String? knownHostKey,
             String purpose,
             @JsonKey(
                 unknownEnumValue: GitRepositoryAccessCredentialMode.unknown)
@@ -369,6 +406,9 @@ extension GitRepositoryAccessPatterns on GitRepositoryAccess {
             _that.user,
             _that.provider,
             _that.repository,
+            _that.host,
+            _that.port,
+            _that.knownHostKey,
             _that.purpose,
             _that.credentialMode,
             _that.credential,
@@ -401,6 +441,9 @@ extension GitRepositoryAccessPatterns on GitRepositoryAccess {
             @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown)
             GitRepositoryAccessProvider provider,
             String repository,
+            String? host,
+            double? port,
+            String? knownHostKey,
             String purpose,
             @JsonKey(
                 unknownEnumValue: GitRepositoryAccessCredentialMode.unknown)
@@ -425,6 +468,9 @@ extension GitRepositoryAccessPatterns on GitRepositoryAccess {
             _that.user,
             _that.provider,
             _that.repository,
+            _that.host,
+            _that.port,
+            _that.knownHostKey,
             _that.purpose,
             _that.credentialMode,
             _that.credential,
@@ -447,6 +493,9 @@ class _GitRepositoryAccess implements GitRepositoryAccess {
       @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown)
       required this.provider,
       required this.repository,
+      this.host,
+      this.port,
+      this.knownHostKey,
       required this.purpose,
       @JsonKey(unknownEnumValue: GitRepositoryAccessCredentialMode.unknown)
       required this.credentialMode,
@@ -470,6 +519,12 @@ class _GitRepositoryAccess implements GitRepositoryAccess {
   final GitRepositoryAccessProvider provider;
   @override
   final String repository;
+  @override
+  final String? host;
+  @override
+  final double? port;
+  @override
+  final String? knownHostKey;
   @override
   final String purpose;
   @override
@@ -516,6 +571,10 @@ class _GitRepositoryAccess implements GitRepositoryAccess {
                 other.provider == provider) &&
             (identical(other.repository, repository) ||
                 other.repository == repository) &&
+            (identical(other.host, host) || other.host == host) &&
+            (identical(other.port, port) || other.port == port) &&
+            (identical(other.knownHostKey, knownHostKey) ||
+                other.knownHostKey == knownHostKey) &&
             (identical(other.purpose, purpose) || other.purpose == purpose) &&
             (identical(other.credentialMode, credentialMode) ||
                 other.credentialMode == credentialMode) &&
@@ -538,6 +597,9 @@ class _GitRepositoryAccess implements GitRepositoryAccess {
       user,
       provider,
       repository,
+      host,
+      port,
+      knownHostKey,
       purpose,
       credentialMode,
       credential,
@@ -548,7 +610,7 @@ class _GitRepositoryAccess implements GitRepositoryAccess {
 
   @override
   String toString() {
-    return 'GitRepositoryAccess(id: $id, user: $user, provider: $provider, repository: $repository, purpose: $purpose, credentialMode: $credentialMode, credential: $credential, requestedAccess: $requestedAccess, registrationStatus: $registrationStatus, status: $status, lastError: $lastError)';
+    return 'GitRepositoryAccess(id: $id, user: $user, provider: $provider, repository: $repository, host: $host, port: $port, knownHostKey: $knownHostKey, purpose: $purpose, credentialMode: $credentialMode, credential: $credential, requestedAccess: $requestedAccess, registrationStatus: $registrationStatus, status: $status, lastError: $lastError)';
   }
 }
 
@@ -566,6 +628,9 @@ abstract mixin class _$GitRepositoryAccessCopyWith<$Res>
       @JsonKey(unknownEnumValue: GitRepositoryAccessProvider.unknown)
       GitRepositoryAccessProvider provider,
       String repository,
+      String? host,
+      double? port,
+      String? knownHostKey,
       String purpose,
       @JsonKey(unknownEnumValue: GitRepositoryAccessCredentialMode.unknown)
       GitRepositoryAccessCredentialMode credentialMode,
@@ -596,6 +661,9 @@ class __$GitRepositoryAccessCopyWithImpl<$Res>
     Object? user = null,
     Object? provider = null,
     Object? repository = null,
+    Object? host = freezed,
+    Object? port = freezed,
+    Object? knownHostKey = freezed,
     Object? purpose = null,
     Object? credentialMode = null,
     Object? credential = freezed,
@@ -621,6 +689,18 @@ class __$GitRepositoryAccessCopyWithImpl<$Res>
           ? _self.repository
           : repository // ignore: cast_nullable_to_non_nullable
               as String,
+      host: freezed == host
+          ? _self.host
+          : host // ignore: cast_nullable_to_non_nullable
+              as String?,
+      port: freezed == port
+          ? _self.port
+          : port // ignore: cast_nullable_to_non_nullable
+              as double?,
+      knownHostKey: freezed == knownHostKey
+          ? _self.knownHostKey
+          : knownHostKey // ignore: cast_nullable_to_non_nullable
+              as String?,
       purpose: null == purpose
           ? _self.purpose
           : purpose // ignore: cast_nullable_to_non_nullable

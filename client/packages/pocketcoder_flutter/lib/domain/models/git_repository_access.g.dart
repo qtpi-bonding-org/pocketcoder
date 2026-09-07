@@ -14,6 +14,9 @@ _GitRepositoryAccess _$GitRepositoryAccessFromJson(Map<String, dynamic> json) =>
           _$GitRepositoryAccessProviderEnumMap, json['provider'],
           unknownValue: GitRepositoryAccessProvider.unknown),
       repository: json['repository'] as String,
+      host: json['host'] as String?,
+      port: (json['port'] as num?)?.toDouble(),
+      knownHostKey: json['known_host_key'] as String?,
       purpose: json['purpose'] as String,
       credentialMode: $enumDecode(
           _$GitRepositoryAccessCredentialModeEnumMap, json['credential_mode'],
@@ -38,6 +41,9 @@ Map<String, dynamic> _$GitRepositoryAccessToJson(
       'user': instance.user,
       'provider': _$GitRepositoryAccessProviderEnumMap[instance.provider]!,
       'repository': instance.repository,
+      'host': instance.host,
+      'port': instance.port,
+      'known_host_key': instance.knownHostKey,
       'purpose': instance.purpose,
       'credential_mode':
           _$GitRepositoryAccessCredentialModeEnumMap[instance.credentialMode]!,
@@ -54,6 +60,7 @@ const _$GitRepositoryAccessProviderEnumMap = {
   GitRepositoryAccessProvider.github: 'github',
   GitRepositoryAccessProvider.gitlab: 'gitlab',
   GitRepositoryAccessProvider.codeberg: 'codeberg',
+  GitRepositoryAccessProvider.custom: 'custom',
   GitRepositoryAccessProvider.unknown: '__unknown__',
 };
 
