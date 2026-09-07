@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/agent_config_exception.dart';
 import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
@@ -14,6 +15,8 @@ class MockPromptDao extends Mock implements PromptDao {}
 
 class MockPermissionModeDao extends Mock implements PermissionModeDao {}
 
+class MockAuthRepository extends Mock implements IAuthRepository {}
+
 class _FakePocoConfig extends Fake implements PocoConfig {}
 
 class _FakePrompt extends Fake implements Prompt {}
@@ -23,6 +26,7 @@ void main() {
   late MockPocoConfigDao configDao;
   late MockPromptDao promptDao;
   late MockPermissionModeDao permissionModeDao;
+  late MockAuthRepository auth;
 
   final testConfig = PocoConfig(
     id: 'config-1',
@@ -51,7 +55,9 @@ void main() {
     configDao = MockPocoConfigDao();
     promptDao = MockPromptDao();
     permissionModeDao = MockPermissionModeDao();
-    repo = AgentConfigRepository(configDao, promptDao, permissionModeDao);
+    auth = MockAuthRepository();
+    when(() => auth.currentUserId).thenReturn('user-1');
+    repo = AgentConfigRepository(configDao, promptDao, permissionModeDao, auth);
   });
 
   test('watchConfigs forwards configDao.watch()', () {
@@ -79,7 +85,7 @@ void main() {
   });
 
   test(
-      'saveConfig calls configDao.save with id and toJson, wraps failures in AgentConfigException',
+      'saveConfig stamps the current user onto the save payload, wraps failures in AgentConfigException',
       () async {
     when(() => configDao.save(
           any(),
@@ -87,7 +93,10 @@ void main() {
         )).thenAnswer((_) async => testConfig);
 
     await repo.saveConfig(testConfig);
-    verify(() => configDao.save(testConfig.id, testConfig.toJson())).called(1);
+    verify(() => configDao.save(
+          testConfig.id,
+          {...testConfig.toJson(), 'user': 'user-1'},
+        )).called(1);
 
     when(() => configDao.save(any(), any())).thenThrow(Exception('boom'));
     await expectLater(
@@ -112,13 +121,16 @@ void main() {
   });
 
   test(
-      'savePrompt calls promptDao.save with id and toJson, wraps failures in AgentConfigException',
+      'savePrompt stamps the current user onto the save payload, wraps failures in AgentConfigException',
       () async {
     when(() => promptDao.save(any(), any()))
         .thenAnswer((_) async => testPrompt);
 
     await repo.savePrompt(testPrompt);
-    verify(() => promptDao.save(testPrompt.id, testPrompt.toJson())).called(1);
+    verify(() => promptDao.save(
+          testPrompt.id,
+          {...testPrompt.toJson(), 'user': 'user-1'},
+        )).called(1);
 
     when(() => promptDao.save(any(), any())).thenThrow(Exception('boom'));
     await expectLater(

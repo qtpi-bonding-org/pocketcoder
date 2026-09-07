@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/agent_config/i_agent_config_repository.dart';
+import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/agent_config_exception.dart';
 import 'package:pocketcoder_flutter/domain/models/permission_mode.dart';
 import 'package:pocketcoder_flutter/domain/models/poco_config.dart';
@@ -13,11 +14,13 @@ class AgentConfigRepository implements IAgentConfigRepository {
     this._configDao,
     this._promptDao,
     this._permissionModeDao,
+    this._auth,
   );
 
   final PocoConfigDao _configDao;
   final PromptDao _promptDao;
   final PermissionModeDao _permissionModeDao;
+  final IAuthRepository _auth;
 
   @override
   Stream<List<PocoConfig>> watchConfigs() => _configDao.watch();
@@ -32,7 +35,10 @@ class AgentConfigRepository implements IAgentConfigRepository {
   @override
   Future<void> saveConfig(PocoConfig config) => tryMethod(
         () async {
-          await _configDao.save(config.id, config.toJson());
+          await _configDao.save(config.id, {
+            ...config.toJson(),
+            'user': _auth.currentUserId,
+          });
         },
         AgentConfigException.new,
         'saveConfig',
@@ -48,7 +54,10 @@ class AgentConfigRepository implements IAgentConfigRepository {
   @override
   Future<void> savePrompt(Prompt prompt) => tryMethod(
         () async {
-          await _promptDao.save(prompt.id, prompt.toJson());
+          await _promptDao.save(prompt.id, {
+            ...prompt.toJson(),
+            'user': _auth.currentUserId,
+          });
         },
         AgentConfigException.new,
         'savePrompt',

@@ -449,12 +449,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<bool>(instanceName: 'useTestingChannel'),
               gh<String>(instanceName: 'releaseChannel'),
             ));
-    gh.lazySingleton<_i630.IAgentConfigRepository>(
-        () => _i857.AgentConfigRepository(
-              gh<_i810.PocoConfigDao>(),
-              gh<_i810.PromptDao>(),
-              gh<_i810.PermissionModeDao>(),
-            ));
     gh.lazySingleton<_i313.AgentStreamClient>(() => _i313.AgentStreamClient(
           pocketBase: gh<_i169.PocketBase>(),
           httpClient: gh<_i519.Client>(),
@@ -473,6 +467,13 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i935.PocketCoderApiClient>(),
           gh<_i36.AuthHttpState>(),
         ));
+    gh.lazySingleton<_i630.IAgentConfigRepository>(
+        () => _i857.AgentConfigRepository(
+              gh<_i810.PocoConfigDao>(),
+              gh<_i810.PromptDao>(),
+              gh<_i810.PermissionModeDao>(),
+              gh<_i50.IAuthRepository>(),
+            ));
     gh.factory<_i273.ObservabilityCubit>(
         () => _i273.ObservabilityCubit(gh<_i611.IObservabilityRepository>()));
     gh.lazySingleton<_i904.IMcpOAuthService>(() => _i732.McpOAuthService(
