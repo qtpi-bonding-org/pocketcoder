@@ -10,16 +10,21 @@ DEFAULT_OUTPUT_DIR = PACKAGE_ROOT / 'lib' / 'domain' / 'models'
 
 # Collections to skip for model generation (system or have custom models)
 SKIP_COLLECTIONS = [
-    '_mfas', '_otps', '_externalAuths', '_authOrigins', '_superusers', 'users',
-    # These collections retain domain-specific hand-maintained models.
-    'agent_profiles', 'permission_mode_tools',
+    '_mfas', '_otps', '_externalAuths', '_authOrigins', '_superusers',
+    # The auth collection's password/tokenKey/verified/emailVisibility
+    # fields must never become plain domain fields -- lib/domain/auth/user.dart
+    # is the real (hand-written, intentionally narrower) model for this.
+    'users',
 ]
 
 # Collections to skip for the Collections constants (internal PB system only)
 SKIP_COLLECTION_CONSTANTS = ['_mfas', '_otps', '_externalAuths', '_authOrigins', '_superusers']
 
 # Mapping for specific collection names to class names
-CLASS_NAME_OVERRIDES = {}
+CLASS_NAME_OVERRIDES = {
+    'agent_profiles': 'PocoConfig',
+    'permission_mode_tools': 'ToolPermission',
+}
 
 # Mapping for collection constant names (camelCase key used in Collections class)
 COLLECTION_CONST_OVERRIDES = {

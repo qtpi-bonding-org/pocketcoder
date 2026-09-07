@@ -39,6 +39,7 @@ Widget toolPermissionsViewPopulated(BuildContext context) =>
           pattern: 'rm *',
           action: ToolPermissionAction.deny,
           active: true,
+          permissionMode: 'mode-1',
         ),
         ToolPermission(
           id: 'rule-2',
@@ -46,6 +47,7 @@ Widget toolPermissionsViewPopulated(BuildContext context) =>
           pattern: '*',
           action: ToolPermissionAction.allow,
           active: true,
+          permissionMode: 'mode-1',
         ),
       ]),
       onSetActive: (_, __) async {},

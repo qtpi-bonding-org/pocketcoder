@@ -14,7 +14,7 @@ _ToolPermission _$ToolPermissionFromJson(Map<String, dynamic> json) =>
       action: $enumDecode(_$ToolPermissionActionEnumMap, json['action'],
           unknownValue: ToolPermissionAction.unknown),
       active: json['active'] as bool?,
-      pocoConfig: json['poco_config'] as String?,
+      permissionMode: json['permission_mode'] as String,
     );
 
 Map<String, dynamic> _$ToolPermissionToJson(_ToolPermission instance) =>
@@ -24,7 +24,7 @@ Map<String, dynamic> _$ToolPermissionToJson(_ToolPermission instance) =>
       'pattern': instance.pattern,
       'action': _$ToolPermissionActionEnumMap[instance.action]!,
       'active': instance.active,
-      'poco_config': instance.pocoConfig,
+      'permission_mode': instance.permissionMode,
     };
 
 const _$ToolPermissionActionEnumMap = {
