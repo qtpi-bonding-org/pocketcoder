@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/boot/boot_routing_decider.dart';
+import 'package:pocketcoder_flutter/application/boot/boot_navigation_parts.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
@@ -186,6 +187,63 @@ class FakeInstanceExistenceResolver implements IInstanceExistenceResolver {
     final outcome = override != null ? await override : result;
     return outcome;
   }
+}
+
+/// Retains each bundle's fake sources so the helpers below can drive them.
+/// BootNavigationParts deliberately does not expose its inputs.
+final Map<BootNavigationParts, FakeAuthRepository> _partAuth =
+    <BootNavigationParts, FakeAuthRepository>{};
+final Map<BootNavigationParts, FakeReadiness> _partReadiness =
+    <BootNavigationParts, FakeReadiness>{};
+
+BootNavigationParts buildParts({
+  FakeReadiness? readiness,
+  FakeHarness? harness,
+  IInstanceExistenceResolver? existenceResolver,
+  IDeploymentAuthStatus? deploymentAuthStatus,
+}) {
+  final sourceReadiness = readiness ??
+      FakeReadiness(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.ready,
+        instanceId: 'i1',
+      ));
+  final repository = FakeAuthRepository();
+  final parts = BootNavigationParts(
+    readinessCheck: sourceReadiness,
+    authCoordinator: AuthSessionCoordinator(repository),
+    harnessAuthRepository: harness ?? FakeHarness(),
+    instanceExistenceResolver: existenceResolver,
+    deploymentAuthStatus: deploymentAuthStatus,
+    unknownExistenceRetryDelay: Duration.zero,
+  );
+  _partAuth[parts] = repository;
+  _partReadiness[parts] = sourceReadiness;
+  return parts;
+}
+
+/// Publishes a session change and waits for it to reach the bundle.
+///
+/// The await is load-bearing. `signInGeneration` is bumped by
+/// BootNavigationParts' own listener on the signed-out to signed-in edge,
+/// which arrives asynchronously through `sessionChanges`; without the wait,
+/// two back-to-back calls collapse into a single delivery and the bundle
+/// never observes the edge. Nothing here reads a part -- reading between
+/// transitions is what would make the caller's assertion vacuous.
+Future<void> setSignedIn(BootNavigationParts parts, bool signedIn) async {
+  final repository = _partAuth[parts];
+  if (repository == null) return;
+  repository.authenticated = signedIn;
+  repository.publish();
+  await Future<void>.delayed(Duration.zero);
+}
+
+/// Emits a readiness snapshot through the bundle's own source.
+Future<void> emitReadiness(BootNavigationParts parts) async {
+  _partReadiness[parts]?.set(const ServerReadinessSnapshot(
+    status: ServerReadinessStatus.ready,
+    instanceId: 'i1',
+  ));
+  await Future<void>.delayed(Duration.zero);
 }
 
 class FakeDeploymentAuthStatus implements IDeploymentAuthStatus {
