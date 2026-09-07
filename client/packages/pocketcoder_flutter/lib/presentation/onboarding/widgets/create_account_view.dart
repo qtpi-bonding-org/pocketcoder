@@ -61,7 +61,7 @@ class _CreateAccountViewState extends State<CreateAccountView> {
               PocoBubble(
                 message: context.l10n.onboardingServerCredentialsPoco,
               ),
-              VSpace.x3,
+              VSpace.x2,
               TerminalTextField(
                 controller: _emailController,
                 label: context.l10n.onboardingPocketbaseAdminEmail,

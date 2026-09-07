@@ -37,7 +37,7 @@ class WelcomeView extends StatelessWidget {
                 speaker: TerminalConversationSpeaker.poco,
                 message: context.l10n.onboardingWelcomePoco,
               ),
-              VSpace.x3,
+              VSpace.x2,
               if (showGuidedSetup) ...[
                 TerminalPromptSuggestion(
                   label: context.l10n.onboardingWelcomeActionGuided,

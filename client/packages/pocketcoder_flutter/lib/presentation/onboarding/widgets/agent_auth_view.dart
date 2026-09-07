@@ -103,7 +103,7 @@ class AgentAuthView extends StatelessWidget {
                     context.l10n.onboardingChooseHarnessBody,
                     role: TextRole.body,
                   ),
-                  VSpace.x3,
+                  VSpace.x2,
                   if (!harnessProvidersLoaded)
                     TerminalText(
                         context.l10n.onboardingChooseHarnessLoadingProviders,

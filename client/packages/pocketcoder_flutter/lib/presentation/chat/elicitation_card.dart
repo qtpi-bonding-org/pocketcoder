@@ -118,7 +118,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             ),
           ),
         ],
-        VSpace.x3,
+        VSpace.x2,
         for (final entry in fields) ...[
           _buildField(
             context,

@@ -28,7 +28,7 @@ class ActiveProStatus extends StatelessWidget {
       ),
       VSpace.x2,
       TerminalText(context.l10n.proActiveBody, role: TextRole.body),
-      VSpace.x3,
+      VSpace.x2,
       if (onContinue case final onContinue?) ...[
         TerminalButton(
             label: context.l10n.proContinueSetup,
