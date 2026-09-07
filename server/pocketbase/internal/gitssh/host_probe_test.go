@@ -83,6 +83,42 @@ func TestProbeHostKeyReturnsAKnownHostsLineMatchingTheServer(t *testing.T) {
 	}
 }
 
+func TestProbeHostKeyRespectsCtxDeadlineEvenWhenTheServerNeverSpeaks(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = ln.Close() })
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		// Accept the TCP connection but never send an SSH banner --
+		// simulates a tarpit or a non-SSH service on that host/port.
+		<-t.Context().Done()
+		_ = conn.Close()
+	}()
+
+	addr := ln.Addr().String()
+	h, p, _ := net.SplitHostPort(addr)
+	portNum, _ := strconv.Atoi(p)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	start := time.Now()
+	_, err = ProbeHostKey(ctx, h, portNum)
+	elapsed := time.Since(start)
+
+	if err == nil {
+		t.Fatal("expected an error from a server that never completes the handshake")
+	}
+	if elapsed > 3*time.Second {
+		t.Fatalf("ProbeHostKey took %s to return; it must respect ctx's deadline instead of blocking indefinitely", elapsed)
+	}
+}
+
 func TestProbeHostKeyFailsFastOnAClosedPort(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {

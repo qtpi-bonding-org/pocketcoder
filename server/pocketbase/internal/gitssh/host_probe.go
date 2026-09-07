@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -22,7 +23,6 @@ func ProbeHostKey(ctx context.Context, host string, port int) (string, error) {
 			// yet.
 			return fmt.Errorf("host key observed, aborting handshake by design")
 		},
-		Timeout: 10 * 1e9, // 10s; overridden below by ctx when it's shorter
 	}
 
 	var d net.Dialer
@@ -31,6 +31,14 @@ func ProbeHostKey(ctx context.Context, host string, port int) (string, error) {
 		return "", fmt.Errorf("dial %s:%d: %w", host, port, err)
 	}
 	defer conn.Close()
+
+	deadline := time.Now().Add(10 * time.Second)
+	if ctxDeadline, ok := ctx.Deadline(); ok && ctxDeadline.Before(deadline) {
+		deadline = ctxDeadline
+	}
+	if err := conn.SetDeadline(deadline); err != nil {
+		return "", fmt.Errorf("set handshake deadline for %s:%d: %w", host, port, err)
+	}
 
 	_, _, _, err = ssh.NewClientConn(conn, net.JoinHostPort(host, strconv.Itoa(port)), config)
 	if observed == nil {

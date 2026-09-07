@@ -15,8 +15,10 @@ func RegisterGitSSHHooks(app core.App, queue *gitssh.Queue) {
 	}
 	app.OnRecordAfterCreateSuccess("git_ssh_credentials").BindFunc(enqueueOwner)
 	app.OnRecordAfterUpdateSuccess("git_ssh_credentials").BindFunc(enqueueOwner)
+	app.OnRecordAfterDeleteSuccess("git_ssh_credentials").BindFunc(enqueueOwner)
 	app.OnRecordAfterCreateSuccess("git_repository_access").BindFunc(enqueueOwner)
 	app.OnRecordAfterUpdateSuccess("git_repository_access").BindFunc(enqueueOwner)
+	app.OnRecordAfterDeleteSuccess("git_repository_access").BindFunc(enqueueOwner)
 	protectRequest := func(e *core.RecordRequestEvent) error {
 		name := e.Record.Collection().Name
 		if name != "git_ssh_credentials" && name != "git_repository_access" {
@@ -32,7 +34,7 @@ func RegisterGitSSHHooks(app core.App, queue *gitssh.Queue) {
 				}
 			}
 		} else {
-			for _, field := range []string{"user", "credential", "status", "last_error"} {
+			for _, field := range []string{"user", "provider", "repository", "host", "port", "known_host_key", "credential", "status", "last_error"} {
 				if e.Record.Original() != nil {
 					e.Record.Set(field, e.Record.Original().Get(field))
 				}
@@ -86,6 +88,17 @@ func RegisterGitSSHHooks(app core.App, queue *gitssh.Queue) {
 		}
 		e.Record.Set("provider", provider)
 		e.Record.Set("repository", repo)
+		if provider == gitssh.CustomProviderID {
+			host := strings.TrimSpace(e.Record.GetString("host"))
+			if host == "" || host != e.Record.GetString("host") || strings.ContainsAny(host, "\r\n \t") {
+				return fmt.Errorf("custom provider requires a valid host")
+			}
+			e.Record.Set("known_host_key", "")
+		} else {
+			e.Record.Set("host", "")
+			e.Record.Set("port", 0)
+			e.Record.Set("known_host_key", "")
+		}
 		if mode := e.Record.GetString("credential_mode"); mode == "existing_account" {
 			id := e.Record.GetString("credential")
 			if id == "" {

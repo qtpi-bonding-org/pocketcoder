@@ -225,7 +225,7 @@ func TestReconcileLeavesAccessPendingUntilItsCredentialIsReady(t *testing.T) {
 	}
 }
 
-func TestReconcileIsANoopWhenNothingIsPending(t *testing.T) {
+func TestReconcileWithNothingPendingStillMaterializesAnEmptyConfig(t *testing.T) {
 	app := testApp(t)
 	user := seedUser(t, app, "noop@example.com")
 
@@ -234,7 +234,47 @@ func TestReconcileIsANoopWhenNothingIsPending(t *testing.T) {
 	if err := r.ReconcileUser(context.Background(), app, user.Id); err != nil {
 		t.Fatal(err)
 	}
-	if len(mat.calls) != 0 {
-		t.Fatalf("expected no materializer calls, got %d", len(mat.calls))
+	if len(mat.calls) != 1 {
+		t.Fatalf("expected one (idempotent, empty) materializer call, got %d", len(mat.calls))
+	}
+}
+
+func TestReconcileAfterDeletingTheOnlyAccessRowStillRematerializesToDropItFromConfig(t *testing.T) {
+	app := testApp(t)
+	user := seedUser(t, app, "delete-only-access@example.com")
+
+	accessColl, _ := app.FindCollectionByNameOrId("git_repository_access")
+	access := core.NewRecord(accessColl)
+	access.Set("user", user.Id)
+	access.Set("provider", "github")
+	access.Set("repository", "octo/hello")
+	access.Set("purpose", "let the agent push")
+	access.Set("credential_mode", "generated_deploy")
+	access.Set("requested_access", "read_write")
+	access.Set("registration_status", "needs_registration")
+	access.Set("status", "pending")
+	if err := app.Save(access); err != nil {
+		t.Fatal(err)
+	}
+
+	mat := &fakeMaterializer{}
+	r := &Reconciler{Materializer: mat}
+	if err := r.ReconcileUser(context.Background(), app, user.Id); err != nil {
+		t.Fatal(err)
+	}
+	first := mat.calls[len(mat.calls)-1]
+	if !strings.Contains(string(first.Config), "Host pcgit-"+access.Id) {
+		t.Fatalf("first materialize should include the access row: %s", first.Config)
+	}
+
+	if err := app.Delete(access); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.ReconcileUser(context.Background(), app, user.Id); err != nil {
+		t.Fatal(err)
+	}
+	last := mat.calls[len(mat.calls)-1]
+	if strings.Contains(string(last.Config), "Host pcgit-"+access.Id) {
+		t.Fatalf("deleted access row should no longer be in the rendered config: %s", last.Config)
 	}
 }

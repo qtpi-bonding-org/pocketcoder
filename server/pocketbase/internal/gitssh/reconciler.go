@@ -160,7 +160,6 @@ func (r *Reconciler) materialize(ctx context.Context, app core.App, userID strin
 	var accessList []Access
 	knownHostsSeen := map[string]bool{}
 	var knownHosts []string
-	anyReady := false
 	for _, access := range rows {
 		cred, err := app.FindRecordById("git_ssh_credentials", access.GetString("credential"))
 		if err != nil || cred.GetString("status") != "ready" {
@@ -176,7 +175,6 @@ func (r *Reconciler) materialize(ctx context.Context, app core.App, userID strin
 			Port:         access.GetInt("port"),
 		}
 		accessList = append(accessList, a)
-		anyReady = true
 
 		if provider == CustomProviderID {
 			if line := access.GetString("known_host_key"); line != "" && !knownHostsSeen[line] {
@@ -197,7 +195,7 @@ func (r *Reconciler) materialize(ctx context.Context, app core.App, userID strin
 		}
 	}
 
-	if !anyReady && len(newKeys) == 0 {
+	if r.Materializer == nil {
 		return nil
 	}
 
@@ -212,9 +210,6 @@ func (r *Reconciler) materialize(ctx context.Context, app core.App, userID strin
 		Config:     []byte(config),
 		KnownHosts: []byte(strings.Join(knownHosts, "\n") + "\n"),
 		Keys:       newKeys,
-	}
-	if r.Materializer == nil {
-		return nil
 	}
 	if err := r.Materializer.Materialize(ctx, userID, manifest); err != nil {
 		return fmt.Errorf("materialize: %w", err)
