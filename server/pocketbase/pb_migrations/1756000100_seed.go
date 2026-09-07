@@ -80,13 +80,32 @@ func init() {
 		if err != nil {
 			return err
 		}
-		balanced := core.NewRecord(modeColl)
-		balanced.Set("name", "Balanced")
-		balanced.Set("description", "Ask before tools that can change the workspace.")
-		balanced.Set("base_session_mode", "approve")
-		balanced.Set("is_system", true)
-		balanced.Set("is_default", true)
-		if err := app.Save(balanced); err != nil {
+		newMode := func(name, description string, isDefault bool) (*core.Record, error) {
+			rec := core.NewRecord(modeColl)
+			rec.Set("name", name)
+			rec.Set("description", description)
+			rec.Set("base_session_mode", "approve")
+			rec.Set("is_system", true)
+			rec.Set("is_default", isDefault)
+			if err := app.Save(rec); err != nil {
+				return nil, fmt.Errorf("seed %s permission mode: %w", name, err)
+			}
+			return rec, nil
+		}
+		manual, err := newMode("manual", "Ask before every tool call.", true)
+		if err != nil {
+			return err
+		}
+		read, err := newMode("read", "Auto-allow read-only tools; ask before everything else.", false)
+		if err != nil {
+			return err
+		}
+		write, err := newMode("write", "Auto-allow reads and file edits; ask before shell, skills, and sub-agents.", false)
+		if err != nil {
+			return err
+		}
+		auto, err := newMode("auto", "Auto-allow every tool call.", false)
+		if err != nil {
 			return err
 		}
 
@@ -98,7 +117,7 @@ func init() {
 		poco.Set("name", "Poco")
 		poco.Set("is_system", true)
 		poco.Set("is_default", true)
-		poco.Set("permission_mode", balanced.Id)
+		poco.Set("permission_mode", manual.Id)
 		if err := app.Save(poco); err != nil {
 			return fmt.Errorf("seed Poco agent profile: %w", err)
 		}
@@ -107,32 +126,43 @@ func init() {
 		if err != nil {
 			return err
 		}
-		seedToolPerm := func(tool, pattern, action string) error {
+		seedToolPerm := func(modeID, tool, pattern, action string) error {
 			rec := core.NewRecord(tpColl)
 			rec.Set("tool", tool)
 			rec.Set("pattern", pattern)
 			rec.Set("action", action)
 			rec.Set("active", true)
-			rec.Set("permission_mode", balanced.Id)
+			rec.Set("permission_mode", modeID)
 			return app.Save(rec)
 		}
 
-		defaults := [][3]string{
-			{"*", "*", "ask"},
+		// manual: no rows at all -- PermissionDecision's own default is "ask"
+		// for anything with no matching rule, so an empty rule set already
+		// means "ask before every tool call."
+
+		readOnlyAllows := [][3]string{
 			{"bash", "ls *", "allow"},
 			{"check_pc_updates", "*", "allow"},
 			{"mcp_catalog", "*", "allow"},
 			{"mcp_status", "*", "allow"},
-			{"mcp_request", "*", "ask"},
-			{"bash", "*", "ask"},
-			{"edit", "*", "ask"},
-			{"skill", "*", "ask"},
-			{"poco-agents_*", "*", "ask"},
 		}
-		for _, d := range defaults {
-			if err := seedToolPerm(d[0], d[1], d[2]); err != nil {
+		for _, d := range readOnlyAllows {
+			if err := seedToolPerm(read.Id, d[0], d[1], d[2]); err != nil {
 				return err
 			}
+		}
+
+		for _, d := range readOnlyAllows {
+			if err := seedToolPerm(write.Id, d[0], d[1], d[2]); err != nil {
+				return err
+			}
+		}
+		if err := seedToolPerm(write.Id, "edit", "*", "allow"); err != nil {
+			return err
+		}
+
+		if err := seedToolPerm(auto.Id, "*", "*", "allow"); err != nil {
+			return err
 		}
 
 		harnessesColl, err := app.FindCollectionByNameOrId("harnesses")
