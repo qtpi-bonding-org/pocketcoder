@@ -328,8 +328,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
                           }
                         },
                         onCopyCode: (code) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(context.l10n.serverControlCopied)));
+                          VimToast.show(context, context.l10n.serverControlCopied,
+                              type: VimToastType.success);
                         },
                         onSubmitCode: (code) => auth.submitCode(
                             harnessId: harness.id,
@@ -358,8 +358,8 @@ class AgentAuthAdapter extends CubitAdapter<ProviderCubit, ProviderState> {
   Future<void> _openChallenge(BuildContext context, Uri uri) async {
     final opened = await launcher.open(uri);
     if (!opened && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.errorCouldNotOpenBrowser)));
+      VimToast.show(context, context.l10n.errorCouldNotOpenBrowser,
+          type: VimToastType.warning);
     }
   }
 }

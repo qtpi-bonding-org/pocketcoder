@@ -27,8 +27,6 @@ void main() {
 
   testWidgets('renders no label line when label is omitted', (tester) async {
     await tester.pumpWidget(_wrap(const TerminalLoadingIndicator()));
-    // Exactly one Text widget -- the spinner's own glyph, no separate
-    // label line underneath it.
-    expect(find.byType(Text), findsOneWidget);
+    expect(find.byType(Text), findsNothing);
   });
 }

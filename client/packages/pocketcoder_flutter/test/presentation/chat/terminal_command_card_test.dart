@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/status_marker.dart';
 import 'package:pocketcoder_flutter/presentation/chat/widgets/terminal_command_card.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/dot_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/status_marker_view.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 
@@ -23,18 +24,9 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
-  testWidgets('keeps the spinner static when reduced motion is enabled',
-      (tester) async {
-    await tester.pumpWidget(_wrap(
-      const MediaQuery(
-        data: MediaQueryData(disableAnimations: true),
-        child: TerminalSpinner(),
-      ),
-    ));
-    expect(find.text('▁'), findsOneWidget);
-
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('▁'), findsOneWidget);
+  testWidgets('renders the shared dot spinner', (tester) async {
+    await tester.pumpWidget(_wrap(const TerminalSpinner()));
+    expect(find.byType(DotSpinner), findsOneWidget);
   });
 
   testWidgets('shows a running command without output', (tester) async {

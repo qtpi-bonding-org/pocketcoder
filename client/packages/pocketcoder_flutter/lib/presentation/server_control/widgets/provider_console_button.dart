@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/domain/server_control/i_provider_console_lin
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 class ProviderConsoleButton extends StatelessWidget {
   const ProviderConsoleButton(
@@ -22,12 +23,10 @@ class ProviderConsoleButton extends StatelessWidget {
               final uri = await link.resolve();
               if (!context.mounted) return;
               if (uri == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                        context.l10n.serverControlProviderConsoleUnavailable),
-                  ),
-                );
+                VimToast.show(
+                    context,
+                    context.l10n.serverControlProviderConsoleUnavailable,
+                    type: VimToastType.warning);
                 return;
               }
               await launcher.open(uri);
