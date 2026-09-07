@@ -231,9 +231,7 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		permissionModeID = poco.GetString("permission_mode")
 	}
 	if permissionModeID == "" {
-		if mode, modeErr := app.FindFirstRecordByFilter("permission_modes", "is_default = true", nil); modeErr == nil && mode != nil {
-			permissionModeID = mode.Id
-		}
+		permissionModeID = defaultPermissionModeID(app, userID)
 	}
 	if permissionModeID != "" {
 		rows, rowsErr := app.FindRecordsByFilter("permission_mode_tools", "active = true && permission_mode = {:mode}", "", 0, 0, map[string]any{"mode": permissionModeID})
@@ -477,6 +475,20 @@ func defaultPocoConfigAPI(app core.App, userID string) (*core.Record, error) {
 		log.Printf("[Profile] %d agent_profiles marked is_default; using first by name %q", len(recs), recs[0].GetString("name"))
 	}
 	return recs[0], nil
+}
+
+// An unscoped "is_default = true" filter would match arbitrarily across
+// every user's rows once personal default modes exist, so scope by user
+// first (mirroring defaultPocoConfigAPI) before falling back to the system
+// default.
+func defaultPermissionModeID(app core.App, userID string) string {
+	if mode, err := app.FindFirstRecordByFilter("permission_modes", "is_default = true && user = {:user}", map[string]any{"user": userID}); err == nil && mode != nil {
+		return mode.Id
+	}
+	if mode, err := app.FindFirstRecordByFilter("permission_modes", "is_default = true && is_system = true", nil); err == nil && mode != nil {
+		return mode.Id
+	}
+	return ""
 }
 
 // SessionForChat resolves an existing ACP session for a chat owned by userID.

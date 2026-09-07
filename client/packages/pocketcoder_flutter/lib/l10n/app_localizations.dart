@@ -292,6 +292,12 @@ abstract class AppLocalizations {
   /// **'save'**
   String get actionSave;
 
+  /// No description provided for @actionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'delete'**
+  String get actionDelete;
+
   /// No description provided for @actionClose.
   ///
   /// In en, this message translates to:
@@ -1546,6 +1552,48 @@ abstract class AppLocalizations {
   /// **'add rule'**
   String get toolPermissionsAddRuleButton;
 
+  /// No description provided for @permissionModesRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'permission modes'**
+  String get permissionModesRegistry;
+
+  /// No description provided for @permissionModesAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'add mode'**
+  String get permissionModesAddButton;
+
+  /// No description provided for @permissionModesDuplicateSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'duplicate which mode?'**
+  String get permissionModesDuplicateSourceTitle;
+
+  /// No description provided for @permissionModesNoModes.
+  ///
+  /// In en, this message translates to:
+  /// **'no modes'**
+  String get permissionModesNoModes;
+
+  /// No description provided for @permissionModesEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'permission mode'**
+  String get permissionModesEditorTitle;
+
+  /// No description provided for @permissionModesNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'name'**
+  String get permissionModesNameLabel;
+
+  /// No description provided for @permissionModesDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'description'**
+  String get permissionModesDescriptionLabel;
+
   /// No description provided for @gitSshScreenTitle.
   ///
   /// In en, this message translates to:
@@ -2071,7 +2119,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMenuToolPermissions.
   ///
   /// In en, this message translates to:
-  /// **'tool permissions'**
+  /// **'permission modes'**
   String get settingsMenuToolPermissions;
 
   /// No description provided for @settingsMenuHarnessConnections.

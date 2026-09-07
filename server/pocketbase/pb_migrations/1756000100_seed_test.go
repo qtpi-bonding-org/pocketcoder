@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tests"
 	_ "github.com/qtpi-bonding-org/pocketcoder/backend/pb_migrations"
 )
@@ -51,34 +52,49 @@ func TestSeedCreatesAdminAgentAndSuperuser(t *testing.T) {
 	}
 }
 
-func TestSeedCreatesBalancedPermissionMode(t *testing.T) {
+func TestSeedCreatesFourPermissionModes(t *testing.T) {
 	app, err := tests.NewTestApp()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer app.Cleanup()
 
-	col, err := app.FindCollectionByNameOrId("permission_mode_tools")
+	modes, err := app.FindRecordsByFilter("permission_modes", "is_system = true", "name", 0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	recs, err := app.FindAllRecords(col)
-	if err != nil {
-		t.Fatal(err)
+	if len(modes) != 4 {
+		t.Fatalf("expected 4 seeded system permission modes, got %d", len(modes))
 	}
-	if len(recs) != 10 {
-		t.Fatalf("expected 10 seeded permission_mode_tools rows, got %d", len(recs))
-	}
-
-	found := false
-	for _, r := range recs {
-		if r.GetString("tool") == "bash" && r.GetString("pattern") == "ls *" && r.GetString("action") == "allow" {
-			found = true
+	byName := map[string]*core.Record{}
+	for _, m := range modes {
+		byName[m.GetString("name")] = m
+		if m.GetString("base_session_mode") != "approve" {
+			t.Errorf("mode %q: expected base_session_mode=approve, got %q", m.GetString("name"), m.GetString("base_session_mode"))
 		}
 	}
-	if !found {
-		t.Error("expected a bash/'ls *'/allow row among seeded permission_mode_tools")
+	for _, name := range []string{"manual", "read", "write", "auto"} {
+		if byName[name] == nil {
+			t.Errorf("expected a seeded permission mode named %q", name)
+		}
 	}
+	if !byName["manual"].GetBool("is_default") {
+		t.Error("expected manual to be the default permission mode")
+	}
+
+	assertRuleCount := func(modeID string, want int) {
+		rules, err := app.FindRecordsByFilter("permission_mode_tools", "permission_mode = {:mode}", "", 0, 0, map[string]any{"mode": modeID})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(rules) != want {
+			t.Errorf("mode %s: expected %d rules, got %d", modeID, want, len(rules))
+		}
+	}
+	assertRuleCount(byName["manual"].Id, 0)
+	assertRuleCount(byName["read"].Id, 4)
+	assertRuleCount(byName["write"].Id, 5)
+	assertRuleCount(byName["auto"].Id, 1)
 }
 
 func TestSeedDoesNotCreateAComposeHarnessInstance(t *testing.T) {

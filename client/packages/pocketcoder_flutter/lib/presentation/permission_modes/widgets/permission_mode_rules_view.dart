@@ -10,21 +10,26 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
-import 'package:pocketcoder_flutter/application/tool_permissions/tool_permissions_state.dart';
+import 'package:pocketcoder_flutter/application/permission_modes/permission_mode_rules_state.dart';
 import 'package:pocketcoder_flutter/domain/models/tool_permission.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 
-import 'tool_permission_dialogs.dart';
+import 'add_rule_dialog.dart';
 
-class ToolPermissionsView extends StatelessWidget {
-  const ToolPermissionsView(
-      {super.key,
-      required this.state,
-      required this.onSetActive,
-      required this.onUpdateAction,
-      required this.onCreateRule});
+class PermissionModeRulesView extends StatelessWidget {
+  const PermissionModeRulesView({
+    super.key,
+    required this.title,
+    required this.readOnly,
+    required this.state,
+    required this.onSetActive,
+    required this.onUpdateAction,
+    required this.onCreateRule,
+  });
 
-  final ToolPermissionsState state;
+  final String title;
+  final bool readOnly;
+  final PermissionModeRulesState state;
   final Future<void> Function(String id, bool active) onSetActive;
   final Future<void> Function(String id, String action) onUpdateAction;
   final Future<void> Function(String tool, String action) onCreateRule;
@@ -37,8 +42,7 @@ class ToolPermissionsView extends StatelessWidget {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SectionHeader(
-                name: context.l10n.toolPermissionsRulesRegistry.toLowerCase()),
+            SectionHeader(name: title.toLowerCase()),
             Expanded(
               child: Builder(builder: (context) {
                 if (state.status == UiFlowStatus.loading) {
@@ -54,12 +58,13 @@ class ToolPermissionsView extends StatelessWidget {
                 }
                 final rules = state.rules;
                 return ListView(children: [
-                  Padding(
-                      padding: EdgeInsets.all(AppSizes.space),
-                      child: TerminalButton(
-                          label: context.l10n.toolPermissionsAddRuleButton,
-                          onTap: () =>
-                              showAddRuleDialog(context, onCreateRule))),
+                  if (!readOnly)
+                    Padding(
+                        padding: EdgeInsets.all(AppSizes.space),
+                        child: TerminalButton(
+                            label: context.l10n.toolPermissionsAddRuleButton,
+                            onTap: () =>
+                                showAddRuleDialog(context, onCreateRule))),
                   if (rules.isNotEmpty)
                     Column(
                         children: rules
@@ -89,21 +94,21 @@ class ToolPermissionsView extends StatelessWidget {
       DetailRow.toggle(
           label: rule.tool,
           value: isActive,
-          onChanged: (value) => onSetActive(rule.id, value)),
+          onChanged: readOnly ? (_) {} : (value) => onSetActive(rule.id, value)),
       VSpace.x1,
       BiosActionStrip(actions: [
         BiosActionStripItem(
             label: context.l10n.toolPermissionsAllowLabel,
             isActive: rule.action == ToolPermissionAction.allow,
-            onTap: () => onUpdateAction(rule.id, 'allow')),
+            onTap: readOnly ? () {} : () => onUpdateAction(rule.id, 'allow')),
         BiosActionStripItem(
             label: context.l10n.toolPermissionsAskLabel,
             isActive: rule.action == ToolPermissionAction.ask,
-            onTap: () => onUpdateAction(rule.id, 'ask')),
+            onTap: readOnly ? () {} : () => onUpdateAction(rule.id, 'ask')),
         BiosActionStripItem(
             label: context.l10n.toolPermissionsDenyLabel,
             isActive: rule.action == ToolPermissionAction.deny,
-            onTap: () => onUpdateAction(rule.id, 'deny')),
+            onTap: readOnly ? () {} : () => onUpdateAction(rule.id, 'deny')),
       ]),
       VSpace.x2,
     ]);

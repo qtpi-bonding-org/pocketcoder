@@ -34,7 +34,7 @@ void main() {
     expect(find.text('[SETUP]'), findsNothing);
     expect(find.text('[CONFIGURE]'), findsNothing);
     expect(find.text('[MANAGE]'), findsNothing);
-    expect(find.textContaining('tool permissions'), findsOneWidget);
+    expect(find.textContaining('permission modes'), findsOneWidget);
     expect(find.textContaining('POCKETCODER UPDATE'), findsNothing,
         reason: 'promoted to the MANAGE footer button; the Configure row '
             'was a dead link before that (no instanceId reached the '
