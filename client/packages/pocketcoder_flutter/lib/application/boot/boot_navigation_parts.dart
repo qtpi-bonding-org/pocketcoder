@@ -43,6 +43,12 @@ class BootNavigationParts {
       name: 'authRestore',
       load: () async {
         await authCoordinator.restore();
+        // restore() publishes through the coordinator, but the observed
+        // session stream delivers a microtask later. The original read
+        // _auth.current directly the instant restore returned, so re-read
+        // now rather than letting the first post-restore decision run
+        // against the pre-restore snapshot.
+        session.invalidate();
       },
     );
     existence = instanceExistenceResolver == null
@@ -97,6 +103,7 @@ class BootNavigationParts {
 
   /// Bumped on the not-ready to ready edge.
   int readyEpoch = 0;
+
   /// Bumped on each signed-out to signed-in edge. Monotone by design (D4).
   int signInGeneration = 0;
   bool _wasReady = false;

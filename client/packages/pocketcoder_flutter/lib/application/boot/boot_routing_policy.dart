@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_deployment_auth_status.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 
 /// The boot decision matrix, as a pure synchronous function of its parts.
 class BootRoutingPolicy extends NavigationPolicy<BootRoute> {
@@ -15,6 +16,7 @@ class BootRoutingPolicy extends NavigationPolicy<BootRoute> {
     this.confirmedLatchKey,
     this.lastDeployProgressRoute,
     this.hasLeftBootScreen = false,
+    this.onApplied,
   })  : _currentRoute = currentRoute,
         _bootFloorElapsed = bootFloorElapsed;
 
@@ -24,6 +26,10 @@ class BootRoutingPolicy extends NavigationPolicy<BootRoute> {
   LatchKey? confirmedLatchKey;
   BootRoute? lastDeployProgressRoute;
   bool hasLeftBootScreen;
+
+  /// Runs after each applied decision, once the memories below are updated.
+  /// The shell uses it to retire the boot-floor timer.
+  final void Function()? onApplied;
   LatchKey? _pendingLatchKey;
 
   @override
@@ -111,6 +117,11 @@ class BootRoutingPolicy extends NavigationPolicy<BootRoute> {
 
   @override
   void onDecisionApplied(BootRoute route, {required bool navigated}) {
+    AppLogger.debug('BootRoutingPolicy decision applied', {
+      'route': route.name,
+      'navigated': navigated,
+      'currentRoute': _currentRoute()?.name,
+    });
     if (navigated) hasLeftBootScreen = true;
     if (route == BootRoute.chats || route == BootRoute.harnessAuth) {
       confirmedLatchKey = _pendingLatchKey;
@@ -120,5 +131,6 @@ class BootRoutingPolicy extends NavigationPolicy<BootRoute> {
     } else if (route == BootRoute.onboarding) {
       lastDeployProgressRoute = null;
     }
+    onApplied?.call();
   }
 }
