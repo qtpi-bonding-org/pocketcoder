@@ -16,6 +16,7 @@ class CreateAccountView extends StatefulWidget {
     required this.onPasswordChanged,
     required this.isValid,
     required this.onContinue,
+    this.emailErrorText,
     this.passwordErrorText,
   });
 
@@ -25,6 +26,7 @@ class CreateAccountView extends StatefulWidget {
   final ValueChanged<String> onPasswordChanged;
   final bool isValid;
   final VoidCallback onContinue;
+  final String? emailErrorText;
   final String? passwordErrorText;
 
   @override
@@ -67,6 +69,7 @@ class _CreateAccountViewState extends State<CreateAccountView> {
                 label: context.l10n.onboardingPocketbaseAdminEmail,
                 hint: context.l10n.onboardingEmailHintShort,
                 onChanged: widget.onEmailChanged,
+                errorText: widget.emailErrorText,
               ),
               VSpace.x2,
               TerminalTextField(

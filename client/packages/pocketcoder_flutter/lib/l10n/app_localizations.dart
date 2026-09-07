@@ -4318,6 +4318,12 @@ abstract class AppLocalizations {
   /// **'Must be at least 8 characters'**
   String get onboardingPasswordTooShort;
 
+  /// No description provided for @onboardingEmailInvalidFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get onboardingEmailInvalidFormat;
+
   /// No description provided for @onboardingProviderPoco.
   ///
   /// In en, this message translates to:

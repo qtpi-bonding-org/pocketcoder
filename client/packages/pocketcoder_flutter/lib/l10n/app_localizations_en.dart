@@ -2341,6 +2341,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingPasswordTooShort => 'Must be at least 8 characters';
 
   @override
+  String get onboardingEmailInvalidFormat => 'Enter a valid email address';
+
+  @override
   String get onboardingProviderPoco =>
       'Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.';
 
