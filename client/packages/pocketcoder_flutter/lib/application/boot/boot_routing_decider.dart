@@ -309,6 +309,11 @@ class BootRoutingDecider {
     _navigate(routeName);
     if (routeName == RouteNames.deploymentProgress) {
       _lastDeployProgressRoute = routeName;
+    } else if (routeName == RouteNames.onboarding) {
+      // notProvisioned means no attempt exists at all -- the guard has
+      // nothing left to protect, and must not suppress a later, unrelated
+      // attempt's push to deploymentProgress.
+      _lastDeployProgressRoute = null;
     }
   }
 

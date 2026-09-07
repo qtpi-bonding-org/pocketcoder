@@ -416,6 +416,34 @@ void main() {
   });
 
   testWidgets(
+      'a second deploy attempt after abort still reaches deploymentProgress '
+      '-- regression for the live bug where the abort-then-redeploy flow '
+      'silently did nothing on the review screen: once the first attempt '
+      'ever reached deploymentProgress, the guard latched onto that route '
+      'and never cleared on the following notProvisioned/onboarding reset, '
+      'so a second, unrelated provisioning attempt was suppressed forever',
+      (tester) async {
+    final t = HarnessTest(
+        status: ServerReadinessStatus.provisioning, instanceId: 'i');
+    await t.start(tester);
+    expect(t.router.state.name, RouteNames.deploymentProgress);
+
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.notProvisioned));
+    await tester.pump();
+    expect(t.router.state.name, RouteNames.onboarding);
+
+    t.router.goNamed(RouteNames.chats);
+    await tester.pump();
+
+    t.readiness.set(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.provisioning, instanceId: 'j'));
+    await tester.pump();
+
+    expect(t.router.state.name, RouteNames.deploymentProgress);
+  });
+
+  testWidgets(
       'start() reading GoRouter.state before any widget has ever attached '
       'the router (the real main() ordering -- runApp() schedules a build, '
       'it does not synchronously run one before the next line executes) '
