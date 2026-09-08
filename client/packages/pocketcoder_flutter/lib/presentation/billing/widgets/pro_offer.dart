@@ -34,9 +34,9 @@ class ProOffer extends StatelessWidget {
           text: AppAscii.pocketCoderProLogo,
           color: context.colorScheme.primary,
           alignment: Alignment.center),
-      VSpace.x3,
+      VSpace.x2,
       const ProBenefitsList(),
-      VSpace.x3,
+      VSpace.x2,
       if (trialDays != null) ...[
         TerminalText(
           context.l10n.proTrialNoPaymentInfo,
@@ -48,7 +48,7 @@ class ProOffer extends StatelessWidget {
           role: TextRole.body,
         ),
       ],
-      VSpace.x3,
+      VSpace.x2,
       TerminalButton(
           label: trialDays == null
               ? context.l10n.proSubscribe

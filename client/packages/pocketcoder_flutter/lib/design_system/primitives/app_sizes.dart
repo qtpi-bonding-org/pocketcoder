@@ -25,7 +25,7 @@ class AppSizes {
   static double get ch => _measureCh();
 
   /// Declared line height factor for vertical grid alignment.
-  static const double lineHeightFactor = 1.3;
+  static const double lineHeightFactor = 1.4;
 
   /// Derived line height from body font size and line height factor.
   static double get line => fontBody * lineHeightFactor;

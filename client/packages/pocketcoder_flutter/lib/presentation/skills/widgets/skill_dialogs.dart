@@ -13,6 +13,16 @@ import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 
+/// Skill names are materialized as directory/file names; PocketBase requires
+/// `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
+String _slugifySkillName(String input) {
+  return input
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+}
+
 class SkillEditorDialog extends StatefulWidget {
   const SkillEditorDialog({super.key, this.skill, required this.onSubmit});
 
@@ -62,6 +72,7 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
           TerminalTextField(
               controller: _name,
               label: context.l10n.skillsNameLabel,
+              hint: 'lowercase-with-hyphens',
               obscureText: false),
           VSpace.x2,
           TerminalTextField(
@@ -83,7 +94,7 @@ class _SkillEditorDialogState extends State<SkillEditorDialog> {
           TerminalActionSpec(
               editing ? context.l10n.skillsSaveButton : context.l10n.actionAdd,
               ActionKind.primary, () {
-            final name = _name.text.trim();
+            final name = _slugifySkillName(_name.text);
             final description = _description.text.trim();
             final content = _content.text.trim();
             if (name.isEmpty || description.isEmpty || content.isEmpty) return;
@@ -140,6 +151,7 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
             TerminalTextField(
                 controller: _name,
                 label: context.l10n.skillsNameLabel,
+                hint: 'lowercase-with-hyphens',
                 obscureText: false),
             VSpace.x2,
             TerminalTextField(
@@ -176,7 +188,13 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
             ]),
             if (!_global && configs.isEmpty) ...[
               VSpace.x1,
-              Text(context.l10n.skillsNoEligibleConfig)
+              Text(
+                context.l10n.skillsNoEligibleConfig,
+                style: TextRole.label.style.copyWith(
+                  fontFamily: AppFonts.family,
+                  package: 'pocketcoder_flutter',
+                ),
+              ),
             ],
             if (!_global && configs.isNotEmpty) ...[
               VSpace.x1,
@@ -203,7 +221,7 @@ class _AddSkillDialogState extends State<AddSkillDialog> {
           TerminalActionSpec(context.l10n.actionCancel, ActionKind.refusal,
               () => Navigator.of(context).pop()),
           TerminalActionSpec(context.l10n.actionAdd, ActionKind.primary, () {
-            final name = _name.text.trim();
+            final name = _slugifySkillName(_name.text);
             final description = _description.text.trim();
             final content = _content.text.trim();
             if (name.isEmpty || description.isEmpty || content.isEmpty) {

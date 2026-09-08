@@ -292,6 +292,12 @@ abstract class AppLocalizations {
   /// **'save'**
   String get actionSave;
 
+  /// No description provided for @actionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'delete'**
+  String get actionDelete;
+
   /// No description provided for @actionClose.
   ///
   /// In en, this message translates to:
@@ -303,6 +309,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'deny'**
   String get actionDeny;
+
+  /// No description provided for @actionDone.
+  ///
+  /// In en, this message translates to:
+  /// **'done'**
+  String get actionDone;
 
   /// No description provided for @actionAuthorize.
   ///
@@ -879,6 +891,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No models available for this harness'**
   String get newChatNoModelsAvailable;
+
+  /// No description provided for @chatPickerSearchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'search'**
+  String get chatPickerSearchLabel;
+
+  /// No description provided for @chatPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter options'**
+  String get chatPickerSearchHint;
+
+  /// No description provided for @chatPickerNoMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'no matching options'**
+  String get chatPickerNoMatches;
 
   /// No description provided for @newChatWorkspaceErrorEmpty.
   ///
@@ -1522,6 +1552,180 @@ abstract class AppLocalizations {
   /// **'add rule'**
   String get toolPermissionsAddRuleButton;
 
+  /// No description provided for @permissionModesRegistry.
+  ///
+  /// In en, this message translates to:
+  /// **'permission modes'**
+  String get permissionModesRegistry;
+
+  /// No description provided for @permissionModesAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'add mode'**
+  String get permissionModesAddButton;
+
+  /// No description provided for @permissionModesDuplicateSourceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'duplicate which mode?'**
+  String get permissionModesDuplicateSourceTitle;
+
+  /// No description provided for @permissionModesNoModes.
+  ///
+  /// In en, this message translates to:
+  /// **'no modes'**
+  String get permissionModesNoModes;
+
+  /// No description provided for @permissionModesEditorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'permission mode'**
+  String get permissionModesEditorTitle;
+
+  /// No description provided for @permissionModesNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'name'**
+  String get permissionModesNameLabel;
+
+  /// No description provided for @permissionModesDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'description'**
+  String get permissionModesDescriptionLabel;
+
+  /// No description provided for @gitSshScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'git ssh access'**
+  String get gitSshScreenTitle;
+
+  /// No description provided for @gitSshAccountKeysHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'account keys'**
+  String get gitSshAccountKeysHeader;
+
+  /// No description provided for @gitSshAddAccountKeyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'generate account key'**
+  String get gitSshAddAccountKeyButton;
+
+  /// No description provided for @gitSshAddAccountKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'generate account key'**
+  String get gitSshAddAccountKeyTitle;
+
+  /// No description provided for @gitSshLabelField.
+  ///
+  /// In en, this message translates to:
+  /// **'label'**
+  String get gitSshLabelField;
+
+  /// No description provided for @gitSshRepositoriesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'repository access'**
+  String get gitSshRepositoriesHeader;
+
+  /// No description provided for @gitSshAddRepositoryAccessButton.
+  ///
+  /// In en, this message translates to:
+  /// **'add repository access'**
+  String get gitSshAddRepositoryAccessButton;
+
+  /// No description provided for @gitSshAddRepositoryAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'add repository access'**
+  String get gitSshAddRepositoryAccessTitle;
+
+  /// No description provided for @gitSshRepositoryField.
+  ///
+  /// In en, this message translates to:
+  /// **'repository (owner/repo)'**
+  String get gitSshRepositoryField;
+
+  /// No description provided for @gitSshPurposeField.
+  ///
+  /// In en, this message translates to:
+  /// **'purpose'**
+  String get gitSshPurposeField;
+
+  /// No description provided for @gitSshHostField.
+  ///
+  /// In en, this message translates to:
+  /// **'host'**
+  String get gitSshHostField;
+
+  /// No description provided for @gitSshPortField.
+  ///
+  /// In en, this message translates to:
+  /// **'port'**
+  String get gitSshPortField;
+
+  /// No description provided for @gitSshCredentialModeDeploy.
+  ///
+  /// In en, this message translates to:
+  /// **'new deploy key'**
+  String get gitSshCredentialModeDeploy;
+
+  /// No description provided for @gitSshCredentialModeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'existing account key'**
+  String get gitSshCredentialModeAccount;
+
+  /// No description provided for @gitSshNoAccountKeysWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'generate an account key first'**
+  String get gitSshNoAccountKeysWarning;
+
+  /// No description provided for @gitSshAccessReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'read only'**
+  String get gitSshAccessReadOnly;
+
+  /// No description provided for @gitSshAccessReadWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'read/write'**
+  String get gitSshAccessReadWrite;
+
+  /// No description provided for @gitSshEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'no keys or repositories yet'**
+  String get gitSshEmptyState;
+
+  /// No description provided for @gitSshShowPublicKeyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'show public key'**
+  String get gitSshShowPublicKeyButton;
+
+  /// No description provided for @gitSshPublicKeyDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'add this key to your git host, then come back and confirm below.'**
+  String get gitSshPublicKeyDialogBody;
+
+  /// No description provided for @gitSshMarkRegisteredButton.
+  ///
+  /// In en, this message translates to:
+  /// **'i\'ve added this key'**
+  String get gitSshMarkRegisteredButton;
+
+  /// No description provided for @gitSshRemoveAccessButton.
+  ///
+  /// In en, this message translates to:
+  /// **'remove'**
+  String get gitSshRemoveAccessButton;
+
   /// No description provided for @notificationSettingsScreenTitle.
   ///
   /// In en, this message translates to:
@@ -1671,6 +1875,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'built-in'**
   String get skillsBuiltInLabel;
+
+  /// No description provided for @settingsMenuManageUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'manage users'**
+  String get settingsMenuManageUsers;
+
+  /// No description provided for @usersScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'manage users'**
+  String get usersScreenTitle;
+
+  /// No description provided for @usersAddButton.
+  ///
+  /// In en, this message translates to:
+  /// **'add user'**
+  String get usersAddButton;
+
+  /// No description provided for @usersAddDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'add user'**
+  String get usersAddDialogTitle;
+
+  /// No description provided for @usersEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'email'**
+  String get usersEmailLabel;
+
+  /// No description provided for @usersNoUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'no users yet'**
+  String get usersNoUsers;
+
+  /// No description provided for @usersRevealDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'temporary password'**
+  String get usersRevealDialogTitle;
+
+  /// No description provided for @usersRevealDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'share this password with {email} outside the app -- it will not be shown again.'**
+  String usersRevealDialogBody(String email);
+
+  /// No description provided for @usersResetPasswordButton.
+  ///
+  /// In en, this message translates to:
+  /// **'reset password'**
+  String get usersResetPasswordButton;
+
+  /// No description provided for @usersResetPasswordConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'reset password'**
+  String get usersResetPasswordConfirmTitle;
+
+  /// No description provided for @usersResetPasswordConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'generate a new temporary password for {email}? their current password stops working immediately.'**
+  String usersResetPasswordConfirmBody(String email);
+
+  /// No description provided for @usersDeleteButton.
+  ///
+  /// In en, this message translates to:
+  /// **'delete'**
+  String get usersDeleteButton;
+
+  /// No description provided for @usersDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'delete user'**
+  String get usersDeleteConfirmTitle;
+
+  /// No description provided for @usersDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'permanently delete {email}? this cannot be undone.'**
+  String usersDeleteConfirmBody(String email);
 
   /// No description provided for @schedulerTitle.
   ///
@@ -1831,7 +2119,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsMenuToolPermissions.
   ///
   /// In en, this message translates to:
-  /// **'tool permissions'**
+  /// **'permission modes'**
   String get settingsMenuToolPermissions;
 
   /// No description provided for @settingsMenuHarnessConnections.
@@ -1839,6 +2127,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'harness connections'**
   String get settingsMenuHarnessConnections;
+
+  /// No description provided for @settingsMenuGitSsh.
+  ///
+  /// In en, this message translates to:
+  /// **'git ssh access'**
+  String get settingsMenuGitSsh;
 
   /// No description provided for @settingsMenuSystemChecks.
   ///
@@ -3003,6 +3297,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'retry'**
   String get initializationActionRetry;
+
+  /// Confirm-dialog title before aborting an in-progress deployment.
+  ///
+  /// In en, this message translates to:
+  /// **'Abort setup?'**
+  String get initializationAbortConfirmationTitle;
+
+  /// Confirm-dialog body before aborting an in-progress deployment.
+  ///
+  /// In en, this message translates to:
+  /// **'This cancels setup and deletes the cloud server being created. This cannot be undone.'**
+  String get initializationAbortConfirmationBody;
+
+  /// Confirm button label on the abort-setup confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'abort'**
+  String get initializationAbortConfirm;
+
+  /// Cancel button label on the abort-setup confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'cancel'**
+  String get initializationAbortCancel;
 
   /// No description provided for @initializationUnknown.
   ///
@@ -4204,6 +4522,36 @@ abstract class AppLocalizations {
   /// **'I\'ll set it up'**
   String get onboardingWelcomeActionSelfHost;
 
+  /// No description provided for @onboardingWelcomeActionReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Something\'s stuck -- reset'**
+  String get onboardingWelcomeActionReset;
+
+  /// Confirm-dialog title for the welcome screen's escape-hatch reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset local state?'**
+  String get onboardingWelcomeResetConfirmationTitle;
+
+  /// Confirm-dialog body for the welcome screen's escape-hatch reset.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears any in-progress or stuck deployment state on this device and starts over. It does not delete an existing cloud server.'**
+  String get onboardingWelcomeResetConfirmationBody;
+
+  /// Confirm button label for the welcome screen's escape-hatch reset dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'reset'**
+  String get onboardingWelcomeResetConfirm;
+
+  /// Cancel button label for the welcome screen's escape-hatch reset dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'cancel'**
+  String get onboardingWelcomeResetCancel;
+
   /// No description provided for @onboardingSelfHostTitle.
   ///
   /// In en, this message translates to:
@@ -4275,6 +4623,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Must be at least 8 characters'**
   String get onboardingPasswordTooShort;
+
+  /// No description provided for @onboardingEmailInvalidFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get onboardingEmailInvalidFormat;
 
   /// No description provided for @onboardingProviderPoco.
   ///
@@ -5469,6 +5823,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'session'**
   String get agentSessionLabel;
+
+  /// Search field hint in the chat session's model-search dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Filter models'**
+  String get agentModelSearchHint;
+
+  /// Shown in the chat session's model-search dialog when the query matches nothing
+  ///
+  /// In en, this message translates to:
+  /// **'no matching models'**
+  String get agentModelSearchNoMatches;
 
   /// No description provided for @pocketCoderUpdateChecking.
   ///

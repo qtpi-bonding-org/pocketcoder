@@ -13,12 +13,14 @@ import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart
 class FileBrowserView extends StatelessWidget {
   final void Function(BuildContext context, String path) onOpenFile;
   final ValueChanged<String> onNavigateInto;
+  final VoidCallback onNavigateUp;
   final FileBrowserState state;
 
   const FileBrowserView(
       {super.key,
       required this.onOpenFile,
       required this.onNavigateInto,
+      required this.onNavigateUp,
       required this.state});
 
   @override
@@ -40,13 +42,25 @@ class FileBrowserView extends StatelessWidget {
             );
           }
           return ListView(children: [
-            Padding(
-              padding: EdgeInsets.all(AppSizes.space),
-              child: TerminalText('/${state.path}', role: TextRole.label),
-            ),
+            _pathHeader(context, state),
             ...state.entries.map((entry) => _entryRow(context, state, entry)),
           ]);
         }));
+  }
+
+  Widget _pathHeader(BuildContext context, FileBrowserState state) {
+    final label = '/${state.path}';
+    if (state.path.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(AppSizes.space),
+        child: TerminalText(label, role: TextRole.label),
+      );
+    }
+    return DetailRow(
+      label: label,
+      affordance: RowAffordance.back,
+      onTap: onNavigateUp,
+    );
   }
 
   Widget _entryRow(

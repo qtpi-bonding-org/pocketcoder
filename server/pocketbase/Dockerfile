@@ -40,6 +40,7 @@ WORKDIR /app
 # Copy PocketBase Binary
 COPY --from=pocketbase-builder /app/pocketbase /app/pocketbase
 COPY --from=pocketbase-builder /app/git-materializer /app/git-materializer
+RUN mkdir -p /inbox
 
 # Copy PocketBase Configs/Hooks
 COPY server/pocketbase/pb_migrations /app/pb_migrations

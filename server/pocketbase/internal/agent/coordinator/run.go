@@ -814,11 +814,13 @@ func (c *Coordinator) StreamColdReplay(ctx context.Context, chatID, sessionID st
 	}
 	profile, err := profileFn(ctx)
 	if err != nil {
+		_ = emitAll(emitSeq, bridge.CloseOpenToolsAsFailed())
 		return fmt.Errorf("resolve session profile: %w", err)
 	}
 	sc := &sessionClient{c: c, chatID: chatID, sessionID: sessionID, bridge: bridge, emit: emitSeq, accepting: &atomic.Bool{}}
 	conn, _, _, _, _, _, err := c.establishSession(ctx, sc, profile, sessionID, func() { sc.accepting.Store(true) })
 	if err != nil {
+		_ = emitAll(emitSeq, bridge.CloseOpenToolsAsFailed())
 		return err
 	}
 	defer conn.Close()
@@ -958,6 +960,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 			onRunEnded(runCtx, chatID, outcome)
 		}
 	}()
+	var bridge *agui.Bridge
 	var once sync.Once
 	teardown := func() {
 		once.Do(func() {
@@ -967,6 +970,11 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 				_ = h.conn.Close()
 			}
 			c.dropPendingForChat(chatID)
+			if bridge != nil {
+				for _, e := range bridge.CloseOpenToolsAsFailed() {
+					hub.Publish(e)
+				}
+			}
 			hub.FinishRun()
 			h.cancel()
 			c.clearRun(chatID, runID)
@@ -983,7 +991,7 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		}
 	}()
 
-	bridge := agui.NewBridge(chatID, runID)
+	bridge = agui.NewBridge(chatID, runID)
 	hub.StartRun(runID, bridge.Snapshot)
 
 	if userMessageID != "" {
@@ -1038,10 +1046,14 @@ func (c *Coordinator) runLoop(runCtx context.Context, chatID, runID, prompt stri
 		hub.Publish(e)
 	}
 	applier := selectApplier(profile)
-	if err := applier.Apply(runCtx, conn, sessionID, profile, modes); err != nil {
+	updatedConfig, err := applier.Apply(runCtx, conn, sessionID, profile, modes)
+	if err != nil {
 		log.Printf("coordinator: applier.Apply failed for chat %s run %s (provider %s): %v", chatID, runID, profile.Provider, err)
 		hub.Publish(providerRunError(profile.AccountLogin, profile.HarnessName, "session init", err))
 		return
+	}
+	for _, e := range bridge.ConfigUpdated(updatedConfig) {
+		hub.Publish(e)
 	}
 	h.accepting.Store(true)
 	hub.Publish(bridge.Started())

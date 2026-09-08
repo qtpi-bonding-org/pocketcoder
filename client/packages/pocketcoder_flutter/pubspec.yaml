@@ -28,6 +28,10 @@ dependencies:
     git: 
       url: https://github.com/qtpi-bonding-org/flutter_cubit_ui_flow.git
       ref: 78ca8da8b52bd750c96443bcefe3ed1edcda5a52
+  nav_snapshot:
+    git:
+      url: https://github.com/qtpi-bonding-org/flutter_nav_snapshot.git
+      ref: 704a9dd4df2a10bd24a045c8741d521445a14c31
   flutter_error_privserver:
     git:
       url: https://github.com/qtpi-bonding-org/flutter_error_privserver.git
@@ -89,7 +93,7 @@ dependencies:
   ag_ui_widgets_flutter:
     git:
       url: https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter.git
-      ref: 4d6c0bc96e2eaf56547e806543b689b1f757ab91
+      ref: 653e8140c1ead221e644cf27a39a8c7af508e1c5
 
 dependency_overrides:
   # Keep the UnifiedPush crypto dependency on the portable hosted 0.6.0

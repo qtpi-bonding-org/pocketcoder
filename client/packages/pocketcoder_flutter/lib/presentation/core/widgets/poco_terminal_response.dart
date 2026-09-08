@@ -36,7 +36,6 @@ class PocoTerminalResponse extends StatelessWidget {
           fontFamily: AppFonts.family,
           package: 'pocketcoder_flutter',
           fontWeight: AppFonts.medium,
-          height: 1.4,
         ),
         text: message,
         speed: speed,
@@ -47,7 +46,6 @@ class PocoTerminalResponse extends StatelessWidget {
           fontFamily: AppFonts.family,
           package: 'pocketcoder_flutter',
           fontWeight: AppFonts.medium,
-          height: 1.4,
         ),
       ),
     );

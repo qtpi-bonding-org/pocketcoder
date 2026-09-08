@@ -107,10 +107,24 @@ class ServerControlView extends StatelessWidget {
                 VSpace.x2,
               ],
               if (state.publicKey case final publicKey?) ...[
-                Text(context.l10n.serverControlPublicKeyLabel),
+                Text(
+                  context.l10n.serverControlPublicKeyLabel,
+                  style: TextRole.label.style.copyWith(
+                    fontFamily: AppFonts.family,
+                    package: 'pocketcoder_flutter',
+                  ),
+                ),
                 VSpace.x1,
                 Row(children: [
-                  Expanded(child: SelectableText(publicKey)),
+                  Expanded(
+                    child: SelectableText(
+                      publicKey,
+                      style: TextRole.label.style.copyWith(
+                        fontFamily: AppFonts.family,
+                        package: 'pocketcoder_flutter',
+                      ),
+                    ),
+                  ),
                   CopyButton(value: publicKey),
                 ]),
                 VSpace.x2,

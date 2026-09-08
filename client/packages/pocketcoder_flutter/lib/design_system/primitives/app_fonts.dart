@@ -11,9 +11,9 @@ class AppFonts {
   /// All font families (single family for the terminal design)
   static const List<String> all = [family];
 
-  static const FontWeight heavy = FontWeight.w800;
+  static const FontWeight heavy = FontWeight.w700;
   static const FontWeight medium = FontWeight.w400;
-  static const FontWeight light = FontWeight.w200;
+  static const FontWeight light = FontWeight.w400;
 
   static TextTheme get textTheme => TextTheme(
         displayLarge: TextStyle(

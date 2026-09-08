@@ -336,15 +336,41 @@ func PermissionPayload(requestID string, options []acpsdk.PermissionOption, tool
 	return payload
 }
 
+func (b *Bridge) CloseOpenTools() []events.Event {
+	return b.closeOpenTools(false)
+}
+
+func (b *Bridge) CloseOpenToolsAsFailed() []events.Event {
+	return b.closeOpenTools(true)
+}
+
+func (b *Bridge) closeOpenTools(failed bool) []events.Event {
+	if len(b.openTools) == 0 {
+		return nil
+	}
+	ids := make([]string, 0, len(b.openTools))
+	result := make([]events.Event, 0, len(b.openTools)*2)
+	for id, meta := range b.openTools {
+		ids = append(ids, id)
+		if failed && !meta.pendingHasResult {
+			result = append(result, customTool(id, meta.title, meta.kind, "failed", nil))
+		}
+		result = append(result, events.NewToolCallEndEvent(id))
+	}
+	log.Printf("[AGUI] force-closing %d still-open tool call(s) chat=%s run=%s ids=%v failed=%v",
+		len(ids), b.threadID, b.runID, ids, failed)
+	b.openTools = map[string]toolMeta{}
+	return result
+}
+
 // Finished closes all lifecycle events. Call this only after the correlated
 // session/prompt response, never by guessing from the final text chunk.
 func (b *Bridge) Finished(stopReason acpsdk.StopReason) []events.Event {
+	log.Printf("[AGUI] run finished chat=%s run=%s stopReason=%s openTools=%d",
+		b.threadID, b.runID, stopReason, len(b.openTools))
 	result := b.closeReasoning()
 	result = append(result, b.closeMessage()...)
-	for id := range b.openTools {
-		result = append(result, events.NewToolCallEndEvent(id))
-	}
-	b.openTools = map[string]toolMeta{}
+	result = append(result, b.CloseOpenTools()...)
 	var opts []events.RunFinishedOption
 	if stopReason == acpsdk.StopReasonEndTurn {
 		opts = []events.RunFinishedOption{events.WithSuccessOutcome()}
@@ -359,7 +385,9 @@ func (b *Bridge) closeMessage() []events.Event {
 		return nil
 	}
 	b.messageOpen = false
-	return []events.Event{events.NewTextMessageEndEvent(b.messageID)}
+	id := b.messageID
+	b.messageID = ""
+	return []events.Event{events.NewTextMessageEndEvent(id)}
 }
 
 func (b *Bridge) closeReasoning() []events.Event {
@@ -367,7 +395,9 @@ func (b *Bridge) closeReasoning() []events.Event {
 		return nil
 	}
 	b.reasoningOpen = false
-	return []events.Event{events.NewReasoningMessageEndEvent(b.reasoningID)}
+	id := b.reasoningID
+	b.reasoningID = ""
+	return []events.Event{events.NewReasoningMessageEndEvent(id)}
 }
 
 func (b *Bridge) ensureReasoningID(messageID *string) string {
@@ -515,6 +545,13 @@ func (b *Bridge) SeedSession(modes *acpsdk.SessionModeState, config []acpsdk.Ses
 		out = append(out, b.state.set("config", map[string]any{"options": configOptions(config)}))
 	}
 	return out
+}
+
+func (b *Bridge) ConfigUpdated(options []acpsdk.SessionConfigOption) []events.Event {
+	if len(options) == 0 {
+		return nil
+	}
+	return []events.Event{b.state.set("config", map[string]any{"options": configOptions(options)})}
 }
 
 // Snapshot returns the current /pocketcoder projection as a single

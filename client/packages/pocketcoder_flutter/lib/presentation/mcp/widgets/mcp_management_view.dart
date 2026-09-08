@@ -300,7 +300,6 @@ class McpManagementView extends StatelessWidget {
                         label: cancel,
                         kind: ActionKind.refusal,
                         onTap: () => Navigator.pop(dialogContext)),
-                    HSpace.x2,
                     TerminalButton(
                         label: submitLabel,
                         kind: ActionKind.primary,

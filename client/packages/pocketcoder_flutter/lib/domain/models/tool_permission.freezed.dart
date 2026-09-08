@@ -20,7 +20,7 @@ mixin _$ToolPermission {
   @JsonKey(unknownEnumValue: ToolPermissionAction.unknown)
   ToolPermissionAction get action;
   bool? get active;
-  String? get pocoConfig;
+  String get permissionMode;
 
   /// Create a copy of ToolPermission
   /// with the given fields replaced by the non-null parameter values.
@@ -43,18 +43,18 @@ mixin _$ToolPermission {
             (identical(other.pattern, pattern) || other.pattern == pattern) &&
             (identical(other.action, action) || other.action == action) &&
             (identical(other.active, active) || other.active == active) &&
-            (identical(other.pocoConfig, pocoConfig) ||
-                other.pocoConfig == pocoConfig));
+            (identical(other.permissionMode, permissionMode) ||
+                other.permissionMode == permissionMode));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, tool, pattern, action, active, pocoConfig);
+  int get hashCode => Object.hash(
+      runtimeType, id, tool, pattern, action, active, permissionMode);
 
   @override
   String toString() {
-    return 'ToolPermission(id: $id, tool: $tool, pattern: $pattern, action: $action, active: $active, pocoConfig: $pocoConfig)';
+    return 'ToolPermission(id: $id, tool: $tool, pattern: $pattern, action: $action, active: $active, permissionMode: $permissionMode)';
   }
 }
 
@@ -71,7 +71,7 @@ abstract mixin class $ToolPermissionCopyWith<$Res> {
       @JsonKey(unknownEnumValue: ToolPermissionAction.unknown)
       ToolPermissionAction action,
       bool? active,
-      String? pocoConfig});
+      String permissionMode});
 }
 
 /// @nodoc
@@ -92,7 +92,7 @@ class _$ToolPermissionCopyWithImpl<$Res>
     Object? pattern = null,
     Object? action = null,
     Object? active = freezed,
-    Object? pocoConfig = freezed,
+    Object? permissionMode = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -115,10 +115,10 @@ class _$ToolPermissionCopyWithImpl<$Res>
           ? _self.active
           : active // ignore: cast_nullable_to_non_nullable
               as bool?,
-      pocoConfig: freezed == pocoConfig
-          ? _self.pocoConfig
-          : pocoConfig // ignore: cast_nullable_to_non_nullable
-              as String?,
+      permissionMode: null == permissionMode
+          ? _self.permissionMode
+          : permissionMode // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -223,7 +223,7 @@ extension ToolPermissionPatterns on ToolPermission {
             @JsonKey(unknownEnumValue: ToolPermissionAction.unknown)
             ToolPermissionAction action,
             bool? active,
-            String? pocoConfig)?
+            String permissionMode)?
         $default, {
     required TResult orElse(),
   }) {
@@ -231,7 +231,7 @@ extension ToolPermissionPatterns on ToolPermission {
     switch (_that) {
       case _ToolPermission() when $default != null:
         return $default(_that.id, _that.tool, _that.pattern, _that.action,
-            _that.active, _that.pocoConfig);
+            _that.active, _that.permissionMode);
       case _:
         return orElse();
     }
@@ -259,14 +259,14 @@ extension ToolPermissionPatterns on ToolPermission {
             @JsonKey(unknownEnumValue: ToolPermissionAction.unknown)
             ToolPermissionAction action,
             bool? active,
-            String? pocoConfig)
+            String permissionMode)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ToolPermission():
         return $default(_that.id, _that.tool, _that.pattern, _that.action,
-            _that.active, _that.pocoConfig);
+            _that.active, _that.permissionMode);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -293,14 +293,14 @@ extension ToolPermissionPatterns on ToolPermission {
             @JsonKey(unknownEnumValue: ToolPermissionAction.unknown)
             ToolPermissionAction action,
             bool? active,
-            String? pocoConfig)?
+            String permissionMode)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _ToolPermission() when $default != null:
         return $default(_that.id, _that.tool, _that.pattern, _that.action,
-            _that.active, _that.pocoConfig);
+            _that.active, _that.permissionMode);
       case _:
         return null;
     }
@@ -317,7 +317,7 @@ class _ToolPermission implements ToolPermission {
       @JsonKey(unknownEnumValue: ToolPermissionAction.unknown)
       required this.action,
       this.active,
-      this.pocoConfig});
+      required this.permissionMode});
   factory _ToolPermission.fromJson(Map<String, dynamic> json) =>
       _$ToolPermissionFromJson(json);
 
@@ -333,7 +333,7 @@ class _ToolPermission implements ToolPermission {
   @override
   final bool? active;
   @override
-  final String? pocoConfig;
+  final String permissionMode;
 
   /// Create a copy of ToolPermission
   /// with the given fields replaced by the non-null parameter values.
@@ -360,18 +360,18 @@ class _ToolPermission implements ToolPermission {
             (identical(other.pattern, pattern) || other.pattern == pattern) &&
             (identical(other.action, action) || other.action == action) &&
             (identical(other.active, active) || other.active == active) &&
-            (identical(other.pocoConfig, pocoConfig) ||
-                other.pocoConfig == pocoConfig));
+            (identical(other.permissionMode, permissionMode) ||
+                other.permissionMode == permissionMode));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, tool, pattern, action, active, pocoConfig);
+  int get hashCode => Object.hash(
+      runtimeType, id, tool, pattern, action, active, permissionMode);
 
   @override
   String toString() {
-    return 'ToolPermission(id: $id, tool: $tool, pattern: $pattern, action: $action, active: $active, pocoConfig: $pocoConfig)';
+    return 'ToolPermission(id: $id, tool: $tool, pattern: $pattern, action: $action, active: $active, permissionMode: $permissionMode)';
   }
 }
 
@@ -390,7 +390,7 @@ abstract mixin class _$ToolPermissionCopyWith<$Res>
       @JsonKey(unknownEnumValue: ToolPermissionAction.unknown)
       ToolPermissionAction action,
       bool? active,
-      String? pocoConfig});
+      String permissionMode});
 }
 
 /// @nodoc
@@ -411,7 +411,7 @@ class __$ToolPermissionCopyWithImpl<$Res>
     Object? pattern = null,
     Object? action = null,
     Object? active = freezed,
-    Object? pocoConfig = freezed,
+    Object? permissionMode = null,
   }) {
     return _then(_ToolPermission(
       id: null == id
@@ -434,10 +434,10 @@ class __$ToolPermissionCopyWithImpl<$Res>
           ? _self.active
           : active // ignore: cast_nullable_to_non_nullable
               as bool?,
-      pocoConfig: freezed == pocoConfig
-          ? _self.pocoConfig
-          : pocoConfig // ignore: cast_nullable_to_non_nullable
-              as String?,
+      permissionMode: null == permissionMode
+          ? _self.permissionMode
+          : permissionMode // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }

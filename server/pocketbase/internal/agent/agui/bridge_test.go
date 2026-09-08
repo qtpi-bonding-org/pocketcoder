@@ -925,3 +925,148 @@ func TestBridgeResolveElicitationEmitsRemoveDelta(t *testing.T) {
 		t.Fatalf("expected a remove delta for /pocketcoder/elicitation, got: %s", b)
 	}
 }
+
+func TestBridgeCloseOpenToolsEndsEveryStillOpenCall(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	for _, id := range []string{"tool-1", "tool-2"} {
+		if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+			SessionUpdate: "tool_call",
+			ToolCallId:    acpsdk.ToolCallId(id),
+			Title:         "read_file",
+		}}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	closed := bridge.CloseOpenTools()
+
+	if len(closed) != 2 {
+		t.Fatalf("expected 2 TOOL_CALL_END events, got %d: %#v", len(closed), closed)
+	}
+	for _, e := range closed {
+		if e.Type() != "TOOL_CALL_END" {
+			t.Fatalf("expected bare TOOL_CALL_END with no status tag, got %s: %#v", e.Type(), e)
+		}
+	}
+
+	if again := bridge.CloseOpenTools(); len(again) != 0 {
+		t.Fatalf("expected no events on a second call, got %#v", again)
+	}
+}
+
+func TestBridgeCloseOpenToolsAsFailedTagsEachCallFailed(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	for _, id := range []string{"tool-1", "tool-2"} {
+		if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+			SessionUpdate: "tool_call",
+			ToolCallId:    acpsdk.ToolCallId(id),
+			Title:         "read_file",
+		}}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	closed := bridge.CloseOpenToolsAsFailed()
+
+	if len(closed) != 4 {
+		t.Fatalf("expected a CUSTOM status update + TOOL_CALL_END per tool (4 events), got %d: %#v", len(closed), closed)
+	}
+	endCount := 0
+	for _, e := range closed {
+		switch e.Type() {
+		case "TOOL_CALL_END":
+			endCount++
+		case "CUSTOM":
+			b, err := json.Marshal(e)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(b), `"status":"failed"`) {
+				t.Fatalf("expected the CUSTOM tool status update to report failed, got: %s", b)
+			}
+		default:
+			t.Fatalf("unexpected event type %s: %#v", e.Type(), e)
+		}
+	}
+	if endCount != 2 {
+		t.Fatalf("expected 2 TOOL_CALL_END events, got %d: %#v", endCount, closed)
+	}
+
+	if again := bridge.CloseOpenToolsAsFailed(); len(again) != 0 {
+		t.Fatalf("expected no events on a second call, got %#v", again)
+	}
+}
+
+func TestBridgeCloseOpenToolsAsFailedLeavesAToolWithDeliveredOutputUnmarked(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call",
+		ToolCallId:    "tool-with-output",
+		Title:         "shell",
+		Content: []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{
+			Type: "content", Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "total 32\ndrwxr-xr-x"}},
+		}}},
+	}}); err != nil {
+		t.Fatal(err)
+	}
+
+	closed := bridge.CloseOpenToolsAsFailed()
+
+	if len(closed) != 1 || closed[0].Type() != "TOOL_CALL_END" {
+		t.Fatalf("expected a bare TOOL_CALL_END, no failed status, for a tool that already delivered output, got: %#v", closed)
+	}
+}
+
+func TestBridgeFinishedStillClosesOpenToolsAndEmitsRunFinished(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call",
+		ToolCallId:    "tool-1",
+		Title:         "read_file",
+	}}); err != nil {
+		t.Fatal(err)
+	}
+
+	finished := bridge.Finished(acpsdk.StopReasonEndTurn)
+
+	if len(finished) != 2 ||
+		finished[0].Type() != "TOOL_CALL_END" ||
+		finished[1].Type() != "RUN_FINISHED" {
+		t.Fatalf("unexpected terminal events: %#v", finished)
+	}
+}
+
+func TestBridgeGeneratesFreshMessageIDAfterToolCallWhenACPSendsNoID(t *testing.T) {
+	bridge := NewBridge("chat-1", "run-1")
+
+	firstEvents, err := bridge.Update(acpsdk.SessionUpdate{AgentMessageChunk: &acpsdk.SessionUpdateAgentMessageChunk{
+		SessionUpdate: "agent_message_chunk",
+		Content:       acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "announcing"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstID := firstEvents[0].(*events.TextMessageStartEvent).MessageID
+
+	if _, err := bridge.Update(acpsdk.SessionUpdate{ToolCall: &acpsdk.SessionUpdateToolCall{
+		SessionUpdate: "tool_call",
+		ToolCallId:    "t1",
+		Title:         "shell",
+		Status:        acpsdk.ToolCallStatusCompleted,
+	}}); err != nil {
+		t.Fatal(err)
+	}
+
+	secondEvents, err := bridge.Update(acpsdk.SessionUpdate{AgentMessageChunk: &acpsdk.SessionUpdateAgentMessageChunk{
+		SessionUpdate: "agent_message_chunk",
+		Content:       acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "summary"}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondID := secondEvents[0].(*events.TextMessageStartEvent).MessageID
+
+	if firstID == secondID {
+		t.Fatalf("expected a fresh message id after the intervening tool call, both messages got %q", firstID)
+	}
+}

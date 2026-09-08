@@ -31,7 +31,7 @@ class SelfHostSetupView extends StatelessWidget {
         TerminalConversationTurn(
             speaker: TerminalConversationSpeaker.poco,
             message: context.l10n.onboardingSelfHostPoco),
-        VSpace.x3,
+        VSpace.x2,
         SectionHeader(
             name:
                 context.l10n.onboardingSelfHostRequirementsTitle.toLowerCase()),
@@ -40,7 +40,7 @@ class SelfHostSetupView extends StatelessWidget {
         _Requirement(label: context.l10n.onboardingSelfHostRequirementDocker),
         VSpace.x1,
         _Requirement(label: context.l10n.onboardingSelfHostRequirementAccess),
-        VSpace.x3,
+        VSpace.x2,
         TerminalButton(
             label: context.l10n.onboardingSelfHostActionGuide,
             kind: ActionKind.neutral,

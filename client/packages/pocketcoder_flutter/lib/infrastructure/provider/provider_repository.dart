@@ -32,33 +32,27 @@ class ProviderRepository implements IProviderRepository {
   final ProviderCatalogDao _providerCatalogDao;
   final IAuthRepository _auth;
 
-  // Memoized so the 16k+ row catalog fetch (networkOnly, uncached) only
-  // ever hits the network once per app session, not once per call site.
-  Future<List<HarnessModel>>? _harnessModelsFuture;
+  // Both catalogs are migration-seeded, read-only, and too large (7.5k-16k+
+  // rows) to pay a networkFirst resync per subscriber -- memoized so each
+  // only ever hits the network once per app session, not once per call site.
+  late final _modelsCache =
+      _CatalogCache(() => _modelDao.getFullList(
+            requestPolicy: RequestPolicy.networkOnly,
+          ));
+  late final _harnessModelsCache =
+      _CatalogCache(() => _harnessModelDao.getFullList(
+            requestPolicy: RequestPolicy.networkOnly,
+          ));
 
   @override
   Stream<List<Harnesse>> watchHarnesses() => _harnesseDao.watch();
 
   @override
-  Stream<List<Model>> watchModels() => _modelDao.watch();
+  Future<List<Model>> fetchModels() => _modelsCache.fetch();
 
   @override
-  Future<List<HarnessModel>> fetchHarnessModels() {
-    return _harnessModelsFuture ??= _fetchHarnessModelsFresh();
-  }
-
-  Future<List<HarnessModel>> _fetchHarnessModelsFresh() async {
-    try {
-      return await _harnessModelDao.getFullList(
-        requestPolicy: RequestPolicy.networkOnly,
-      );
-    } catch (_) {
-      // Don't let a failed fetch permanently poison every future call --
-      // clear the cached future so the next call retries the network.
-      _harnessModelsFuture = null;
-      rethrow;
-    }
-  }
+  Future<List<HarnessModel>> fetchHarnessModels() =>
+      _harnessModelsCache.fetch();
 
   @override
   Stream<List<HarnessProvider>> watchHarnessProviders() =>
@@ -103,4 +97,24 @@ class ProviderRepository implements IProviderRepository {
         ProviderException.new,
         'deleteProviderAPIKey',
       );
+}
+
+/// A transient network error must not permanently poison every later call,
+/// so only a successful [_fetch] gets memoized.
+class _CatalogCache<T> {
+  _CatalogCache(this._fetch);
+
+  final Future<List<T>> Function() _fetch;
+  Future<List<T>>? _future;
+
+  Future<List<T>> fetch() => _future ??= _fetchFresh();
+
+  Future<List<T>> _fetchFresh() async {
+    try {
+      return await _fetch();
+    } catch (_) {
+      _future = null;
+      rethrow;
+    }
+  }
 }

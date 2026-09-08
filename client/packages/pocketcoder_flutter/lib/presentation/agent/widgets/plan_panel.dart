@@ -51,6 +51,8 @@ class PlanPanel extends StatelessWidget {
                 style: TextStyle(
                   color: colors.primary,
                   fontWeight: AppFonts.heavy,
+                  fontFamily: AppFonts.family,
+                  package: 'pocketcoder_flutter',
                 ),
               ),
               HSpace.x2,
@@ -61,6 +63,8 @@ class PlanPanel extends StatelessWidget {
                     color: colors.primary,
                     fontWeight: AppFonts.heavy,
                     letterSpacing: 2,
+                    fontFamily: AppFonts.family,
+                    package: 'pocketcoder_flutter',
                   ),
                 ),
               ),
@@ -117,6 +121,7 @@ class PlanPanel extends StatelessWidget {
                       ? colors.onSurface.withValues(alpha: 0.4)
                       : colors.onSurface,
                   fontFamily: AppFonts.family,
+                  package: 'pocketcoder_flutter',
                   decoration:
                       isDone ? TextDecoration.lineThrough : TextDecoration.none,
                 ),
@@ -127,6 +132,7 @@ class PlanPanel extends StatelessWidget {
                   style: TextStyle(
                     color: accent,
                     fontFamily: AppFonts.family,
+                    package: 'pocketcoder_flutter',
                     letterSpacing: 1,
                   ),
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_cubit.dart';
 import 'package:pocketcoder_flutter/application/server_control/server_control_state.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
 import 'package:pocketcoder_flutter/presentation/server_control/widgets/copy_button.dart';
@@ -42,12 +43,26 @@ class PrivateKeySectionState extends State<PrivateKeySection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(context.l10n.serverControlPrivateKeyLabel),
+        Text(
+          context.l10n.serverControlPrivateKeyLabel,
+          style: TextRole.label.style.copyWith(
+            fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter',
+          ),
+        ),
         VSpace.x1,
         if (_revealed && privateKey != null)
           Row(
             children: [
-              Expanded(child: SelectableText(privateKey)),
+              Expanded(
+                child: SelectableText(
+                  privateKey,
+                  style: TextRole.label.style.copyWith(
+                    fontFamily: AppFonts.family,
+                    package: 'pocketcoder_flutter',
+                  ),
+                ),
+              ),
               CopyButton(value: privateKey),
             ],
           )

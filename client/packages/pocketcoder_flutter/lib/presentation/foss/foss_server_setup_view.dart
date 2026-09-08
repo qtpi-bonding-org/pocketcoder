@@ -30,7 +30,13 @@ class FossServerSetupView extends StatelessWidget {
                   role: TextRole.label,
                 ),
                 VSpace.x1,
-                Text(context.l10n.fossServerSetupIntro),
+                Text(
+                  context.l10n.fossServerSetupIntro,
+                  style: TextRole.label.style.copyWith(
+                    fontFamily: AppFonts.family,
+                    package: 'pocketcoder_flutter',
+                  ),
+                ),
                 VSpace.x2,
                 if (state.phase == FossServerSetupPhase.idle)
                   TerminalButton(
@@ -39,10 +45,24 @@ class FossServerSetupView extends StatelessWidget {
                       onTap: () =>
                           context.read<FossServerSetupCubit>().generateKey()),
                 if (state.publicKey case final publicKey?) ...[
-                  Text(context.l10n.fossServerSetupPublicKeyLabel),
+                  Text(
+                    context.l10n.fossServerSetupPublicKeyLabel,
+                    style: TextRole.label.style.copyWith(
+                      fontFamily: AppFonts.family,
+                      package: 'pocketcoder_flutter',
+                    ),
+                  ),
                   VSpace.x1,
                   Row(children: [
-                    Expanded(child: SelectableText(publicKey)),
+                    Expanded(
+                      child: SelectableText(
+                        publicKey,
+                        style: TextRole.label.style.copyWith(
+                          fontFamily: AppFonts.family,
+                          package: 'pocketcoder_flutter',
+                        ),
+                      ),
+                    ),
                     SizedBox(width: AppSizes.space),
                     TerminalButton(
                         label: 'copy',
@@ -51,8 +71,14 @@ class FossServerSetupView extends StatelessWidget {
                             Clipboard.setData(ClipboardData(text: publicKey))),
                   ]),
                   VSpace.x2,
-                  Text('${context.l10n.fossServerSetupHostLabel} '
-                      '${context.read<FossServerSetupCubit>().host}'),
+                  Text(
+                    '${context.l10n.fossServerSetupHostLabel} '
+                    '${context.read<FossServerSetupCubit>().host}',
+                    style: TextRole.label.style.copyWith(
+                      fontFamily: AppFonts.family,
+                      package: 'pocketcoder_flutter',
+                    ),
+                  ),
                   VSpace.x2,
                   if (state.phase != FossServerSetupPhase.connected)
                     TerminalButton(
@@ -69,7 +95,13 @@ class FossServerSetupView extends StatelessWidget {
                 ],
                 if (state.phase == FossServerSetupPhase.connected) ...[
                   VSpace.x2,
-                  Text(context.l10n.fossServerSetupConnected),
+                  Text(
+                    context.l10n.fossServerSetupConnected,
+                    style: TextRole.label.style.copyWith(
+                      fontFamily: AppFonts.family,
+                      package: 'pocketcoder_flutter',
+                    ),
+                  ),
                 ],
               ])));
 }

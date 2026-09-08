@@ -12,6 +12,7 @@ class SettingsView extends StatelessWidget {
     super.key,
     required this.hasPendingMcp,
     required this.isPro,
+    required this.isAdmin,
     required this.hapticsEnabled,
     required this.onNavigate,
     required this.onLogout,
@@ -23,6 +24,7 @@ class SettingsView extends StatelessWidget {
 
   final bool hasPendingMcp;
   final bool isPro;
+  final bool isAdmin;
   final bool hapticsEnabled;
   final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
@@ -45,6 +47,7 @@ class SettingsView extends StatelessWidget {
             'configureToolPermissions'
           ),
           (context.l10n.settingsMenuHarnessConnections, 'configureHarnessAuth'),
+          (context.l10n.settingsMenuGitSsh, 'configureGitSsh'),
           (context.l10n.settingsReportAiContentLabel, 'reportAiContent'),
         ]
       ),
@@ -56,6 +59,7 @@ class SettingsView extends StatelessWidget {
           (context.l10n.settingsMenuPocketbase, 'statusPocketbase'),
           (context.l10n.settingsMenuScheduler, 'configureScheduler'),
           (context.l10n.errorsTitle, 'statusErrors'),
+          if (isAdmin) (context.l10n.settingsMenuManageUsers, 'manageUsers'),
         ]
       ),
       (

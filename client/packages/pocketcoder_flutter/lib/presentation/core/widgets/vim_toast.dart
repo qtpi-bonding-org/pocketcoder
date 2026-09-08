@@ -38,18 +38,16 @@ class VimToast extends StatelessWidget {
     late final OverlayEntry entry;
     entry = OverlayEntry(
       builder: (context) => Positioned(
-        top: MediaQuery.viewPaddingOf(context).top + AppSizes.space,
-        left: AppSizes.space,
-        right: AppSizes.space,
-        child: Center(
-          child: Material(
-            color: Colors.transparent,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _remove(entry),
-              onVerticalDragEnd: (_) => _remove(entry),
-              child: VimToast(message: message, color: color, type: type),
-            ),
+        top: MediaQuery.viewPaddingOf(context).top,
+        left: 0,
+        right: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _remove(entry),
+            onVerticalDragEnd: (_) => _remove(entry),
+            child: VimToast(message: message, color: color, type: type),
           ),
         ),
       ),
@@ -70,51 +68,29 @@ class VimToast extends StatelessWidget {
     final colors = context.colorScheme;
     final accentColor = color ??
         switch (type) {
-          VimToastType.info => colors.onSurface,
+          VimToastType.info => colors.primary,
           VimToastType.success => colors.primary,
           VimToastType.warning => context.terminalColors.warning,
         };
 
-    final int dashCount = (message.length + 4).clamp(40, 60);
-    final String dashes = '-' * dashCount;
-
+    // Full-bleed solid fill, not translucent -- must never blend into
+    // scrolling terminal content underneath it.
     return Container(
-      padding: EdgeInsets.symmetric(vertical: AppSizes.space),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            dashes,
-            style: TextStyle(
-              color: accentColor.withValues(alpha: 0.5),
-              fontFamily: AppFonts.family,
-              package: 'pocketcoder_flutter',
-              height: 0.5,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSizes.space * 0.5),
-            child: Text(
-              ' $message ',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: accentColor,
-                fontFamily: AppFonts.family,
-                package: 'pocketcoder_flutter',
-                fontWeight: AppFonts.heavy,
-              ),
-            ),
-          ),
-          Text(
-            dashes,
-            style: TextStyle(
-              color: accentColor.withValues(alpha: 0.5),
-              fontFamily: AppFonts.family,
-              package: 'pocketcoder_flutter',
-              height: 0.5,
-            ),
-          ),
-        ],
+      width: double.infinity,
+      color: accentColor,
+      padding: EdgeInsets.symmetric(
+        vertical: AppSizes.space * 0.75,
+        horizontal: AppSizes.space,
+      ),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: colors.onPrimary,
+          fontFamily: AppFonts.family,
+          package: 'pocketcoder_flutter',
+          fontWeight: AppFonts.heavy,
+        ),
       ),
     );
   }

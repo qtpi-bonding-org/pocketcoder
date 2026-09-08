@@ -58,6 +58,7 @@ PENDING_LICENSE_ALLOWLIST = {
     "flutter_color_palette": "https://github.com/qtpi-bonding-org/flutter_color_palette",
     "l10n_key_resolver": "https://github.com/qtpi-bonding-org/dart_l10n_key_resolver",
     "ag_ui_widgets_flutter": "https://github.com/qtpi-bonding-org/ag_ui_widgets_flutter",
+    "nav_snapshot": "https://github.com/qtpi-bonding-org/flutter_nav_snapshot",
 }
 
 PUB_CACHE = os.environ.get("PUB_CACHE", os.path.expanduser("~/.pub-cache"))

@@ -1,9 +1,29 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:mocktail/mocktail.dart';
+import 'package:path/path.dart' as p;
+import 'package:pocketcoder_flutter/domain/deployment/caddy_ca_pin.dart';
+import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_command_runner.dart';
+import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
+import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command_result.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/caddy_ca_pinning_http_client.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_fetcher.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_mutex.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_recovery.dart';
+import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
+
+class MockSshRunner extends Mock implements IRootSshCommandRunner {}
+
+class FakeDeploymentLookup implements CurrentDeploymentLookup {
+  FakeDeploymentLookup(this.current);
+  @override
+  final ({String instanceId, String host})? current;
+}
 
 void main() {
   group('CaddyCaPinningHttpClient', () {
@@ -150,6 +170,86 @@ vOlqkW8uk4vrxfTyo29hA6Pu8X6rAA==
       client.updatePin(testCertPem);
 
       final response = await responseFuture;
+      expect(response.statusCode, 200);
+    }, testOn: 'vm');
+
+    test(
+        'retries and succeeds after recovery even when the durable pin was '
+        'already correct (recoverIfStale returns false) -- regression for a '
+        'cold-boot client that never loaded ANY pin yet this session: SSH '
+        'refetch legitimately reports "fingerprint unchanged" (the '
+        'persisted pin was never wrong), but updatePin() still installs it '
+        'into this LIVE client for the first time, so the retry must still '
+        'happen -- confirmed live, this made every cold boot against a '
+        'healthy, already-provisioned deployment permanently fail with '
+        'CERTIFICATE_VERIFY_FAILED', () async {
+      registerFallbackValue(RootSshCommand.exportCaddyCaFingerprint);
+      final tempDir = await Directory.systemTemp.createTemp('ca_pin_test');
+      addTearDown(() => tempDir.delete(recursive: true));
+      final certPath = p.join(tempDir.path, 'cert.pem');
+      final keyPath = p.join(tempDir.path, 'key.pem');
+      final genResult = await Process.run('openssl', [
+        'req', '-x509', '-newkey', 'rsa:2048', '-keyout', keyPath,
+        '-out', certPath, '-days', '1', '-nodes', '-subj', '/CN=127.0.0.1',
+        '-addext', 'subjectAltName=IP:127.0.0.1',
+        '-addext', 'extendedKeyUsage=serverAuth',
+      ]);
+      expect(genResult.exitCode, 0,
+          reason: 'openssl cert generation failed: ${genResult.stderr}');
+      final certPem = await File(certPath).readAsString();
+
+      final serverContext = SecurityContext()
+        ..useCertificateChain(certPath)
+        ..usePrivateKey(keyPath);
+      final server = await HttpServer.bindSecure(
+          InternetAddress.loopbackIPv4, 0, serverContext);
+      addTearDown(server.close);
+      unawaited(server.first.then((request) async {
+        request.response.statusCode = 200;
+        await request.response.close();
+      }));
+
+      FlutterSecureStorage.setMockInitialValues({});
+      final pinStore = CaddyCaPinStore(FlutterSecureStorage());
+      const instanceId = 'test-instance';
+      const fingerprint = 'unchanged-fingerprint';
+      await pinStore.write(
+        deploymentId: instanceId,
+        pin: CaddyCaPin(fingerprint: fingerprint, certificatePem: certPem),
+      );
+
+      final sshRunner = MockSshRunner();
+      when(() => sshRunner.run(
+            instanceId: any(named: 'instanceId'),
+            host: any(named: 'host'),
+            command: RootSshCommand.exportCaddyCaFingerprint,
+          )).thenAnswer((_) async => RootSshCommandResult(
+            exitCode: 0,
+            stdout: '{"fingerprint":"$fingerprint",'
+                '"certificatePemBase64":"${base64.encode(utf8.encode(certPem))}"}',
+            stderr: '',
+          ));
+
+      final client = CaddyCaPinningHttpClient();
+      final fetcher = CaPinFetcher(
+        sshCommandRunner: sshRunner,
+        pinStore: pinStore,
+        pinningHttpClient: CaddyCaPinningHttpClientAdapter(client),
+        mutex: CaPinMutex(),
+      );
+      final recovery = CaPinRecovery(
+        caPinFetcher: fetcher,
+        currentDeployment:
+            FakeDeploymentLookup((instanceId: instanceId, host: '127.0.0.1')),
+      );
+      client.attachRecovery(recovery);
+
+      // No pin loaded yet this session -- the first attempt must fail
+      // native cert validation against the self-signed server, exactly
+      // like a real cold boot.
+      final response =
+          await client.get(Uri.parse('https://127.0.0.1:${server.port}/'));
+
       expect(response.statusCode, 200);
     }, testOn: 'vm');
   });

@@ -1,6 +1,9 @@
 package gitssh
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestCanonicalRepository(t *testing.T) {
 	got, err := CanonicalRepository("github", "octo/hello.git")
@@ -38,5 +41,30 @@ func TestConfigStableOrdering(t *testing.T) {
 	}
 	if len(c) == 0 || c[0:8] != "Host pcg" {
 		t.Fatalf("unexpected config: %s", c)
+	}
+}
+
+func TestCanonicalRepositoryAcceptsCustomProviderWithoutARegistryEntry(t *testing.T) {
+	got, err := CanonicalRepository("custom", "org/repo.git")
+	if err != nil || got != "org/repo" {
+		t.Fatalf("got %q, %v", got, err)
+	}
+}
+
+func TestConfigRendersACustomProviderUsingItsOwnHostAndPort(t *testing.T) {
+	c, err := RenderConfig([]Access{{ID: "a", Provider: "custom", Repository: "org/repo", CredentialID: "k1", Host: "git.example.com", Port: 2222}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"HostName git.example.com", "HostKeyAlias git.example.com", "Port 2222"} {
+		if !strings.Contains(c, want) {
+			t.Fatalf("config missing %q: %s", want, c)
+		}
+	}
+}
+
+func TestConfigRejectsACustomProviderWithNoHost(t *testing.T) {
+	if _, err := RenderConfig([]Access{{ID: "a", Provider: "custom", Repository: "org/repo", CredentialID: "k1"}}); err == nil {
+		t.Fatal("expected an error for a custom provider with no host")
 	}
 }

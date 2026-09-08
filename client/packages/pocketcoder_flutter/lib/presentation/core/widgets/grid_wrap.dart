@@ -96,6 +96,52 @@ class _RenderGridWrap extends RenderBox
         _ => 0,
       };
 
+  // Must mirror performLayout's sizing without mutating children/parentData --
+  // GridWrap can itself be dry-laid-out by an ancestor GridWrap.
+  @override
+  Size computeDryLayout(BoxConstraints constraints) {
+    final children = _children;
+    if (children.isEmpty) {
+      return constraints.smallest;
+    }
+
+    final maxWidth =
+        constraints.hasBoundedWidth ? constraints.maxWidth : double.infinity;
+
+    final naturalSizes = [
+      for (final child in children) child.getDryLayout(const BoxConstraints())
+    ];
+    final naturalRowWidth =
+        naturalSizes.fold<double>(0, (sum, s) => sum + s.width) +
+            _spacing * (children.length - 1);
+
+    if (!maxWidth.isFinite || naturalRowWidth <= maxWidth) {
+      final rowHeight =
+          naturalSizes.fold<double>(0, (h, s) => s.height > h ? s.height : h);
+      final effectiveWidth = maxWidth.isFinite ? maxWidth : naturalRowWidth;
+      return constraints.constrain(Size(effectiveWidth, rowHeight));
+    }
+
+    final rowCount =
+        (naturalRowWidth / maxWidth).ceil().clamp(2, children.length);
+    final columns = (children.length / rowCount).ceil();
+
+    var y = 0.0;
+    for (var i = 0; i < children.length; i += columns) {
+      var rowHeight = 0.0;
+      for (var k = i; k < children.length && k < i + columns; k++) {
+        final h = children[k]
+            .getDryLayout(BoxConstraints(maxWidth: maxWidth))
+            .height;
+        if (h > rowHeight) rowHeight = h;
+      }
+      y += rowHeight + _runSpacing;
+    }
+    if (children.isNotEmpty) y -= _runSpacing;
+
+    return constraints.constrain(Size(maxWidth, y));
+  }
+
   @override
   void performLayout() {
     final children = _children;

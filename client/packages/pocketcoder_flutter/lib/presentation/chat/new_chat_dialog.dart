@@ -5,6 +5,7 @@ import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/domain/models/model.dart';
 import 'package:pocketcoder_flutter/domain/models/ollama_model.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_provider.dart';
+import 'package:pocketcoder_flutter/domain/models/provider.dart' as domain;
 import 'package:pocketcoder_flutter/domain/models/provider_api_key.dart';
 import 'package:pocketcoder_flutter/domain/models/credential_selection.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_oauth_account.dart';
@@ -46,6 +47,7 @@ class NewChatDialog extends StatefulWidget {
     required this.models,
     required this.harnessModels,
     required this.harnessProviders,
+    this.providers = const [],
     required this.providerAPIKeys,
     this.credentialSelections = const [],
     this.harnessOAuthAccounts = const [],
@@ -56,6 +58,7 @@ class NewChatDialog extends StatefulWidget {
   final List<Model> models;
   final List<HarnessModel> harnessModels;
   final List<HarnessProvider> harnessProviders;
+  final List<domain.Provider> providers;
   final List<ProviderApiKey> providerAPIKeys;
   final List<CredentialSelection> credentialSelections;
   final List<HarnessOauthAccount> harnessOAuthAccounts;
@@ -71,6 +74,17 @@ class _NewChatDialogState extends State<NewChatDialog> {
   Harnesse? _selectedHarness;
   _ModelChoice? _selectedModel;
   String? _cwdError;
+
+  late final _modelsById = {for (final m in widget.models) m.id: m};
+  late final _providerNamesById = {
+    for (final p in widget.providers) p.id: p.name,
+  };
+  late final _keyedProviderIds = {
+    for (final k in widget.providerAPIKeys) k.provider,
+    for (final c in widget.credentialSelections) c.provider,
+    for (final a in widget.harnessOAuthAccounts)
+      if (a.status == HarnessOauthAccountStatus.connected) a.provider,
+  };
 
   @override
   void dispose() {
@@ -105,17 +119,26 @@ class _NewChatDialogState extends State<NewChatDialog> {
     ));
   }
 
+  bool _isUsable(HarnessModel hm, Harnesse harness) {
+    if (harness.providerFanout != true) return true;
+    final provider = _modelsById[hm.model]?.provider;
+    return provider == null || _keyedProviderIds.contains(provider);
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedHarness = _selectedHarness;
     final availableModels = selectedHarness == null
         ? const <HarnessModel>[]
-        : widget.harnessModels.where((hm) => hm.harness == selectedHarness.id).toList();
+        : widget.harnessModels
+            .where((hm) =>
+                hm.harness == selectedHarness.id &&
+                _isUsable(hm, selectedHarness))
+            .toList();
 
     return _buildDialog(
       context,
       harnesses: widget.harnesses,
-      models: widget.models,
       availableModels: availableModels,
       ollamaModels: widget.ollamaModels,
     );
@@ -124,14 +147,14 @@ class _NewChatDialogState extends State<NewChatDialog> {
   Widget _buildDialog(
     BuildContext context, {
     required List<Harnesse> harnesses,
-    required List<Model> models,
     required List<HarnessModel> availableModels,
     required List<OllamaModel> ollamaModels,
   }) {
     final selectedHarness = _selectedHarness;
     final choices = [
       for (final hm in availableModels)
-        _ModelChoice.catalog(hm.id, _modelDisplayName(models, hm)),
+        _ModelChoice.catalog(
+            hm.id, _modelDisplayName(hm), _providerGroupLabel(hm)),
       if (selectedHarness != null &&
           supportsOllamaHarness(selectedHarness.cliId))
         for (final model in ollamaModels) _ModelChoice.ollama(model.name),
@@ -168,6 +191,7 @@ class _NewChatDialogState extends State<NewChatDialog> {
             options: choices,
             selected: _selectedModel,
             optionLabel: (choice) => choice.label,
+            groupLabel: (choice) => choice.groupLabel,
             onSelected: (choice) => setState(() => _selectedModel = choice),
           ),
           VSpace.x2,
@@ -193,27 +217,31 @@ class _NewChatDialogState extends State<NewChatDialog> {
     );
   }
 
-  String _modelDisplayName(List<Model> models, HarnessModel hm) {
-    for (final m in models) {
-      if (m.id == hm.model) {
-        final dn = m.displayName;
-        return dn != null && dn.isNotEmpty ? dn : m.name;
-      }
-    }
-    return hm.harnessModelId;
+  String _modelDisplayName(HarnessModel hm) {
+    final m = _modelsById[hm.model];
+    if (m == null) return hm.harnessModelId;
+    final dn = m.displayName;
+    return dn != null && dn.isNotEmpty ? dn : m.name;
+  }
+
+  String _providerGroupLabel(HarnessModel hm) {
+    final providerId = _modelsById[hm.model]?.provider;
+    return _providerNamesById[providerId] ?? '';
   }
 }
 
 class _ModelChoice {
-  const _ModelChoice.catalog(this.harnessModelId, this.label)
+  const _ModelChoice.catalog(this.harnessModelId, this.label, this.groupLabel)
       : ollamaModel = null;
 
   const _ModelChoice.ollama(String name)
       : harnessModelId = null,
         ollamaModel = name,
-        label = '$name (LOCAL)';
+        label = '$name (LOCAL)',
+        groupLabel = 'Local';
 
   final String? harnessModelId;
   final String? ollamaModel;
   final String label;
+  final String groupLabel;
 }

@@ -74,6 +74,10 @@ func materialize(inbox, state string) error {
 			return err
 		}
 	}
+	if err := copyForwardCurrent(state, root, seen); err != nil {
+		return err
+	}
+
 	tmp := filepath.Join(state, ".current.tmp")
 	_ = os.Remove(tmp)
 	if err := os.Symlink(filepath.Join("generations", generation), tmp); err != nil {
@@ -88,4 +92,47 @@ func materialize(inbox, state string) error {
 	}
 	_ = os.Remove(old)
 	return nil
+}
+
+// copyForwardCurrent preserves files from the previous generation that the
+// new manifest doesn't include (e.g. a private key from a pass that didn't
+// regenerate it) -- a manifest only ever carries what changed, not the
+// full desired state.
+func copyForwardCurrent(state, newRoot string, seen map[string]bool) error {
+	link, err := os.Readlink(filepath.Join(state, "current"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	oldRoot := filepath.Join(state, link)
+
+	return filepath.Walk(oldRoot, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		rel, err := filepath.Rel(oldRoot, path)
+		if err != nil {
+			return err
+		}
+		if seen[rel] {
+			return nil
+		}
+		dest := filepath.Join(newRoot, rel)
+		if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(dest, data, info.Mode().Perm())
+	})
 }

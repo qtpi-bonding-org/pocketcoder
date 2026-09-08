@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -33,6 +34,7 @@ import (
 
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/coordinator"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/gitssh"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/harnessaccount"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/hooks"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/modelcatalog"
@@ -94,7 +96,9 @@ func main() {
 	hooks.RegisterMcpHooks(app)
 
 	hooks.RegisterAgentFileHooks(app)
-	hooks.RegisterGitSSHHooks(app)
+	gitSSHQueue := gitssh.NewQueue()
+	hooks.RegisterGitSSHHooks(app, gitSSHQueue)
+	modelcatalog.RegisterCredentialHooks(app, http.DefaultClient, modelcatalog.DefaultCatalogURL)
 
 	app.OnServe().BindFunc(func(e *core.ServeEvent) error {
 		app.Logger().Info("🚀 Starting PocketCoder Sovereign Backend...")
@@ -132,12 +136,24 @@ func main() {
 		watcherCtx, cancelWatcher := context.WithCancel(context.Background())
 		watcherDone := hooks.StartHarnessWatcher(watcherCtx, app, dockerapi.New())
 		hooks.RegisterHarnessLifecycle(app, dockerapi.New())
+
+		gitSSHCtx, cancelGitSSH := context.WithCancel(context.Background())
+		gitSSHDone := hooks.StartGitSSHReconcileLoop(gitSSHCtx, app, gitSSHQueue,
+			&gitssh.Reconciler{Materializer: hooks.DockerGitSSHMaterializer{Client: dockerapi.New()}},
+			5*time.Second)
+
 		app.OnTerminate().BindFunc(func(_ *core.TerminateEvent) error {
 			cancelWatcher()
+			cancelGitSSH()
 			select {
 			case <-watcherDone:
 			case <-time.After(5 * time.Second):
 				log.Println("[HarnessWatcher] timed out waiting for shutdown")
+			}
+			select {
+			case <-gitSSHDone:
+			case <-time.After(5 * time.Second):
+				log.Println("[GitSSH] timed out waiting for reconcile loop shutdown")
 			}
 			return nil
 		})

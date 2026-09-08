@@ -15,15 +15,22 @@ class HarnesseDao extends BaseDao<Harnesse> {
       : super(pb, Collections.harnesses, Harnesse.fromJson);
 }
 
+// Longer than the 10s default: these collections page across many
+// sequential round trips.
+const _catalogFetchTimeout = Duration(seconds: 30);
+
 @lazySingleton
 class ModelDao extends BaseDao<Model> {
-  ModelDao(PocketBase pb) : super(pb, Collections.models, Model.fromJson);
+  ModelDao(PocketBase pb)
+      : super(pb, Collections.models, Model.fromJson,
+            getFullListTimeout: _catalogFetchTimeout);
 }
 
 @lazySingleton
 class HarnessModelDao extends BaseDao<HarnessModel> {
   HarnessModelDao(PocketBase pb)
-      : super(pb, Collections.harnessModels, HarnessModel.fromJson);
+      : super(pb, Collections.harnessModels, HarnessModel.fromJson,
+            getFullListTimeout: _catalogFetchTimeout);
 }
 
 @lazySingleton

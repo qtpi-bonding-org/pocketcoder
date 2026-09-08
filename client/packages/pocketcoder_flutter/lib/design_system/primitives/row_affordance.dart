@@ -7,6 +7,7 @@
 enum RowAffordance {
   none(''),
   navigate('▸'), // triangle right -- pushes another screen
+  back('◂'), // triangle left -- returns to the parent level
   expand('▾'), // small triangle down -- reveals in place
   collapse('▴'); // small triangle up -- hides in place
 

@@ -22,4 +22,8 @@ fi
 # Provider credentials and provider-specific settings arrive through the
 # rendered keys.env or the container environment and are validated by Goose.
 
+# Goose reads the standard Rust tracing RUST_LOG convention; default to
+# debug so ACP tool-call lifecycle logging shows up in `docker logs`.
+export RUST_LOG="${RUST_LOG:-debug}"
+
 exec /usr/local/bin/goose serve --host 0.0.0.0 --port 3000

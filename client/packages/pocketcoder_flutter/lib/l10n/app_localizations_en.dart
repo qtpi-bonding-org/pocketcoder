@@ -112,10 +112,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionSave => 'save';
 
   @override
+  String get actionDelete => 'delete';
+
+  @override
   String get actionClose => 'close';
 
   @override
   String get actionDeny => 'deny';
+
+  @override
+  String get actionDone => 'done';
 
   @override
   String get actionAuthorize => 'authorize';
@@ -423,6 +429,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newChatNoModelsAvailable => 'No models available for this harness';
+
+  @override
+  String get chatPickerSearchLabel => 'search';
+
+  @override
+  String get chatPickerSearchHint => 'Filter options';
+
+  @override
+  String get chatPickerNoMatches => 'no matching options';
 
   @override
   String get newChatWorkspaceErrorEmpty => 'Path cannot be empty';
@@ -780,6 +795,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toolPermissionsAddRuleButton => 'add rule';
 
   @override
+  String get permissionModesRegistry => 'permission modes';
+
+  @override
+  String get permissionModesAddButton => 'add mode';
+
+  @override
+  String get permissionModesDuplicateSourceTitle => 'duplicate which mode?';
+
+  @override
+  String get permissionModesNoModes => 'no modes';
+
+  @override
+  String get permissionModesEditorTitle => 'permission mode';
+
+  @override
+  String get permissionModesNameLabel => 'name';
+
+  @override
+  String get permissionModesDescriptionLabel => 'description';
+
+  @override
+  String get gitSshScreenTitle => 'git ssh access';
+
+  @override
+  String get gitSshAccountKeysHeader => 'account keys';
+
+  @override
+  String get gitSshAddAccountKeyButton => 'generate account key';
+
+  @override
+  String get gitSshAddAccountKeyTitle => 'generate account key';
+
+  @override
+  String get gitSshLabelField => 'label';
+
+  @override
+  String get gitSshRepositoriesHeader => 'repository access';
+
+  @override
+  String get gitSshAddRepositoryAccessButton => 'add repository access';
+
+  @override
+  String get gitSshAddRepositoryAccessTitle => 'add repository access';
+
+  @override
+  String get gitSshRepositoryField => 'repository (owner/repo)';
+
+  @override
+  String get gitSshPurposeField => 'purpose';
+
+  @override
+  String get gitSshHostField => 'host';
+
+  @override
+  String get gitSshPortField => 'port';
+
+  @override
+  String get gitSshCredentialModeDeploy => 'new deploy key';
+
+  @override
+  String get gitSshCredentialModeAccount => 'existing account key';
+
+  @override
+  String get gitSshNoAccountKeysWarning => 'generate an account key first';
+
+  @override
+  String get gitSshAccessReadOnly => 'read only';
+
+  @override
+  String get gitSshAccessReadWrite => 'read/write';
+
+  @override
+  String get gitSshEmptyState => 'no keys or repositories yet';
+
+  @override
+  String get gitSshShowPublicKeyButton => 'show public key';
+
+  @override
+  String get gitSshPublicKeyDialogBody =>
+      'add this key to your git host, then come back and confirm below.';
+
+  @override
+  String get gitSshMarkRegisteredButton => 'i\'ve added this key';
+
+  @override
+  String get gitSshRemoveAccessButton => 'remove';
+
+  @override
   String get notificationSettingsScreenTitle => 'notifications';
 
   @override
@@ -857,6 +960,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get skillsBuiltInLabel => 'built-in';
+
+  @override
+  String get settingsMenuManageUsers => 'manage users';
+
+  @override
+  String get usersScreenTitle => 'manage users';
+
+  @override
+  String get usersAddButton => 'add user';
+
+  @override
+  String get usersAddDialogTitle => 'add user';
+
+  @override
+  String get usersEmailLabel => 'email';
+
+  @override
+  String get usersNoUsers => 'no users yet';
+
+  @override
+  String get usersRevealDialogTitle => 'temporary password';
+
+  @override
+  String usersRevealDialogBody(String email) {
+    return 'share this password with $email outside the app -- it will not be shown again.';
+  }
+
+  @override
+  String get usersResetPasswordButton => 'reset password';
+
+  @override
+  String get usersResetPasswordConfirmTitle => 'reset password';
+
+  @override
+  String usersResetPasswordConfirmBody(String email) {
+    return 'generate a new temporary password for $email? their current password stops working immediately.';
+  }
+
+  @override
+  String get usersDeleteButton => 'delete';
+
+  @override
+  String get usersDeleteConfirmTitle => 'delete user';
+
+  @override
+  String usersDeleteConfirmBody(String email) {
+    return 'permanently delete $email? this cannot be undone.';
+  }
 
   @override
   String get schedulerTitle => 'scheduler';
@@ -939,10 +1090,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsMenuSkills => 'skills';
 
   @override
-  String get settingsMenuToolPermissions => 'tool permissions';
+  String get settingsMenuToolPermissions => 'permission modes';
 
   @override
   String get settingsMenuHarnessConnections => 'harness connections';
+
+  @override
+  String get settingsMenuGitSsh => 'git ssh access';
 
   @override
   String get settingsMenuSystemChecks => 'system checks';
@@ -1581,6 +1735,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get initializationActionRetry => 'retry';
+
+  @override
+  String get initializationAbortConfirmationTitle => 'Abort setup?';
+
+  @override
+  String get initializationAbortConfirmationBody =>
+      'This cancels setup and deletes the cloud server being created. This cannot be undone.';
+
+  @override
+  String get initializationAbortConfirm => 'abort';
+
+  @override
+  String get initializationAbortCancel => 'cancel';
 
   @override
   String get initializationUnknown => 'unknown';
@@ -2279,6 +2446,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingWelcomeActionSelfHost => 'I\'ll set it up';
 
   @override
+  String get onboardingWelcomeActionReset => 'Something\'s stuck -- reset';
+
+  @override
+  String get onboardingWelcomeResetConfirmationTitle => 'Reset local state?';
+
+  @override
+  String get onboardingWelcomeResetConfirmationBody =>
+      'This clears any in-progress or stuck deployment state on this device and starts over. It does not delete an existing cloud server.';
+
+  @override
+  String get onboardingWelcomeResetConfirm => 'reset';
+
+  @override
+  String get onboardingWelcomeResetCancel => 'cancel';
+
+  @override
   String get onboardingSelfHostTitle => 'self-host setup';
 
   @override
@@ -2317,6 +2500,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingPasswordTooShort => 'Must be at least 8 characters';
+
+  @override
+  String get onboardingEmailInvalidFormat => 'Enter a valid email address';
 
   @override
   String get onboardingProviderPoco =>
@@ -3024,6 +3210,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentSessionLabel => 'session';
+
+  @override
+  String get agentModelSearchHint => 'Filter models';
+
+  @override
+  String get agentModelSearchNoMatches => 'no matching models';
 
   @override
   String get pocketCoderUpdateChecking =>

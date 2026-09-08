@@ -26,37 +26,47 @@ class PocoExpression {
   static const String winkRight = '-_^';
   static const String vigilantLeft = 'o_-';
   static const String vigilantRight = '-_o';
+
+  /// Must stay a subset of [PocoMood.color]'s bright/green branch.
+  static const List<String> greenHappy = [
+    awake,
+    happy,
+    cheeky,
+    amazed,
+    winkLeft,
+    winkRight,
+  ];
 }
 
 class AppAscii {
   static const String navChat = r'''
                                                  
-   ▄▄▄  █               ▄                        
- ▄▀   ▀ █ ▄▄    ▄▄▄   ▄▄█▄▄                      
- █      █▀  █  ▀   █    █                        
- █      █   █  ▄▀▀▀█    █                        
-  ▀▄▄▄▀ █   █  ▀▄▄▀█    ▀▄▄                      
+             ▄▄▄  █               ▄              
+           ▄▀   ▀ █ ▄▄    ▄▄▄   ▄▄█▄▄            
+           █      █▀  █  ▀   █    █              
+           █      █   █  ▄▀▀▀█    █              
+            ▀▄▄▄▀ █   █  ▀▄▄▀█    ▀▄▄            
                                                  
                                                  ''';
 
   static const String navConfig = r'''
                                                  
-   ▄▄▄                  ▄▀▀    ▀                 
- ▄▀   ▀  ▄▄▄   ▄ ▄▄   ▄▄█▄▄  ▄▄▄     ▄▄▄▄        
- █      █▀ ▀█  █▀  █    █      █    █▀ ▀█        
- █      █   █  █   █    █      █    █   █        
-  ▀▄▄▄▀ ▀█▄█▀  █   █    █    ▄▄█▄▄  ▀█▄▀█        
-                                     ▄  █        
-                                      ▀▀         
+      ▄▄▄                  ▄▀▀    ▀              
+    ▄▀   ▀  ▄▄▄   ▄ ▄▄   ▄▄█▄▄  ▄▄▄     ▄▄▄▄     
+    █      █▀ ▀█  █▀  █    █      █    █▀ ▀█     
+    █      █   █  █   █    █      █    █   █     
+     ▀▄▄▄▀ ▀█▄█▀  █   █    █    ▄▄█▄▄  ▀█▄▀█     
+                                        ▄  █     
+                                         ▀▀      
                                                  ''';
 
   static const String navStatus = r'''
                                                  
-  ▄▄▄▄    ▄             ▄                        
- █▀   ▀ ▄▄█▄▄   ▄▄▄   ▄▄█▄▄  ▄   ▄   ▄▄▄         
- ▀█▄▄▄    █    ▀   █    █    █   █  █   ▀        
-     ▀█   █    ▄▀▀▀█    █    █   █   ▀▀▀▄        
- ▀▄▄▄█▀   ▀▄▄  ▀▄▄▀█    ▀▄▄  ▀▄▄▀█  ▀▄▄▄▀        
+     ▄▄▄▄    ▄             ▄                     
+    █▀   ▀ ▄▄█▄▄   ▄▄▄   ▄▄█▄▄  ▄   ▄   ▄▄▄      
+    ▀█▄▄▄    █    ▀   █    █    █   █  █   ▀     
+        ▀█   █    ▄▀▀▀█    █    █   █   ▀▀▀▄     
+    ▀▄▄▄█▀   ▀▄▄  ▀▄▄▀█    ▀▄▄  ▀▄▄▀█  ▀▄▄▄▀     
                                                  
                                                  ''';
 

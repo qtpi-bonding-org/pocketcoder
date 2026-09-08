@@ -1,27 +1,27 @@
 import 'package:acp_dart/acp_dart.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_list_picker_dialog.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 
-class ConfigPicker extends StatefulWidget {
+class ConfigPicker extends StatelessWidget {
   const ConfigPicker(
-      {super.key, required this.config, required this.onSetOption});
+      {super.key,
+      required this.config,
+      required this.onSetOption,
+      this.onSearchModels});
   final Map<String, dynamic>? config;
   final void Function(SetSessionConfigOptionRequest request) onSetOption;
-  @override
-  State<ConfigPicker> createState() => _ConfigPickerState();
-}
+  final Future<List<HarnessModel>> Function()? onSearchModels;
 
-class _ConfigPickerState extends State<ConfigPicker> {
-  bool _expanded = false;
   @override
   Widget build(BuildContext context) {
-    final config = widget.config;
     final options = (config?['options'] as List?)
             ?.whereType<Map>()
             .map(Map<String, dynamic>.from)
@@ -29,22 +29,10 @@ class _ConfigPickerState extends State<ConfigPicker> {
         const <Map<String, dynamic>>[];
     if (options.isEmpty) return const SizedBox.shrink();
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      DetailRow(
-        label: context.l10n.agentSessionLabel,
-        value: _expanded ? null : _summary(options),
-        affordance:
-            _expanded ? RowAffordance.collapse : RowAffordance.expand,
-        onTap: () => setState(() => _expanded = !_expanded),
-      ),
-      if (_expanded) ...options.map((o) => _option(context, o)),
+      DetailRow(label: context.l10n.agentSessionLabel),
+      ...options.map((o) => _option(context, o)),
     ]);
   }
-
-  String _summary(List<Map<String, dynamic>> options) => options
-      .where((o) => o['kind'] == 'select')
-      .map((o) => o['currentValue']?.toString() ?? '')
-      .where((value) => value.isNotEmpty)
-      .join(' · ');
 
   Widget _option(BuildContext context, Map<String, dynamic> o) {
     final id = o['id'] as String?;
@@ -54,8 +42,10 @@ class _ConfigPickerState extends State<ConfigPicker> {
         value = o['currentValue'];
     final label = Text(name,
         style: TextStyle(
-            color: context.colorScheme.onSurface, fontFamily: AppFonts.family));
-    void submit(String v) => widget.onSetOption(
+            color: context.colorScheme.onSurface,
+            fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter'));
+    void submit(String v) => onSetOption(
         SetSessionConfigOptionRequest(sessionId: '', configId: id, value: v));
     if (kind == 'boolean') {
       return Padding(
@@ -65,6 +55,10 @@ class _ConfigPickerState extends State<ConfigPicker> {
             TerminalCheckbox(
                 value: value == true, onChanged: (v) => submit('$v'))
           ]));
+    }
+    if (kind == 'select' && id == 'model' && onSearchModels != null) {
+      return _modelSearchRow(context,
+          name: name, current: value?.toString(), submit: submit);
     }
     if (kind == 'select') {
       final choices = (o['options'] as List?)
@@ -76,23 +70,33 @@ class _ConfigPickerState extends State<ConfigPicker> {
       final displayValue = choices.any((c) => '${c['value']}' == current)
           ? current
           : (current.isEmpty ? '--' : current);
+      String labelFor(String value) =>
+          choices.firstWhere((c) => '${c['value']}' == value,
+              orElse: () => {})['label'] as String? ??
+          value;
       return DetailRow(
           label: name,
           value: displayValue,
           affordance: RowAffordance.expand,
-          onTap: () => showTerminalListPicker<String>(
+          onTap: () => showDialog<String>(
                 context: context,
-                title: name,
-                items: choices
-                    .map((c) => '${c['value']}')
-                    .toList(),
-                itemBuilder: (_, item) => TerminalText(
-                    (choices.firstWhere((c) => '${c['value']}' == item,
-                            orElse: () => {})['label'] as String? ?? item),
-                    role: TextRole.label),
-                selected: displayValue == '--' ? null : current,
-                emptyLabel: 'no options',
-                cancelLabel: 'cancel',
+                builder: (_) => SearchablePickerDialog<String>(
+                  title: name,
+                  items: choices.map((c) => '${c['value']}').toList(),
+                  itemLabel: labelFor,
+                  selectedItem: displayValue == '--' ? null : current,
+                  searchLabel: context.l10n.chatPickerSearchLabel,
+                  searchHint: context.l10n.chatPickerSearchHint,
+                  noMatchesLabel: context.l10n.chatPickerNoMatches,
+                  itemBuilder: (_, item, {required isSelected, required onTap}) =>
+                      InkWell(
+                    onTap: onTap,
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSizes.space),
+                      child: TerminalText(labelFor(item), role: TextRole.label),
+                    ),
+                  ),
+                ),
               ).then((selected) {
                 if (selected != null) submit(selected);
               }));
@@ -106,4 +110,46 @@ class _ConfigPickerState extends State<ConfigPicker> {
                   color: context.colorScheme.onSurface.withValues(alpha: .4)))
         ]));
   }
+
+  Widget _modelSearchRow(
+    BuildContext context, {
+    required String name,
+    required String? current,
+    required void Function(String) submit,
+  }) =>
+      DetailRow(
+          label: name,
+          value: current?.isEmpty ?? true ? '--' : current,
+          affordance: RowAffordance.expand,
+          onTap: () async {
+            final models = await onSearchModels!();
+            if (!context.mounted) return;
+            final selected = await showDialog<HarnessModel>(
+                context: context,
+                builder: (dialogContext) => SearchablePickerDialog<HarnessModel>(
+                    title: name,
+                    items: models,
+                    itemLabel: (hm) => hm.harnessModelId,
+                    itemBuilder: (context, hm,
+                            {required isSelected, required onTap}) =>
+                        InkWell(
+                            onTap: onTap,
+                            child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: AppSizes.space * .5),
+                                child: TerminalText(hm.harnessModelId,
+                                    role: isSelected
+                                        ? TextRole.label
+                                        : TextRole.body))),
+                    selectedItem: models
+                        .where((hm) => hm.harnessModelId == current)
+                        .firstOrNull,
+                    maxUnfilteredResults: 5,
+                    searchLabel: dialogContext.l10n.providerScreenSearchLabel,
+                    searchHint: dialogContext.l10n.agentModelSearchHint,
+                    emptyLabel:
+                        dialogContext.l10n.providerScreenNoHarnessModels,
+                    noMatchesLabel: dialogContext.l10n.agentModelSearchNoMatches));
+            if (selected != null) submit(selected.harnessModelId);
+          });
 }

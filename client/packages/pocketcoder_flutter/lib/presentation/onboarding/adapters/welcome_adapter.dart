@@ -18,6 +18,8 @@ class WelcomeAdapter extends CubitAdapter<PocoCubit, PocoState> {
       showGuidedSetup: setupFlow.offersGuidedSetup,
       onGuidedSetup: () => setupFlow.startGuidedSetup(context),
       onSelfHost: () => setupFlow.showSelfHostInformation(context),
+      showReset: setupFlow.offersReset,
+      onReset: () => setupFlow.reset(context),
     );
   }
 }

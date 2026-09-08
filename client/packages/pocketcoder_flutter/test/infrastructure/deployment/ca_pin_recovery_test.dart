@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -153,6 +154,47 @@ void main() {
     await recovery.recoverIfStale(requestUrl: uri);
 
     expect(callCount, 1);
+  });
+
+  group('warmUp', () {
+    test(
+        'pins the already-cached CA immediately, with no SSH call, when a '
+        'deployment is available right away', () async {
+      await recovery.warmUp();
+
+      verify(() => pinningHttpClient.updatePin('old-pem')).called(1);
+      verifyNever(() => sshRunner.run(
+            instanceId: any(named: 'instanceId'),
+            host: any(named: 'host'),
+            command: any(named: 'command'),
+          ));
+    });
+
+    test(
+        'waits for the deployment lookup to become available instead of '
+        'giving up on the first null read (matches ProCurrentDeploymentLookup, '
+        'whose async refresh has not necessarily completed yet at boot)',
+        () async {
+      lookup.current = null;
+      unawaited(Future<void>.delayed(const Duration(milliseconds: 100), () {
+        lookup.current = (instanceId: 'inst-1', host: 'deploy.example');
+      }));
+
+      await recovery.warmUp(timeout: const Duration(seconds: 2));
+
+      verify(() => pinningHttpClient.updatePin('old-pem')).called(1);
+    });
+
+    test(
+        'gives up quietly after timeout when no deployment ever becomes '
+        'available -- a fresh install with nothing deployed yet is not an '
+        'error', () async {
+      lookup.current = null;
+
+      await recovery.warmUp(timeout: const Duration(milliseconds: 100));
+
+      verifyNever(() => pinningHttpClient.updatePin(any()));
+    });
   });
 }
 

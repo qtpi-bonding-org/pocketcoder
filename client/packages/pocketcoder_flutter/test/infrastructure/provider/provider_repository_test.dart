@@ -115,12 +115,87 @@ void main() {
     verify(() => harnesseDao.watch()).called(1);
   });
 
-  test('watchModels forwards modelDao.watch()', () {
-    final stream = Stream<List<Model>>.value([testModel]);
-    when(() => modelDao.watch()).thenAnswer((_) => stream);
+  test(
+      'fetchModels calls modelDao.getFullList with RequestPolicy.networkOnly '
+      '-- models is a 7.5k+ row read-only catalog that must never be '
+      'written into the local drift cache', () async {
+    when(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) async => [testModel]);
 
-    expect(repo.watchModels(), emits([testModel]));
-    verify(() => modelDao.watch()).called(1);
+    final result = await repo.fetchModels();
+
+    expect(result, [testModel]);
+    verify(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(1);
+  });
+
+  test(
+      'fetchModels only hits the network once across repeated calls in the '
+      'same app session', () async {
+    when(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) async => [testModel]);
+
+    final first = await repo.fetchModels();
+    final second = await repo.fetchModels();
+    final third = await repo.fetchModels();
+
+    expect(first, [testModel]);
+    expect(second, [testModel]);
+    expect(third, [testModel]);
+    verify(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(1);
+  });
+
+  test(
+      'fetchModels does not permanently cache a failure -- a later call '
+      'retries the network fetch', () async {
+    when(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) => Future.error(Exception('network unreachable')));
+
+    Object? caughtError;
+    try {
+      await repo.fetchModels();
+    } catch (e) {
+      caughtError = e;
+    }
+    expect(caughtError, isA<Exception>());
+
+    when(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) async => [testModel]);
+
+    final result = await repo.fetchModels();
+
+    expect(result, [testModel]);
+    verify(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(2);
+  });
+
+  test(
+      'fetchModels de-duplicates concurrent in-flight calls into a single '
+      'network fetch', () async {
+    final controller = Completer<List<Model>>();
+    when(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).thenAnswer((_) => controller.future);
+
+    final firstCall = repo.fetchModels();
+    final secondCall = repo.fetchModels();
+    controller.complete([testModel]);
+
+    final results = await Future.wait([firstCall, secondCall]);
+
+    expect(results[0], [testModel]);
+    expect(results[1], [testModel]);
+    verify(() => modelDao.getFullList(
+          requestPolicy: RequestPolicy.networkOnly,
+        )).called(1);
   });
 
   test(

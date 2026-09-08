@@ -89,6 +89,7 @@ class ChatAdapter extends CubitAdapter<ChatCubit, ChatState> {
                 onSendPrompt: chatCubit.sendPrompt,
                 onCancel: chatCubit.cancel,
                 onSetOption: controls.setOption,
+                onSearchModels: controls.searchableModels,
                 onPermissionOptionSelected: (requestId,
                     {optionId, cancelled = false}) {
                   final cubit = context.read<PermissionCubit>();

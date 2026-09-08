@@ -29,13 +29,14 @@ flutter_launcher_icons:
   ios: true
   web:
     generate: true
-    image_path: "../../../assets/logo-1024.png"
+    image_path: "../../../assets/logo-icon-safe-1024.png"
     background_color: "#000000"
     theme_color: "#00b82a"
-  image_path: "../../../assets/logo-1024.png"
+  image_path: "../../../assets/logo-icon-safe-1024.png"
   adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "../../../assets/logo-1024.png"
+  adaptive_icon_foreground: "../../../assets/logo-icon-safe-1024.png"
   remove_alpha_ios: true
+  background_color_ios: "#000000"
 
 flutter:
   uses-material-design: true

@@ -16,7 +16,7 @@ class UnavailableProOffer extends StatelessWidget {
       TerminalText(context.l10n.proUnavailable, role: TextRole.warn),
       VSpace.x2,
       TerminalText(context.l10n.proUnavailableBody, role: TextRole.body),
-      VSpace.x3,
+      VSpace.x2,
       TerminalButton(
           label: context.l10n.proRestore,
           onTap: onRestore,

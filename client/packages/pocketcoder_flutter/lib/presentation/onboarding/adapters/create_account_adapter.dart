@@ -8,6 +8,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/server_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/create_account_view.dart';
+import 'package:pocketcoder_flutter/support/validation/email_format.dart';
 
 // PocketBase's own migration rejects a seeded admin password under this
 // length ("password: Must be at least 8 character(s)."), which otherwise
@@ -34,15 +35,19 @@ class CreateAccountAdapter
         password: value.password,
         onEmailChanged: cubit.setEmail,
         onPasswordChanged: cubit.setPassword,
+        emailErrorText: value.email.isNotEmpty &&
+                !isValidEmailFormat(value.email.trim())
+            ? context.l10n.onboardingEmailInvalidFormat
+            : null,
         passwordErrorText: value.password.isNotEmpty &&
                 value.password.length < _minimumPasswordLength
             ? context.l10n.onboardingPasswordTooShort
             : null,
-        isValid: value.email.trim().isNotEmpty &&
+        isValid: isValidEmailFormat(value.email.trim()) &&
             value.password.length >= _minimumPasswordLength,
         onContinue: () {
           final current = cubit.state;
-          if (current.email.trim().isEmpty ||
+          if (!isValidEmailFormat(current.email.trim()) ||
               current.password.length < _minimumPasswordLength) {
             return;
           }

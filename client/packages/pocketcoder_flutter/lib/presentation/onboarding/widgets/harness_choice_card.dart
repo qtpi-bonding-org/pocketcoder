@@ -40,6 +40,7 @@ class HarnessChoiceCard extends StatelessWidget {
                                 harness.name,
                                 style: TextStyle(
                                     fontFamily: AppFonts.family,
+                                    package: 'pocketcoder_flutter',
                                     fontWeight: AppFonts.heavy,
                                     color: context.colorScheme.onSurface),
                               ),

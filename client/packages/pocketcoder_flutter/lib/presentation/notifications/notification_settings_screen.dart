@@ -79,7 +79,7 @@ class NotificationSettingsView extends StatelessWidget {
                     TerminalButton(
                         label: context.l10n.notificationSettingsEnableDevice,
                         onTap: onEnableDevice),
-                    VSpace.x3,
+                    VSpace.x2,
                     Column(children: [
                       for (final (type, key) in types)
                         DetailRow.toggle(
@@ -87,7 +87,7 @@ class NotificationSettingsView extends StatelessWidget {
                             value: state.rules[type] ?? true,
                             onChanged: (value) => onChanged(type, value)),
                     ]),
-                    VSpace.x3,
+                    VSpace.x2,
                     _SelfHostedPushOption(
                         onConfigure: onConfigureSelfHostedPush),
                   ]),

@@ -65,6 +65,7 @@ class ReleaseStatusBanner extends StatelessWidget {
               style: TextStyle(
                 color: color,
                 fontFamily: AppFonts.family,
+                package: 'pocketcoder_flutter',
                 fontWeight: AppFonts.heavy,
               ),
             ),

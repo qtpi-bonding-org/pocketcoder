@@ -32,28 +32,48 @@ class TerminalFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    final children = actions.map((action) {
-      if (action.isLabel) {
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-            child: Center(
-              child: TerminalText(
-                action.label,
-                role: TextRole.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        );
-      }
-      // The page footer is a persistent status bar, not a row of discrete
-      // buttons: labels stay bare and reverse-video carries the state.
-      return Expanded(
-          child:
-              BiosActionButton(action: action.asStripItem(bracketed: false)));
-    }).toList();
+    // Unexpanded so a lone action left-aligns instead of centering in a
+    // full-width Expanded slot.
+    final soleAction = actions.length == 1 ? actions.single : null;
+    final children = soleAction != null
+        ? [
+            if (soleAction.isLabel)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+                child: TerminalText(
+                  soleAction.label,
+                  role: TextRole.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+            else
+              BiosActionButton(
+                  action: soleAction.asStripItem(bracketed: false)),
+          ]
+        : actions.map((action) {
+            if (action.isLabel) {
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
+                  child: Center(
+                    child: TerminalText(
+                      action.label,
+                      role: TextRole.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              );
+            }
+            // The page footer is a persistent status bar, not a row of
+            // discrete buttons: labels stay bare and reverse-video carries
+            // the state.
+            return Expanded(
+                child: BiosActionButton(
+                    action: action.asStripItem(bracketed: false)));
+          }).toList();
 
     return Container(
       width: double.infinity,

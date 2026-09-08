@@ -51,7 +51,7 @@ class _ErrorTileState extends State<ErrorTile> {
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       DetailRow(
-        label: timestamp,
+        label: '$timestamp [gh]',
         value: '${entry.errorData.source}  ${entry.occurrenceCount}x',
         affordance: _isExpanded ? RowAffordance.collapse : RowAffordance.expand,
         onTap: () => setState(() => _isExpanded = !_isExpanded),
@@ -71,7 +71,13 @@ class _ErrorTileState extends State<ErrorTile> {
           padding: EdgeInsets.only(left: AppSizes.ch * 2),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: SelectableText(entry.errorData.stackTrace),
+            child: SelectableText(
+              entry.errorData.stackTrace,
+              style: TextRole.label.style.copyWith(
+                fontFamily: AppFonts.family,
+                package: 'pocketcoder_flutter',
+              ),
+            ),
           ),
         ),
         VSpace.x1,

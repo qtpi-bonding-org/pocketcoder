@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:pocketcoder_flutter/domain/deployment/caddy_ca_pin.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_command_runner.dart';
 import 'package:pocketcoder_flutter/domain/os_control/root_ssh_command.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_mutex.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/infrastructure/errors/diagnostic_capture.dart';
@@ -87,12 +88,24 @@ class CaPinFetcher {
     required Future<bool> Function() isCurrentAttemptStillLive,
     required bool skipIfAlreadyStored,
   }) async {
+    AppLogger.debug('CaPinFetcher._sshFetchAndStore start', {
+      'instanceId': instanceId,
+      'host': host,
+      'skipIfAlreadyStored': skipIfAlreadyStored,
+    });
     try {
       final result = await sshCommandRunner.run(
         instanceId: instanceId,
         host: host,
         command: RootSshCommand.exportCaddyCaFingerprint,
       );
+      AppLogger.debug('CaPinFetcher._sshFetchAndStore ssh result', {
+        'instanceId': instanceId,
+        'host': host,
+        'exitCode': result.exitCode,
+        'stderr': result.stderr,
+        'stdoutLength': result.stdout.length,
+      });
       if (result.exitCode != 0) {
         throw Exception(result.stderr.isEmpty
             ? 'export-caddy-ca-fingerprint failed'
@@ -103,16 +116,34 @@ class CaPinFetcher {
       );
 
       return await mutex.synchronized(() async {
-        if (!await isCurrentAttemptStillLive()) return null;
+        if (!await isCurrentAttemptStillLive()) {
+          AppLogger.debug(
+              'CaPinFetcher._sshFetchAndStore: attempt no longer live -- discarding fetched pin',
+              {'instanceId': instanceId});
+          return null;
+        }
         if (skipIfAlreadyStored &&
             await pinStore.read(deploymentId: instanceId) != null) {
+          AppLogger.debug(
+              'CaPinFetcher._sshFetchAndStore: already stored, skipping write',
+              {'instanceId': instanceId});
           return null;
         }
         await pinStore.write(deploymentId: instanceId, pin: pin);
         pinningHttpClient.updatePin(pin.certificatePem);
+        AppLogger.debug(
+            'CaPinFetcher._sshFetchAndStore: wrote pin and updated live client',
+            {'instanceId': instanceId, 'fingerprint': pin.fingerprint});
         return pin;
       });
     } on Object catch (error, stackTrace) {
+      AppLogger.warning('CaPinFetcher._sshFetchAndStore failed', {
+        'instanceId': instanceId,
+        'host': host,
+        'skipIfAlreadyStored': skipIfAlreadyStored,
+        'errorType': error.runtimeType.toString(),
+        'error': error.toString(),
+      });
       await pocketCoderDiagnosticCapture.capture(
         error: error,
         stackTrace: stackTrace,

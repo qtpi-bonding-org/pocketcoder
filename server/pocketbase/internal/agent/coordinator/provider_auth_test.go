@@ -49,6 +49,8 @@ func TestProviderApiKeyFailure(t *testing.T) {
 		{"api-key/unauthorized", false, "401 unauthorized", true},
 		{"api-key/forbidden", false, "403 forbidden", true},
 		{"api-key/invalid api key", false, "invalid api key provided", true},
+		// OpenAI's own rejection wording, distinct from "invalid api key".
+		{"api-key/incorrect api key", false, "Incorrect API key provided: sk-golde...6084", true},
 		{"api-key/network failure", false, "temporary network failure", false},
 		// account-login sessions already have their own reauth path via
 		// providerAuthFailure -- providerApiKeyFailure must not also fire for

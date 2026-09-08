@@ -28,6 +28,7 @@ class FileBrowserAdapter
           state: value,
           onOpenFile: onOpenFile,
           onNavigateInto: cubit.navigateInto,
+          onNavigateUp: cubit.navigateUp,
         ),
       ),
     );

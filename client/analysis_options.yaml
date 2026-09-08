@@ -1,0 +1,19 @@
+plugins:
+  flutter_lint_generator:
+    git:
+      url: git@github-qtpi-bonding-org-flutter_lint_generator:qtpi-bonding-org/flutter_lint_generator.git
+      ref: 8537c34b324d88763967bc9006c9b4ed715e3127
+    diagnostics:
+      no_hardcoded_colors: true
+      no_hardcoded_font_size: true
+      no_hardcoded_font_family: true
+      no_raw_sizedbox_spacing: true
+      no_hardcoded_padding: true
+      no_inline_widget_composition_in_pages: true
+      no_hardcoded_strings: true
+      avoid_bloc_imports_in_widgets_dir: true
+      avoid_getit_in_adapters_dir: true
+      require_cubitfield_over_raw_bloc_apis: true
+      require_static_selector: true
+      cubit_field_selector_must_be_equatable: true
+      no_duplicate_cubitfield_keys: true

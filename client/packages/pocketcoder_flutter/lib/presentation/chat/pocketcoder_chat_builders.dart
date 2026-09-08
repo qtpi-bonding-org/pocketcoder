@@ -17,7 +17,6 @@ import 'package:flutter_chat_core/flutter_chat_core.dart' as chat_core;
 import 'package:flyer_chat_text_stream_message/flyer_chat_text_stream_message.dart'
     as chat_stream;
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
-import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'chat_message_bubble.dart' show pocketcoderRoleHeader;
 import 'elicitation_card.dart';
 import 'permission_card.dart';
@@ -56,14 +55,12 @@ StackedChatBuilders pocketcoderChatBuilders(
       color: colors.onSurface,
       fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
-      height: 1.4,
     ),
     reasoningTextStyle: TextStyle(
       color: colors.onSurface.withValues(alpha: 0.7),
       fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
       fontStyle: FontStyle.italic,
-      height: 1.4,
     ),
     roleHeaderBuilder: pocketcoderRoleHeader,
     padding: EdgeInsets.symmetric(
@@ -108,6 +105,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
         final args = metadata['args'] as String? ?? '';
         final toolKind = metadata['toolKind'] as String?;
         final result = metadata['result'] as String?;
+        final hasEnded = metadata['hasEnded'] as bool? ?? false;
+        final isFailed = (metadata['status'] as String?) == 'failed';
         final diffs = (metadata['diffs'] as List<dynamic>?) ?? const [];
         final command = commandFor(
           name: name,
@@ -115,17 +114,13 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           toolKind: toolKind,
           fallback: context.l10n.chatToolCallFallback,
         );
-        logDebug('🤖 [toolCallBuilder] building', {
-          'messageId': message.id,
-          'name': name,
-          'hasResult': result != null,
-          'wallClock': DateTime.now().toIso8601String(),
-        });
         return TerminalCommandCard(
           command: command,
-          status: result == null
-              ? const TerminalSpinner()
-              : const StatusMarkerView(marker: StatusMarker.ok),
+          status: switch ((hasEnded, isFailed)) {
+            (false, _) => const TerminalSpinner(),
+            (true, true) => const StatusMarkerView(marker: StatusMarker.failed),
+            (true, false) => const StatusMarkerView(marker: StatusMarker.ok),
+          },
           outputLabel: context.l10n.chatCommandOutput,
           output: result,
           diffs: diffs,
@@ -154,7 +149,6 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
                       fontFamily: AppFonts.family,
                       package: 'pocketcoder_flutter',
                       fontWeight: AppFonts.heavy,
-                      height: 1.4,
                     ),
                   ),
                   TextSpan(
@@ -164,7 +158,6 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
                       fontFamily: AppFonts.family,
                       package: 'pocketcoder_flutter',
                       fontWeight: AppFonts.medium,
-                      height: 1.4,
                     ),
                   ),
                 ],

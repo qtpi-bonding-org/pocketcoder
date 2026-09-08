@@ -104,6 +104,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
             style: TextStyle(
               color: colors.secondary,
               fontFamily: AppFonts.family,
+              package: 'pocketcoder_flutter',
             ),
           ),
         if (elicitationId.isNotEmpty) ...[
@@ -112,10 +113,12 @@ class _ElicitationCardState extends State<ElicitationCard> {
             '[$elicitationId]',
             style: TextStyle(
               color: colors.secondary.withValues(alpha: 0.5),
+              fontFamily: AppFonts.family,
+              package: 'pocketcoder_flutter',
             ),
           ),
         ],
-        VSpace.x3,
+        VSpace.x2,
         for (final entry in fields) ...[
           _buildField(
             context,
@@ -132,6 +135,8 @@ class _ElicitationCardState extends State<ElicitationCard> {
             style: TextStyle(
               color: colors.onSurface.withValues(alpha: 0.4),
               fontStyle: FontStyle.italic,
+              fontFamily: AppFonts.family,
+              package: 'pocketcoder_flutter',
             ),
           ),
         VSpace.x2,
@@ -224,6 +229,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
           style: TextStyle(
             color: colors.onSurface,
             fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter',
           ),
         );
       case 'string':
@@ -242,6 +248,7 @@ class _ElicitationCardState extends State<ElicitationCard> {
           style: TextStyle(
             color: colors.onSurface,
             fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter',
           ),
         );
     }

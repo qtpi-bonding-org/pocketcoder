@@ -132,6 +132,9 @@ type fakeConn struct {
 	resumeErr                  error
 	done                       chan struct{}
 	closeDoneBeforePromptError bool
+	emitToolCallBeforePromptError bool // only takes effect alongside closeDoneBeforePromptError
+	emitToolCallID                string
+	emitToolCallWithContent       bool // if set, the emitted tool call already carries output content
 
 	// Task 2: capture dial/handshake counts.
 	initializeCalls int
@@ -141,6 +144,7 @@ type fakeConn struct {
 	lastSetConfigOption  acpsdk.SetSessionConfigOptionRequest
 	setConfigOptionCalls []acpsdk.SetSessionConfigOptionRequest
 	setConfigOptionErrs []error
+	setConfigOptionResp  acpsdk.SetSessionConfigOptionResponse
 
 	// Task 6: custom InitializeResponse for testing capability flags
 	initResp acpsdk.InitializeResponse
@@ -399,8 +403,9 @@ func (f *fakeConn) SetSessionConfigOption(_ context.Context, req acpsdk.SetSessi
 		err = f.setConfigOptionErrs[0]
 		f.setConfigOptionErrs = f.setConfigOptionErrs[1:]
 	}
+	resp := f.setConfigOptionResp
 	f.mu.Unlock()
-	return acpsdk.SetSessionConfigOptionResponse{}, err
+	return resp, err
 }
 func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.PromptResponse, error) {
 	if f.promptCalled != nil {
@@ -414,8 +419,30 @@ func (f *fakeConn) Prompt(ctx context.Context, _ acpsdk.PromptRequest) (acpsdk.P
 	}
 	f.mu.Lock()
 	closeDone := f.closeDoneBeforePromptError
+	emitToolCall := f.emitToolCallBeforePromptError
+	toolCallID := f.emitToolCallID
+	withContent := f.emitToolCallWithContent
 	f.mu.Unlock()
 	if closeDone {
+		if emitToolCall {
+			if su, ok := f.client.(interface {
+				SessionUpdate(context.Context, acpsdk.SessionNotification) error
+			}); ok {
+				tc := &acpsdk.SessionUpdateToolCall{
+					ToolCallId: acpsdk.ToolCallId(toolCallID),
+					Title:      "run tests",
+					Status:     acpsdk.ToolCallStatusInProgress,
+				}
+				if withContent {
+					tc.Content = []acpsdk.ToolCallContent{{Content: &acpsdk.ToolCallContentContent{
+						Type: "content", Content: acpsdk.ContentBlock{Text: &acpsdk.ContentBlockText{Type: "text", Text: "all tests passed"}},
+					}}}
+				}
+				_ = su.SessionUpdate(ctx, acpsdk.SessionNotification{
+					Update: acpsdk.SessionUpdate{ToolCall: tc},
+				})
+			}
+		}
 		f.closeConnDone()
 		return acpsdk.PromptResponse{}, errors.New("simulated peer disconnect")
 	}
@@ -655,6 +682,99 @@ func TestPromptFailureAfterConnDoneEmitsInterrupted(t *testing.T) {
 	}
 }
 
+func TestErrorPathForceClosesOpenToolCall(t *testing.T) {
+	f := newFakeConn()
+	f.closeDoneBeforePromptError = true
+	f.emitToolCallBeforePromptError = true
+	f.emitToolCallID = "tool-stuck"
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	chatID := "stuck-tool-chat"
+
+	if _, err := c.StartPrompt(chatID, "hello",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil); err != nil {
+		t.Fatalf("StartPrompt: %v", err)
+	}
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	seen := collectEventsUntilToolCallEnd(t, att, "tool-stuck")
+
+	failedTag := false
+	for _, b := range seen {
+		if strings.Contains(b, `"toolCallId":"tool-stuck"`) && strings.Contains(b, `"status":"failed"`) {
+			failedTag = true
+		}
+	}
+	if !failedTag {
+		t.Fatalf("expected a failed status tag for a tool abandoned mid-flight (no output), got: %v", seen)
+	}
+}
+
+func TestErrorPathDoesNotMarkAToolWithDeliveredOutputFailed(t *testing.T) {
+	f := newFakeConn()
+	f.closeDoneBeforePromptError = true
+	f.emitToolCallBeforePromptError = true
+	f.emitToolCallID = "tool-with-output"
+	f.emitToolCallWithContent = true
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	chatID := "output-tool-chat"
+
+	if _, err := c.StartPrompt(chatID, "hello",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil); err != nil {
+		t.Fatalf("StartPrompt: %v", err)
+	}
+
+	att := c.Attach(chatID, 0)
+	defer att.Unsubscribe()
+	seen := collectEventsUntilToolCallEnd(t, att, "tool-with-output")
+
+	for _, b := range seen {
+		if strings.Contains(b, `"toolCallId":"tool-with-output"`) && strings.Contains(b, `"status":"failed"`) {
+			t.Fatalf("a tool that already delivered output must not be tagged failed just because the connection later dropped, got: %v", seen)
+		}
+	}
+}
+
+func collectEventsUntilToolCallEnd(t *testing.T, att Attachment, toolCallID string) []string {
+	t.Helper()
+	var seen []string
+	deadline := time.After(2 * time.Second)
+	for _, se := range att.Buffered {
+		b, err := json.Marshal(se.Ev)
+		if err != nil {
+			t.Fatal(err)
+		}
+		seen = append(seen, string(b))
+		if strings.Contains(string(b), `"toolCallId":"`+toolCallID+`"`) && strings.Contains(string(b), `"type":"TOOL_CALL_END"`) {
+			return seen
+		}
+	}
+	for {
+		select {
+		case se, ok := <-att.Live:
+			if !ok {
+				t.Fatalf("event stream closed before TOOL_CALL_END for %s", toolCallID)
+			}
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			seen = append(seen, string(b))
+			if strings.Contains(string(b), `"toolCallId":"`+toolCallID+`"`) && strings.Contains(string(b), `"type":"TOOL_CALL_END"`) {
+				return seen
+			}
+		case <-deadline:
+			t.Fatalf("timed out waiting for TOOL_CALL_END on %s after connection_interrupted error path", toolCallID)
+		}
+	}
+}
+
 // TestRequestPermissionForwardsToolCallID covers the fix for the
 // ACP->AG-UI field-drop audit finding: RequestPermissionRequest.ToolCall
 // (the id of the tool call this permission gates) must reach the AG-UI
@@ -692,6 +812,61 @@ func TestRequestPermissionForwardsToolCallID(t *testing.T) {
 		t.Fatal(err)
 	}
 	c.waitRunDone(t, "A")
+}
+
+// A successful live model correction must reach the client as a "config"
+// STATE_DELTA, not just the pre-correction snapshot SeedSession published.
+func TestLiveModelCorrectionReachesTheClientAsAStateDelta(t *testing.T) {
+	f := newFakeConn()
+	f.newSession = "sess-1"
+	f.setConfigOptionResp = acpsdk.SetSessionConfigOptionResponse{
+		ConfigOptions: []acpsdk.SessionConfigOption{{Select: &acpsdk.SessionConfigOptionSelect{
+			Id: "model", CurrentValue: "openrouter/minimax/minimax-m2.7:free",
+		}}},
+	}
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	att := c.hubFor("A").Attach(0)
+	defer att.Unsubscribe()
+
+	_, err := c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "", nil },
+		func(context.Context) (SessionProfile, error) {
+			return SessionProfile{Model: "openrouter/minimax/minimax-m2.7:free", SupportsLiveConfig: true}, nil
+		},
+		func(context.Context, string) error { return nil },
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("StartPrompt err=%v", err)
+	}
+	c.waitRunDone(t, "A")
+
+	found := false
+	for i := 0; i < 20; i++ {
+		select {
+		case se := <-att.Live:
+			b, err := json.Marshal(se.Ev)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(string(b), "minimax-m2.7:free") {
+				found = true
+			}
+		default:
+		}
+	}
+	for _, se := range att.Buffered {
+		b, err := json.Marshal(se.Ev)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(b), "minimax-m2.7:free") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected a published event carrying the post-correction model value, got none -- the client would still show the pre-correction boot placeholder")
+	}
 }
 
 func TestStartPromptWithUserMessageIDEchoesTextMessage(t *testing.T) {
