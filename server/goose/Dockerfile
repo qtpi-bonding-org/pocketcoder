@@ -10,6 +10,13 @@ USER root
 # fixture). It must exist in the image, or Docker has nothing to
 # initialize a fresh named volume from at that path.
 RUN mkdir -p /workspace/.pocketcoder_auth/config
+# openssh-client: harness_provision.go mounts a materialized git-ssh config
+# at $HOME/.ssh (harnessvolume.GitSSHMount) for repo access over SSH -- the
+# base goose image has no ssh binary at all, so git silently fails with
+# "ssh: not found" without this.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends openssh-client \
+    && rm -rf /var/lib/apt/lists/*
 COPY entrypoint.sh /usr/local/bin/pocketcoder-goose
 RUN chmod 0555 /usr/local/bin/pocketcoder-goose
 

@@ -41,7 +41,7 @@ func buildManifest(t *testing.T, files map[string]string) string {
 
 func TestMaterializeWritesFilesFromTheManifest(t *testing.T) {
 	inbox := buildManifest(t, map[string]string{
-		"ssh_config":  "Host pcgit-a\n",
+		"config":  "Host pcgit-a\n",
 		"known_hosts": "github.com ssh-ed25519 AAAA\n",
 		"keys/cred1":  "private-key-1",
 	})
@@ -52,7 +52,7 @@ func TestMaterializeWritesFilesFromTheManifest(t *testing.T) {
 	}
 
 	for name, want := range map[string]string{
-		"ssh_config":  "Host pcgit-a\n",
+		"config":  "Host pcgit-a\n",
 		"known_hosts": "github.com ssh-ed25519 AAAA\n",
 		"keys/cred1":  "private-key-1",
 	} {
@@ -70,7 +70,7 @@ func TestMaterializeCarriesForwardKeysNotInTheNewManifest(t *testing.T) {
 	state := t.TempDir()
 
 	firstInbox := buildManifest(t, map[string]string{
-		"ssh_config":  "Host pcgit-a\n",
+		"config":  "Host pcgit-a\n",
 		"known_hosts": "github.com ssh-ed25519 AAAA\n",
 		"keys/cred1":  "private-key-1",
 	})
@@ -79,7 +79,7 @@ func TestMaterializeCarriesForwardKeysNotInTheNewManifest(t *testing.T) {
 	}
 
 	secondInbox := buildManifest(t, map[string]string{
-		"ssh_config":  "Host pcgit-a\nHost pcgit-b\n",
+		"config":  "Host pcgit-a\nHost pcgit-b\n",
 		"known_hosts": "github.com ssh-ed25519 AAAA\ngitlab.com ssh-ed25519 BBBB\n",
 	})
 	if err := materialize(secondInbox, state); err != nil {
@@ -94,12 +94,12 @@ func TestMaterializeCarriesForwardKeysNotInTheNewManifest(t *testing.T) {
 		t.Fatalf("keys/cred1 = %q, want %q", got, "private-key-1")
 	}
 
-	config, err := os.ReadFile(filepath.Join(state, "current", "ssh_config"))
+	config, err := os.ReadFile(filepath.Join(state, "current", "config"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if string(config) != "Host pcgit-a\nHost pcgit-b\n" {
-		t.Fatalf("ssh_config not updated to the second pass's content: %q", config)
+		t.Fatalf("config not updated to the second pass's content: %q", config)
 	}
 }
 
@@ -125,8 +125,51 @@ func TestMaterializeOverwritesAFileThatChangedRatherThanKeepingTheOldOne(t *test
 	}
 }
 
+func TestMaterializeExposesConfigAndKnownHostsAtTheVolumeRoot(t *testing.T) {
+	state := t.TempDir()
+
+	first := buildManifest(t, map[string]string{
+		"config":      "Host pcgit-a\n",
+		"known_hosts": "github.com ssh-ed25519 AAAA\n",
+	})
+	if err := materialize(first, state); err != nil {
+		t.Fatal(err)
+	}
+
+	// ssh's own default config/known-hosts lookup is $HOME/.ssh/config and
+	// $HOME/.ssh/known_hosts directly -- these must resolve at the volume
+	// root, not only under "current/", or an unmodified ssh/git invocation
+	// (no -F override) would never find them.
+	for name, want := range map[string]string{
+		"config":      "Host pcgit-a\n",
+		"known_hosts": "github.com ssh-ed25519 AAAA\n",
+	} {
+		got, err := os.ReadFile(filepath.Join(state, name))
+		if err != nil {
+			t.Fatalf("read root %s: %v", name, err)
+		}
+		if string(got) != want {
+			t.Fatalf("root %s = %q, want %q", name, got, want)
+		}
+	}
+
+	// A later generation must be picked up through the same root-level
+	// name, since it follows "current" rather than pinning a generation.
+	second := buildManifest(t, map[string]string{"config": "Host pcgit-a\nHost pcgit-b\n"})
+	if err := materialize(second, state); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(filepath.Join(state, "config"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "Host pcgit-a\nHost pcgit-b\n" {
+		t.Fatalf("root config after rotation = %q", got)
+	}
+}
+
 func TestMaterializeSucceedsOnTheFirstEverPassWithNoPriorGeneration(t *testing.T) {
-	inbox := buildManifest(t, map[string]string{"ssh_config": "Host pcgit-a\n"})
+	inbox := buildManifest(t, map[string]string{"config": "Host pcgit-a\n"})
 	state := t.TempDir()
 
 	if err := materialize(inbox, state); err != nil {

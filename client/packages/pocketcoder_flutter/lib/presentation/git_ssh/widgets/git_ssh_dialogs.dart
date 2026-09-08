@@ -4,7 +4,9 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/git_repository_access.dart';
 import 'package:pocketcoder_flutter/domain/models/git_ssh_credential.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/grid_wrap.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -119,6 +121,7 @@ void showAddRepositoryAccessDialog(
             TerminalTextField(
               controller: repositoryController,
               label: context.l10n.gitSshRepositoryField,
+              hint: context.l10n.gitSshRepositoryFieldHint,
             ),
             VSpace.x2,
             TerminalTextField(
@@ -168,21 +171,20 @@ void showAddRepositoryAccessDialog(
                 ),
             ],
             VSpace.x2,
-            _choiceRow<GitRepositoryAccessRequestedAccess>(
-              context,
-              value: requestedAccess,
-              options: [
-                (
-                  GitRepositoryAccessRequestedAccess.readOnly,
-                  context.l10n.gitSshAccessReadOnly
-                ),
-                (
-                  GitRepositoryAccessRequestedAccess.readWrite,
-                  context.l10n.gitSshAccessReadWrite
-                ),
-              ],
-              onSelected: (v) => setState(() => requestedAccess = v),
-            ),
+            Row(children: [
+              TerminalCheckbox(
+                value:
+                    requestedAccess == GitRepositoryAccessRequestedAccess.readWrite,
+                onChanged: (checked) => setState(() => requestedAccess = checked
+                    ? GitRepositoryAccessRequestedAccess.readWrite
+                    : GitRepositoryAccessRequestedAccess.readOnly),
+              ),
+              HSpace.x2,
+              Expanded(
+                child: TerminalText(context.l10n.gitSshAllowWriteAccessLabel,
+                    role: TextRole.body),
+              ),
+            ]),
           ],
         ),
         actions: [
@@ -226,19 +228,16 @@ Widget _choiceRow<T>(
   required List<(T, String)> options,
   required ValueChanged<T> onSelected,
 }) {
-  return Row(
+  return GridWrap(
+    alignment: WrapAlignment.start,
+    spacing: AppSizes.space * 2,
+    runSpacing: AppSizes.space,
     children: options
-        .map((entry) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSizes.space / 2),
-                child: TerminalButton(
-                  label: entry.$2,
-                  kind: value == entry.$1
-                      ? ActionKind.primary
-                      : ActionKind.neutral,
-                  onTap: () => onSelected(entry.$1),
-                ),
-              ),
+        .map((entry) => TerminalButton(
+              label: entry.$2,
+              kind:
+                  value == entry.$1 ? ActionKind.primary : ActionKind.neutral,
+              onTap: () => onSelected(entry.$1),
             ))
         .toList(),
   );

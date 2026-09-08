@@ -339,7 +339,6 @@ class L10nKeyResolver {
       'git.ssh.empty.state' => _l10n.gitSshEmptyState,
       'git.ssh.host.field' => _l10n.gitSshHostField,
       'git.ssh.label.field' => _l10n.gitSshLabelField,
-      'git.ssh.mark.registered.button' => _l10n.gitSshMarkRegisteredButton,
       'git.ssh.no.account.keys.warning' => _l10n.gitSshNoAccountKeysWarning,
       'git.ssh.port.field' => _l10n.gitSshPortField,
       'git.ssh.public.key.dialog.body' => _l10n.gitSshPublicKeyDialogBody,
@@ -347,6 +346,7 @@ class L10nKeyResolver {
       'git.ssh.remove.access.button' => _l10n.gitSshRemoveAccessButton,
       'git.ssh.repositories.header' => _l10n.gitSshRepositoriesHeader,
       'git.ssh.repository.field' => _l10n.gitSshRepositoryField,
+      'git.ssh.repository.field.hint' => _l10n.gitSshRepositoryFieldHint,
       'git.ssh.screen.title' => _l10n.gitSshScreenTitle,
       'git.ssh.show.public.key.button' => _l10n.gitSshShowPublicKeyButton,
       'harness.auth.account.login' => _l10n.harnessAuthAccountLogin,
@@ -1467,7 +1467,6 @@ class L10nKeyResolver {
     'git.ssh.empty.state',
     'git.ssh.host.field',
     'git.ssh.label.field',
-    'git.ssh.mark.registered.button',
     'git.ssh.no.account.keys.warning',
     'git.ssh.port.field',
     'git.ssh.public.key.dialog.body',
@@ -1475,6 +1474,7 @@ class L10nKeyResolver {
     'git.ssh.remove.access.button',
     'git.ssh.repositories.header',
     'git.ssh.repository.field',
+    'git.ssh.repository.field.hint',
     'git.ssh.screen.title',
     'git.ssh.show.public.key.button',
     'harness.auth.account',
@@ -2573,7 +2573,6 @@ class L10nKeyResolver {
     'gitSshEmptyState': 'git.ssh.empty.state',
     'gitSshHostField': 'git.ssh.host.field',
     'gitSshLabelField': 'git.ssh.label.field',
-    'gitSshMarkRegisteredButton': 'git.ssh.mark.registered.button',
     'gitSshNoAccountKeysWarning': 'git.ssh.no.account.keys.warning',
     'gitSshPortField': 'git.ssh.port.field',
     'gitSshPublicKeyDialogBody': 'git.ssh.public.key.dialog.body',
@@ -2581,6 +2580,7 @@ class L10nKeyResolver {
     'gitSshRemoveAccessButton': 'git.ssh.remove.access.button',
     'gitSshRepositoriesHeader': 'git.ssh.repositories.header',
     'gitSshRepositoryField': 'git.ssh.repository.field',
+    'gitSshRepositoryFieldHint': 'git.ssh.repository.field.hint',
     'gitSshScreenTitle': 'git.ssh.screen.title',
     'gitSshShowPublicKeyButton': 'git.ssh.show.public.key.button',
     'harnessAuthAccount': 'harness.auth.account',
@@ -3676,7 +3676,6 @@ class L10nKeyResolver {
     'git.ssh.empty.state': 'gitSshEmptyState',
     'git.ssh.host.field': 'gitSshHostField',
     'git.ssh.label.field': 'gitSshLabelField',
-    'git.ssh.mark.registered.button': 'gitSshMarkRegisteredButton',
     'git.ssh.no.account.keys.warning': 'gitSshNoAccountKeysWarning',
     'git.ssh.port.field': 'gitSshPortField',
     'git.ssh.public.key.dialog.body': 'gitSshPublicKeyDialogBody',
@@ -3684,6 +3683,7 @@ class L10nKeyResolver {
     'git.ssh.remove.access.button': 'gitSshRemoveAccessButton',
     'git.ssh.repositories.header': 'gitSshRepositoriesHeader',
     'git.ssh.repository.field': 'gitSshRepositoryField',
+    'git.ssh.repository.field.hint': 'gitSshRepositoryFieldHint',
     'git.ssh.screen.title': 'gitSshScreenTitle',
     'git.ssh.show.public.key.button': 'gitSshShowPublicKeyButton',
     'harness.auth.account': 'harnessAuthAccount',
@@ -4786,7 +4786,6 @@ abstract class L10nKeys {
   static const gitSshEmptyState = 'git.ssh.empty.state';
   static const gitSshHostField = 'git.ssh.host.field';
   static const gitSshLabelField = 'git.ssh.label.field';
-  static const gitSshMarkRegisteredButton = 'git.ssh.mark.registered.button';
   static const gitSshNoAccountKeysWarning = 'git.ssh.no.account.keys.warning';
   static const gitSshPortField = 'git.ssh.port.field';
   static const gitSshPublicKeyDialogBody = 'git.ssh.public.key.dialog.body';
@@ -4794,6 +4793,7 @@ abstract class L10nKeys {
   static const gitSshRemoveAccessButton = 'git.ssh.remove.access.button';
   static const gitSshRepositoriesHeader = 'git.ssh.repositories.header';
   static const gitSshRepositoryField = 'git.ssh.repository.field';
+  static const gitSshRepositoryFieldHint = 'git.ssh.repository.field.hint';
   static const gitSshScreenTitle = 'git.ssh.screen.title';
   static const gitSshShowPublicKeyButton = 'git.ssh.show.public.key.button';
   static (String, Map<String, dynamic>) harnessAuthAccount(String account, String visibility) => ('harness.auth.account', {'account': account, 'visibility': visibility});

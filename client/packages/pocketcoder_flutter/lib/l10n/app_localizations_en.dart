@@ -843,6 +843,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitSshRepositoryField => 'repository (owner/repo)';
 
   @override
+  String get gitSshRepositoryFieldHint => 'e.g. octocat/hello-world';
+
+  @override
   String get gitSshPurposeField => 'purpose';
 
   @override
@@ -867,6 +870,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gitSshAccessReadWrite => 'read/write';
 
   @override
+  String get gitSshAllowWriteAccessLabel => 'allow write access';
+
+  @override
   String get gitSshEmptyState => 'no keys or repositories yet';
 
   @override
@@ -875,9 +881,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get gitSshPublicKeyDialogBody =>
       'add this key to your git host, then come back and confirm below.';
-
-  @override
-  String get gitSshMarkRegisteredButton => 'i\'ve added this key';
 
   @override
   String get gitSshRemoveAccessButton => 'remove';

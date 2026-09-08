@@ -76,17 +76,6 @@ class GitSshRepository implements IGitSshRepository {
   }
 
   @override
-  Future<void> markRegistered(String accessId) async {
-    return tryMethod(
-      () async {
-        await _accessDao.save(accessId, {'registration_status': 'registered'});
-      },
-      GitSshException.new,
-      'markRegistered',
-    );
-  }
-
-  @override
   Future<void> deleteAccess(String accessId) async {
     return tryMethod(
       () async {

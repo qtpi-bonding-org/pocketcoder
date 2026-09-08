@@ -9,7 +9,13 @@ import (
 )
 
 const AuthHomeMount = "/workspace/.pocketcoder_auth"
-const GitSSHMount = "/run/pocketcoder/git"
+
+// GitSSHMount is nested under AuthHomeMount (harness_provision.go sets
+// HOME=AuthHomeMount) so ssh/git find the materialized config at the
+// conventional $HOME/.ssh/config -- no GIT_SSH_COMMAND override needed,
+// and it's where an agent introspecting "do I have an SSH key" would
+// actually look.
+const GitSSHMount = AuthHomeMount + "/.ssh"
 
 var nameComponent = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`)
 

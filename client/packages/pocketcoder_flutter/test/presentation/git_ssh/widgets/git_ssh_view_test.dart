@@ -24,7 +24,6 @@ void main() {
             host,
             port,
           }) async {},
-          onMarkRegistered: (_) async {},
           onDeleteAccess: (_) async {},
         ),
       );
@@ -76,8 +75,7 @@ void main() {
     expect(find.text('<show public key>'), findsOneWidget);
   });
 
-  testWidgets(
-      'an access row needing registration offers to confirm it; one already registered does not',
+  testWidgets('lists a repository access row with its status',
       (tester) async {
     await tester.pumpWidget(subject(GitSshState(
       status: UiFlowStatus.success,
@@ -96,7 +94,7 @@ void main() {
         ),
       ],
     )));
-    expect(find.text("<i've added this key>"), findsOneWidget);
     expect(find.textContaining('github/octo/hello'), findsOneWidget);
+    expect(find.text('<remove>'), findsOneWidget);
   });
 }

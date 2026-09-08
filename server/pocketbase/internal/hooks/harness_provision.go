@@ -405,7 +405,9 @@ func ProvisionHarnessInstance(ctx context.Context, app core.App, client dockerPr
 		"XDG_CONFIG_HOME="+harnessvolume.AuthHomeMount+"/.config",
 		"XDG_DATA_HOME="+harnessvolume.AuthHomeMount+"/.local/share",
 	)
-	env = append(env, "GIT_SSH_COMMAND=ssh -F "+harnessvolume.GitSSHMount+"/current/ssh_config")
+	// No GIT_SSH_COMMAND override: GitSSHMount is nested under HOME (set
+	// above), so ssh/git find the materialized config at the conventional
+	// $HOME/.ssh/config on their own.
 	networkNames := []string{networkName, HarnessEgressNetwork, "pocketcoder-mcp-gateway", "pocketcoder-memory"}
 	if running, err := ollamaRunning(ctx, client); err != nil {
 		return fail(fmt.Errorf("check local-models availability: %w", err), true)

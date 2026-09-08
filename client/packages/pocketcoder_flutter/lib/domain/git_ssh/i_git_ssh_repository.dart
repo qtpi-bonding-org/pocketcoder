@@ -19,7 +19,5 @@ abstract interface class IGitSshRepository {
     int? port,
   });
 
-  Future<void> markRegistered(String accessId);
-
   Future<void> deleteAccess(String accessId);
 }

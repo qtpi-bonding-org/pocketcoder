@@ -6,7 +6,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 /// The aggregate state of everything inside a section. A section with no
 /// state concept is [nominal] -- green, per spec section 2.
 enum SectionState {
-  nominal(TextRole.ok),
+  nominal(TextRole.body),
   attention(TextRole.warn),
   failed(TextRole.fail);
 
@@ -33,7 +33,7 @@ class SectionHeader extends StatelessWidget {
           children: [
             TerminalText('●', role: state.role),
             HSpace.x1,
-            Expanded(child: TerminalText(name, role: TextRole.value)),
+            Expanded(child: TerminalText(name, role: TextRole.body)),
           ],
         ),
       );

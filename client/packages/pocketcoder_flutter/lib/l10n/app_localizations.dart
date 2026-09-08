@@ -1648,6 +1648,12 @@ abstract class AppLocalizations {
   /// **'repository (owner/repo)'**
   String get gitSshRepositoryField;
 
+  /// No description provided for @gitSshRepositoryFieldHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. octocat/hello-world'**
+  String get gitSshRepositoryFieldHint;
+
   /// No description provided for @gitSshPurposeField.
   ///
   /// In en, this message translates to:
@@ -1696,6 +1702,12 @@ abstract class AppLocalizations {
   /// **'read/write'**
   String get gitSshAccessReadWrite;
 
+  /// No description provided for @gitSshAllowWriteAccessLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'allow write access'**
+  String get gitSshAllowWriteAccessLabel;
+
   /// No description provided for @gitSshEmptyState.
   ///
   /// In en, this message translates to:
@@ -1713,12 +1725,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'add this key to your git host, then come back and confirm below.'**
   String get gitSshPublicKeyDialogBody;
-
-  /// No description provided for @gitSshMarkRegisteredButton.
-  ///
-  /// In en, this message translates to:
-  /// **'i\'ve added this key'**
-  String get gitSshMarkRegisteredButton;
 
   /// No description provided for @gitSshRemoveAccessButton.
   ///

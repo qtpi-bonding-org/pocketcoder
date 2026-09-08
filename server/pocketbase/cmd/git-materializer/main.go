@@ -91,6 +91,22 @@ func materialize(inbox, state string) error {
 		return err
 	}
 	_ = os.Remove(old)
+
+	// state is mounted directly at $HOME/.ssh in the harness container, so
+	// ssh's own default config/known-hosts lookup needs "config" and
+	// "known_hosts" at the volume root, not nested under "current" -- these
+	// always point at the same relative target, "current/<name>", which
+	// transparently follows current's atomic rotation above.
+	for _, name := range []string{"config", "known_hosts"} {
+		linkTmp := filepath.Join(state, "."+name+".tmp")
+		_ = os.Remove(linkTmp)
+		if err := os.Symlink(filepath.Join("current", name), linkTmp); err != nil {
+			return err
+		}
+		if err := os.Rename(linkTmp, filepath.Join(state, name)); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
