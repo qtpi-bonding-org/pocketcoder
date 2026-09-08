@@ -716,6 +716,7 @@
   "proPrivacyPolicyLink": "privacy policy",
   "proBenefitServerSetup": "one-tap server setup -- no manual VPS configuration",
   "proBenefitPushNotifications": "push notifications for agent activity -- approvals, task completion",
+  "proBenefitKeepYourServer": "your VPS and its data are yours to keep -- if you cancel, only convenience features stop",
   "proBenefitLiveMonitoring": "live agent monitoring",
   "proActive": "> entitlement: active",
   "proActiveBody": "PocketCoder Pro is active. Deployment and hosted notifications are unlocked.",

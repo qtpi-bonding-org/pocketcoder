@@ -1640,6 +1640,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'push notifications for agent activity -- approvals, task completion';
 
   @override
+  String get proBenefitKeepYourServer =>
+      'your VPS and its data are yours to keep -- if you cancel, only convenience features stop';
+
+  @override
   String get proBenefitLiveMonitoring => 'live agent monitoring';
 
   @override

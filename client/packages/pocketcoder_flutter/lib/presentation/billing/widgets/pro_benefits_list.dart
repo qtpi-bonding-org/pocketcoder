@@ -11,6 +11,7 @@ class ProBenefitsList extends StatelessWidget {
     final benefits = [
       context.l10n.proBenefitServerSetup,
       context.l10n.proBenefitPushNotifications,
+      context.l10n.proBenefitKeepYourServer,
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
