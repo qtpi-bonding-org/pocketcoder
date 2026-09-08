@@ -23,6 +23,9 @@ Widget settingsDefault(BuildContext context) => _app(SettingsView(
       onReportAiContent: () {},
       hapticsEnabled: true,
       onHapticsChanged: (_) {},
+      onOpenPrivacyPolicy: () {},
+      onOpenTermsOfService: () {},
+      onOpenSourceCode: () {},
     ));
 
 @wb.UseCase(name: 'pending MCP badge', type: SettingsView)
@@ -37,4 +40,7 @@ Widget settingsPendingMcp(BuildContext context) => _app(SettingsView(
       onReportAiContent: () {},
       hapticsEnabled: true,
       onHapticsChanged: (_) {},
+      onOpenPrivacyPolicy: () {},
+      onOpenTermsOfService: () {},
+      onOpenSourceCode: () {},
     ));

@@ -1046,7 +1046,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get schedulerNameLabel => 'name';
 
   @override
-  String get schedulerCronLabel => 'cron expression';
+  String get schedulerFrequencyLabel => 'frequency';
+
+  @override
+  String get schedulerFrequencyHourly => 'hourly';
+
+  @override
+  String get schedulerFrequencyDaily => 'daily';
+
+  @override
+  String get schedulerFrequencyWeekly => 'weekly';
+
+  @override
+  String get schedulerDaysLabel => 'days';
+
+  @override
+  String get schedulerDaySun => 'sun';
+
+  @override
+  String get schedulerDayMon => 'mon';
+
+  @override
+  String get schedulerDayTue => 'tue';
+
+  @override
+  String get schedulerDayWed => 'wed';
+
+  @override
+  String get schedulerDayThu => 'thu';
+
+  @override
+  String get schedulerDayFri => 'fri';
+
+  @override
+  String get schedulerDaySat => 'sat';
+
+  @override
+  String get schedulerTimeLabel => 'time';
 
   @override
   String get schedulerPromptLabel => 'prompt';
@@ -1078,7 +1114,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSystemSection => 'system';
 
   @override
+  String get settingsAboutSection => 'about';
+
+  @override
   String get settingsAccountSection => 'account';
+
+  @override
+  String get settingsMenuPrivacyPolicy => 'privacy policy';
+
+  @override
+  String get settingsMenuTermsOfService => 'terms of service';
+
+  @override
+  String get settingsMenuSourceCode => 'source code';
 
   @override
   String get settingsMenuLlmManagement => 'llm management';

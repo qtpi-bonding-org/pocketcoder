@@ -26,11 +26,13 @@ void main() {
     expect(bullet.role, TextRole.warn);
   });
 
-  testWidgets('a section with no state concept is green', (tester) async {
+  testWidgets(
+      'a section with no state concept is normal green, not bright',
+      (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: SectionHeader(name: 'about')),
     ));
     final bullet = tester.widget<TerminalText>(find.byType(TerminalText).first);
-    expect(bullet.role, TextRole.ok);
+    expect(bullet.role, TextRole.body);
   });
 }

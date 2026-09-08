@@ -145,6 +145,99 @@ class AppTheme {
           ),
         ),
       ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: palette.backgroundPrimary,
+        dialBackgroundColor: palette.backgroundPrimary,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(
+              color: palette.vividGreen, width: AppSizes.borderWidthThick),
+          borderRadius: BorderRadius.zero,
+        ),
+        entryModeIconColor: palette.vividGreen,
+        helpTextStyle: TextStyle(
+          color: palette.vividGreen.withValues(alpha: 0.7),
+          fontFamily: AppFonts.family,
+          package: 'pocketcoder_flutter',
+          fontWeight: AppFonts.heavy,
+          fontSize: AppSizes.fontBody,
+        ),
+        hourMinuteTextColor: palette.vividGreen,
+        hourMinuteColor: WidgetStateColor.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? palette.vividGreen.withValues(alpha: 0.15)
+                : Colors.transparent),
+        hourMinuteShape: RoundedRectangleBorder(
+          side: BorderSide(color: palette.vividGreen.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.zero,
+        ),
+        hourMinuteTextStyle: TextStyle(
+          color: palette.vividGreen,
+          fontFamily: AppFonts.family,
+          package: 'pocketcoder_flutter',
+          fontWeight: AppFonts.heavy,
+          fontSize: AppSizes.fontBody * 2,
+        ),
+        dayPeriodTextColor: palette.vividGreen,
+        dayPeriodColor: WidgetStateColor.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? palette.vividGreen.withValues(alpha: 0.15)
+                : Colors.transparent),
+        dayPeriodShape: RoundedRectangleBorder(
+          side: BorderSide(color: palette.vividGreen.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.zero,
+        ),
+        dayPeriodBorderSide:
+            BorderSide(color: palette.vividGreen.withValues(alpha: 0.3)),
+        dayPeriodTextStyle: TextStyle(
+          color: palette.vividGreen,
+          fontFamily: AppFonts.family,
+          package: 'pocketcoder_flutter',
+          fontWeight: AppFonts.heavy,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          isDense: true,
+          fillColor: palette.backgroundPrimary,
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide:
+                BorderSide(color: palette.vividGreen.withValues(alpha: 0.3)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide:
+                BorderSide(color: palette.vividGreen.withValues(alpha: 0.3)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide: BorderSide(
+                color: palette.vividGreen, width: AppSizes.borderWidthThick),
+          ),
+        ),
+        confirmButtonStyle: TextButton.styleFrom(
+          foregroundColor: palette.vividGreen,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+          textStyle: TextStyle(
+            fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter',
+            fontWeight: AppFonts.heavy,
+          ),
+        ),
+        cancelButtonStyle: TextButton.styleFrom(
+          foregroundColor: palette.warningAmber,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+          textStyle: TextStyle(
+            fontFamily: AppFonts.family,
+            package: 'pocketcoder_flutter',
+            fontWeight: AppFonts.heavy,
+          ),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
         fillColor: palette.backgroundPrimary,

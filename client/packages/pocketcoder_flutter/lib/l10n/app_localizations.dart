@@ -2032,11 +2032,83 @@ abstract class AppLocalizations {
   /// **'name'**
   String get schedulerNameLabel;
 
-  /// No description provided for @schedulerCronLabel.
+  /// No description provided for @schedulerFrequencyLabel.
   ///
   /// In en, this message translates to:
-  /// **'cron expression'**
-  String get schedulerCronLabel;
+  /// **'frequency'**
+  String get schedulerFrequencyLabel;
+
+  /// No description provided for @schedulerFrequencyHourly.
+  ///
+  /// In en, this message translates to:
+  /// **'hourly'**
+  String get schedulerFrequencyHourly;
+
+  /// No description provided for @schedulerFrequencyDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'daily'**
+  String get schedulerFrequencyDaily;
+
+  /// No description provided for @schedulerFrequencyWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'weekly'**
+  String get schedulerFrequencyWeekly;
+
+  /// No description provided for @schedulerDaysLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get schedulerDaysLabel;
+
+  /// No description provided for @schedulerDaySun.
+  ///
+  /// In en, this message translates to:
+  /// **'sun'**
+  String get schedulerDaySun;
+
+  /// No description provided for @schedulerDayMon.
+  ///
+  /// In en, this message translates to:
+  /// **'mon'**
+  String get schedulerDayMon;
+
+  /// No description provided for @schedulerDayTue.
+  ///
+  /// In en, this message translates to:
+  /// **'tue'**
+  String get schedulerDayTue;
+
+  /// No description provided for @schedulerDayWed.
+  ///
+  /// In en, this message translates to:
+  /// **'wed'**
+  String get schedulerDayWed;
+
+  /// No description provided for @schedulerDayThu.
+  ///
+  /// In en, this message translates to:
+  /// **'thu'**
+  String get schedulerDayThu;
+
+  /// No description provided for @schedulerDayFri.
+  ///
+  /// In en, this message translates to:
+  /// **'fri'**
+  String get schedulerDayFri;
+
+  /// No description provided for @schedulerDaySat.
+  ///
+  /// In en, this message translates to:
+  /// **'sat'**
+  String get schedulerDaySat;
+
+  /// No description provided for @schedulerTimeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'time'**
+  String get schedulerTimeLabel;
 
   /// No description provided for @schedulerPromptLabel.
   ///
@@ -2092,11 +2164,35 @@ abstract class AppLocalizations {
   /// **'system'**
   String get settingsSystemSection;
 
+  /// No description provided for @settingsAboutSection.
+  ///
+  /// In en, this message translates to:
+  /// **'about'**
+  String get settingsAboutSection;
+
   /// No description provided for @settingsAccountSection.
   ///
   /// In en, this message translates to:
   /// **'account'**
   String get settingsAccountSection;
+
+  /// No description provided for @settingsMenuPrivacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'privacy policy'**
+  String get settingsMenuPrivacyPolicy;
+
+  /// No description provided for @settingsMenuTermsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'terms of service'**
+  String get settingsMenuTermsOfService;
+
+  /// No description provided for @settingsMenuSourceCode.
+  ///
+  /// In en, this message translates to:
+  /// **'source code'**
+  String get settingsMenuSourceCode;
 
   /// No description provided for @settingsMenuLlmManagement.
   ///

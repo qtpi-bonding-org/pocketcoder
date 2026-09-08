@@ -334,6 +334,7 @@ class L10nKeyResolver {
       'git.ssh.add.account.key.title' => _l10n.gitSshAddAccountKeyTitle,
       'git.ssh.add.repository.access.button' => _l10n.gitSshAddRepositoryAccessButton,
       'git.ssh.add.repository.access.title' => _l10n.gitSshAddRepositoryAccessTitle,
+      'git.ssh.allow.write.access.label' => _l10n.gitSshAllowWriteAccessLabel,
       'git.ssh.credential.mode.account' => _l10n.gitSshCredentialModeAccount,
       'git.ssh.credential.mode.deploy' => _l10n.gitSshCredentialModeDeploy,
       'git.ssh.empty.state' => _l10n.gitSshEmptyState,
@@ -794,9 +795,20 @@ class L10nKeyResolver {
       'question.send.reply' => _l10n.questionSendReply,
       'scheduler.add.button' => _l10n.schedulerAddButton,
       'scheduler.add.dialog.title' => _l10n.schedulerAddDialogTitle,
-      'scheduler.cron.label' => _l10n.schedulerCronLabel,
+      'scheduler.day.fri' => _l10n.schedulerDayFri,
+      'scheduler.day.mon' => _l10n.schedulerDayMon,
+      'scheduler.day.sat' => _l10n.schedulerDaySat,
+      'scheduler.day.sun' => _l10n.schedulerDaySun,
+      'scheduler.day.thu' => _l10n.schedulerDayThu,
+      'scheduler.day.tue' => _l10n.schedulerDayTue,
+      'scheduler.day.wed' => _l10n.schedulerDayWed,
+      'scheduler.days.label' => _l10n.schedulerDaysLabel,
       'scheduler.delete.button' => _l10n.schedulerDeleteButton,
       'scheduler.edit.button' => _l10n.schedulerEditButton,
+      'scheduler.frequency.daily' => _l10n.schedulerFrequencyDaily,
+      'scheduler.frequency.hourly' => _l10n.schedulerFrequencyHourly,
+      'scheduler.frequency.label' => _l10n.schedulerFrequencyLabel,
+      'scheduler.frequency.weekly' => _l10n.schedulerFrequencyWeekly,
       'scheduler.name.label' => _l10n.schedulerNameLabel,
       'scheduler.no.schedules' => _l10n.schedulerNoSchedules,
       'scheduler.pause.button' => _l10n.schedulerPauseButton,
@@ -807,6 +819,7 @@ class L10nKeyResolver {
       'scheduler.run.now.button' => _l10n.schedulerRunNowButton,
       'scheduler.running.badge' => _l10n.schedulerRunningBadge,
       'scheduler.save.button' => _l10n.schedulerSaveButton,
+      'scheduler.time.label' => _l10n.schedulerTimeLabel,
       'scheduler.title' => _l10n.schedulerTitle,
       'server.control.action.restart' => _l10n.serverControlActionRestart,
       'server.control.action.restore' => _l10n.serverControlActionRestore,
@@ -844,6 +857,7 @@ class L10nKeyResolver {
       'server.control.retry.action' => _l10n.serverControlRetryAction,
       'server.control.show' => _l10n.serverControlShow,
       'server.control.title' => _l10n.serverControlTitle,
+      'settings.about.section' => _l10n.settingsAboutSection,
       'settings.account.section' => _l10n.settingsAccountSection,
       'settings.ai.agents.section' => _l10n.settingsAiAgentsSection,
       'settings.delete.pro.data.cancel' => _l10n.settingsDeleteProDataCancel,
@@ -870,10 +884,13 @@ class L10nKeyResolver {
       'settings.menu.notifications' => _l10n.settingsMenuNotifications,
       'settings.menu.pocket.memory' => _l10n.settingsMenuPocketMemory,
       'settings.menu.pocketbase' => _l10n.settingsMenuPocketbase,
+      'settings.menu.privacy.policy' => _l10n.settingsMenuPrivacyPolicy,
       'settings.menu.reset' => _l10n.settingsMenuReset,
       'settings.menu.scheduler' => _l10n.settingsMenuScheduler,
       'settings.menu.skills' => _l10n.settingsMenuSkills,
+      'settings.menu.source.code' => _l10n.settingsMenuSourceCode,
       'settings.menu.system.checks' => _l10n.settingsMenuSystemChecks,
+      'settings.menu.terms.of.service' => _l10n.settingsMenuTermsOfService,
       'settings.menu.tool.permissions' => _l10n.settingsMenuToolPermissions,
       'settings.report.ai.content.label' => _l10n.settingsReportAiContentLabel,
       'settings.system.section' => _l10n.settingsSystemSection,
@@ -1462,6 +1479,7 @@ class L10nKeyResolver {
     'git.ssh.add.account.key.title',
     'git.ssh.add.repository.access.button',
     'git.ssh.add.repository.access.title',
+    'git.ssh.allow.write.access.label',
     'git.ssh.credential.mode.account',
     'git.ssh.credential.mode.deploy',
     'git.ssh.empty.state',
@@ -1977,10 +1995,21 @@ class L10nKeyResolver {
     'question.send.reply',
     'scheduler.add.button',
     'scheduler.add.dialog.title',
-    'scheduler.cron.label',
+    'scheduler.day.fri',
+    'scheduler.day.mon',
+    'scheduler.day.sat',
+    'scheduler.day.sun',
+    'scheduler.day.thu',
+    'scheduler.day.tue',
+    'scheduler.day.wed',
+    'scheduler.days.label',
     'scheduler.delete.button',
     'scheduler.edit.button',
     'scheduler.edit.dialog.title',
+    'scheduler.frequency.daily',
+    'scheduler.frequency.hourly',
+    'scheduler.frequency.label',
+    'scheduler.frequency.weekly',
     'scheduler.name.label',
     'scheduler.no.schedules',
     'scheduler.pause.button',
@@ -1991,6 +2020,7 @@ class L10nKeyResolver {
     'scheduler.run.now.button',
     'scheduler.running.badge',
     'scheduler.save.button',
+    'scheduler.time.label',
     'scheduler.title',
     'server.control.action.restart',
     'server.control.action.restore',
@@ -2035,6 +2065,7 @@ class L10nKeyResolver {
     'server.control.retry.action',
     'server.control.show',
     'server.control.title',
+    'settings.about.section',
     'settings.account.section',
     'settings.ai.agents.section',
     'settings.delete.pro.data.cancel',
@@ -2061,10 +2092,13 @@ class L10nKeyResolver {
     'settings.menu.notifications',
     'settings.menu.pocket.memory',
     'settings.menu.pocketbase',
+    'settings.menu.privacy.policy',
     'settings.menu.reset',
     'settings.menu.scheduler',
     'settings.menu.skills',
+    'settings.menu.source.code',
     'settings.menu.system.checks',
+    'settings.menu.terms.of.service',
     'settings.menu.tool.permissions',
     'settings.report.ai.content.label',
     'settings.system.section',
@@ -2568,6 +2602,7 @@ class L10nKeyResolver {
     'gitSshAddAccountKeyTitle': 'git.ssh.add.account.key.title',
     'gitSshAddRepositoryAccessButton': 'git.ssh.add.repository.access.button',
     'gitSshAddRepositoryAccessTitle': 'git.ssh.add.repository.access.title',
+    'gitSshAllowWriteAccessLabel': 'git.ssh.allow.write.access.label',
     'gitSshCredentialModeAccount': 'git.ssh.credential.mode.account',
     'gitSshCredentialModeDeploy': 'git.ssh.credential.mode.deploy',
     'gitSshEmptyState': 'git.ssh.empty.state',
@@ -3083,10 +3118,21 @@ class L10nKeyResolver {
     'questionSendReply': 'question.send.reply',
     'schedulerAddButton': 'scheduler.add.button',
     'schedulerAddDialogTitle': 'scheduler.add.dialog.title',
-    'schedulerCronLabel': 'scheduler.cron.label',
+    'schedulerDayFri': 'scheduler.day.fri',
+    'schedulerDayMon': 'scheduler.day.mon',
+    'schedulerDaySat': 'scheduler.day.sat',
+    'schedulerDaySun': 'scheduler.day.sun',
+    'schedulerDayThu': 'scheduler.day.thu',
+    'schedulerDayTue': 'scheduler.day.tue',
+    'schedulerDayWed': 'scheduler.day.wed',
+    'schedulerDaysLabel': 'scheduler.days.label',
     'schedulerDeleteButton': 'scheduler.delete.button',
     'schedulerEditButton': 'scheduler.edit.button',
     'schedulerEditDialogTitle': 'scheduler.edit.dialog.title',
+    'schedulerFrequencyDaily': 'scheduler.frequency.daily',
+    'schedulerFrequencyHourly': 'scheduler.frequency.hourly',
+    'schedulerFrequencyLabel': 'scheduler.frequency.label',
+    'schedulerFrequencyWeekly': 'scheduler.frequency.weekly',
     'schedulerNameLabel': 'scheduler.name.label',
     'schedulerNoSchedules': 'scheduler.no.schedules',
     'schedulerPauseButton': 'scheduler.pause.button',
@@ -3097,6 +3143,7 @@ class L10nKeyResolver {
     'schedulerRunNowButton': 'scheduler.run.now.button',
     'schedulerRunningBadge': 'scheduler.running.badge',
     'schedulerSaveButton': 'scheduler.save.button',
+    'schedulerTimeLabel': 'scheduler.time.label',
     'schedulerTitle': 'scheduler.title',
     'serverControlActionRestart': 'server.control.action.restart',
     'serverControlActionRestore': 'server.control.action.restore',
@@ -3141,6 +3188,7 @@ class L10nKeyResolver {
     'serverControlRetryAction': 'server.control.retry.action',
     'serverControlShow': 'server.control.show',
     'serverControlTitle': 'server.control.title',
+    'settingsAboutSection': 'settings.about.section',
     'settingsAccountSection': 'settings.account.section',
     'settingsAiAgentsSection': 'settings.ai.agents.section',
     'settingsDeleteProDataCancel': 'settings.delete.pro.data.cancel',
@@ -3167,10 +3215,13 @@ class L10nKeyResolver {
     'settingsMenuNotifications': 'settings.menu.notifications',
     'settingsMenuPocketMemory': 'settings.menu.pocket.memory',
     'settingsMenuPocketbase': 'settings.menu.pocketbase',
+    'settingsMenuPrivacyPolicy': 'settings.menu.privacy.policy',
     'settingsMenuReset': 'settings.menu.reset',
     'settingsMenuScheduler': 'settings.menu.scheduler',
     'settingsMenuSkills': 'settings.menu.skills',
+    'settingsMenuSourceCode': 'settings.menu.source.code',
     'settingsMenuSystemChecks': 'settings.menu.system.checks',
+    'settingsMenuTermsOfService': 'settings.menu.terms.of.service',
     'settingsMenuToolPermissions': 'settings.menu.tool.permissions',
     'settingsReportAiContentLabel': 'settings.report.ai.content.label',
     'settingsSystemSection': 'settings.system.section',
@@ -3671,6 +3722,7 @@ class L10nKeyResolver {
     'git.ssh.add.account.key.title': 'gitSshAddAccountKeyTitle',
     'git.ssh.add.repository.access.button': 'gitSshAddRepositoryAccessButton',
     'git.ssh.add.repository.access.title': 'gitSshAddRepositoryAccessTitle',
+    'git.ssh.allow.write.access.label': 'gitSshAllowWriteAccessLabel',
     'git.ssh.credential.mode.account': 'gitSshCredentialModeAccount',
     'git.ssh.credential.mode.deploy': 'gitSshCredentialModeDeploy',
     'git.ssh.empty.state': 'gitSshEmptyState',
@@ -4186,10 +4238,21 @@ class L10nKeyResolver {
     'question.send.reply': 'questionSendReply',
     'scheduler.add.button': 'schedulerAddButton',
     'scheduler.add.dialog.title': 'schedulerAddDialogTitle',
-    'scheduler.cron.label': 'schedulerCronLabel',
+    'scheduler.day.fri': 'schedulerDayFri',
+    'scheduler.day.mon': 'schedulerDayMon',
+    'scheduler.day.sat': 'schedulerDaySat',
+    'scheduler.day.sun': 'schedulerDaySun',
+    'scheduler.day.thu': 'schedulerDayThu',
+    'scheduler.day.tue': 'schedulerDayTue',
+    'scheduler.day.wed': 'schedulerDayWed',
+    'scheduler.days.label': 'schedulerDaysLabel',
     'scheduler.delete.button': 'schedulerDeleteButton',
     'scheduler.edit.button': 'schedulerEditButton',
     'scheduler.edit.dialog.title': 'schedulerEditDialogTitle',
+    'scheduler.frequency.daily': 'schedulerFrequencyDaily',
+    'scheduler.frequency.hourly': 'schedulerFrequencyHourly',
+    'scheduler.frequency.label': 'schedulerFrequencyLabel',
+    'scheduler.frequency.weekly': 'schedulerFrequencyWeekly',
     'scheduler.name.label': 'schedulerNameLabel',
     'scheduler.no.schedules': 'schedulerNoSchedules',
     'scheduler.pause.button': 'schedulerPauseButton',
@@ -4200,6 +4263,7 @@ class L10nKeyResolver {
     'scheduler.run.now.button': 'schedulerRunNowButton',
     'scheduler.running.badge': 'schedulerRunningBadge',
     'scheduler.save.button': 'schedulerSaveButton',
+    'scheduler.time.label': 'schedulerTimeLabel',
     'scheduler.title': 'schedulerTitle',
     'server.control.action.restart': 'serverControlActionRestart',
     'server.control.action.restore': 'serverControlActionRestore',
@@ -4244,6 +4308,7 @@ class L10nKeyResolver {
     'server.control.retry.action': 'serverControlRetryAction',
     'server.control.show': 'serverControlShow',
     'server.control.title': 'serverControlTitle',
+    'settings.about.section': 'settingsAboutSection',
     'settings.account.section': 'settingsAccountSection',
     'settings.ai.agents.section': 'settingsAiAgentsSection',
     'settings.delete.pro.data.cancel': 'settingsDeleteProDataCancel',
@@ -4270,10 +4335,13 @@ class L10nKeyResolver {
     'settings.menu.notifications': 'settingsMenuNotifications',
     'settings.menu.pocket.memory': 'settingsMenuPocketMemory',
     'settings.menu.pocketbase': 'settingsMenuPocketbase',
+    'settings.menu.privacy.policy': 'settingsMenuPrivacyPolicy',
     'settings.menu.reset': 'settingsMenuReset',
     'settings.menu.scheduler': 'settingsMenuScheduler',
     'settings.menu.skills': 'settingsMenuSkills',
+    'settings.menu.source.code': 'settingsMenuSourceCode',
     'settings.menu.system.checks': 'settingsMenuSystemChecks',
+    'settings.menu.terms.of.service': 'settingsMenuTermsOfService',
     'settings.menu.tool.permissions': 'settingsMenuToolPermissions',
     'settings.report.ai.content.label': 'settingsReportAiContentLabel',
     'settings.system.section': 'settingsSystemSection',
@@ -4781,6 +4849,7 @@ abstract class L10nKeys {
   static const gitSshAddAccountKeyTitle = 'git.ssh.add.account.key.title';
   static const gitSshAddRepositoryAccessButton = 'git.ssh.add.repository.access.button';
   static const gitSshAddRepositoryAccessTitle = 'git.ssh.add.repository.access.title';
+  static const gitSshAllowWriteAccessLabel = 'git.ssh.allow.write.access.label';
   static const gitSshCredentialModeAccount = 'git.ssh.credential.mode.account';
   static const gitSshCredentialModeDeploy = 'git.ssh.credential.mode.deploy';
   static const gitSshEmptyState = 'git.ssh.empty.state';
@@ -5296,10 +5365,21 @@ abstract class L10nKeys {
   static const questionSendReply = 'question.send.reply';
   static const schedulerAddButton = 'scheduler.add.button';
   static const schedulerAddDialogTitle = 'scheduler.add.dialog.title';
-  static const schedulerCronLabel = 'scheduler.cron.label';
+  static const schedulerDayFri = 'scheduler.day.fri';
+  static const schedulerDayMon = 'scheduler.day.mon';
+  static const schedulerDaySat = 'scheduler.day.sat';
+  static const schedulerDaySun = 'scheduler.day.sun';
+  static const schedulerDayThu = 'scheduler.day.thu';
+  static const schedulerDayTue = 'scheduler.day.tue';
+  static const schedulerDayWed = 'scheduler.day.wed';
+  static const schedulerDaysLabel = 'scheduler.days.label';
   static const schedulerDeleteButton = 'scheduler.delete.button';
   static const schedulerEditButton = 'scheduler.edit.button';
   static (String, Map<String, dynamic>) schedulerEditDialogTitle(String name) => ('scheduler.edit.dialog.title', {'name': name});
+  static const schedulerFrequencyDaily = 'scheduler.frequency.daily';
+  static const schedulerFrequencyHourly = 'scheduler.frequency.hourly';
+  static const schedulerFrequencyLabel = 'scheduler.frequency.label';
+  static const schedulerFrequencyWeekly = 'scheduler.frequency.weekly';
   static const schedulerNameLabel = 'scheduler.name.label';
   static const schedulerNoSchedules = 'scheduler.no.schedules';
   static const schedulerPauseButton = 'scheduler.pause.button';
@@ -5310,6 +5390,7 @@ abstract class L10nKeys {
   static const schedulerRunNowButton = 'scheduler.run.now.button';
   static const schedulerRunningBadge = 'scheduler.running.badge';
   static const schedulerSaveButton = 'scheduler.save.button';
+  static const schedulerTimeLabel = 'scheduler.time.label';
   static const schedulerTitle = 'scheduler.title';
   static const serverControlActionRestart = 'server.control.action.restart';
   static const serverControlActionRestore = 'server.control.action.restore';
@@ -5354,6 +5435,7 @@ abstract class L10nKeys {
   static const serverControlRetryAction = 'server.control.retry.action';
   static const serverControlShow = 'server.control.show';
   static const serverControlTitle = 'server.control.title';
+  static const settingsAboutSection = 'settings.about.section';
   static const settingsAccountSection = 'settings.account.section';
   static const settingsAiAgentsSection = 'settings.ai.agents.section';
   static const settingsDeleteProDataCancel = 'settings.delete.pro.data.cancel';
@@ -5380,10 +5462,13 @@ abstract class L10nKeys {
   static const settingsMenuNotifications = 'settings.menu.notifications';
   static const settingsMenuPocketMemory = 'settings.menu.pocket.memory';
   static const settingsMenuPocketbase = 'settings.menu.pocketbase';
+  static const settingsMenuPrivacyPolicy = 'settings.menu.privacy.policy';
   static const settingsMenuReset = 'settings.menu.reset';
   static const settingsMenuScheduler = 'settings.menu.scheduler';
   static const settingsMenuSkills = 'settings.menu.skills';
+  static const settingsMenuSourceCode = 'settings.menu.source.code';
   static const settingsMenuSystemChecks = 'settings.menu.system.checks';
+  static const settingsMenuTermsOfService = 'settings.menu.terms.of.service';
   static const settingsMenuToolPermissions = 'settings.menu.tool.permissions';
   static const settingsReportAiContentLabel = 'settings.report.ai.content.label';
   static const settingsSystemSection = 'settings.system.section';
