@@ -17,6 +17,8 @@ class PocoExpression {
   static const String cheeky = '^_~';
   static const String lookRight = '>_>';
   static const String lookLeft = '<_<';
+  static const String lookUp = '^_^';
+  static const String lookDown = 'v_v';
   static const String greedy = '\$_\$';
   static const String mad = 'ò_ó';
   static const String skeptical = '¬_¬';
@@ -179,6 +181,9 @@ class AsciiFace extends StatelessWidget {
         PocoExpression.surprised => PocoMood.surprised,
         PocoExpression.lookRight => PocoMood.lookRight,
         PocoExpression.lookLeft => PocoMood.lookLeft,
+        // lookUp shares '^_^' with `happy` above, so it can never match here;
+        // callers needing lookUp's mood must pass it explicitly.
+        PocoExpression.lookDown => PocoMood.lookDown,
         PocoExpression.mad => PocoMood.mad,
         PocoExpression.mistaken => PocoMood.mistaken,
         PocoExpression.panic => PocoMood.panic,
