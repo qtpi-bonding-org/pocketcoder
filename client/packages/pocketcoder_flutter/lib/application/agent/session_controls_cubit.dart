@@ -41,6 +41,8 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
 
   StreamSubscription? _watchSub;
   String? _chatId;
+  String? _searchableModelsChatId;
+  Future<List<HarnessModel>>? _searchableModelsFuture;
 
   @override
   Future<void> close() {
@@ -60,6 +62,7 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
       status: UiFlowStatus.loading,
       lastOperation: SessionControlsOperation.open,
     ));
+    _prefetchSearchableModels(chatId);
 
     _watchSub = _repository.watch(chatId).listen(
       (conversation) {
@@ -82,9 +85,23 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
 
   /// Empty (rather than throwing) before [open] or for a chat with no
   /// harness -- there is nothing to search yet, not a failure.
-  Future<List<HarnessModel>> searchableModels() async {
+  Future<List<HarnessModel>> searchableModels() {
     final chatId = _chatId;
-    if (chatId == null) return const [];
+    if (chatId == null) return Future.value(const []);
+    final cached = _searchableModelsFuture;
+    if (cached != null && _searchableModelsChatId == chatId) return cached;
+    return _fetchSearchableModels(chatId);
+  }
+
+  void _prefetchSearchableModels(String chatId) {
+    _searchableModelsChatId = chatId;
+    final future = _fetchSearchableModels(chatId);
+    _searchableModelsFuture = future;
+    // Second listener so an unawaited failure here doesn't crash the zone.
+    unawaited(future.catchError((_) => const <HarnessModel>[]));
+  }
+
+  Future<List<HarnessModel>> _fetchSearchableModels(String chatId) async {
     final chat = await _chatDao.getOne(chatId);
     final harnessId = chat.harness;
     if (harnessId == null || harnessId.isEmpty) return const [];

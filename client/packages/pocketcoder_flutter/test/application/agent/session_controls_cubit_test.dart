@@ -705,5 +705,87 @@ void main() {
       expect(result, isEmpty);
       verifyNever(() => chatDao.getOne(any()));
     });
+
+    test('open() prefetches the catalog instead of waiting for the first call',
+        () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-1',
+                    harness: 'harness-1',
+                    model: 'm-1',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+              ]);
+
+      cubit.open('chat-1');
+      await _settle();
+
+      verify(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .called(1);
+    });
+
+    test('caches the prefetched catalog -- a later call does not re-query',
+        () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-1',
+                    harness: 'harness-1',
+                    model: 'm-1',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+              ]);
+
+      cubit.open('chat-1');
+      await _settle();
+      final first = await cubit.searchableModels();
+      final second = await cubit.searchableModels();
+
+      expect(first.map((hm) => hm.id), ['hm-1']);
+      expect(second.map((hm) => hm.id), ['hm-1']);
+      verify(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .called(1);
+    });
+
+    test('re-opening on a different chat refetches for the new harness',
+        () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-1',
+                    harness: 'harness-1',
+                    model: 'm-1',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+              ]);
+      const chatOnOtherHarness = Chat(
+        id: 'chat-2',
+        title: 'Chat 2',
+        user: 'user-1',
+        harness: 'harness-2',
+      );
+      when(() => chatDao.getOne('chat-2'))
+          .thenAnswer((_) async => chatOnOtherHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-2'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-2',
+                    harness: 'harness-2',
+                    model: 'm-2',
+                    harnessModelId: 'openai/gpt-5'),
+              ]);
+
+      cubit.open('chat-1');
+      await _settle();
+      cubit.open('chat-2');
+      await _settle();
+      final result = await cubit.searchableModels();
+
+      expect(result.map((hm) => hm.id), ['hm-2']);
+    });
   });
 }
