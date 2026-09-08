@@ -83,7 +83,6 @@ class BootView extends StatelessWidget {
                               color: colors.surface,
                               child: PocoFace(
                                 sequence: pocoState.sequence,
-                                fontSize: 64.0,
                               ),
                             ),
                           ),
