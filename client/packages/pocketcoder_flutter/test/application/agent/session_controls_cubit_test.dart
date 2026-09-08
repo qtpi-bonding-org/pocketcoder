@@ -841,6 +841,48 @@ void main() {
       expect(cubit.state.status, UiFlowStatus.success);
     });
 
+    test(
+        'a boolean option\'s optimistic currentValue is a bool, not the '
+        'wire-format string, matching every real config_update from the '
+        'backend (bridge.go always sends a JSON bool for a boolean option)',
+        () async {
+      cubit.open('chat-1');
+      await _settle();
+      repo.controllerFor('chat-1').add(
+            Conversation(
+              sessionState: SessionState(
+                isRunning: true,
+                config: {
+                  'options': [
+                    {
+                      'id': 'auto_approve',
+                      'kind': 'boolean',
+                      'currentValue': false,
+                    },
+                  ],
+                },
+              ),
+            ),
+          );
+      await _settle();
+
+      final pending = cubit.setOption(SetSessionConfigOptionRequest(
+        sessionId: 'chat-1',
+        configId: 'auto_approve',
+        value: 'true',
+      ));
+
+      final options = cubit.state.config?['options'] as List;
+      final option =
+          options.firstWhere((o) => (o as Map)['id'] == 'auto_approve') as Map;
+      expect(option['currentValue'], isA<bool>(),
+          reason: 'a string "true" here reads as `!= true` in '
+              'ConfigPicker\'s boolean branch and renders as still off');
+      expect(option['currentValue'], true);
+
+      await pending;
+    });
+
     test('rolls back the optimistic value when the persist fails', () async {
       when(() => chatDao.getOne('chat-1'))
           .thenAnswer((_) async => chatWithHarness);

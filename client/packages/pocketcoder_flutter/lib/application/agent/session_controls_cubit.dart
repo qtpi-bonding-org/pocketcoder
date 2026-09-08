@@ -212,7 +212,9 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
     for (final option in options) {
       if (option is Map && option['id'] == req.configId) {
         matched = true;
-        updatedOptions.add({...option, 'currentValue': req.value});
+        final currentValue =
+            option['kind'] == 'boolean' ? req.value == 'true' : req.value;
+        updatedOptions.add({...option, 'currentValue': currentValue});
       } else {
         updatedOptions.add(option);
       }
