@@ -37,6 +37,8 @@ CORE_DIRS=(
   "server/pocketbase"
   "server/goose"
   "server/mcp-gateway"
+  "server/memory"
+  "workers"
   "scripts"
   "client"
 )
@@ -143,12 +145,10 @@ for DIR in "${CORE_DIRS[@]}"; do
     EXT_ARGS+=(-o -name "*.${e}")
   done
 
-  # Prune cao submodule, node_modules, build artifacts, generated code
   while IFS= read -r FILE; do
     scan_file "$FILE"
   done < <(find "$ABS_DIR" \
-    -path "$ABS_DIR/node_modules" -prune -o \
-    -path "$ABS_DIR/cao" -prune -o \
+    -path "*/node_modules/*" -prune -o \
     -path "$ABS_DIR/.dart_tool" -prune -o \
     -path "$ABS_DIR/build" -prune -o \
     -path "*/generated/*" -prune -o \
@@ -161,14 +161,6 @@ for f in "${ROOT_FILES[@]}"; do
     scan_file "$ABS_F"
   fi
 done
-
-# ---------------------------------------------------------------------------
-# The CAO fork submodule was removed with the legacy sandbox service;
-# Python delta accounting is retired along with it.
-# ---------------------------------------------------------------------------
-CAO_ADDED=0
-CAO_DELETED=0
-CAO_NOTE="(retired — sandbox/cao removed)"
 
 # ---------------------------------------------------------------------------
 # Flutter client: full Dart count (non-generated, non-test)
@@ -197,8 +189,18 @@ DART_TEST_LOC=$(find "$REPO_ROOT/client" \
   -path "*/.dart_tool/*" -prune -o \
   -path "*/build/*" -prune -o \
   -path "*/generated/*" -prune -o \
-  -type f \( -name '*_test.dart' -o -path '*/test/*.dart' \) -print 2>/dev/null \
+  -type f \( -name '*_test.dart' -o -path '*/test/*.dart' -o -path '*/tests/*.dart' \) -print 2>/dev/null \
   | sort -u | xargs wc -l 2>/dev/null | awk 'END{print $1+0}')
+
+RUST_LOC=$(find "$REPO_ROOT/server/memory" -name '*.rs' ! -path '*/tests/*' ! -path '*/target/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+RUST_TEST_LOC=$(find "$REPO_ROOT/server/memory" -name '*.rs' -path '*/tests/*' ! -path '*/target/*' -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+
+TS_LOC=$(find "$REPO_ROOT/workers" -name '*.ts' \
+  ! -path '*/node_modules/*' ! -path '*/test/*' ! -path '*/tests/*' ! -name '*.test.ts' \
+  -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
+TS_TEST_LOC=$(find "$REPO_ROOT/workers" -name '*.ts' ! -path '*/node_modules/*' \
+  \( -path '*/test/*' -o -path '*/tests/*' -o -name '*.test.ts' \) \
+  -exec wc -l {} + 2>/dev/null | awk 'END{print $1+0}')
 
 # Bash tests: the tests/ tree — .bats suites plus their .sh harnesses.
 BASH_TEST_LOC=$(find "$REPO_ROOT/tests" \( -name '*.bats' -o -name '*.sh' \) -type f 2>/dev/null \
@@ -209,10 +211,13 @@ BASH_TEST_LOC=$(find "$REPO_ROOT/tests" \( -name '*.bats' -o -name '*.sh' \) -ty
 # fdroid_env, client iOS/Flutter tooling), inflating the count several-fold.
 BASH_LOC=$( (cd "$REPO_ROOT" && git ls-files -z '*.sh' ':!:*/tests/*' | xargs -0 cat 2>/dev/null) | wc -l | tr -d ' ')
 
-# Core = active product code only: Go (c1) + Dart (client). Dormant Rust is
-# excluded (see dormant/); tests and tooling are tallied separately, never core.
-CORE_TOTAL=$((GO_LOC + DART_LOC))
-TEST_TOTAL=$((GO_TEST_LOC + DART_TEST_LOC + BASH_TEST_LOC))
+# Kept distinct rather than one "core" blob: TypeScript (Workers) runs on
+# our Cloudflare account, not a self-hoster's device, unlike VPS/Mobile.
+VPS_TOTAL=$((GO_LOC + RUST_LOC))
+MOBILE_TOTAL=$DART_LOC
+INFRA_TOTAL=$TS_LOC
+CORE_TOTAL=$((VPS_TOTAL + MOBILE_TOTAL + INFRA_TOTAL))
+TEST_TOTAL=$((GO_TEST_LOC + DART_TEST_LOC + RUST_TEST_LOC + TS_TEST_LOC + BASH_TEST_LOC))
 
 {
 echo ""
@@ -220,13 +225,29 @@ echo "---"
 echo ""
 echo "## 📊 Lines of Code"
 echo ""
-echo "**Core product code:**"
+echo "**VPS** (runs on a self-hoster's own box):"
 echo ""
 echo "| Language | LoC | Component |"
 echo "| :--- | ---: | :--- |"
 echo "| Go | ${GO_LOC} | c1: PocketBase + ACP client + AG-UI server |"
+echo "| Rust | ${RUST_LOC} | Pocket Memory (server/memory) |"
+echo "| **VPS total** | **${VPS_TOTAL}** | Go + Rust |"
+echo ""
+echo "**Mobile** (runs on the user's phone, not the VPS):"
+echo ""
+echo "| Language | LoC | Component |"
+echo "| :--- | ---: | :--- |"
 echo "| Dart | ${DART_LOC} | Flutter client (non-generated, non-test) |"
-echo "| **Core total** | **${CORE_TOTAL}** | Go + Dart |"
+echo ""
+echo "**Infra** (FOSS, auditable, but runs centrally on our Cloudflare"
+echo "account, not a self-hoster's own device — see CLAUDE.md's Deployment"
+echo "Model):"
+echo ""
+echo "| Language | LoC | Component |"
+echo "| :--- | ---: | :--- |"
+echo "| TypeScript | ${TS_LOC} | Cloudflare Workers (workers/) |"
+echo ""
+echo "**Grand total (all product code):** ${CORE_TOTAL}"
 echo ""
 echo "**Tests** (not product code):"
 echo ""
@@ -234,6 +255,8 @@ echo "| Type | LoC | Notes |"
 echo "| :--- | ---: | :--- |"
 echo "| Go tests | ${GO_TEST_LOC} | \`*_test.go\` |"
 echo "| Dart tests | ${DART_TEST_LOC} | \`*_test.dart\`, \`test/\` |"
+echo "| Rust tests | ${RUST_TEST_LOC} | \`server/memory/tests/\` |"
+echo "| TypeScript tests | ${TS_TEST_LOC} | \`workers/**/test/\`, \`*.test.ts\` |"
 echo "| Bash tests | ${BASH_TEST_LOC} | \`tests/\` — bats suites + shell harnesses |"
 echo "| **Test total** | **${TEST_TOTAL}** | |"
 echo ""
@@ -249,12 +272,10 @@ echo "*Tagged core files (index above): $FILE_COUNT.*"
 } >> "$TARGET_FILE"
 
 echo "✅ [Audit] Generated $TARGET_FILE"
-echo "   Core logic : $LOGIC_LOC LoC across $FILE_COUNT tagged files"
-echo "   Shell infra : $SCRIPT_LOC LoC (separate)"
-echo "   Flutter     : $DART_LOC LoC (Dart, non-generated)"
-if [[ -n "$CAO_NOTE" ]]; then
-  echo "   CAO fork    : $CAO_NOTE"
-fi
+echo "   Tagged index : $LOGIC_LOC LoC across $FILE_COUNT tagged files (+ $SCRIPT_LOC LoC bash)"
+echo "   VPS (Go+Rust): $VPS_TOTAL LoC"
+echo "   Mobile (Dart): $MOBILE_TOTAL LoC"
+echo "   Infra (TS)   : $INFRA_TOTAL LoC"
 
 # ---------------------------------------------------------------------------
 # Sync README.md stats table
@@ -269,10 +290,13 @@ if [[ -f "$README_FILE" ]]; then
   cat > "$README_TABLE_FILE" <<READMEEOF
 | Language | LoC | Component |
 | :--- | ---: | :--- |
-| Go | $(fmt $GO_LOC) | c1: PocketBase + ACP client + AG-UI server |
-| Dart | $(fmt $DART_LOC) | Flutter client (non-generated) |
-| **Core code** | **~$(fmt $CORE_TOTAL)** | Go + Dart — product code |
-| Tests | $(fmt $TEST_TOTAL) | not code — Go $(fmt $GO_TEST_LOC) · Dart $(fmt $DART_TEST_LOC) · Bash $(fmt $BASH_TEST_LOC) |
+| Go | $(fmt $GO_LOC) | VPS — c1: PocketBase + ACP client + AG-UI server |
+| Rust | $(fmt $RUST_LOC) | VPS — Pocket Memory |
+| **VPS total** | **~$(fmt $VPS_TOTAL)** | self-hosted server stack |
+| Dart | $(fmt $DART_LOC) | Mobile — Flutter client (non-generated) |
+| TypeScript | $(fmt $TS_LOC) | Infra — Cloudflare Workers (FOSS, runs on our account) |
+| **Grand total** | **~$(fmt $CORE_TOTAL)** | VPS + Mobile + Infra — product code |
+| Tests | $(fmt $TEST_TOTAL) | not code — Go $(fmt $GO_TEST_LOC) · Dart $(fmt $DART_TEST_LOC) · Rust $(fmt $RUST_TEST_LOC) · TS $(fmt $TS_TEST_LOC) · Bash $(fmt $BASH_TEST_LOC) |
 | Tooling | $(fmt $BASH_LOC) | not code — Bash scripts / infra |
 READMEEOF
 
