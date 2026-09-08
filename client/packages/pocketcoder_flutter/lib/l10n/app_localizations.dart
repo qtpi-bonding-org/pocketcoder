@@ -2983,13 +2983,13 @@ abstract class AppLocalizations {
   /// No description provided for @proTerms.
   ///
   /// In en, this message translates to:
-  /// **'Subscription renews at {price} Until cancelled. Manage or cancel in your app store account.'**
+  /// **'Subscription renews at {price}. Until cancelled, manage or cancel in your app store account.'**
   String proTerms(String price);
 
   /// No description provided for @proTrialTerms.
   ///
   /// In en, this message translates to:
-  /// **'Free for {days} Days, then {price} Until cancelled. Manage or cancel in your app store account.'**
+  /// **'Free for {days} days, then {price}. Until cancelled, manage or cancel in your app store account.'**
   String proTrialTerms(int days, String price);
 
   /// No description provided for @proTermsOfServiceLink.

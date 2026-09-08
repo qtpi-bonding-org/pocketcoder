@@ -66,7 +66,8 @@ class ProOffer extends StatelessWidget {
         trialDays == null
             ? context.l10n.proTerms(recurringPrice)
             : context.l10n.proTrialTerms(trialDays, recurringPrice),
-        role: TextRole.label,
+        role: TextRole.value,
+        textAlign: TextAlign.center,
       ),
       VSpace.x2,
       Wrap(alignment: WrapAlignment.center, spacing: AppSizes.ch * 2, children: [

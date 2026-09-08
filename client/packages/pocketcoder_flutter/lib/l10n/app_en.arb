@@ -684,11 +684,11 @@
   "proContinueSetup": "continue setup",
   "proRestore": "restore purchases",
   "proManageSubscription": "manage subscription",
-  "proTerms": "Subscription renews at {price} Until cancelled. Manage or cancel in your app store account.",
+  "proTerms": "Subscription renews at {price}. Until cancelled, manage or cancel in your app store account.",
   "@proTerms": {
     "placeholders": {"price": {"type": "String"}}
   },
-  "proTrialTerms": "Free for {days} Days, then {price} Until cancelled. Manage or cancel in your app store account.",
+  "proTrialTerms": "Free for {days} days, then {price}. Until cancelled, manage or cancel in your app store account.",
   "@proTrialTerms": {
     "placeholders": {
       "days": {"type": "int"},

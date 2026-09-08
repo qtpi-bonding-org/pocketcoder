@@ -1566,12 +1566,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String proTerms(String price) {
-    return 'Subscription renews at $price Until cancelled. Manage or cancel in your app store account.';
+    return 'Subscription renews at $price. Until cancelled, manage or cancel in your app store account.';
   }
 
   @override
   String proTrialTerms(int days, String price) {
-    return 'Free for $days Days, then $price Until cancelled. Manage or cancel in your app store account.';
+    return 'Free for $days days, then $price. Until cancelled, manage or cancel in your app store account.';
   }
 
   @override
