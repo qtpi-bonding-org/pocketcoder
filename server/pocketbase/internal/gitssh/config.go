@@ -51,3 +51,27 @@ func RenderConfig(access []Access) (string, error) {
 	}
 	return b.String(), nil
 }
+
+// RenderRemotesDoc must use the `git@pcgit-<id>:...` alias form, not the
+// provider's real hostname -- a plain `git@github.com:...` URL bypasses
+// the config's IdentitiesOnly scoping entirely.
+func RenderRemotesDoc(access []Access) string {
+	if len(access) == 0 {
+		return ""
+	}
+	items := append([]Access(nil), access...)
+	sort.Slice(items, func(i, j int) bool { return items[i].ID < items[j].ID })
+	var b strings.Builder
+	b.WriteString("## Git remotes\n\n")
+	b.WriteString("Pre-authenticated SSH access exists for the repositories below. " +
+		"Use the exact `git@pcgit-<id>:...` alias shown -- not the provider's real " +
+		"hostname -- since that alias is what selects the right credential.\n\n")
+	for _, a := range items {
+		r, err := CanonicalRepository(a.Provider, a.Repository)
+		if err != nil {
+			continue // matches RenderConfig's own validation; skip rather than fail a whole doc
+		}
+		fmt.Fprintf(&b, "- `%s`: `git clone git@pcgit-%s:%s.git`\n", r, a.ID, r)
+	}
+	return b.String()
+}

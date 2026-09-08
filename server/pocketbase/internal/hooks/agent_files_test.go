@@ -3,6 +3,7 @@ package hooks
 import (
 	"archive/tar"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -83,5 +84,91 @@ func TestSkillMaterializationRootUsesWorkspaceRelativeProjectPath(t *testing.T) 
 	skill.Set("metadata", map[string]any{"projectDir": "/tmp/outside"})
 	if _, err := skillMaterializationRoot(skill); err == nil {
 		t.Fatal("expected out-of-workspace projectDir to fail")
+	}
+}
+
+func TestGitRemotesDocOnlyIncludesThisUsersReadyAccess(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+
+	usersColl, err := app.FindCollectionByNameOrId("users")
+	if err != nil {
+		t.Fatal(err)
+	}
+	newUser := func(email string) *core.Record {
+		u := core.NewRecord(usersColl)
+		u.SetEmail(email)
+		u.SetPassword("password1234")
+		if err := app.Save(u); err != nil {
+			t.Fatal(err)
+		}
+		return u
+	}
+	user := newUser("remotes-doc@example.com")
+	otherUser := newUser("other-user@example.com")
+
+	accessColl, err := app.FindCollectionByNameOrId("git_repository_access")
+	if err != nil {
+		t.Fatal(err)
+	}
+	newAccess := func(owner *core.Record, repo, status string) {
+		a := core.NewRecord(accessColl)
+		a.Set("user", owner.Id)
+		a.Set("provider", "github")
+		a.Set("repository", repo)
+		a.Set("purpose", "test")
+		a.Set("credential_mode", "generated_deploy")
+		a.Set("requested_access", "read_only")
+		a.Set("registration_status", "needs_registration")
+		a.Set("status", status)
+		if err := app.Save(a); err != nil {
+			t.Fatal(err)
+		}
+	}
+	newAccess(user, "octo/ready-repo", "ready")
+	newAccess(user, "octo/pending-repo", "pending")
+	newAccess(otherUser, "octo/someone-elses-repo", "ready")
+
+	doc, err := gitRemotesDoc(app, user.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(doc, "octo/ready-repo") {
+		t.Fatalf("expected the ready access to be included: %s", doc)
+	}
+	if strings.Contains(doc, "pending-repo") {
+		t.Fatalf("expected the pending access to be excluded: %s", doc)
+	}
+	if strings.Contains(doc, "someone-elses-repo") {
+		t.Fatalf("expected another user's access to be excluded: %s", doc)
+	}
+}
+
+func TestGitRemotesDocIsEmptyWithNoReadyAccess(t *testing.T) {
+	app, err := tests.NewTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	usersColl, err := app.FindCollectionByNameOrId("users")
+	if err != nil {
+		t.Fatal(err)
+	}
+	u := core.NewRecord(usersColl)
+	u.SetEmail("no-remotes@example.com")
+	u.SetPassword("password1234")
+	if err := app.Save(u); err != nil {
+		t.Fatal(err)
+	}
+
+	doc, err := gitRemotesDoc(app, u.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc != "" {
+		t.Fatalf("expected an empty doc for a user with no access, got %q", doc)
 	}
 }

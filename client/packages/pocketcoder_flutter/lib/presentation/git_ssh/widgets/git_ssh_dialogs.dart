@@ -4,8 +4,6 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/git_repository_access.dart';
 import 'package:pocketcoder_flutter/domain/models/git_ssh_credential.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/grid_wrap.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
@@ -228,16 +226,22 @@ Widget _choiceRow<T>(
   required List<(T, String)> options,
   required ValueChanged<T> onSelected,
 }) {
-  return GridWrap(
-    alignment: WrapAlignment.start,
-    spacing: AppSizes.space * 2,
-    runSpacing: AppSizes.space,
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: options
-        .map((entry) => TerminalButton(
-              label: entry.$2,
-              kind:
-                  value == entry.$1 ? ActionKind.primary : ActionKind.neutral,
+        .map((entry) => GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => onSelected(entry.$1),
+              child: Row(children: [
+                TerminalCheckbox(
+                  value: value == entry.$1,
+                  onChanged: (_) => onSelected(entry.$1),
+                ),
+                HSpace.x2,
+                Expanded(
+                  child: TerminalText(entry.$2, role: TextRole.body),
+                ),
+              ]),
             ))
         .toList(),
   );
