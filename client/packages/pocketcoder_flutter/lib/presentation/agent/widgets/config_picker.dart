@@ -39,6 +39,7 @@ class ConfigPicker extends StatelessWidget {
         vertical: AppSizes.space * .5,
       ),
       child: Wrap(
+        alignment: WrapAlignment.center,
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: AppSizes.space,
         runSpacing: AppSizes.space * .25,
