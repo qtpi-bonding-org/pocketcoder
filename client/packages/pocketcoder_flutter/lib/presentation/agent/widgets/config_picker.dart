@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/row_affordance.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_model.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/searchable_picker_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
@@ -28,10 +26,20 @@ class ConfigPicker extends StatelessWidget {
             .toList() ??
         const <Map<String, dynamic>>[];
     if (options.isEmpty) return const SizedBox.shrink();
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      DetailRow(label: context.l10n.agentSessionLabel),
-      ...options.map((o) => _option(context, o)),
-    ]);
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.ch * 2,
+        vertical: AppSizes.space * .5,
+      ),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: AppSizes.space,
+        runSpacing: AppSizes.space * .25,
+        children: [
+          ...options.map((o) => _option(context, o)),
+        ],
+      ),
+    );
   }
 
   Widget _option(BuildContext context, Map<String, dynamic> o) {
@@ -40,24 +48,17 @@ class ConfigPicker extends StatelessWidget {
     final name = (o['name'] as String?) ?? id,
         kind = o['kind'] as String?,
         value = o['currentValue'];
-    final label = Text(name,
-        style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontFamily: AppFonts.family,
-            package: 'pocketcoder_flutter'));
     void submit(String v) => onSetOption(
         SetSessionConfigOptionRequest(sessionId: '', configId: id, value: v));
     if (kind == 'boolean') {
-      return Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
-          child: Row(children: [
-            Expanded(child: label),
-            TerminalCheckbox(
-                value: value == true, onChanged: (v) => submit('$v'))
-          ]));
+      return ConfigOptionChip(
+        label: name,
+        value: value == true ? 'on' : 'off',
+        onTap: () => submit('${value != true}'),
+      );
     }
     if (kind == 'select' && id == 'model' && onSearchModels != null) {
-      return _modelSearchRow(context,
+      return _modelSearchChip(context,
           name: name, current: value?.toString(), submit: submit);
     }
     if (kind == 'select') {
@@ -74,7 +75,7 @@ class ConfigPicker extends StatelessWidget {
           choices.firstWhere((c) => '${c['value']}' == value,
               orElse: () => {})['label'] as String? ??
           value;
-      return DetailRow(
+      return ConfigOptionChip(
           label: name,
           value: displayValue,
           affordance: RowAffordance.expand,
@@ -101,28 +102,23 @@ class ConfigPicker extends StatelessWidget {
                 if (selected != null) submit(selected);
               }));
     }
-    return Padding(
-        padding: EdgeInsets.symmetric(vertical: AppSizes.space * .5),
-        child: Row(children: [
-          Expanded(child: label),
-          Text(value?.toString() ?? '',
-              style: TextStyle(
-                  color: context.colorScheme.onSurface.withValues(alpha: .4)))
-        ]));
+    return ConfigOptionChip(label: name, value: value?.toString() ?? '');
   }
 
-  Widget _modelSearchRow(
+  Widget _modelSearchChip(
     BuildContext context, {
     required String name,
     required String? current,
     required void Function(String) submit,
   }) =>
-      DetailRow(
+      ConfigOptionChip(
           label: name,
           value: current?.isEmpty ?? true ? '--' : current,
           affordance: RowAffordance.expand,
           onTap: () async {
-            final models = await onSearchModels!();
+            final search = onSearchModels;
+            if (search == null) return;
+            final models = await search();
             if (!context.mounted) return;
             final selected = await showDialog<HarnessModel>(
                 context: context,
@@ -152,4 +148,68 @@ class ConfigPicker extends StatelessWidget {
                     noMatchesLabel: dialogContext.l10n.agentModelSearchNoMatches));
             if (selected != null) submit(selected.harnessModelId);
           });
+}
+
+class ConfigOptionChip extends StatefulWidget {
+  const ConfigOptionChip({
+    super.key,
+    required this.label,
+    required this.value,
+    this.affordance,
+    this.onTap,
+  });
+
+  final String label;
+  final String? value;
+  final RowAffordance? affordance;
+  final VoidCallback? onTap;
+
+  @override
+  State<ConfigOptionChip> createState() => _ConfigOptionChipState();
+}
+
+class _ConfigOptionChipState extends State<ConfigOptionChip> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final reversed = _pressed;
+    Widget text(String value, TextRole role) {
+      final terminalText = TerminalText(value, role: role);
+      if (!reversed) return terminalText;
+      return ColorFiltered(
+        colorFilter:
+            const ColorFilter.mode(AppPalette.ground, BlendMode.srcIn),
+        child: terminalText,
+      );
+    }
+
+    final affordance = widget.affordance;
+    final content = Row(mainAxisSize: MainAxisSize.min, children: [
+      text('${widget.label}:', TextRole.label),
+      SizedBox(width: AppSizes.space * .5),
+      text(widget.value ?? '', TextRole.value),
+      if (affordance != null && affordance != RowAffordance.none) ...[
+        SizedBox(width: AppSizes.space * .5),
+        text(affordance.glyph, TextRole.value),
+      ],
+    ]);
+    final onTap = widget.onTap;
+    if (onTap == null) return content;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      child: Container(
+        color: reversed ? TextRole.value.color : Colors.transparent,
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSizes.space * .5,
+          vertical: AppSizes.space * .25,
+        ),
+        child: content,
+      ),
+    );
+  }
 }
