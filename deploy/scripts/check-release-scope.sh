@@ -68,10 +68,11 @@ if [ -n "$image_changed" ]; then
 elif [ -n "$migrations_changed" ] || [ -n "$backend_changed" ]; then
   verdict=UPGRADE_TEST_ONLY
   echo "UPGRADE_TEST_ONLY: backend and/or a PocketBase migration changed, but"
-  echo "  deploy/nixos and deploy/release-manager did not. A fresh full provision"
-  echo "  re-tests code that hasn't moved -- run the cheaper"
-  echo "  run_vps_script_nixos_upgrade_test instead (real box, real accumulated"
-  echo "  data, minutes not hours)."
+  echo "  deploy/nixos and deploy/release-manager did not. Run"
+  echo "  run_vps_script_nixos_full_suite -- it provisions a box on the current"
+  echo "  release, builds+promotes this commit to nightly-testing, runs the"
+  echo "  in-place update, and verifies data survives. There is no cheaper"
+  echo "  substitute that actually exercises the update path."
 else
   verdict=SKIP_VPS_TEST
   echo "SKIP_VPS_TEST: nothing in this repo's visible scope needs a live-VPS test"
