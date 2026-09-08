@@ -55,8 +55,7 @@ abstract mixin class $UserManagementStateCopyWith<$Res> {
           UserManagementState value, $Res Function(UserManagementState) _then) =
       _$UserManagementStateCopyWithImpl;
   @useResult
-  $Res call(
-      {UiFlowStatus status, List<User> users, Object? error});
+  $Res call({UiFlowStatus status, List<User> users, Object? error});
 }
 
 /// @nodoc
@@ -181,8 +180,7 @@ extension UserManagementStatePatterns on UserManagementState {
 
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
-    TResult Function(
-            UiFlowStatus status, List<User> users, Object? error)?
+    TResult Function(UiFlowStatus status, List<User> users, Object? error)?
         $default, {
     required TResult orElse(),
   }) {
@@ -210,8 +208,7 @@ extension UserManagementStatePatterns on UserManagementState {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(
-            UiFlowStatus status, List<User> users, Object? error)
+    TResult Function(UiFlowStatus status, List<User> users, Object? error)
         $default,
   ) {
     final _that = this;
@@ -235,8 +232,7 @@ extension UserManagementStatePatterns on UserManagementState {
 
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
-    TResult? Function(
-            UiFlowStatus status, List<User> users, Object? error)?
+    TResult? Function(UiFlowStatus status, List<User> users, Object? error)?
         $default,
   ) {
     final _that = this;
@@ -280,7 +276,8 @@ class _UserManagementState extends UserManagementState {
   @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
   _$UserManagementStateCopyWith<_UserManagementState> get copyWith =>
-      __$UserManagementStateCopyWithImpl<_UserManagementState>(this, _$identity);
+      __$UserManagementStateCopyWithImpl<_UserManagementState>(
+          this, _$identity);
 
   @override
   bool operator ==(Object other) {
@@ -288,8 +285,7 @@ class _UserManagementState extends UserManagementState {
         (other.runtimeType == runtimeType &&
             other is _UserManagementState &&
             (identical(other.status, status) || other.status == status) &&
-            const DeepCollectionEquality()
-                .equals(other._users, _users) &&
+            const DeepCollectionEquality().equals(other._users, _users) &&
             const DeepCollectionEquality().equals(other.error, error));
   }
 
@@ -309,13 +305,12 @@ class _UserManagementState extends UserManagementState {
 /// @nodoc
 abstract mixin class _$UserManagementStateCopyWith<$Res>
     implements $UserManagementStateCopyWith<$Res> {
-  factory _$UserManagementStateCopyWith(
-          _UserManagementState value, $Res Function(_UserManagementState) _then) =
+  factory _$UserManagementStateCopyWith(_UserManagementState value,
+          $Res Function(_UserManagementState) _then) =
       __$UserManagementStateCopyWithImpl;
   @override
   @useResult
-  $Res call(
-      {UiFlowStatus status, List<User> users, Object? error});
+  $Res call({UiFlowStatus status, List<User> users, Object? error});
 }
 
 /// @nodoc

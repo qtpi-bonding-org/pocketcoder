@@ -24,25 +24,28 @@ analyzer:
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
-plugins:
-  flutter_lint_generator:
-    git:
-      url: git@github-qtpi-bonding-org-flutter_lint_generator:qtpi-bonding-org/flutter_lint_generator.git
-      ref: 8537c34b324d88763967bc9006c9b4ed715e3127
-    diagnostics:
-      no_hardcoded_colors: true
-      no_hardcoded_font_size: true
-      no_hardcoded_font_family: true
-      no_raw_sizedbox_spacing: true
-      no_hardcoded_padding: true
-      no_inline_widget_composition_in_pages: true
-      no_hardcoded_strings: true
-      avoid_bloc_imports_in_widgets_dir: true
-      avoid_getit_in_adapters_dir: true
-      require_cubitfield_over_raw_bloc_apis: true
-      require_static_selector: true
-      cubit_field_selector_must_be_equatable: true
-      no_duplicate_cubitfield_keys: true
+# flutter_lint_generator's `plugins:` config lives in ../../analysis_options.yaml
+# (the pub workspace root) -- a plugins block only works at the workspace root,
+# not in a member package's own file (see client/pubspec.yaml's `workspace:` list).
+# plugins:
+#   flutter_lint_generator:
+#     git:
+#       url: git@github-qtpi-bonding-org-flutter_lint_generator:qtpi-bonding-org/flutter_lint_generator.git
+#       ref: 8537c34b324d88763967bc9006c9b4ed715e3127
+#     diagnostics:
+#       no_hardcoded_colors: true
+#       no_hardcoded_font_size: true
+#       no_hardcoded_font_family: true
+#       no_raw_sizedbox_spacing: true
+#       no_hardcoded_padding: true
+#       no_inline_widget_composition_in_pages: true
+#       no_hardcoded_strings: true
+#       avoid_bloc_imports_in_widgets_dir: true
+#       avoid_getit_in_adapters_dir: true
+#       require_cubitfield_over_raw_bloc_apis: true
+#       require_static_selector: true
+#       cubit_field_selector_must_be_equatable: true
+#       no_duplicate_cubitfield_keys: true
 
 linter:
   # The lint rules applied to this project can be customized in the
