@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
@@ -6,7 +7,7 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.da
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
-import 'package:pocketcoder_flutter/presentation/server_control/widgets/copy_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 
 void showAddUserDialog(
   BuildContext context,
@@ -57,12 +58,18 @@ void showRevealPasswordDialog(
               role: TextRole.body),
           VSpace.x2,
           TerminalText(password, role: TextRole.value),
-          VSpace.x1,
-          CopyButton(value: password),
         ],
       ),
       actions: [
         TerminalDialogActions(actions: [
+          TerminalActionSpec(context.l10n.serverControlCopy,
+              ActionKind.neutral, () async {
+            await Clipboard.setData(ClipboardData(text: password));
+            if (dialogContext.mounted) {
+              VimToast.show(dialogContext, context.l10n.serverControlCopied,
+                  type: VimToastType.success);
+            }
+          }),
           TerminalActionSpec(context.l10n.actionDone, ActionKind.primary,
               () => Navigator.of(dialogContext).pop()),
         ]),
