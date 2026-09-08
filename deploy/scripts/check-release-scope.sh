@@ -2,7 +2,9 @@
 set -eu
 
 # Diffs against the promoted commit, not origin/main -- pushed code can
-# sit unreleased indefinitely.
+# sit unreleased indefinitely. Cannot see flutter_aeroform or the Pro
+# deployment orchestrator; pocketcoder-pro's scripts/check-release-scope.sh
+# wraps this and adds those.
 
 ref=${1:-HEAD}
 channel=${2:-stable}
@@ -30,7 +32,9 @@ if ! git cat-file -e "$source_commit" 2>/dev/null; then
   exit 1
 fi
 
-nixos_changed=$(git diff --name-only "$source_commit..$ref" -- deploy/)
+drv_changed=$(git diff --name-only "$source_commit..$ref" -- deploy/nixos/ deploy/release-manager/)
+tooling_changed=$(git diff --name-only "$source_commit..$ref" -- deploy/ci/ deploy/scripts/)
+migrations_changed=$(git diff --name-only "$source_commit..$ref" -- server/pocketbase/pb_migrations/)
 backend_changed=$(git diff --name-only "$source_commit..$ref" -- server/ api/ contracts/)
 workers_changed=$(git diff --name-only "$source_commit..$ref" -- workers/)
 flutter_changed=$(git diff --name-only "$source_commit..$ref" -- client/)
@@ -39,30 +43,55 @@ report() {
   label=$1
   files=$2
   if [ -z "$files" ]; then
-    printf '%-10s no change\n' "$label"
+    printf '%-18s no change\n' "$label"
   else
     count=$(printf '%s\n' "$files" | wc -l | tr -d ' ')
-    printf '%-10s %s file(s) changed\n' "$label" "$count"
+    printf '%-18s %s file(s) changed\n' "$label" "$count"
     printf '%s\n' "$files" | sed 's/^/    /'
   fi
 }
 
-report "nixos:" "$nixos_changed"
+report "nixos/rel-mgr:" "$drv_changed"
+report "deploy tooling:" "$tooling_changed"
+report "pb migrations:" "$migrations_changed"
 report "backend:" "$backend_changed"
 report "workers:" "$workers_changed"
 report "flutter:" "$flutter_changed"
 echo
 
-if [ -n "$nixos_changed" ] || [ -n "$backend_changed" ]; then
-  echo "ALERT: nixos and/or backend changed since the promoted release."
-  echo "  -> rebuild + promote required (docs/ops-runbook.md section 6) before app builds go out."
-  exit_code=2
-elif [ -n "$workers_changed" ]; then
-  echo "workers changed -- deploy independently (wrangler), unrelated to the nixos/app pipeline."
-  exit_code=0
+if [ -n "$drv_changed" ]; then
+  verdict=FULL_PROVISION
+  echo "FULL_PROVISION: deploy/nixos or deploy/release-manager changed -- this moves"
+  echo "  the image drv hash. Run the full live-VPS provisioning suite once, on"
+  echo "  staging/nightly, before opening the staging->main PR (docs/ops-runbook.md"
+  echo "  section 6)."
+elif [ -n "$migrations_changed" ] || [ -n "$backend_changed" ]; then
+  verdict=UPGRADE_TEST_ONLY
+  echo "UPGRADE_TEST_ONLY: backend and/or a PocketBase migration changed, but"
+  echo "  deploy/nixos and deploy/release-manager did not. A fresh full provision"
+  echo "  re-tests code that hasn't moved -- run the cheaper"
+  echo "  run_vps_script_nixos_upgrade_test instead (real box, real accumulated"
+  echo "  data, minutes not hours)."
 else
-  echo "OK: nixos and backend match the promoted release. Safe to skip the release pipeline."
-  exit_code=0
+  verdict=NO_LIVE_VPS
+  echo "NO_LIVE_VPS: nothing in this repo's visible scope needs a live VPS."
+  echo "  (This script cannot see the flutter_aeroform pin or the Pro deployment"
+  echo "  orchestrator -- scripts/check-release-scope.sh in pocketcoder-pro checks"
+  echo "  those too and can still escalate this verdict.)"
 fi
 
-exit "$exit_code"
+if [ -n "$workers_changed" ]; then
+  echo "workers changed -- deploy independently (wrangler), unrelated to this verdict."
+fi
+if [ -n "$tooling_changed" ]; then
+  echo "deploy tooling (ci/scripts) changed -- review directly, not drv-hash-relevant."
+fi
+
+echo
+echo "VERDICT: $verdict"
+
+case "$verdict" in
+  FULL_PROVISION) exit 2 ;;
+  UPGRADE_TEST_ONLY) exit 1 ;;
+  NO_LIVE_VPS) exit 0 ;;
+esac
