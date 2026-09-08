@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart' as pocketbase;
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_flutter/domain/scheduler/friendly_schedule.dart';
+import 'package:pocketcoder_flutter/domain/scheduler/schedule_timezone.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/scheduler/schedule_owner_dao.dart';
 import 'package:pocketcoder_flutter/infrastructure/scheduler/scheduler_repository.dart';
@@ -103,6 +104,48 @@ void main() {
             minute: 0,
             daysOfWeek: {0, 6}),
       };
+
+      // Mirrors exactly what the "add schedule" dialog does
+      // (_cronFromLocal in scheduler_dialogs.dart, not itself exported):
+      // convert a schedule picked in *local* wall-clock time to UTC before
+      // building the cron string. Picking times right at the day boundary
+      // means this actually exercises the day-of-week shift on whatever
+      // timezone the test runner happens to be in.
+      final localCases = <String, FriendlySchedule>{
+        'local daily at 23:50': FriendlySchedule(
+            frequency: ScheduleFrequency.daily, hour: 23, minute: 50),
+        'local daily at 00:10': FriendlySchedule(
+            frequency: ScheduleFrequency.daily, hour: 0, minute: 10),
+        'local weekly Sat 23:50': FriendlySchedule(
+            frequency: ScheduleFrequency.weekly,
+            hour: 23,
+            minute: 50,
+            daysOfWeek: {6}),
+        'local weekly Sun 00:10': FriendlySchedule(
+            frequency: ScheduleFrequency.weekly,
+            hour: 0,
+            minute: 10,
+            daysOfWeek: {0}),
+      };
+      for (final entry in localCases.entries) {
+        final local = entry.value;
+        final utc = local.frequency == ScheduleFrequency.hourly
+            ? local
+            : () {
+                final converted = localToUtc(ScheduleLocalTime(
+                  hour: local.hour,
+                  minute: local.minute,
+                  daysOfWeek: local.daysOfWeek,
+                ));
+                return FriendlySchedule(
+                  frequency: local.frequency,
+                  hour: converted.hour,
+                  minute: converted.minute,
+                  daysOfWeek: converted.daysOfWeek,
+                );
+              }();
+        cases[entry.key] = utc;
+      }
 
       for (final entry in cases.entries) {
         final cron = entry.value.toCron();
