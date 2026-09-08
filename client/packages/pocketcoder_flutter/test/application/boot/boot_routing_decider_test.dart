@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/boot/boot_routing_decider.dart';
+import 'package:pocketcoder_flutter/application/boot/boot_navigation_parts.dart';
 import 'package:pocketcoder_flutter/domain/auth/auth_session_coordinator.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_instance_existence_resolver.dart';
@@ -188,6 +189,63 @@ class FakeInstanceExistenceResolver implements IInstanceExistenceResolver {
   }
 }
 
+/// Retains each bundle's fake sources so the helpers below can drive them.
+/// BootNavigationParts deliberately does not expose its inputs.
+final Map<BootNavigationParts, FakeAuthRepository> _partAuth =
+    <BootNavigationParts, FakeAuthRepository>{};
+final Map<BootNavigationParts, FakeReadiness> _partReadiness =
+    <BootNavigationParts, FakeReadiness>{};
+
+BootNavigationParts buildParts({
+  FakeReadiness? readiness,
+  FakeHarness? harness,
+  IInstanceExistenceResolver? existenceResolver,
+  IDeploymentAuthStatus? deploymentAuthStatus,
+}) {
+  final sourceReadiness = readiness ??
+      FakeReadiness(const ServerReadinessSnapshot(
+        status: ServerReadinessStatus.ready,
+        instanceId: 'i1',
+      ));
+  final repository = FakeAuthRepository();
+  final parts = BootNavigationParts(
+    readinessCheck: sourceReadiness,
+    authCoordinator: AuthSessionCoordinator(repository),
+    harnessAuthRepository: harness ?? FakeHarness(),
+    instanceExistenceResolver: existenceResolver,
+    deploymentAuthStatus: deploymentAuthStatus,
+    unknownExistenceRetryDelay: Duration.zero,
+  );
+  _partAuth[parts] = repository;
+  _partReadiness[parts] = sourceReadiness;
+  return parts;
+}
+
+/// Publishes a session change and waits for it to reach the bundle.
+///
+/// The await is load-bearing. `signInGeneration` is bumped by
+/// BootNavigationParts' own listener on the signed-out to signed-in edge,
+/// which arrives asynchronously through `sessionChanges`; without the wait,
+/// two back-to-back calls collapse into a single delivery and the bundle
+/// never observes the edge. Nothing here reads a part -- reading between
+/// transitions is what would make the caller's assertion vacuous.
+Future<void> setSignedIn(BootNavigationParts parts, bool signedIn) async {
+  final repository = _partAuth[parts];
+  if (repository == null) return;
+  repository.authenticated = signedIn;
+  repository.publish();
+  await Future<void>.delayed(Duration.zero);
+}
+
+/// Emits a readiness snapshot through the bundle's own source.
+Future<void> emitReadiness(BootNavigationParts parts) async {
+  _partReadiness[parts]?.set(const ServerReadinessSnapshot(
+    status: ServerReadinessStatus.ready,
+    instanceId: 'i1',
+  ));
+  await Future<void>.delayed(Duration.zero);
+}
+
 class FakeDeploymentAuthStatus implements IDeploymentAuthStatus {
   FakeDeploymentAuthStatus([this._current]);
   DeploymentAuthStatusSnapshot? _current;
@@ -227,6 +285,22 @@ class HarnessTest {
   late final FakeHarness harness;
   late final GoRouter router;
   late final BootRoutingDecider decider;
+  /// Every route the router settled on, in order, without consecutive
+  /// duplicates. This is the observable behaviour the migration must preserve.
+  final List<String> journey = <String>[];
+
+  void _recordJourney() {
+    final String? name;
+    try {
+      name = router.state.name;
+    } on StateError {
+      return;
+    }
+    if (name == null) return;
+    if (journey.isNotEmpty && journey.last == name) return;
+    journey.add(name);
+  }
+
   HarnessTest(
       {ServerReadinessStatus status = ServerReadinessStatus.ready,
       String? instanceId,
@@ -240,6 +314,8 @@ class HarnessTest {
     auth = AuthSessionCoordinator(authRepository);
     harness = FakeHarness(connected: harnessConnected);
     router = makeRouter();
+    router.routerDelegate.addListener(_recordJourney);
+    _recordJourney();
     decider = BootRoutingDecider(
         readinessCheck: readiness,
         authCoordinator: auth,
@@ -290,6 +366,12 @@ void main() {
             instanceId: 'i', phase: DeploymentAuthPhase.signingIn));
     final t = HarnessTest(instanceId: 'i', deploymentAuthStatus: authStatus);
     await t.start(tester);
+    expect(t.router.state.name, RouteNames.boot);
+
+    // The boot floor is a deadline armed at launch, so it is still pending
+    // here. Letting it elapse must shake nothing loose: Q2 is held by the
+    // in-flight deployment auth, not by the floor.
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
     expect(t.router.state.name, RouteNames.boot);
   });
 
@@ -491,6 +573,11 @@ void main() {
       'navigation yet, not a guess to be corrected later', (tester) async {
     final t = HarnessTest(status: ServerReadinessStatus.resolving);
     await t.start(tester);
+    expect(t.router.state.name, RouteNames.boot);
+
+    // The floor elapsing is not an answer to Q1. Resolving still means wait,
+    // so the boot screen holds rather than guessing at a destination.
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
     expect(t.router.state.name, RouteNames.boot);
   });
   testWidgets(
