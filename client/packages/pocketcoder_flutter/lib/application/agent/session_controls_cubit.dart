@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:acp_dart/acp_dart.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 
@@ -156,6 +157,11 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
       'ollamaModelOverride': 'ollama_model_override',
       'workspaceOverride': 'workspace_override',
     };
+
+    final previousSessionState = state.sessionState;
+    final optimistic = _withOptimisticOptionValue(previousSessionState, req);
+    if (optimistic != null) emit(state.copyWith(sessionState: optimistic));
+
     await tryOperation(() async {
       if (state.sessionState.isRunning) {
         await _repository.setConfigOption(chatId, req);
@@ -187,6 +193,32 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
         lastOperation: SessionControlsOperation.setOption,
       );
     });
+
+    if (optimistic != null && state.status == UiFlowStatus.failure) {
+      emit(state.copyWith(sessionState: previousSessionState));
+    }
+  }
+
+  SessionState? _withOptimisticOptionValue(
+    SessionState sessionState,
+    SetSessionConfigOptionRequest req,
+  ) {
+    final config = sessionState.config;
+    final options = config?['options'];
+    if (config == null || options is! List) return null;
+
+    var matched = false;
+    final updatedOptions = <dynamic>[];
+    for (final option in options) {
+      if (option is Map && option['id'] == req.configId) {
+        matched = true;
+        updatedOptions.add({...option, 'currentValue': req.value});
+      } else {
+        updatedOptions.add(option);
+      }
+    }
+    if (!matched) return null;
+    return sessionState.copyWith(config: {...config, 'options': updatedOptions});
   }
 
   /// `harness_model_override` and `ollama_model_override` are mutually

@@ -788,4 +788,88 @@ void main() {
       expect(result.map((hm) => hm.id), ['hm-2']);
     });
   });
+
+  group('setOption optimistic update', () {
+    test(
+        'the picked value shows immediately, before the persist resolves',
+        () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => harnessModelDao.getFullList(
+              filter: 'harness = "harness-1" && '
+                  'harness_model_id = "anthropic/claude-opus-4"'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                  id: 'hm-opus',
+                  harness: 'harness-1',
+                  model: 'model-rec-2',
+                  harnessModelId: 'anthropic/claude-opus-4',
+                ),
+              ]);
+      when(() => chatDao.save('chat-1', {
+            'harness_model_override': 'hm-opus',
+            'ollama_model_override': '',
+          })).thenAnswer((_) async => chatWithHarness);
+
+      cubit.open('chat-1');
+      await _settle();
+      repo.controllerFor('chat-1').add(
+            Conversation(
+                sessionState: _idleConfigWithActiveProvider('anthropic')),
+          );
+      await _settle();
+
+      final pending = cubit.setOption(SetSessionConfigOptionRequest(
+        sessionId: 'chat-1',
+        configId: 'model',
+        value: 'anthropic/claude-opus-4',
+      ));
+
+      // Before the persist's awaited DAO calls resolve, the optimistic
+      // emit has already happened synchronously.
+      final options = cubit.state.config?['options'] as List;
+      final modelOption =
+          options.firstWhere((o) => (o as Map)['id'] == 'model') as Map;
+      expect(modelOption['currentValue'], 'anthropic/claude-opus-4');
+
+      await pending;
+
+      final settledOptions = cubit.state.config?['options'] as List;
+      final settledModelOption = settledOptions
+          .firstWhere((o) => (o as Map)['id'] == 'model') as Map;
+      expect(settledModelOption['currentValue'], 'anthropic/claude-opus-4');
+      expect(cubit.state.status, UiFlowStatus.success);
+    });
+
+    test('rolls back the optimistic value when the persist fails', () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => harnessModelDao.getFullList(
+              filter: 'harness = "harness-1" && '
+                  'harness_model_id = "no-such-model"'))
+          .thenAnswer((_) async => const []);
+      when(() => harnesseDao.getOne('harness-1'))
+          .thenAnswer((_) async => nonOllamaHarness);
+
+      cubit.open('chat-1');
+      await _settle();
+      repo.controllerFor('chat-1').add(
+            Conversation(
+                sessionState: _idleConfigWithActiveProvider('anthropic')),
+          );
+      await _settle();
+
+      await cubit.setOption(SetSessionConfigOptionRequest(
+        sessionId: 'chat-1',
+        configId: 'model',
+        value: 'no-such-model',
+      ));
+
+      expect(cubit.state.status, UiFlowStatus.failure);
+      final options = cubit.state.config?['options'] as List;
+      final modelOption =
+          options.firstWhere((o) => (o as Map)['id'] == 'model') as Map;
+      expect(modelOption['currentValue'], 'placeholder');
+    });
+  });
 }
