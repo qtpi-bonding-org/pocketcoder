@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_bubble.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_gaze_scope.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/scanline_widget.dart';
 
 /// The app's very first screen -- deliberately outside PocketCoderShell's/
@@ -31,75 +32,78 @@ class BootView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
-    return Scaffold(
-      backgroundColor: colors.surface,
-      body: ScanlineWidget(
-        child: Stack(
-          children: [
-            AnimatedOpacity(
-              duration: const Duration(seconds: 1),
-              opacity: logsDimmed ? 0.2 : 1.0,
-              child: ListView.builder(
-                controller: scrollController,
-                padding: EdgeInsets.all(AppSizes.space * 2),
-                itemCount: logs.length,
-                itemBuilder: (context, index) {
-                  final logEntry = logs[index];
-                  Color? textColor = colors.primary;
-                  if (logEntry.startsWith('[!]') ||
-                      logEntry.contains('ERROR')) {
-                    textColor = context.terminalColors.warning;
-                  } else if (logEntry.startsWith('[sys]')) {
-                    textColor = colors.tertiary;
-                  } else if (logEntry.startsWith('[net]')) {
-                    textColor = colors.secondary;
-                  }
-                  return Text(logEntry,
-                      style: context.textTheme.bodySmall
-                          ?.copyWith(color: textColor));
-                },
+    return PocoGazeScope(
+      child: Scaffold(
+        backgroundColor: colors.surface,
+        body: ScanlineWidget(
+          child: Stack(
+            children: [
+              AnimatedOpacity(
+                duration: const Duration(seconds: 1),
+                opacity: logsDimmed ? 0.2 : 1.0,
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: EdgeInsets.all(AppSizes.space * 2),
+                  itemCount: logs.length,
+                  itemBuilder: (context, index) {
+                    final logEntry = logs[index];
+                    Color? textColor = colors.primary;
+                    if (logEntry.startsWith('[!]') ||
+                        logEntry.contains('ERROR')) {
+                      textColor = context.terminalColors.warning;
+                    } else if (logEntry.startsWith('[sys]')) {
+                      textColor = colors.tertiary;
+                    } else if (logEntry.startsWith('[net]')) {
+                      textColor = colors.secondary;
+                    }
+                    return Text(logEntry,
+                        style: context.textTheme.bodySmall
+                            ?.copyWith(color: textColor));
+                  },
+                ),
               ),
-            ),
-            if (pocoVisible)
-              Center(
-                child: ConstrainedBox(
-                  constraints:
-                      BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Opaque backdrop so the dimmed log wall behind it
-                      // doesn't bleed through the face glyph. Poco is sized
-                      // for the boot screen's empty middle, so on a short
-                      // viewport he scales down rather than overflowing.
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Container(
-                            color: colors.surface,
-                            child: PocoFace(
-                              sequence: pocoState.sequence,
-                              fontSize: 64.0,
+              if (pocoVisible)
+                Center(
+                  child: ConstrainedBox(
+                    constraints:
+                        BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Opaque backdrop so the dimmed log wall behind it
+                        // doesn't bleed through the face glyph. Poco is
+                        // sized for the boot screen's empty middle, so on a
+                        // short viewport he scales down rather than
+                        // overflowing.
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Container(
+                              color: colors.surface,
+                              child: PocoFace(
+                                sequence: pocoState.sequence,
+                                fontSize: 64.0,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      VSpace.x4,
-                      // The message needs the same opaque backdrop as the
-                      // face: the dimmed log wall runs behind both.
-                      Container(
-                        color: colors.surface,
-                        child: PocoBubble(
-                            message: pocoState.message,
-                            history: pocoState.history,
-                            showFace: false),
-                      ),
-                    ],
+                        VSpace.x4,
+                        // The message needs the same opaque backdrop as the
+                        // face: the dimmed log wall runs behind both.
+                        Container(
+                          color: colors.surface,
+                          child: PocoBubble(
+                              message: pocoState.message,
+                              history: pocoState.history,
+                              showFace: false),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

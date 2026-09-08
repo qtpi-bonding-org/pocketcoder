@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ascii_art.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/poco_animator.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/poco_gaze_scope.dart';
 
 void main() {
   String faceText(WidgetTester tester) =>
@@ -71,5 +72,98 @@ void main() {
     expect(changed, isTrue,
         reason: 'legacy behavior keeps cycling forever when no turn state '
             'is provided');
+  });
+
+  testWidgets('tapping to the right of Poco while idle looks right',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+          body: PocoGazeScope(child: Center(child: PocoAnimator()))),
+    ));
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center + const Offset(200, 0));
+    await tester.pump();
+
+    expect(faceText(tester), PocoExpression.lookRight);
+  });
+
+  testWidgets('tapping to the left of Poco while idle looks left',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+          body: PocoGazeScope(child: Center(child: PocoAnimator()))),
+    ));
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center - const Offset(200, 0));
+    await tester.pump();
+
+    expect(faceText(tester), PocoExpression.lookLeft);
+  });
+
+  testWidgets('tapping close to Poco while idle looks neutral, not left/right',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+          body: PocoGazeScope(child: Center(child: PocoAnimator()))),
+    ));
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center + const Offset(5, 0));
+    await tester.pump();
+
+    expect(faceText(tester), PocoExpression.awake);
+  });
+
+  testWidgets('a tap does not override the thinking face', (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+          body: PocoGazeScope(
+              child: Center(child: PocoAnimator(isAgentTurn: true)))),
+    ));
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center + const Offset(200, 0));
+    await tester.pump();
+
+    expect(faceText(tester), PocoExpression.thinking,
+        reason: 'thinking status must not be hidden by a tap-look override');
+  });
+
+  testWidgets('a tap does not override an active scripted sequence',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+          body: PocoGazeScope(
+              child: Center(
+                  child: PocoAnimator(
+        sequence: [(PocoExpression.sad, 10000)],
+      )))),
+    ));
+    expect(faceText(tester), PocoExpression.sad);
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center + const Offset(200, 0));
+    await tester.pump();
+
+    expect(faceText(tester), PocoExpression.sad,
+        reason: 'a scripted onboarding beat must not be hidden by a tap');
+  });
+
+  testWidgets('with no PocoGazeScope ancestor, a tap is a no-op',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: Center(child: PocoAnimator())),
+    ));
+    expect(PocoExpression.greenHappy, contains(faceText(tester)));
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center + const Offset(200, 0));
+    await tester.pump();
+
+    expect(PocoExpression.greenHappy, contains(faceText(tester)),
+        reason: 'no scope means no gaze tracking, same as before this '
+            'feature existed');
   });
 }
