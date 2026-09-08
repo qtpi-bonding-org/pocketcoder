@@ -144,6 +144,77 @@ void main() {
     });
   });
 
+  testWidgets(
+      'renders the model chip last regardless of its position in config, '
+      'so the shorter options can share a line', (tester) async {
+    const config = {
+      'options': [
+        {'id': 'provider', 'name': 'provider', 'kind': 'select',
+         'currentValue': 'openrouter',
+         'options': [{'value': 'openrouter', 'label': 'openrouter'}]},
+        {'id': 'model', 'name': 'model', 'kind': 'select',
+         'currentValue': 'anthropic/claude-haiku-4.5'},
+        {'id': 'mode', 'name': 'mode', 'kind': 'select',
+         'currentValue': 'approve',
+         'options': [{'value': 'approve', 'label': 'approve'}]},
+      ],
+    };
+    await tester.pumpWidget(_wrap(ConfigPicker(
+      config: config,
+      onSetOption: (_) {},
+      onSearchModels: () async => const [],
+    )));
+
+    final chips = tester
+        .widgetList<ConfigOptionChip>(find.byType(ConfigOptionChip))
+        .toList();
+    expect(chips.map((c) => c.label), ['provider', 'mode', 'model']);
+  });
+
+  group('thinking effort truncation', () {
+    testWidgets('a short value like "off" renders untruncated',
+        (tester) async {
+      const config = {
+        'options': [
+          {'id': 'thinking_effort', 'name': 'thinking effort', 'kind': 'select',
+           'currentValue': 'off',
+           'options': [{'value': 'off', 'label': 'off'}]},
+        ],
+      };
+      await tester.pumpWidget(
+        _wrap(ConfigPicker(config: config, onSetOption: (_) {})),
+      );
+
+      expect(find.text('off'), findsOneWidget);
+    });
+
+    testWidgets('an unusually long value gets ellipsized, not left to wrap',
+        (tester) async {
+      const config = {
+        'options': [
+          {'id': 'thinking_effort', 'name': 'thinking effort', 'kind': 'select',
+           'currentValue': 'extremely-high-reasoning-effort',
+           'options': [
+             {'value': 'extremely-high-reasoning-effort',
+              'label': 'extremely-high-reasoning-effort'},
+           ]},
+        ],
+      };
+      await tester.pumpWidget(
+        _wrap(ConfigPicker(config: config, onSetOption: (_) {})),
+      );
+
+      // Text's `data` always carries the full string -- overflow/maxLines
+      // control the *painted* result, not what's findable by text.
+      final text = tester.widget<Text>(find.descendant(
+        of: find.byType(ConfigOptionChip),
+        matching: find.byType(Text),
+      ).first);
+      expect(text.overflow, TextOverflow.ellipsis);
+      expect(text.maxLines, 1);
+    });
+  });
+
   testWidgets('lays every chip out in a single Wrap, not one row each',
       (tester) async {
     const config = {

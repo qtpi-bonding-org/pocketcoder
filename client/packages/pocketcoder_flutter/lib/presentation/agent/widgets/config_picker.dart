@@ -26,6 +26,13 @@ class ConfigPicker extends StatelessWidget {
             .toList() ??
         const <Map<String, dynamic>>[];
     if (options.isEmpty) return const SizedBox.shrink();
+    // The model id is usually the longest value by far -- moving it to the
+    // end lets the short options (provider/mode/thinking effort/...) share
+    // a line instead of it splitting them across two.
+    final ordered = [
+      ...options.where((o) => o['id'] != 'model'),
+      ...options.where((o) => o['id'] == 'model'),
+    ];
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: AppSizes.ch * 2,
@@ -36,7 +43,7 @@ class ConfigPicker extends StatelessWidget {
         spacing: AppSizes.space,
         runSpacing: AppSizes.space * .25,
         children: [
-          ...options.map((o) => _option(context, o)),
+          ...ordered.map((o) => _option(context, o)),
         ],
       ),
     );
@@ -79,6 +86,7 @@ class ConfigPicker extends StatelessWidget {
           label: name,
           value: displayValue,
           affordance: RowAffordance.expand,
+          maxValueChars: id == 'thinking_effort' ? 8 : null,
           onTap: () => showDialog<String>(
                 context: context,
                 builder: (_) => SearchablePickerDialog<String>(
@@ -165,12 +173,15 @@ class ConfigOptionChip extends StatefulWidget {
     required this.value,
     this.affordance,
     this.onTap,
+    this.maxValueChars,
   });
 
   final String label;
   final String? value;
   final RowAffordance? affordance;
   final VoidCallback? onTap;
+
+  final int? maxValueChars;
 
   @override
   State<ConfigOptionChip> createState() => _ConfigOptionChipState();
@@ -182,8 +193,10 @@ class _ConfigOptionChipState extends State<ConfigOptionChip> {
   @override
   Widget build(BuildContext context) {
     final reversed = _pressed;
-    Widget text(String value, TextRole role) {
-      final terminalText = TerminalText(value, role: role);
+    Widget text(String value, TextRole role,
+        {int? maxLines, TextOverflow? overflow}) {
+      final terminalText = TerminalText(value,
+          role: role, maxLines: maxLines, overflow: overflow);
       if (!reversed) return terminalText;
       return ColorFiltered(
         colorFilter:
@@ -193,8 +206,17 @@ class _ConfigOptionChipState extends State<ConfigOptionChip> {
     }
 
     final affordance = widget.affordance;
+    final maxChars = widget.maxValueChars;
+    final rawValue = widget.value ?? '';
+    final valueWidget = maxChars == null || rawValue.length <= maxChars
+        ? text(rawValue, TextRole.value)
+        : ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: AppSizes.ch * maxChars),
+            child: text(rawValue, TextRole.value,
+                maxLines: 1, overflow: TextOverflow.ellipsis),
+          );
     final content = Row(mainAxisSize: MainAxisSize.min, children: [
-      text(widget.value ?? '', TextRole.value),
+      valueWidget,
       if (affordance != null && affordance != RowAffordance.none) ...[
         SizedBox(width: AppSizes.space * .5),
         text(affordance.glyph, TextRole.value),
