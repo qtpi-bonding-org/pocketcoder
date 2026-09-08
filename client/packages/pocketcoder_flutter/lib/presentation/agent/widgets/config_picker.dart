@@ -113,7 +113,10 @@ class ConfigPicker extends StatelessWidget {
   }) =>
       ConfigOptionChip(
           label: name,
-          value: current?.isEmpty ?? true ? '--' : current,
+          value: switch (current) {
+            null || '' => '--',
+            final id => _afterSlash(id),
+          },
           affordance: RowAffordance.expand,
           onTap: () async {
             final search = onSearchModels;
@@ -148,6 +151,11 @@ class ConfigPicker extends StatelessWidget {
                     noMatchesLabel: dialogContext.l10n.agentModelSearchNoMatches));
             if (selected != null) submit(selected.harnessModelId);
           });
+
+  String _afterSlash(String harnessModelId) {
+    final slash = harnessModelId.lastIndexOf('/');
+    return slash < 0 ? harnessModelId : harnessModelId.substring(slash + 1);
+  }
 }
 
 class ConfigOptionChip extends StatefulWidget {
@@ -186,8 +194,6 @@ class _ConfigOptionChipState extends State<ConfigOptionChip> {
 
     final affordance = widget.affordance;
     final content = Row(mainAxisSize: MainAxisSize.min, children: [
-      text('${widget.label}:', TextRole.label),
-      SizedBox(width: AppSizes.space * .5),
       text(widget.value ?? '', TextRole.value),
       if (affordance != null && affordance != RowAffordance.none) ...[
         SizedBox(width: AppSizes.space * .5),
@@ -195,21 +201,27 @@ class _ConfigOptionChipState extends State<ConfigOptionChip> {
       ],
     ]);
     final onTap = widget.onTap;
-    if (onTap == null) return content;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: Container(
-        color: reversed ? TextRole.value.color : Colors.transparent,
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSizes.space * .5,
-          vertical: AppSizes.space * .25,
-        ),
-        child: content,
+    final chip = Container(
+      color: reversed ? TextRole.value.color : Colors.transparent,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSizes.space * .5,
+        vertical: AppSizes.space * .25,
       ),
+      child: content,
+    );
+    return Semantics(
+      label: widget.label,
+      value: widget.value,
+      child: onTap == null
+          ? chip
+          : GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              onTapDown: (_) => setState(() => _pressed = true),
+              onTapUp: (_) => setState(() => _pressed = false),
+              onTapCancel: () => setState(() => _pressed = false),
+              child: chip,
+            ),
     );
   }
 }

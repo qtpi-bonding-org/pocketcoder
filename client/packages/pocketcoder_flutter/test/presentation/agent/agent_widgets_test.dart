@@ -45,8 +45,8 @@ void main() {
       },
       onSetOption: (value) => request = value,
     )));
-    expect(find.text('Auto Approve:'), findsOneWidget);
-    expect(find.text('Preset:'), findsOneWidget);
+    expect(find.text('off'), findsOneWidget);
+    expect(find.text('safe'), findsOneWidget);
     expect(find.byType(Switch), findsNothing);
     await tester.tap(find.text('off'));
     expect(request?.configId, 'auto-approve');

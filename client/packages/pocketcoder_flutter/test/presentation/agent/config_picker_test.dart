@@ -123,6 +123,25 @@ void main() {
 
       expect(find.text('b'), findsOneWidget);
     });
+
+    testWidgets(
+        'shows only what follows the last "/" of the current model id, '
+        'not the full harnessModelId', (tester) async {
+      const config = {
+        'options': [
+          {'id': 'model', 'name': 'model', 'kind': 'select',
+           'currentValue': 'anthropic/claude-haiku-4.5'},
+        ],
+      };
+      await tester.pumpWidget(_wrap(ConfigPicker(
+        config: config,
+        onSetOption: (_) {},
+        onSearchModels: () async => models,
+      )));
+
+      expect(find.text('claude-haiku-4.5'), findsOneWidget);
+      expect(find.text('anthropic/claude-haiku-4.5'), findsNothing);
+    });
   });
 
   testWidgets('lays every chip out in a single Wrap, not one row each',
@@ -166,5 +185,19 @@ void main() {
 
     expect(submitted?.configId, 'auto_approve');
     expect(submitted?.value, 'true');
+  });
+
+  testWidgets(
+      'chips show only the value, not the label -- the label survives as a '
+      'Semantics announcement instead', (tester) async {
+    await tester.pumpWidget(
+      _wrap(ConfigPicker(config: _config, onSetOption: (_) {})),
+    );
+
+    expect(find.text('model'), findsNothing);
+    expect(find.text('a'), findsOneWidget);
+    expect(
+        tester.getSemantics(find.byType(ConfigOptionChip)).label,
+        contains('model'));
   });
 }
