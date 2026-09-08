@@ -102,14 +102,25 @@ class _PocoAnimatorState extends State<PocoAnimator> {
     _scheduleNextFrame();
   }
 
-  String? _gazeLookFor(Offset? tapPosition) {
+  /// Mood travels with the glyph since `lookUp`'s glyph collides with `happy`.
+  (String, PocoMood)? _gazeLookFor(Offset? tapPosition) {
     if (tapPosition == null) return null;
     final box = _faceKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return null;
     final center = box.localToGlobal(box.size.center(Offset.zero));
     final dx = tapPosition.dx - center.dx;
-    if (dx.abs() < _gazeThreshold) return PocoExpression.awake;
-    return dx > 0 ? PocoExpression.lookRight : PocoExpression.lookLeft;
+    final dy = tapPosition.dy - center.dy;
+    if (dx.abs() < _gazeThreshold && dy.abs() < _gazeThreshold) {
+      return (PocoExpression.awake, PocoMood.awake);
+    }
+    if (dx.abs() >= dy.abs()) {
+      return dx > 0
+          ? (PocoExpression.lookRight, PocoMood.lookRight)
+          : (PocoExpression.lookLeft, PocoMood.lookLeft);
+    }
+    return dy > 0
+        ? (PocoExpression.lookDown, PocoMood.lookDown)
+        : (PocoExpression.lookUp, PocoMood.lookUp);
   }
 
   Widget _buildFace(BuildContext context, Offset? tapPosition) {
@@ -118,10 +129,11 @@ class _PocoAnimatorState extends State<PocoAnimator> {
     final gazeLook = _isRandomIdle ? _gazeLookFor(tapPosition) : null;
     return AsciiFace(
         key: _faceKey,
-        expression: gazeLook ?? _currentFace,
+        expression: gazeLook?.$1 ?? _currentFace,
         fontSize: widget.fontSize ?? AppSizes.fontPoco,
         color: widget.color,
         mood: widget.mood ??
+            gazeLook?.$2 ??
             (_isTurnDriven && widget.isAgentTurn! ? PocoMood.thinking : null),
         posture: widget.posture ?? PocoPostureScope.of(context));
   }

@@ -32,7 +32,7 @@ if ! git cat-file -e "$source_commit" 2>/dev/null; then
   exit 1
 fi
 
-drv_changed=$(git diff --name-only "$source_commit..$ref" -- deploy/nixos/ deploy/release-manager/)
+image_changed=$(git diff --name-only "$source_commit..$ref" -- deploy/nixos/ deploy/release-manager/)
 tooling_changed=$(git diff --name-only "$source_commit..$ref" -- deploy/ci/ deploy/scripts/)
 migrations_changed=$(git diff --name-only "$source_commit..$ref" -- server/pocketbase/pb_migrations/)
 backend_changed=$(git diff --name-only "$source_commit..$ref" -- server/ api/ contracts/)
@@ -51,7 +51,7 @@ report() {
   fi
 }
 
-report "nixos/rel-mgr:" "$drv_changed"
+report "nixos/rel-mgr:" "$image_changed"
 report "deploy tooling:" "$tooling_changed"
 report "pb migrations:" "$migrations_changed"
 report "backend:" "$backend_changed"
@@ -59,7 +59,7 @@ report "workers:" "$workers_changed"
 report "flutter:" "$flutter_changed"
 echo
 
-if [ -n "$drv_changed" ]; then
+if [ -n "$image_changed" ]; then
   verdict=FULL_PROVISION
   echo "FULL_PROVISION: deploy/nixos or deploy/release-manager changed -- this moves"
   echo "  the image drv hash. Run the full live-VPS provisioning suite once, on"
@@ -68,13 +68,15 @@ if [ -n "$drv_changed" ]; then
 elif [ -n "$migrations_changed" ] || [ -n "$backend_changed" ]; then
   verdict=UPGRADE_TEST_ONLY
   echo "UPGRADE_TEST_ONLY: backend and/or a PocketBase migration changed, but"
-  echo "  deploy/nixos and deploy/release-manager did not. A fresh full provision"
-  echo "  re-tests code that hasn't moved -- run the cheaper"
-  echo "  run_vps_script_nixos_upgrade_test instead (real box, real accumulated"
-  echo "  data, minutes not hours)."
+  echo "  deploy/nixos and deploy/release-manager did not. Run"
+  echo "  run_vps_script_nixos_full_suite -- it provisions a box on the current"
+  echo "  release, builds+promotes this commit to nightly-testing, runs the"
+  echo "  in-place update, and verifies data survives. There is no cheaper"
+  echo "  substitute that actually exercises the update path."
 else
-  verdict=NO_LIVE_VPS
-  echo "NO_LIVE_VPS: nothing in this repo's visible scope needs a live VPS."
+  verdict=SKIP_VPS_TEST
+  echo "SKIP_VPS_TEST: nothing in this repo's visible scope needs a live-VPS test"
+  echo "  before promoting."
   echo "  (This script cannot see the flutter_aeroform pin or the Pro deployment"
   echo "  orchestrator -- scripts/check-release-scope.sh in pocketcoder-pro checks"
   echo "  those too and can still escalate this verdict.)"
@@ -93,5 +95,5 @@ echo "VERDICT: $verdict"
 case "$verdict" in
   FULL_PROVISION) exit 2 ;;
   UPGRADE_TEST_ONLY) exit 1 ;;
-  NO_LIVE_VPS) exit 0 ;;
+  SKIP_VPS_TEST) exit 0 ;;
 esac

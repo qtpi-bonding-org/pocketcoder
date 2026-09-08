@@ -13,7 +13,7 @@ FROM node:22-bookworm-slim
 ARG ACP_AGENT_PACKAGE
 ARG AGENT_CLI_PACKAGE
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates \
+    && apt-get install --yes --no-install-recommends ca-certificates openssh-client \
     && rm -rf /var/lib/apt/lists/* \
     && test -n "$ACP_AGENT_PACKAGE" \
     && if [ -n "$AGENT_CLI_PACKAGE" ]; then \

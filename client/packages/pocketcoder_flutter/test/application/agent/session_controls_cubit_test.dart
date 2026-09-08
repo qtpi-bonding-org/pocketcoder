@@ -705,5 +705,213 @@ void main() {
       expect(result, isEmpty);
       verifyNever(() => chatDao.getOne(any()));
     });
+
+    test('open() prefetches the catalog instead of waiting for the first call',
+        () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-1',
+                    harness: 'harness-1',
+                    model: 'm-1',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+              ]);
+
+      cubit.open('chat-1');
+      await _settle();
+
+      verify(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .called(1);
+    });
+
+    test('caches the prefetched catalog -- a later call does not re-query',
+        () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-1',
+                    harness: 'harness-1',
+                    model: 'm-1',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+              ]);
+
+      cubit.open('chat-1');
+      await _settle();
+      final first = await cubit.searchableModels();
+      final second = await cubit.searchableModels();
+
+      expect(first.map((hm) => hm.id), ['hm-1']);
+      expect(second.map((hm) => hm.id), ['hm-1']);
+      verify(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .called(1);
+    });
+
+    test('re-opening on a different chat refetches for the new harness',
+        () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-1'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-1',
+                    harness: 'harness-1',
+                    model: 'm-1',
+                    harnessModelId: 'anthropic/claude-sonnet-4.5'),
+              ]);
+      const chatOnOtherHarness = Chat(
+        id: 'chat-2',
+        title: 'Chat 2',
+        user: 'user-1',
+        harness: 'harness-2',
+      );
+      when(() => chatDao.getOne('chat-2'))
+          .thenAnswer((_) async => chatOnOtherHarness);
+      when(() => modelSearchRepository.modelsAvailableFor('harness-2'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                    id: 'hm-2',
+                    harness: 'harness-2',
+                    model: 'm-2',
+                    harnessModelId: 'openai/gpt-5'),
+              ]);
+
+      cubit.open('chat-1');
+      await _settle();
+      cubit.open('chat-2');
+      await _settle();
+      final result = await cubit.searchableModels();
+
+      expect(result.map((hm) => hm.id), ['hm-2']);
+    });
+  });
+
+  group('setOption optimistic update', () {
+    test(
+        'the picked value shows immediately, before the persist resolves',
+        () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => harnessModelDao.getFullList(
+              filter: 'harness = "harness-1" && '
+                  'harness_model_id = "anthropic/claude-opus-4"'))
+          .thenAnswer((_) async => const [
+                HarnessModel(
+                  id: 'hm-opus',
+                  harness: 'harness-1',
+                  model: 'model-rec-2',
+                  harnessModelId: 'anthropic/claude-opus-4',
+                ),
+              ]);
+      when(() => chatDao.save('chat-1', {
+            'harness_model_override': 'hm-opus',
+            'ollama_model_override': '',
+          })).thenAnswer((_) async => chatWithHarness);
+
+      cubit.open('chat-1');
+      await _settle();
+      repo.controllerFor('chat-1').add(
+            Conversation(
+                sessionState: _idleConfigWithActiveProvider('anthropic')),
+          );
+      await _settle();
+
+      final pending = cubit.setOption(SetSessionConfigOptionRequest(
+        sessionId: 'chat-1',
+        configId: 'model',
+        value: 'anthropic/claude-opus-4',
+      ));
+
+      // Before the persist's awaited DAO calls resolve, the optimistic
+      // emit has already happened synchronously.
+      final options = cubit.state.config?['options'] as List;
+      final modelOption =
+          options.firstWhere((o) => (o as Map)['id'] == 'model') as Map;
+      expect(modelOption['currentValue'], 'anthropic/claude-opus-4');
+
+      await pending;
+
+      final settledOptions = cubit.state.config?['options'] as List;
+      final settledModelOption = settledOptions
+          .firstWhere((o) => (o as Map)['id'] == 'model') as Map;
+      expect(settledModelOption['currentValue'], 'anthropic/claude-opus-4');
+      expect(cubit.state.status, UiFlowStatus.success);
+    });
+
+    test(
+        'a boolean option\'s optimistic currentValue is a bool, not the '
+        'wire-format string, matching every real config_update from the '
+        'backend (bridge.go always sends a JSON bool for a boolean option)',
+        () async {
+      cubit.open('chat-1');
+      await _settle();
+      repo.controllerFor('chat-1').add(
+            Conversation(
+              sessionState: SessionState(
+                isRunning: true,
+                config: {
+                  'options': [
+                    {
+                      'id': 'auto_approve',
+                      'kind': 'boolean',
+                      'currentValue': false,
+                    },
+                  ],
+                },
+              ),
+            ),
+          );
+      await _settle();
+
+      final pending = cubit.setOption(SetSessionConfigOptionRequest(
+        sessionId: 'chat-1',
+        configId: 'auto_approve',
+        value: 'true',
+      ));
+
+      final options = cubit.state.config?['options'] as List;
+      final option =
+          options.firstWhere((o) => (o as Map)['id'] == 'auto_approve') as Map;
+      expect(option['currentValue'], isA<bool>(),
+          reason: 'a string "true" here reads as `!= true` in '
+              'ConfigPicker\'s boolean branch and renders as still off');
+      expect(option['currentValue'], true);
+
+      await pending;
+    });
+
+    test('rolls back the optimistic value when the persist fails', () async {
+      when(() => chatDao.getOne('chat-1'))
+          .thenAnswer((_) async => chatWithHarness);
+      when(() => harnessModelDao.getFullList(
+              filter: 'harness = "harness-1" && '
+                  'harness_model_id = "no-such-model"'))
+          .thenAnswer((_) async => const []);
+      when(() => harnesseDao.getOne('harness-1'))
+          .thenAnswer((_) async => nonOllamaHarness);
+
+      cubit.open('chat-1');
+      await _settle();
+      repo.controllerFor('chat-1').add(
+            Conversation(
+                sessionState: _idleConfigWithActiveProvider('anthropic')),
+          );
+      await _settle();
+
+      await cubit.setOption(SetSessionConfigOptionRequest(
+        sessionId: 'chat-1',
+        configId: 'model',
+        value: 'no-such-model',
+      ));
+
+      expect(cubit.state.status, UiFlowStatus.failure);
+      final options = cubit.state.config?['options'] as List;
+      final modelOption =
+          options.firstWhere((o) => (o as Map)['id'] == 'model') as Map;
+      expect(modelOption['currentValue'], 'placeholder');
+    });
   });
 }

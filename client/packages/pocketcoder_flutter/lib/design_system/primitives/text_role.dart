@@ -18,6 +18,11 @@ enum TextRole {
   /// Regular body text (e.g., descriptions, instructions).
   body(AppPalette.body, FontWeight.w400),
 
+  /// Structural section headings -- bold for hierarchy, but normal-green
+  /// rather than bright: a heading isn't an action or a value, so it
+  /// shouldn't compete with either for the eye.
+  heading(AppPalette.body, FontWeight.w700),
+
   /// Important data or values (e.g., file sizes, memory usage) — bold for emphasis.
   value(AppPalette.bright, FontWeight.w700),
 

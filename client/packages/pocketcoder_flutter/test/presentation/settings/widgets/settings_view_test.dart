@@ -28,6 +28,9 @@ void main() {
         onReportAiContent: () {},
         hapticsEnabled: true,
         onHapticsChanged: (_) {},
+        onOpenPrivacyPolicy: () {},
+        onOpenTermsOfService: () {},
+        onOpenSourceCode: () {},
       ),
     ));
 
@@ -64,6 +67,9 @@ void main() {
         onReportAiContent: () => tapped = true,
         hapticsEnabled: true,
         onHapticsChanged: (_) {},
+        onOpenPrivacyPolicy: () {},
+        onOpenTermsOfService: () {},
+        onOpenSourceCode: () {},
       ),
     ));
 
@@ -92,6 +98,9 @@ void main() {
         onReportAiContent: () {},
         hapticsEnabled: true,
         onHapticsChanged: (_) {},
+        onOpenPrivacyPolicy: () {},
+        onOpenTermsOfService: () {},
+        onOpenSourceCode: () {},
       ),
     ));
 
@@ -114,9 +123,58 @@ void main() {
         onDeleteProData: () {},
         onReportAiContent: () {},
         onHapticsChanged: (_) {},
+        onOpenPrivacyPolicy: () {},
+        onOpenTermsOfService: () {},
+        onOpenSourceCode: () {},
       ),
     ));
     expect(find.text('manage users'), findsOneWidget);
+  });
+
+  testWidgets(
+      'about section rows open privacy policy, terms of service, and source code',
+      (tester) async {
+    var openedPrivacyPolicy = false;
+    var openedTermsOfService = false;
+    var openedSourceCode = false;
+    // Tall enough that every row is on-screen without a scroll -- the shell
+    // fires a global GetIt-backed haptics lookup on scroll gestures, which
+    // isn't registered in this widget-only test.
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.darkTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en')],
+      home: SettingsView(
+        hasPendingMcp: false,
+        isPro: true,
+        isAdmin: false,
+        onNavigate: (_) {},
+        onLogout: () {},
+        onFactoryReset: () {},
+        onDeleteProData: () {},
+        onReportAiContent: () {},
+        hapticsEnabled: true,
+        onHapticsChanged: (_) {},
+        onOpenPrivacyPolicy: () => openedPrivacyPolicy = true,
+        onOpenTermsOfService: () => openedTermsOfService = true,
+        onOpenSourceCode: () => openedSourceCode = true,
+      ),
+    ));
+
+    await tester.tap(find.text('privacy policy'));
+    await tester.tap(find.text('terms of service'));
+    await tester.tap(find.text('source code'));
+    expect(openedPrivacyPolicy, isTrue);
+    expect(openedTermsOfService, isTrue);
+    expect(openedSourceCode, isTrue);
   });
 
   testWidgets('hides manage-users row for non-admins', (tester) async {
@@ -135,6 +193,9 @@ void main() {
         onDeleteProData: () {},
         onReportAiContent: () {},
         onHapticsChanged: (_) {},
+        onOpenPrivacyPolicy: () {},
+        onOpenTermsOfService: () {},
+        onOpenSourceCode: () {},
       ),
     ));
     expect(find.text('manage users'), findsNothing);

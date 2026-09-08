@@ -25,7 +25,6 @@ class GitSshAdapter extends CubitAdapter<GitSshCubit, GitSshState> {
           state: value,
           onCreateAccountKey: cubit.createAccountKey,
           onAddRepositoryAccess: cubit.addRepositoryAccess,
-          onMarkRegistered: cubit.markRegistered,
           onDeleteAccess: cubit.deleteAccess,
         ),
       ),

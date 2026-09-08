@@ -166,6 +166,10 @@ var ErrNoPendingPermission = errors.New("no pending permission")
 var ErrPermissionOptionNotOffered = errors.New("permission option was not offered")
 var ErrNoPendingElicitation = errors.New("no pending elicitation")
 
+// Switching the harness's own permission axis live could silence
+// RequestPermission for the rest of the session, so it's never forwarded.
+var ErrHarnessModeConfigRejected = errors.New(`configId "mode" is reserved for PocketCoder's own permission layer and cannot be set directly`)
+
 // isConnDone reports whether conn's transport has already signalled
 // shutdown, distinguishing a dead pipe from an application-level harness
 // error while the connection is still alive.
@@ -436,8 +440,14 @@ func (c *Coordinator) SetConfigOption(ctx context.Context, chatID string, req ac
 	// trusted from the request body: the client only supplies configId/value.
 	switch {
 	case req.Boolean != nil:
+		if req.Boolean.ConfigId == "mode" {
+			return ErrHarnessModeConfigRejected
+		}
 		req.Boolean.SessionId = acpsdk.SessionId(h.sessionID)
 	case req.ValueId != nil:
+		if req.ValueId.ConfigId == "mode" {
+			return ErrHarnessModeConfigRejected
+		}
 		req.ValueId.SessionId = acpsdk.SessionId(h.sessionID)
 	}
 	_, err := h.conn.SetSessionConfigOption(ctx, req)

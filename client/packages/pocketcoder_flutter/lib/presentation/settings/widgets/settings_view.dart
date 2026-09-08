@@ -20,6 +20,9 @@ class SettingsView extends StatelessWidget {
     required this.onDeleteProData,
     required this.onReportAiContent,
     required this.onHapticsChanged,
+    required this.onOpenPrivacyPolicy,
+    required this.onOpenTermsOfService,
+    required this.onOpenSourceCode,
   });
 
   final bool hasPendingMcp;
@@ -32,6 +35,9 @@ class SettingsView extends StatelessWidget {
   final VoidCallback onDeleteProData;
   final VoidCallback onReportAiContent;
   final ValueChanged<bool> onHapticsChanged;
+  final VoidCallback onOpenPrivacyPolicy;
+  final VoidCallback onOpenTermsOfService;
+  final VoidCallback onOpenSourceCode;
 
   List<(String, List<(String, String)>)> _sections(BuildContext context) {
     return [
@@ -60,6 +66,14 @@ class SettingsView extends StatelessWidget {
           (context.l10n.settingsMenuScheduler, 'configureScheduler'),
           (context.l10n.errorsTitle, 'statusErrors'),
           if (isAdmin) (context.l10n.settingsMenuManageUsers, 'manageUsers'),
+        ]
+      ),
+      (
+        context.l10n.settingsAboutSection,
+        [
+          (context.l10n.settingsMenuPrivacyPolicy, 'openPrivacyPolicy'),
+          (context.l10n.settingsMenuTermsOfService, 'openTermsOfService'),
+          (context.l10n.settingsMenuSourceCode, 'openSourceCode'),
         ]
       ),
       (
@@ -100,6 +114,9 @@ class SettingsView extends StatelessWidget {
                       'factoryReset' => onFactoryReset(),
                       'deleteProData' => onDeleteProData(),
                       'reportAiContent' => onReportAiContent(),
+                      'openPrivacyPolicy' => onOpenPrivacyPolicy(),
+                      'openTermsOfService' => onOpenTermsOfService(),
+                      'openSourceCode' => onOpenSourceCode(),
                       _ => onNavigate(item.$2),
                     },
                   ),

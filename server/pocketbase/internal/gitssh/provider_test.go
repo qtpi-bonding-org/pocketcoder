@@ -68,3 +68,33 @@ func TestConfigRejectsACustomProviderWithNoHost(t *testing.T) {
 		t.Fatal("expected an error for a custom provider with no host")
 	}
 }
+
+func TestRenderRemotesDocIsEmptyForNoAccess(t *testing.T) {
+	if got := RenderRemotesDoc(nil); got != "" {
+		t.Fatalf("expected empty doc for no access, got %q", got)
+	}
+}
+
+func TestRenderRemotesDocUsesTheAliasNotTheRealHostname(t *testing.T) {
+	doc := RenderRemotesDoc([]Access{{ID: "acc1", Provider: "github", Repository: "octo/hello.git"}})
+	want := "git clone git@pcgit-acc1:octo/hello.git"
+	if !strings.Contains(doc, want) {
+		t.Fatalf("doc missing %q: %s", want, doc)
+	}
+	if strings.Contains(doc, "github.com") {
+		t.Fatalf("doc must route through the pcgit- alias, not the real hostname: %s", doc)
+	}
+}
+
+func TestRenderRemotesDocSkipsAnInvalidEntryRatherThanFailingTheWholeDoc(t *testing.T) {
+	doc := RenderRemotesDoc([]Access{
+		{ID: "bad", Provider: "unsupported-provider", Repository: "x/y"},
+		{ID: "good", Provider: "github", Repository: "octo/hello"},
+	})
+	if strings.Contains(doc, "pcgit-bad") {
+		t.Fatalf("expected the invalid entry to be skipped: %s", doc)
+	}
+	if !strings.Contains(doc, "pcgit-good") {
+		t.Fatalf("expected the valid entry to still render: %s", doc)
+	}
+}

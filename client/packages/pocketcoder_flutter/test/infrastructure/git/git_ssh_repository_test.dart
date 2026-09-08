@@ -158,18 +158,6 @@ void main() {
     });
   });
 
-  group('GitSshRepository.markRegistered', () {
-    test('saves only the registration_status field', () async {
-      when(() => accessDao.save(any(), any()))
-          .thenAnswer((_) async => _FakeAccess());
-
-      await repo.markRegistered('access-1');
-
-      verify(() => accessDao
-          .save('access-1', {'registration_status': 'registered'})).called(1);
-    });
-  });
-
   group('GitSshRepository.deleteAccess', () {
     test('deletes the access row', () async {
       when(() => accessDao.delete(any())).thenAnswer((_) async {});

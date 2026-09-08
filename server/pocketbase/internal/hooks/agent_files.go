@@ -17,6 +17,7 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/agent/pocoprompt"
 	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/dockerapi"
+	"github.com/qtpi-bonding-org/pocketcoder/backend/internal/gitssh"
 )
 
 // archiveCopier is intentionally smaller than dockerapi.Client so the
@@ -80,6 +81,11 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 			}
 		}
 	}
+	if remotesDoc, err := gitRemotesDoc(app, userID); err != nil {
+		return fmt.Errorf("render git remotes doc: %w", err)
+	} else if remotesDoc != "" {
+		body = strings.TrimRight(body, "\n") + "\n\n" + remotesDoc
+	}
 	files["AGENTS.md"] = body
 	files["CLAUDE.md"] = body
 	files[".goosehints"] = body
@@ -102,6 +108,25 @@ func MaterializeUserHarnessFiles(ctx context.Context, app core.App, client archi
 		return fmt.Errorf("materialize harness files: %w", err)
 	}
 	return nil
+}
+
+// gitRemotesDoc only includes "ready" access -- pending/error rows have no
+// usable credential materialized yet.
+func gitRemotesDoc(app core.App, userID string) (string, error) {
+	rows, err := app.FindRecordsByFilter("git_repository_access",
+		"user = {:user} && status = 'ready'", "", 0, 0, map[string]any{"user": userID})
+	if err != nil {
+		return "", fmt.Errorf("query ready git repository access: %w", err)
+	}
+	access := make([]gitssh.Access, 0, len(rows))
+	for _, row := range rows {
+		access = append(access, gitssh.Access{
+			ID:         row.Id,
+			Provider:   row.GetString("provider"),
+			Repository: row.GetString("repository"),
+		})
+	}
+	return gitssh.RenderRemotesDoc(access), nil
 }
 
 func skillMaterializationRoot(skill *core.Record) (string, error) {

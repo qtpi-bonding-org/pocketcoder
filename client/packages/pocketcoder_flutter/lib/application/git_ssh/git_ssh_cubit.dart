@@ -84,13 +84,6 @@ class GitSshCubit extends AppCubit<GitSshState> {
     });
   }
 
-  Future<void> markRegistered(String accessId) async {
-    await tryOperation(() async {
-      await _repository.markRegistered(accessId);
-      return state.copyWith(status: UiFlowStatus.success, error: null);
-    });
-  }
-
   Future<void> deleteAccess(String accessId) async {
     await tryOperation(() async {
       await _repository.deleteAccess(accessId);

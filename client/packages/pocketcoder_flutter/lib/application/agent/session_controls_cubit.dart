@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:acp_dart/acp_dart.dart';
+import 'package:ag_ui_widgets_flutter/ag_ui_widgets_flutter.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:injectable/injectable.dart';
 
@@ -41,6 +42,8 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
 
   StreamSubscription? _watchSub;
   String? _chatId;
+  String? _searchableModelsChatId;
+  Future<List<HarnessModel>>? _searchableModelsFuture;
 
   @override
   Future<void> close() {
@@ -60,6 +63,7 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
       status: UiFlowStatus.loading,
       lastOperation: SessionControlsOperation.open,
     ));
+    _prefetchSearchableModels(chatId);
 
     _watchSub = _repository.watch(chatId).listen(
       (conversation) {
@@ -82,9 +86,23 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
 
   /// Empty (rather than throwing) before [open] or for a chat with no
   /// harness -- there is nothing to search yet, not a failure.
-  Future<List<HarnessModel>> searchableModels() async {
+  Future<List<HarnessModel>> searchableModels() {
     final chatId = _chatId;
-    if (chatId == null) return const [];
+    if (chatId == null) return Future.value(const []);
+    final cached = _searchableModelsFuture;
+    if (cached != null && _searchableModelsChatId == chatId) return cached;
+    return _fetchSearchableModels(chatId);
+  }
+
+  void _prefetchSearchableModels(String chatId) {
+    _searchableModelsChatId = chatId;
+    final future = _fetchSearchableModels(chatId);
+    _searchableModelsFuture = future;
+    // Second listener so an unawaited failure here doesn't crash the zone.
+    unawaited(future.catchError((_) => const <HarnessModel>[]));
+  }
+
+  Future<List<HarnessModel>> _fetchSearchableModels(String chatId) async {
     final chat = await _chatDao.getOne(chatId);
     final harnessId = chat.harness;
     if (harnessId == null || harnessId.isEmpty) return const [];
@@ -139,6 +157,11 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
       'ollamaModelOverride': 'ollama_model_override',
       'workspaceOverride': 'workspace_override',
     };
+
+    final previousSessionState = state.sessionState;
+    final optimistic = _withOptimisticOptionValue(previousSessionState, req);
+    if (optimistic != null) emit(state.copyWith(sessionState: optimistic));
+
     await tryOperation(() async {
       if (state.sessionState.isRunning) {
         await _repository.setConfigOption(chatId, req);
@@ -170,6 +193,34 @@ class SessionControlsCubit extends AppCubit<SessionControlsState> {
         lastOperation: SessionControlsOperation.setOption,
       );
     });
+
+    if (optimistic != null && state.status == UiFlowStatus.failure) {
+      emit(state.copyWith(sessionState: previousSessionState));
+    }
+  }
+
+  SessionState? _withOptimisticOptionValue(
+    SessionState sessionState,
+    SetSessionConfigOptionRequest req,
+  ) {
+    final config = sessionState.config;
+    final options = config?['options'];
+    if (config == null || options is! List) return null;
+
+    var matched = false;
+    final updatedOptions = <dynamic>[];
+    for (final option in options) {
+      if (option is Map && option['id'] == req.configId) {
+        matched = true;
+        final currentValue =
+            option['kind'] == 'boolean' ? req.value == 'true' : req.value;
+        updatedOptions.add({...option, 'currentValue': currentValue});
+      } else {
+        updatedOptions.add(option);
+      }
+    }
+    if (!matched) return null;
+    return sessionState.copyWith(config: {...config, 'options': updatedOptions});
   }
 
   /// `harness_model_override` and `ollama_model_override` are mutually

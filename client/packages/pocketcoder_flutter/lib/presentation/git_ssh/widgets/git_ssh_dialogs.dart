@@ -4,7 +4,8 @@ import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/models/git_repository_access.dart';
 import 'package:pocketcoder_flutter/domain/models/git_ssh_credential.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_checkbox.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_choice_list.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog_actions.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
@@ -104,8 +105,7 @@ void showAddRepositoryAccessDialog(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _choiceRow<GitRepositoryAccessProvider>(
-              context,
+            TerminalChoiceList<GitRepositoryAccessProvider>(
               value: provider,
               options: const [
                 (GitRepositoryAccessProvider.github, 'GitHub'),
@@ -119,6 +119,7 @@ void showAddRepositoryAccessDialog(
             TerminalTextField(
               controller: repositoryController,
               label: context.l10n.gitSshRepositoryField,
+              hint: context.l10n.gitSshRepositoryFieldHint,
             ),
             VSpace.x2,
             TerminalTextField(
@@ -138,8 +139,7 @@ void showAddRepositoryAccessDialog(
               ),
             ],
             VSpace.x2,
-            _choiceRow<GitRepositoryAccessCredentialMode>(
-              context,
+            TerminalChoiceList<GitRepositoryAccessCredentialMode>(
               value: credentialMode,
               options: [
                 (
@@ -160,29 +160,27 @@ void showAddRepositoryAccessDialog(
                 TerminalText(context.l10n.gitSshNoAccountKeysWarning,
                     role: TextRole.warn)
               else
-                _choiceRow<String>(
-                  context,
+                TerminalChoiceList<String>(
                   value: selectedAccountKeyId ?? accountKeys.first.id,
                   options: accountKeys.map((k) => (k.id, k.label)).toList(),
                   onSelected: (v) => setState(() => selectedAccountKeyId = v),
                 ),
             ],
             VSpace.x2,
-            _choiceRow<GitRepositoryAccessRequestedAccess>(
-              context,
-              value: requestedAccess,
-              options: [
-                (
-                  GitRepositoryAccessRequestedAccess.readOnly,
-                  context.l10n.gitSshAccessReadOnly
-                ),
-                (
-                  GitRepositoryAccessRequestedAccess.readWrite,
-                  context.l10n.gitSshAccessReadWrite
-                ),
-              ],
-              onSelected: (v) => setState(() => requestedAccess = v),
-            ),
+            Row(children: [
+              TerminalCheckbox(
+                value:
+                    requestedAccess == GitRepositoryAccessRequestedAccess.readWrite,
+                onChanged: (checked) => setState(() => requestedAccess = checked
+                    ? GitRepositoryAccessRequestedAccess.readWrite
+                    : GitRepositoryAccessRequestedAccess.readOnly),
+              ),
+              HSpace.x2,
+              Expanded(
+                child: TerminalText(context.l10n.gitSshAllowWriteAccessLabel,
+                    role: TextRole.body),
+              ),
+            ]),
           ],
         ),
         actions: [
@@ -220,26 +218,3 @@ void showAddRepositoryAccessDialog(
   );
 }
 
-Widget _choiceRow<T>(
-  BuildContext context, {
-  required T value,
-  required List<(T, String)> options,
-  required ValueChanged<T> onSelected,
-}) {
-  return Row(
-    children: options
-        .map((entry) => Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSizes.space / 2),
-                child: TerminalButton(
-                  label: entry.$2,
-                  kind: value == entry.$1
-                      ? ActionKind.primary
-                      : ActionKind.neutral,
-                  onTap: () => onSelected(entry.$1),
-                ),
-              ),
-            ))
-        .toList(),
-  );
-}

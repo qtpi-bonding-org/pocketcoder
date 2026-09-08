@@ -127,8 +127,8 @@ func TestDockerGitSSHMaterializerBindsTheUsersOwnVolumeAndReusesItsOwnImage(t *t
 		buf, _ := io.ReadAll(tr)
 		got[h.Name] = string(buf)
 	}
-	if got["ssh_config"] != "Host pcgit-a\n" {
-		t.Fatalf("ssh_config = %q", got["ssh_config"])
+	if got["config"] != "Host pcgit-a\n" {
+		t.Fatalf("config = %q", got["config"])
 	}
 	if got["known_hosts"] != "github.com ssh-ed25519 AAAA\n" {
 		t.Fatalf("known_hosts = %q", got["known_hosts"])

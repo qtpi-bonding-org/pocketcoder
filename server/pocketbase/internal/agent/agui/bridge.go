@@ -458,6 +458,11 @@ func commands(cmds []acpsdk.AvailableCommand) []map[string]any {
 	return out
 }
 
+// "mode" is the harness's own permission axis (approve/auto/chat/...); it
+// must never reach a client, which could switch it live and silence the
+// coordinator's RequestPermission callback for the rest of the session.
+var harnessConfigOptionsToDrop = map[string]bool{"mode": true}
+
 // configOptions decodes ACP's discriminated union (Boolean | Select). The
 // `kind` discriminator is preserved so clients can branch on it; the original
 // id/name/currentValue are carried alongside so the Flutter side can rebuild
@@ -467,6 +472,9 @@ func configOptions(opts []acpsdk.SessionConfigOption) []map[string]any {
 	for _, o := range opts {
 		switch {
 		case o.Boolean != nil:
+			if harnessConfigOptionsToDrop[string(o.Boolean.Id)] {
+				continue
+			}
 			v := map[string]any{
 				"kind":         "boolean",
 				"id":           string(o.Boolean.Id),
@@ -481,6 +489,9 @@ func configOptions(opts []acpsdk.SessionConfigOption) []map[string]any {
 			}
 			out = append(out, v)
 		case o.Select != nil:
+			if harnessConfigOptionsToDrop[string(o.Select.Id)] {
+				continue
+			}
 			v := map[string]any{
 				"kind":         "select",
 				"id":           string(o.Select.Id),

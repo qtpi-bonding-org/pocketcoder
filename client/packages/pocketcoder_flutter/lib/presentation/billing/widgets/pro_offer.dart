@@ -39,11 +39,6 @@ class ProOffer extends StatelessWidget {
       VSpace.x2,
       if (trialDays != null) ...[
         TerminalText(
-          context.l10n.proTrialNoPaymentInfo,
-          role: TextRole.body,
-        ),
-        VSpace.x1,
-        TerminalText(
           context.l10n.proTrialLapseExplainer,
           role: TextRole.body,
         ),
@@ -62,11 +57,10 @@ class ProOffer extends StatelessWidget {
               kind: ActionKind.neutral,
               onTap: onRestore)),
       VSpace.x2,
-      TerminalText(
-        trialDays == null
+      _PriceDisclosure(
+        text: trialDays == null
             ? context.l10n.proTerms(recurringPrice)
             : context.l10n.proTrialTerms(trialDays, recurringPrice),
-        role: TextRole.label,
       ),
       VSpace.x2,
       Wrap(alignment: WrapAlignment.center, spacing: AppSizes.ch * 2, children: [
@@ -89,5 +83,31 @@ class ProOffer extends StatelessWidget {
       BillingPeriod.year => context.l10n.proPricePerYear(package.priceString),
       BillingPeriod.unknown => package.priceString
     };
+  }
+}
+
+/// Reuses the inverse-video `Emphasis.selected` treatment (see
+/// TerminalConversation) rather than a one-off style.
+class _PriceDisclosure extends StatelessWidget {
+  const _PriceDisclosure({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final resolved = emphasize(context.colorScheme.primary, Emphasis.selected);
+    return Container(
+      width: double.infinity,
+      color: resolved.fill,
+      padding: EdgeInsets.symmetric(
+        vertical: AppSizes.space,
+        horizontal: AppSizes.space * 1.5,
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(color: resolved.text, fontWeight: FontWeight.w700),
+      ),
+    );
   }
 }

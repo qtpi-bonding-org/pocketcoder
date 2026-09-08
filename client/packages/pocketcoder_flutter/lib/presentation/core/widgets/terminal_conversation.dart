@@ -194,6 +194,7 @@ class TerminalPromptSuggestion extends StatefulWidget {
     required this.onSelected,
     this.emphasis,
     this.danger = false,
+    this.maxLines = 1,
   });
 
   final String label;
@@ -202,6 +203,8 @@ class TerminalPromptSuggestion extends StatefulWidget {
   final Emphasis? emphasis;
 
   final bool danger;
+
+  final int? maxLines;
 
   @override
   State<TerminalPromptSuggestion> createState() =>
@@ -244,8 +247,10 @@ class _TerminalPromptSuggestionState extends State<TerminalPromptSuggestion> {
               child: TerminalText(
                 widget.label,
                 role: role,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                maxLines: widget.maxLines,
+                overflow: widget.maxLines == null
+                    ? TextOverflow.clip
+                    : TextOverflow.ellipsis,
               ),
             ),
           ],

@@ -39,7 +39,7 @@ class OnboardingView extends StatelessWidget {
                 sequence: pocoState.sequence,
                 history: pocoState.history,
               ),
-              VSpace.x4,
+              VSpace.x3,
               TerminalPromptSuggestion(
                 label: context.l10n.onboardingNoServerChipExisting,
                 onSelected: onLogin,

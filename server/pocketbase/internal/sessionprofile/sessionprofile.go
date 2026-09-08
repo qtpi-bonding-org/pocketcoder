@@ -171,7 +171,8 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 		return p, fmt.Errorf("agent_profile %s has no name", poco.Id)
 	}
 
-	// Default mode if no agent_profile
+	// Never permission-mode-driven -- the harness must always stay in an
+	// asking mode, or RequestPermission never fires for a given tool call.
 	p.Mode = acpsdk.SessionModeId("approve")
 	if poco != nil {
 		if spID := poco.GetString("system_prompt"); spID != "" {
@@ -182,15 +183,6 @@ func Build(app core.App, chatID string, ctx context.Context, ollamaBaseURL strin
 				if body := strings.TrimSpace(sp.GetString("body")); body != "" {
 					p.Instructions = body
 				}
-			}
-		}
-		if modeID := poco.GetString("permission_mode"); modeID != "" {
-			mode, modeErr := app.FindRecordById("permission_modes", modeID)
-			if modeErr != nil {
-				return p, fmt.Errorf("resolve agent_profiles.permission_mode=%s: %w", modeID, modeErr)
-			}
-			if baseMode := mode.GetString("base_session_mode"); baseMode != "" {
-				p.Mode = acpsdk.SessionModeId(baseMode)
 			}
 		}
 

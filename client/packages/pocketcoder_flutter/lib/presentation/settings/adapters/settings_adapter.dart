@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/domain/edition/i_app_edition.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/models/mcp_server.dart';
 import 'package:pocketcoder_flutter/domain/settings/i_local_settings_service.dart';
+import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_button.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_dialog.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/ui_flow_listener.dart';
@@ -25,6 +26,11 @@ final Uri _reportAiContentUri = Uri(
   path: 'marketing@qtpi.app',
   query: 'subject=PocketCoder AI content report',
 );
+
+final Uri _privacyPolicyUri = Uri.parse('https://pocketcoder.org/privacy/');
+final Uri _termsOfServiceUri = Uri.parse('https://pocketcoder.org/terms/');
+final Uri _sourceCodeUri =
+    Uri.parse('https://github.com/qtpi-bonding-org/pocketcoder');
 
 bool _hasPendingMcp(McpState state) =>
     state.status == UiFlowStatus.success &&
@@ -44,6 +50,7 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
     final authCubit = context.read<AuthCubit>();
     final mcpCubit = context.read<McpCubit>();
     final localSettings = GetIt.instance<ILocalSettingsService>();
+    final browserLauncher = GetIt.instance<InAppBrowserLauncher>();
     return UiFlowListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state.isSuccess &&
@@ -73,6 +80,10 @@ class SettingsAdapter extends CubitAdapter<AuthCubit, AuthState> {
               onDeleteProData: () => _confirmDeleteProData(context, authCubit),
               onReportAiContent: () => _reportAiContent(context),
               onHapticsChanged: localSettings.setHapticsEnabled,
+              onOpenPrivacyPolicy: () => browserLauncher.open(_privacyPolicyUri),
+              onOpenTermsOfService: () =>
+                  browserLauncher.open(_termsOfServiceUri),
+              onOpenSourceCode: () => browserLauncher.open(_sourceCodeUri),
             ),
           ),
         ),

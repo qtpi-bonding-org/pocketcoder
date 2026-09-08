@@ -181,6 +181,21 @@ void main() {
       await _waitForStatus(client, 'git_ssh_credentials', deployCredId,
           'status', {'ready', 'error'});
 
+      // This volume is mounted directly at $HOME/.ssh in the harness
+      // container (harnessvolume.GitSSHMount), so ssh/git's own default
+      // config/known-hosts lookup needs these at the volume ROOT, not only
+      // under current/ -- that's what lets the harness run plain ssh/git
+      // with no GIT_SSH_COMMAND override.
+      final rootConfig = await _readFileFromVolume(volume, 'config');
+      expect(rootConfig, isNotNull,
+          reason: 'expected a root-level config symlink into current/, '
+              'not just current/config, in docker volume $volume');
+      expect(rootConfig, contains('Host pcgit-${readyGithubAccess.id}'));
+      final rootKnownHosts = await _readFileFromVolume(volume, 'known_hosts');
+      expect(rootKnownHosts, isNotNull,
+          reason: 'expected a root-level known_hosts symlink into current/ '
+              'in docker volume $volume');
+
       final firstKeyAfterPass2 =
           await _readFileFromVolume(volume, 'current/keys/${accountCred.id}');
       expect(firstKeyAfterPass2, firstKeyFile,

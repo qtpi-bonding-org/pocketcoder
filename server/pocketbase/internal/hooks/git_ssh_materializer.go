@@ -85,7 +85,7 @@ func (m DockerGitSSHMaterializer) Materialize(ctx context.Context, userID string
 // Layout must match what cmd/git-materializer expects under /inbox/manifest.tar.
 func manifestArchive(manifest gitssh.Manifest) ([]byte, error) {
 	files := []gitssh.File{
-		{Path: "ssh_config", Mode: 0644, Data: manifest.Config},
+		{Path: "config", Mode: 0644, Data: manifest.Config},
 		{Path: "known_hosts", Mode: 0644, Data: manifest.KnownHosts},
 	}
 	for id, key := range manifest.Keys {

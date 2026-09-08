@@ -19,6 +19,8 @@ enum PocoMood {
   surprised,
   lookRight,
   lookLeft,
+  lookUp,
+  lookDown,
   mad,
   mistaken,
   panic,
@@ -34,7 +36,11 @@ enum PocoMood {
         amazed ||
         thinking ||
         winkLeft ||
-        winkRight =>
+        winkRight ||
+        lookLeft ||
+        lookRight ||
+        lookUp ||
+        lookDown =>
           AppPalette.bright,
         sleepy || shy => AppPalette.body,
         _ => AppPalette.amber,

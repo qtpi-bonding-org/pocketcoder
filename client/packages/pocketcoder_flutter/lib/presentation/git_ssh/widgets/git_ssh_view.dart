@@ -24,7 +24,6 @@ class GitSshView extends StatelessWidget {
     required this.state,
     required this.onCreateAccountKey,
     required this.onAddRepositoryAccess,
-    required this.onMarkRegistered,
     required this.onDeleteAccess,
   });
 
@@ -40,7 +39,6 @@ class GitSshView extends StatelessWidget {
     String? host,
     int? port,
   }) onAddRepositoryAccess;
-  final Future<void> Function(String accessId) onMarkRegistered;
   final Future<void> Function(String accessId) onDeleteAccess;
 
   @override
@@ -139,8 +137,6 @@ class GitSshView extends StatelessWidget {
   }
 
   Widget _accessItem(BuildContext context, GitRepositoryAccess access) {
-    final needsRegistration = access.registrationStatus ==
-        GitRepositoryAccessRegistrationStatus.needsRegistration;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       DetailRow(
           label: '${access.provider.name}/${access.repository}',
@@ -155,12 +151,6 @@ class GitSshView extends StatelessWidget {
         ),
       VSpace.x1,
       BiosActionStrip(actions: [
-        if (needsRegistration)
-          BiosActionStripItem(
-            label: context.l10n.gitSshMarkRegisteredButton,
-            isActive: true,
-            onTap: () => onMarkRegistered(access.id),
-          ),
         BiosActionStripItem(
           label: context.l10n.gitSshRemoveAccessButton,
           kind: ActionKind.destructive,
