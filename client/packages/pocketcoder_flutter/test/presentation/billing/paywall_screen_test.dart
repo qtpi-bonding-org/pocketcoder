@@ -52,7 +52,6 @@ void main() {
     await tester.pumpAndSettle();
 
     final l10n = lookupAppLocalizations(const Locale('en'));
-    expect(find.text(l10n.proTrialNoPaymentInfo), findsOneWidget);
     expect(find.text(l10n.proTrialLapseExplainer), findsOneWidget);
     expect(
         find.text('<${l10n.proStartTrial(7).toLowerCase()}>'), findsOneWidget);

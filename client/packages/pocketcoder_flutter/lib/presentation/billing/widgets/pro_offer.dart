@@ -39,11 +39,6 @@ class ProOffer extends StatelessWidget {
       VSpace.x2,
       if (trialDays != null) ...[
         TerminalText(
-          context.l10n.proTrialNoPaymentInfo,
-          role: TextRole.body,
-        ),
-        VSpace.x1,
-        TerminalText(
           context.l10n.proTrialLapseExplainer,
           role: TextRole.body,
         ),
