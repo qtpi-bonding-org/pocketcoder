@@ -137,3 +137,62 @@ func TestSetModeDispatchesToConn(t *testing.T) {
 	close(f.blockPrompt)
 	c.waitRunDone(t, "A")
 }
+
+// configId "mode" must be rejected here -- this is the enforcement
+// boundary, not just the client-side filter on what's advertised.
+func TestSetConfigOptionRejectsHarnessModeConfigId(t *testing.T) {
+	f := newFakeConn()
+	f.blockPrompt = make(chan struct{})
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	f.waitForPrompt(t)
+	defer func() {
+		close(f.blockPrompt)
+		c.waitRunDone(t, "A")
+	}()
+
+	err := c.SetConfigOption(context.Background(), "A", acpsdk.SetSessionConfigOptionRequest{
+		ValueId: &acpsdk.SetSessionConfigOptionValueId{ConfigId: "mode", Value: "auto"},
+	})
+	if err == nil {
+		t.Fatal("expected SetConfigOption to reject configId \"mode\", got nil error")
+	}
+	f.mu.Lock()
+	calls := len(f.setConfigOptionCalls)
+	f.mu.Unlock()
+	if calls != 0 {
+		t.Fatalf("configId \"mode\" must never reach the harness connection, got %d dispatched calls", calls)
+	}
+}
+
+func TestSetConfigOptionAllowsOtherConfigIds(t *testing.T) {
+	f := newFakeConn()
+	f.blockPrompt = make(chan struct{})
+	c := testCoordinatorWithConn(t, f, NewFakeClock(time.Unix(0, 0)))
+	c.StartPrompt("A", "hi",
+		func(context.Context) (string, error) { return "s1", nil },
+		func(context.Context) (SessionProfile, error) { return SessionProfile{}, nil },
+		func(context.Context, string) error { return nil },
+		nil)
+	f.waitForPrompt(t)
+	defer func() {
+		close(f.blockPrompt)
+		c.waitRunDone(t, "A")
+	}()
+
+	if err := c.SetConfigOption(context.Background(), "A", acpsdk.SetSessionConfigOptionRequest{
+		ValueId: &acpsdk.SetSessionConfigOptionValueId{ConfigId: "model", Value: "claude"},
+	}); err != nil {
+		t.Fatalf("SetConfigOption(model) should not be rejected: %v", err)
+	}
+	f.mu.Lock()
+	calls := len(f.setConfigOptionCalls)
+	f.mu.Unlock()
+	if calls != 1 {
+		t.Fatalf("expected 1 dispatched call for configId \"model\", got %d", calls)
+	}
+}

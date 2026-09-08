@@ -485,6 +485,48 @@ func TestBridgeConfigSelectOptionsAndDescription(t *testing.T) {
 	}
 }
 
+func TestBridgeDropsHarnessModeConfigOption(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	evs, err := bridge.Update(acpsdk.SessionUpdate{ConfigOptionUpdate: &acpsdk.SessionConfigOptionUpdate{
+		SessionUpdate: "config_option_update",
+		ConfigOptions: []acpsdk.SessionConfigOption{
+			{Select: &acpsdk.SessionConfigOptionSelect{Id: "provider", Name: "Provider", CurrentValue: "openrouter"}},
+			{Select: &acpsdk.SessionConfigOptionSelect{Id: "mode", Name: "Mode", CurrentValue: "approve"}},
+			{Select: &acpsdk.SessionConfigOptionSelect{Id: "model", Name: "Model", CurrentValue: "claude"}},
+		},
+	}})
+	if err != nil || len(evs) != 1 {
+		t.Fatalf("config: %#v err=%v", evs, err)
+	}
+	b, _ := json.Marshal(evs[0])
+	s := string(b)
+	if strings.Contains(s, `"id":"mode"`) {
+		t.Fatalf("harness mode config option must never reach the client: %s", s)
+	}
+	if !strings.Contains(s, `"id":"provider"`) || !strings.Contains(s, `"id":"model"`) {
+		t.Fatalf("non-mode options must still pass through: %s", s)
+	}
+}
+
+func TestBridgeSeedSessionDropsHarnessModeConfigOption(t *testing.T) {
+	bridge := NewBridge("c", "r")
+	evs := bridge.SeedSession(nil, []acpsdk.SessionConfigOption{
+		{Select: &acpsdk.SessionConfigOptionSelect{Id: "mode", Name: "Mode", CurrentValue: "auto"}},
+		{Select: &acpsdk.SessionConfigOptionSelect{Id: "provider", Name: "Provider", CurrentValue: "openrouter"}},
+	})
+	if len(evs) != 1 {
+		t.Fatalf("SeedSession: %#v", evs)
+	}
+	b, _ := json.Marshal(evs[0])
+	s := string(b)
+	if strings.Contains(s, `"id":"mode"`) {
+		t.Fatalf("harness mode config option must never reach the client: %s", s)
+	}
+	if !strings.Contains(s, `"id":"provider"`) {
+		t.Fatalf("non-mode options must still pass through: %s", s)
+	}
+}
+
 // TestBridgeAvailableCommandsForwardsHint covers the fix for the ACP->AG-UI
 // field-drop audit finding: AvailableCommand.Input.Hint (the placeholder
 // text for a command's argument, e.g. "/model <name>") was never read.

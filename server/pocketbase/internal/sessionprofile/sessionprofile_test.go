@@ -404,6 +404,41 @@ func TestBuildSessionProfileResolvesChatFieldsWithDefaultPoco(t *testing.T) {
 	t.Fatal("expected profile.McpServers to contain attributed memory HTTP entry")
 }
 
+func TestBuildSessionProfileAlwaysUsesApproveSessionMode(t *testing.T) {
+	app := testApp(t)
+	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
+	harness, _ := seedTestHarnessAndInstance(t, app, "goose", true, userID)
+
+	modesColl, err := app.FindCollectionByNameOrId("permission_modes")
+	if err != nil {
+		t.Fatal(err)
+	}
+	autoMode := core.NewRecord(modesColl)
+	autoMode.Set("name", "test-auto-"+randomSuffix())
+	autoMode.Set("base_session_mode", "auto")
+	autoMode.Set("user", userID)
+	if err := app.Save(autoMode); err != nil {
+		t.Fatal(err)
+	}
+
+	agent := createTestPocoConfig(t, app, map[string]any{
+		"name":            "test-agent-" + randomSuffix(),
+		"user":            userID,
+		"permission_mode": autoMode.Id,
+	}, userID)
+	chat := createTestChat(t, app, map[string]any{
+		"user": userID, "harness": harness.Id, "agent_profile": agent.Id,
+	})
+
+	profile, err := sessionprofile.Build(app, chat.Id, context.Background(), ollama.DefaultURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(profile.Mode) != "approve" {
+		t.Fatalf(`Mode = %q, want "approve" regardless of the referenced permission mode's base_session_mode ("auto")`, profile.Mode)
+	}
+}
+
 func TestBuildSessionProfileUsesExplicitAgentAsMemoryAuthor(t *testing.T) {
 	app := testApp(t)
 	userID := testUser(t, app, "testchat-"+randomSuffix()+"@example.com").Id
