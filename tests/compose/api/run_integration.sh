@@ -30,12 +30,18 @@ done
 
 compose=(docker compose -f docker-compose.yml -f docker-compose.agent-test.yml)
 
+teardown() {
+  local harness_containers
+  harness_containers="$(docker ps -aq --filter 'name=pocketcoder-harness-')"
+  if [ -n "$harness_containers" ]; then
+    docker rm -f $harness_containers >/dev/null
+  fi
+  "${compose[@]}" down -v --remove-orphans
+}
+
 echo "==> Tearing down the whole local stack (containers, networks, volumes)"
-harness_containers="$(docker ps -aq --filter 'name=pocketcoder-harness-')"
-if [ -n "$harness_containers" ]; then
-  docker rm -f $harness_containers >/dev/null
-fi
-"${compose[@]}" down -v --remove-orphans
+teardown
+trap teardown EXIT
 
 echo "==> Rebuilding and starting a fresh stack"
 "${compose[@]}" up -d --build --wait \
