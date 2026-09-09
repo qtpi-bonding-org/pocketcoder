@@ -127,29 +127,13 @@ class _TerminalInputState extends State<TerminalInput> {
     });
   }
 
-  // Many Android IMEs insert a literal "\n" instead of invoking
-  // TextInputAction.send when keyboardType is multiline, so TextField's own
-  // onSubmitted never fires. Treat a trailing newline here as submit too --
-  // this is a no-op on platforms/IMEs that already call onSubmitted
-  // correctly, since by then there's nothing left to strip.
   void _onDisplayChanged() {
     if (_syncing) return;
     _displayController.enforcePrompt();
-    var content = _displayController.content;
-    final shouldSubmit = content.endsWith('\n');
-    if (shouldSubmit) {
-      content = content.substring(0, content.length - 1);
+    if (widget.controller.text != _displayController.content) {
       _syncing = true;
-      _displayController.content = content;
+      widget.controller.text = _displayController.content;
       _syncing = false;
-    }
-    if (widget.controller.text != content) {
-      _syncing = true;
-      widget.controller.text = content;
-      _syncing = false;
-    }
-    if (shouldSubmit) {
-      widget.onSubmitted();
     }
   }
 

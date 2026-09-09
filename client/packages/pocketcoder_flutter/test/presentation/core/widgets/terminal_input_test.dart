@@ -32,28 +32,6 @@ void main() {
     expect(submitted, isTrue);
   });
 
-  testWidgets(
-      'a trailing newline from the IME auto-submits and strips itself (prompt intact)',
-      (tester) async {
-    final controller = TextEditingController();
-    var submitted = false;
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: TerminalInput(
-          controller: controller,
-          onSubmitted: () => submitted = true,
-        ),
-      ),
-    ));
-
-    // Prompt intact ("% "), matching the real IME shape.
-    await tester.enterText(find.byType(TextField), '% deploy\n');
-    await tester.pump();
-
-    expect(submitted, isTrue);
-    expect(controller.text, 'deploy');
-  });
-
   testWidgets('typing without a trailing newline does not submit',
       (tester) async {
     final controller = TextEditingController();
