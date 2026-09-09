@@ -45,6 +45,7 @@ import 'package:pocketcoder_flutter/domain/files/i_files_repository.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/server_control/i_server_control_service.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 
 /// App routing configuration.
 class AppRouter {
@@ -81,6 +82,7 @@ class AppRouter {
 
   static final GoRouter _router = GoRouter(
     initialLocation: AppRoutes.boot,
+    observers: [_ScreenLogObserver()],
     redirect: (context, state) {
       final loc = state.matchedLocation;
       // Redirect / → /chats
@@ -443,6 +445,28 @@ class AppRouter {
       ),
     ),
   );
+}
+
+class _ScreenLogObserver extends NavigatorObserver {
+  void _log(String event, Route<dynamic> route) => AppLogger.debug(
+      'Screen $event', {'route': route.settings.name ?? '${route.settings}'});
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _log('pushed', route);
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _log('popped', route);
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    if (newRoute != null) _log('replaced-in', newRoute);
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _log('removed', route);
 }
 
 class AppRoutes {

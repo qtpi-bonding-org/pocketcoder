@@ -17,8 +17,10 @@ import 'package:pocketcoder_flutter/domain/models/credential_selection.dart';
 import 'package:pocketcoder_flutter/domain/models/harness_oauth_account.dart';
 
 class FakeReadiness implements IServerReadinessCheck {
-  FakeReadiness(this._snapshot);
+  FakeReadiness(this._snapshot, {ServerReadinessSnapshot? afterInitialize})
+      : _afterInitialize = afterInitialize;
   ServerReadinessSnapshot _snapshot;
+  final ServerReadinessSnapshot? _afterInitialize;
   final changes = StreamController<ServerReadinessSnapshot>.broadcast();
   @override
   ServerReadinessSnapshot get current => _snapshot;
@@ -30,7 +32,11 @@ class FakeReadiness implements IServerReadinessCheck {
   }
 
   @override
-  Future<void> initialize() async {}
+  Future<void> initialize() async {
+    final after = _afterInitialize;
+    if (after != null) set(after);
+  }
+
   @override
   Future<void> retry() async {}
 }
@@ -307,9 +313,11 @@ class HarnessTest {
       bool signedIn = false,
       bool harnessConnected = false,
       IInstanceExistenceResolver? instanceExistenceResolver,
-      IDeploymentAuthStatus? deploymentAuthStatus}) {
-    readiness = FakeReadiness(
-        ServerReadinessSnapshot(status: status, instanceId: instanceId));
+      IDeploymentAuthStatus? deploymentAuthStatus,
+      FakeReadiness? readinessOverride}) {
+    readiness = readinessOverride ??
+        FakeReadiness(
+            ServerReadinessSnapshot(status: status, instanceId: instanceId));
     authRepository = FakeAuthRepository(authenticated: signedIn);
     auth = AuthSessionCoordinator(authRepository);
     harness = FakeHarness(connected: harnessConnected);
@@ -580,6 +588,26 @@ void main() {
     await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
     expect(t.router.state.name, RouteNames.boot);
   });
+  testWidgets(
+      'a stale pre-initialize readiness snapshot is corrected by '
+      'initialize() itself, before the router ever evaluates -- regression '
+      'for ManagedServerReadinessCheck.initialize() not notifying '
+      'readinessChanges once its async cache load resolved, which let boot '
+      'route to deploymentProgress on a stale "provisioning" answer '
+      'computed before the cache had loaded', (tester) async {
+    final readiness = FakeReadiness(
+      const ServerReadinessSnapshot(status: ServerReadinessStatus.provisioning),
+      afterInitialize: const ServerReadinessSnapshot(
+          status: ServerReadinessStatus.ready, instanceId: 'i'),
+    );
+    final t = HarnessTest(
+        readinessOverride: readiness, signedIn: true, harnessConnected: true);
+    await t.start(tester);
+
+    expect(t.journey, isNot(contains(RouteNames.deploymentProgress)));
+    expect(t.router.state.name, RouteNames.chats);
+  });
+
   testWidgets(
       'resolving then notProvisioned lands directly on onboarding once the '
       'boot animation finishes -- no earlier navigation to correct',
