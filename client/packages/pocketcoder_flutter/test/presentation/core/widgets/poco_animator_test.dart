@@ -151,6 +151,49 @@ void main() {
         reason: 'a scripted onboarding beat must not be hidden by a tap');
   });
 
+  testWidgets(
+      'allowGazeDuringSequence lets a tap override an active scripted '
+      'sequence', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+          body: PocoGazeScope(
+              child: Center(
+                  child: PocoAnimator(
+        sequence: [(PocoExpression.sad, 10000)],
+        allowGazeDuringSequence: true,
+      )))),
+    ));
+    expect(faceText(tester), PocoExpression.sad);
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center + const Offset(200, 0));
+    await tester.pump();
+
+    expect(faceText(tester), PocoExpression.lookRight,
+        reason: 'boot opts a scripted sequence into being tap-interruptible');
+  });
+
+  testWidgets(
+      'allowGazeDuringSequence still defers to the thinking face',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+          body: PocoGazeScope(
+              child: Center(
+                  child: PocoAnimator(
+        isAgentTurn: true,
+        allowGazeDuringSequence: true,
+      )))),
+    ));
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center + const Offset(200, 0));
+    await tester.pump();
+
+    expect(faceText(tester), PocoExpression.thinking,
+        reason: 'thinking status must still win, even with the opt-in');
+  });
+
   testWidgets('with no PocoGazeScope ancestor, a tap is a no-op',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(
