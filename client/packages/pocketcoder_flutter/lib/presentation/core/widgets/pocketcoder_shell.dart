@@ -148,18 +148,57 @@ class PocketCoderShell extends StatelessWidget {
   }
 }
 
-class ContentScrollRegion extends StatelessWidget {
+class ContentScrollRegion extends StatefulWidget {
   const ContentScrollRegion({super.key, required this.child, this.padding});
 
   final Widget child;
   final EdgeInsets? padding;
 
   @override
+  State<ContentScrollRegion> createState() => _ContentScrollRegionState();
+}
+
+class _ContentScrollRegionState extends State<ContentScrollRegion> {
+  final ScrollController _controller = ScrollController();
+  bool _scrollable = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(_updateScrollable);
+  }
+
+  @override
+  void didUpdateWidget(covariant ContentScrollRegion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback(_updateScrollable);
+  }
+
+  void _updateScrollable(Duration _) {
+    if (!mounted || !_controller.hasClients) return;
+    final scrollable = _controller.position.maxScrollExtent > 0;
+    if (scrollable != _scrollable) {
+      setState(() => _scrollable = scrollable);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-          child: SingleChildScrollView(padding: padding, child: child),
+          child: SingleChildScrollView(
+            controller: _controller,
+            padding: widget.padding,
+            physics: _scrollable ? null : const NeverScrollableScrollPhysics(),
+            child: widget.child,
+          ),
         ),
       );
 }
