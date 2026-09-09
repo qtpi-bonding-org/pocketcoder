@@ -10,17 +10,21 @@ import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart
 /// Sits in the prompt line, the slot [InterruptAction] takes over once a turn
 /// starts -- always exactly one tap target there, never both.
 class SendAction extends StatelessWidget {
-  const SendAction({super.key, required this.onSend});
+  const SendAction({super.key, required this.onSend, this.enabled = true});
 
   final VoidCallback onSend;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) => GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onSend,
+        onTap: enabled ? onSend : null,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-          child: TerminalText('↵', role: TextRole.value),
+          child: Opacity(
+            opacity: enabled ? 1 : 0.3,
+            child: TerminalText('↵', role: TextRole.value),
+          ),
         ),
       );
 }

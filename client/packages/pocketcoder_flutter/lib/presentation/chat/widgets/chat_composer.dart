@@ -38,7 +38,7 @@ class ChatComposer extends StatelessWidget {
         onSubmitted: onSubmitted,
         trailing: switch (onInterrupt) {
           final onInterrupt? => InterruptAction(onInterrupt: onInterrupt),
-          null => SendAction(onSend: onSubmitted),
+          null => SendAction(onSend: onSubmitted, enabled: enabled),
         },
       ),
     );

@@ -103,21 +103,24 @@ void main() {
     controller.dispose();
   });
 
-  testWidgets(
-      'SendAction is still present (not gated on enabled) while disabled -- '
-      'documents current behavior, not a requirement', (tester) async {
+  testWidgets('tapping send does nothing while disabled', (tester) async {
     final controller = TextEditingController();
+    var submitted = false;
     await tester.pumpWidget(_wrap(
       ChatComposer(
         controller: controller,
         enabled: false,
         isLoading: true,
-        onSubmitted: () {},
+        onSubmitted: () => submitted = true,
       ),
     ));
     await tester.pumpAndSettle();
 
     expect(find.text('↵'), findsOneWidget);
+    await tester.tap(find.text('↵'));
+    await tester.pump();
+
+    expect(submitted, isFalse);
     controller.dispose();
   });
 }

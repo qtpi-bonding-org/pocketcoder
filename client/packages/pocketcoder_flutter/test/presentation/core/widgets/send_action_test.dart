@@ -17,6 +17,21 @@ void main() {
     expect(sent, isTrue);
   });
 
+  testWidgets('tapping a disabled SendAction does not invoke onSend',
+      (tester) async {
+    var sent = false;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SendAction(onSend: () => sent = true, enabled: false),
+      ),
+    ));
+
+    await tester.tap(find.byType(SendAction));
+    await tester.pump();
+
+    expect(sent, isFalse);
+  });
+
   testWidgets('renders the return glyph, not a worded label', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
