@@ -19,9 +19,12 @@ class InterruptAction extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onInterrupt,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-          child: TerminalText('^C', role: TextRole.warn),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: AppSizes.buttonHeight,
+            minHeight: AppSizes.buttonHeight,
+          ),
+          child: Center(child: TerminalText('^C', role: TextRole.warn)),
         ),
       );
 }

@@ -19,11 +19,16 @@ class SendAction extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: enabled ? onSend : null,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSizes.space),
-          child: Opacity(
-            opacity: enabled ? 1 : 0.3,
-            child: TerminalText('↵', role: TextRole.value),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: AppSizes.buttonHeight,
+            minHeight: AppSizes.buttonHeight,
+          ),
+          child: Center(
+            child: Opacity(
+              opacity: enabled ? 1 : 0.3,
+              child: TerminalText('↵', role: TextRole.value),
+            ),
           ),
         ),
       );

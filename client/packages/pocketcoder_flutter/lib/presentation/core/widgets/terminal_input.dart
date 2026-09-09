@@ -155,6 +155,7 @@ class _TerminalInputState extends State<TerminalInput> {
           : colors.onSurface.withValues(alpha: 0.3),
       fontFamily: AppFonts.family,
       package: 'pocketcoder_flutter',
+      fontSize: AppSizes.fontBody,
       fontWeight: AppFonts.heavy,
     );
     return Container(
