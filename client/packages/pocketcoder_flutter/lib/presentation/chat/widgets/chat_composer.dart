@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/interrupt_action.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/send_action.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_input.dart';
 
 /// The chat prompt at the bottom of the terminal transcript.
@@ -37,7 +38,7 @@ class ChatComposer extends StatelessWidget {
         onSubmitted: onSubmitted,
         trailing: switch (onInterrupt) {
           final onInterrupt? => InterruptAction(onInterrupt: onInterrupt),
-          null => null,
+          null => SendAction(onSend: onSubmitted),
         },
       ),
     );
