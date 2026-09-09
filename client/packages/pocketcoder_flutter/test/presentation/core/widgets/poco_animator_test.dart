@@ -151,6 +151,24 @@ void main() {
         reason: 'a scripted onboarding beat must not be hidden by a tap');
   });
 
+  testWidgets('a tap looks even when isAgentTurn is explicitly false',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+          body: PocoGazeScope(
+              child: Center(child: PocoAnimator(isAgentTurn: false)))),
+    ));
+    expect(PocoExpression.greenHappy, contains(faceText(tester)));
+
+    final center = tester.getCenter(find.byType(PocoAnimator));
+    await tester.tapAt(center + const Offset(200, 0));
+    await tester.pump();
+
+    expect(faceText(tester), PocoExpression.lookRight,
+        reason: 'chat passes a non-null isAgentTurn even while idle, so '
+            'gaze must key off the thinking face, not turn-driven-ness');
+  });
+
   testWidgets(
       'allowGazeDuringSequence lets a tap override an active scripted '
       'sequence', (tester) async {

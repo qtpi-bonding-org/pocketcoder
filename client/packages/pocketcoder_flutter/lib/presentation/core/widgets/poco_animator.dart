@@ -48,6 +48,7 @@ class _PocoAnimatorState extends State<PocoAnimator> {
 
   bool get _isTurnDriven => widget.isAgentTurn != null;
   bool get _isRandomIdle => !_isTurnDriven && widget.sequence.isEmpty;
+  bool get _isThinking => widget.isAgentTurn == true;
 
   @override
   void initState() {
@@ -128,8 +129,8 @@ class _PocoAnimatorState extends State<PocoAnimator> {
   }
 
   Widget _buildFace(BuildContext context, Offset? tapPosition) {
-    final gazeEligible = _isRandomIdle ||
-        (widget.allowGazeDuringSequence && !_isTurnDriven);
+    final gazeEligible = !_isThinking &&
+        (widget.sequence.isEmpty || widget.allowGazeDuringSequence);
     final gazeLook = gazeEligible ? _gazeLookFor(tapPosition) : null;
     return AsciiFace(
         key: _faceKey,
