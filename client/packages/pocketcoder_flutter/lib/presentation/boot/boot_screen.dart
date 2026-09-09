@@ -130,6 +130,10 @@ class _BootScreenState extends State<BootScreen> {
           context.l10n.bootSystemsNominal,
           sequence: PocoExpressions.happy,
         );
+    await Future.delayed(const Duration(milliseconds: 5000));
+    if (mounted) {
+      context.read<PocoCubit>().setExpression(const []);
+    }
   }
 
   @override
