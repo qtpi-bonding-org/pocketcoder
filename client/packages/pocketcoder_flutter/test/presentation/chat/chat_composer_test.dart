@@ -35,6 +35,7 @@ void main() {
 
     expect(find.text('commander@pc \$ '), findsOneWidget);
     expect(find.text('SEND'), findsNothing);
+    expect(find.text('↵'), findsOneWidget);
     final field = tester.widget<TextField>(find.byType(TextField));
     field.onSubmitted?.call('hello');
     expect(submitted, isTrue);
@@ -80,6 +81,43 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
+    controller.dispose();
+  });
+
+  testWidgets('shows the interrupt control instead of send while a turn runs',
+      (tester) async {
+    final controller = TextEditingController();
+    await tester.pumpWidget(_wrap(
+      ChatComposer(
+        controller: controller,
+        enabled: true,
+        isLoading: true,
+        onSubmitted: () {},
+        onInterrupt: () {},
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('^C'), findsOneWidget);
+    expect(find.text('↵'), findsNothing);
+    controller.dispose();
+  });
+
+  testWidgets(
+      'SendAction is still present (not gated on enabled) while disabled -- '
+      'documents current behavior, not a requirement', (tester) async {
+    final controller = TextEditingController();
+    await tester.pumpWidget(_wrap(
+      ChatComposer(
+        controller: controller,
+        enabled: false,
+        isLoading: true,
+        onSubmitted: () {},
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('↵'), findsOneWidget);
     controller.dispose();
   });
 }
