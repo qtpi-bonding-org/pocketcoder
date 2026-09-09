@@ -78,7 +78,7 @@ void main() {
     expect(await cubit.purchasePro(package.identifier), isFalse);
     expect(cubit.state.isPro, isFalse);
     expect(cubit.state.isSuccess, isTrue);
-    expect(cubit.state.hasError, isFalse);
+    expect(cubit.state.hasError, isTrue);
     await cubit.close();
   });
 

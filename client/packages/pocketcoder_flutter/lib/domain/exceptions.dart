@@ -77,6 +77,8 @@ class BillingException extends DomainException {
 
   factory BillingException.restoreFailed([dynamic cause]) =>
       BillingException('Failed to restore purchases', cause);
+  factory BillingException.purchaseFailed([dynamic cause]) =>
+      BillingException('Failed to complete purchase', cause);
 }
 
 /// Generic repository exceptions.
