@@ -173,7 +173,7 @@ class _TerminalInputState extends State<TerminalInput> {
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
               child: TextField(
