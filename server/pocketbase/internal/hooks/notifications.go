@@ -64,8 +64,8 @@ func SendLiveActivityUpdate(token, fcmToken, userID string, state LiveActivityCo
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if secret := os.Getenv("PN_RELAY_SECRET"); secret != "" {
-		req.Header.Set("X-Relay-Secret", secret)
+	if root := os.Getenv("PN_RELAY_SECRET"); root != "" {
+		req.Header.Set("X-Relay-Secret", relaySecretFor(root, userID))
 	}
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
@@ -168,8 +168,8 @@ func (p *FcmRelayProvider) Send(token, title, body string, extra map[string]stri
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if secret := os.Getenv("PN_RELAY_SECRET"); secret != "" {
-		req.Header.Set("X-Relay-Secret", secret)
+	if root := os.Getenv("PN_RELAY_SECRET"); root != "" {
+		req.Header.Set("X-Relay-Secret", relaySecretFor(root, p.UserID))
 	}
 
 	client := &http.Client{}

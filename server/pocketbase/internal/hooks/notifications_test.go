@@ -60,7 +60,7 @@ func newNotificationTestApp() (*tests.TestApp, error) {
 // withFakeRelayCapturing's own callers (dispatchLiveActivityUpdate) call
 // SendLiveActivityUpdate directly and never go through that gate, so it has
 // no reason to set PN_PROVIDER itself.
-func withCapturingRelay(t *testing.T) (lastBody func() map[string]any) {
+func withCapturingRelay(t *testing.T) (lastBody func() map[string]any, lastHeader func() http.Header) {
 	t.Helper()
 	prevMode, hadMode := os.LookupEnv("PN_PROVIDER")
 	os.Setenv("PN_PROVIDER", "FCM")
@@ -80,7 +80,7 @@ func TestSendPushNotificationWithExtraIncludesExtraFields(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer app.Cleanup()
-	lastBody := withCapturingRelay(t)
+	lastBody, _ := withCapturingRelay(t)
 
 	user := notificationTestUser(t, app)
 	liveActivityTestDevice(t, app, user.Id)
@@ -110,7 +110,7 @@ func TestSendPushNotificationHasNoExtraFields(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer app.Cleanup()
-	lastBody := withCapturingRelay(t)
+	lastBody, _ := withCapturingRelay(t)
 
 	user := notificationTestUser(t, app)
 	liveActivityTestDevice(t, app, user.Id)
@@ -125,6 +125,79 @@ func TestSendPushNotificationHasNoExtraFields(t *testing.T) {
 	}
 	if _, present := body["request_id"]; present {
 		t.Fatalf("request_id present on a plain SendPushNotification call: %v", body["request_id"])
+	}
+}
+
+func TestSendPushNotificationSendsPerUserDerivedRelaySecret(t *testing.T) {
+	t.Setenv("PN_RELAY_SECRET", "test-root-secret")
+	app, err := newNotificationTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	lastBody, lastHeader := withCapturingRelay(t)
+
+	user := notificationTestUser(t, app)
+	liveActivityTestDevice(t, app, user.Id)
+
+	if err := SendPushNotification(app, user.Id, "title", "body", "chat_reply", ""); err != nil {
+		t.Fatalf("SendPushNotification returned error: %v", err)
+	}
+
+	if lastBody() == nil {
+		t.Fatal("relay never received a request")
+	}
+	got := lastHeader().Get("X-Relay-Secret")
+	want := relaySecretFor("test-root-secret", user.Id)
+	if got != want {
+		t.Fatalf("X-Relay-Secret = %q, want the per-user derived secret %q", got, want)
+	}
+	if got == "test-root-secret" {
+		t.Fatal("X-Relay-Secret was sent as the raw root secret, not derived per user")
+	}
+}
+
+// TestSendPushNotificationTwoUsersOnSameDeploymentGetDifferentSecrets proves
+// the actual user-visible bug this plan fixes: two PocketBase accounts on
+// the same deployment (same PN_RELAY_SECRET) must no longer collide on the
+// same derived secret, which is what caused the second account's push
+// requests to be permanently rejected by push-relay's tenant binding.
+func TestSendPushNotificationTwoUsersOnSameDeploymentGetDifferentSecrets(t *testing.T) {
+	t.Setenv("PN_RELAY_SECRET", "shared-deployment-secret")
+	app, err := newNotificationTestApp()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Cleanup()
+	lastBody, lastHeader := withCapturingRelay(t)
+
+	// Uses liveActivityTestUser (defined in live_activities_test.go, same
+	// package) rather than notificationTestUser, since that helper takes
+	// an explicit email and this test needs two distinct accounts --
+	// notificationTestUser hardcodes one fixed email and creating a
+	// second user with it would fail on a duplicate-email constraint.
+	userA := liveActivityTestUser(t, app, "push-multi-a@example.com")
+	liveActivityTestDevice(t, app, userA.Id)
+	if err := SendPushNotification(app, userA.Id, "title", "body", "chat_reply", ""); err != nil {
+		t.Fatalf("SendPushNotification for userA returned error: %v", err)
+	}
+	if lastBody() == nil {
+		t.Fatal("relay never received a request for userA")
+	}
+	secretA := lastHeader().Get("X-Relay-Secret")
+
+	userB := liveActivityTestUser(t, app, "push-multi-b@example.com")
+	liveActivityTestDevice(t, app, userB.Id)
+	if err := SendPushNotification(app, userB.Id, "title", "body", "chat_reply", ""); err != nil {
+		t.Fatalf("SendPushNotification for userB returned error: %v", err)
+	}
+	if lastBody() == nil {
+		t.Fatal("relay never received a request for userB")
+	}
+	secretB := lastHeader().Get("X-Relay-Secret")
+
+	if secretA == secretB {
+		t.Fatalf("userA and userB on the same deployment got the same X-Relay-Secret (%q) -- this is the bug this fix addresses", secretA)
 	}
 }
 
