@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/pocketbase/pocketbase/core"
@@ -120,10 +121,44 @@ func TestDeleteProDataSendsTheCallersOwnUserIDAndTheRelaySecret(t *testing.T) {
 	if gotHeader != "1" {
 		t.Fatalf("X-Relay-Delete-Pro-Data = %q, want \"1\"", gotHeader)
 	}
-	if gotSecret != "test-relay-secret" {
-		t.Fatalf("X-Relay-Secret = %q, want the configured PN_RELAY_SECRET", gotSecret)
+	wantSecret := relaySecretFor("test-relay-secret", caller.Id)
+	if gotSecret != wantSecret {
+		t.Fatalf("X-Relay-Secret = %q, want the per-caller derived secret %q", gotSecret, wantSecret)
+	}
+	if gotSecret == "test-relay-secret" {
+		t.Fatal("X-Relay-Secret was sent as the raw root secret, not derived per caller")
 	}
 	if !strings.Contains(gotBody, caller.Id) {
 		t.Fatalf("request body = %q, want it to contain the caller's own id %q", gotBody, caller.Id)
+	}
+}
+
+func TestDeleteProDataDerivesADifferentSecretForEachCaller(t *testing.T) {
+	t.Setenv("PN_RELAY_SECRET", "shared-deployment-secret")
+	var mu sync.Mutex
+	var gotSecrets []string
+	relay := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		gotSecrets = append(gotSecrets, r.Header.Get("X-Relay-Secret"))
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer relay.Close()
+	t.Setenv("PN_URL", relay.URL)
+	app := testApp(t)
+	callerA := testUser(t, app, "pro-data-multi-a@example.com")
+	callerB := testUser(t, app, "pro-data-multi-b@example.com")
+
+	action := deleteProDataAction(t, app)
+	callDeleteProData(t, action, callerA)
+	callDeleteProData(t, action, callerB)
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(gotSecrets) != 2 {
+		t.Fatalf("relay received %d requests, want 2", len(gotSecrets))
+	}
+	if gotSecrets[0] == gotSecrets[1] {
+		t.Fatalf("two different callers on the same deployment got the same X-Relay-Secret (%q) -- this is the bug this fix addresses", gotSecrets[0])
 	}
 }

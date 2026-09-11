@@ -41,14 +41,14 @@ func AddProDataOperations(app core.App, registry *operation.Registry) {
 }
 
 // DeleteProDataOperation never touches this deployment's own local
-// PocketBase data -- only push-relay's Supabase rows and the RevenueCat
+// PocketBase data -- only push-relay's D1 rows and the RevenueCat
 // customer record. userID always comes from the caller's own auth token,
 // never a request parameter.
 func DeleteProDataOperation(userID string) error {
 	return purgeRelayData(userID)
 }
 
-// purgeRelayData tells push-relay to delete this user's Supabase rows
+// purgeRelayData tells push-relay to delete this user's D1 rows
 // (relay_bindings, push_quota) and RevenueCat customer record. Unlike the
 // notification-send path, this is NOT best-effort: there is no local
 // fallback state here, so a failed purge must be reported as a failed
@@ -58,7 +58,7 @@ func purgeRelayData(userID string) error {
 	if url == "" {
 		return nil // no relay configured (e.g. self-hosted without push) -- nothing to purge
 	}
-	secret := os.Getenv("PN_RELAY_SECRET")
+	root := os.Getenv("PN_RELAY_SECRET")
 	body, err := json.Marshal(map[string]string{"user_id": userID})
 	if err != nil {
 		return err
@@ -71,8 +71,8 @@ func purgeRelayData(userID string) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Relay-Delete-Pro-Data", "1")
-	if secret != "" {
-		req.Header.Set("X-Relay-Secret", secret)
+	if root != "" {
+		req.Header.Set("X-Relay-Secret", relaySecretFor(root, userID))
 	}
 	resp, err := (&http.Client{Timeout: 5 * time.Second}).Do(req)
 	if err != nil {
