@@ -3118,6 +3118,12 @@ abstract class AppLocalizations {
   /// **'push notifications for agent activity -- approvals, task completion'**
   String get proBenefitPushNotifications;
 
+  /// No description provided for @proBenefitKeepYourServer.
+  ///
+  /// In en, this message translates to:
+  /// **'your VPS and its data are yours to keep -- if you cancel, only convenience features stop'**
+  String get proBenefitKeepYourServer;
+
   /// No description provided for @proBenefitLiveMonitoring.
   ///
   /// In en, this message translates to:

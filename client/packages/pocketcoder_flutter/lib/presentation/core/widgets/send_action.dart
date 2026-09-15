@@ -1,0 +1,35 @@
+import 'package:flutter/material.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
+import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
+
+/// `↵` is the literal Return/Enter glyph -- no angle brackets, matching
+/// [InterruptAction]'s `^C`: both stand for a real keystroke, not a
+/// modal-offered choice.
+///
+/// Sits in the prompt line, the slot [InterruptAction] takes over once a turn
+/// starts -- always exactly one tap target there, never both.
+class SendAction extends StatelessWidget {
+  const SendAction({super.key, required this.onSend, this.enabled = true});
+
+  final VoidCallback onSend;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: enabled ? onSend : null,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: AppSizes.buttonHeight,
+            minHeight: AppSizes.buttonHeight,
+          ),
+          child: Center(
+            child: Opacity(
+              opacity: enabled ? 1 : 0.3,
+              child: TerminalText('↵', role: TextRole.value),
+            ),
+          ),
+        ),
+      );
+}

@@ -81,6 +81,43 @@ void main() {
     expect(find.byType(TerminalConversationFrame), findsOneWidget);
   });
 
+  testWidgets(
+      'a streaming user command renders as plain text, not GptMarkdown',
+      (tester) async {
+    late StackedChatBuilders builders;
+    await tester.pumpWidget(wrap(
+      Builder(builder: (context) {
+        builders = pocketcoderChatBuilders(
+          context,
+          onPermissionOptionSelected: (_, {optionId, cancelled = false}) {},
+          onElicitationRespond: (_, __) {},
+          animatedMessageIds: const {},
+          onMessageAnimated: (_) {},
+        );
+        return host(
+          context,
+          builders,
+          const Conversation(timeline: [
+            TimelineItem.textStream(
+              id: 'm1',
+              role: 'user',
+              text: 'deploy',
+              order: OrderKey(1),
+            ),
+          ]),
+        );
+      }),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('commander@pc \$ '), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+          (widget) => widget.runtimeType.toString() == 'GptMarkdown'),
+      findsNothing,
+    );
+  });
+
   testWidgets('assistant responses use a Poco terminal prefix', (tester) async {
     late StackedChatBuilders builders;
     await tester.pumpWidget(wrap(

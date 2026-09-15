@@ -22,6 +22,9 @@ class PocoAnimator extends StatefulWidget {
 
   /// Null means [sequence] governs the face instead.
   final bool? isAgentTurn;
+
+  final bool allowGazeDuringSequence;
+
   const PocoAnimator({
     super.key,
     this.fontSize,
@@ -30,6 +33,7 @@ class PocoAnimator extends StatefulWidget {
     this.posture,
     this.sequence = const [],
     this.isAgentTurn,
+    this.allowGazeDuringSequence = false,
   });
   @override
   State<PocoAnimator> createState() => _PocoAnimatorState();
@@ -44,6 +48,7 @@ class _PocoAnimatorState extends State<PocoAnimator> {
 
   bool get _isTurnDriven => widget.isAgentTurn != null;
   bool get _isRandomIdle => !_isTurnDriven && widget.sequence.isEmpty;
+  bool get _isThinking => widget.isAgentTurn == true;
 
   @override
   void initState() {
@@ -124,9 +129,9 @@ class _PocoAnimatorState extends State<PocoAnimator> {
   }
 
   Widget _buildFace(BuildContext context, Offset? tapPosition) {
-    // A tap-look only ever replaces the idle filler face -- it must never
-    // hide the "thinking" status or step on a scripted onboarding beat.
-    final gazeLook = _isRandomIdle ? _gazeLookFor(tapPosition) : null;
+    final gazeEligible = !_isThinking &&
+        (widget.sequence.isEmpty || widget.allowGazeDuringSequence);
+    final gazeLook = gazeEligible ? _gazeLookFor(tapPosition) : null;
     return AsciiFace(
         key: _faceKey,
         expression: gazeLook?.$1 ?? _currentFace,

@@ -106,6 +106,7 @@ class PocoFace extends StatelessWidget {
     this.posture,
     this.sequence = const [],
     this.isAgentTurn,
+    this.allowGazeDuringSequence = false,
   });
 
   final double? fontSize;
@@ -114,6 +115,7 @@ class PocoFace extends StatelessWidget {
   final PocoPosture? posture;
   final List<(String, int)> sequence;
   final bool? isAgentTurn;
+  final bool allowGazeDuringSequence;
 
   @override
   Widget build(BuildContext context) => PocoAnimator(
@@ -123,5 +125,6 @@ class PocoFace extends StatelessWidget {
         posture: posture ?? PocoPostureScope.of(context),
         sequence: sequence,
         isAgentTurn: isAgentTurn,
+        allowGazeDuringSequence: allowGazeDuringSequence,
       );
 }

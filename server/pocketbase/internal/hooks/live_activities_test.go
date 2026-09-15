@@ -47,16 +47,18 @@ func withFakeRelay(t *testing.T, status int) (count func() int) {
 // withFakeRelayCapturing is like withFakeRelay but hands back the JSON body
 // of the most recent POST, so tests can assert on payload shape (user_id,
 // fcm_token) rather than just delivery/no-delivery.
-func withFakeRelayCapturing(t *testing.T, status int) (lastBody func() map[string]any) {
+func withFakeRelayCapturing(t *testing.T, status int) (lastBody func() map[string]any, lastHeader func() http.Header) {
 	t.Helper()
 	var mu sync.Mutex
 	var body map[string]any
+	var header http.Header
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, _ := io.ReadAll(r.Body)
 		var parsed map[string]any
 		_ = json.Unmarshal(b, &parsed)
 		mu.Lock()
 		body = parsed
+		header = r.Header.Clone()
 		mu.Unlock()
 		w.WriteHeader(status)
 	}))
@@ -71,10 +73,14 @@ func withFakeRelayCapturing(t *testing.T, status int) (lastBody func() map[strin
 		}
 	})
 	return func() map[string]any {
-		mu.Lock()
-		defer mu.Unlock()
-		return body
-	}
+			mu.Lock()
+			defer mu.Unlock()
+			return body
+		}, func() http.Header {
+			mu.Lock()
+			defer mu.Unlock()
+			return header
+		}
 }
 
 func liveActivityTestUser(t *testing.T, app core.App, email string) *core.Record {
@@ -482,7 +488,7 @@ func TestDispatchLiveActivityUpdateSendsUserIDAndFCMToken(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer app.Cleanup()
-	lastBody := withFakeRelayCapturing(t, http.StatusOK)
+	lastBody, _ := withFakeRelayCapturing(t, http.StatusOK)
 
 	user := liveActivityTestUser(t, app, "la-dispatch-4@example.com")
 	device := liveActivityTestDevice(t, app, user.Id)
@@ -547,7 +553,7 @@ func TestSendLiveActivityUpdateIncludesAttributesOnlyForStartEvent(t *testing.T)
 		t.Fatal(err)
 	}
 	defer app.Cleanup()
-	lastBody := withFakeRelayCapturing(t, http.StatusOK)
+	lastBody, _ := withFakeRelayCapturing(t, http.StatusOK)
 
 	if err := SendLiveActivityUpdate("activity-tok", "fcm-tok", "user-1",
 		LiveActivityContentState{Status: "running"}, 1, "start",
@@ -573,6 +579,28 @@ func TestSendLiveActivityUpdateIncludesAttributesOnlyForStartEvent(t *testing.T)
 	}
 	if _, present := body["attributes"]; present {
 		t.Fatalf("attributes present on an update event: %v", body["attributes"])
+	}
+}
+
+func TestSendLiveActivityUpdateSendsPerUserDerivedRelaySecret(t *testing.T) {
+	t.Setenv("PN_RELAY_SECRET", "test-root-secret")
+	lastBody, lastHeader := withFakeRelayCapturing(t, http.StatusOK)
+
+	if err := SendLiveActivityUpdate("activity-tok", "fcm-tok", "user-42",
+		LiveActivityContentState{Status: "running"}, 1, "update", "", nil); err != nil {
+		t.Fatalf("SendLiveActivityUpdate returned error: %v", err)
+	}
+
+	if lastBody() == nil {
+		t.Fatal("relay never received a request")
+	}
+	got := lastHeader().Get("X-Relay-Secret")
+	want := relaySecretFor("test-root-secret", "user-42")
+	if got != want {
+		t.Fatalf("X-Relay-Secret = %q, want the per-user derived secret %q", got, want)
+	}
+	if got == "test-root-secret" {
+		t.Fatal("X-Relay-Secret was sent as the raw root secret, not derived per user")
 	}
 }
 

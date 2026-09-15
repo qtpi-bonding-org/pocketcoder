@@ -741,6 +741,7 @@ class L10nKeyResolver {
       'poco.provisioning.waiting.for.source' => _l10n.pocoProvisioningWaitingForSource,
       'pro.active' => _l10n.proActive,
       'pro.active.body' => _l10n.proActiveBody,
+      'pro.benefit.keep.your.server' => _l10n.proBenefitKeepYourServer,
       'pro.benefit.live.monitoring' => _l10n.proBenefitLiveMonitoring,
       'pro.benefit.push.notifications' => _l10n.proBenefitPushNotifications,
       'pro.benefit.server.setup' => _l10n.proBenefitServerSetup,
@@ -1927,6 +1928,7 @@ class L10nKeyResolver {
     'poco.provisioning.waiting.for.source',
     'pro.active',
     'pro.active.body',
+    'pro.benefit.keep.your.server',
     'pro.benefit.live.monitoring',
     'pro.benefit.push.notifications',
     'pro.benefit.server.setup',
@@ -3050,6 +3052,7 @@ class L10nKeyResolver {
     'pocoProvisioningWaitingForSource': 'poco.provisioning.waiting.for.source',
     'proActive': 'pro.active',
     'proActiveBody': 'pro.active.body',
+    'proBenefitKeepYourServer': 'pro.benefit.keep.your.server',
     'proBenefitLiveMonitoring': 'pro.benefit.live.monitoring',
     'proBenefitPushNotifications': 'pro.benefit.push.notifications',
     'proBenefitServerSetup': 'pro.benefit.server.setup',
@@ -4170,6 +4173,7 @@ class L10nKeyResolver {
     'poco.provisioning.waiting.for.source': 'pocoProvisioningWaitingForSource',
     'pro.active': 'proActive',
     'pro.active.body': 'proActiveBody',
+    'pro.benefit.keep.your.server': 'proBenefitKeepYourServer',
     'pro.benefit.live.monitoring': 'proBenefitLiveMonitoring',
     'pro.benefit.push.notifications': 'proBenefitPushNotifications',
     'pro.benefit.server.setup': 'proBenefitServerSetup',
@@ -5297,6 +5301,7 @@ abstract class L10nKeys {
   static const pocoProvisioningWaitingForSource = 'poco.provisioning.waiting.for.source';
   static const proActive = 'pro.active';
   static const proActiveBody = 'pro.active.body';
+  static const proBenefitKeepYourServer = 'pro.benefit.keep.your.server';
   static const proBenefitLiveMonitoring = 'pro.benefit.live.monitoring';
   static const proBenefitPushNotifications = 'pro.benefit.push.notifications';
   static const proBenefitServerSetup = 'pro.benefit.server.setup';

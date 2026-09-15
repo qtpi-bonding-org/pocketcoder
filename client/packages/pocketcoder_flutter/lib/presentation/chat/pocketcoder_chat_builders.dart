@@ -130,40 +130,46 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
   bool _isReasoning(chat_core.Message message) =>
       message.metadata?['kind'] == 'reasoning';
 
+  /// Shared by both builders so a sent command never renders differently
+  /// between them.
+  Widget _buildSentCommand(BuildContext context, String text) {
+    final color =
+        emphasize(context.colorScheme.secondary, Emphasis.selected).text;
+    return TerminalConversationFrame(
+      speaker: TerminalConversationSpeaker.user,
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: context.l10n.chatCommanderPrompt,
+              style: TextStyle(
+                color: color,
+                fontFamily: AppFonts.family,
+                package: 'pocketcoder_flutter',
+                fontWeight: AppFonts.heavy,
+              ),
+            ),
+            TextSpan(
+              text: text,
+              style: TextStyle(
+                color: color,
+                fontFamily: AppFonts.family,
+                package: 'pocketcoder_flutter',
+                fontWeight: AppFonts.medium,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   chat_core.TextMessageBuilder get textMessageBuilder =>
       (context, message, index, {required isSentByMe, groupStatus}) {
         if (_isReasoning(message)) return const SizedBox.shrink();
         if (isSentByMe) {
-          final color =
-              emphasize(context.colorScheme.secondary, Emphasis.selected).text;
-          return TerminalConversationFrame(
-            speaker: TerminalConversationSpeaker.user,
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: context.l10n.chatCommanderPrompt,
-                    style: TextStyle(
-                      color: color,
-                      fontFamily: AppFonts.family,
-                      package: 'pocketcoder_flutter',
-                      fontWeight: AppFonts.heavy,
-                    ),
-                  ),
-                  TextSpan(
-                    text: message.text,
-                    style: TextStyle(
-                      color: color,
-                      fontFamily: AppFonts.family,
-                      package: 'pocketcoder_flutter',
-                      fontWeight: AppFonts.medium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return _buildSentCommand(context, message.text);
         }
         return PocoTerminalResponse(
           messageId: message.id,
@@ -178,6 +184,17 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
       (context, message, index,
           {required isSentByMe, groupStatus, required streamState}) {
         if (_isReasoning(message)) return const SizedBox.shrink();
+        if (isSentByMe) {
+          final text = switch (streamState) {
+            chat_stream.StreamStateCompleted(:final finalText) => finalText,
+            chat_stream.StreamStateStreaming(:final accumulatedText) =>
+              accumulatedText,
+            chat_stream.StreamStateError(:final accumulatedText) =>
+              accumulatedText ?? '',
+            chat_stream.StreamStateLoading() => '',
+          };
+          return _buildSentCommand(context, text);
+        }
         final child = chat_stream.FlyerChatTextStreamMessage(
           message: message,
           index: index,
@@ -185,24 +202,8 @@ class _PocketcoderChatBuilders extends StackedChatBuilders {
           padding: EdgeInsets.zero,
           showTime: false,
           showStatus: false,
-          sentTextStyle: style.textStyle.copyWith(
-            color: emphasize(context.colorScheme.secondary, Emphasis.selected)
-                .text,
-            fontWeight: AppFonts.medium,
-          ),
           receivedTextStyle: style.textStyle,
         );
-        if (isSentByMe) {
-          return TerminalConversationFrame(
-            speaker: TerminalConversationSpeaker.user,
-            child: TerminalTranscriptLine(
-              prefix: context.l10n.chatCommanderPrompt,
-              color: emphasize(context.colorScheme.secondary, Emphasis.selected)
-                  .text,
-              child: child,
-            ),
-          );
-        }
         return TerminalConversationFrame(
           speaker: TerminalConversationSpeaker.poco,
           child: TerminalTranscriptLine(

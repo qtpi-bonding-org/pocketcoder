@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart';
 import 'billing_state.dart';
 
@@ -34,7 +35,10 @@ class BillingCubit extends AppCubit<BillingState> {
           error: null,
         );
       } else {
-        return state.copyWith(status: UiFlowStatus.success, error: null);
+        return state.copyWith(
+          status: UiFlowStatus.success,
+          error: BillingException.purchaseFailed(),
+        );
       }
     });
     return success;
