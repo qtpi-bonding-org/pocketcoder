@@ -9,7 +9,9 @@
 // the remaining unmapped types found in the E2E audit.
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/agent/provider_reauthentication_required.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/infrastructure/feedback/exception_mapper.dart';
 
@@ -42,5 +44,41 @@ void main() {
           reason: '${error.runtimeType} should fall back to the generic '
               'error key, not leak its raw message');
     }
+  });
+
+  group('AuthException unwrapping', () {
+    AuthException wrap(Object original) => AuthException(
+          'operation failed: ${original.runtimeType}',
+          SafeExceptionCause(
+              original.runtimeType, original, StackTrace.current),
+        );
+
+    test('maps a definite rejection (401/403/400) to auth.login.failed', () {
+      for (final status in [400, 401, 403]) {
+        final key =
+            mapper.map(wrap(ClientException(statusCode: status)));
+        expect(key!.key, 'auth.login.failed',
+            reason: 'statusCode $status is a definite server rejection');
+      }
+    });
+
+    test(
+        'maps a network/transport failure (statusCode 0) or a server error '
+        '(5xx) to the generic network key, not a credentials message', () {
+      for (final status in [0, 500, 503]) {
+        final key =
+            mapper.map(wrap(ClientException(statusCode: status)));
+        expect(key!.key, 'error.network',
+            reason: 'statusCode $status says nothing about credentials');
+      }
+    });
+
+    test(
+        'maps a compatibility mismatch (FormatException from '
+        'verifyServerCompatibility) to a dedicated incompatible-server key',
+        () {
+      final key = mapper.map(wrap(const FormatException('mismatch')));
+      expect(key!.key, 'auth.server.incompatible');
+    });
   });
 }

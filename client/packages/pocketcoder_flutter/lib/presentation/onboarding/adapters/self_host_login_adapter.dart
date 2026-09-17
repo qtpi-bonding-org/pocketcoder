@@ -5,6 +5,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
@@ -71,10 +72,10 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
       _pocoMessage.value = context.l10n.onboardingPocoWelcome;
       _pocoSequence.value = PocoExpressions.happy;
     } else if (state.status == UiFlowStatus.failure) {
-      // Never surfaces state.error's raw text -- it may carry an
-      // unpredictable underlying exception (network, decoding, etc.) that
-      // client/AGENTS.md requires stay out of user-facing copy.
-      _pocoMessage.value = context.l10n.onboardingAccessDenied;
+      // Mapped/localized, never state.error's raw text.
+      final mapped = safeErrorMessage(state.error);
+      _pocoMessage.value =
+          mapped.isNotEmpty ? mapped : context.l10n.onboardingAccessDenied;
       _pocoSequence.value = PocoExpressions.nervous;
     }
   }
@@ -95,10 +96,14 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     });
     try {
       await context.read<AuthCubit>().login(url, email, password);
-    } catch (_) {
+    } catch (error) {
       if (context.mounted) {
-        VimToast.show(context, context.l10n.onboardingAccessDenied,
-            color: context.terminalColors.warning);
+        final mapped = safeErrorMessage(error);
+        VimToast.show(
+          context,
+          mapped.isNotEmpty ? mapped : context.l10n.onboardingAccessDenied,
+          color: context.terminalColors.warning,
+        );
       }
     }
   }

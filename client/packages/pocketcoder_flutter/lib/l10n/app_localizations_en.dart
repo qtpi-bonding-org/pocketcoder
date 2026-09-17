@@ -47,6 +47,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authError => 'Authentication error';
 
   @override
+  String get authServerIncompatible =>
+      'This server isn\'t compatible with this app version';
+
+  @override
   String get providerReauthenticationRequired =>
       'Your provider needs to be reauthenticated. Your saved login was kept.';
 

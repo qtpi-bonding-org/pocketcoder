@@ -17,6 +17,7 @@
   "authNotAuthenticated": "Please log in",
   "authTokenExpired": "Session expired, please log in again",
   "authError": "Authentication error",
+  "authServerIncompatible": "This server isn't compatible with this app version",
   "providerReauthenticationRequired": "Your provider needs to be reauthenticated. Your saved login was kept.",
 
   "chatFetchFailed": "Unable to load chats",

@@ -166,6 +166,12 @@ abstract class AppLocalizations {
   /// **'Authentication error'**
   String get authError;
 
+  /// No description provided for @authServerIncompatible.
+  ///
+  /// In en, this message translates to:
+  /// **'This server isn\'t compatible with this app version'**
+  String get authServerIncompatible;
+
   /// No description provided for @providerReauthenticationRequired.
   ///
   /// In en, this message translates to:

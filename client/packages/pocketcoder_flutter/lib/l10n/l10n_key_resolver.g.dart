@@ -85,6 +85,7 @@ class L10nKeyResolver {
       'auth.error' => _l10n.authError,
       'auth.login.failed' => _l10n.authLoginFailed,
       'auth.not.authenticated' => _l10n.authNotAuthenticated,
+      'auth.server.incompatible' => _l10n.authServerIncompatible,
       'auth.token.expired' => _l10n.authTokenExpired,
       'billing.error' => _l10n.billingError,
       'billing.restore.failed' => _l10n.billingRestoreFailed,
@@ -1215,6 +1216,7 @@ class L10nKeyResolver {
     'auth.error',
     'auth.login.failed',
     'auth.not.authenticated',
+    'auth.server.incompatible',
     'auth.token.expired',
     'billing.error',
     'billing.restore.failed',
@@ -2339,6 +2341,7 @@ class L10nKeyResolver {
     'authError': 'auth.error',
     'authLoginFailed': 'auth.login.failed',
     'authNotAuthenticated': 'auth.not.authenticated',
+    'authServerIncompatible': 'auth.server.incompatible',
     'authTokenExpired': 'auth.token.expired',
     'billingError': 'billing.error',
     'billingRestoreFailed': 'billing.restore.failed',
@@ -3460,6 +3463,7 @@ class L10nKeyResolver {
     'auth.error': 'authError',
     'auth.login.failed': 'authLoginFailed',
     'auth.not.authenticated': 'authNotAuthenticated',
+    'auth.server.incompatible': 'authServerIncompatible',
     'auth.token.expired': 'authTokenExpired',
     'billing.error': 'billingError',
     'billing.restore.failed': 'billingRestoreFailed',
@@ -4588,6 +4592,7 @@ abstract class L10nKeys {
   static const authError = 'auth.error';
   static const authLoginFailed = 'auth.login.failed';
   static const authNotAuthenticated = 'auth.not.authenticated';
+  static const authServerIncompatible = 'auth.server.incompatible';
   static const authTokenExpired = 'auth.token.expired';
   static const billingError = 'billing.error';
   static const billingRestoreFailed = 'billing.restore.failed';

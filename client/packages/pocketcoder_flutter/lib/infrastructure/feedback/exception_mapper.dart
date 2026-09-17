@@ -1,6 +1,8 @@
 import 'package:injectable/injectable.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/agent/provider_reauthentication_required.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/exceptions/chat_list_exception.dart';
 
@@ -39,8 +41,29 @@ class AppExceptionKeyMapper implements IExceptionKeyMapper {
   }
 
   MessageKey? _mapAuthException(AuthException exception) {
+    // tryMethod wraps every AuthRepository failure's real cause in
+    // exception.cause as a SafeExceptionCause; exception.message is only a
+    // privacy-safe label.
+    final original = switch (exception.cause) {
+      SafeExceptionCause(:final originalException) => originalException,
+      final other => other,
+    };
+    if (original is ClientException) {
+      if (original.statusCode == 400 ||
+          original.statusCode == 401 ||
+          original.statusCode == 403) {
+        return const MessageKey.error('auth.login.failed');
+      }
+      // statusCode 0 (no HTTP response), 5xx, 408/425/429: transport/server
+      // trouble, not a credentials verdict.
+      return const MessageKey.error('error.network');
+    }
+    if (original is FormatException) {
+      // From verifyServerCompatibility(): reached fine, contract mismatch.
+      return const MessageKey.error('auth.server.incompatible');
+    }
     return switch (exception.message) {
-      String msg when msg.contains('Login') =>
+      String msg when msg.toLowerCase().contains('login') =>
         const MessageKey.error('auth.login.failed'),
       String msg when msg.contains('not authenticated') =>
         const MessageKey.error('auth.not.authenticated'),

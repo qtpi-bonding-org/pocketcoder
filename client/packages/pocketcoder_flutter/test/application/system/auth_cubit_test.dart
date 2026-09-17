@@ -2,13 +2,24 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
+
+AuthException _wrappedClientFailure(int statusCode) {
+  final client = ClientException(statusCode: statusCode);
+  return AuthException(
+    'login failed: ClientException',
+    SafeExceptionCause(ClientException, client, StackTrace.current),
+  );
+}
 
 class MockAuthRepository extends Mock implements IAuthRepository {}
 
@@ -176,6 +187,61 @@ void main() {
       verifyNever(() => repo.persistBaseUrl(any()));
       verify(() => repo.updateBaseUrl('https://old-good-server.example'))
           .called(1);
+      expect(cubit.state.status, UiFlowStatus.failure);
+    });
+
+    test(
+        'retries a transient failure (network/5xx) and succeeds once the '
+        'server responds -- a reviewer or first-time user will not retry a '
+        'failed login themselves', () async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      var attempt = 0;
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {
+        attempt++;
+        if (attempt < 3) throw _wrappedClientFailure(0); // network failure
+      });
+      when(() => repo.login('owner@example.com', 'secret'))
+          .thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl())
+          .thenAnswer((_) async => 'https://old-good-server.example');
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://server.example',
+        'owner@example.com',
+        'secret',
+      );
+
+      expect(attempt, 3);
+      expect(cubit.state.status, UiFlowStatus.success);
+      verify(() => repo.persistBaseUrl('https://server.example')).called(1);
+    });
+
+    test(
+        'does not retry a definite rejection (401) -- retrying a wrong '
+        'password gains nothing and must fail on the first attempt',
+        () async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      var attempts = 0;
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {
+        attempts++;
+        throw _wrappedClientFailure(401);
+      });
+      when(() => repo.getSavedBaseUrl())
+          .thenAnswer((_) async => 'https://old-good-server.example');
+      when(() => repo.updateBaseUrl('https://old-good-server.example'))
+          .thenAnswer((_) async {});
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://server.example',
+        'owner@example.com',
+        'wrong-password',
+      );
+
+      expect(attempts, 1);
+      verifyNever(() => repo.login(any(), any()));
       expect(cubit.state.status, UiFlowStatus.failure);
     });
   });

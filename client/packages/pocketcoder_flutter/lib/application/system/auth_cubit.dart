@@ -1,5 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
@@ -75,10 +77,27 @@ class AuthCubit extends AppCubit<AuthState> {
     await tryOperation(() async {
       await _authRepository.updateBaseUrl(url);
       try {
-        await _authRepository.verifyServerCompatibility();
-        final success = await _authRepository.login(email, password);
-        if (!success) {
-          throw AuthException.loginFailed();
+        // Nothing here retries on the user's behalf, so a transient hiccup
+        // must not surface as a failure on the first try.
+        const maxAttempts = 3;
+        const retryDelay = Duration(milliseconds: 600);
+        for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            await _authRepository.verifyServerCompatibility();
+            final success = await _authRepository.login(email, password);
+            if (!success) {
+              throw AuthException.loginFailed();
+            }
+            break;
+          } catch (error) {
+            if (attempt == maxAttempts || !_isTransientLoginError(error)) {
+              rethrow;
+            }
+            OnboardingLogger.event('server login retrying', {
+              'attempt': '$attempt',
+            });
+            await Future<void>.delayed(retryDelay * attempt);
+          }
         }
       } catch (_) {
         if (previousUrl != null) {
@@ -137,5 +156,19 @@ class AuthCubit extends AppCubit<AuthState> {
       await _proDataDeletionHook.deleteProData();
       return createSuccessState().copyWith(skipOnboardingNavigation: true);
     });
+  }
+
+  static bool _isTransientLoginError(Object error) {
+    if (error is! AuthException) return false;
+    final cause = error.cause;
+    final original =
+        cause is SafeExceptionCause ? cause.originalException : cause;
+    if (original is! ClientException) return false;
+    if (original.statusCode == 400 ||
+        original.statusCode == 401 ||
+        original.statusCode == 403) {
+      return false;
+    }
+    return true;
   }
 }
