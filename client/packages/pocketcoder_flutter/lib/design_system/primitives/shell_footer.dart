@@ -66,6 +66,8 @@ final class WizardFooter extends ShellFooter {
     this.totalSteps,
     this.onNext,
     this.onBack,
+    this.nextLabel,
+    this.busyLabel,
   }) : assert(
           (step == null && totalSteps == null) ||
               (step != null &&
@@ -78,6 +80,8 @@ final class WizardFooter extends ShellFooter {
   final int? totalSteps;
   final VoidCallback? onNext; // null when the step auto-advances
   final VoidCallback? onBack; // null on the first step
+  final String? nextLabel;
+  final String? busyLabel;
 }
 
 /// A dead end: the flow cannot continue. `instance_gone`,

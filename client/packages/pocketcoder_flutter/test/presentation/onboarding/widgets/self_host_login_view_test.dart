@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/dot_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
 
 void main() {
@@ -42,5 +43,76 @@ void main() {
           .first,
     );
     expect(container.color, Colors.transparent);
+  });
+
+  Widget view({
+    UiFlowStatus status = UiFlowStatus.idle,
+    Future<void> Function(String, String, String)? onLogin,
+  }) =>
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: SelfHostLoginView(
+          initialUrl: 'https://server.test',
+          initialEmail: 'a@test',
+          initialPassword: 'pw',
+          status: status,
+          pocoMessage: 'hi',
+          pocoSequence: const [],
+          pocoHistory: const [],
+          onDeploy: () {},
+          onLogin: onLogin ?? (_, __, ___) async {},
+        ),
+      );
+
+  testWidgets('while logging in the footer shows a spinner, not next',
+      (tester) async {
+    await tester.pumpWidget(view(status: UiFlowStatus.loading));
+
+    expect(find.text('next'), findsNothing);
+    expect(find.byType(DotSpinner), findsOneWidget);
+    expect(find.text('authenticating'), findsOneWidget);
+  });
+
+  testWidgets('submitting from next dismisses the keyboard', (tester) async {
+    var logins = 0;
+    await tester.pumpWidget(view(onLogin: (_, __, ___) async => logins++));
+    await tester.showKeyboard(find.byType(EditableText).last);
+    expect(
+        tester
+            .widget<EditableText>(find.byType(EditableText).last)
+            .focusNode
+            .hasFocus,
+        isTrue);
+
+    await tester.tap(find.text('next'));
+    await tester.pump();
+
+    expect(logins, 1);
+    expect(
+        tester
+            .widget<EditableText>(find.byType(EditableText).last)
+            .focusNode
+            .hasFocus,
+        isFalse);
+  });
+
+  testWidgets('submitting from the password field dismisses the keyboard',
+      (tester) async {
+    var logins = 0;
+    await tester.pumpWidget(view(onLogin: (_, __, ___) async => logins++));
+    await tester.showKeyboard(find.byType(EditableText).last);
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+
+    expect(logins, 1);
+    expect(
+        tester
+            .widget<EditableText>(find.byType(EditableText).last)
+            .focusNode
+            .hasFocus,
+        isFalse);
   });
 }

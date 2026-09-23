@@ -43,6 +43,8 @@ class ShellFooterView extends StatelessWidget {
           totalSteps: f.totalSteps,
           onBack: f.onBack,
           onNext: f.onNext,
+          nextLabel: f.nextLabel,
+          busyLabel: f.busyLabel,
         ),
         _ => TerminalFooter(actions: actionsFor(footer)),
       };

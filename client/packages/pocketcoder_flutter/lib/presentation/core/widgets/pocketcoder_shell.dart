@@ -114,6 +114,8 @@ class PocketCoderShell extends StatelessWidget {
           totalSteps: wizard.totalSteps,
           onNext: wizard.onNext,
           onBack: wizard.onBack ?? (showBack ? goBack : null),
+          nextLabel: wizard.nextLabel,
+          busyLabel: wizard.busyLabel,
         ),
       );
     } else {

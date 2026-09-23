@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
@@ -65,7 +64,10 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
     return PocketCoderShell(
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
-      footer: WizardFooter(onNext: loading ? () {} : _login),
+      footer: WizardFooter(
+        onNext: _login,
+        busyLabel: loading ? context.l10n.onboardingAuthenticating : null,
+      ),
       body: OnboardingContentShell(
         child: Column(
           children: [
@@ -94,21 +96,18 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
               obscureText: true,
               onSubmitted: (_) => loading ? null : _login(),
             ),
-            if (loading) ...[
-              VSpace.x2,
-              TerminalLoadingIndicator(
-                label: context.l10n.onboardingAuthenticating,
-              ),
-            ],
           ],
         ),
       ),
     );
   }
 
-  Future<void> _login() => widget.onLogin(
-        _urlController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+  Future<void> _login() {
+    FocusScope.of(context).unfocus();
+    return widget.onLogin(
+      _urlController.text.trim(),
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+  }
 }
