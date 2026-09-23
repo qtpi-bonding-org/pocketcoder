@@ -22,6 +22,10 @@ class SelfHostLoginView extends StatefulWidget {
     required this.onLogin,
     this.onRetrySetup,
     this.errorInboxLink,
+    this.emailErrorText,
+    this.passwordHelperText,
+    this.onEmailChanged,
+    this.onPasswordChanged,
   });
 
   final String initialUrl;
@@ -36,6 +40,10 @@ class SelfHostLoginView extends StatefulWidget {
       onLogin;
   final VoidCallback? onRetrySetup;
   final Widget? errorInboxLink;
+  final String? emailErrorText;
+  final String? passwordHelperText;
+  final ValueChanged<String>? onEmailChanged;
+  final ValueChanged<String>? onPasswordChanged;
 
   @override
   State<SelfHostLoginView> createState() => _SelfHostLoginViewState();
@@ -97,18 +105,31 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
               controller: _urlController,
               label: context.l10n.onboardingServerUrl,
               hint: context.l10n.onboardingServerUrlHint,
+              keyboardType: TextInputType.url,
+              autocorrect: false,
+              enableSuggestions: false,
             ),
             VSpace.x2,
             TerminalTextField(
               controller: _emailController,
               label: context.l10n.onboardingEmail,
               hint: context.l10n.onboardingEmailHintShort,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              enableSuggestions: false,
+              autofillHints: const [AutofillHints.email],
+              errorText: widget.emailErrorText,
+              onChanged: widget.onEmailChanged,
             ),
             VSpace.x2,
             TerminalTextField(
               controller: _passwordController,
               label: context.l10n.onboardingPassword,
               obscureText: true,
+              revealable: true,
+              autofillHints: const [AutofillHints.password],
+              helperText: widget.passwordHelperText,
+              onChanged: widget.onPasswordChanged,
               onSubmitted: (_) => loading || signedIn ? null : _login(),
             ),
             if (widget.errorInboxLink case final link?) ...[VSpace.x3, link],
@@ -122,7 +143,7 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
     FocusScope.of(context).unfocus();
     return widget.onLogin(
       _urlController.text.trim(),
-      _emailController.text.trim(),
+      _emailController.text,
       _passwordController.text,
     );
   }

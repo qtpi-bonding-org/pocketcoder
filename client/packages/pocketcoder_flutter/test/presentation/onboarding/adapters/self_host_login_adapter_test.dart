@@ -1,3 +1,4 @@
+import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -18,6 +19,7 @@ import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/infrastructure/feedback/exception_mapper.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/adapters/self_host_login_adapter.dart';
 
 class _MockAuthRepository extends Mock implements IAuthRepository {}
@@ -213,6 +215,115 @@ void main() {
       expect(find.text('next'), findsOneWidget);
       await tester.pump(watchdog);
       expect(find.text('retry'), findsNothing);
+    });
+  });
+
+  group('credential validation', () {
+    late _MockAuthRepository repository;
+    late AuthCubit authCubit;
+
+    setUp(() {
+      repository = _MockAuthRepository();
+      when(() => repository.getSavedBaseUrl()).thenAnswer((_) async => null);
+      when(() => repository.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repository.verifyServerCompatibility())
+          .thenAnswer((_) async {});
+      when(() => repository.login(any(), any())).thenAnswer((_) async => true);
+      when(() => repository.persistBaseUrl(any())).thenAnswer((_) async {});
+      authCubit = AuthCubit(
+          repository,
+          CaddyCaPinStore(_MockSecureStorage()),
+          _MockFactoryResetHook(),
+          _MockDeletionHook(),
+          _MockBillingService(),
+          const _NoopServerReadinessCheck());
+    });
+
+    tearDown(() async {
+      await authCubit.close();
+      if (GetIt.I.isRegistered<IExceptionKeyMapper>()) {
+        await GetIt.I.unregister<IExceptionKeyMapper>();
+      }
+    });
+
+    Future<void> pumpForm(WidgetTester tester,
+        {required String email, required String password}) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: BlocProvider.value(
+          value: authCubit,
+          child: SelfHostLoginAdapter(),
+        ),
+      ));
+      await tester.pump();
+      final fields = find.byType(EditableText);
+      await tester.enterText(fields.at(1), email);
+      await tester.enterText(fields.at(2), password);
+      await tester.pump();
+    }
+
+    Future<void> submit(WidgetTester tester) async {
+      await tester.tap(find.text('next'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('an email with surrounding space is blocked inline',
+        (tester) async {
+      await pumpForm(tester, email: ' user@example.com', password: 'password');
+      await submit(tester);
+
+      expect(find.text('Remove the space before or after the email'),
+          findsOneWidget);
+      verifyNever(() => repository.login(any(), any()));
+    });
+
+    testWidgets('a malformed email is blocked inline', (tester) async {
+      await pumpForm(tester, email: 'user@localhost', password: 'password');
+      await submit(tester);
+
+      expect(find.text('Enter a valid email address'), findsOneWidget);
+      verifyNever(() => repository.login(any(), any()));
+    });
+
+    testWidgets('mixed-case email and spaced password are sent verbatim',
+        (tester) async {
+      await pumpForm(tester,
+          email: 'User.Name@Example.com', password: ' pass word ');
+
+      expect(
+          find.textContaining('if pasted by mistake',
+              findRichText: true),
+          findsOneWidget);
+      await submit(tester);
+
+      verify(() => repository.login('User.Name@Example.com', ' pass word '))
+          .called(1);
+    });
+
+    testWidgets('a clean password shows no paste warning', (tester) async {
+      await pumpForm(tester, email: 'user@example.com', password: 'pa ss');
+
+      expect(
+          find.textContaining('if pasted by mistake',
+              findRichText: true),
+          findsNothing);
+    });
+
+    testWidgets('rejected credentials explain that matching is exact',
+        (tester) async {
+      GetIt.I.registerSingleton<IExceptionKeyMapper>(AppExceptionKeyMapper());
+      when(() => repository.login(any(), any())).thenThrow(
+          AuthException('login failed', ClientException(statusCode: 400)));
+      await pumpForm(tester, email: 'user@example.com', password: 'password');
+      await submit(tester);
+      await tester.pump(const Duration(seconds: 10));
+
+      expect(
+          find.textContaining('must match exactly', findRichText: true),
+          findsOneWidget);
     });
   });
 }

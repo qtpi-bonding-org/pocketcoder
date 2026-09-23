@@ -9,12 +9,14 @@ import 'package:pocketcoder_flutter/application/boot/boot_routing_decider.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/l10n/l10n_key_resolver.g.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
 import 'package:pocketcoder_flutter/presentation/errors/error_inbox_link_builder.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
+import 'package:pocketcoder_flutter/support/validation/credential_rules.dart';
 import '../../../app_router.dart';
 
 class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
@@ -29,6 +31,8 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
   final _url = ValueNotifier<String>('');
   final _email = ValueNotifier<String>('');
   final _password = ValueNotifier<String>('');
+  final _emailIssue = ValueNotifier<EmailIssue?>(null);
+  final _passwordLooksPasted = ValueNotifier<bool>(false);
   final _pocoMessage = ValueNotifier<String>('');
   final _pocoSequence = ValueNotifier<List<(String, int)>>(const []);
   final List<String> _pocoHistory = const [];
@@ -51,7 +55,8 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _initialize(context);
 
     return ListenableBuilder(
-      listenable: Listenable.merge([status, watchdog.stalled]),
+      listenable: Listenable.merge(
+          [status, watchdog.stalled, _emailIssue, _passwordLooksPasted]),
       builder: (context, _) => SelfHostLoginView(
         initialUrl: _url.value,
         initialEmail: _email.value,
@@ -67,6 +72,18 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
             ? () => _retrySetup(context, watchdog)
             : null,
         errorInboxLink: const ErrorInboxLinkBuilder(),
+        emailErrorText: switch (_emailIssue.value) {
+          EmailIssue.surroundingWhitespace =>
+            context.l10n.onboardingEmailSurroundingWhitespace,
+          EmailIssue.invalidFormat => context.l10n.onboardingEmailInvalidFormat,
+          null => null,
+        },
+        passwordHelperText: _passwordLooksPasted.value
+            ? context.l10n.onboardingPasswordPastedWarning
+            : null,
+        onEmailChanged: (_) => _emailIssue.value = null,
+        onPasswordChanged: (password) =>
+            _passwordLooksPasted.value = loginPasswordLooksPasted(password),
       ),
     );
   }
@@ -95,6 +112,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _url.value = prefill?.url ?? 'http://127.0.0.1:8090';
     _email.value = prefill?.email ?? '';
     _password.value = prefill?.password ?? '';
+    _passwordLooksPasted.value = loginPasswordLooksPasted(_password.value);
     _pocoMessage.value = context.l10n.onboardingPocoChallengeMessage;
     _pocoSequence.value = PocoExpressions.scanning;
     final savedUrl = context.read<AuthCubit>().state.savedUrl;
@@ -117,9 +135,15 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
       _pocoSequence.value = PocoExpressions.happy;
     } else if (state.status == UiFlowStatus.failure) {
       // Mapped/localized, never state.error's raw text.
-      final mapped = safeErrorMessage(state.error);
-      _pocoMessage.value =
+      final error = state.error;
+      final mapped = safeErrorMessage(error);
+      final message =
           mapped.isNotEmpty ? mapped : context.l10n.onboardingAccessDenied;
+      final credentialsRejected = error != null &&
+          safeErrorKey(error).key == L10nKeys.authLoginFailed;
+      _pocoMessage.value = credentialsRejected
+          ? '$message\n\n${context.l10n.onboardingLoginExactMatchHint}'
+          : message;
       _pocoSequence.value = PocoExpressions.nervous;
     }
   }
@@ -134,6 +158,9 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
       VimToast.show(context, context.l10n.onboardingRequiredFields);
       return;
     }
+    final issue = emailIssue(email);
+    _emailIssue.value = issue;
+    if (issue != null) return;
     OnboardingLogger.event('existing server login submitted', {
       'server_host': Uri.tryParse(url)?.host ?? 'invalid',
       'email_domain': email.contains('@') ? email.split('@').last : 'invalid',
@@ -157,6 +184,8 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _url.dispose();
     _email.dispose();
     _password.dispose();
+    _emailIssue.dispose();
+    _passwordLooksPasted.dispose();
     _pocoMessage.dispose();
     _pocoSequence.dispose();
     super.disposeAdapter();

@@ -71,6 +71,27 @@ void main() {
         ),
       );
 
+  testWidgets('email is sent untrimmed and fields are credential inputs',
+      (tester) async {
+    String? sentEmail;
+    await tester.pumpWidget(view(onLogin: (_, email, __) async {
+      sentEmail = email;
+    }));
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(1), ' User@Example.com ');
+    await tester.tap(find.text('next'));
+    await tester.pump();
+
+    expect(sentEmail, ' User@Example.com ');
+    final email = tester.widget<TextField>(fields.at(1));
+    expect(email.keyboardType, TextInputType.emailAddress);
+    expect(email.autocorrect, isFalse);
+    expect(email.enableSuggestions, isFalse);
+    expect(tester.widget<TextField>(fields.at(0)).keyboardType,
+        TextInputType.url);
+    expect(find.text('show'), findsOneWidget);
+  });
+
   testWidgets('shows the error inbox link and opens it on tap',
       (tester) async {
     var opened = 0;
