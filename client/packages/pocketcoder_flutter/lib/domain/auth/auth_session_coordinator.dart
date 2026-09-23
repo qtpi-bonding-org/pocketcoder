@@ -34,7 +34,7 @@ class AuthSessionCoordinator {
       final signedIn = _authRepository.isAuthenticated;
       if (!signedIn) {
         _liveSignIn = false;
-      } else if (_latestSnapshot.state == AuthSessionState.signedOut) {
+      } else if (_latestSnapshot.state != AuthSessionState.signedIn) {
         _liveSignIn = true;
       }
       _publish(_snapshotFor(

@@ -74,6 +74,23 @@ void main() {
     expect(coordinator.current.state, AuthSessionState.signedIn);
   });
 
+  test(
+      'a sign-in from temporarilyUnavailable also counts as live, so the '
+      'follow-up unavailable refresh does not demote it', () async {
+    when(() => repository.isAuthenticated).thenReturn(true);
+    when(() => repository.currentUserId).thenReturn('user-a');
+    when(() => repository.refreshToken()).thenAnswer(
+      (_) async => AuthRefreshResult.temporarilyUnavailable,
+    );
+    final coordinator = AuthSessionCoordinator(repository);
+    expect(await coordinator.restore(), AuthSessionState.temporarilyUnavailable);
+
+    authChanges.add(null);
+    await pumpEventQueue();
+
+    expect(await coordinator.restore(), AuthSessionState.signedIn);
+  });
+
   test('a live sign-in is still demoted when the server rejects the session',
       () async {
     var authenticated = false;
