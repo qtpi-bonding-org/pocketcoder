@@ -8,14 +8,7 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_provider_option_service.dart';
 import 'package:pocketcoder_flutter/presentation/deployment/server_credentials.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/create_account_view.dart';
-import 'package:pocketcoder_flutter/support/validation/email_format.dart';
-
-// PocketBase's own migration rejects a seeded admin password under this
-// length ("password: Must be at least 8 character(s)."), which otherwise
-// only surfaces minutes later as an opaque release_install_failed deep into
-// a live deploy -- confirmed live: this crash-loops the pocketbase
-// container forever once a box has already been provisioned for it.
-const _minimumPasswordLength = 8;
+import 'package:pocketcoder_flutter/support/validation/credential_rules.dart';
 
 class CreateAccountAdapter
     extends CubitAdapter<CreateAccountCubit, CreateAccountState> {
@@ -35,24 +28,31 @@ class CreateAccountAdapter
         password: value.password,
         onEmailChanged: cubit.setEmail,
         onPasswordChanged: cubit.setPassword,
-        emailErrorText: value.email.isNotEmpty &&
-                !isValidEmailFormat(value.email.trim())
-            ? context.l10n.onboardingEmailInvalidFormat
-            : null,
-        passwordErrorText: value.password.isNotEmpty &&
-                value.password.length < _minimumPasswordLength
-            ? context.l10n.onboardingPasswordTooShort
-            : null,
-        isValid: isValidEmailFormat(value.email.trim()) &&
-            value.password.length >= _minimumPasswordLength,
+        emailErrorText: value.email.isEmpty
+            ? null
+            : switch (emailIssue(value.email)) {
+                EmailIssue.surroundingWhitespace =>
+                  context.l10n.onboardingEmailSurroundingWhitespace,
+                EmailIssue.invalidFormat =>
+                  context.l10n.onboardingEmailInvalidFormat,
+                null => null,
+              },
+        passwordErrorText: value.password.isEmpty
+            ? null
+            : switch (newPasswordIssue(value.password)) {
+                PasswordIssue.surroundingWhitespace =>
+                  context.l10n.onboardingPasswordSurroundingWhitespace,
+                PasswordIssue.tooShort =>
+                  context.l10n.onboardingPasswordTooShort,
+                PasswordIssue.tooLong => context.l10n.onboardingPasswordTooLong,
+                null => null,
+              },
+        isValid: _isValid(value),
         onContinue: () {
           final current = cubit.state;
-          if (!isValidEmailFormat(current.email.trim()) ||
-              current.password.length < _minimumPasswordLength) {
-            return;
-          }
+          if (!_isValid(current)) return;
           final credentials = ServerCredentials(
-            email: current.email.trim(),
+            email: current.email,
             password: current.password,
           );
           final providerRoute = provider?.routePath;
@@ -65,4 +65,8 @@ class CreateAccountAdapter
       ),
     );
   }
+
+  static bool _isValid(CreateAccountState state) =>
+      emailIssue(state.email) == null &&
+      newPasswordIssue(state.password) == null;
 }

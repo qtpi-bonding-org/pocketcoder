@@ -87,16 +87,15 @@ void main() {
     expect(email.keyboardType, TextInputType.emailAddress);
     expect(email.autocorrect, isFalse);
     expect(email.enableSuggestions, isFalse);
-    expect(tester.widget<TextField>(fields.at(0)).keyboardType,
-        TextInputType.url);
+    expect(
+        tester.widget<TextField>(fields.at(0)).keyboardType, TextInputType.url);
     expect(find.text('show'), findsOneWidget);
   });
 
-  testWidgets('shows the error inbox link and opens it on tap',
-      (tester) async {
+  testWidgets('shows the error inbox link and opens it on tap', (tester) async {
     var opened = 0;
-    await tester.pumpWidget(view(
-        errorInboxLink: ErrorInboxLink(count: 0, onTap: () => opened++)));
+    await tester.pumpWidget(
+        view(errorInboxLink: ErrorInboxLink(count: 0, onTap: () => opened++)));
 
     await tester.ensureVisible(find.text('<errors (0)>'));
     await tester.tap(find.text('<errors (0)>'));
@@ -105,8 +104,8 @@ void main() {
 
   testWidgets('the error inbox link sits below the password field',
       (tester) async {
-    await tester.pumpWidget(view(
-        errorInboxLink: ErrorInboxLink(count: 1, onTap: () {})));
+    await tester.pumpWidget(
+        view(errorInboxLink: ErrorInboxLink(count: 1, onTap: () {})));
 
     expect(tester.getRect(find.text('<errors (1)>')).top,
         greaterThan(tester.getRect(find.byType(EditableText).last).bottom));

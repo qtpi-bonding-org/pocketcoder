@@ -139,8 +139,8 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
       final mapped = safeErrorMessage(error);
       final message =
           mapped.isNotEmpty ? mapped : context.l10n.onboardingAccessDenied;
-      final credentialsRejected = error != null &&
-          safeErrorKey(error).key == L10nKeys.authLoginFailed;
+      final credentialsRejected =
+          error != null && safeErrorKey(error).key == L10nKeys.authLoginFailed;
       _pocoMessage.value = credentialsRejected
           ? '$message\n\n${context.l10n.onboardingLoginExactMatchHint}'
           : message;

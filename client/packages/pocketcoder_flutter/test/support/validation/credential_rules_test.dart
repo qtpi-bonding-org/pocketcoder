@@ -44,8 +44,8 @@ void main() {
     });
     test('surrounding whitespace wins over format', () {
       expect(emailIssue(' user@example.com'), EmailIssue.surroundingWhitespace);
-      expect(emailIssue('user@example.com\n'),
-          EmailIssue.surroundingWhitespace);
+      expect(
+          emailIssue('user@example.com\n'), EmailIssue.surroundingWhitespace);
     });
     test('bad format', () {
       expect(emailIssue('user@localhost'), EmailIssue.invalidFormat);
@@ -68,8 +68,10 @@ void main() {
       expect(newPasswordIssue('😀' * 72), PasswordIssue.tooLong);
     });
     test('surrounding whitespace is rejected', () {
-      expect(newPasswordIssue(' password'), PasswordIssue.surroundingWhitespace);
-      expect(newPasswordIssue('password '), PasswordIssue.surroundingWhitespace);
+      expect(
+          newPasswordIssue(' password'), PasswordIssue.surroundingWhitespace);
+      expect(
+          newPasswordIssue('password '), PasswordIssue.surroundingWhitespace);
     });
   });
 
