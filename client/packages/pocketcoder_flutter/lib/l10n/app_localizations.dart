@@ -4771,25 +4771,25 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingEmailSurroundingWhitespace.
   ///
   /// In en, this message translates to:
-  /// **'Remove the space before or after the email'**
+  /// **'Remove extra whitespace'**
   String get onboardingEmailSurroundingWhitespace;
 
   /// No description provided for @onboardingPasswordSurroundingWhitespace.
   ///
   /// In en, this message translates to:
-  /// **'Remove the space before or after the password'**
+  /// **'Remove extra whitespace'**
   String get onboardingPasswordSurroundingWhitespace;
 
   /// No description provided for @onboardingPasswordPastedWarning.
   ///
   /// In en, this message translates to:
-  /// **'Password starts or ends with a space, or contains a line break or tab. Remove it if pasted by mistake'**
+  /// **'Extra whitespace?'**
   String get onboardingPasswordPastedWarning;
 
   /// No description provided for @onboardingLoginExactMatchHint.
   ///
   /// In en, this message translates to:
-  /// **'Email and password must match exactly. Capitals and spaces count'**
+  /// **'Capitals and whitespace count'**
   String get onboardingLoginExactMatchHint;
 
   /// No description provided for @terminalTextFieldShow.

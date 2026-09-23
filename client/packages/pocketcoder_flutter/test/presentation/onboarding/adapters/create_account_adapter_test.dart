@@ -51,8 +51,7 @@ void main() {
       (tester) async {
     await fill(tester, email: 'admin@example.com ', password: 'password');
 
-    expect(find.text('Remove the space before or after the email'),
-        findsOneWidget);
+    expect(find.text('Remove extra whitespace'), findsOneWidget);
     await next(tester);
     expect(forwarded, isEmpty);
   });
@@ -60,8 +59,7 @@ void main() {
   testWidgets('a password with surrounding space is an error', (tester) async {
     await fill(tester, email: 'admin@example.com', password: ' password');
 
-    expect(find.text('Remove the space before or after the password'),
-        findsOneWidget);
+    expect(find.text('Remove extra whitespace'), findsOneWidget);
     await next(tester);
     expect(forwarded, isEmpty);
   });

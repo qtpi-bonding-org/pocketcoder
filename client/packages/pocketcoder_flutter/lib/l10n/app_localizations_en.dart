@@ -2577,20 +2577,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingPasswordTooLong => 'Must be at most 71 characters';
 
   @override
-  String get onboardingEmailSurroundingWhitespace =>
-      'Remove the space before or after the email';
+  String get onboardingEmailSurroundingWhitespace => 'Remove extra whitespace';
 
   @override
   String get onboardingPasswordSurroundingWhitespace =>
-      'Remove the space before or after the password';
+      'Remove extra whitespace';
 
   @override
-  String get onboardingPasswordPastedWarning =>
-      'Password starts or ends with a space, or contains a line break or tab. Remove it if pasted by mistake';
+  String get onboardingPasswordPastedWarning => 'Extra whitespace?';
 
   @override
-  String get onboardingLoginExactMatchHint =>
-      'Email and password must match exactly. Capitals and spaces count';
+  String get onboardingLoginExactMatchHint => 'Capitals and whitespace count';
 
   @override
   String get terminalTextFieldShow => 'show';

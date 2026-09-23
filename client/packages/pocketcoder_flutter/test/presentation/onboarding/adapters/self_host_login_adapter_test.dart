@@ -275,8 +275,7 @@ void main() {
       await pumpForm(tester, email: ' user@example.com', password: 'password');
       await submit(tester);
 
-      expect(find.text('Remove the space before or after the email'),
-          findsOneWidget);
+      expect(find.text('Remove extra whitespace'), findsOneWidget);
       verifyNever(() => repository.login(any(), any()));
     });
 
@@ -293,7 +292,7 @@ void main() {
       await pumpForm(tester,
           email: 'User.Name@Example.com', password: ' pass word ');
 
-      expect(find.textContaining('if pasted by mistake', findRichText: true),
+      expect(find.textContaining('Extra whitespace?', findRichText: true),
           findsOneWidget);
       await submit(tester);
 
@@ -304,7 +303,7 @@ void main() {
     testWidgets('a clean password shows no paste warning', (tester) async {
       await pumpForm(tester, email: 'user@example.com', password: 'pa ss');
 
-      expect(find.textContaining('if pasted by mistake', findRichText: true),
+      expect(find.textContaining('Extra whitespace?', findRichText: true),
           findsNothing);
     });
 
@@ -317,7 +316,9 @@ void main() {
       await submit(tester);
       await tester.pump(const Duration(seconds: 10));
 
-      expect(find.textContaining('must match exactly', findRichText: true),
+      expect(
+          find.textContaining('Capitals and whitespace count',
+              findRichText: true),
           findsOneWidget);
     });
   });
