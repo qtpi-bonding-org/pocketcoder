@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/dot_spinner.dart';
+import 'package:pocketcoder_flutter/presentation/errors/widgets/error_inbox_link.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
 
 void main() {
@@ -49,6 +50,7 @@ void main() {
     UiFlowStatus status = UiFlowStatus.idle,
     VoidCallback? onRetrySetup,
     Future<void> Function(String, String, String)? onLogin,
+    Widget? errorInboxLink,
   }) =>
       MaterialApp(
         theme: AppTheme.lightTheme,
@@ -65,8 +67,29 @@ void main() {
           onDeploy: () {},
           onLogin: onLogin ?? (_, __, ___) async {},
           onRetrySetup: onRetrySetup,
+          errorInboxLink: errorInboxLink,
         ),
       );
+
+  testWidgets('shows the error inbox link and opens it on tap',
+      (tester) async {
+    var opened = 0;
+    await tester.pumpWidget(view(
+        errorInboxLink: ErrorInboxLink(count: 0, onTap: () => opened++)));
+
+    await tester.ensureVisible(find.text('<errors (0)>'));
+    await tester.tap(find.text('<errors (0)>'));
+    expect(opened, 1);
+  });
+
+  testWidgets('the error inbox link sits below the password field',
+      (tester) async {
+    await tester.pumpWidget(view(
+        errorInboxLink: ErrorInboxLink(count: 1, onTap: () {})));
+
+    expect(tester.getRect(find.text('<errors (1)>')).top,
+        greaterThan(tester.getRect(find.byType(EditableText).last).bottom));
+  });
 
   testWidgets('while logging in the footer shows a spinner, not next',
       (tester) async {

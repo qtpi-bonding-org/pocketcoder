@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
+import 'package:pocketcoder_flutter/presentation/errors/widgets/error_inbox_link.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/welcome_view.dart';
 
 void main() {
@@ -109,5 +110,27 @@ void main() {
       ),
     );
     expect(resetSuggestion.danger, isTrue);
+  });
+
+  testWidgets('shows the error inbox link and opens it on tap',
+      (tester) async {
+    var opened = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: WelcomeView(
+          showGuidedSetup: true,
+          onGuidedSetup: () {},
+          onSelfHost: () {},
+          errorInboxLink: ErrorInboxLink(count: 2, onTap: () => opened++),
+        ),
+      ),
+    );
+
+    await tester.ensureVisible(find.text('<errors (2)>'));
+    await tester.tap(find.text('<errors (2)>'));
+    expect(opened, 1);
   });
 }

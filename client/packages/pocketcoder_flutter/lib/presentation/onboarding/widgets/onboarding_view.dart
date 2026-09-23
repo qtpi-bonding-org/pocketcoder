@@ -13,11 +13,13 @@ class OnboardingView extends StatelessWidget {
       {super.key,
       required this.pocoState,
       required this.onLogin,
-      required this.onDeploy});
+      required this.onDeploy,
+      this.errorInboxLink});
 
   final PocoState pocoState;
   final VoidCallback onLogin;
   final VoidCallback onDeploy;
+  final Widget? errorInboxLink;
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
@@ -49,6 +51,7 @@ class OnboardingView extends StatelessWidget {
                 label: context.l10n.onboardingNoServerChipNew,
                 onSelected: onDeploy,
               ),
+              if (errorInboxLink case final link?) ...[VSpace.x3, link],
             ],
           ),
         ),

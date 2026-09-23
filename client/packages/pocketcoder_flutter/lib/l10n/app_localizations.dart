@@ -6119,6 +6119,12 @@ abstract class AppLocalizations {
   /// **'delete'**
   String get errorsDeleteAction;
 
+  /// No description provided for @errorsInboxLink.
+  ///
+  /// In en, this message translates to:
+  /// **'errors ({count})'**
+  String errorsInboxLink(int count);
+
   /// Label for the reset deployment state action on the config screen recovery section
   ///
   /// In en, this message translates to:

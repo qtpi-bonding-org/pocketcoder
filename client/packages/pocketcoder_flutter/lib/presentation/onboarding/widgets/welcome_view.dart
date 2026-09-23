@@ -15,6 +15,7 @@ class WelcomeView extends StatelessWidget {
     required this.onSelfHost,
     this.showReset = false,
     this.onReset,
+    this.errorInboxLink,
   });
 
   final bool showGuidedSetup;
@@ -25,6 +26,7 @@ class WelcomeView extends StatelessWidget {
   /// leave behind a stuck deployment/session state to clear.
   final bool showReset;
   final VoidCallback? onReset;
+  final Widget? errorInboxLink;
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
@@ -65,6 +67,7 @@ class WelcomeView extends StatelessWidget {
                   danger: true,
                 ),
               ],
+              if (errorInboxLink case final link?) ...[VSpace.x3, link],
             ],
           ),
         ),

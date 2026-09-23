@@ -21,6 +21,7 @@ class SelfHostLoginView extends StatefulWidget {
     required this.onDeploy,
     required this.onLogin,
     this.onRetrySetup,
+    this.errorInboxLink,
   });
 
   final String initialUrl;
@@ -34,6 +35,7 @@ class SelfHostLoginView extends StatefulWidget {
   final Future<void> Function(String url, String email, String password)
       onLogin;
   final VoidCallback? onRetrySetup;
+  final Widget? errorInboxLink;
 
   @override
   State<SelfHostLoginView> createState() => _SelfHostLoginViewState();
@@ -109,6 +111,7 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
               obscureText: true,
               onSubmitted: (_) => loading || signedIn ? null : _login(),
             ),
+            if (widget.errorInboxLink case final link?) ...[VSpace.x3, link],
           ],
         ),
       ),

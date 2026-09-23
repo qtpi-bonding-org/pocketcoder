@@ -3372,6 +3372,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorsDeleteAction => 'delete';
 
   @override
+  String errorsInboxLink(int count) {
+    return 'errors ($count)';
+  }
+
+  @override
   String get deploymentResetAction => 'reset';
 
   @override

@@ -1362,6 +1362,12 @@
     }
   },
   "errorsDeleteAction": "delete",
+  "errorsInboxLink": "errors ({count})",
+  "@errorsInboxLink": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "deploymentResetAction": "reset",
   "@deploymentResetAction": { "description": "Label for the reset deployment state action on the config screen recovery section" },
   "deploymentResetConfirmationTitle": "Reset local deployment state?",

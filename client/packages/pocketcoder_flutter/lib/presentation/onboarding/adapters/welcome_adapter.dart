@@ -2,6 +2,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app/bootstrap.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
+import 'package:pocketcoder_flutter/presentation/errors/error_inbox_link_builder.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_setup_flow.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/welcome_view.dart';
 
@@ -20,6 +21,7 @@ class WelcomeAdapter extends CubitAdapter<PocoCubit, PocoState> {
       onSelfHost: () => setupFlow.showSelfHostInformation(context),
       showReset: setupFlow.offersReset,
       onReset: () => setupFlow.reset(context),
+      errorInboxLink: const ErrorInboxLinkBuilder(),
     );
   }
 }

@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-09-23T13:03:55.926551
 
 import 'app_localizations.dart';
 
@@ -1073,6 +1074,7 @@ class L10nKeyResolver {
       'deployment.monthly.price' => _l10n.deploymentMonthlyPrice(args?['price'] as String? ?? ''),
       'deployment.plan.poco' => _l10n.deploymentPlanPoco(args?['minimumMemory'] as String? ?? ''),
       'deployment.plan.specs' => _l10n.deploymentPlanSpecs(args?['vcpus'] as int? ?? 0, args?['memory'] as String? ?? '', args?['diskGb'] as int? ?? 0),
+      'errors.inbox.link' => _l10n.errorsInboxLink(args?['count'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'external.auth.connecting' => _l10n.externalAuthConnecting(args?['label'] as String? ?? ''),
       'foss.server.setup.error.prefix' => _l10n.fossServerSetupErrorPrefix(args?['error'] as String? ?? ''),
@@ -1452,6 +1454,7 @@ class L10nKeyResolver {
     'errors.copy.all',
     'errors.delete.action',
     'errors.empty',
+    'errors.inbox.link',
     'errors.occurred',
     'errors.report.on.github',
     'errors.title',
@@ -2580,6 +2583,7 @@ class L10nKeyResolver {
     'errorsCopyAll': 'errors.copy.all',
     'errorsDeleteAction': 'errors.delete.action',
     'errorsEmpty': 'errors.empty',
+    'errorsInboxLink': 'errors.inbox.link',
     'errorsOccurred': 'errors.occurred',
     'errorsReportOnGithub': 'errors.report.on.github',
     'errorsTitle': 'errors.title',
@@ -3705,6 +3709,7 @@ class L10nKeyResolver {
     'errors.copy.all': 'errorsCopyAll',
     'errors.delete.action': 'errorsDeleteAction',
     'errors.empty': 'errorsEmpty',
+    'errors.inbox.link': 'errorsInboxLink',
     'errors.occurred': 'errorsOccurred',
     'errors.report.on.github': 'errorsReportOnGithub',
     'errors.title': 'errorsTitle',
@@ -4837,6 +4842,7 @@ abstract class L10nKeys {
   static const errorsCopyAll = 'errors.copy.all';
   static const errorsDeleteAction = 'errors.delete.action';
   static const errorsEmpty = 'errors.empty';
+  static (String, Map<String, dynamic>) errorsInboxLink(int count) => ('errors.inbox.link', {'count': count});
   static (String, Map<String, dynamic>) errorsOccurred(int count) => ('errors.occurred', {'count': count});
   static const errorsReportOnGithub = 'errors.report.on.github';
   static const errorsTitle = 'errors.title';

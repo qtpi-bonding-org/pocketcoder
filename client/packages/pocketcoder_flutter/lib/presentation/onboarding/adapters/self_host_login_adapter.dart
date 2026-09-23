@@ -11,6 +11,7 @@ import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/presentation/errors/error_inbox_link_builder.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
@@ -65,6 +66,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
         onRetrySetup: watchdog.stalled.value
             ? () => _retrySetup(context, watchdog)
             : null,
+        errorInboxLink: const ErrorInboxLinkBuilder(),
       ),
     );
   }

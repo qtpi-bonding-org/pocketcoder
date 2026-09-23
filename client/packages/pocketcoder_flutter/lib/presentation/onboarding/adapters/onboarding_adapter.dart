@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
+import 'package:pocketcoder_flutter/presentation/errors/error_inbox_link_builder.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_view.dart';
 
 class OnboardingAdapter extends CubitAdapter<PocoCubit, PocoState> {
@@ -18,6 +19,7 @@ class OnboardingAdapter extends CubitAdapter<PocoCubit, PocoState> {
         pocoState: value,
         onLogin: () => context.pushNamed(RouteNames.onboardingLogin),
         onDeploy: () => context.pushNamed(RouteNames.onboardingWelcome),
+        errorInboxLink: const ErrorInboxLinkBuilder(),
       ),
     );
   }
