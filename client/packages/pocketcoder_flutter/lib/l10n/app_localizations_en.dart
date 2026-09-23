@@ -2592,6 +2592,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingLoginExactMatchHint => 'Capitals and whitespace count';
 
   @override
+  String get onboardingServerUrlMissingScheme =>
+      'Start with http:// or https://';
+
+  @override
+  String get onboardingServerUrlInvalid => 'Enter a valid URL';
+
+  @override
   String get terminalTextFieldShow => 'show';
 
   @override

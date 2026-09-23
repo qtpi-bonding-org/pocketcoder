@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-09-23T14:23:06.124488
+// Generated at: 2026-09-23T16:18:05.107045
 
 import 'app_localizations.dart';
 
@@ -629,6 +629,8 @@ class L10nKeyResolver {
       'onboarding.server.login.title' => _l10n.onboardingServerLoginTitle,
       'onboarding.server.url' => _l10n.onboardingServerUrl,
       'onboarding.server.url.hint' => _l10n.onboardingServerUrlHint,
+      'onboarding.server.url.invalid' => _l10n.onboardingServerUrlInvalid,
+      'onboarding.server.url.missing.scheme' => _l10n.onboardingServerUrlMissingScheme,
       'onboarding.setup.title' => _l10n.onboardingSetupTitle,
       'onboarding.sign.in.poco' => _l10n.onboardingSignInPoco,
       'onboarding.sign.in.title' => _l10n.onboardingSignInTitle,
@@ -1824,6 +1826,8 @@ class L10nKeyResolver {
     'onboarding.server.login.title',
     'onboarding.server.url',
     'onboarding.server.url.hint',
+    'onboarding.server.url.invalid',
+    'onboarding.server.url.missing.scheme',
     'onboarding.setup.title',
     'onboarding.sign.in.poco',
     'onboarding.sign.in.title',
@@ -2960,6 +2964,8 @@ class L10nKeyResolver {
     'onboardingServerLoginTitle': 'onboarding.server.login.title',
     'onboardingServerUrl': 'onboarding.server.url',
     'onboardingServerUrlHint': 'onboarding.server.url.hint',
+    'onboardingServerUrlInvalid': 'onboarding.server.url.invalid',
+    'onboardingServerUrlMissingScheme': 'onboarding.server.url.missing.scheme',
     'onboardingSetupTitle': 'onboarding.setup.title',
     'onboardingSignInPoco': 'onboarding.sign.in.poco',
     'onboardingSignInTitle': 'onboarding.sign.in.title',
@@ -4093,6 +4099,8 @@ class L10nKeyResolver {
     'onboarding.server.login.title': 'onboardingServerLoginTitle',
     'onboarding.server.url': 'onboardingServerUrl',
     'onboarding.server.url.hint': 'onboardingServerUrlHint',
+    'onboarding.server.url.invalid': 'onboardingServerUrlInvalid',
+    'onboarding.server.url.missing.scheme': 'onboardingServerUrlMissingScheme',
     'onboarding.setup.title': 'onboardingSetupTitle',
     'onboarding.sign.in.poco': 'onboardingSignInPoco',
     'onboarding.sign.in.title': 'onboardingSignInTitle',
@@ -5233,6 +5241,8 @@ abstract class L10nKeys {
   static const onboardingServerLoginTitle = 'onboarding.server.login.title';
   static const onboardingServerUrl = 'onboarding.server.url';
   static const onboardingServerUrlHint = 'onboarding.server.url.hint';
+  static const onboardingServerUrlInvalid = 'onboarding.server.url.invalid';
+  static const onboardingServerUrlMissingScheme = 'onboarding.server.url.missing.scheme';
   static const onboardingSetupTitle = 'onboarding.setup.title';
   static const onboardingSignInPoco = 'onboarding.sign.in.poco';
   static const onboardingSignInTitle = 'onboarding.sign.in.title';

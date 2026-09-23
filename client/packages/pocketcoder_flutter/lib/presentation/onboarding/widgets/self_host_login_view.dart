@@ -22,6 +22,8 @@ class SelfHostLoginView extends StatefulWidget {
     required this.onLogin,
     this.onRetrySetup,
     this.errorInboxLink,
+    this.urlErrorText,
+    this.onUrlChanged,
     this.emailErrorText,
     this.passwordHelperText,
     this.onEmailChanged,
@@ -40,6 +42,8 @@ class SelfHostLoginView extends StatefulWidget {
       onLogin;
   final VoidCallback? onRetrySetup;
   final Widget? errorInboxLink;
+  final String? urlErrorText;
+  final ValueChanged<String>? onUrlChanged;
   final String? emailErrorText;
   final String? passwordHelperText;
   final ValueChanged<String>? onEmailChanged;
@@ -108,6 +112,8 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
               keyboardType: TextInputType.url,
               autocorrect: false,
               enableSuggestions: false,
+              errorText: widget.urlErrorText,
+              onChanged: widget.onUrlChanged,
             ),
             VSpace.x2,
             TerminalTextField(

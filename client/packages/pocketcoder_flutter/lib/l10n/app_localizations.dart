@@ -4792,6 +4792,18 @@ abstract class AppLocalizations {
   /// **'Capitals and whitespace count'**
   String get onboardingLoginExactMatchHint;
 
+  /// No description provided for @onboardingServerUrlMissingScheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with http:// or https://'**
+  String get onboardingServerUrlMissingScheme;
+
+  /// No description provided for @onboardingServerUrlInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid URL'**
+  String get onboardingServerUrlInvalid;
+
   /// No description provided for @terminalTextFieldShow.
   ///
   /// In en, this message translates to:

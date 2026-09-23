@@ -1054,6 +1054,8 @@
   "onboardingPasswordSurroundingWhitespace": "Remove leading/trailing whitespace",
   "onboardingPasswordPastedWarning": "Has leading/trailing whitespace",
   "onboardingLoginExactMatchHint": "Capitals and whitespace count",
+  "onboardingServerUrlMissingScheme": "Start with http:// or https://",
+  "onboardingServerUrlInvalid": "Enter a valid URL",
   "terminalTextFieldShow": "show",
   "terminalTextFieldHide": "hide",
   "onboardingProviderPoco": "Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.",

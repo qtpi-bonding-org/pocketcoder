@@ -17,6 +17,7 @@ import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.d
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 import 'package:pocketcoder_flutter/support/validation/credential_rules.dart';
+import 'package:pocketcoder_flutter/support/validation/server_url_rules.dart';
 import '../../../app_router.dart';
 
 class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
@@ -31,6 +32,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
   final _url = ValueNotifier<String>('');
   final _email = ValueNotifier<String>('');
   final _password = ValueNotifier<String>('');
+  final _urlIssue = ValueNotifier<ServerUrlIssue?>(null);
   final _emailIssue = ValueNotifier<EmailIssue?>(null);
   final _passwordLooksPasted = ValueNotifier<bool>(false);
   final _pocoMessage = ValueNotifier<String>('');
@@ -55,8 +57,13 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _initialize(context);
 
     return ListenableBuilder(
-      listenable: Listenable.merge(
-          [status, watchdog.stalled, _emailIssue, _passwordLooksPasted]),
+      listenable: Listenable.merge([
+        status,
+        watchdog.stalled,
+        _urlIssue,
+        _emailIssue,
+        _passwordLooksPasted
+      ]),
       builder: (context, _) => SelfHostLoginView(
         initialUrl: _url.value,
         initialEmail: _email.value,
@@ -72,6 +79,13 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
             ? () => _retrySetup(context, watchdog)
             : null,
         errorInboxLink: const ErrorInboxLinkBuilder(),
+        urlErrorText: switch (_urlIssue.value) {
+          ServerUrlIssue.missingScheme =>
+            context.l10n.onboardingServerUrlMissingScheme,
+          ServerUrlIssue.invalid => context.l10n.onboardingServerUrlInvalid,
+          null => null,
+        },
+        onUrlChanged: (_) => _urlIssue.value = null,
         emailErrorText: switch (_emailIssue.value) {
           EmailIssue.surroundingWhitespace =>
             context.l10n.onboardingEmailSurroundingWhitespace,
@@ -158,9 +172,11 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
       VimToast.show(context, context.l10n.onboardingRequiredFields);
       return;
     }
+    final urlProblem = serverUrlIssue(url);
     final issue = emailIssue(email);
+    _urlIssue.value = urlProblem;
     _emailIssue.value = issue;
-    if (issue != null) return;
+    if (urlProblem != null || issue != null) return;
     OnboardingLogger.event('existing server login submitted', {
       'server_host': Uri.tryParse(url)?.host ?? 'invalid',
       'email_domain': email.contains('@') ? email.split('@').last : 'invalid',
@@ -184,6 +200,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _url.dispose();
     _email.dispose();
     _password.dispose();
+    _urlIssue.dispose();
     _emailIssue.dispose();
     _passwordLooksPasted.dispose();
     _pocoMessage.dispose();

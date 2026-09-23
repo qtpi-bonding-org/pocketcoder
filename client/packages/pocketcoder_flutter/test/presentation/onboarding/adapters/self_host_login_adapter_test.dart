@@ -279,6 +279,18 @@ void main() {
       verifyNever(() => repository.login(any(), any()));
     });
 
+    testWidgets('a server URL without http(s):// is blocked inline',
+        (tester) async {
+      await pumpForm(tester, email: 'user@example.com', password: 'password');
+      await tester.enterText(
+          find.byType(EditableText).at(0), '192-155-89-165.sslip.io');
+      await tester.pump();
+      await submit(tester);
+
+      expect(find.text('Start with http:// or https://'), findsOneWidget);
+      verifyNever(() => repository.login(any(), any()));
+    });
+
     testWidgets('a malformed email is blocked inline', (tester) async {
       await pumpForm(tester, email: 'user@localhost', password: 'password');
       await submit(tester);
