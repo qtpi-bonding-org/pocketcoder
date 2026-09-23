@@ -31,10 +31,14 @@ class AuthSessionCoordinator {
     // Subscribe before taking the initial snapshot. This prevents a change
     // between subscription and the first replay from being missed.
     _authRepository.authChanges.listen((_) {
+      final signedIn = _authRepository.isAuthenticated;
+      if (!signedIn) {
+        _liveSignIn = false;
+      } else if (_latestSnapshot.state == AuthSessionState.signedOut) {
+        _liveSignIn = true;
+      }
       _publish(_snapshotFor(
-        _authRepository.isAuthenticated
-            ? AuthSessionState.signedIn
-            : AuthSessionState.signedOut,
+        signedIn ? AuthSessionState.signedIn : AuthSessionState.signedOut,
       ));
     });
     _latestSnapshot = _snapshotFor(
@@ -48,6 +52,8 @@ class AuthSessionCoordinator {
   final Duration refreshTimeout;
   Future<AuthRefreshResult>? _refreshInFlight;
   late AuthSessionSnapshot _latestSnapshot;
+  // Server-confirmed in this process; an unavailable refresh must not demote it.
+  bool _liveSignIn = false;
   final StreamController<AuthSessionSnapshot> _liveChanges =
       StreamController<AuthSessionSnapshot>.broadcast();
 
@@ -104,10 +110,13 @@ class AuthSessionCoordinator {
     final result = await refresh();
     final state = switch (result) {
       AuthRefreshResult.refreshed => AuthSessionState.signedIn,
+      AuthRefreshResult.temporarilyUnavailable when _liveSignIn =>
+        AuthSessionState.signedIn,
       AuthRefreshResult.temporarilyUnavailable =>
         AuthSessionState.temporarilyUnavailable,
       AuthRefreshResult.invalidSession => AuthSessionState.signedOut,
     };
+    if (state == AuthSessionState.signedOut) _liveSignIn = false;
     _publish(_snapshotFor(state));
     return state;
   }

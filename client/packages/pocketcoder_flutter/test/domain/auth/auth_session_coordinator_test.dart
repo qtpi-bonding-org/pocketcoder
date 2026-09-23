@@ -53,6 +53,44 @@ void main() {
     expect(state, AuthSessionState.temporarilyUnavailable);
   });
 
+  test(
+      'a sign-in the server just confirmed stays signedIn when the follow-up '
+      'restore refresh is merely unavailable (slow network)', () async {
+    var authenticated = false;
+    when(() => repository.isAuthenticated).thenAnswer((_) => authenticated);
+    when(() => repository.currentUserId)
+        .thenAnswer((_) => authenticated ? 'user-a' : null);
+    when(() => repository.refreshToken()).thenAnswer(
+      (_) async => AuthRefreshResult.temporarilyUnavailable,
+    );
+    final coordinator = AuthSessionCoordinator(repository);
+
+    authenticated = true;
+    authChanges.add(null);
+    await pumpEventQueue();
+    final state = await coordinator.restore();
+
+    expect(state, AuthSessionState.signedIn);
+    expect(coordinator.current.state, AuthSessionState.signedIn);
+  });
+
+  test('a live sign-in is still demoted when the server rejects the session',
+      () async {
+    var authenticated = false;
+    when(() => repository.isAuthenticated).thenAnswer((_) => authenticated);
+    when(() => repository.currentUserId)
+        .thenAnswer((_) => authenticated ? 'user-a' : null);
+    when(() => repository.refreshToken())
+        .thenAnswer((_) async => AuthRefreshResult.invalidSession);
+    final coordinator = AuthSessionCoordinator(repository);
+
+    authenticated = true;
+    authChanges.add(null);
+    await pumpEventQueue();
+
+    expect(await coordinator.restore(), AuthSessionState.signedOut);
+  });
+
   test('requires login only when the session is definitively invalid',
       () async {
     when(() => repository.isAuthenticated).thenReturn(true);
