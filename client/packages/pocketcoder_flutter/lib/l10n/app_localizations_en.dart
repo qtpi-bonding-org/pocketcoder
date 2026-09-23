@@ -2574,6 +2574,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingEmailInvalidFormat => 'Enter a valid email address';
 
   @override
+  String get onboardingPasswordTooLong => 'Must be at most 71 characters';
+
+  @override
+  String get onboardingEmailSurroundingWhitespace =>
+      'Remove the space before or after the email';
+
+  @override
+  String get onboardingPasswordSurroundingWhitespace =>
+      'Remove the space before or after the password';
+
+  @override
+  String get onboardingPasswordPastedWarning =>
+      'Password starts or ends with a space, or contains a line break or tab. Remove it if pasted by mistake';
+
+  @override
+  String get onboardingLoginExactMatchHint =>
+      'Email and password must match exactly. Capitals and spaces count';
+
+  @override
+  String get terminalTextFieldShow => 'show';
+
+  @override
+  String get terminalTextFieldHide => 'hide';
+
+  @override
   String get onboardingProviderPoco =>
       'Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.';
 

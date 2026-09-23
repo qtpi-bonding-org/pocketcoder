@@ -4762,6 +4762,48 @@ abstract class AppLocalizations {
   /// **'Enter a valid email address'**
   String get onboardingEmailInvalidFormat;
 
+  /// No description provided for @onboardingPasswordTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be at most 71 characters'**
+  String get onboardingPasswordTooLong;
+
+  /// No description provided for @onboardingEmailSurroundingWhitespace.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the space before or after the email'**
+  String get onboardingEmailSurroundingWhitespace;
+
+  /// No description provided for @onboardingPasswordSurroundingWhitespace.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the space before or after the password'**
+  String get onboardingPasswordSurroundingWhitespace;
+
+  /// No description provided for @onboardingPasswordPastedWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Password starts or ends with a space, or contains a line break or tab. Remove it if pasted by mistake'**
+  String get onboardingPasswordPastedWarning;
+
+  /// No description provided for @onboardingLoginExactMatchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email and password must match exactly. Capitals and spaces count'**
+  String get onboardingLoginExactMatchHint;
+
+  /// No description provided for @terminalTextFieldShow.
+  ///
+  /// In en, this message translates to:
+  /// **'show'**
+  String get terminalTextFieldShow;
+
+  /// No description provided for @terminalTextFieldHide.
+  ///
+  /// In en, this message translates to:
+  /// **'hide'**
+  String get terminalTextFieldHide;
+
   /// No description provided for @onboardingProviderPoco.
   ///
   /// In en, this message translates to:

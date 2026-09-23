@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-09-23T13:03:55.926551
+// Generated at: 2026-09-23T14:23:06.124488
 
 import 'app_localizations.dart';
 
@@ -541,6 +541,7 @@ class L10nKeyResolver {
       'onboarding.email.hint' => _l10n.onboardingEmailHint,
       'onboarding.email.hint.short' => _l10n.onboardingEmailHintShort,
       'onboarding.email.invalid.format' => _l10n.onboardingEmailInvalidFormat,
+      'onboarding.email.surrounding.whitespace' => _l10n.onboardingEmailSurroundingWhitespace,
       'onboarding.existing.server' => _l10n.onboardingExistingServer,
       'onboarding.failure.action.back.to.setup' => _l10n.onboardingFailureActionBackToSetup,
       'onboarding.failure.action.retry.connection' => _l10n.onboardingFailureActionRetryConnection,
@@ -562,6 +563,7 @@ class L10nKeyResolver {
       'onboarding.intent.chip.local.models' => _l10n.onboardingIntentChipLocalModels,
       'onboarding.intent.poco' => _l10n.onboardingIntentPoco,
       'onboarding.login' => _l10n.onboardingLogin,
+      'onboarding.login.exact.match.hint' => _l10n.onboardingLoginExactMatchHint,
       'onboarding.login.finishing.setup' => _l10n.onboardingLoginFinishingSetup,
       'onboarding.login.retry' => _l10n.onboardingLoginRetry,
       'onboarding.login.setup.stalled' => _l10n.onboardingLoginSetupStalled,
@@ -581,6 +583,9 @@ class L10nKeyResolver {
       'onboarding.passphrase.label' => _l10n.onboardingPassphraseLabel,
       'onboarding.password' => _l10n.onboardingPassword,
       'onboarding.password.hint' => _l10n.onboardingPasswordHint,
+      'onboarding.password.pasted.warning' => _l10n.onboardingPasswordPastedWarning,
+      'onboarding.password.surrounding.whitespace' => _l10n.onboardingPasswordSurroundingWhitespace,
+      'onboarding.password.too.long' => _l10n.onboardingPasswordTooLong,
       'onboarding.password.too.short' => _l10n.onboardingPasswordTooShort,
       'onboarding.plan.title' => _l10n.onboardingPlanTitle,
       'onboarding.pocketbase.admin.email' => _l10n.onboardingPocketbaseAdminEmail,
@@ -930,6 +935,8 @@ class L10nKeyResolver {
       'terminal.reconnect' => _l10n.terminalReconnect,
       'terminal.retry' => _l10n.terminalRetry,
       'terminal.sftp.title' => _l10n.terminalSftpTitle,
+      'terminal.text.field.hide' => _l10n.terminalTextFieldHide,
+      'terminal.text.field.show' => _l10n.terminalTextFieldShow,
       'terminal.title' => _l10n.terminalTitle,
       'terminal.transfer' => _l10n.terminalTransfer,
       'terminal.upload' => _l10n.terminalUpload,
@@ -1722,6 +1729,7 @@ class L10nKeyResolver {
     'onboarding.email.hint',
     'onboarding.email.hint.short',
     'onboarding.email.invalid.format',
+    'onboarding.email.surrounding.whitespace',
     'onboarding.existing.server',
     'onboarding.failure.action.back.to.setup',
     'onboarding.failure.action.retry.connection',
@@ -1746,6 +1754,7 @@ class L10nKeyResolver {
     'onboarding.intent.chip.local.models',
     'onboarding.intent.poco',
     'onboarding.login',
+    'onboarding.login.exact.match.hint',
     'onboarding.login.finishing.setup',
     'onboarding.login.retry',
     'onboarding.login.setup.stalled',
@@ -1767,6 +1776,9 @@ class L10nKeyResolver {
     'onboarding.passphrase.label',
     'onboarding.password',
     'onboarding.password.hint',
+    'onboarding.password.pasted.warning',
+    'onboarding.password.surrounding.whitespace',
+    'onboarding.password.too.long',
     'onboarding.password.too.short',
     'onboarding.plan.poco',
     'onboarding.plan.title',
@@ -2147,6 +2159,8 @@ class L10nKeyResolver {
     'terminal.retry',
     'terminal.sftp.title',
     'terminal.ssh.link',
+    'terminal.text.field.hide',
+    'terminal.text.field.show',
     'terminal.title',
     'terminal.transfer',
     'terminal.upload',
@@ -2851,6 +2865,7 @@ class L10nKeyResolver {
     'onboardingEmailHint': 'onboarding.email.hint',
     'onboardingEmailHintShort': 'onboarding.email.hint.short',
     'onboardingEmailInvalidFormat': 'onboarding.email.invalid.format',
+    'onboardingEmailSurroundingWhitespace': 'onboarding.email.surrounding.whitespace',
     'onboardingExistingServer': 'onboarding.existing.server',
     'onboardingFailureActionBackToSetup': 'onboarding.failure.action.back.to.setup',
     'onboardingFailureActionRetryConnection': 'onboarding.failure.action.retry.connection',
@@ -2875,6 +2890,7 @@ class L10nKeyResolver {
     'onboardingIntentChipLocalModels': 'onboarding.intent.chip.local.models',
     'onboardingIntentPoco': 'onboarding.intent.poco',
     'onboardingLogin': 'onboarding.login',
+    'onboardingLoginExactMatchHint': 'onboarding.login.exact.match.hint',
     'onboardingLoginFinishingSetup': 'onboarding.login.finishing.setup',
     'onboardingLoginRetry': 'onboarding.login.retry',
     'onboardingLoginSetupStalled': 'onboarding.login.setup.stalled',
@@ -2896,6 +2912,9 @@ class L10nKeyResolver {
     'onboardingPassphraseLabel': 'onboarding.passphrase.label',
     'onboardingPassword': 'onboarding.password',
     'onboardingPasswordHint': 'onboarding.password.hint',
+    'onboardingPasswordPastedWarning': 'onboarding.password.pasted.warning',
+    'onboardingPasswordSurroundingWhitespace': 'onboarding.password.surrounding.whitespace',
+    'onboardingPasswordTooLong': 'onboarding.password.too.long',
     'onboardingPasswordTooShort': 'onboarding.password.too.short',
     'onboardingPlanPoco': 'onboarding.plan.poco',
     'onboardingPlanTitle': 'onboarding.plan.title',
@@ -3276,6 +3295,8 @@ class L10nKeyResolver {
     'terminalRetry': 'terminal.retry',
     'terminalSftpTitle': 'terminal.sftp.title',
     'terminalSshLink': 'terminal.ssh.link',
+    'terminalTextFieldHide': 'terminal.text.field.hide',
+    'terminalTextFieldShow': 'terminal.text.field.show',
     'terminalTitle': 'terminal.title',
     'terminalTransfer': 'terminal.transfer',
     'terminalUpload': 'terminal.upload',
@@ -3977,6 +3998,7 @@ class L10nKeyResolver {
     'onboarding.email.hint': 'onboardingEmailHint',
     'onboarding.email.hint.short': 'onboardingEmailHintShort',
     'onboarding.email.invalid.format': 'onboardingEmailInvalidFormat',
+    'onboarding.email.surrounding.whitespace': 'onboardingEmailSurroundingWhitespace',
     'onboarding.existing.server': 'onboardingExistingServer',
     'onboarding.failure.action.back.to.setup': 'onboardingFailureActionBackToSetup',
     'onboarding.failure.action.retry.connection': 'onboardingFailureActionRetryConnection',
@@ -4001,6 +4023,7 @@ class L10nKeyResolver {
     'onboarding.intent.chip.local.models': 'onboardingIntentChipLocalModels',
     'onboarding.intent.poco': 'onboardingIntentPoco',
     'onboarding.login': 'onboardingLogin',
+    'onboarding.login.exact.match.hint': 'onboardingLoginExactMatchHint',
     'onboarding.login.finishing.setup': 'onboardingLoginFinishingSetup',
     'onboarding.login.retry': 'onboardingLoginRetry',
     'onboarding.login.setup.stalled': 'onboardingLoginSetupStalled',
@@ -4022,6 +4045,9 @@ class L10nKeyResolver {
     'onboarding.passphrase.label': 'onboardingPassphraseLabel',
     'onboarding.password': 'onboardingPassword',
     'onboarding.password.hint': 'onboardingPasswordHint',
+    'onboarding.password.pasted.warning': 'onboardingPasswordPastedWarning',
+    'onboarding.password.surrounding.whitespace': 'onboardingPasswordSurroundingWhitespace',
+    'onboarding.password.too.long': 'onboardingPasswordTooLong',
     'onboarding.password.too.short': 'onboardingPasswordTooShort',
     'onboarding.plan.poco': 'onboardingPlanPoco',
     'onboarding.plan.title': 'onboardingPlanTitle',
@@ -4402,6 +4428,8 @@ class L10nKeyResolver {
     'terminal.retry': 'terminalRetry',
     'terminal.sftp.title': 'terminalSftpTitle',
     'terminal.ssh.link': 'terminalSshLink',
+    'terminal.text.field.hide': 'terminalTextFieldHide',
+    'terminal.text.field.show': 'terminalTextFieldShow',
     'terminal.title': 'terminalTitle',
     'terminal.transfer': 'terminalTransfer',
     'terminal.upload': 'terminalUpload',
@@ -5110,6 +5138,7 @@ abstract class L10nKeys {
   static const onboardingEmailHint = 'onboarding.email.hint';
   static const onboardingEmailHintShort = 'onboarding.email.hint.short';
   static const onboardingEmailInvalidFormat = 'onboarding.email.invalid.format';
+  static const onboardingEmailSurroundingWhitespace = 'onboarding.email.surrounding.whitespace';
   static const onboardingExistingServer = 'onboarding.existing.server';
   static const onboardingFailureActionBackToSetup = 'onboarding.failure.action.back.to.setup';
   static const onboardingFailureActionRetryConnection = 'onboarding.failure.action.retry.connection';
@@ -5134,6 +5163,7 @@ abstract class L10nKeys {
   static const onboardingIntentChipLocalModels = 'onboarding.intent.chip.local.models';
   static const onboardingIntentPoco = 'onboarding.intent.poco';
   static const onboardingLogin = 'onboarding.login';
+  static const onboardingLoginExactMatchHint = 'onboarding.login.exact.match.hint';
   static const onboardingLoginFinishingSetup = 'onboarding.login.finishing.setup';
   static const onboardingLoginRetry = 'onboarding.login.retry';
   static const onboardingLoginSetupStalled = 'onboarding.login.setup.stalled';
@@ -5155,6 +5185,9 @@ abstract class L10nKeys {
   static const onboardingPassphraseLabel = 'onboarding.passphrase.label';
   static const onboardingPassword = 'onboarding.password';
   static const onboardingPasswordHint = 'onboarding.password.hint';
+  static const onboardingPasswordPastedWarning = 'onboarding.password.pasted.warning';
+  static const onboardingPasswordSurroundingWhitespace = 'onboarding.password.surrounding.whitespace';
+  static const onboardingPasswordTooLong = 'onboarding.password.too.long';
   static const onboardingPasswordTooShort = 'onboarding.password.too.short';
   static (String, Map<String, dynamic>) onboardingPlanPoco(String providerName) => ('onboarding.plan.poco', {'providerName': providerName});
   static const onboardingPlanTitle = 'onboarding.plan.title';
@@ -5535,6 +5568,8 @@ abstract class L10nKeys {
   static const terminalRetry = 'terminal.retry';
   static const terminalSftpTitle = 'terminal.sftp.title';
   static (String, Map<String, dynamic>) terminalSshLink(String host, String port) => ('terminal.ssh.link', {'host': host, 'port': port});
+  static const terminalTextFieldHide = 'terminal.text.field.hide';
+  static const terminalTextFieldShow = 'terminal.text.field.show';
   static const terminalTitle = 'terminal.title';
   static const terminalTransfer = 'terminal.transfer';
   static const terminalUpload = 'terminal.upload';

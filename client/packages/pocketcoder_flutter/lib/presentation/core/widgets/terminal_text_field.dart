@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 
-class TerminalTextField extends StatelessWidget {
+class TerminalTextField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
   final String? hint;
@@ -11,6 +11,12 @@ class TerminalTextField extends StatelessWidget {
   final bool enabled;
   final int maxLines;
   final String? errorText;
+  final String? helperText;
+  final TextInputType? keyboardType;
+  final bool autocorrect;
+  final bool enableSuggestions;
+  final Iterable<String>? autofillHints;
+  final bool revealable;
 
   const TerminalTextField({
     super.key,
@@ -23,11 +29,32 @@ class TerminalTextField extends StatelessWidget {
     this.enabled = true,
     this.maxLines = 1,
     this.errorText,
+    this.helperText,
+    this.keyboardType,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
+    this.autofillHints,
+    this.revealable = false,
   });
+
+  @override
+  State<TerminalTextField> createState() => _TerminalTextFieldState();
+}
+
+class _TerminalTextFieldState extends State<TerminalTextField> {
+  bool _revealed = false;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colorScheme;
+    final label = widget.label;
+    final errorText = widget.errorText;
+    final revealable = widget.obscureText && widget.revealable;
+    final warningStyle = TextStyle(
+      color: context.terminalColors.warning,
+      fontFamily: AppFonts.family,
+      package: 'pocketcoder_flutter',
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -42,12 +69,16 @@ class TerminalTextField extends StatelessWidget {
         ),
         VSpace.x1,
         TextField(
-          controller: controller,
-          obscureText: obscureText,
-          onSubmitted: onSubmitted,
-          onChanged: onChanged,
-          enabled: enabled,
-          maxLines: maxLines,
+          controller: widget.controller,
+          obscureText: widget.obscureText && !_revealed,
+          onSubmitted: widget.onSubmitted,
+          onChanged: widget.onChanged,
+          enabled: widget.enabled,
+          maxLines: widget.maxLines,
+          keyboardType: widget.keyboardType,
+          autocorrect: widget.autocorrect,
+          enableSuggestions: widget.enableSuggestions,
+          autofillHints: widget.autofillHints,
           style: TextStyle(
             fontFamily: AppFonts.family,
             package: 'pocketcoder_flutter',
@@ -55,7 +86,7 @@ class TerminalTextField extends StatelessWidget {
           ),
           cursorColor: colors.onSurface,
           decoration: InputDecoration(
-            hintText: hint,
+            hintText: widget.hint,
             hintStyle: TextStyle(
               color: colors.onSurface.withValues(alpha: 0.3),
               fontFamily: AppFonts.family,
@@ -86,11 +117,35 @@ class TerminalTextField extends StatelessWidget {
               borderRadius: BorderRadius.zero,
             ),
             errorText: errorText,
-            errorStyle: TextStyle(
-              color: context.terminalColors.warning,
-              fontFamily: AppFonts.family,
-              package: 'pocketcoder_flutter',
-            ),
+            errorStyle: warningStyle,
+            errorMaxLines: 3,
+            helperText: widget.helperText,
+            helperStyle: warningStyle,
+            helperMaxLines: 3,
+            suffixIcon: revealable
+                ? GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => setState(() => _revealed = !_revealed),
+                    child: Center(
+                      widthFactor: 1,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: AppSizes.space * 2),
+                        child: Text(
+                          _revealed
+                              ? context.l10n.terminalTextFieldHide
+                              : context.l10n.terminalTextFieldShow,
+                          style: TextStyle(
+                            fontFamily: AppFonts.family,
+                            package: 'pocketcoder_flutter',
+                            color: colors.onSurface,
+                            fontWeight: AppFonts.heavy,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : null,
             contentPadding: EdgeInsets.all(AppSizes.space * 2),
             isDense: true,
           ),
