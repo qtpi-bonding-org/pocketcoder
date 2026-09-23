@@ -20,6 +20,7 @@ class SelfHostLoginView extends StatefulWidget {
     required this.pocoHistory,
     required this.onDeploy,
     required this.onLogin,
+    this.onRetrySetup,
   });
 
   final String initialUrl;
@@ -32,6 +33,7 @@ class SelfHostLoginView extends StatefulWidget {
   final VoidCallback onDeploy;
   final Future<void> Function(String url, String email, String password)
       onLogin;
+  final VoidCallback? onRetrySetup;
 
   @override
   State<SelfHostLoginView> createState() => _SelfHostLoginViewState();
@@ -61,13 +63,24 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
   @override
   Widget build(BuildContext context) {
     final loading = widget.status == UiFlowStatus.loading;
+    final signedIn = widget.status == UiFlowStatus.success;
+    final onRetrySetup = widget.onRetrySetup;
     return PocketCoderShell(
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
-      footer: WizardFooter(
-        onNext: _login,
-        busyLabel: loading ? context.l10n.onboardingAuthenticating : null,
-      ),
+      footer: switch ((loading, signedIn, onRetrySetup)) {
+        (true, _, _) => WizardFooter(
+            busyLabel: context.l10n.onboardingAuthenticating,
+          ),
+        (_, true, final retry?) => WizardFooter(
+            onNext: retry,
+            nextLabel: context.l10n.onboardingLoginRetry,
+          ),
+        (_, true, null) => WizardFooter(
+            busyLabel: context.l10n.onboardingLoginFinishingSetup,
+          ),
+        _ => WizardFooter(onNext: _login),
+      },
       body: OnboardingContentShell(
         child: Column(
           children: [
@@ -94,7 +107,7 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
               controller: _passwordController,
               label: context.l10n.onboardingPassword,
               obscureText: true,
-              onSubmitted: (_) => loading ? null : _login(),
+              onSubmitted: (_) => loading || signedIn ? null : _login(),
             ),
           ],
         ),

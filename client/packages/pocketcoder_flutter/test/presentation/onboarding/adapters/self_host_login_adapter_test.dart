@@ -5,7 +5,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:get_it/get_it.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketcoder_flutter/application/boot/boot_routing_decider.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
@@ -114,4 +118,103 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, '/login');
     expect(find.text('HARNESS'), findsNothing);
   });
+
+  group('post-success watchdog', () {
+    late _MockAuthRepository repository;
+    late AuthCubit authCubit;
+    const watchdog = Duration(seconds: 10);
+
+    setUp(() {
+      repository = _MockAuthRepository();
+      final storage = _MockSecureStorage();
+      when(() => repository.getSavedBaseUrl()).thenAnswer((_) async => null);
+      when(() => repository.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repository.verifyServerCompatibility())
+          .thenAnswer((_) async {});
+      when(() => repository.login(any(), any())).thenAnswer((_) async => true);
+      when(() => repository.persistBaseUrl(any())).thenAnswer((_) async {});
+      authCubit = AuthCubit(
+          repository,
+          CaddyCaPinStore(storage),
+          _MockFactoryResetHook(),
+          _MockDeletionHook(),
+          _MockBillingService(),
+          const _NoopServerReadinessCheck());
+    });
+
+    tearDown(() async {
+      await authCubit.close();
+      if (GetIt.I.isRegistered<BootRoutingDecider>()) {
+        await GetIt.I.unregister<BootRoutingDecider>();
+      }
+    });
+
+    Future<void> pumpLogin(WidgetTester tester) async {
+      await tester.pumpWidget(MaterialApp(
+        theme: AppTheme.lightTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: BlocProvider.value(
+          value: authCubit,
+          child: SelfHostLoginAdapter(setupWatchdog: watchdog),
+        ),
+      ));
+      await tester.pump();
+      await authCubit.login('https://server.test', 'user@test', 'password');
+      await tester.pump();
+    }
+
+    testWidgets('stays busy after success, then offers a boot retry',
+        (tester) async {
+      final decider = _MockBootRoutingDecider();
+      when(() => decider.retryAuth()).thenAnswer((_) async {});
+      GetIt.I.registerSingleton<BootRoutingDecider>(decider);
+      await pumpLogin(tester);
+
+      expect(find.text('connected, finishing setup…'), findsOneWidget);
+      expect(find.text('retry'), findsNothing);
+
+      await tester.pump(watchdog);
+      await tester.pump(const Duration(seconds: 5));
+
+      expect(
+          find.textContaining('taking longer than expected',
+              findRichText: true),
+          findsOneWidget);
+      await tester.tap(find.text('retry'));
+      await tester.pump();
+
+      verify(() => decider.retryAuth()).called(1);
+      expect(find.text('connected, finishing setup…'), findsOneWidget);
+    });
+
+    testWidgets('retry without a boot decider does not crash', (tester) async {
+      await pumpLogin(tester);
+      await tester.pump(watchdog);
+
+      await tester.tap(find.text('retry'));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a new login failure resets the stalled screen to the form',
+        (tester) async {
+      await pumpLogin(tester);
+      await tester.pump(watchdog);
+      expect(find.text('retry'), findsOneWidget);
+
+      when(() => repository.login(any(), any())).thenThrow(
+          AuthException('login failed', ClientException(statusCode: 401)));
+      await authCubit.login('https://server.test', 'user@test', 'password');
+      await tester.pump();
+
+      expect(find.text('retry'), findsNothing);
+      expect(find.text('next'), findsOneWidget);
+      await tester.pump(watchdog);
+      expect(find.text('retry'), findsNothing);
+    });
+  });
 }
+
+class _MockBootRoutingDecider extends Mock implements BootRoutingDecider {}

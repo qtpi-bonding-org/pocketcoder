@@ -47,6 +47,7 @@ void main() {
 
   Widget view({
     UiFlowStatus status = UiFlowStatus.idle,
+    VoidCallback? onRetrySetup,
     Future<void> Function(String, String, String)? onLogin,
   }) =>
       MaterialApp(
@@ -63,6 +64,7 @@ void main() {
           pocoHistory: const [],
           onDeploy: () {},
           onLogin: onLogin ?? (_, __, ___) async {},
+          onRetrySetup: onRetrySetup,
         ),
       );
 
@@ -73,6 +75,24 @@ void main() {
     expect(find.text('next'), findsNothing);
     expect(find.byType(DotSpinner), findsOneWidget);
     expect(find.text('authenticating'), findsOneWidget);
+  });
+
+  testWidgets('after a successful login the footer stays busy', (tester) async {
+    await tester.pumpWidget(view(status: UiFlowStatus.success));
+
+    expect(find.text('next'), findsNothing);
+    expect(find.byType(DotSpinner), findsOneWidget);
+    expect(find.text('connected, finishing setup…'), findsOneWidget);
+  });
+
+  testWidgets('a stalled setup offers retry in the footer', (tester) async {
+    var retries = 0;
+    await tester.pumpWidget(
+        view(status: UiFlowStatus.success, onRetrySetup: () => retries++));
+
+    expect(find.byType(DotSpinner), findsNothing);
+    await tester.tap(find.text('retry'));
+    expect(retries, 1);
   });
 
   testWidgets('submitting from next dismisses the keyboard', (tester) async {

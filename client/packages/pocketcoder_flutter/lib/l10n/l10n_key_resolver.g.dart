@@ -561,6 +561,9 @@ class L10nKeyResolver {
       'onboarding.intent.chip.local.models' => _l10n.onboardingIntentChipLocalModels,
       'onboarding.intent.poco' => _l10n.onboardingIntentPoco,
       'onboarding.login' => _l10n.onboardingLogin,
+      'onboarding.login.finishing.setup' => _l10n.onboardingLoginFinishingSetup,
+      'onboarding.login.retry' => _l10n.onboardingLoginRetry,
+      'onboarding.login.setup.stalled' => _l10n.onboardingLoginSetupStalled,
       'onboarding.no.server.chip.existing' => _l10n.onboardingNoServerChipExisting,
       'onboarding.no.server.chip.new' => _l10n.onboardingNoServerChipNew,
       'onboarding.no.server.looking.poco' => _l10n.onboardingNoServerLookingPoco,
@@ -1740,6 +1743,9 @@ class L10nKeyResolver {
     'onboarding.intent.chip.local.models',
     'onboarding.intent.poco',
     'onboarding.login',
+    'onboarding.login.finishing.setup',
+    'onboarding.login.retry',
+    'onboarding.login.setup.stalled',
     'onboarding.no.server.chip.existing',
     'onboarding.no.server.chip.new',
     'onboarding.no.server.looking.poco',
@@ -2865,6 +2871,9 @@ class L10nKeyResolver {
     'onboardingIntentChipLocalModels': 'onboarding.intent.chip.local.models',
     'onboardingIntentPoco': 'onboarding.intent.poco',
     'onboardingLogin': 'onboarding.login',
+    'onboardingLoginFinishingSetup': 'onboarding.login.finishing.setup',
+    'onboardingLoginRetry': 'onboarding.login.retry',
+    'onboardingLoginSetupStalled': 'onboarding.login.setup.stalled',
     'onboardingNoServerChipExisting': 'onboarding.no.server.chip.existing',
     'onboardingNoServerChipNew': 'onboarding.no.server.chip.new',
     'onboardingNoServerLookingPoco': 'onboarding.no.server.looking.poco',
@@ -3987,6 +3996,9 @@ class L10nKeyResolver {
     'onboarding.intent.chip.local.models': 'onboardingIntentChipLocalModels',
     'onboarding.intent.poco': 'onboardingIntentPoco',
     'onboarding.login': 'onboardingLogin',
+    'onboarding.login.finishing.setup': 'onboardingLoginFinishingSetup',
+    'onboarding.login.retry': 'onboardingLoginRetry',
+    'onboarding.login.setup.stalled': 'onboardingLoginSetupStalled',
     'onboarding.no.server.chip.existing': 'onboardingNoServerChipExisting',
     'onboarding.no.server.chip.new': 'onboardingNoServerChipNew',
     'onboarding.no.server.looking.poco': 'onboardingNoServerLookingPoco',
@@ -5116,6 +5128,9 @@ abstract class L10nKeys {
   static const onboardingIntentChipLocalModels = 'onboarding.intent.chip.local.models';
   static const onboardingIntentPoco = 'onboarding.intent.poco';
   static const onboardingLogin = 'onboarding.login';
+  static const onboardingLoginFinishingSetup = 'onboarding.login.finishing.setup';
+  static const onboardingLoginRetry = 'onboarding.login.retry';
+  static const onboardingLoginSetupStalled = 'onboarding.login.setup.stalled';
   static const onboardingNoServerChipExisting = 'onboarding.no.server.chip.existing';
   static const onboardingNoServerChipNew = 'onboarding.no.server.chip.new';
   static const onboardingNoServerLookingPoco = 'onboarding.no.server.looking.poco';

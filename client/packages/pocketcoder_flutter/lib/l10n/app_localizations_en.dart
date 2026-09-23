@@ -252,6 +252,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingAuthenticating => 'authenticating';
 
   @override
+  String get onboardingLoginFinishingSetup => 'connected, finishing setup…';
+
+  @override
+  String get onboardingLoginSetupStalled =>
+      'Signed in, but setup is taking longer than expected. Tap retry to try again.';
+
+  @override
+  String get onboardingLoginRetry => 'retry';
+
+  @override
   String get onboardingSetupTitle => 'PocketCoder setup';
 
   @override

@@ -556,6 +556,24 @@ abstract class AppLocalizations {
   /// **'authenticating'**
   String get onboardingAuthenticating;
 
+  /// No description provided for @onboardingLoginFinishingSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'connected, finishing setup…'**
+  String get onboardingLoginFinishingSetup;
+
+  /// No description provided for @onboardingLoginSetupStalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in, but setup is taking longer than expected. Tap retry to try again.'**
+  String get onboardingLoginSetupStalled;
+
+  /// No description provided for @onboardingLoginRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'retry'**
+  String get onboardingLoginRetry;
+
   /// No description provided for @onboardingSetupTitle.
   ///
   /// In en, this message translates to:
