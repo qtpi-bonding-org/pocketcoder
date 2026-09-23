@@ -4783,7 +4783,7 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingPasswordPastedWarning.
   ///
   /// In en, this message translates to:
-  /// **'Leading/trailing whitespace?'**
+  /// **'Has leading/trailing whitespace'**
   String get onboardingPasswordPastedWarning;
 
   /// No description provided for @onboardingLoginExactMatchHint.

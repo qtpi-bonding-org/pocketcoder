@@ -1052,7 +1052,7 @@
   "onboardingPasswordTooLong": "Must be at most 71 characters",
   "onboardingEmailSurroundingWhitespace": "Remove leading/trailing whitespace",
   "onboardingPasswordSurroundingWhitespace": "Remove leading/trailing whitespace",
-  "onboardingPasswordPastedWarning": "Leading/trailing whitespace?",
+  "onboardingPasswordPastedWarning": "Has leading/trailing whitespace",
   "onboardingLoginExactMatchHint": "Capitals and whitespace count",
   "terminalTextFieldShow": "show",
   "terminalTextFieldHide": "hide",

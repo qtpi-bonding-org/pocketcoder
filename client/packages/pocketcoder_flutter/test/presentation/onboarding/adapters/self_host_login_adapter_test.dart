@@ -293,7 +293,7 @@ void main() {
           email: 'User.Name@Example.com', password: ' pass word ');
 
       expect(
-          find.textContaining('Leading/trailing whitespace?',
+          find.textContaining('Has leading/trailing whitespace',
               findRichText: true),
           findsOneWidget);
       await submit(tester);
@@ -306,7 +306,7 @@ void main() {
       await pumpForm(tester, email: 'user@example.com', password: 'pa ss');
 
       expect(
-          find.textContaining('Leading/trailing whitespace?',
+          find.textContaining('Has leading/trailing whitespace',
               findRichText: true),
           findsNothing);
     });

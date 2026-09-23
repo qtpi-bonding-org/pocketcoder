@@ -2585,7 +2585,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Remove leading/trailing whitespace';
 
   @override
-  String get onboardingPasswordPastedWarning => 'Leading/trailing whitespace?';
+  String get onboardingPasswordPastedWarning =>
+      'Has leading/trailing whitespace';
 
   @override
   String get onboardingLoginExactMatchHint => 'Capitals and whitespace count';
