@@ -10,7 +10,7 @@ class ErrorInboxLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Align(
-        alignment: AlignmentDirectional.centerStart,
+        alignment: Alignment.center,
         child: TerminalButton(
           label: context.l10n.errorsInboxLink(count),
           onTap: onTap,

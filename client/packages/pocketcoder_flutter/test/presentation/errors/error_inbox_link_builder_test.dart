@@ -128,4 +128,13 @@ void main() {
 
     expect(find.text('<errors (0)>'), findsOneWidget);
   });
+
+  testWidgets('centers the errors link horizontally', (tester) async {
+    await pumpLink(tester);
+
+    final linkCenter = tester.getCenter(find.text('<errors (0)>'));
+    final scaffoldCenter = tester.getCenter(find.byType(Scaffold));
+
+    expect(linkCenter.dx, closeTo(scaffoldCenter.dx, 1.0));
+  });
 }
