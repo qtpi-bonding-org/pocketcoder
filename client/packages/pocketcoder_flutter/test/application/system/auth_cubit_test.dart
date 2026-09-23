@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +14,7 @@ import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
+import 'package:pocketcoder_flutter/infrastructure/feedback/exception_mapper.dart';
 
 AuthException _wrappedClientFailure(int statusCode) {
   final client = ClientException(statusCode: statusCode);
@@ -243,6 +246,57 @@ void main() {
       expect(attempts, 1);
       verifyNever(() => repo.login(any(), any()));
       expect(cubit.state.status, UiFlowStatus.failure);
+    });
+  });
+
+  group('AuthCubit.login step timeout', () {
+    Future<AuthCubit> loginAgainst({
+      required Future<void> Function() verify,
+      required Future<bool> Function() login,
+    }) async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) => verify());
+      when(() => repo.login(any(), any())).thenAnswer((_) => login());
+      when(() => repo.persistBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl()).thenAnswer((_) async => null);
+      final cubit = buildCubit()
+        ..loginStepTimeout = const Duration(milliseconds: 20);
+      await cubit.login('https://server.example', 'a@example.com', 'secret');
+      return cubit;
+    }
+
+    test(
+        'a stalled compatibility check fails as a retried network error '
+        'instead of hanging the login screen', () async {
+      var attempts = 0;
+      final cubit = await loginAgainst(
+        verify: () {
+          attempts++;
+          return Completer<void>().future;
+        },
+        login: () async => true,
+      );
+
+      expect(attempts, 3);
+      expect(cubit.state.status, UiFlowStatus.failure);
+      expect(
+        AppExceptionKeyMapper().map(cubit.state.error ?? Object()),
+        const MessageKey.error('error.network'),
+      );
+      verifyNever(() => repo.persistBaseUrl(any()));
+    });
+
+    test('a stalled login request fails as a network error', () async {
+      final cubit = await loginAgainst(
+        verify: () async {},
+        login: () => Completer<bool>().future,
+      );
+
+      expect(cubit.state.status, UiFlowStatus.failure);
+      expect(
+        AppExceptionKeyMapper().map(cubit.state.error ?? Object()),
+        const MessageKey.error('error.network'),
+      );
     });
   });
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -51,6 +53,9 @@ class AuthCubit extends AppCubit<AuthState> {
       this._serverReadinessCheck)
       : super(AuthState.initial());
 
+  @visibleForTesting
+  Duration loginStepTimeout = const Duration(seconds: 15);
+
   Future<void> restoreSavedUrl() async {
     String? savedUrl;
     try {
@@ -83,8 +88,10 @@ class AuthCubit extends AppCubit<AuthState> {
         const retryDelay = Duration(milliseconds: 600);
         for (var attempt = 1; attempt <= maxAttempts; attempt++) {
           try {
-            await _authRepository.verifyServerCompatibility();
-            final success = await _authRepository.login(email, password);
+            await _withLoginStepTimeout(
+                _authRepository.verifyServerCompatibility());
+            final success = await _withLoginStepTimeout(
+                _authRepository.login(email, password));
             if (!success) {
               throw AuthException.loginFailed();
             }
@@ -156,6 +163,16 @@ class AuthCubit extends AppCubit<AuthState> {
       await _proDataDeletionHook.deleteProData();
       return createSuccessState().copyWith(skipOnboardingNavigation: true);
     });
+  }
+
+  Future<T> _withLoginStepTimeout<T>(Future<T> step) {
+    return step.timeout(
+      loginStepTimeout,
+      onTimeout: () => throw AuthException(
+        'login timed out',
+        ClientException(originalError: TimeoutException(null, loginStepTimeout)),
+      ),
+    );
   }
 
   static bool _isTransientLoginError(Object error) {
