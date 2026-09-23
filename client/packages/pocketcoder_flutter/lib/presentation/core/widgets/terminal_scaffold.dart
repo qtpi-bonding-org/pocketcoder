@@ -51,7 +51,16 @@ class TerminalScaffold extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: showFooter ? resolvedFooter : null,
+      // Scaffold pins bottomNavigationBar to the screen edge, under the
+      // keyboard; lift it so the primary action stays reachable while typing.
+      bottomNavigationBar: switch ((showFooter, resolvedFooter)) {
+        (true, final footer?) => Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom),
+            child: footer,
+          ),
+        _ => null,
+      },
     );
   }
 }

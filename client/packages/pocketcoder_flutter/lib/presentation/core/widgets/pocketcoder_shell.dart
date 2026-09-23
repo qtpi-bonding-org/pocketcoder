@@ -195,12 +195,29 @@ class _ContentScrollRegionState extends State<ContentScrollRegion> {
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: AppSizes.contentMaxWidth),
-          child: SingleChildScrollView(
-            controller: _controller,
-            padding: widget.padding,
-            physics: _scrollable ? null : const NeverScrollableScrollPhysics(),
-            child: widget.child,
+          child: NotificationListener<ScrollMetricsNotification>(
+            onNotification: (notification) {
+              if (notification.depth == 0) _updateScrollable(Duration.zero);
+              return false;
+            },
+            child: SingleChildScrollView(
+              controller: _controller,
+              padding: widget.padding,
+              physics: _scrollable ? null : const _NoUserScrollPhysics(),
+              child: widget.child,
+            ),
           ),
         ),
       );
+}
+
+class _NoUserScrollPhysics extends NeverScrollableScrollPhysics {
+  const _NoUserScrollPhysics({super.parent});
+
+  @override
+  _NoUserScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      _NoUserScrollPhysics(parent: buildParent(ancestor));
+
+  @override
+  bool get allowImplicitScrolling => true;
 }

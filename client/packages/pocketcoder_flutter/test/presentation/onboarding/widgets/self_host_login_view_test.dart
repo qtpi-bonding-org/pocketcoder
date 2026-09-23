@@ -135,4 +135,33 @@ void main() {
             .hasFocus,
         isFalse);
   });
+
+  for (final (name, size) in [
+    ('iPad landscape', const Size(1180, 820)),
+    ('iPad portrait', const Size(820, 1180)),
+    ('phone', const Size(390, 844)),
+  ]) {
+    testWidgets(
+        '$name: the focused password field and next stay above the keyboard',
+        (tester) async {
+      const keyboard = 380.0;
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(view());
+      final password = find.byType(EditableText).last;
+      await tester.showKeyboard(password);
+      tester.view.viewInsets = const FakeViewPadding(bottom: keyboard);
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      final visibleBottom = size.height - keyboard;
+      expect(tester.getRect(password).bottom, lessThanOrEqualTo(visibleBottom));
+      expect(tester.getRect(password).top, greaterThanOrEqualTo(0));
+      expect(tester.getRect(find.text('next')).bottom,
+          lessThanOrEqualTo(visibleBottom));
+    });
+  }
 }
