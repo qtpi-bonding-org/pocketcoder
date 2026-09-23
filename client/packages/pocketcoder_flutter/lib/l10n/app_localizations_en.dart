@@ -2577,14 +2577,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingPasswordTooLong => 'Must be at most 71 characters';
 
   @override
-  String get onboardingEmailSurroundingWhitespace => 'Remove extra whitespace';
+  String get onboardingEmailSurroundingWhitespace =>
+      'Remove leading/trailing whitespace';
 
   @override
   String get onboardingPasswordSurroundingWhitespace =>
-      'Remove extra whitespace';
+      'Remove leading/trailing whitespace';
 
   @override
-  String get onboardingPasswordPastedWarning => 'Extra whitespace?';
+  String get onboardingPasswordPastedWarning => 'Leading/trailing whitespace?';
 
   @override
   String get onboardingLoginExactMatchHint => 'Capitals and whitespace count';

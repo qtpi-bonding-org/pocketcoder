@@ -4771,19 +4771,19 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingEmailSurroundingWhitespace.
   ///
   /// In en, this message translates to:
-  /// **'Remove extra whitespace'**
+  /// **'Remove leading/trailing whitespace'**
   String get onboardingEmailSurroundingWhitespace;
 
   /// No description provided for @onboardingPasswordSurroundingWhitespace.
   ///
   /// In en, this message translates to:
-  /// **'Remove extra whitespace'**
+  /// **'Remove leading/trailing whitespace'**
   String get onboardingPasswordSurroundingWhitespace;
 
   /// No description provided for @onboardingPasswordPastedWarning.
   ///
   /// In en, this message translates to:
-  /// **'Extra whitespace?'**
+  /// **'Leading/trailing whitespace?'**
   String get onboardingPasswordPastedWarning;
 
   /// No description provided for @onboardingLoginExactMatchHint.
