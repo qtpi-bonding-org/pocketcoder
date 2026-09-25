@@ -721,7 +721,7 @@ paths:
       operationId: deleteProData
       tags:
         - pro-data
-      description: Purges this user's PocketCoder-Pro-hosted data (push-relay's Supabase rows and the RevenueCat customer record). Pure pass-through to push-relay -- never touches this deployment's own local PocketBase data, which the user already owns and controls on their own server.
+      description: Purges this user's PocketCoder-Pro-hosted data (push-relay's stored rows and the RevenueCat customer record). Pure pass-through to push-relay -- never touches this deployment's own local PocketBase data, which the user already owns and controls on their own server.
       security:
         - pocketbaseToken: []
       responses:

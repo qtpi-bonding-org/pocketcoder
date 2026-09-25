@@ -19,7 +19,7 @@ class ProDataApi {
   const ProDataApi(this._dio, this._serializers);
 
   /// deleteProData
-  /// Purges this user&#39;s PocketCoder-Pro-hosted data (push-relay&#39;s Supabase rows and the RevenueCat customer record). Pure pass-through to push-relay -- never touches this deployment&#39;s own local PocketBase data, which the user already owns and controls on their own server.
+  /// Purges this user&#39;s PocketCoder-Pro-hosted data (push-relay&#39;s stored rows and the RevenueCat customer record). Pure pass-through to push-relay -- never touches this deployment&#39;s own local PocketBase data, which the user already owns and controls on their own server.
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
