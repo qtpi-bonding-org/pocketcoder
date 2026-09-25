@@ -63,3 +63,8 @@ export interface ImageReleaseObjectRequest {
   object_path: string;
   content_type: string;
 }
+
+export interface ImageRelayRevocation {
+  jti: string;
+  revoked_at: string;
+}

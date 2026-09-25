@@ -438,7 +438,7 @@ restartOpenCode sends a restart command to the OpenCode container via the Docker
 <a name="FcmRelayProvider"></a>
 ## type FcmRelayProvider
 
-FcmRelayProvider routes notifications through a Cloudflare Worker relay. The Worker handles subscription verification \(RevenueCat\), rate limiting \(Supabase\), and FCM v1 delivery — PocketBase just fires and forgets.
+FcmRelayProvider routes notifications through a Cloudflare Worker relay. The Worker handles subscription verification \(RevenueCat\), rate limiting \(Cloudflare D1\), and FCM v1 delivery — PocketBase just fires and forgets.
 
 ```go
 type FcmRelayProvider struct {
