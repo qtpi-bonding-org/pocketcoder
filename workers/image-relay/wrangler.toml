@@ -12,4 +12,4 @@ bucket_name = "pocketcoder-images"
 [[d1_databases]]
 binding = "DB"
 database_name = "pocketcoder-image-relay"
-database_id = "<filled in after wrangler d1 create>"
+database_id = "d894a210-af9f-4011-8d72-e49e891b8c58"
