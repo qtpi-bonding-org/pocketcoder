@@ -35,7 +35,7 @@ class _BootScreenState extends State<BootScreen> {
   }
 
   void _startBootSequence() async {
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    Future.delayed(const Duration(milliseconds: 1000), () {
       if (mounted) _wakeUpPoco();
     });
 

@@ -30,7 +30,7 @@ class BootRoutingDecider {
         _unknownExistenceRetryDelay = unknownExistenceRetryDelay;
 
   static const Duration kMinFreshInstallBootDuration =
-      Duration(milliseconds: 3000);
+      Duration(milliseconds: 6000);
   static const int kMaxUnknownExistenceRetries = 3;
   static const Duration kUnknownExistenceRetryDelay = Duration(seconds: 2);
 
