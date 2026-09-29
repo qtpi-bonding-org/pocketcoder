@@ -123,7 +123,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
 
   void _initialize(BuildContext context) {
     if (_pocoMessage.value.isNotEmpty) return;
-    _url.value = prefill?.url ?? 'http://127.0.0.1:8090';
+    _url.value = prefill?.url ?? '';
     _email.value = prefill?.email ?? '';
     _password.value = prefill?.password ?? '';
     _passwordLooksPasted.value = loginPasswordLooksPasted(_password.value);

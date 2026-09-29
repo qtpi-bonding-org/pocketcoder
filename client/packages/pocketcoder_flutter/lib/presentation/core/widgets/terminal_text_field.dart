@@ -76,8 +76,8 @@ class _TerminalTextFieldState extends State<TerminalTextField> {
           enabled: widget.enabled,
           maxLines: widget.maxLines,
           keyboardType: widget.keyboardType,
-          autocorrect: widget.autocorrect,
-          enableSuggestions: widget.enableSuggestions,
+          autocorrect: widget.autocorrect && !widget.obscureText,
+          enableSuggestions: widget.enableSuggestions && !widget.obscureText,
           autofillHints: widget.autofillHints,
           style: TextStyle(
             fontFamily: AppFonts.family,

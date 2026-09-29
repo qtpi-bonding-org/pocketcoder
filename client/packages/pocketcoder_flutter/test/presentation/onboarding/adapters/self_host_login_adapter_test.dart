@@ -247,7 +247,9 @@ void main() {
     });
 
     Future<void> pumpForm(WidgetTester tester,
-        {required String email, required String password}) async {
+        {required String email,
+        required String password,
+        String? url = 'http://127.0.0.1:8090'}) async {
       await tester.pumpWidget(MaterialApp(
         theme: AppTheme.lightTheme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -259,6 +261,7 @@ void main() {
       ));
       await tester.pump();
       final fields = find.byType(EditableText);
+      if (url != null) await tester.enterText(fields.at(0), url);
       await tester.enterText(fields.at(1), email);
       await tester.enterText(fields.at(2), password);
       await tester.pump();
@@ -269,6 +272,16 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
     }
+
+    testWidgets(
+        'the server URL starts empty -- a URL pasted into a prefilled '
+        'default would be appended to it', (tester) async {
+      await pumpForm(tester,
+          email: 'user@example.com', password: 'password', url: null);
+
+      final url = tester.widget<EditableText>(find.byType(EditableText).at(0));
+      expect(url.controller.text, isEmpty);
+    });
 
     testWidgets('an email with surrounding space is blocked inline',
         (tester) async {
