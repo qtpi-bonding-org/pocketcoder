@@ -17,11 +17,16 @@ class MockSshRunner extends Mock implements IRootSshCommandRunner {}
 
 class MockCaPinWriter extends Mock implements CaPinWriter {}
 
+class MockSecureStorage extends Mock implements FlutterSecureStorage {}
+
 class FakeCurrentDeploymentLookup implements CurrentDeploymentLookup {
   FakeCurrentDeploymentLookup(this.current);
 
   @override
   ({String instanceId, String host})? current;
+
+  @override
+  bool isLoaded = true;
 }
 
 void main() {
@@ -176,8 +181,10 @@ void main() {
         'whose async refresh has not necessarily completed yet at boot)',
         () async {
       lookup.current = null;
+      lookup.isLoaded = false;
       unawaited(Future<void>.delayed(const Duration(milliseconds: 100), () {
         lookup.current = (instanceId: 'inst-1', host: 'deploy.example');
+        lookup.isLoaded = true;
       }));
 
       await recovery.warmUp(timeout: const Duration(seconds: 2));
@@ -190,10 +197,60 @@ void main() {
         'available -- a fresh install with nothing deployed yet is not an '
         'error', () async {
       lookup.current = null;
+      lookup.isLoaded = false;
 
       await recovery.warmUp(timeout: const Duration(milliseconds: 100));
 
       verifyNever(() => pinningHttpClient.updatePin(any()));
+    });
+
+    test(
+        'returns at once when the lookup has finished loading and found no '
+        'deployment -- a fresh install must not sit on the native splash '
+        'for the whole timeout', () async {
+      lookup.current = null;
+      lookup.isLoaded = true;
+      final stopwatch = Stopwatch()..start();
+
+      await recovery.warmUp(timeout: const Duration(seconds: 5));
+
+      expect(stopwatch.elapsed, lessThan(const Duration(milliseconds: 500)));
+    });
+
+    test(
+        'does not let a failing Keychain read escape -- warmUp runs before '
+        'runApp(), so any error must be logged and skipped', () async {
+      final storage = MockSecureStorage();
+      when(() => storage.read(key: any(named: 'key')))
+          .thenThrow(Exception('keychain unavailable'));
+      final failingRecovery = CaPinRecovery(
+        caPinFetcher: CaPinFetcher(
+          sshCommandRunner: sshRunner,
+          pinStore: CaddyCaPinStore(storage),
+          pinningHttpClient: pinningHttpClient,
+          mutex: CaPinMutex(),
+        ),
+        currentDeployment: lookup,
+      );
+
+      await expectLater(failingRecovery.warmUp(), completes);
+    });
+
+    test(
+        'stops waiting on a CA pin fetch that never completes -- warmUp runs '
+        'before runApp(), so a stalled SSH call must not hold the splash',
+        () async {
+      lookup.current = (instanceId: 'inst-unpinned', host: 'deploy.example');
+      when(() => sshRunner.run(
+            instanceId: any(named: 'instanceId'),
+            host: any(named: 'host'),
+            command: any(named: 'command'),
+          )).thenAnswer((_) => Completer<RootSshCommandResult>().future);
+      final stopwatch = Stopwatch()..start();
+
+      await recovery.warmUp(fetchTimeout: const Duration(milliseconds: 100));
+
+      expect(stopwatch.elapsed, lessThan(const Duration(seconds: 2)));
     });
   });
 }

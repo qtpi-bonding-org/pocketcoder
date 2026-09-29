@@ -8,6 +8,7 @@ import 'package:cubit_ui_flow/cubit_ui_flow.dart' as cubit_ui_flow;
 import 'bootstrap.config.dart';
 import 'app_dependency_module.dart';
 
+import 'package:pocketcoder_flutter/app/optional_startup_step.dart';
 import 'package:pocketcoder_flutter/infrastructure/core/connectivity_override.dart';
 import 'package:pocketcoder_flutter/domain/notifications/push_service.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
@@ -128,10 +129,12 @@ Future<void> bootstrap({AppDependencyModule? appModule}) async {
     debugPrint('Bootstrap: Dependencies configured');
 
     final pushService = getIt<PushService>();
-    await pushService.initialize();
+    await runOptionalStartupStep(
+        'pushService.initialize', pushService.initialize);
 
     final billingService = getIt<BillingService>();
-    await billingService.initialize();
+    await runOptionalStartupStep(
+        'billingService.initialize', billingService.initialize);
 
     // Start after push and billing initialization. The coordinator replay
     // handles an already-persisted session without blocking bootstrap.

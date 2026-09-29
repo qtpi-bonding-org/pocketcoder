@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:go_router/go_router.dart';
 import 'package:nav_snapshot/nav_snapshot.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/application/boot/boot_navigation_parts.dart';
 import 'package:pocketcoder_flutter/application/boot/boot_route.dart';
 import 'package:pocketcoder_flutter/application/boot/boot_routing_policy.dart';
@@ -29,7 +30,7 @@ class BootRoutingDecider {
         _unknownExistenceRetryDelay = unknownExistenceRetryDelay;
 
   static const Duration kMinFreshInstallBootDuration =
-      Duration(milliseconds: 9000);
+      Duration(milliseconds: 3000);
   static const int kMaxUnknownExistenceRetries = 3;
   static const Duration kUnknownExistenceRetryDelay = Duration(seconds: 2);
 
@@ -80,20 +81,25 @@ class BootRoutingDecider {
     _binding = binding;
 
     // One deadline, armed once from boot start. The floor is measured from
-    // launch, not from whenever notProvisioned happens to arrive: a user who
-    // spends eight seconds in `resolving` waits one more second, not nine.
+    // launch, not from whenever notProvisioned happens to arrive.
     _bootFloorTimer = Timer(kMinFreshInstallBootDuration, () {
       _bootFloorPassed = true;
       _binding?.evaluate();
     });
-    await _readiness.initialize();
-    binding.start();
+    try {
+      await _readiness.initialize();
+    } catch (error, stackTrace) {
+      AppLogger.error(
+          'BootRoutingDecider: readiness initialize failed', error, stackTrace);
+    } finally {
+      binding.start();
+    }
   }
 
   /// Once the boot screen is behind us the floor can no longer gate
-  /// anything, so drop the timer rather than leave it armed for nine
-  /// seconds. Under flutter_test a still-pending timer fails the test
-  /// outright, and it does so before addTearDown(dispose) ever runs.
+  /// anything, so drop the timer rather than leave it armed. Under
+  /// flutter_test a still-pending timer fails the test outright, and it
+  /// does so before addTearDown(dispose) ever runs.
   void _cancelFloorOnceLeft() {
     if (!(_policy?.hasLeftBootScreen ?? false)) return;
     _bootFloorTimer?.cancel();
