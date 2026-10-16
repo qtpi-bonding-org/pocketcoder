@@ -143,6 +143,32 @@ void main() {
     });
 
     test(
+        're-checks server readiness after persisting the URL, so a fresh '
+        'install is not routed back to onboarding', () async {
+      when(() => repo.updateBaseUrl('https://server.example'))
+          .thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
+      when(() => repo.login('owner@example.com', 'secret'))
+          .thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl('https://server.example'))
+          .thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl()).thenAnswer((_) async => null);
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://server.example',
+        'owner@example.com',
+        'secret',
+      );
+
+      verifyInOrder([
+        () => repo.persistBaseUrl('https://server.example'),
+        () => serverReadinessCheck.retry(),
+      ]);
+      expect(cubit.state.status, UiFlowStatus.success);
+    });
+
+    test(
         'does not send credentials to an incompatible server, and never '
         'persists the unverified URL', () async {
       when(() => repo.updateBaseUrl('https://server.example'))

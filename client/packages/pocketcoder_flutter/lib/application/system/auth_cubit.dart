@@ -123,6 +123,11 @@ class AuthCubit extends AppCubit<AuthState> {
         rethrow;
       }
       await _authRepository.persistBaseUrl(url);
+      // Readiness derives from the saved URL; without a re-check a fresh
+      // install keeps reading notProvisioned and is routed back to onboarding.
+      try {
+        await _serverReadinessCheck.retry();
+      } catch (_) {}
       OnboardingLogger.event('server login succeeded');
       return createSuccessState();
     });
