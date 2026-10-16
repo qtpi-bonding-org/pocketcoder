@@ -39,6 +39,8 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
   final _pocoSequence = ValueNotifier<List<(String, int)>>(const []);
   final List<String> _pocoHistory = const [];
 
+  final _attemptHost = ValueNotifier<String>('');
+
   static UiFlowStatus selectStatus(AuthState state) => state.status;
 
   @override
@@ -62,7 +64,9 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
         watchdog.stalled,
         _urlIssue,
         _emailIssue,
-        _passwordLooksPasted
+        _passwordLooksPasted,
+        _pocoMessage,
+        _pocoSequence,
       ]),
       builder: (context, _) => SelfHostLoginView(
         initialUrl: _url.value,
@@ -155,9 +159,15 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
           mapped.isNotEmpty ? mapped : context.l10n.onboardingAccessDenied;
       final credentialsRejected =
           error != null && safeErrorKey(error).key == L10nKeys.authLoginFailed;
-      _pocoMessage.value = credentialsRejected
+      final detail = credentialsRejected
           ? '$message\n\n${context.l10n.onboardingLoginExactMatchHint}'
           : message;
+      // The screenshot is the only diagnostic a reviewer reliably sends, so
+      // the screen itself names the server that was tried.
+      final host = _attemptHost.value;
+      _pocoMessage.value = host.isEmpty
+          ? detail
+          : '$detail\n\n${context.l10n.onboardingLoginTriedHost(host)}';
       _pocoSequence.value = PocoExpressions.nervous;
     }
   }
@@ -170,6 +180,9 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
   ) async {
     if (url.isEmpty || email.isEmpty || password.isEmpty) {
       VimToast.show(context, context.l10n.onboardingRequiredFields);
+      // The toast disappears; leave the reason on the screen as well.
+      _pocoMessage.value = context.l10n.onboardingRequiredFields;
+      _pocoSequence.value = PocoExpressions.nervous;
       return;
     }
     final urlProblem = serverUrlIssue(url);
@@ -177,6 +190,10 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _urlIssue.value = urlProblem;
     _emailIssue.value = issue;
     if (urlProblem != null || issue != null) return;
+    final parsed = Uri.tryParse(url);
+    _attemptHost.value = parsed == null || parsed.host.isEmpty
+        ? url
+        : '${parsed.host}${parsed.hasPort ? ':${parsed.port}' : ''}';
     OnboardingLogger.event('existing server login submitted', {
       'server_host': Uri.tryParse(url)?.host ?? 'invalid',
       'email_domain': email.contains('@') ? email.split('@').last : 'invalid',
@@ -203,6 +220,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _urlIssue.dispose();
     _emailIssue.dispose();
     _passwordLooksPasted.dispose();
+    _attemptHost.dispose();
     _pocoMessage.dispose();
     _pocoSequence.dispose();
     super.disposeAdapter();

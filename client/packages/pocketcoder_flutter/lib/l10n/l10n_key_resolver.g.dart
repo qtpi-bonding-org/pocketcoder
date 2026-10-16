@@ -1,6 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
-// Generated at: 2026-09-23T16:18:05.107045
 
 import 'app_localizations.dart';
 
@@ -86,7 +85,12 @@ class L10nKeyResolver {
       'auth.error' => _l10n.authError,
       'auth.login.failed' => _l10n.authLoginFailed,
       'auth.not.authenticated' => _l10n.authNotAuthenticated,
+      'auth.server.dns' => _l10n.authServerDns,
+      'auth.server.error' => _l10n.authServerError,
       'auth.server.incompatible' => _l10n.authServerIncompatible,
+      'auth.server.timeout' => _l10n.authServerTimeout,
+      'auth.server.tls' => _l10n.authServerTls,
+      'auth.server.unreachable' => _l10n.authServerUnreachable,
       'auth.token.expired' => _l10n.authTokenExpired,
       'billing.error' => _l10n.billingError,
       'billing.restore.failed' => _l10n.billingRestoreFailed,
@@ -1070,6 +1074,7 @@ class L10nKeyResolver {
       'agent.config.dialog.title' => _l10n.agentConfigDialogTitle(args?['name'] as String? ?? ''),
       'agent.config.error.prefix' => _l10n.agentConfigErrorPrefix(args?['error'] as String? ?? ''),
       'agent.dialog.title' => _l10n.agentDialogTitle(args?['name'] as String? ?? ''),
+      'auth.server.unexpected' => _l10n.authServerUnexpected(args?['detail'] as String? ?? ''),
       'brief.label' => _l10n.briefLabel(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
       'chat.list.actions.body' => _l10n.chatListActionsBody(args?['title'] as String? ?? ''),
       'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
@@ -1119,6 +1124,7 @@ class L10nKeyResolver {
       'onboarding.failure.connection.poco' => _l10n.onboardingFailureConnectionPoco(args?['providerName'] as String? ?? ''),
       'onboarding.harness.account.login' => _l10n.onboardingHarnessAccountLogin(args?['harness'] as String? ?? ''),
       'onboarding.harness.login.title' => _l10n.onboardingHarnessLoginTitle(args?['provider'] as String? ?? ''),
+      'onboarding.login.tried.host' => _l10n.onboardingLoginTriedHost(args?['host'] as String? ?? ''),
       'onboarding.os.debian.description' => _l10n.onboardingOsDebianDescription(args?['minutes'] as int? ?? 0),
       'onboarding.os.nixos.description' => _l10n.onboardingOsNixosDescription(args?['minutes'] as int? ?? 0),
       'onboarding.plan.poco' => _l10n.onboardingPlanPoco(args?['providerName'] as String? ?? ''),
@@ -1230,7 +1236,13 @@ class L10nKeyResolver {
     'auth.error',
     'auth.login.failed',
     'auth.not.authenticated',
+    'auth.server.dns',
+    'auth.server.error',
     'auth.server.incompatible',
+    'auth.server.timeout',
+    'auth.server.tls',
+    'auth.server.unexpected',
+    'auth.server.unreachable',
     'auth.token.expired',
     'billing.error',
     'billing.restore.failed',
@@ -1760,6 +1772,7 @@ class L10nKeyResolver {
     'onboarding.login.finishing.setup',
     'onboarding.login.retry',
     'onboarding.login.setup.stalled',
+    'onboarding.login.tried.host',
     'onboarding.no.server.chip.existing',
     'onboarding.no.server.chip.new',
     'onboarding.no.server.looking.poco',
@@ -2368,7 +2381,13 @@ class L10nKeyResolver {
     'authError': 'auth.error',
     'authLoginFailed': 'auth.login.failed',
     'authNotAuthenticated': 'auth.not.authenticated',
+    'authServerDns': 'auth.server.dns',
+    'authServerError': 'auth.server.error',
     'authServerIncompatible': 'auth.server.incompatible',
+    'authServerTimeout': 'auth.server.timeout',
+    'authServerTls': 'auth.server.tls',
+    'authServerUnexpected': 'auth.server.unexpected',
+    'authServerUnreachable': 'auth.server.unreachable',
     'authTokenExpired': 'auth.token.expired',
     'billingError': 'billing.error',
     'billingRestoreFailed': 'billing.restore.failed',
@@ -2898,6 +2917,7 @@ class L10nKeyResolver {
     'onboardingLoginFinishingSetup': 'onboarding.login.finishing.setup',
     'onboardingLoginRetry': 'onboarding.login.retry',
     'onboardingLoginSetupStalled': 'onboarding.login.setup.stalled',
+    'onboardingLoginTriedHost': 'onboarding.login.tried.host',
     'onboardingNoServerChipExisting': 'onboarding.no.server.chip.existing',
     'onboardingNoServerChipNew': 'onboarding.no.server.chip.new',
     'onboardingNoServerLookingPoco': 'onboarding.no.server.looking.poco',
@@ -3503,7 +3523,13 @@ class L10nKeyResolver {
     'auth.error': 'authError',
     'auth.login.failed': 'authLoginFailed',
     'auth.not.authenticated': 'authNotAuthenticated',
+    'auth.server.dns': 'authServerDns',
+    'auth.server.error': 'authServerError',
     'auth.server.incompatible': 'authServerIncompatible',
+    'auth.server.timeout': 'authServerTimeout',
+    'auth.server.tls': 'authServerTls',
+    'auth.server.unexpected': 'authServerUnexpected',
+    'auth.server.unreachable': 'authServerUnreachable',
     'auth.token.expired': 'authTokenExpired',
     'billing.error': 'billingError',
     'billing.restore.failed': 'billingRestoreFailed',
@@ -4033,6 +4059,7 @@ class L10nKeyResolver {
     'onboarding.login.finishing.setup': 'onboardingLoginFinishingSetup',
     'onboarding.login.retry': 'onboardingLoginRetry',
     'onboarding.login.setup.stalled': 'onboardingLoginSetupStalled',
+    'onboarding.login.tried.host': 'onboardingLoginTriedHost',
     'onboarding.no.server.chip.existing': 'onboardingNoServerChipExisting',
     'onboarding.no.server.chip.new': 'onboardingNoServerChipNew',
     'onboarding.no.server.looking.poco': 'onboardingNoServerLookingPoco',
@@ -4645,7 +4672,13 @@ abstract class L10nKeys {
   static const authError = 'auth.error';
   static const authLoginFailed = 'auth.login.failed';
   static const authNotAuthenticated = 'auth.not.authenticated';
+  static const authServerDns = 'auth.server.dns';
+  static const authServerError = 'auth.server.error';
   static const authServerIncompatible = 'auth.server.incompatible';
+  static const authServerTimeout = 'auth.server.timeout';
+  static const authServerTls = 'auth.server.tls';
+  static (String, Map<String, dynamic>) authServerUnexpected(String detail) => ('auth.server.unexpected', {'detail': detail});
+  static const authServerUnreachable = 'auth.server.unreachable';
   static const authTokenExpired = 'auth.token.expired';
   static const billingError = 'billing.error';
   static const billingRestoreFailed = 'billing.restore.failed';
@@ -5175,6 +5208,7 @@ abstract class L10nKeys {
   static const onboardingLoginFinishingSetup = 'onboarding.login.finishing.setup';
   static const onboardingLoginRetry = 'onboarding.login.retry';
   static const onboardingLoginSetupStalled = 'onboarding.login.setup.stalled';
+  static (String, Map<String, dynamic>) onboardingLoginTriedHost(String host) => ('onboarding.login.tried.host', {'host': host});
   static const onboardingNoServerChipExisting = 'onboarding.no.server.chip.existing';
   static const onboardingNoServerChipNew = 'onboarding.no.server.chip.new';
   static const onboardingNoServerLookingPoco = 'onboarding.no.server.looking.poco';

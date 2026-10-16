@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -334,6 +336,42 @@ void main() {
           find.textContaining('Has leading/trailing whitespace',
               findRichText: true),
           findsNothing);
+    });
+
+    testWidgets(
+        'a failed login says what failed and names the host it tried, so '
+        'a screenshot alone is diagnosable', (tester) async {
+      GetIt.I.registerSingleton<IExceptionKeyMapper>(AppExceptionKeyMapper());
+      when(() => repository.login(any(), any())).thenThrow(AuthException(
+          'login failed',
+          ClientException(
+              originalError:
+                  const SocketException("Failed host lookup: 'review.test'"))));
+      await pumpForm(tester,
+          email: 'user@example.com',
+          password: 'password',
+          url: 'https://review.test');
+      await submit(tester);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.textContaining('auth.server.dns', findRichText: true),
+          findsOneWidget);
+      expect(find.textContaining('Tried: review.test', findRichText: true),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'leaving a field empty leaves a message on screen, not only a '
+        'toast that disappears', (tester) async {
+      await pumpForm(tester, email: 'user@example.com', password: '');
+      await submit(tester);
+      await tester.pump(const Duration(seconds: 10));
+
+      expect(
+          find.textContaining('enter all required fields', findRichText: true),
+          findsOneWidget);
+      verifyNever(() => repository.login(any(), any()));
     });
 
     testWidgets('rejected credentials explain that matching is exact',

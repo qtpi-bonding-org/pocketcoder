@@ -247,6 +247,21 @@ void main() {
       verifyNever(() => repo.login(any(), any()));
       expect(cubit.state.status, UiFlowStatus.failure);
     });
+    test(
+        'an unreadable saved URL (Keychain error) does not stop the login '
+        'attempt or escape as an uncaught throw', () async {
+      when(() => repo.getSavedBaseUrl()).thenThrow(Exception('keychain'));
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
+      when(() => repo.login(any(), any())).thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl(any())).thenAnswer((_) async {});
+      final cubit = buildCubit();
+
+      await cubit.login('https://server.example', 'a@example.com', 'secret');
+
+      expect(cubit.state.status, UiFlowStatus.success);
+      verify(() => repo.persistBaseUrl('https://server.example')).called(1);
+    });
   });
 
   group('AuthCubit.login step timeout', () {
@@ -266,7 +281,7 @@ void main() {
     }
 
     test(
-        'a stalled compatibility check fails as a retried network error '
+        'a stalled compatibility check fails as a retried timeout '
         'instead of hanging the login screen', () async {
       var attempts = 0;
       final cubit = await loginAgainst(
@@ -281,12 +296,12 @@ void main() {
       expect(cubit.state.status, UiFlowStatus.failure);
       expect(
         AppExceptionKeyMapper().map(cubit.state.error ?? Object()),
-        const MessageKey.error('error.network'),
+        const MessageKey.error('auth.server.timeout'),
       );
       verifyNever(() => repo.persistBaseUrl(any()));
     });
 
-    test('a stalled login request fails as a network error', () async {
+    test('a stalled login request fails as a timeout', () async {
       final cubit = await loginAgainst(
         verify: () async {},
         login: () => Completer<bool>().future,
@@ -295,7 +310,7 @@ void main() {
       expect(cubit.state.status, UiFlowStatus.failure);
       expect(
         AppExceptionKeyMapper().map(cubit.state.error ?? Object()),
-        const MessageKey.error('error.network'),
+        const MessageKey.error('auth.server.timeout'),
       );
     });
   });

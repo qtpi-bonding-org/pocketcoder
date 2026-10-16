@@ -78,7 +78,13 @@ class AuthCubit extends AppCubit<AuthState> {
     // previously-saved URL is captured up front so a failed attempt can
     // restore it in memory too, rather than leaving the app pointed at an
     // unverified URL for the rest of the session.
-    final previousUrl = await _authRepository.getSavedBaseUrl();
+    String? previousUrl;
+    try {
+      previousUrl = await _authRepository.getSavedBaseUrl();
+    } catch (_) {
+      // An unreadable Keychain must not stop a login that doesn't need it;
+      // the only cost is not restoring the old URL if this attempt fails.
+    }
     await tryOperation(() async {
       await _authRepository.updateBaseUrl(url);
       try {

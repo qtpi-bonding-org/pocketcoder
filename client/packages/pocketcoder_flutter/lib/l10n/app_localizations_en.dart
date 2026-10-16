@@ -47,6 +47,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authError => 'Authentication error';
 
   @override
+  String get authServerTimeout => 'The server didn\'t answer in time';
+
+  @override
+  String get authServerDns =>
+      'Couldn\'t find this server\'s address. Check the URL and that your network can resolve it';
+
+  @override
+  String get authServerUnreachable =>
+      'Couldn\'t connect to the server. It may be down or blocked on this network';
+
+  @override
+  String get authServerTls =>
+      'Couldn\'t verify the server\'s secure connection (certificate error)';
+
+  @override
+  String authServerUnexpected(String detail) {
+    return 'Unexpected response from the server ($detail)';
+  }
+
+  @override
+  String get authServerError =>
+      'The server reported an error. Try again in a moment';
+
+  @override
   String get authServerIncompatible =>
       'This server isn\'t compatible with this app version';
 
@@ -2587,6 +2611,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get onboardingPasswordPastedWarning =>
       'Has leading/trailing whitespace';
+
+  @override
+  String onboardingLoginTriedHost(String host) {
+    return 'Tried: $host';
+  }
 
   @override
   String get onboardingLoginExactMatchHint => 'Capitals and whitespace count';

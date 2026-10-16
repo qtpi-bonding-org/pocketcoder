@@ -7,7 +7,11 @@
 // in logs, user messages are generic + localized" rule. Already fixed
 // once for AgentActionFailure (see agent_actions_api.dart); this covers
 // the remaining unmapped types found in the E2E audit.
+import 'dart:async';
+import 'dart:io';
+
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/agent/provider_reauthentication_required.dart';
@@ -63,14 +67,171 @@ void main() {
     });
 
     test(
-        'maps a network/transport failure (statusCode 0) or a server error '
-        '(5xx) to the generic network key, not a credentials message', () {
-      for (final status in [0, 500, 503]) {
-        final key =
-            mapper.map(wrap(ClientException(statusCode: status)));
-        expect(key!.key, 'error.network',
-            reason: 'statusCode $status says nothing about credentials');
+        'maps a transport failure with no recognisable cause (statusCode 0) '
+        'to the generic network key, not a credentials message', () {
+      final key = mapper.map(wrap(ClientException(statusCode: 0)));
+      expect(key!.key, 'error.network');
+    });
+
+    test('maps a 5xx response to a dedicated server-error key', () {
+      for (final status in [500, 502, 503]) {
+        final key = mapper.map(wrap(ClientException(statusCode: status)));
+        expect(key!.key, 'auth.server.error',
+            reason: 'statusCode $status means the server answered badly');
       }
+    });
+
+    test('maps a transport timeout to auth.server.timeout', () {
+      final key = mapper.map(wrap(ClientException(
+          originalError: TimeoutException(null, const Duration(seconds: 15)))));
+      expect(key!.key, 'auth.server.timeout');
+    });
+
+    test('maps a failed DNS lookup to auth.server.dns', () {
+      final key = mapper.map(wrap(ClientException(
+          originalError: const SocketException(
+              "Failed host lookup: 'example.sslip.io'"))));
+      expect(key!.key, 'auth.server.dns');
+    });
+
+    test('maps a refused or unreachable connection to auth.server.unreachable',
+        () {
+      for (final error in [
+        const SocketException('Connection refused'),
+        const SocketException('Network is unreachable'),
+        const SocketException('Connection reset by peer'),
+      ]) {
+        final key = mapper.map(wrap(ClientException(originalError: error)));
+        expect(key!.key, 'auth.server.unreachable', reason: '$error');
+      }
+    });
+
+    test('maps a TLS/certificate failure to auth.server.tls', () {
+      for (final error in [
+        const HandshakeException('CERTIFICATE_VERIFY_FAILED'),
+        const TlsException('bad cert'),
+      ]) {
+        final key = mapper.map(wrap(ClientException(originalError: error)));
+        expect(key!.key, 'auth.server.tls', reason: '$error');
+      }
+    });
+
+    test('maps a dropped connection (dart:io HttpException) to unreachable',
+        () {
+      final key = mapper.map(wrap(ClientException(
+          originalError: const HttpException('Connection closed'))));
+      expect(key!.key, 'auth.server.unreachable');
+    });
+
+    test(
+        'names the exception type for an unrecognised cause instead of a '
+        'bare network error', () {
+      final key = mapper
+          .map(wrap(ClientException(originalError: StateError('closed'))));
+      expect(key!.key, 'auth.server.unexpected');
+      expect(key.args, {'detail': 'StateError'});
+    });
+
+    group('Dio transport failures (the compatibility check)', () {
+      final options = RequestOptions(path: '/api/pocketcoder/v1/compatibility');
+
+      DioException dio(DioExceptionType type, {Object? error, int? status}) =>
+          DioException(
+            requestOptions: options,
+            type: type,
+            error: error,
+            response: status == null
+                ? null
+                : Response<dynamic>(requestOptions: options, statusCode: status),
+          );
+
+      test('maps every Dio timeout type to auth.server.timeout', () {
+        for (final type in [
+          DioExceptionType.connectionTimeout,
+          DioExceptionType.sendTimeout,
+          DioExceptionType.receiveTimeout,
+        ]) {
+          expect(mapper.map(wrap(dio(type)))!.key, 'auth.server.timeout',
+              reason: '$type');
+        }
+      });
+
+      test('classifies a Dio connection error by its socket cause', () {
+        expect(
+            mapper
+                .map(wrap(dio(DioExceptionType.connectionError,
+                    error: const SocketException("Failed host lookup: 'x'"))))!
+                .key,
+            'auth.server.dns');
+        expect(
+            mapper
+                .map(wrap(dio(DioExceptionType.connectionError,
+                    error: const SocketException('Connection refused'))))!
+                .key,
+            'auth.server.unreachable');
+      });
+
+      test('maps a Dio bad certificate or handshake error to auth.server.tls',
+          () {
+        expect(mapper.map(wrap(dio(DioExceptionType.badCertificate)))!.key,
+            'auth.server.tls');
+        expect(
+            mapper
+                .map(wrap(dio(DioExceptionType.unknown,
+                    error: const HandshakeException('x'))))!
+                .key,
+            'auth.server.tls');
+      });
+
+      test('maps a Dio 5xx response to auth.server.error', () {
+        expect(
+            mapper
+                .map(wrap(dio(DioExceptionType.badResponse, status: 502)))!
+                .key,
+            'auth.server.error');
+      });
+
+      test('maps a Dio 401/403 to auth.login.failed', () {
+        for (final status in [401, 403]) {
+          expect(
+              mapper
+                  .map(wrap(dio(DioExceptionType.badResponse, status: status)))!
+                  .key,
+              'auth.login.failed',
+              reason: '$status');
+        }
+      });
+
+      test('maps any other Dio non-5xx answer to auth.server.incompatible', () {
+        for (final status in [302, 405, 418]) {
+          expect(
+              mapper
+                  .map(wrap(dio(DioExceptionType.badResponse, status: status)))!
+                  .key,
+              'auth.server.incompatible',
+              reason: '$status');
+        }
+      });
+
+      test(
+          'maps a 200 answer that cannot be parsed (captive portal, wrong '
+          'server) to auth.server.incompatible', () {
+        expect(
+            mapper
+                .map(wrap(dio(DioExceptionType.unknown,
+                    error: const FormatException('not json'), status: 200)))!
+                .key,
+            'auth.server.incompatible');
+      });
+
+      test('maps a Dio 404 (server answered, wrong app) to auth.server.incompatible',
+          () {
+        expect(
+            mapper
+                .map(wrap(dio(DioExceptionType.badResponse, status: 404)))!
+                .key,
+            'auth.server.incompatible');
+      });
     });
 
     test(

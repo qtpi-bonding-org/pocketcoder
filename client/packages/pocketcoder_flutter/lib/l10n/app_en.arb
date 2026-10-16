@@ -17,6 +17,15 @@
   "authNotAuthenticated": "Please log in",
   "authTokenExpired": "Session expired, please log in again",
   "authError": "Authentication error",
+  "authServerTimeout": "The server didn't answer in time",
+  "authServerDns": "Couldn't find this server's address. Check the URL and that your network can resolve it",
+  "authServerUnreachable": "Couldn't connect to the server. It may be down or blocked on this network",
+  "authServerTls": "Couldn't verify the server's secure connection (certificate error)",
+  "authServerUnexpected": "Unexpected response from the server ({detail})",
+  "@authServerUnexpected": {
+    "placeholders": {"detail": {"type": "String"}}
+  },
+  "authServerError": "The server reported an error. Try again in a moment",
   "authServerIncompatible": "This server isn't compatible with this app version",
   "providerReauthenticationRequired": "Your provider needs to be reauthenticated. Your saved login was kept.",
 
@@ -1053,6 +1062,10 @@
   "onboardingEmailSurroundingWhitespace": "Remove leading/trailing whitespace",
   "onboardingPasswordSurroundingWhitespace": "Remove leading/trailing whitespace",
   "onboardingPasswordPastedWarning": "Has leading/trailing whitespace",
+  "onboardingLoginTriedHost": "Tried: {host}",
+  "@onboardingLoginTriedHost": {
+    "placeholders": {"host": {"type": "String"}}
+  },
   "onboardingLoginExactMatchHint": "Capitals and whitespace count",
   "onboardingServerUrlMissingScheme": "Start with http:// or https://",
   "onboardingServerUrlInvalid": "Enter a valid URL",
