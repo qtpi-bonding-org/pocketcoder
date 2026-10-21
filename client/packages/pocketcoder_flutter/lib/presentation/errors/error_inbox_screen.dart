@@ -72,8 +72,9 @@ class ErrorInboxScreen extends StatelessWidget {
             // scroll on its own rather than push past the frame.
             Expanded(
                 child: ListView(children: [
-              for (final entry in errors)
+              for (final (index, entry) in errors.indexed)
                 ErrorTile(
+                    initiallyExpanded: index == 0,
                     entry: entry,
                     onCopy: onCopy,
                     onReportOnGithub: onReportOnGithub,

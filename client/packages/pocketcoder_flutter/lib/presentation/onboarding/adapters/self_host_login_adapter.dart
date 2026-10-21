@@ -40,6 +40,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
   final List<String> _pocoHistory = const [];
 
   final _attemptHost = ValueNotifier<String>('');
+  final _failureText = ValueNotifier<String?>(null);
 
   static UiFlowStatus selectStatus(AuthState state) => state.status;
 
@@ -67,6 +68,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
         _passwordLooksPasted,
         _pocoMessage,
         _pocoSequence,
+        _failureText,
       ]),
       builder: (context, _) => SelfHostLoginView(
         initialUrl: _url.value,
@@ -83,6 +85,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
             ? () => _retrySetup(context, watchdog)
             : null,
         errorInboxLink: const ErrorInboxLinkBuilder(),
+        failureText: _failureText.value,
         urlErrorText: switch (_urlIssue.value) {
           ServerUrlIssue.missingScheme =>
             context.l10n.onboardingServerUrlMissingScheme,
@@ -144,6 +147,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     } else {
       watchdog.reset();
     }
+    if (state.status != UiFlowStatus.failure) _failureText.value = null;
     if (state.status == UiFlowStatus.loading) {
       _pocoSequence.value = PocoExpressions.scanning;
     } else if (state.status == UiFlowStatus.success) {
@@ -163,9 +167,10 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
           ? '$message\n\n${context.l10n.onboardingLoginExactMatchHint}'
           : message;
       // The screenshot is the only diagnostic a reviewer reliably sends, so
-      // the screen itself names the server that was tried.
+      // the screen itself names the server that was tried, in the banner
+      // under the form rather than in Poco's message at the top of the card.
       final host = _attemptHost.value;
-      _pocoMessage.value = host.isEmpty
+      _failureText.value = host.isEmpty
           ? detail
           : '$detail\n\n${context.l10n.onboardingLoginTriedHost(host)}';
       _pocoSequence.value = PocoExpressions.nervous;
@@ -221,6 +226,7 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _emailIssue.dispose();
     _passwordLooksPasted.dispose();
     _attemptHost.dispose();
+    _failureText.dispose();
     _pocoMessage.dispose();
     _pocoSequence.dispose();
     super.disposeAdapter();

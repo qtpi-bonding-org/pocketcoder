@@ -5,7 +5,9 @@ import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 
 class SelfHostLoginView extends StatefulWidget {
@@ -22,6 +24,7 @@ class SelfHostLoginView extends StatefulWidget {
     required this.onLogin,
     this.onRetrySetup,
     this.errorInboxLink,
+    this.failureText,
     this.urlErrorText,
     this.onUrlChanged,
     this.emailErrorText,
@@ -42,6 +45,11 @@ class SelfHostLoginView extends StatefulWidget {
       onLogin;
   final VoidCallback? onRetrySetup;
   final Widget? errorInboxLink;
+
+  /// Why the last login failed. Rendered under the password field, where the
+  /// screen is already scrolled to after tapping next, so it is never off
+  /// the top of the card.
+  final String? failureText;
   final String? urlErrorText;
   final ValueChanged<String>? onUrlChanged;
   final String? emailErrorText;
@@ -138,6 +146,10 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
               onChanged: widget.onPasswordChanged,
               onSubmitted: (_) => loading || signedIn ? null : _login(),
             ),
+            if (widget.failureText case final failure?) ...[
+              VSpace.x3,
+              TerminalText(failure, role: TextRole.fail),
+            ],
             if (widget.errorInboxLink case final link?) ...[VSpace.x3, link],
           ],
         ),

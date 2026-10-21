@@ -51,6 +51,7 @@ void main() {
     VoidCallback? onRetrySetup,
     Future<void> Function(String, String, String)? onLogin,
     Widget? errorInboxLink,
+    String? failureText,
   }) =>
       MaterialApp(
         theme: AppTheme.lightTheme,
@@ -68,6 +69,7 @@ void main() {
           onLogin: onLogin ?? (_, __, ___) async {},
           onRetrySetup: onRetrySetup,
           errorInboxLink: errorInboxLink,
+          failureText: failureText,
         ),
       );
 
@@ -109,6 +111,30 @@ void main() {
 
     expect(tester.getRect(find.text('<errors (1)>')).top,
         greaterThan(tester.getRect(find.byType(EditableText).last).bottom));
+  });
+
+  testWidgets(
+      'a login failure is shown between the password field and the error '
+      'link, where the screen is already scrolled to', (tester) async {
+    await tester.pumpWidget(view(
+      failureText: 'could not resolve the server name',
+      errorInboxLink: ErrorInboxLink(count: 1, onTap: () {}),
+    ));
+
+    final failure = tester.getRect(
+        find.textContaining('could not resolve', findRichText: true));
+    expect(failure.top,
+        greaterThan(tester.getRect(find.byType(EditableText).last).bottom));
+    expect(failure.bottom,
+        lessThanOrEqualTo(tester.getRect(find.text('<errors (1)>')).top));
+  });
+
+  testWidgets('no failure text is shown until a login has failed',
+      (tester) async {
+    await tester.pumpWidget(view());
+
+    expect(find.textContaining('could not resolve', findRichText: true),
+        findsNothing);
   });
 
   testWidgets('while logging in the footer shows a spinner, not next',
