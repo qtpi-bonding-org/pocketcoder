@@ -127,7 +127,7 @@ class AuthCubit extends AppCubit<AuthState> {
             await Future<void>.delayed(retryDelay * attempt);
           }
         }
-      } catch (error) {
+      } catch (error, stackTrace) {
         if (_isNetworkFailure(error)) {
           networkReport = await _probe(url);
           OnboardingLogger.event('server login network probe', {
@@ -141,7 +141,15 @@ class AuthCubit extends AppCubit<AuthState> {
             await _authRepository.updateBaseUrl(previousUrl);
           } catch (_) {}
         }
-        rethrow;
+        final report = networkReport;
+        if (report == null || report.isEmpty) rethrow;
+        // The error inbox stores the stack trace verbatim and nothing else
+        // free-form, so the hop-by-hop result rides at its head: it then
+        // persists, shows in the inbox and goes out with "copy report".
+        Error.throwWithStackTrace(
+          error,
+          StackTrace.fromString('$report\n\n$stackTrace'),
+        );
       }
       await _authRepository.persistBaseUrl(url);
       // Readiness derives from the saved URL; without a re-check a fresh

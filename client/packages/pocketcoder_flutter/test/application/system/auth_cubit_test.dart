@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -35,6 +36,8 @@ class MockBillingService extends Mock implements BillingService {}
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class MockFactoryResetHook extends Mock implements FactoryResetHook {}
+
+class MockErrorBoxStorage extends Mock implements ErrorBoxStorage {}
 
 class MockProDataDeletionHook extends Mock implements ProDataDeletionHook {}
 
@@ -415,6 +418,57 @@ void main() {
       await cubit.login('https://server.example', 'a@example.com', 'secret');
 
       expect(cubit.networkReport, isNull);
+    });
+
+    group('in the saved error report', () {
+      late MockErrorBoxStorage errorStorage;
+
+      setUpAll(() {
+        registerFallbackValue(ErrorEntry(
+          source: 'fallback',
+          errorType: 'fallback',
+          errorCode: 'fallback',
+          stackTrace: 'fallback',
+          timestamp: DateTime(2026),
+        ));
+      });
+
+      setUp(() {
+        errorStorage = MockErrorBoxStorage();
+        when(() => errorStorage.saveError(any())).thenAnswer((_) async {});
+        ErrorPrivserver.configure(ErrorPrivserverConfig(
+          storage: errorStorage,
+          reporter: (_) async => false,
+          errorCodeMapper: (_) => 'AUTH_TEST',
+          exceptionMapper: (_) => null,
+        ));
+      });
+
+      ErrorEntry savedEntry() =>
+          verify(() => errorStorage.saveError(captureAny())).captured.single
+              as ErrorEntry;
+
+      test(
+          'the probe heads the stack trace, so the inbox and the copied '
+          'report carry it', () async {
+        await failLogin(
+          verify: () => Completer<void>().future,
+          login: () async => true,
+        );
+
+        final entry = savedEntry();
+        expect(entry.stackTrace, startsWith('dns ok'));
+        expect(entry.stackTrace, contains('AuthCubit.login'));
+      });
+
+      test('a rejected password keeps the plain stack trace', () async {
+        await failLogin(
+          verify: () async {},
+          login: () async => false,
+        );
+
+        expect(savedEntry().stackTrace, isNot(contains('dns ok')));
+      });
     });
   });
 
