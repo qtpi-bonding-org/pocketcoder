@@ -170,9 +170,12 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
       // the screen itself names the server that was tried, in the banner
       // under the form rather than in Poco's message at the top of the card.
       final host = _attemptHost.value;
-      _failureText.value = host.isEmpty
+      final probe = context.read<AuthCubit>().networkReport;
+      final tried = host.isEmpty
           ? detail
           : '$detail\n\n${context.l10n.onboardingLoginTriedHost(host)}';
+      _failureText.value =
+          probe == null || probe.isEmpty ? tried : '$tried\n\n$probe';
       _pocoSequence.value = PocoExpressions.nervous;
     }
   }

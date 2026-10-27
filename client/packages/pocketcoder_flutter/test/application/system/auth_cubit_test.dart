@@ -14,6 +14,7 @@ import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
+import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
 import 'package:pocketcoder_flutter/infrastructure/feedback/exception_mapper.dart';
 
 AuthException _wrappedClientFailure(int statusCode) {
@@ -249,8 +250,7 @@ void main() {
 
     test(
         'does not retry a definite rejection (401) -- retrying a wrong '
-        'password gains nothing and must fail on the first attempt',
-        () async {
+        'password gains nothing and must fail on the first attempt', () async {
       when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
       var attempts = 0;
       when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {
@@ -338,6 +338,83 @@ void main() {
         AppExceptionKeyMapper().map(cubit.state.error ?? Object()),
         const MessageKey.error('auth.server.timeout'),
       );
+    });
+  });
+
+  group('AuthCubit.login failure diagnostics', () {
+    Future<(AuthCubit, List<Uri>)> failLogin({
+      required Future<void> Function() verify,
+      required Future<bool> Function() login,
+    }) async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) => verify());
+      when(() => repo.login(any(), any())).thenAnswer((_) => login());
+      when(() => repo.getSavedBaseUrl()).thenAnswer((_) async => null);
+      final probed = <Uri>[];
+      final cubit = buildCubit()
+        ..loginStepTimeout = const Duration(milliseconds: 20)
+        ..probeNetwork = (url) async {
+          probed.add(url);
+          return 'dns ok';
+        };
+      await cubit.login('https://server.example', 'a@example.com', 'secret');
+      return (cubit, probed);
+    }
+
+    test('a stalled compatibility check is coded COMPAT, not LOGIN', () async {
+      final (cubit, _) = await failLogin(
+        verify: () => Completer<void>().future,
+        login: () async => true,
+      );
+
+      expect(PocketCoderErrorCodeMapper.mapError(cubit.state.error ?? Object()),
+          'AUTH_001.COMPAT.TIMEOUT');
+    });
+
+    test('a stalled login request stays coded LOGIN', () async {
+      final (cubit, _) = await failLogin(
+        verify: () async {},
+        login: () => Completer<bool>().future,
+      );
+
+      expect(PocketCoderErrorCodeMapper.mapError(cubit.state.error ?? Object()),
+          'AUTH_001.LOGIN.TIMEOUT');
+    });
+
+    test('a network failure probes the server once and keeps the report',
+        () async {
+      final (cubit, probed) = await failLogin(
+        verify: () => Completer<void>().future,
+        login: () async => true,
+      );
+
+      expect(probed, [Uri.parse('https://server.example')]);
+      expect(cubit.networkReport, 'dns ok');
+    });
+
+    test('rejected credentials are not a network problem, so no probe',
+        () async {
+      final (cubit, probed) = await failLogin(
+        verify: () async {},
+        login: () async => false,
+      );
+
+      expect(cubit.state.status, UiFlowStatus.failure);
+      expect(probed, isEmpty);
+      expect(cubit.networkReport, isNull);
+    });
+
+    test('a successful login leaves no report behind', () async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
+      when(() => repo.login(any(), any())).thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl()).thenAnswer((_) async => null);
+      final cubit = buildCubit()..networkReport = 'stale';
+
+      await cubit.login('https://server.example', 'a@example.com', 'secret');
+
+      expect(cubit.networkReport, isNull);
     });
   });
 

@@ -239,6 +239,7 @@ void main() {
           _MockDeletionHook(),
           _MockBillingService(),
           const _NoopServerReadinessCheck());
+      authCubit.probeNetwork = (_) async => 'dns ok 5ms v4 192.155.89.165';
     });
 
     tearDown(() async {
@@ -358,6 +359,27 @@ void main() {
       expect(find.textContaining('auth.server.dns', findRichText: true),
           findsOneWidget);
       expect(find.textContaining('Tried: review.test', findRichText: true),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'a network failure shows the hop-by-hop probe result under the '
+        'error, so one screenshot names the broken hop', (tester) async {
+      GetIt.I.registerSingleton<IExceptionKeyMapper>(AppExceptionKeyMapper());
+      when(() => repository.login(any(), any())).thenThrow(AuthException(
+          'login failed',
+          ClientException(
+              originalError:
+                  const SocketException("Failed host lookup: 'review.test'"))));
+      await pumpForm(tester,
+          email: 'user@example.com',
+          password: 'password',
+          url: 'https://review.test');
+      await submit(tester);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.textContaining('dns ok 5ms', findRichText: true),
           findsOneWidget);
     });
 
