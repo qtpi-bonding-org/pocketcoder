@@ -1,0 +1,187 @@
+id: pocketcoder
+verified_at: 85377efdb
+public:
+  name: PocketCoder core
+  summary: Self-hosted mobile cockpit for coding agents, with harness permission requests approved from the phone.
+  status: active
+  stage: released
+  homepage: https://pocketcoder.org/
+  links:
+  - type: repo
+    url: https://github.com/qtpi-bonding-org/pocketcoder
+private:
+  started: 2026-02
+  visibility: public
+  license: AGPL-3.0-or-later
+  ownership: designed and directed; code written with AI assistance
+  build: agentic
+facts:
+- id: three-containers
+  assertion: Three container roles run the agent path. The pocketbase service serves the chat AG-UI stream with chat-ownership checks and acts as the ACP client to the harness. A harness container, one per harness instance, is created by PocketBase through the Docker API. The mcp-gateway service serves the tool catalog rendered from approved mcp_servers records. The pocket-memory service is a separate container that PocketBase attaches to sessions.
+  evidence:
+  - docker-compose.yml
+  - server/pocketbase/internal/api/agent.go
+  - server/pocketbase/internal/agent/coordinator/run.go
+  - server/pocketbase/internal/hooks/harness_provision.go
+  - server/pocketbase/internal/hooks/mcp.go
+- id: acp-harness-link
+  assertion: PocketBase dials each harness's ACP WebSocket as an ACP client using coder/acp-go-sdk over coder/websocket, sending that harness instance's minted secret both as a token query parameter and as an X-Secret-Key header; the code does not check whether the harness enforces either.
+  evidence:
+  - server/pocketbase/go.mod
+  - server/pocketbase/internal/agent/acp/websocket.go
+  - server/pocketbase/internal/agent/coordinator/run.go
+  - server/pocketbase/internal/hooks/harness_provision.go
+- id: agui-bridge
+  assertion: The AG-UI bridge maps ACP message and thought chunks, tool calls, plan, mode, config, command, usage and session-info updates to AG-UI events, and emits any other ACP update as a RAW event with no update payload. The chat stream route sends these events to the Flutter app as server-sent events, one stream per chat, with the sequence number as the SSE id.
+  evidence:
+  - server/pocketbase/internal/agent/agui/bridge.go
+  - server/pocketbase/internal/agent/agui/custom.go
+  - server/pocketbase/internal/agent/coordinator/run.go
+  - server/pocketbase/internal/api/agent.go
+  - server/pocketbase/internal/api/sse_frame.go
+  - client/packages/pocketcoder_flutter/lib/infrastructure/agent/agent_stream_client.dart
+  - client/packages/pocketcoder_flutter/lib/infrastructure/core/api_endpoints.dart
+- id: mcp-gateway-approval
+  assertion: Creating or updating an mcp_servers record to status approved or revoked re-renders the gateway catalog and secrets files in the /mcp_config directory and restarts the mcp-gateway container. PocketBase attaches the gateway to every harness session it builds, as an HTTP MCP server, only when MCP_GATEWAY_AUTH_TOKEN is set in its environment.
+  evidence:
+  - server/pocketbase/internal/hooks/mcp.go
+  - server/pocketbase/internal/hooks/mcp_services.go
+  - server/pocketbase/internal/sessionprofile/sessionprofile.go
+  - server/pocketbase/internal/agent/coordinator/run.go
+  - server/pocketbase/pb_migrations/schema.json
+  - docker-compose.yml
+- id: pocket-memory-attach
+  assertion: PocketBase adds a pocket-memory HTTP MCP server at http://pocket-memory:8000/mcp to every session profile it builds, separate from the gateway. Its X-PocketCoder-Memory-Context header carries base64url JSON of account_id, agent_profile_id and agent_name, and the profile build fails when any of those is empty. The ACP session/new, session/load and session/resume requests carry this server in their McpServers list.
+  evidence:
+  - server/pocketbase/internal/hooks/mcp_services.go
+  - server/pocketbase/internal/hooks/mcp_services_test.go
+  - server/pocketbase/internal/sessionprofile/sessionprofile.go
+  - server/pocketbase/internal/agent/coordinator/run.go
+- id: approve-from-phone
+  assertion: When a harness permission request is not resolved by a configured allow or deny rule, PocketBase holds it in memory, publishes it on the chat stream as pending with its offered options, and sends a push notification. The phone answers with POST /api/pocketcoder/v1/chats/{chatId}/session/request-permission/{id}, selecting an offered option or cancelling. An unanswered request expires after POCKETCODER_PERMISSION_TIMEOUT, which defaults to 5 minutes when unset or invalid.
+  evidence:
+  - server/pocketbase/internal/agent/coordinator/run.go
+  - server/pocketbase/internal/agent/coordinator/profile.go
+  - server/pocketbase/internal/agent/coordinator/runtime.go
+  - server/pocketbase/internal/api/agent.go
+  - server/pocketbase/internal/agent/agui/bridge.go
+  - client/packages/pocketcoder_flutter/lib/infrastructure/agent/agent_actions_api.dart
+  - client/packages/pocketcoder_flutter/lib/application/agent/permission_cubit.dart
+- id: selectable-harness
+  assertion: The harness catalog seeds Goose, Claude Code, Codex, and OpenCode, and a profile with no instance for a selected harness starts provisioning it in the background. Claude Code, Codex, and OpenCode run behind a WebSocket adapter that spawns their stdio ACP process per connection and rejects a wrong token only when a secret is configured. Goose runs its own ACP server from its own image.
+  evidence:
+  - server/pocketbase/pb_migrations/1756000100_seed.go
+  - server/pocketbase/internal/sessionprofile/sessionprofile.go
+  - docker-compose.yml
+  - server/harness-adapter/adapter.go
+  - server/harness-adapter/adapter_test.go
+  - server/harness-adapter/Dockerfile
+  - server/goose/Dockerfile
+- id: provider-independent
+  assertion: Ollama is a Compose service in the local-models profile, so a plain docker compose up does not start it, and a harness can use Ollama or a hosted provider whose API key the user has stored, which the server passes to the harness container as environment variables.
+  evidence:
+  - docker-compose.yml
+  - server/pocketbase/internal/hooks/harness_provision.go
+  - server/pocketbase/internal/hooks/harness_provision_test.go
+- id: self-hosted-deploy
+  assertion: On Ubuntu or Debian, deploy.sh applies host hardening and runs deploy/standard-linux/setup-caddy.sh, which installs native Caddy and serves PocketBase at an sslip.io hostname built from the host's detected public IPv4 address.
+  evidence:
+  - deploy.sh
+  - deploy/standard-linux/setup-caddy.sh
+  - deploy/standard-linux/harden-host.sh
+- id: tls-pinned-internal-ca
+  assertion: On Ubuntu or Debian, native Caddy serves a publicly issued certificate from ACME or ZeroSSL. On NixOS, the Caddyfile template uses ACME with internal CA fallback for the sslip.io name and the internal CA alone for the raw public IP. The app trusts the system roots plus Caddy's internal root CA, which it fetches over SSH by running pocketcoder-release export-ca-fingerprint and stores in flutter_secure_storage.
+  evidence:
+  - deploy/standard-linux/setup-caddy.sh
+  - deploy/nixos/caddy.nix
+  - client/packages/pocketcoder_flutter/assets/deployment/Caddyfile.template
+  - client/packages/pocketcoder_flutter/lib/infrastructure/core/caddy_ca_pinning_http_client.dart
+  - client/packages/pocketcoder_flutter/lib/infrastructure/deployment/ca_pin_fetcher.dart
+  - client/packages/pocketcoder_flutter/lib/infrastructure/deployment/caddy_ca_pin_store.dart
+  - client/packages/pocketcoder_flutter/lib/infrastructure/os_control/ssh_root_command_runner.dart
+  - deploy/release-manager/cmd/pocketcoder-release/main.go
+  - deploy/release-manager/internal/tlscert/tlscert.go
+- id: nixos-image
+  assertion: The flake's linode-image output builds a raw, unpartitioned disk image from the pocketcoder NixOS configuration. That configuration enables a host firewall open on TCP 22, 80, and 443 and UDP 443, key-only sshd with fail2ban, Docker, and the Caddy service from caddy.nix.
+  evidence:
+  - deploy/nixos/flake.nix
+  - deploy/nixos/configuration.nix
+  - deploy/nixos/caddy.nix
+- id: flutter-app
+  assertion: The FOSS client is a Flutter app. Its main.dart calls bootstrap with FossAppModule and runs the App widget from the shared pocketcoder_flutter package, which contains the router and the screens under lib/presentation.
+  evidence:
+  - client/apps/pocketcoder_foss/pubspec.yaml
+  - client/apps/pocketcoder_foss/lib/main.dart
+  - client/apps/pocketcoder_foss/lib/foss_app_module.dart
+  - client/packages/pocketcoder_flutter/lib/app_router.dart
+  - client/packages/pocketcoder_flutter/lib/presentation/chat/chat_screen.dart
+- id: chat-with-agent
+  assertion: The chat screen's ChatCubit sends a prompt by POST to /api/pocketcoder/v1/chats/{chatId}/session/prompt, and reads the agent's replies from a GET to /api/pocketcoder/v1/chats/{chatId}/stream, which returns AG-UI events from a cursor.
+  evidence:
+  - client/packages/pocketcoder_flutter/lib/presentation/chat/chat_screen.dart
+  - client/packages/pocketcoder_flutter/lib/application/agent/chat_cubit.dart
+  - client/packages/pocketcoder_flutter/lib/infrastructure/agent/pocketcoder_ag_ui_transport.dart
+  - client/packages/pocketcoder_flutter/lib/infrastructure/agent/agent_chat_repository.dart
+  - client/packages/pocketcoder_flutter/lib/infrastructure/agent/agent_actions_api.dart
+  - client/packages/pocketcoder_flutter/lib/infrastructure/agent/agent_stream_client.dart
+  - server/pocketbase/internal/api/agent.go
+- id: file-viewer
+  assertion: The app browses and reads the agent's workspace files; the files repository exposes only list and read operations, with no write operation.
+  evidence:
+  - client/packages/pocketcoder_flutter/lib/infrastructure/files/files_repository.dart
+  - client/packages/pocketcoder_flutter/lib/app_router.dart
+- id: vps-controller
+  assertion: The app's server control screen restarts PocketCoder, updates PocketCoder, restarts the NixOS host, or updates it. It runs fixed root SSH commands that call the pocketcoder-release binary under /opt/pocketcoder/current/bin, with no HTTP API. The route is registered only when an IServerControlService is available, and the FOSS app module provides it.
+  evidence:
+  - client/packages/pocketcoder_flutter/lib/infrastructure/os_control/ssh_root_command_runner.dart
+  - client/packages/pocketcoder_flutter/lib/application/server_control/server_control_cubit.dart
+  - client/packages/pocketcoder_flutter/lib/app_router.dart
+  - client/apps/pocketcoder_foss/lib/foss_app_module.dart
+  - deploy/release-manager/cmd/pocketcoder-release/main.go
+- id: foss-app-no-provisioning
+  assertion: The FOSS app's pubspec declares no Aeroform dependency, and its module registers FOSS implementations of the provider and server-control services.
+  evidence:
+  - client/apps/pocketcoder_foss/pubspec.yaml
+  - client/apps/pocketcoder_foss/lib/foss_app_module.dart
+- id: go-backend
+  assertion: The c1 backend and the release manager are written in Go.
+  evidence:
+  - server/pocketbase/go.mod
+  - deploy/release-manager/go.mod
+- id: pocketbase-framework
+  assertion: The backend is built on PocketBase v0.40.1, used as a Go framework library rather than a standalone server.
+  evidence:
+  - server/pocketbase/go.mod
+  - server/pocketbase/main.go
+- id: rust-pocket-memory
+  assertion: Pocket Memory is a Rust service that stores observations and interpretations in SQLite, using sqlite-vec vec0 tables for vector search and FTS5 tables for full-text search; it serves FTS-only results when the embedding model is absent.
+  evidence:
+  - server/memory/Cargo.toml
+  - server/memory/schema.sql
+  - server/memory/src/db/native.rs
+  - server/memory/src/db/vectors.rs
+  - server/memory/src/search/fts.rs
+  - server/memory/src/main.rs
+- id: flutter-client
+  assertion: The mobile client is a Dart Flutter app; its UI lives in the pocketcoder_flutter package and its API client in the pocketcoder_api package.
+  evidence:
+  - client/apps/pocketcoder_foss/pubspec.yaml
+  - client/packages/pocketcoder_flutter/pubspec.yaml
+  - client/packages/pocketcoder_api/pubspec.yaml
+- id: docker-compose-stack
+  assertion: docker-compose.yml defines 14 services. Seven upstream images (ollama, both docker-socket-proxy services, sqlpage, ntfy, tailscale, caddy) are pinned by sha256 digest; the other seven are built locally from this repository or use version or latest tags.
+  evidence:
+  - docker-compose.yml
+- id: nix-flake-image
+  assertion: A Nix flake defines the NixOS configuration nixosConfigurations.pocketcoder and a linode-image output that builds a raw disk image with nixpkgs' make-disk-image.nix.
+  evidence:
+  - deploy/nixos/flake.nix
+- id: limits-not-hardened-sandbox
+  assertion: "Tool execution is left to the harness container: PocketBase's ACP initialize request declares only elicitation capability, so it provides no file or terminal callbacks. The Rust sandbox proxy under dormant/ is not referenced by docker-compose.yml or any Dockerfile. Authentication endpoints are rate-limited to 10 requests per 60 seconds by a rule that main.go enables at bootstrap, unless rate limiting is already enabled in settings."
+  evidence:
+  - server/pocketbase/internal/agent/coordinator/run.go
+  - server/pocketbase/internal/agent/executor/sandbox.go
+  - server/pocketbase/main.go
+  - dormant/README.md
+  - dormant/proxy/Cargo.toml
+  - docker-compose.yml
