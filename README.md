@@ -1,27 +1,52 @@
 # PocketCoder
 
-**PocketCoder enables you to set up your own private server and deploy an agent with one tap from your phone.** You own the server and its data. Once it is running, you can use a coding-focused personal agent from anywhere, review its proposed actions, and approve or deny them from the mobile app — without becoming a systems administrator or routing commands through a chat app.
+**Meet Poco, your own private AI assistant, on a server that is truly yours.** PocketCoder runs an AI assistant (and a real coding agent) on a server you own, not a company's cloud. The mobile app is how you set it up, talk to it, and approve or deny what it wants to do. You own the machine and the data. Small yet sovereign.
 
-PocketCoder is a solo research project built in the open. It follows an **Alpine Linux** philosophy — a tiny original surface area standing on FOSS "giant's shoulders" rather than hand-rolled glue: **PocketBase** for state and auth, **Goose** as the default harness, and open agent protocols (**ACP**, **AG-UI**, **MCP**) for everything in between.
+## What the app does
 
-> ### ⚠️ Status: mid-build, core loop usable
-> - ✅ **Backend contract (c1 ↔ c2) is implemented and passes live acceptance** against a real model — authenticated runs, streaming, tool calls, and phone approve/deny all work.
-> - ✅ **The Flutter client's core loop is live**: chat list (home screen), conversation, file browser, MCP/scheduler/skills/tool-permissions/agent-config/notification settings, logout — all wired to real PocketBase-backed data, no stubs.
-> - ✅ **Pocket Memory replaces Cognee** with an always-on Rust/SQLite MCP service: agent-authored observations and interpretations, local multilingual hybrid recall, and no generative-memory LLM.
-> - ✅ **The c3 MCP gateway container runs by default** (no Compose profile gate) — external MCP servers are approved per-deployment via the `mcp_servers` PocketBase collection.
-> - 💤 **Dormant:** the Rust sandbox proxy is retained for future work — see [`dormant/`](dormant/).
+The PocketCoder app is a mobile front end for Poco, the assistant running on your own VPS or machine:
+
+- **Set up a private server from your phone.** Answer a few questions and Poco gets you a hosting provider and a running PocketCoder, explaining each step in plain language. This guided setup is part of PocketCoder Pro; self-hosters run [`deploy.sh`](deploy.sh) instead.
+- **Use Poco as an everyday assistant.** Talk through a problem, draft or edit something, look into a question, or make a plan.
+- **Use Poco as a real coder.** Ask it to build, fix, or ship software, and it writes and tests the code. Follow its replies, plans, and tool calls as they stream in.
+- **Approve or deny actions.** When the agent wants to run a command, edit a file, or use a tool, the request shows up in the app as an explicit approve/deny choice. The default is human-in-the-loop, and you can set "always allow" rules for the things you trust.
+- **Pick your agent.** Goose is the default. Claude Code, Codex, and OpenCode are also supported, and each runs in its own Docker container.
+- **Browse the workspace.** Look at the files the agent is working on.
+- **Extend and schedule.** Connect external tools as MCP servers (GitHub, Notion, and others), manage skills, and schedule recurring tasks.
+- **Get notified.** Push notifications tell you when Poco needs your input or finishes a task, even when the app is closed (self-hosted ntfy in this repository).
+- **Keep memory.** Pocket Memory, a local Rust/SQLite service, lets the agent store and recall observations across sessions without calling a separate memory LLM.
+
+Behind the app is a small server stack: PocketBase for auth and state, the selected agent harness, a Docker MCP gateway, and Pocket Memory, all in Docker Compose. Everything is on your machine, with no telemetry, and the agent works in a Docker container separate from the rest of your server, so an AI mistake stays small. Bring your own model (local Ollama or a hosted provider) or use the recommended one. If you use a hosted model provider or an external MCP server, that provider receives what the agent sends it.
+
+## Who it is for
+
+- **Anyone who wants a private AI assistant** and doesn't want their conversations and data sitting in someone else's cloud. You don't need to know what a server is: the guided setup handles it.
+- **Developers and the curious-but-technical** who want a coding agent they control (Goose, Claude Code, Codex, or OpenCode) and want to review its work from their phone.
+- **Self-hosters** who are comfortable with Docker and prefer open source and their own data. The free path is this repository.
+- **One person, or a small group of trusted friends and family** sharing a single deployment. PocketCoder is not a hostile multi-tenant SaaS boundary: people sharing a deployment can see one another's workspace, agent activity, logs, and configured integrations.
+
+It is not aimed at editing 500-line diffs on a phone. The phone is for orchestration, review, and control: assigning tasks, reading plans, and approving executions.
+
+## Get it
+
+- **Self-host (free, this repository).** Run [`./deploy.sh`](deploy.sh) on a Linux VPS, or `docker compose up -d` locally, and connect the app to your server. See [Quick Start](#quick-start).
+- **PocketCoder Pro (optional).** A paid, separate distribution on the app stores (as "Poco the PocketCoder") that sets up and manages the server for you from your phone: one-tap VPS provisioning, HTTPS configured for you, and hosted push notifications. Your server stays on your own VPS account, so it keeps running if you stop paying. See [What is public and what is Pro](#what-is-public-and-what-is-pro). Details and pricing: [pocketcoder.org](https://pocketcoder.org/).
+- **This repository** is the complete public AGPL Core: server, deployment scripts, Workers, and the FOSS Flutter client (`apps/pocketcoder_foss`).
+
+PocketCoder is a solo project built in the open. It follows an **Alpine Linux** philosophy: a tiny original surface area standing on FOSS shoulders, with **PocketBase** for state and auth, **Goose** as the default harness, and open agent protocols (**ACP**, **AG-UI**, **MCP**) in between.
+
+> ### Status: mid-build, core loop usable
+> - ✅ **Backend contract (c1 ↔ c2) passes live acceptance** against a real model: authenticated runs, streaming, tool calls, and phone approve/deny.
+> - ✅ **The Flutter client's core loop is live**: chat list, conversation, file browser, MCP/scheduler/skills/tool-permissions/agent-config/notification settings, logout, all wired to real PocketBase-backed data.
+> - ✅ **Pocket Memory** is an always-on Rust/SQLite MCP service with local multilingual hybrid recall.
+> - ✅ **The c3 MCP gateway runs by default**; external MCP servers are approved per deployment via the `mcp_servers` collection.
+> - 💤 **Dormant:** the Rust sandbox proxy is retained for future work, see [`dormant/`](dormant/).
 >
-> Treat this as an architecture experiment you can read and run, not a finished product.
-
-### Who this is for
-
-PocketCoder is intended for a **single self-hosted VPS shared by one person or a small group of trusted friends and family**. It is not designed as a hostile multi-tenant SaaS boundary. People who share a deployment should be trusted with one another's workspace, agent activity, logs, and configured integrations.
+> AI can make mistakes. Keep your own backups and review generated code before running it. The current limits of the security model are in [`SECURITY.md`](SECURITY.md).
 
 The default architecture supports a fully self-hosted path: PocketCoder, Goose,
-Ollama, and optional ntfy all run in your Compose deployment. If you choose a
-hosted model provider or enable external MCP servers, those services may receive
-prompts, file contents, or other data when the agent uses them. Review the
-privacy policies and permissions of every provider or integration before
+Ollama, and optional ntfy all run in your Compose deployment. Review the privacy
+policies and permissions of every hosted provider or integration before
 connecting sensitive accounts.
 
 ## Why it exists
@@ -388,7 +413,7 @@ The backend is deliberately tiny: PocketBase supplies auth, the database, REST, 
 
 ## Disclaimer & License
 
-An active research project by a solo developer, built in the open — not a commercial product, no support SLAs. Bug reports are welcome; I move at my own pace.
+An active project by a solo developer, built in the open. The free self-hosted Core has no support SLAs. Bug reports are welcome; I move at my own pace.
 
 PocketCoder is licensed as a whole under **AGPL-3.0-or-later**, including the
 Flutter client, backend, and self-hosting infrastructure. Third-party runtime
