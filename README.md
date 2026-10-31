@@ -35,7 +35,7 @@ It is not aimed at editing 500-line diffs on a phone. The phone is for orchestra
 
 PocketCoder is a solo project built in the open. It follows an **Alpine Linux** philosophy: a tiny original surface area standing on FOSS shoulders, with **PocketBase** for state and auth, **Goose** as the default harness, and open agent protocols (**ACP**, **AG-UI**, **MCP**) in between.
 
-> ### Status: mid-build, core loop usable
+> ### Status: MVP complete
 > - ✅ **Backend contract (c1 ↔ c2) passes live acceptance** against a real model: authenticated runs, streaming, tool calls, and phone approve/deny.
 > - ✅ **The Flutter client's core loop is live**: chat list, conversation, file browser, MCP/scheduler/skills/tool-permissions/agent-config/notification settings, logout, all wired to real PocketBase-backed data.
 > - ✅ **Pocket Memory** is an always-on Rust/SQLite MCP service with local multilingual hybrid recall.
