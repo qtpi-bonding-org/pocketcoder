@@ -3112,11 +3112,11 @@ abstract class AppLocalizations {
   /// **'{price} / year'**
   String proPricePerYear(String price);
 
-  /// No description provided for @proStartTrial.
+  /// No description provided for @proSubscribePrice.
   ///
   /// In en, this message translates to:
-  /// **'start {days}-day free trial'**
-  String proStartTrial(int days);
+  /// **'subscribe -- {price}'**
+  String proSubscribePrice(String price);
 
   /// No description provided for @proSubscribe.
   ///
@@ -3151,7 +3151,7 @@ abstract class AppLocalizations {
   /// No description provided for @proTrialTerms.
   ///
   /// In en, this message translates to:
-  /// **'Free for {days} days, then {price}. Until cancelled, manage or cancel in your app store account.'**
+  /// **'Includes a {days}-day free trial, then billed {price}. Until cancelled, manage or cancel in your app store account.'**
   String proTrialTerms(int days, String price);
 
   /// No description provided for @proTermsOfServiceLink.

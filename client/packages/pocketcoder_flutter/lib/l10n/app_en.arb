@@ -706,9 +706,9 @@
   "@proPricePerYear": {
     "placeholders": {"price": {"type": "String"}}
   },
-  "proStartTrial": "start {days}-day free trial",
-  "@proStartTrial": {
-    "placeholders": {"days": {"type": "int"}}
+  "proSubscribePrice": "subscribe -- {price}",
+  "@proSubscribePrice": {
+    "placeholders": {"price": {"type": "String"}}
   },
   "proSubscribe": "unlock PocketCoder Pro",
   "proContinueSetup": "continue setup",
@@ -718,7 +718,7 @@
   "@proTerms": {
     "placeholders": {"price": {"type": "String"}}
   },
-  "proTrialTerms": "Free for {days} days, then {price}. Until cancelled, manage or cancel in your app store account.",
+  "proTrialTerms": "Includes a {days}-day free trial, then billed {price}. Until cancelled, manage or cancel in your app store account.",
   "@proTrialTerms": {
     "placeholders": {
       "days": {"type": "int"},

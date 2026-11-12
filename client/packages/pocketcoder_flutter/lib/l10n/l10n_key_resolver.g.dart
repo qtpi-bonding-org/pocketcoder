@@ -1,5 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // Generator: l10n_key_resolver
+// Generated at: 2026-11-11T22:11:09.559208
 
 import 'app_localizations.dart';
 
@@ -1139,7 +1140,7 @@ class L10nKeyResolver {
       'pro.price.per.month' => _l10n.proPricePerMonth(args?['price'] as String? ?? ''),
       'pro.price.per.week' => _l10n.proPricePerWeek(args?['price'] as String? ?? ''),
       'pro.price.per.year' => _l10n.proPricePerYear(args?['price'] as String? ?? ''),
-      'pro.start.trial' => _l10n.proStartTrial(args?['days'] as int? ?? 0),
+      'pro.subscribe.price' => _l10n.proSubscribePrice(args?['price'] as String? ?? ''),
       'pro.terms' => _l10n.proTerms(args?['price'] as String? ?? ''),
       'pro.trial.duration' => _l10n.proTrialDuration(args?['days'] as int? ?? 0),
       'pro.trial.terms' => _l10n.proTrialTerms(args?['days'] as int? ?? 0, args?['price'] as String? ?? ''),
@@ -1992,8 +1993,8 @@ class L10nKeyResolver {
     'pro.self.hosted.push.title',
     'pro.settings.label',
     'pro.settings.status',
-    'pro.start.trial',
     'pro.subscribe',
+    'pro.subscribe.price',
     'pro.summary',
     'pro.terms',
     'pro.terms.of.service.link',
@@ -3137,8 +3138,8 @@ class L10nKeyResolver {
     'proSelfHostedPushTitle': 'pro.self.hosted.push.title',
     'proSettingsLabel': 'pro.settings.label',
     'proSettingsStatus': 'pro.settings.status',
-    'proStartTrial': 'pro.start.trial',
     'proSubscribe': 'pro.subscribe',
+    'proSubscribePrice': 'pro.subscribe.price',
     'proSummary': 'pro.summary',
     'proTerms': 'pro.terms',
     'proTermsOfServiceLink': 'pro.terms.of.service.link',
@@ -4279,8 +4280,8 @@ class L10nKeyResolver {
     'pro.self.hosted.push.title': 'proSelfHostedPushTitle',
     'pro.settings.label': 'proSettingsLabel',
     'pro.settings.status': 'proSettingsStatus',
-    'pro.start.trial': 'proStartTrial',
     'pro.subscribe': 'proSubscribe',
+    'pro.subscribe.price': 'proSubscribePrice',
     'pro.summary': 'proSummary',
     'pro.terms': 'proTerms',
     'pro.terms.of.service.link': 'proTermsOfServiceLink',
@@ -5428,8 +5429,8 @@ abstract class L10nKeys {
   static const proSelfHostedPushTitle = 'pro.self.hosted.push.title';
   static const proSettingsLabel = 'pro.settings.label';
   static const proSettingsStatus = 'pro.settings.status';
-  static (String, Map<String, dynamic>) proStartTrial(int days) => ('pro.start.trial', {'days': days});
   static const proSubscribe = 'pro.subscribe';
+  static (String, Map<String, dynamic>) proSubscribePrice(String price) => ('pro.subscribe.price', {'price': price});
   static const proSummary = 'pro.summary';
   static (String, Map<String, dynamic>) proTerms(String price) => ('pro.terms', {'price': price});
   static const proTermsOfServiceLink = 'pro.terms.of.service.link';

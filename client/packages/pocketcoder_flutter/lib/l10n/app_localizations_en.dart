@@ -1637,8 +1637,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String proStartTrial(int days) {
-    return 'start $days-day free trial';
+  String proSubscribePrice(String price) {
+    return 'subscribe -- $price';
   }
 
   @override
@@ -1660,7 +1660,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String proTrialTerms(int days, String price) {
-    return 'Free for $days days, then $price. Until cancelled, manage or cancel in your app store account.';
+    return 'Includes a $days-day free trial, then billed $price. Until cancelled, manage or cancel in your app store account.';
   }
 
   @override
