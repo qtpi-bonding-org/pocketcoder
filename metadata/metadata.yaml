@@ -9,12 +9,6 @@ public:
   links:
   - type: repo
     url: https://github.com/qtpi-bonding-org/pocketcoder
-private:
-  started: 2026-02
-  visibility: public
-  license: AGPL-3.0-or-later
-  ownership: designed and directed; code written with AI assistance
-  build: agentic
 facts:
 - id: three-containers
   assertion: Three container roles run the agent path. The pocketbase service serves the chat AG-UI stream with chat-ownership checks and acts as the ACP client to the harness. A harness container, one per harness instance, is created by PocketBase through the Docker API. The mcp-gateway service serves the tool catalog rendered from approved mcp_servers records. The pocket-memory service is a separate container that PocketBase attaches to sessions.
