@@ -166,6 +166,48 @@ abstract class AppLocalizations {
   /// **'Authentication error'**
   String get authError;
 
+  /// No description provided for @authServerTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'The server didn\'t answer in time'**
+  String get authServerTimeout;
+
+  /// No description provided for @authServerDns.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t find this server\'s address. Check the URL and that your network can resolve it'**
+  String get authServerDns;
+
+  /// No description provided for @authServerUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t connect to the server. It may be down or blocked on this network'**
+  String get authServerUnreachable;
+
+  /// No description provided for @authServerTls.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t verify the server\'s secure connection (certificate error)'**
+  String get authServerTls;
+
+  /// No description provided for @authServerUnexpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Unexpected response from the server ({detail})'**
+  String authServerUnexpected(String detail);
+
+  /// No description provided for @authServerError.
+  ///
+  /// In en, this message translates to:
+  /// **'The server reported an error. Try again in a moment'**
+  String get authServerError;
+
+  /// No description provided for @authServerIncompatible.
+  ///
+  /// In en, this message translates to:
+  /// **'This server isn\'t compatible with this app version'**
+  String get authServerIncompatible;
+
   /// No description provided for @providerReauthenticationRequired.
   ///
   /// In en, this message translates to:
@@ -549,6 +591,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'authenticating'**
   String get onboardingAuthenticating;
+
+  /// No description provided for @onboardingLoginFinishingSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'connected, finishing setup…'**
+  String get onboardingLoginFinishingSetup;
+
+  /// No description provided for @onboardingLoginSetupStalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in, but setup is taking longer than expected. Tap retry to try again.'**
+  String get onboardingLoginSetupStalled;
+
+  /// No description provided for @onboardingLoginRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'retry'**
+  String get onboardingLoginRetry;
 
   /// No description provided for @onboardingSetupTitle.
   ///
@@ -3052,11 +3112,11 @@ abstract class AppLocalizations {
   /// **'{price} / year'**
   String proPricePerYear(String price);
 
-  /// No description provided for @proStartTrial.
+  /// No description provided for @proSubscribePrice.
   ///
   /// In en, this message translates to:
-  /// **'start {days}-day free trial'**
-  String proStartTrial(int days);
+  /// **'subscribe -- {price}'**
+  String proSubscribePrice(String price);
 
   /// No description provided for @proSubscribe.
   ///
@@ -3091,7 +3151,7 @@ abstract class AppLocalizations {
   /// No description provided for @proTrialTerms.
   ///
   /// In en, this message translates to:
-  /// **'Free for {days} days, then {price}. Until cancelled, manage or cancel in your app store account.'**
+  /// **'Includes a {days}-day free trial, then billed {price}. Until cancelled, manage or cancel in your app store account.'**
   String proTrialTerms(int days, String price);
 
   /// No description provided for @proTermsOfServiceLink.
@@ -4738,6 +4798,66 @@ abstract class AppLocalizations {
   /// **'Enter a valid email address'**
   String get onboardingEmailInvalidFormat;
 
+  /// No description provided for @onboardingPasswordTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be at most 71 characters'**
+  String get onboardingPasswordTooLong;
+
+  /// No description provided for @onboardingEmailSurroundingWhitespace.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove leading/trailing whitespace'**
+  String get onboardingEmailSurroundingWhitespace;
+
+  /// No description provided for @onboardingPasswordSurroundingWhitespace.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove leading/trailing whitespace'**
+  String get onboardingPasswordSurroundingWhitespace;
+
+  /// No description provided for @onboardingPasswordPastedWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Has leading/trailing whitespace'**
+  String get onboardingPasswordPastedWarning;
+
+  /// No description provided for @onboardingLoginTriedHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Tried: {host}'**
+  String onboardingLoginTriedHost(String host);
+
+  /// No description provided for @onboardingLoginExactMatchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Capitals and whitespace count'**
+  String get onboardingLoginExactMatchHint;
+
+  /// No description provided for @onboardingServerUrlMissingScheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with http:// or https://'**
+  String get onboardingServerUrlMissingScheme;
+
+  /// No description provided for @onboardingServerUrlInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid URL'**
+  String get onboardingServerUrlInvalid;
+
+  /// No description provided for @terminalTextFieldShow.
+  ///
+  /// In en, this message translates to:
+  /// **'show'**
+  String get terminalTextFieldShow;
+
+  /// No description provided for @terminalTextFieldHide.
+  ///
+  /// In en, this message translates to:
+  /// **'hide'**
+  String get terminalTextFieldHide;
+
   /// No description provided for @onboardingProviderPoco.
   ///
   /// In en, this message translates to:
@@ -6094,6 +6214,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'delete'**
   String get errorsDeleteAction;
+
+  /// No description provided for @errorsInboxLink.
+  ///
+  /// In en, this message translates to:
+  /// **'errors ({count})'**
+  String errorsInboxLink(int count);
 
   /// Label for the reset deployment state action on the config screen recovery section
   ///

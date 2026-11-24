@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/bios_action_strip.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 
 /// A 3-slot wizard footer layout that keeps the counter centered
@@ -18,12 +19,16 @@ class WizardFooterBar extends StatelessWidget {
     this.totalSteps,
     this.onBack,
     this.onNext,
+    this.nextLabel,
+    this.busyLabel,
   });
 
   final int? step;
   final int? totalSteps;
   final VoidCallback? onBack;
   final VoidCallback? onNext;
+  final String? nextLabel;
+  final String? busyLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -67,12 +72,39 @@ class WizardFooterBar extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (onNext case final next?)
+                if (busyLabel case final label?)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: AppSizes.space,
+                            vertical: AppSizes.space * 1.5),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const TerminalSpinner(),
+                            HSpace.x1,
+                            Flexible(
+                              child: TerminalText(
+                                label,
+                                role: TextRole.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else if (onNext case final next?)
                   Align(
                     alignment: Alignment.centerRight,
                     child: BiosActionButton(
                       action: BiosActionStripItem(
-                        label: 'next',
+                        label: nextLabel ?? 'next',
                         onTap: next,
                         bracketed: false,
                       ),

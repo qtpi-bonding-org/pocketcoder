@@ -85,6 +85,12 @@ class L10nKeyResolver {
       'auth.error' => _l10n.authError,
       'auth.login.failed' => _l10n.authLoginFailed,
       'auth.not.authenticated' => _l10n.authNotAuthenticated,
+      'auth.server.dns' => _l10n.authServerDns,
+      'auth.server.error' => _l10n.authServerError,
+      'auth.server.incompatible' => _l10n.authServerIncompatible,
+      'auth.server.timeout' => _l10n.authServerTimeout,
+      'auth.server.tls' => _l10n.authServerTls,
+      'auth.server.unreachable' => _l10n.authServerUnreachable,
       'auth.token.expired' => _l10n.authTokenExpired,
       'billing.error' => _l10n.billingError,
       'billing.restore.failed' => _l10n.billingRestoreFailed,
@@ -539,6 +545,7 @@ class L10nKeyResolver {
       'onboarding.email.hint' => _l10n.onboardingEmailHint,
       'onboarding.email.hint.short' => _l10n.onboardingEmailHintShort,
       'onboarding.email.invalid.format' => _l10n.onboardingEmailInvalidFormat,
+      'onboarding.email.surrounding.whitespace' => _l10n.onboardingEmailSurroundingWhitespace,
       'onboarding.existing.server' => _l10n.onboardingExistingServer,
       'onboarding.failure.action.back.to.setup' => _l10n.onboardingFailureActionBackToSetup,
       'onboarding.failure.action.retry.connection' => _l10n.onboardingFailureActionRetryConnection,
@@ -560,6 +567,10 @@ class L10nKeyResolver {
       'onboarding.intent.chip.local.models' => _l10n.onboardingIntentChipLocalModels,
       'onboarding.intent.poco' => _l10n.onboardingIntentPoco,
       'onboarding.login' => _l10n.onboardingLogin,
+      'onboarding.login.exact.match.hint' => _l10n.onboardingLoginExactMatchHint,
+      'onboarding.login.finishing.setup' => _l10n.onboardingLoginFinishingSetup,
+      'onboarding.login.retry' => _l10n.onboardingLoginRetry,
+      'onboarding.login.setup.stalled' => _l10n.onboardingLoginSetupStalled,
       'onboarding.no.server.chip.existing' => _l10n.onboardingNoServerChipExisting,
       'onboarding.no.server.chip.new' => _l10n.onboardingNoServerChipNew,
       'onboarding.no.server.looking.poco' => _l10n.onboardingNoServerLookingPoco,
@@ -576,6 +587,9 @@ class L10nKeyResolver {
       'onboarding.passphrase.label' => _l10n.onboardingPassphraseLabel,
       'onboarding.password' => _l10n.onboardingPassword,
       'onboarding.password.hint' => _l10n.onboardingPasswordHint,
+      'onboarding.password.pasted.warning' => _l10n.onboardingPasswordPastedWarning,
+      'onboarding.password.surrounding.whitespace' => _l10n.onboardingPasswordSurroundingWhitespace,
+      'onboarding.password.too.long' => _l10n.onboardingPasswordTooLong,
       'onboarding.password.too.short' => _l10n.onboardingPasswordTooShort,
       'onboarding.plan.title' => _l10n.onboardingPlanTitle,
       'onboarding.pocketbase.admin.email' => _l10n.onboardingPocketbaseAdminEmail,
@@ -619,6 +633,8 @@ class L10nKeyResolver {
       'onboarding.server.login.title' => _l10n.onboardingServerLoginTitle,
       'onboarding.server.url' => _l10n.onboardingServerUrl,
       'onboarding.server.url.hint' => _l10n.onboardingServerUrlHint,
+      'onboarding.server.url.invalid' => _l10n.onboardingServerUrlInvalid,
+      'onboarding.server.url.missing.scheme' => _l10n.onboardingServerUrlMissingScheme,
       'onboarding.setup.title' => _l10n.onboardingSetupTitle,
       'onboarding.sign.in.poco' => _l10n.onboardingSignInPoco,
       'onboarding.sign.in.title' => _l10n.onboardingSignInTitle,
@@ -925,6 +941,8 @@ class L10nKeyResolver {
       'terminal.reconnect' => _l10n.terminalReconnect,
       'terminal.retry' => _l10n.terminalRetry,
       'terminal.sftp.title' => _l10n.terminalSftpTitle,
+      'terminal.text.field.hide' => _l10n.terminalTextFieldHide,
+      'terminal.text.field.show' => _l10n.terminalTextFieldShow,
       'terminal.title' => _l10n.terminalTitle,
       'terminal.transfer' => _l10n.terminalTransfer,
       'terminal.upload' => _l10n.terminalUpload,
@@ -1056,6 +1074,7 @@ class L10nKeyResolver {
       'agent.config.dialog.title' => _l10n.agentConfigDialogTitle(args?['name'] as String? ?? ''),
       'agent.config.error.prefix' => _l10n.agentConfigErrorPrefix(args?['error'] as String? ?? ''),
       'agent.dialog.title' => _l10n.agentDialogTitle(args?['name'] as String? ?? ''),
+      'auth.server.unexpected' => _l10n.authServerUnexpected(args?['detail'] as String? ?? ''),
       'brief.label' => _l10n.briefLabel(args?['current'] as int? ?? 0, args?['total'] as int? ?? 0),
       'chat.list.actions.body' => _l10n.chatListActionsBody(args?['title'] as String? ?? ''),
       'chat.list.timestamp.days.ago' => _l10n.chatListTimestampDaysAgo(args?['count'] as int? ?? 0),
@@ -1069,6 +1088,7 @@ class L10nKeyResolver {
       'deployment.monthly.price' => _l10n.deploymentMonthlyPrice(args?['price'] as String? ?? ''),
       'deployment.plan.poco' => _l10n.deploymentPlanPoco(args?['minimumMemory'] as String? ?? ''),
       'deployment.plan.specs' => _l10n.deploymentPlanSpecs(args?['vcpus'] as int? ?? 0, args?['memory'] as String? ?? '', args?['diskGb'] as int? ?? 0),
+      'errors.inbox.link' => _l10n.errorsInboxLink(args?['count'] as int? ?? 0),
       'errors.occurred' => _l10n.errorsOccurred(args?['count'] as int? ?? 0),
       'external.auth.connecting' => _l10n.externalAuthConnecting(args?['label'] as String? ?? ''),
       'foss.server.setup.error.prefix' => _l10n.fossServerSetupErrorPrefix(args?['error'] as String? ?? ''),
@@ -1104,6 +1124,7 @@ class L10nKeyResolver {
       'onboarding.failure.connection.poco' => _l10n.onboardingFailureConnectionPoco(args?['providerName'] as String? ?? ''),
       'onboarding.harness.account.login' => _l10n.onboardingHarnessAccountLogin(args?['harness'] as String? ?? ''),
       'onboarding.harness.login.title' => _l10n.onboardingHarnessLoginTitle(args?['provider'] as String? ?? ''),
+      'onboarding.login.tried.host' => _l10n.onboardingLoginTriedHost(args?['host'] as String? ?? ''),
       'onboarding.os.debian.description' => _l10n.onboardingOsDebianDescription(args?['minutes'] as int? ?? 0),
       'onboarding.os.nixos.description' => _l10n.onboardingOsNixosDescription(args?['minutes'] as int? ?? 0),
       'onboarding.plan.poco' => _l10n.onboardingPlanPoco(args?['providerName'] as String? ?? ''),
@@ -1118,7 +1139,7 @@ class L10nKeyResolver {
       'pro.price.per.month' => _l10n.proPricePerMonth(args?['price'] as String? ?? ''),
       'pro.price.per.week' => _l10n.proPricePerWeek(args?['price'] as String? ?? ''),
       'pro.price.per.year' => _l10n.proPricePerYear(args?['price'] as String? ?? ''),
-      'pro.start.trial' => _l10n.proStartTrial(args?['days'] as int? ?? 0),
+      'pro.subscribe.price' => _l10n.proSubscribePrice(args?['price'] as String? ?? ''),
       'pro.terms' => _l10n.proTerms(args?['price'] as String? ?? ''),
       'pro.trial.duration' => _l10n.proTrialDuration(args?['days'] as int? ?? 0),
       'pro.trial.terms' => _l10n.proTrialTerms(args?['days'] as int? ?? 0, args?['price'] as String? ?? ''),
@@ -1215,6 +1236,13 @@ class L10nKeyResolver {
     'auth.error',
     'auth.login.failed',
     'auth.not.authenticated',
+    'auth.server.dns',
+    'auth.server.error',
+    'auth.server.incompatible',
+    'auth.server.timeout',
+    'auth.server.tls',
+    'auth.server.unexpected',
+    'auth.server.unreachable',
     'auth.token.expired',
     'billing.error',
     'billing.restore.failed',
@@ -1447,6 +1475,7 @@ class L10nKeyResolver {
     'errors.copy.all',
     'errors.delete.action',
     'errors.empty',
+    'errors.inbox.link',
     'errors.occurred',
     'errors.report.on.github',
     'errors.title',
@@ -1714,6 +1743,7 @@ class L10nKeyResolver {
     'onboarding.email.hint',
     'onboarding.email.hint.short',
     'onboarding.email.invalid.format',
+    'onboarding.email.surrounding.whitespace',
     'onboarding.existing.server',
     'onboarding.failure.action.back.to.setup',
     'onboarding.failure.action.retry.connection',
@@ -1738,6 +1768,11 @@ class L10nKeyResolver {
     'onboarding.intent.chip.local.models',
     'onboarding.intent.poco',
     'onboarding.login',
+    'onboarding.login.exact.match.hint',
+    'onboarding.login.finishing.setup',
+    'onboarding.login.retry',
+    'onboarding.login.setup.stalled',
+    'onboarding.login.tried.host',
     'onboarding.no.server.chip.existing',
     'onboarding.no.server.chip.new',
     'onboarding.no.server.looking.poco',
@@ -1756,6 +1791,9 @@ class L10nKeyResolver {
     'onboarding.passphrase.label',
     'onboarding.password',
     'onboarding.password.hint',
+    'onboarding.password.pasted.warning',
+    'onboarding.password.surrounding.whitespace',
+    'onboarding.password.too.long',
     'onboarding.password.too.short',
     'onboarding.plan.poco',
     'onboarding.plan.title',
@@ -1801,6 +1839,8 @@ class L10nKeyResolver {
     'onboarding.server.login.title',
     'onboarding.server.url',
     'onboarding.server.url.hint',
+    'onboarding.server.url.invalid',
+    'onboarding.server.url.missing.scheme',
     'onboarding.setup.title',
     'onboarding.sign.in.poco',
     'onboarding.sign.in.title',
@@ -1952,8 +1992,8 @@ class L10nKeyResolver {
     'pro.self.hosted.push.title',
     'pro.settings.label',
     'pro.settings.status',
-    'pro.start.trial',
     'pro.subscribe',
+    'pro.subscribe.price',
     'pro.summary',
     'pro.terms',
     'pro.terms.of.service.link',
@@ -2136,6 +2176,8 @@ class L10nKeyResolver {
     'terminal.retry',
     'terminal.sftp.title',
     'terminal.ssh.link',
+    'terminal.text.field.hide',
+    'terminal.text.field.show',
     'terminal.title',
     'terminal.transfer',
     'terminal.upload',
@@ -2339,6 +2381,13 @@ class L10nKeyResolver {
     'authError': 'auth.error',
     'authLoginFailed': 'auth.login.failed',
     'authNotAuthenticated': 'auth.not.authenticated',
+    'authServerDns': 'auth.server.dns',
+    'authServerError': 'auth.server.error',
+    'authServerIncompatible': 'auth.server.incompatible',
+    'authServerTimeout': 'auth.server.timeout',
+    'authServerTls': 'auth.server.tls',
+    'authServerUnexpected': 'auth.server.unexpected',
+    'authServerUnreachable': 'auth.server.unreachable',
     'authTokenExpired': 'auth.token.expired',
     'billingError': 'billing.error',
     'billingRestoreFailed': 'billing.restore.failed',
@@ -2571,6 +2620,7 @@ class L10nKeyResolver {
     'errorsCopyAll': 'errors.copy.all',
     'errorsDeleteAction': 'errors.delete.action',
     'errorsEmpty': 'errors.empty',
+    'errorsInboxLink': 'errors.inbox.link',
     'errorsOccurred': 'errors.occurred',
     'errorsReportOnGithub': 'errors.report.on.github',
     'errorsTitle': 'errors.title',
@@ -2838,6 +2888,7 @@ class L10nKeyResolver {
     'onboardingEmailHint': 'onboarding.email.hint',
     'onboardingEmailHintShort': 'onboarding.email.hint.short',
     'onboardingEmailInvalidFormat': 'onboarding.email.invalid.format',
+    'onboardingEmailSurroundingWhitespace': 'onboarding.email.surrounding.whitespace',
     'onboardingExistingServer': 'onboarding.existing.server',
     'onboardingFailureActionBackToSetup': 'onboarding.failure.action.back.to.setup',
     'onboardingFailureActionRetryConnection': 'onboarding.failure.action.retry.connection',
@@ -2862,6 +2913,11 @@ class L10nKeyResolver {
     'onboardingIntentChipLocalModels': 'onboarding.intent.chip.local.models',
     'onboardingIntentPoco': 'onboarding.intent.poco',
     'onboardingLogin': 'onboarding.login',
+    'onboardingLoginExactMatchHint': 'onboarding.login.exact.match.hint',
+    'onboardingLoginFinishingSetup': 'onboarding.login.finishing.setup',
+    'onboardingLoginRetry': 'onboarding.login.retry',
+    'onboardingLoginSetupStalled': 'onboarding.login.setup.stalled',
+    'onboardingLoginTriedHost': 'onboarding.login.tried.host',
     'onboardingNoServerChipExisting': 'onboarding.no.server.chip.existing',
     'onboardingNoServerChipNew': 'onboarding.no.server.chip.new',
     'onboardingNoServerLookingPoco': 'onboarding.no.server.looking.poco',
@@ -2880,6 +2936,9 @@ class L10nKeyResolver {
     'onboardingPassphraseLabel': 'onboarding.passphrase.label',
     'onboardingPassword': 'onboarding.password',
     'onboardingPasswordHint': 'onboarding.password.hint',
+    'onboardingPasswordPastedWarning': 'onboarding.password.pasted.warning',
+    'onboardingPasswordSurroundingWhitespace': 'onboarding.password.surrounding.whitespace',
+    'onboardingPasswordTooLong': 'onboarding.password.too.long',
     'onboardingPasswordTooShort': 'onboarding.password.too.short',
     'onboardingPlanPoco': 'onboarding.plan.poco',
     'onboardingPlanTitle': 'onboarding.plan.title',
@@ -2925,6 +2984,8 @@ class L10nKeyResolver {
     'onboardingServerLoginTitle': 'onboarding.server.login.title',
     'onboardingServerUrl': 'onboarding.server.url',
     'onboardingServerUrlHint': 'onboarding.server.url.hint',
+    'onboardingServerUrlInvalid': 'onboarding.server.url.invalid',
+    'onboardingServerUrlMissingScheme': 'onboarding.server.url.missing.scheme',
     'onboardingSetupTitle': 'onboarding.setup.title',
     'onboardingSignInPoco': 'onboarding.sign.in.poco',
     'onboardingSignInTitle': 'onboarding.sign.in.title',
@@ -3076,8 +3137,8 @@ class L10nKeyResolver {
     'proSelfHostedPushTitle': 'pro.self.hosted.push.title',
     'proSettingsLabel': 'pro.settings.label',
     'proSettingsStatus': 'pro.settings.status',
-    'proStartTrial': 'pro.start.trial',
     'proSubscribe': 'pro.subscribe',
+    'proSubscribePrice': 'pro.subscribe.price',
     'proSummary': 'pro.summary',
     'proTerms': 'pro.terms',
     'proTermsOfServiceLink': 'pro.terms.of.service.link',
@@ -3260,6 +3321,8 @@ class L10nKeyResolver {
     'terminalRetry': 'terminal.retry',
     'terminalSftpTitle': 'terminal.sftp.title',
     'terminalSshLink': 'terminal.ssh.link',
+    'terminalTextFieldHide': 'terminal.text.field.hide',
+    'terminalTextFieldShow': 'terminal.text.field.show',
     'terminalTitle': 'terminal.title',
     'terminalTransfer': 'terminal.transfer',
     'terminalUpload': 'terminal.upload',
@@ -3460,6 +3523,13 @@ class L10nKeyResolver {
     'auth.error': 'authError',
     'auth.login.failed': 'authLoginFailed',
     'auth.not.authenticated': 'authNotAuthenticated',
+    'auth.server.dns': 'authServerDns',
+    'auth.server.error': 'authServerError',
+    'auth.server.incompatible': 'authServerIncompatible',
+    'auth.server.timeout': 'authServerTimeout',
+    'auth.server.tls': 'authServerTls',
+    'auth.server.unexpected': 'authServerUnexpected',
+    'auth.server.unreachable': 'authServerUnreachable',
     'auth.token.expired': 'authTokenExpired',
     'billing.error': 'billingError',
     'billing.restore.failed': 'billingRestoreFailed',
@@ -3692,6 +3762,7 @@ class L10nKeyResolver {
     'errors.copy.all': 'errorsCopyAll',
     'errors.delete.action': 'errorsDeleteAction',
     'errors.empty': 'errorsEmpty',
+    'errors.inbox.link': 'errorsInboxLink',
     'errors.occurred': 'errorsOccurred',
     'errors.report.on.github': 'errorsReportOnGithub',
     'errors.title': 'errorsTitle',
@@ -3959,6 +4030,7 @@ class L10nKeyResolver {
     'onboarding.email.hint': 'onboardingEmailHint',
     'onboarding.email.hint.short': 'onboardingEmailHintShort',
     'onboarding.email.invalid.format': 'onboardingEmailInvalidFormat',
+    'onboarding.email.surrounding.whitespace': 'onboardingEmailSurroundingWhitespace',
     'onboarding.existing.server': 'onboardingExistingServer',
     'onboarding.failure.action.back.to.setup': 'onboardingFailureActionBackToSetup',
     'onboarding.failure.action.retry.connection': 'onboardingFailureActionRetryConnection',
@@ -3983,6 +4055,11 @@ class L10nKeyResolver {
     'onboarding.intent.chip.local.models': 'onboardingIntentChipLocalModels',
     'onboarding.intent.poco': 'onboardingIntentPoco',
     'onboarding.login': 'onboardingLogin',
+    'onboarding.login.exact.match.hint': 'onboardingLoginExactMatchHint',
+    'onboarding.login.finishing.setup': 'onboardingLoginFinishingSetup',
+    'onboarding.login.retry': 'onboardingLoginRetry',
+    'onboarding.login.setup.stalled': 'onboardingLoginSetupStalled',
+    'onboarding.login.tried.host': 'onboardingLoginTriedHost',
     'onboarding.no.server.chip.existing': 'onboardingNoServerChipExisting',
     'onboarding.no.server.chip.new': 'onboardingNoServerChipNew',
     'onboarding.no.server.looking.poco': 'onboardingNoServerLookingPoco',
@@ -4001,6 +4078,9 @@ class L10nKeyResolver {
     'onboarding.passphrase.label': 'onboardingPassphraseLabel',
     'onboarding.password': 'onboardingPassword',
     'onboarding.password.hint': 'onboardingPasswordHint',
+    'onboarding.password.pasted.warning': 'onboardingPasswordPastedWarning',
+    'onboarding.password.surrounding.whitespace': 'onboardingPasswordSurroundingWhitespace',
+    'onboarding.password.too.long': 'onboardingPasswordTooLong',
     'onboarding.password.too.short': 'onboardingPasswordTooShort',
     'onboarding.plan.poco': 'onboardingPlanPoco',
     'onboarding.plan.title': 'onboardingPlanTitle',
@@ -4046,6 +4126,8 @@ class L10nKeyResolver {
     'onboarding.server.login.title': 'onboardingServerLoginTitle',
     'onboarding.server.url': 'onboardingServerUrl',
     'onboarding.server.url.hint': 'onboardingServerUrlHint',
+    'onboarding.server.url.invalid': 'onboardingServerUrlInvalid',
+    'onboarding.server.url.missing.scheme': 'onboardingServerUrlMissingScheme',
     'onboarding.setup.title': 'onboardingSetupTitle',
     'onboarding.sign.in.poco': 'onboardingSignInPoco',
     'onboarding.sign.in.title': 'onboardingSignInTitle',
@@ -4197,8 +4279,8 @@ class L10nKeyResolver {
     'pro.self.hosted.push.title': 'proSelfHostedPushTitle',
     'pro.settings.label': 'proSettingsLabel',
     'pro.settings.status': 'proSettingsStatus',
-    'pro.start.trial': 'proStartTrial',
     'pro.subscribe': 'proSubscribe',
+    'pro.subscribe.price': 'proSubscribePrice',
     'pro.summary': 'proSummary',
     'pro.terms': 'proTerms',
     'pro.terms.of.service.link': 'proTermsOfServiceLink',
@@ -4381,6 +4463,8 @@ class L10nKeyResolver {
     'terminal.retry': 'terminalRetry',
     'terminal.sftp.title': 'terminalSftpTitle',
     'terminal.ssh.link': 'terminalSshLink',
+    'terminal.text.field.hide': 'terminalTextFieldHide',
+    'terminal.text.field.show': 'terminalTextFieldShow',
     'terminal.title': 'terminalTitle',
     'terminal.transfer': 'terminalTransfer',
     'terminal.upload': 'terminalUpload',
@@ -4588,6 +4672,13 @@ abstract class L10nKeys {
   static const authError = 'auth.error';
   static const authLoginFailed = 'auth.login.failed';
   static const authNotAuthenticated = 'auth.not.authenticated';
+  static const authServerDns = 'auth.server.dns';
+  static const authServerError = 'auth.server.error';
+  static const authServerIncompatible = 'auth.server.incompatible';
+  static const authServerTimeout = 'auth.server.timeout';
+  static const authServerTls = 'auth.server.tls';
+  static (String, Map<String, dynamic>) authServerUnexpected(String detail) => ('auth.server.unexpected', {'detail': detail});
+  static const authServerUnreachable = 'auth.server.unreachable';
   static const authTokenExpired = 'auth.token.expired';
   static const billingError = 'billing.error';
   static const billingRestoreFailed = 'billing.restore.failed';
@@ -4820,6 +4911,7 @@ abstract class L10nKeys {
   static const errorsCopyAll = 'errors.copy.all';
   static const errorsDeleteAction = 'errors.delete.action';
   static const errorsEmpty = 'errors.empty';
+  static (String, Map<String, dynamic>) errorsInboxLink(int count) => ('errors.inbox.link', {'count': count});
   static (String, Map<String, dynamic>) errorsOccurred(int count) => ('errors.occurred', {'count': count});
   static const errorsReportOnGithub = 'errors.report.on.github';
   static const errorsTitle = 'errors.title';
@@ -5087,6 +5179,7 @@ abstract class L10nKeys {
   static const onboardingEmailHint = 'onboarding.email.hint';
   static const onboardingEmailHintShort = 'onboarding.email.hint.short';
   static const onboardingEmailInvalidFormat = 'onboarding.email.invalid.format';
+  static const onboardingEmailSurroundingWhitespace = 'onboarding.email.surrounding.whitespace';
   static const onboardingExistingServer = 'onboarding.existing.server';
   static const onboardingFailureActionBackToSetup = 'onboarding.failure.action.back.to.setup';
   static const onboardingFailureActionRetryConnection = 'onboarding.failure.action.retry.connection';
@@ -5111,6 +5204,11 @@ abstract class L10nKeys {
   static const onboardingIntentChipLocalModels = 'onboarding.intent.chip.local.models';
   static const onboardingIntentPoco = 'onboarding.intent.poco';
   static const onboardingLogin = 'onboarding.login';
+  static const onboardingLoginExactMatchHint = 'onboarding.login.exact.match.hint';
+  static const onboardingLoginFinishingSetup = 'onboarding.login.finishing.setup';
+  static const onboardingLoginRetry = 'onboarding.login.retry';
+  static const onboardingLoginSetupStalled = 'onboarding.login.setup.stalled';
+  static (String, Map<String, dynamic>) onboardingLoginTriedHost(String host) => ('onboarding.login.tried.host', {'host': host});
   static const onboardingNoServerChipExisting = 'onboarding.no.server.chip.existing';
   static const onboardingNoServerChipNew = 'onboarding.no.server.chip.new';
   static const onboardingNoServerLookingPoco = 'onboarding.no.server.looking.poco';
@@ -5129,6 +5227,9 @@ abstract class L10nKeys {
   static const onboardingPassphraseLabel = 'onboarding.passphrase.label';
   static const onboardingPassword = 'onboarding.password';
   static const onboardingPasswordHint = 'onboarding.password.hint';
+  static const onboardingPasswordPastedWarning = 'onboarding.password.pasted.warning';
+  static const onboardingPasswordSurroundingWhitespace = 'onboarding.password.surrounding.whitespace';
+  static const onboardingPasswordTooLong = 'onboarding.password.too.long';
   static const onboardingPasswordTooShort = 'onboarding.password.too.short';
   static (String, Map<String, dynamic>) onboardingPlanPoco(String providerName) => ('onboarding.plan.poco', {'providerName': providerName});
   static const onboardingPlanTitle = 'onboarding.plan.title';
@@ -5174,6 +5275,8 @@ abstract class L10nKeys {
   static const onboardingServerLoginTitle = 'onboarding.server.login.title';
   static const onboardingServerUrl = 'onboarding.server.url';
   static const onboardingServerUrlHint = 'onboarding.server.url.hint';
+  static const onboardingServerUrlInvalid = 'onboarding.server.url.invalid';
+  static const onboardingServerUrlMissingScheme = 'onboarding.server.url.missing.scheme';
   static const onboardingSetupTitle = 'onboarding.setup.title';
   static const onboardingSignInPoco = 'onboarding.sign.in.poco';
   static const onboardingSignInTitle = 'onboarding.sign.in.title';
@@ -5325,8 +5428,8 @@ abstract class L10nKeys {
   static const proSelfHostedPushTitle = 'pro.self.hosted.push.title';
   static const proSettingsLabel = 'pro.settings.label';
   static const proSettingsStatus = 'pro.settings.status';
-  static (String, Map<String, dynamic>) proStartTrial(int days) => ('pro.start.trial', {'days': days});
   static const proSubscribe = 'pro.subscribe';
+  static (String, Map<String, dynamic>) proSubscribePrice(String price) => ('pro.subscribe.price', {'price': price});
   static const proSummary = 'pro.summary';
   static (String, Map<String, dynamic>) proTerms(String price) => ('pro.terms', {'price': price});
   static const proTermsOfServiceLink = 'pro.terms.of.service.link';
@@ -5509,6 +5612,8 @@ abstract class L10nKeys {
   static const terminalRetry = 'terminal.retry';
   static const terminalSftpTitle = 'terminal.sftp.title';
   static (String, Map<String, dynamic>) terminalSshLink(String host, String port) => ('terminal.ssh.link', {'host': host, 'port': port});
+  static const terminalTextFieldHide = 'terminal.text.field.hide';
+  static const terminalTextFieldShow = 'terminal.text.field.show';
   static const terminalTitle = 'terminal.title';
   static const terminalTransfer = 'terminal.transfer';
   static const terminalUpload = 'terminal.upload';

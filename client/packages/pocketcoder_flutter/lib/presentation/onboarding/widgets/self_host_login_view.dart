@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:pocketcoder_flutter/app_router.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
-import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_loading_indicator.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/pocketcoder_shell.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/onboarding_content_shell.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_text_field.dart';
+import 'package:pocketcoder_flutter/design_system/primitives/text_role.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/terminal_conversation.dart';
 
 class SelfHostLoginView extends StatefulWidget {
@@ -21,6 +22,15 @@ class SelfHostLoginView extends StatefulWidget {
     required this.pocoHistory,
     required this.onDeploy,
     required this.onLogin,
+    this.onRetrySetup,
+    this.errorInboxLink,
+    this.failureText,
+    this.urlErrorText,
+    this.onUrlChanged,
+    this.emailErrorText,
+    this.passwordHelperText,
+    this.onEmailChanged,
+    this.onPasswordChanged,
   });
 
   final String initialUrl;
@@ -33,6 +43,19 @@ class SelfHostLoginView extends StatefulWidget {
   final VoidCallback onDeploy;
   final Future<void> Function(String url, String email, String password)
       onLogin;
+  final VoidCallback? onRetrySetup;
+  final Widget? errorInboxLink;
+
+  /// Why the last login failed. Rendered under the password field, where the
+  /// screen is already scrolled to after tapping next, so it is never off
+  /// the top of the card.
+  final String? failureText;
+  final String? urlErrorText;
+  final ValueChanged<String>? onUrlChanged;
+  final String? emailErrorText;
+  final String? passwordHelperText;
+  final ValueChanged<String>? onEmailChanged;
+  final ValueChanged<String>? onPasswordChanged;
 
   @override
   State<SelfHostLoginView> createState() => _SelfHostLoginViewState();
@@ -62,10 +85,24 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
   @override
   Widget build(BuildContext context) {
     final loading = widget.status == UiFlowStatus.loading;
+    final signedIn = widget.status == UiFlowStatus.success;
+    final onRetrySetup = widget.onRetrySetup;
     return PocketCoderShell(
       showBack: true,
       backFallbackRoute: AppRoutes.onboarding,
-      footer: WizardFooter(onNext: loading ? () {} : _login),
+      footer: switch ((loading, signedIn, onRetrySetup)) {
+        (true, _, _) => WizardFooter(
+            busyLabel: context.l10n.onboardingAuthenticating,
+          ),
+        (_, true, final retry?) => WizardFooter(
+            onNext: retry,
+            nextLabel: context.l10n.onboardingLoginRetry,
+          ),
+        (_, true, null) => WizardFooter(
+            busyLabel: context.l10n.onboardingLoginFinishingSetup,
+          ),
+        _ => WizardFooter(onNext: _login),
+      },
       body: OnboardingContentShell(
         child: Column(
           children: [
@@ -80,35 +117,52 @@ class _SelfHostLoginViewState extends State<SelfHostLoginView> {
               controller: _urlController,
               label: context.l10n.onboardingServerUrl,
               hint: context.l10n.onboardingServerUrlHint,
+              keyboardType: TextInputType.url,
+              autocorrect: false,
+              enableSuggestions: false,
+              errorText: widget.urlErrorText,
+              onChanged: widget.onUrlChanged,
             ),
             VSpace.x2,
             TerminalTextField(
               controller: _emailController,
               label: context.l10n.onboardingEmail,
               hint: context.l10n.onboardingEmailHintShort,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              enableSuggestions: false,
+              autofillHints: const [AutofillHints.email],
+              errorText: widget.emailErrorText,
+              onChanged: widget.onEmailChanged,
             ),
             VSpace.x2,
             TerminalTextField(
               controller: _passwordController,
               label: context.l10n.onboardingPassword,
               obscureText: true,
-              onSubmitted: (_) => loading ? null : _login(),
+              revealable: true,
+              autofillHints: const [AutofillHints.password],
+              helperText: widget.passwordHelperText,
+              onChanged: widget.onPasswordChanged,
+              onSubmitted: (_) => loading || signedIn ? null : _login(),
             ),
-            if (loading) ...[
-              VSpace.x2,
-              TerminalLoadingIndicator(
-                label: context.l10n.onboardingAuthenticating,
-              ),
+            if (widget.failureText case final failure?) ...[
+              VSpace.x3,
+              TerminalText(failure, role: TextRole.fail),
             ],
+            if (widget.errorInboxLink case final link?) ...[VSpace.x3, link],
           ],
         ),
       ),
     );
   }
 
-  Future<void> _login() => widget.onLogin(
-        _urlController.text.trim(),
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+  Future<void> _login() {
+    FocusScope.of(context).unfocus();
+    return widget.onLogin(
+      _urlController.text.trim(),
+      _emailController.text,
+      _passwordController.text,
+    );
+  }
 }

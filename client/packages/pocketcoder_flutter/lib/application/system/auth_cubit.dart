@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:injectable/injectable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
@@ -8,6 +12,7 @@ import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import "package:pocketcoder_flutter/support/extensions/cubit_ui_flow_extension.dart";
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_flutter/infrastructure/core/network_probe.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
 
@@ -49,6 +54,18 @@ class AuthCubit extends AppCubit<AuthState> {
       this._serverReadinessCheck)
       : super(AuthState.initial());
 
+  @visibleForTesting
+  Duration loginStepTimeout = const Duration(seconds: 15);
+
+  /// Walks DNS, TCP and TLS to the server after a failed login so the
+  /// failure can say which hop is broken. Swappable so tests need no network.
+  @visibleForTesting
+  Future<String> Function(Uri url) probeNetwork = NetworkProbe().run;
+
+  /// The hop-by-hop result for the most recent failed login, or null when
+  /// that login succeeded or was rejected on credentials alone.
+  String? networkReport;
+
   Future<void> restoreSavedUrl() async {
     String? savedUrl;
     try {
@@ -71,16 +88,52 @@ class AuthCubit extends AppCubit<AuthState> {
     // previously-saved URL is captured up front so a failed attempt can
     // restore it in memory too, rather than leaving the app pointed at an
     // unverified URL for the rest of the session.
-    final previousUrl = await _authRepository.getSavedBaseUrl();
+    String? previousUrl;
+    try {
+      previousUrl = await _authRepository.getSavedBaseUrl();
+    } catch (_) {
+      // An unreadable Keychain must not stop a login that doesn't need it;
+      // the only cost is not restoring the old URL if this attempt fails.
+    }
+    networkReport = null;
     await tryOperation(() async {
       await _authRepository.updateBaseUrl(url);
       try {
-        await _authRepository.verifyServerCompatibility();
-        final success = await _authRepository.login(email, password);
-        if (!success) {
-          throw AuthException.loginFailed();
+        // Nothing here retries on the user's behalf, so a transient hiccup
+        // must not surface as a failure on the first try.
+        const maxAttempts = 3;
+        const retryDelay = Duration(milliseconds: 600);
+        for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            await _withLoginStepTimeout(
+              _authRepository.verifyServerCompatibility(),
+              'compatibility check',
+            );
+            final success = await _withLoginStepTimeout(
+              _authRepository.login(email, password),
+              'login',
+            );
+            if (!success) {
+              throw AuthException.loginFailed();
+            }
+            break;
+          } catch (error) {
+            if (attempt == maxAttempts || !_isTransientLoginError(error)) {
+              rethrow;
+            }
+            OnboardingLogger.event('server login retrying', {
+              'attempt': '$attempt',
+            });
+            await Future<void>.delayed(retryDelay * attempt);
+          }
         }
-      } catch (_) {
+      } catch (error, stackTrace) {
+        if (_isNetworkFailure(error)) {
+          networkReport = await _probe(url);
+          OnboardingLogger.event('server login network probe', {
+            'report': networkReport ?? 'none',
+          });
+        }
         if (previousUrl != null) {
           // Best-effort: a revert failure must never mask the real reason
           // this login attempt failed.
@@ -88,9 +141,22 @@ class AuthCubit extends AppCubit<AuthState> {
             await _authRepository.updateBaseUrl(previousUrl);
           } catch (_) {}
         }
-        rethrow;
+        final report = networkReport;
+        if (report == null || report.isEmpty) rethrow;
+        // The error inbox stores the stack trace verbatim and nothing else
+        // free-form, so the hop-by-hop result rides at its head: it then
+        // persists, shows in the inbox and goes out with "copy report".
+        Error.throwWithStackTrace(
+          error,
+          StackTrace.fromString('$report\n\n$stackTrace'),
+        );
       }
       await _authRepository.persistBaseUrl(url);
+      // Readiness derives from the saved URL; without a re-check a fresh
+      // install keeps reading notProvisioned and is routed back to onboarding.
+      try {
+        await _serverReadinessCheck.retry();
+      } catch (_) {}
       OnboardingLogger.event('server login succeeded');
       return createSuccessState();
     });
@@ -137,5 +203,58 @@ class AuthCubit extends AppCubit<AuthState> {
       await _proDataDeletionHook.deleteProData();
       return createSuccessState().copyWith(skipOnboardingNavigation: true);
     });
+  }
+
+  Future<String?> _probe(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.host.isEmpty) return null;
+    try {
+      return await probeNetwork(uri);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Rejected credentials (a plain `loginFailed`, or a 400/401/403) mean the
+  /// server answered, so there is no network path to explain.
+  static bool _isNetworkFailure(Object error) {
+    if (error is! AuthException) return true;
+    final cause = error.cause;
+    final original =
+        cause is SafeExceptionCause ? cause.originalException : cause;
+    if (original == null) return false;
+    if (original is ClientException) {
+      return original.statusCode != 400 &&
+          original.statusCode != 401 &&
+          original.statusCode != 403;
+    }
+    return true;
+  }
+
+  /// [stepName] names the step in the exception message, which the error
+  /// code mapper turns into the step token (COMPAT, LOGIN) in the code.
+  Future<T> _withLoginStepTimeout<T>(Future<T> step, String stepName) {
+    return step.timeout(
+      loginStepTimeout,
+      onTimeout: () => throw AuthException(
+        '$stepName timed out',
+        ClientException(
+            originalError: TimeoutException(null, loginStepTimeout)),
+      ),
+    );
+  }
+
+  static bool _isTransientLoginError(Object error) {
+    if (error is! AuthException) return false;
+    final cause = error.cause;
+    final original =
+        cause is SafeExceptionCause ? cause.originalException : cause;
+    if (original is! ClientException) return false;
+    if (original.statusCode == 400 ||
+        original.statusCode == 401 ||
+        original.statusCode == 403) {
+      return false;
+    }
+    return true;
   }
 }

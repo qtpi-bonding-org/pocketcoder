@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:pocketcoder_flutter/infrastructure/core/pocketcoder_api_client.dart';
 import 'package:pocketcoder_flutter/infrastructure/settings/local_settings_database.dart';
+import 'package:pocketcoder_flutter/infrastructure/errors/notifying_error_box_storage.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'auth_aware_http_client.dart';
 import 'auth_store.dart';
@@ -180,7 +181,8 @@ abstract class ExternalModule {
   /// Local-only storage for the on-device error inbox. Never synced or
   /// transmitted.
   @lazySingleton
-  ErrorBoxStorage get errorBoxStorage => SharedPrefsErrorBoxStorage();
+  ErrorBoxStorage get errorBoxStorage =>
+      NotifyingErrorBoxStorage(SharedPrefsErrorBoxStorage());
 
   /// Registered here, not via @LazySingleton on the class itself:
   /// injectable's generator can't register UrlLauncherInAppBrowserLauncher's

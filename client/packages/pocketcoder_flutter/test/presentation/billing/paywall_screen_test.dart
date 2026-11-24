@@ -43,26 +43,43 @@ void main() {
   }
 
   testWidgets(
-      'presents the trial offer and store-derived price for a '
-      'trial-eligible package', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
+      'presents the store-derived billed amount as the most conspicuous '
+      'pricing element, with the trial subordinate (Guideline 3.1.2(c))',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(subject());
     await tester.pumpAndSettle();
 
     final l10n = lookupAppLocalizations(const Locale('en'));
+    final billed = l10n.proPricePerMonth(r'$9.99');
+    final billedFinder = find.text(billed);
+    final buttonFinder = find.text('<${l10n.proSubscribePrice(billed)}>');
+    final trialNote = find.text(l10n.proTrialTerms(7, billed));
+
+    expect(billedFinder, findsOneWidget);
+    expect(buttonFinder, findsOneWidget);
+    expect(trialNote, findsOneWidget);
     expect(find.text(l10n.proTrialLapseExplainer), findsOneWidget);
-    expect(
-        find.text('<${l10n.proStartTrial(7).toLowerCase()}>'), findsOneWidget);
     expect(find.text('<${l10n.proRestore}>'), findsOneWidget);
-    // Apple requires the auto-renewal disclosure visible for a trial offer
-    // too, not just a plain subscription -- the trial-specific wording,
-    // not the no-trial one.
-    expect(
-      find.text(l10n.proTrialTerms(7, l10n.proPricePerMonth(r'$9.99'))),
-      findsOneWidget,
-    );
+
+    // The button leads with the billed amount, not the trial.
+    expect(find.text('<start 7-day free trial>'), findsNothing);
+
+    // Billed amount sits above the call to action, trial note below it.
+    final billedY = tester.getTopLeft(billedFinder).dy;
+    final buttonY = tester.getTopLeft(buttonFinder).dy;
+    final trialY = tester.getTopLeft(trialNote).dy;
+    expect(billedY, lessThan(buttonY));
+    expect(trialY, greaterThan(buttonY));
+
+    // Billed amount is bold; the trial note is regular weight.
+    final billedStyle = tester.widget<Text>(billedFinder).style!;
+    final trialStyle = tester.widget<Text>(trialNote).style;
+    expect(billedStyle.fontWeight, FontWeight.w700);
+    expect(trialStyle?.fontWeight ?? FontWeight.w400, FontWeight.w400);
+
     expect(tester.takeException(), isNull);
   });
 
@@ -99,8 +116,11 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('<start 7-day free trial>'));
-    await tester.tap(find.text('<start 7-day free trial>'));
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    final subscribe =
+        find.text('<${l10n.proSubscribePrice(l10n.proPricePerMonth(r'$9.99'))}>');
+    await tester.ensureVisible(subscribe);
+    await tester.tap(subscribe);
     await tester.ensureVisible(find.text('<restore purchases>'));
     await tester.tap(find.text('<restore purchases>'));
 

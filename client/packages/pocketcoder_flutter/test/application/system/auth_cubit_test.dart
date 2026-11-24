@@ -1,14 +1,30 @@
+import 'dart:async';
+
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:flutter_error_privserver/flutter_error_privserver.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
+import 'package:pocketcoder_flutter/core/try_operation.dart';
 import 'package:pocketcoder_flutter/domain/auth/i_auth_repository.dart';
 import 'package:pocketcoder_flutter/domain/billing/billing_service.dart';
 import 'package:pocketcoder_flutter/domain/deployment/i_server_readiness_check.dart';
+import 'package:pocketcoder_flutter/domain/exceptions.dart';
 import 'package:pocketcoder_flutter/domain/system/factory_reset_hook.dart';
 import 'package:pocketcoder_flutter/domain/system/pro_data_deletion_hook.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/caddy_ca_pin_store.dart';
+import 'package:pocketcoder_flutter/infrastructure/errors/error_code_mapper.dart';
+import 'package:pocketcoder_flutter/infrastructure/feedback/exception_mapper.dart';
+
+AuthException _wrappedClientFailure(int statusCode) {
+  final client = ClientException(statusCode: statusCode);
+  return AuthException(
+    'login failed: ClientException',
+    SafeExceptionCause(ClientException, client, StackTrace.current),
+  );
+}
 
 class MockAuthRepository extends Mock implements IAuthRepository {}
 
@@ -20,6 +36,8 @@ class MockBillingService extends Mock implements BillingService {}
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class MockFactoryResetHook extends Mock implements FactoryResetHook {}
+
+class MockErrorBoxStorage extends Mock implements ErrorBoxStorage {}
 
 class MockProDataDeletionHook extends Mock implements ProDataDeletionHook {}
 
@@ -129,6 +147,32 @@ void main() {
     });
 
     test(
+        're-checks server readiness after persisting the URL, so a fresh '
+        'install is not routed back to onboarding', () async {
+      when(() => repo.updateBaseUrl('https://server.example'))
+          .thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
+      when(() => repo.login('owner@example.com', 'secret'))
+          .thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl('https://server.example'))
+          .thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl()).thenAnswer((_) async => null);
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://server.example',
+        'owner@example.com',
+        'secret',
+      );
+
+      verifyInOrder([
+        () => repo.persistBaseUrl('https://server.example'),
+        () => serverReadinessCheck.retry(),
+      ]);
+      expect(cubit.state.status, UiFlowStatus.success);
+    });
+
+    test(
         'does not send credentials to an incompatible server, and never '
         'persists the unverified URL', () async {
       when(() => repo.updateBaseUrl('https://server.example'))
@@ -177,6 +221,254 @@ void main() {
       verify(() => repo.updateBaseUrl('https://old-good-server.example'))
           .called(1);
       expect(cubit.state.status, UiFlowStatus.failure);
+    });
+
+    test(
+        'retries a transient failure (network/5xx) and succeeds once the '
+        'server responds -- a reviewer or first-time user will not retry a '
+        'failed login themselves', () async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      var attempt = 0;
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {
+        attempt++;
+        if (attempt < 3) throw _wrappedClientFailure(0); // network failure
+      });
+      when(() => repo.login('owner@example.com', 'secret'))
+          .thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl())
+          .thenAnswer((_) async => 'https://old-good-server.example');
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://server.example',
+        'owner@example.com',
+        'secret',
+      );
+
+      expect(attempt, 3);
+      expect(cubit.state.status, UiFlowStatus.success);
+      verify(() => repo.persistBaseUrl('https://server.example')).called(1);
+    });
+
+    test(
+        'does not retry a definite rejection (401) -- retrying a wrong '
+        'password gains nothing and must fail on the first attempt', () async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      var attempts = 0;
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {
+        attempts++;
+        throw _wrappedClientFailure(401);
+      });
+      when(() => repo.getSavedBaseUrl())
+          .thenAnswer((_) async => 'https://old-good-server.example');
+      when(() => repo.updateBaseUrl('https://old-good-server.example'))
+          .thenAnswer((_) async {});
+      final cubit = buildCubit();
+
+      await cubit.login(
+        'https://server.example',
+        'owner@example.com',
+        'wrong-password',
+      );
+
+      expect(attempts, 1);
+      verifyNever(() => repo.login(any(), any()));
+      expect(cubit.state.status, UiFlowStatus.failure);
+    });
+    test(
+        'an unreadable saved URL (Keychain error) does not stop the login '
+        'attempt or escape as an uncaught throw', () async {
+      when(() => repo.getSavedBaseUrl()).thenThrow(Exception('keychain'));
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
+      when(() => repo.login(any(), any())).thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl(any())).thenAnswer((_) async {});
+      final cubit = buildCubit();
+
+      await cubit.login('https://server.example', 'a@example.com', 'secret');
+
+      expect(cubit.state.status, UiFlowStatus.success);
+      verify(() => repo.persistBaseUrl('https://server.example')).called(1);
+    });
+  });
+
+  group('AuthCubit.login step timeout', () {
+    Future<AuthCubit> loginAgainst({
+      required Future<void> Function() verify,
+      required Future<bool> Function() login,
+    }) async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) => verify());
+      when(() => repo.login(any(), any())).thenAnswer((_) => login());
+      when(() => repo.persistBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl()).thenAnswer((_) async => null);
+      final cubit = buildCubit()
+        ..loginStepTimeout = const Duration(milliseconds: 20);
+      await cubit.login('https://server.example', 'a@example.com', 'secret');
+      return cubit;
+    }
+
+    test(
+        'a stalled compatibility check fails as a retried timeout '
+        'instead of hanging the login screen', () async {
+      var attempts = 0;
+      final cubit = await loginAgainst(
+        verify: () {
+          attempts++;
+          return Completer<void>().future;
+        },
+        login: () async => true,
+      );
+
+      expect(attempts, 3);
+      expect(cubit.state.status, UiFlowStatus.failure);
+      expect(
+        AppExceptionKeyMapper().map(cubit.state.error ?? Object()),
+        const MessageKey.error('auth.server.timeout'),
+      );
+      verifyNever(() => repo.persistBaseUrl(any()));
+    });
+
+    test('a stalled login request fails as a timeout', () async {
+      final cubit = await loginAgainst(
+        verify: () async {},
+        login: () => Completer<bool>().future,
+      );
+
+      expect(cubit.state.status, UiFlowStatus.failure);
+      expect(
+        AppExceptionKeyMapper().map(cubit.state.error ?? Object()),
+        const MessageKey.error('auth.server.timeout'),
+      );
+    });
+  });
+
+  group('AuthCubit.login failure diagnostics', () {
+    Future<(AuthCubit, List<Uri>)> failLogin({
+      required Future<void> Function() verify,
+      required Future<bool> Function() login,
+    }) async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) => verify());
+      when(() => repo.login(any(), any())).thenAnswer((_) => login());
+      when(() => repo.getSavedBaseUrl()).thenAnswer((_) async => null);
+      final probed = <Uri>[];
+      final cubit = buildCubit()
+        ..loginStepTimeout = const Duration(milliseconds: 20)
+        ..probeNetwork = (url) async {
+          probed.add(url);
+          return 'dns ok';
+        };
+      await cubit.login('https://server.example', 'a@example.com', 'secret');
+      return (cubit, probed);
+    }
+
+    test('a stalled compatibility check is coded COMPAT, not LOGIN', () async {
+      final (cubit, _) = await failLogin(
+        verify: () => Completer<void>().future,
+        login: () async => true,
+      );
+
+      expect(PocketCoderErrorCodeMapper.mapError(cubit.state.error ?? Object()),
+          'AUTH_001.COMPAT.TIMEOUT');
+    });
+
+    test('a stalled login request stays coded LOGIN', () async {
+      final (cubit, _) = await failLogin(
+        verify: () async {},
+        login: () => Completer<bool>().future,
+      );
+
+      expect(PocketCoderErrorCodeMapper.mapError(cubit.state.error ?? Object()),
+          'AUTH_001.LOGIN.TIMEOUT');
+    });
+
+    test('a network failure probes the server once and keeps the report',
+        () async {
+      final (cubit, probed) = await failLogin(
+        verify: () => Completer<void>().future,
+        login: () async => true,
+      );
+
+      expect(probed, [Uri.parse('https://server.example')]);
+      expect(cubit.networkReport, 'dns ok');
+    });
+
+    test('rejected credentials are not a network problem, so no probe',
+        () async {
+      final (cubit, probed) = await failLogin(
+        verify: () async {},
+        login: () async => false,
+      );
+
+      expect(cubit.state.status, UiFlowStatus.failure);
+      expect(probed, isEmpty);
+      expect(cubit.networkReport, isNull);
+    });
+
+    test('a successful login leaves no report behind', () async {
+      when(() => repo.updateBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.verifyServerCompatibility()).thenAnswer((_) async {});
+      when(() => repo.login(any(), any())).thenAnswer((_) async => true);
+      when(() => repo.persistBaseUrl(any())).thenAnswer((_) async {});
+      when(() => repo.getSavedBaseUrl()).thenAnswer((_) async => null);
+      final cubit = buildCubit()..networkReport = 'stale';
+
+      await cubit.login('https://server.example', 'a@example.com', 'secret');
+
+      expect(cubit.networkReport, isNull);
+    });
+
+    group('in the saved error report', () {
+      late MockErrorBoxStorage errorStorage;
+
+      setUpAll(() {
+        registerFallbackValue(ErrorEntry(
+          source: 'fallback',
+          errorType: 'fallback',
+          errorCode: 'fallback',
+          stackTrace: 'fallback',
+          timestamp: DateTime(2026),
+        ));
+      });
+
+      setUp(() {
+        errorStorage = MockErrorBoxStorage();
+        when(() => errorStorage.saveError(any())).thenAnswer((_) async {});
+        ErrorPrivserver.configure(ErrorPrivserverConfig(
+          storage: errorStorage,
+          reporter: (_) async => false,
+          errorCodeMapper: (_) => 'AUTH_TEST',
+          exceptionMapper: (_) => null,
+        ));
+      });
+
+      ErrorEntry savedEntry() =>
+          verify(() => errorStorage.saveError(captureAny())).captured.single
+              as ErrorEntry;
+
+      test(
+          'the probe heads the stack trace, so the inbox and the copied '
+          'report carry it', () async {
+        await failLogin(
+          verify: () => Completer<void>().future,
+          login: () async => true,
+        );
+
+        final entry = savedEntry();
+        expect(entry.stackTrace, startsWith('dns ok'));
+        expect(entry.stackTrace, contains('AuthCubit.login'));
+      });
+
+      test('a rejected password keeps the plain stack trace', () async {
+        await failLogin(
+          verify: () async {},
+          login: () async => false,
+        );
+
+        expect(savedEntry().stackTrace, isNot(contains('dns ok')));
+      });
     });
   });
 

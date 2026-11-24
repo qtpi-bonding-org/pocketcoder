@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:pocketcoder_flutter/infrastructure/core/logger.dart';
 import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_fetcher.dart';
 
@@ -8,6 +10,8 @@ import 'package:pocketcoder_flutter/infrastructure/deployment/ca_pin_fetcher.dar
 /// supplies its own implementation.
 abstract class CurrentDeploymentLookup {
   ({String instanceId, String host})? get current;
+
+  bool get isLoaded;
 }
 
 /// Recovers from a certificate-validation failure against the currently
@@ -106,10 +110,15 @@ class CaPinRecovery {
   /// [currentDeployment] may still be completing its own async load at
   /// boot, so a null read is polled rather than treated as final; bounded by
   /// [timeout] since there may genuinely be no deployment yet.
-  Future<void> warmUp({Duration timeout = const Duration(seconds: 5)}) async {
+  Future<void> warmUp({
+    Duration timeout = const Duration(seconds: 5),
+    Duration fetchTimeout = const Duration(seconds: 10),
+  }) async {
     final deadline = DateTime.now().add(timeout);
     var deployment = currentDeployment.current;
-    while (deployment == null && DateTime.now().isBefore(deadline)) {
+    while (deployment == null &&
+        !currentDeployment.isLoaded &&
+        DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 50));
       deployment = currentDeployment.current;
     }
@@ -122,10 +131,22 @@ class CaPinRecovery {
       'instanceId': deployment.instanceId,
       'host': deployment.host,
     });
-    await caPinFetcher.fetchAndPin(
-      instanceId: deployment.instanceId,
-      host: deployment.host,
-      isCurrentAttemptStillLive: () async => true,
-    );
+    try {
+      await caPinFetcher
+          .fetchAndPin(
+            instanceId: deployment.instanceId,
+            host: deployment.host,
+            isCurrentAttemptStillLive: () async => true,
+          )
+          .timeout(fetchTimeout);
+    } on TimeoutException {
+      AppLogger.warning('CaPinRecovery.warmUp: CA pin fetch timed out', {
+        'instanceId': deployment.instanceId,
+        'fetchTimeout': fetchTimeout.toString(),
+      });
+    } catch (error, stackTrace) {
+      AppLogger.error(
+          'CaPinRecovery.warmUp: CA pin fetch failed', error, stackTrace);
+    }
   }
 }

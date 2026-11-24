@@ -53,8 +53,8 @@ class _CreateAccountViewState extends State<CreateAccountView> {
 
   @override
   Widget build(BuildContext context) => PocketCoderShell(
-        footer: WizardFooter(
-            onNext: widget.isValid ? widget.onContinue : () {}),
+        footer:
+            WizardFooter(onNext: widget.isValid ? widget.onContinue : () {}),
         showBack: true,
         backFallbackRoute: AppRoutes.onboarding,
         body: OnboardingContentShell(
@@ -68,6 +68,10 @@ class _CreateAccountViewState extends State<CreateAccountView> {
                 controller: _emailController,
                 label: context.l10n.onboardingPocketbaseAdminEmail,
                 hint: context.l10n.onboardingEmailHintShort,
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                enableSuggestions: false,
+                autofillHints: const [AutofillHints.email],
                 onChanged: widget.onEmailChanged,
                 errorText: widget.emailErrorText,
               ),
@@ -76,6 +80,8 @@ class _CreateAccountViewState extends State<CreateAccountView> {
                 controller: _passwordController,
                 label: context.l10n.onboardingPocketbaseAdminPassword,
                 obscureText: true,
+                revealable: true,
+                autofillHints: const [AutofillHints.newPassword],
                 onChanged: widget.onPasswordChanged,
                 onSubmitted: (_) => widget.onContinue(),
                 errorText: widget.passwordErrorText,

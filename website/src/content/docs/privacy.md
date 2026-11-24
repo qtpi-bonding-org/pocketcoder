@@ -13,8 +13,8 @@ PocketCoder documents hosted data flows below. Legal prose outside generated sec
 | Record | Categories | Storage | Retention | Deletion |
 |---|---|---|---|---|
 | `hosted_push_request` | account_identifier, authentication_credential, conversation_identifier, device_identifier, notification_content, notification_metadata, service_metadata | `transient_worker_memory` | `request_lifetime` | discarded_after_delivery_or_error |
-| `relay_binding` | account_identifier, activity_metadata, pseudonymous_identifier | `supabase.relay_bindings` | `until_user_unbinds_or_90_days_inactive` | delete_on_unbind_or_account_deletion |
-| `push_quota` | account_identifier, operational_metadata | `supabase.push_quota` | `30_days` | purge_after_retention |
+| `relay_binding` | account_identifier, activity_metadata, pseudonymous_identifier | `cloudflare_d1.relay_bindings` | `until_user_unbinds_or_90_days_inactive` | delete_on_unbind_or_account_deletion |
+| `push_quota` | account_identifier, operational_metadata | `cloudflare_d1.push_quota` | `30_days` | purge_after_retention |
 | `oauth_state` | provider_selection, pseudonymous_identifier | `redirect_query_and_worker_memory` | `request_lifetime` | discarded_after_callback |
 | `oauth_exchange_record` | authorization_metadata, credential_metadata, oauth_credential, pseudonymous_identifier | `cloudflare_kv.exchange` | `60_seconds` | delete_on_claim_mismatch_or_expiration |
 | `oauth_callback_request` | oauth_credential, provider_error, pseudonymous_identifier | `transient_worker_memory` | `request_lifetime` | discarded_after_callback |
@@ -23,6 +23,7 @@ PocketCoder documents hosted data flows below. Legal prose outside generated sec
 | `oauth_refresh_request` | oauth_credential, provider_selection | `transient_worker_memory` | `request_lifetime` | discarded_after_provider_response |
 | `subscription_entitlement_check` | account_identifier, subscription_status | `cloudflare_cache` | `5_minutes` | cache_expiration |
 | `image_release_object_request` | none | `cloudflare_r2` | `until_release_or_artifact_purge` | release_pipeline_controlled_deletion |
+| `image_relay_revocation` | activity_metadata, pseudonymous_identifier | `cloudflare_d1.image_relay_revocations` | `permanent` | never_deleted_revocation_must_persist |
 | `customer_owned_pocketbase_boundary` | customer_defined | `customer_owned_pocketbase` | `customer_configured` | customer_controlled |
 
 Declared personal-data categories: `account_identifier`, `activity_metadata`, `authentication_credential`, `authorization_metadata`, `conversation_identifier`, `credential_metadata`, `customer_defined`, `device_identifier`, `notification_content`, `notification_metadata`, `oauth_credential`, `operational_metadata`, `provider_configuration`, `provider_error`, `provider_selection`, `pseudonymous_identifier`, `service_metadata`, `subscription_status`.
@@ -35,8 +36,7 @@ Declared personal-data categories: `account_identifier`, `activity_metadata`, `a
 
 | Provider | Services | Role | Contract data |
 |---|---|---|---|
-| `cloudflare` | Workers, KV, R2 | hosting_and_edge_storage | `oauth_state`, `oauth_exchange_record`, `image_release_object_request` |
-| `supabase` | Postgres | push_binding_storage_and_quota | `relay_binding`, `push_quota` |
+| `cloudflare` | Workers, KV, R2, D1 | hosting_edge_storage_and_database | `oauth_state`, `oauth_exchange_record`, `image_release_object_request`, `relay_binding`, `push_quota`, `image_relay_revocation` |
 | `firebase` | FCM | push_delivery | `hosted_push_request` |
 | `revenuecat` | subscription_entitlement_api | expected_subscription_verification | `subscription_entitlement_check` |
 | `github` | OAuth | oauth_provider | `oauth_state`, `oauth_exchange_record`, `oauth_refresh_request` |

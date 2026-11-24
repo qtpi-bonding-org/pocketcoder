@@ -4,6 +4,7 @@ import 'package:pocketcoder_flutter/design_system/primitives/action_kind.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/shell_footer.dart';
 import 'package:pocketcoder_flutter/design_system/primitives/nav_pillar.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/presentation/core/widgets/dot_spinner.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/shell_footer_view.dart';
 
 void main() {
@@ -68,6 +69,36 @@ void main() {
     expect(find.textContaining('▸'), findsNothing,
         reason: 'the navigate glyph means navigate-to-a-screen and nothing '
             'else');
+  });
+
+  testWidgets(
+      'a busy wizard footer shows the spinner and label in place of next, '
+      'and nothing there is tappable', (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+          body: ShellFooterView(
+              footer: WizardFooter(
+                  onNext: () => taps++, busyLabel: 'connecting…'))),
+    ));
+    expect(find.byType(DotSpinner), findsOneWidget);
+    expect(find.text('connecting…'), findsOneWidget);
+    expect(find.text('next'), findsNothing);
+
+    await tester.tap(find.text('connecting…'), warnIfMissed: false);
+    expect(taps, 0);
+  });
+
+  testWidgets('a wizard footer can relabel next', (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+          body: ShellFooterView(
+              footer: WizardFooter(onNext: () => taps++, nextLabel: 'retry'))),
+    ));
+    expect(find.text('next'), findsNothing);
+    await tester.tap(find.text('retry'));
+    expect(taps, 1);
   });
 
   test('a wizard footer cannot be stepless', () {

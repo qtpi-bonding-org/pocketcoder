@@ -17,6 +17,16 @@
   "authNotAuthenticated": "Please log in",
   "authTokenExpired": "Session expired, please log in again",
   "authError": "Authentication error",
+  "authServerTimeout": "The server didn't answer in time",
+  "authServerDns": "Couldn't find this server's address. Check the URL and that your network can resolve it",
+  "authServerUnreachable": "Couldn't connect to the server. It may be down or blocked on this network",
+  "authServerTls": "Couldn't verify the server's secure connection (certificate error)",
+  "authServerUnexpected": "Unexpected response from the server ({detail})",
+  "@authServerUnexpected": {
+    "placeholders": {"detail": {"type": "String"}}
+  },
+  "authServerError": "The server reported an error. Try again in a moment",
+  "authServerIncompatible": "This server isn't compatible with this app version",
   "providerReauthenticationRequired": "Your provider needs to be reauthenticated. Your saved login was kept.",
 
   "chatFetchFailed": "Unable to load chats",
@@ -92,6 +102,9 @@
   "onboardingPassphraseLabel": "passphrase",
   "onboardingPasswordHint": "enter password",
   "onboardingAuthenticating": "authenticating",
+  "onboardingLoginFinishingSetup": "connected, finishing setup…",
+  "onboardingLoginSetupStalled": "Signed in, but setup is taking longer than expected. Tap retry to try again.",
+  "onboardingLoginRetry": "retry",
   "onboardingSetupTitle": "PocketCoder setup",
   "onboardingConnectOrDeploy": "Are you already part of the PocketCoder initiative?",
   "onboardingExistingServer": "use an existing PocketBase server",
@@ -693,9 +706,9 @@
   "@proPricePerYear": {
     "placeholders": {"price": {"type": "String"}}
   },
-  "proStartTrial": "start {days}-day free trial",
-  "@proStartTrial": {
-    "placeholders": {"days": {"type": "int"}}
+  "proSubscribePrice": "subscribe -- {price}",
+  "@proSubscribePrice": {
+    "placeholders": {"price": {"type": "String"}}
   },
   "proSubscribe": "unlock PocketCoder Pro",
   "proContinueSetup": "continue setup",
@@ -705,7 +718,7 @@
   "@proTerms": {
     "placeholders": {"price": {"type": "String"}}
   },
-  "proTrialTerms": "Free for {days} days, then {price}. Until cancelled, manage or cancel in your app store account.",
+  "proTrialTerms": "Includes a {days}-day free trial, then billed {price}. Until cancelled, manage or cancel in your app store account.",
   "@proTrialTerms": {
     "placeholders": {
       "days": {"type": "int"},
@@ -1045,6 +1058,19 @@
   "onboardingServerCredentialsPoco": "These are the administrator credentials for PocketCoder on the server we are about to provision.\n\nThey are separate from your Linode password. I will use them to finish setup, and you will use them to sign in to PocketCoder when the server is ready. Keep them safe.",
   "onboardingPasswordTooShort": "Must be at least 8 characters",
   "onboardingEmailInvalidFormat": "Enter a valid email address",
+  "onboardingPasswordTooLong": "Must be at most 71 characters",
+  "onboardingEmailSurroundingWhitespace": "Remove leading/trailing whitespace",
+  "onboardingPasswordSurroundingWhitespace": "Remove leading/trailing whitespace",
+  "onboardingPasswordPastedWarning": "Has leading/trailing whitespace",
+  "onboardingLoginTriedHost": "Tried: {host}",
+  "@onboardingLoginTriedHost": {
+    "placeholders": {"host": {"type": "String"}}
+  },
+  "onboardingLoginExactMatchHint": "Capitals and whitespace count",
+  "onboardingServerUrlMissingScheme": "Start with http:// or https://",
+  "onboardingServerUrlInvalid": "Enter a valid URL",
+  "terminalTextFieldShow": "show",
+  "terminalTextFieldHide": "hide",
   "onboardingProviderPoco": "Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.",
   "onboardingProviderTitle": "choose a server provider",
   "onboardingProviderChipLinode": "Linode",
@@ -1358,6 +1384,12 @@
     }
   },
   "errorsDeleteAction": "delete",
+  "errorsInboxLink": "errors ({count})",
+  "@errorsInboxLink": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "deploymentResetAction": "reset",
   "@deploymentResetAction": { "description": "Label for the reset deployment state action on the config screen recovery section" },
   "deploymentResetConfirmationTitle": "Reset local deployment state?",

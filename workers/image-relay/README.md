@@ -7,6 +7,13 @@ Worker **never holds provider credentials and never writes to R2** —
 it's a read-only relay in front of objects CI/promotion tooling writes
 directly. All routes are defined in `src/index.ts`.
 
+Credential revocations (`POST /v1/revoke`) are stored in a Cloudflare D1
+database (`pocketcoder-image-relay`, binding `DB`). Schema:
+`migrations/0001_init.sql`, applied with `wrangler d1 migrations apply
+pocketcoder-image-relay --remote` (secrets-daemon action
+`apply_image_relay_d1_schema`). If the lookup fails, requests are denied
+with `503 Revocation check unavailable`, never served.
+
 ## What it serves
 
 Routes: `/v1/channels/{stable,beta,nightly}[-testing].json`,

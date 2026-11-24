@@ -14,8 +14,13 @@ class ErrorTile extends StatefulWidget {
   final Future<void> Function(ErrorEntry) onReportOnGithub;
   final Future<void> Function(String id) onDelete;
 
+  /// Opens the tile showing its detail; the inbox does this for the newest
+  /// report so a screenshot of the screen is enough to diagnose it.
+  final bool initiallyExpanded;
+
   const ErrorTile({
     super.key,
+    this.initiallyExpanded = false,
     required this.entry,
     required this.onCopy,
     required this.onReportOnGithub,
@@ -27,7 +32,7 @@ class ErrorTile extends StatefulWidget {
 }
 
 class _ErrorTileState extends State<ErrorTile> {
-  bool _isExpanded = false;
+  late bool _isExpanded = widget.initiallyExpanded;
 
   String _formatTimestamp(DateTime time) {
     final now = DateTime.now();

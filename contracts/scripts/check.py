@@ -18,27 +18,22 @@ def main():
     if not opts.privacy_only:
         subprocess.run([sys.executable,str(ROOT/'contracts/scripts/generate.py')],check=True)
         external_root=Path(os.environ.get('POCKETCODER_PRO_ROOT', str(ROOT.parents[2]/'pocketcoder-pro')))
-        sql_path=external_root/'workers/push-relay/scripts/supabase-schema.sql'
+        sql_path=external_root/'workers/push-relay/migrations/0001_init.sql'
         sql=sql_path.read_text() if sql_path.exists() else ''
         if not sql:
             print('note: proprietary push-relay SQL not present; public manifest boundary retained')
-        for table in ('relay_bindings','push_quota') if sql else ():
-            if not re.search(r'create\s+table\s+if\s+not\s+exists\s+'+table+r'\s*\((.*?)\);',sql,re.I|re.S): errors.append(f'Supabase table missing: {table}')
-        sql_fields={
-          'relay_binding':['secret_hash','user_id','bound_at'],
-          'push_quota':['user_id','day','count'],
-        }
-        for record, cols in sql_fields.items() if sql else []:
+        sql_tables=[(sql,'relay_bindings','relay_binding',['secret_hash','user_id','bound_at']),
+                    (sql,'push_quota','push_quota',['user_id','day','count'])] if sql else []
+        sql_tables.append(((ROOT/'workers/image-relay/migrations/0001_init.sql').read_text(),'image_relay_revocations','image_relay_revocation',['jti','revoked_at']))
+        for table_sql, table, record, cols in sql_tables:
+            m=re.search(r'create\s+table\s+if\s+not\s+exists\s+'+table+r'\s*\((.*?)\);',table_sql,re.I|re.S)
+            if not m:
+                errors.append(f'SQL table missing: {table}')
+                continue
             manifest_cols={f['name'] for f in records[record]['fields']}
             if manifest_cols != set(cols): errors.append(f'{record} manifest columns {sorted(manifest_cols)} != SQL columns {cols}')
             for col in cols:
-                if not re.search(r'\b'+re.escape(col)+r'\b',sql,re.I): errors.append(f'SQL column missing: {record}.{col}')
-        for fn, params in [('bind_relay_secret',['p_secret_hash','p_user_id']),('increment_push',['p_user_id'])] if sql else []:
-            m=re.search(r'create\s+or\s+replace\s+function\s+'+fn+r'\s*\((.*?)\)',sql,re.I|re.S)
-            if not m: errors.append(f'Supabase function missing: {fn}')
-            else:
-                for p in params:
-                    if not re.search(r'\b'+p+r'\b',m.group(1),re.I): errors.append(f'RPC parameter missing: {fn}({p})')
+                if not re.search(r'\b'+re.escape(col)+r'\b',m.group(1),re.I): errors.append(f'SQL column missing: {table}.{col}')
         source_path=external_root/'workers/push-relay/src/index.js'
         source=source_path.read_text() if source_path.exists() else ''
         if source:

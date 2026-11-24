@@ -47,6 +47,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authError => 'Authentication error';
 
   @override
+  String get authServerTimeout => 'The server didn\'t answer in time';
+
+  @override
+  String get authServerDns =>
+      'Couldn\'t find this server\'s address. Check the URL and that your network can resolve it';
+
+  @override
+  String get authServerUnreachable =>
+      'Couldn\'t connect to the server. It may be down or blocked on this network';
+
+  @override
+  String get authServerTls =>
+      'Couldn\'t verify the server\'s secure connection (certificate error)';
+
+  @override
+  String authServerUnexpected(String detail) {
+    return 'Unexpected response from the server ($detail)';
+  }
+
+  @override
+  String get authServerError =>
+      'The server reported an error. Try again in a moment';
+
+  @override
+  String get authServerIncompatible =>
+      'This server isn\'t compatible with this app version';
+
+  @override
   String get providerReauthenticationRequired =>
       'Your provider needs to be reauthenticated. Your saved login was kept.';
 
@@ -246,6 +274,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get onboardingAuthenticating => 'authenticating';
+
+  @override
+  String get onboardingLoginFinishingSetup => 'connected, finishing setup…';
+
+  @override
+  String get onboardingLoginSetupStalled =>
+      'Signed in, but setup is taking longer than expected. Tap retry to try again.';
+
+  @override
+  String get onboardingLoginRetry => 'retry';
 
   @override
   String get onboardingSetupTitle => 'PocketCoder setup';
@@ -1599,8 +1637,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String proStartTrial(int days) {
-    return 'start $days-day free trial';
+  String proSubscribePrice(String price) {
+    return 'subscribe -- $price';
   }
 
   @override
@@ -1622,7 +1660,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String proTrialTerms(int days, String price) {
-    return 'Free for $days days, then $price. Until cancelled, manage or cancel in your app store account.';
+    return 'Includes a $days-day free trial, then billed $price. Until cancelled, manage or cancel in your app store account.';
   }
 
   @override
@@ -2560,6 +2598,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingEmailInvalidFormat => 'Enter a valid email address';
 
   @override
+  String get onboardingPasswordTooLong => 'Must be at most 71 characters';
+
+  @override
+  String get onboardingEmailSurroundingWhitespace =>
+      'Remove leading/trailing whitespace';
+
+  @override
+  String get onboardingPasswordSurroundingWhitespace =>
+      'Remove leading/trailing whitespace';
+
+  @override
+  String get onboardingPasswordPastedWarning =>
+      'Has leading/trailing whitespace';
+
+  @override
+  String onboardingLoginTriedHost(String host) {
+    return 'Tried: $host';
+  }
+
+  @override
+  String get onboardingLoginExactMatchHint => 'Capitals and whitespace count';
+
+  @override
+  String get onboardingServerUrlMissingScheme =>
+      'Start with http:// or https://';
+
+  @override
+  String get onboardingServerUrlInvalid => 'Enter a valid URL';
+
+  @override
+  String get terminalTextFieldShow => 'show';
+
+  @override
+  String get terminalTextFieldHide => 'hide';
+
+  @override
   String get onboardingProviderPoco =>
       'Okay, here are our options for who will host your server.\n\nA server provider gives it a computer and internet connection, then keeps it online.';
 
@@ -3356,6 +3430,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorsDeleteAction => 'delete';
+
+  @override
+  String errorsInboxLink(int count) {
+    return 'errors ($count)';
+  }
 
   @override
   String get deploymentResetAction => 'reset';

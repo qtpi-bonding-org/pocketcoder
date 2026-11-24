@@ -9,8 +9,7 @@ import { rfc7638Thumbprint } from './crypto.ts';
 
 interface Env {
 	IMAGES: R2Bucket;
-	SUPABASE_URL: string;
-	SUPABASE_SERVICE_KEY: string;
+	DB: D1Database;
 	REVENUECAT_SECRET_KEY: string;
 	REVENUECAT_PROJECT_ID: string;
 }
@@ -80,40 +79,29 @@ async function checkSubscription(userId: string, env: Env): Promise<boolean> {
 	}
 }
 
-async function isRevoked(jti: string, env: Env): Promise<boolean> {
+type RevocationStatus = 'revoked' | 'active' | 'unavailable';
+
+async function revocationStatus(jti: string, env: Env): Promise<RevocationStatus> {
 	const cacheKey = new Request(`https://ir-revoke-cache-v1.internal/${encodeURIComponent(jti)}`);
 	const cache = (caches as unknown as { default: Cache }).default;
 	const cached = await cache.match(cacheKey);
-	if (cached) return ((await cached.json()) as { revoked: boolean }).revoked;
-	let resp: Response;
+	if (cached) return ((await cached.json()) as { revoked: boolean }).revoked ? 'revoked' : 'active';
+	let row: unknown;
 	try {
-		resp = await fetch(
-			`${env.SUPABASE_URL}/rest/v1/image_relay_revocations?jti=eq.${encodeURIComponent(jti)}&select=jti`,
-			{ headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` } },
-		);
+		row = await env.DB.prepare('SELECT 1 FROM image_relay_revocations WHERE jti = ?1').bind(jti).first();
 	} catch (e) {
-		console.error(`Revocation lookup request failed at ${env.SUPABASE_URL}/rest/v1/image_relay_revocations:`, (e as Error).message);
-		return true;
+		console.error('Revocation lookup failed:', (e as Error).message);
+		return 'unavailable';
 	}
-	if (!resp.ok) {
-		console.error(`Revocation lookup failed: HTTP ${resp.status}`);
-		return true;
-	}
-	const rows = (await resp.json()) as unknown[];
-	const revoked = rows.length > 0;
+	const revoked = row !== null;
 	await cache.put(cacheKey, new Response(JSON.stringify({ revoked }), {
 		headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=300' },
 	}));
-	return revoked;
+	return revoked ? 'revoked' : 'active';
 }
 
 async function recordRevocation(jti: string, env: Env): Promise<void> {
-	const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/image_relay_revocations`, {
-		method: 'POST',
-		headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates' },
-		body: JSON.stringify({ jti }),
-	});
-	if (!resp.ok) throw new Error(`Failed to record revocation: HTTP ${resp.status}`);
+	await env.DB.prepare('INSERT OR IGNORE INTO image_relay_revocations (jti) VALUES (?1)').bind(jti).run();
 }
 
 async function checkAndRecordProofJti(keyThumbprint: string, proofJti: string): Promise<boolean> {
@@ -138,7 +126,9 @@ export async function authorizeRequest(request: Request, env: Env): Promise<
 		console.error('Credential verification failed:', (e as Error).message);
 		return { ok: false, status: 401, error: `Invalid credential: ${(e as Error).message}` };
 	}
-	if (await isRevoked(credential.jti, env)) return { ok: false, status: 403, error: 'Credential revoked' };
+	const revocation = await revocationStatus(credential.jti, env);
+	if (revocation === 'unavailable') return { ok: false, status: 503, error: 'Revocation check unavailable' };
+	if (revocation === 'revoked') return { ok: false, status: 403, error: 'Credential revoked' };
 	const expectedUrl = `${TRUSTED_ORIGIN}${new URL(request.url).pathname}`;
 	let proof;
 	try { proof = await verifyProof(proofHeader, credential.boxJwk, request.method, expectedUrl, Math.floor(Date.now() / 1000)); }

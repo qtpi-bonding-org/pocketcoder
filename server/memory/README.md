@@ -1,5 +1,9 @@
 # Pocket Memory
 
+The code here is a vendored copy of
+<https://github.com/qtpi-bonding/pocket-memory>; see `VENDORED`. Change it there,
+then run `tooling/scripts/sync_pocket_memory.sh`. This README is PocketCoder's own.
+
 Pocket Memory is PocketCoder's lightweight, local-first MCP memory service. It
 stores mutable agent-authored observations and interpretations in SQLite, links
 them through an ordinary many-to-many join, and retrieves them with FTS5 plus a
@@ -64,11 +68,12 @@ revisions, validated against the upstream F32 model, checksum-pinned, and
 bundled so production startup needs no network access.
 
 For development, `docker compose build pocket-memory` downloads the immutable
-MIT Q8_0 artifact from `keisuke-miyako/multilingual-e5-small-gguf-q8_0` commit
-`e1da94460f223e3204e75dfe51350e5491c879d4` and verifies SHA-256
-`0d5a5a0b0ad84faad6357a6145e769b0661f0efbf53acf74598afc34dab454f4`.
+MIT Q8_0 artifact from `janusz-bit/multilingual-e5-small-gguf` commit
+`57c0a8f1481a66ca991375e4f87311c9e4bd0cc5` and verifies SHA-256
+`3a98dd889ee152d923991c60df2fad21e39f7441a5ee302a0a050d5137993b60`.
 `tests/model_compat.rs` verifies that the configured artifact loads through the
-actual adapter and produces finite, normalized multilingual embeddings. Release
+actual adapter and produces finite, normalized multilingual embeddings, and
+`tests/model_reference.rs` compares them with upstream. Release
 CI requires explicit model URL and checksum values so production can switch to
 PocketCoder's independently reproduced artifact without runtime changes.
 
@@ -82,24 +87,25 @@ to start or perform semantic retrieval. The current Q8_0 GGUF is approximately
 
 ### Measured memory footprint
 
-Measurements taken from the release-mode Debian Bookworm container on
-2026-08-13, using the bundled Q8_0 model and CPU-only llama.cpp runtime:
+Idle is the memory held while the service waits for work; it is not zero, because
+the model stays loaded. The peak grows with the length of the text embedded, up to
+the 512-token limit, and is not released afterwards.
 
-| State | Process RSS |
+Container memory measured on 2026-11-24, arm64 Debian Bookworm, release build,
+bundled Q8_0 model, CPU only:
+
+| State | Container memory |
 | --- | ---: |
-| Ready, before the first embedding | approximately 187 MiB |
-| Warm idle, after a real embedding | approximately 197 MiB |
+| Ready, before the first embedding | approximately 265 MiB |
+| After a short note | approximately 270 MiB |
+| After a note that fills the 512-token limit | approximately 760 MiB |
 
-About 130 MiB of the warm process RSS is file-backed model data and can be
-reclaimed by the operating system under pressure, at the cost of faulting those
-pages back in later. Docker Desktop reported only approximately 91 MiB for the
-same warm container because its container accounting discounted or attributed
-shared image-backed pages elsewhere; that figure should not be used for VPS
-sizing.
+About 130 MiB of the total is file-backed model data that the operating system
+can reclaim under pressure. Measurements on other architectures may differ.
 
-Allocate 384 MiB as a practical minimum for the service and 512 MiB for
-comfortable operating headroom. These are service-level sizing numbers, not a
-whole-stack PocketCoder memory requirement.
+Allow at least 1 GiB for the service. At 512 MiB it was killed while importing
+long notes. These are service-level sizing numbers, not a whole-stack PocketCoder
+memory requirement.
 
 ## Acknowledgements and provenance
 

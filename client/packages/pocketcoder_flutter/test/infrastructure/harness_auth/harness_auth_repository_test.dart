@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
@@ -143,5 +145,15 @@ void main() {
         requestPolicy: RequestPolicy.networkOnly)).thenAnswer((_) async => []);
     expect(await repository.hasEffectiveHarnessConnection(), isFalse);
     expect(calls, 2);
+  });
+
+  test('a stalled probe returns false once its wall-clock budget is spent',
+      () async {
+    when(() => oauthAccountDao.getFullList(
+            requestPolicy: RequestPolicy.networkOnly))
+        .thenAnswer((_) => Completer<List<HarnessOauthAccount>>().future);
+    repository.connectionProbeTimeout = const Duration(milliseconds: 20);
+
+    expect(await repository.hasEffectiveHarnessConnection(), isFalse);
   });
 }

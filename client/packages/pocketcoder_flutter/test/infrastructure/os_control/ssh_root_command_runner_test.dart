@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pocketcoder_flutter/domain/os_control/i_root_ssh_credentials_provider.dart';
@@ -24,7 +25,52 @@ SshRootCommandRunner _runner(RootSshCredentials? credentials) =>
       credentialsProvider: _CredentialsProvider(credentials),
     );
 
+const _throwawayUnusedTestKeyPem = '''
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACDKG62SnsY3Ekjx62Z660rIGRN3YACezSwyMw0ZaY5ngQAAAIhYDsRkWA7E
+ZAAAAAtzc2gtZWQyNTUxOQAAACDKG62SnsY3Ekjx62Z660rIGRN3YACezSwyMw0ZaY5ngQ
+AAAEBoAOfxZN2L0Glk82eufm/ta30HNGvw/QW/p9rITmduasobrZKexjcSSPHrZnrrSsgZ
+E3dgAJ7NLDIzDRlpjmeBAAAABHRlc3QB
+-----END OPENSSH PRIVATE KEY-----
+''';
+
 void main() {
+  test(
+      'gives up when the server accepts the connection but never completes '
+      'the SSH handshake -- warmUp can reach this before runApp()', () async {
+    final silentServer =
+        await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    final accepted = <Socket>[];
+    silentServer.listen(accepted.add);
+    addTearDown(() async {
+      for (final socket in accepted) {
+        socket.destroy();
+      }
+      await silentServer.close();
+    });
+    final runner = SshRootCommandRunner(
+      credentialsProvider: const _CredentialsProvider(
+        RootSshCredentials(
+          privateKeyPem: _throwawayUnusedTestKeyPem,
+          hostKeyType: 'ssh-ed25519',
+          hostKeyFingerprint: 'SHA256:AAAAC3NzaC1lZDI1NTE5AAAAIA',
+        ),
+      ),
+      port: silentServer.port,
+      handshakeTimeout: const Duration(milliseconds: 300),
+    );
+
+    await expectLater(
+      runner.run(
+        instanceId: 'instance',
+        host: '127.0.0.1',
+        command: RootSshCommand.exportCaddyCaFingerprint,
+      ),
+      throwsA(isA<RootSshException>()),
+    );
+  }, timeout: const Timeout(Duration(seconds: 10)));
+
   test('refuses a privileged operation without owner credentials', () async {
     await expectLater(
       _runner(null).run(

@@ -41,6 +41,14 @@ class FakeReadiness implements IServerReadinessCheck {
   Future<void> retry() async {}
 }
 
+class ThrowingInitializeReadiness extends FakeReadiness {
+  ThrowingInitializeReadiness(super.snapshot);
+
+  @override
+  Future<void> initialize() async =>
+      throw StateError('keychain read failed during readiness initialize');
+}
+
 class FakeAuthRepository implements IAuthRepository {
   bool authenticated;
   AuthRefreshResult refreshResult;
@@ -291,6 +299,7 @@ class HarnessTest {
   late final FakeHarness harness;
   late final GoRouter router;
   late final BootRoutingDecider decider;
+
   /// Every route the router settled on, in order, without consecutive
   /// duplicates. This is the observable behaviour the migration must preserve.
   final List<String> journey = <String>[];
@@ -430,6 +439,25 @@ void main() {
         deploymentAuthStatus: authStatus);
     await t.start(tester);
     expect(t.router.state.name, RouteNames.onboardingLogin);
+  });
+
+  testWidgets(
+      'still routes off the boot screen when readiness initialize throws -- '
+      'otherwise the boot animation runs forever with no route',
+      (tester) async {
+    final t = HarnessTest(
+        readinessOverride: ThrowingInitializeReadiness(
+            const ServerReadinessSnapshot(
+                status: ServerReadinessStatus.notProvisioned)));
+    addTearDown(t.decider.dispose);
+    await tester.pumpWidget(Directionality(
+        textDirection: TextDirection.ltr,
+        child: Router.withConfig(config: t.router)));
+    final pending = t.decider.start();
+    await tester.pump(BootRoutingDecider.kMinFreshInstallBootDuration);
+    await pending;
+    await t.settleReconcile(tester);
+    expect(t.router.state.name, RouteNames.onboarding);
   });
 
   testWidgets('optional deployment auth leaves FOSS boot wait unchanged',

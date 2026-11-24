@@ -24,7 +24,7 @@
     {
       "id": "push-relay",
       "repository": "../pocketcoder-pro",
-      "schema": "workers/push-relay/scripts/supabase-schema.sql",
+      "schema": "workers/push-relay/migrations/0001_init.sql",
       "source": "workers/push-relay/src/index.js",
       "status": "proprietary_external_worker"
     }
@@ -39,25 +39,18 @@
       "data": [
         "oauth_state",
         "oauth_exchange_record",
-        "image_release_object_request"
+        "image_release_object_request",
+        "relay_binding",
+        "push_quota",
+        "image_relay_revocation"
       ],
       "id": "cloudflare",
-      "role": "hosting_and_edge_storage",
+      "role": "hosting_edge_storage_and_database",
       "services": [
         "Workers",
         "KV",
-        "R2"
-      ]
-    },
-    {
-      "data": [
-        "relay_binding",
-        "push_quota"
-      ],
-      "id": "supabase",
-      "role": "push_binding_storage_and_quota",
-      "services": [
-        "Postgres"
+        "R2",
+        "D1"
       ]
     },
     {
@@ -126,7 +119,7 @@
         },
         {
           "deletion": "not_stored",
-          "destination": "Supabase",
+          "destination": "Cloudflare_D1",
           "log": false,
           "name": "user_id",
           "personal_data": "account_identifier",
@@ -229,12 +222,12 @@
     },
     {
       "deletion": "delete_on_unbind_or_account_deletion",
-      "destination": "supabase",
+      "destination": "cloudflare_d1",
       "durable": true,
       "fields": [
         {
           "deletion": "delete_with_account",
-          "destination": "Supabase",
+          "destination": "Cloudflare_D1",
           "log": false,
           "name": "secret_hash",
           "personal_data": "pseudonymous_identifier",
@@ -247,7 +240,7 @@
         },
         {
           "deletion": "delete_with_account",
-          "destination": "Supabase",
+          "destination": "Cloudflare_D1",
           "log": false,
           "name": "user_id",
           "personal_data": "account_identifier",
@@ -260,7 +253,7 @@
         },
         {
           "deletion": "delete_with_record",
-          "destination": "Supabase",
+          "destination": "Cloudflare_D1",
           "log": false,
           "name": "bound_at",
           "personal_data": "activity_metadata",
@@ -278,16 +271,16 @@
       "service": "push-relay",
       "source": "hosted_push_request",
       "status": "proprietary_external_worker",
-      "storage": "supabase.relay_bindings"
+      "storage": "cloudflare_d1.relay_bindings"
     },
     {
       "deletion": "purge_after_retention",
-      "destination": "supabase",
+      "destination": "cloudflare_d1",
       "durable": true,
       "fields": [
         {
           "deletion": "purge_with_window",
-          "destination": "Supabase",
+          "destination": "Cloudflare_D1",
           "log": false,
           "name": "user_id",
           "personal_data": "account_identifier",
@@ -300,7 +293,7 @@
         },
         {
           "deletion": "purge_after_retention",
-          "destination": "Supabase",
+          "destination": "Cloudflare_D1",
           "log": false,
           "name": "day",
           "personal_data": "operational_metadata",
@@ -313,7 +306,7 @@
         },
         {
           "deletion": "purge_after_retention",
-          "destination": "Supabase",
+          "destination": "Cloudflare_D1",
           "log": false,
           "name": "count",
           "personal_data": "operational_metadata",
@@ -331,7 +324,7 @@
       "service": "push-relay",
       "source": "hosted_push_request",
       "status": "proprietary_external_worker",
-      "storage": "supabase.push_quota"
+      "storage": "cloudflare_d1.push_quota"
     },
     {
       "deletion": "discarded_after_callback",
@@ -759,6 +752,45 @@
       "storage": "cloudflare_r2"
     },
     {
+      "deletion": "never_deleted_revocation_must_persist",
+      "destination": "cloudflare_d1",
+      "durable": true,
+      "fields": [
+        {
+          "deletion": "not_deleted",
+          "destination": "Cloudflare_D1",
+          "log": true,
+          "name": "jti",
+          "personal_data": "pseudonymous_identifier",
+          "purpose": "deny_revoked_box_credential",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "revoke_request_body",
+          "type": "string"
+        },
+        {
+          "deletion": "not_deleted",
+          "destination": "Cloudflare_D1",
+          "log": false,
+          "name": "revoked_at",
+          "personal_data": "activity_metadata",
+          "purpose": "revocation_audit_time",
+          "required": true,
+          "secret": false,
+          "sensitivity": "low",
+          "source": "database_clock",
+          "type": "timestamp"
+        }
+      ],
+      "kind": "stored_record",
+      "name": "image_relay_revocation",
+      "retention": "permanent",
+      "service": "image-relay",
+      "source": "root_signed_revoke_request",
+      "storage": "cloudflare_d1.image_relay_revocations"
+    },
+    {
       "deletion": "customer_controlled",
       "destination": "customer_owned_pocketbase",
       "durable": true,
@@ -785,6 +817,6 @@
       "storage": "customer_owned_pocketbase"
     }
   ],
-  "scope": "hosted-workers-and-supabase",
+  "scope": "hosted-workers",
   "version": 1
 }

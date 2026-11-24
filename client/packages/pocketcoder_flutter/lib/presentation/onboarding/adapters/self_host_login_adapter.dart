@@ -1,26 +1,46 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cubit_ui_flow/cubit_ui_flow.dart';
+import 'package:pocketcoder_flutter/application/boot/boot_routing_decider.dart';
 import 'package:pocketcoder_flutter/application/system/auth_cubit.dart';
 import 'package:pocketcoder_flutter/application/system/poco_cubit.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
+import 'package:pocketcoder_flutter/l10n/l10n_key_resolver.g.dart';
+import 'package:pocketcoder_flutter/presentation/core/safe_error_message.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/vim_toast.dart';
+import 'package:pocketcoder_flutter/presentation/errors/error_inbox_link_builder.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/onboarding_prefill.dart';
 import 'package:pocketcoder_flutter/presentation/onboarding/widgets/self_host_login_view.dart';
 import 'package:pocketcoder_flutter/support/onboarding_logger.dart';
+import 'package:pocketcoder_flutter/support/validation/credential_rules.dart';
+import 'package:pocketcoder_flutter/support/validation/server_url_rules.dart';
 import '../../../app_router.dart';
 
 class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
-  SelfHostLoginAdapter({super.key, this.prefill});
+  SelfHostLoginAdapter({
+    super.key,
+    this.prefill,
+    this.setupWatchdog = const Duration(seconds: 10),
+  });
 
   final OnboardingPrefill? prefill;
+  final Duration setupWatchdog;
   final _url = ValueNotifier<String>('');
   final _email = ValueNotifier<String>('');
   final _password = ValueNotifier<String>('');
+  final _urlIssue = ValueNotifier<ServerUrlIssue?>(null);
+  final _emailIssue = ValueNotifier<EmailIssue?>(null);
+  final _passwordLooksPasted = ValueNotifier<bool>(false);
   final _pocoMessage = ValueNotifier<String>('');
   final _pocoSequence = ValueNotifier<List<(String, int)>>(const []);
   final List<String> _pocoHistory = const [];
+
+  final _attemptHost = ValueNotifier<String>('');
+  final _failureText = ValueNotifier<String?>(null);
 
   static UiFlowStatus selectStatus(AuthState state) => state.status;
 
@@ -30,39 +50,104 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     CubitAdapterState<AuthCubit, AuthState> adapter,
   ) {
     final status = adapter.cubitField(selectStatus);
-    adapter.listenTo(#authStatus, status, () => _handleAuthStatus(context));
+    final watchdog = adapter.keep<_SetupWatchdog>(
+      #setupWatchdog,
+      _SetupWatchdog.new,
+      dispose: (w) => w.dispose(),
+    );
+    adapter.listenTo(
+        #authStatus, status, () => _handleAuthStatus(context, watchdog));
     _initialize(context);
 
-    return ValueListenableBuilder<UiFlowStatus>(
-      valueListenable: status,
-      builder: (context, status, _) => SelfHostLoginView(
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        status,
+        watchdog.stalled,
+        _urlIssue,
+        _emailIssue,
+        _passwordLooksPasted,
+        _pocoMessage,
+        _pocoSequence,
+        _failureText,
+      ]),
+      builder: (context, _) => SelfHostLoginView(
         initialUrl: _url.value,
         initialEmail: _email.value,
         initialPassword: _password.value,
-        status: status,
+        status: status.value,
         pocoMessage: _pocoMessage.value,
         pocoSequence: _pocoSequence.value,
         pocoHistory: _pocoHistory,
         onDeploy: () => context.pushNamed(RouteNames.onboardingWelcome),
         onLogin: (url, email, password) =>
             _login(context, url, email, password),
+        onRetrySetup: watchdog.stalled.value
+            ? () => _retrySetup(context, watchdog)
+            : null,
+        errorInboxLink: const ErrorInboxLinkBuilder(),
+        failureText: _failureText.value,
+        urlErrorText: switch (_urlIssue.value) {
+          ServerUrlIssue.missingScheme =>
+            context.l10n.onboardingServerUrlMissingScheme,
+          ServerUrlIssue.invalid => context.l10n.onboardingServerUrlInvalid,
+          null => null,
+        },
+        onUrlChanged: (_) => _urlIssue.value = null,
+        emailErrorText: switch (_emailIssue.value) {
+          EmailIssue.surroundingWhitespace =>
+            context.l10n.onboardingEmailSurroundingWhitespace,
+          EmailIssue.invalidFormat => context.l10n.onboardingEmailInvalidFormat,
+          null => null,
+        },
+        passwordHelperText: _passwordLooksPasted.value
+            ? context.l10n.onboardingPasswordPastedWarning
+            : null,
+        onEmailChanged: (_) => _emailIssue.value = null,
+        onPasswordChanged: (password) =>
+            _passwordLooksPasted.value = loginPasswordLooksPasted(password),
       ),
     );
   }
 
+  void _armWatchdog(BuildContext context, _SetupWatchdog watchdog) {
+    watchdog.arm(setupWatchdog, () {
+      if (!context.mounted) return;
+      OnboardingLogger.event('existing server connected; setup stalled');
+      _pocoMessage.value = context.l10n.onboardingLoginSetupStalled;
+      _pocoSequence.value = PocoExpressions.nervous;
+    });
+  }
+
+  void _retrySetup(BuildContext context, _SetupWatchdog watchdog) {
+    OnboardingLogger.event('existing server connected; retrying setup');
+    _pocoMessage.value = context.l10n.onboardingPocoWelcome;
+    _pocoSequence.value = PocoExpressions.happy;
+    _armWatchdog(context, watchdog);
+    if (GetIt.I.isRegistered<BootRoutingDecider>()) {
+      unawaited(GetIt.I<BootRoutingDecider>().retryAuth());
+    }
+  }
+
   void _initialize(BuildContext context) {
     if (_pocoMessage.value.isNotEmpty) return;
-    _url.value = prefill?.url ?? 'http://127.0.0.1:8090';
+    _url.value = prefill?.url ?? '';
     _email.value = prefill?.email ?? '';
     _password.value = prefill?.password ?? '';
+    _passwordLooksPasted.value = loginPasswordLooksPasted(_password.value);
     _pocoMessage.value = context.l10n.onboardingPocoChallengeMessage;
     _pocoSequence.value = PocoExpressions.scanning;
     final savedUrl = context.read<AuthCubit>().state.savedUrl;
     if (prefill == null && savedUrl != null) _url.value = savedUrl;
   }
 
-  void _handleAuthStatus(BuildContext context) {
+  void _handleAuthStatus(BuildContext context, _SetupWatchdog watchdog) {
     final state = context.read<AuthCubit>().state;
+    if (state.status == UiFlowStatus.success) {
+      _armWatchdog(context, watchdog);
+    } else {
+      watchdog.reset();
+    }
+    if (state.status != UiFlowStatus.failure) _failureText.value = null;
     if (state.status == UiFlowStatus.loading) {
       _pocoSequence.value = PocoExpressions.scanning;
     } else if (state.status == UiFlowStatus.success) {
@@ -71,10 +156,26 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
       _pocoMessage.value = context.l10n.onboardingPocoWelcome;
       _pocoSequence.value = PocoExpressions.happy;
     } else if (state.status == UiFlowStatus.failure) {
-      // Never surfaces state.error's raw text -- it may carry an
-      // unpredictable underlying exception (network, decoding, etc.) that
-      // client/AGENTS.md requires stay out of user-facing copy.
-      _pocoMessage.value = context.l10n.onboardingAccessDenied;
+      // Mapped/localized, never state.error's raw text.
+      final error = state.error;
+      final mapped = safeErrorMessage(error);
+      final message =
+          mapped.isNotEmpty ? mapped : context.l10n.onboardingAccessDenied;
+      final credentialsRejected =
+          error != null && safeErrorKey(error).key == L10nKeys.authLoginFailed;
+      final detail = credentialsRejected
+          ? '$message\n\n${context.l10n.onboardingLoginExactMatchHint}'
+          : message;
+      // The screenshot is the only diagnostic a reviewer reliably sends, so
+      // the screen itself names the server that was tried, in the banner
+      // under the form rather than in Poco's message at the top of the card.
+      final host = _attemptHost.value;
+      final probe = context.read<AuthCubit>().networkReport;
+      final tried = host.isEmpty
+          ? detail
+          : '$detail\n\n${context.l10n.onboardingLoginTriedHost(host)}';
+      _failureText.value =
+          probe == null || probe.isEmpty ? tried : '$tried\n\n$probe';
       _pocoSequence.value = PocoExpressions.nervous;
     }
   }
@@ -87,18 +188,34 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
   ) async {
     if (url.isEmpty || email.isEmpty || password.isEmpty) {
       VimToast.show(context, context.l10n.onboardingRequiredFields);
+      // The toast disappears; leave the reason on the screen as well.
+      _pocoMessage.value = context.l10n.onboardingRequiredFields;
+      _pocoSequence.value = PocoExpressions.nervous;
       return;
     }
+    final urlProblem = serverUrlIssue(url);
+    final issue = emailIssue(email);
+    _urlIssue.value = urlProblem;
+    _emailIssue.value = issue;
+    if (urlProblem != null || issue != null) return;
+    final parsed = Uri.tryParse(url);
+    _attemptHost.value = parsed == null || parsed.host.isEmpty
+        ? url
+        : '${parsed.host}${parsed.hasPort ? ':${parsed.port}' : ''}';
     OnboardingLogger.event('existing server login submitted', {
       'server_host': Uri.tryParse(url)?.host ?? 'invalid',
       'email_domain': email.contains('@') ? email.split('@').last : 'invalid',
     });
     try {
       await context.read<AuthCubit>().login(url, email, password);
-    } catch (_) {
+    } catch (error) {
       if (context.mounted) {
-        VimToast.show(context, context.l10n.onboardingAccessDenied,
-            color: context.terminalColors.warning);
+        final mapped = safeErrorMessage(error);
+        VimToast.show(
+          context,
+          mapped.isNotEmpty ? mapped : context.l10n.onboardingAccessDenied,
+          color: context.terminalColors.warning,
+        );
       }
     }
   }
@@ -108,8 +225,37 @@ class SelfHostLoginAdapter extends CubitAdapter<AuthCubit, AuthState> {
     _url.dispose();
     _email.dispose();
     _password.dispose();
+    _urlIssue.dispose();
+    _emailIssue.dispose();
+    _passwordLooksPasted.dispose();
+    _attemptHost.dispose();
+    _failureText.dispose();
     _pocoMessage.dispose();
     _pocoSequence.dispose();
     super.disposeAdapter();
+  }
+}
+
+class _SetupWatchdog {
+  final ValueNotifier<bool> stalled = ValueNotifier(false);
+  Timer? _timer;
+
+  void arm(Duration after, VoidCallback onStall) {
+    reset();
+    _timer = Timer(after, () {
+      onStall();
+      stalled.value = true;
+    });
+  }
+
+  void reset() {
+    _timer?.cancel();
+    _timer = null;
+    stalled.value = false;
+  }
+
+  void dispose() {
+    _timer?.cancel();
+    stalled.dispose();
   }
 }

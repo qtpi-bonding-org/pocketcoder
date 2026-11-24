@@ -17,6 +17,10 @@ pub struct Config {
     pub database_path: PathBuf,
     pub busy_timeout: Duration,
     pub bind_address: SocketAddr,
+    /// Host header values accepted in addition to the built-in list.
+    pub extra_allowed_hosts: Vec<String>,
+    /// Whether agents get the update and delete tools.
+    pub agent_edits: bool,
     pub embedding_model_path: PathBuf,
     pub embedding_version: String,
     pub embedding_threads: usize,
@@ -52,6 +56,12 @@ impl Config {
                     "POCKET_MEMORY_BIND_ADDRESS must be an IP socket address: {error}"
                 ))
             })?;
+        let extra_allowed_hosts = env::var("POCKET_MEMORY_EXTRA_ALLOWED_HOSTS")
+            .map_or_else(|_| Vec::new(), |value| parse_hosts(&value));
+        let agent_edits = match env::var("POCKET_MEMORY_AGENT_EDITS") {
+            Ok(value) => parse_bool("POCKET_MEMORY_AGENT_EDITS", &value)?,
+            Err(_) => false,
+        };
         let embedding_model_path = env::var_os("POCKET_MEMORY_EMBEDDING_MODEL_PATH").map_or_else(
             || PathBuf::from(DEFAULT_EMBEDDING_MODEL_PATH),
             PathBuf::from,
@@ -83,6 +93,8 @@ impl Config {
             database_path,
             busy_timeout: Duration::from_millis(busy_timeout),
             bind_address,
+            extra_allowed_hosts,
+            agent_edits,
             embedding_model_path,
             embedding_version,
             embedding_threads,
@@ -90,6 +102,25 @@ impl Config {
             reconcile_interval: Duration::from_secs(reconcile_interval_seconds),
             reconcile_batch_size,
         })
+    }
+}
+
+fn parse_hosts(value: &str) -> Vec<String> {
+    value
+        .split(',')
+        .map(str::trim)
+        .filter(|host| !host.is_empty())
+        .map(str::to_owned)
+        .collect()
+}
+
+fn parse_bool(name: &str, value: &str) -> Result<bool> {
+    match value.trim() {
+        "true" | "1" => Ok(true),
+        "false" | "0" | "" => Ok(false),
+        other => Err(MemoryError::Configuration(format!(
+            "{name} must be true or false, got {other:?}"
+        ))),
     }
 }
 
@@ -109,5 +140,23 @@ where
         )))
     } else {
         Ok(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hosts_are_trimmed_and_empty_entries_dropped() {
+        assert_eq!(parse_hosts(" a:8000, ,b,"), ["a:8000", "b"]);
+        assert_eq!(parse_hosts(""), Vec::<String>::new());
+    }
+
+    #[test]
+    fn booleans_reject_unknown_values() {
+        assert!(parse_bool("X", "true").unwrap());
+        assert!(!parse_bool("X", "0").unwrap());
+        assert!(parse_bool("X", "yes please").is_err());
     }
 }

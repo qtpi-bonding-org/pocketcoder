@@ -35,7 +35,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             config.reconcile_batch_size,
         ))
     });
-    let router = mcp::router(service, cancellation.child_token());
+    let router = mcp::router_with_options(
+        service,
+        cancellation.child_token(),
+        mcp::RouterOptions {
+            extra_allowed_hosts: config.extra_allowed_hosts.clone(),
+            agent_edits: config.agent_edits,
+        },
+    );
     let listener = tokio::net::TcpListener::bind(config.bind_address).await?;
 
     tracing::info!(address = %config.bind_address, "pocket-memory listening");

@@ -44,10 +44,12 @@ class ProOffer extends StatelessWidget {
         ),
       ],
       VSpace.x2,
+      // The billed amount leads: first, bold, inverse video. Any trial or
+      // introductory wording is subordinate (Guideline 3.1.2(c)).
+      _BilledAmount(text: recurringPrice),
+      VSpace.x1,
       TerminalButton(
-          label: trialDays == null
-              ? context.l10n.proSubscribe
-              : context.l10n.proStartTrial(trialDays),
+          label: context.l10n.proSubscribePrice(recurringPrice),
           kind: ActionKind.primary,
           onTap: onPurchase),
       VSpace.x1,
@@ -57,10 +59,11 @@ class ProOffer extends StatelessWidget {
               kind: ActionKind.neutral,
               onTap: onRestore)),
       VSpace.x2,
-      _PriceDisclosure(
-        text: trialDays == null
+      TerminalText(
+        trialDays == null
             ? context.l10n.proTerms(recurringPrice)
             : context.l10n.proTrialTerms(trialDays, recurringPrice),
+        role: TextRole.body,
       ),
       VSpace.x2,
       Wrap(alignment: WrapAlignment.center, spacing: AppSizes.ch * 2, children: [
@@ -88,8 +91,8 @@ class ProOffer extends StatelessWidget {
 
 /// Reuses the inverse-video `Emphasis.selected` treatment (see
 /// TerminalConversation) rather than a one-off style.
-class _PriceDisclosure extends StatelessWidget {
-  const _PriceDisclosure({required this.text});
+class _BilledAmount extends StatelessWidget {
+  const _BilledAmount({required this.text});
 
   final String text;
 

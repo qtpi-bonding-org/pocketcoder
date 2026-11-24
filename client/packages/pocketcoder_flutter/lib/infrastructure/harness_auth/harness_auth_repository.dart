@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pocketbase_drift/pocketbase_drift.dart';
 import 'package:pocketcoder_api/pocketcoder_api.dart' as generated;
@@ -27,6 +28,9 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
   static const _retries = 2;
   static const _retryDelay = Duration(milliseconds: 300);
 
+  @visibleForTesting
+  Duration connectionProbeTimeout = const Duration(seconds: 5);
+
   @override
   Stream<List<HarnessOauthAccount>> watchHarnessOAuthAccounts() =>
       requireNonNull(
@@ -44,7 +48,14 @@ class HarnessAuthRepository implements IHarnessAuthRepository {
       ).getFullList(requestPolicy: RequestPolicy.networkOnly);
 
   @override
-  Future<bool> hasEffectiveHarnessConnection() async {
+  Future<bool> hasEffectiveHarnessConnection() {
+    return _probeHarnessConnection().timeout(
+      connectionProbeTimeout,
+      onTimeout: () => false,
+    );
+  }
+
+  Future<bool> _probeHarnessConnection() async {
     for (var attempt = 0; attempt < _retries; attempt++) {
       try {
         final oauth = await fetchHarnessOAuthAccounts();
