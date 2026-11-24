@@ -23,6 +23,8 @@ class FakeDeploymentLookup implements CurrentDeploymentLookup {
   FakeDeploymentLookup(this.current);
   @override
   final ({String instanceId, String host})? current;
+  @override
+  bool get isLoaded => true;
 }
 
 void main() {

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cubit_ui_flow/cubit_ui_flow.dart' show IExceptionKeyMapper;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -237,6 +239,7 @@ void main() {
           _MockDeletionHook(),
           _MockBillingService(),
           const _NoopServerReadinessCheck());
+      authCubit.probeNetwork = (_) async => 'dns ok 5ms v4 192.155.89.165';
     });
 
     tearDown(() async {
@@ -247,7 +250,9 @@ void main() {
     });
 
     Future<void> pumpForm(WidgetTester tester,
-        {required String email, required String password}) async {
+        {required String email,
+        required String password,
+        String? url = 'http://127.0.0.1:8090'}) async {
       await tester.pumpWidget(MaterialApp(
         theme: AppTheme.lightTheme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -259,6 +264,7 @@ void main() {
       ));
       await tester.pump();
       final fields = find.byType(EditableText);
+      if (url != null) await tester.enterText(fields.at(0), url);
       await tester.enterText(fields.at(1), email);
       await tester.enterText(fields.at(2), password);
       await tester.pump();
@@ -269,6 +275,16 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
     }
+
+    testWidgets(
+        'the server URL starts empty -- a URL pasted into a prefilled '
+        'default would be appended to it', (tester) async {
+      await pumpForm(tester,
+          email: 'user@example.com', password: 'password', url: null);
+
+      final url = tester.widget<EditableText>(find.byType(EditableText).at(0));
+      expect(url.controller.text, isEmpty);
+    });
 
     testWidgets('an email with surrounding space is blocked inline',
         (tester) async {
@@ -321,6 +337,63 @@ void main() {
           find.textContaining('Has leading/trailing whitespace',
               findRichText: true),
           findsNothing);
+    });
+
+    testWidgets(
+        'a failed login says what failed and names the host it tried, so '
+        'a screenshot alone is diagnosable', (tester) async {
+      GetIt.I.registerSingleton<IExceptionKeyMapper>(AppExceptionKeyMapper());
+      when(() => repository.login(any(), any())).thenThrow(AuthException(
+          'login failed',
+          ClientException(
+              originalError:
+                  const SocketException("Failed host lookup: 'review.test'"))));
+      await pumpForm(tester,
+          email: 'user@example.com',
+          password: 'password',
+          url: 'https://review.test');
+      await submit(tester);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.textContaining('auth.server.dns', findRichText: true),
+          findsOneWidget);
+      expect(find.textContaining('Tried: review.test', findRichText: true),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'a network failure shows the hop-by-hop probe result under the '
+        'error, so one screenshot names the broken hop', (tester) async {
+      GetIt.I.registerSingleton<IExceptionKeyMapper>(AppExceptionKeyMapper());
+      when(() => repository.login(any(), any())).thenThrow(AuthException(
+          'login failed',
+          ClientException(
+              originalError:
+                  const SocketException("Failed host lookup: 'review.test'"))));
+      await pumpForm(tester,
+          email: 'user@example.com',
+          password: 'password',
+          url: 'https://review.test');
+      await submit(tester);
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.textContaining('dns ok 5ms', findRichText: true),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'leaving a field empty leaves a message on screen, not only a '
+        'toast that disappears', (tester) async {
+      await pumpForm(tester, email: 'user@example.com', password: '');
+      await submit(tester);
+      await tester.pump(const Duration(seconds: 10));
+
+      expect(
+          find.textContaining('enter all required fields', findRichText: true),
+          findsOneWidget);
+      verifyNever(() => repository.login(any(), any()));
     });
 
     testWidgets('rejected credentials explain that matching is exact',

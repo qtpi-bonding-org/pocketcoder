@@ -65,6 +65,23 @@ void main() {
     expect(find.text('show'), findsOneWidget);
   });
 
+  testWidgets(
+      'a revealed password is never autocorrected -- iPad autocorrect would '
+      'otherwise rewrite it', (tester) async {
+    await tester.pumpWidget(host(TerminalTextField(
+      controller: TextEditingController(text: 'secret'),
+      label: 'password',
+      obscureText: true,
+      revealable: true,
+    )));
+
+    await tester.tap(find.text('show'));
+    await tester.pump();
+
+    expect(textField(tester).autocorrect, isFalse);
+    expect(textField(tester).enableSuggestions, isFalse);
+  });
+
   testWidgets('passes keyboard and autofill options through', (tester) async {
     await tester.pumpWidget(host(TerminalTextField(
       controller: TextEditingController(),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -52,12 +53,19 @@ const _rollbackCommand =
 final class SshRootCommandRunner implements IRootSshCommandRunner {
   const SshRootCommandRunner({
     required IRootSshCredentialsProvider credentialsProvider,
-  }) : _credentialsProvider = credentialsProvider;
+    int port = _sshPort,
+    Duration handshakeTimeout = _handshakeTimeout,
+  })  : _credentialsProvider = credentialsProvider,
+        _port = port,
+        _handshakeTimeoutValue = handshakeTimeout;
 
   static const _sshPort = 22;
   static const _connectTimeout = Duration(seconds: 15);
+  static const _handshakeTimeout = Duration(seconds: 20);
 
   final IRootSshCredentialsProvider _credentialsProvider;
+  final int _port;
+  final Duration _handshakeTimeoutValue;
 
   @override
   Future<RootSshCommandResult> fetchProvisioningLogs({
@@ -134,7 +142,7 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
 
     final socket = await SSHSocket.connect(
       host,
-      _sshPort,
+      _port,
       timeout: _connectTimeout,
     );
     final client = SSHClient(
@@ -147,7 +155,14 @@ final class SshRootCommandRunner implements IRootSshCommandRunner {
     );
 
     try {
-      await client.authenticated;
+      // Handshake only: update-os legitimately runs for minutes.
+      try {
+        await client.authenticated.timeout(_handshakeTimeoutValue);
+      } on TimeoutException {
+        throw const RootSshException(
+          'The server did not complete the SSH handshake in time.',
+        );
+      }
       final session = await client.execute(
         shellCommand,
       );

@@ -13,6 +13,7 @@ import 'package:pocketcoder_flutter/domain/release/i_server_release_status_servi
 import 'package:pocketcoder_flutter/domain/release/server_release_status.dart';
 import 'package:pocketcoder_flutter/presentation/core/in_app_browser_launcher.dart';
 import 'package:pocketcoder_flutter/presentation/errors/adapters/error_inbox_adapter.dart';
+import 'package:pocketcoder_flutter/presentation/errors/error_inbox_screen.dart';
 import 'package:pocketcoder_flutter/l10n/app_localizations.dart';
 import 'package:pocketcoder_flutter/design_system/theme/app_theme.dart';
 import 'package:pocketcoder_flutter/presentation/core/widgets/detail_row.dart';
@@ -118,12 +119,44 @@ void main() {
     expect(find.textContaining('ChatCubit'), findsOneWidget);
     expect(find.textContaining('CHAT_001'), findsOneWidget);
     expect(find.byType(DetailRow), findsWidgets);
-    expect(find.text('#0 fake stack'), findsNothing);
+    // The newest report opens expanded: a reviewer's screenshot of this
+    // screen should carry the detail without a tap.
+    expect(find.text('#0 fake stack'), findsOneWidget);
 
     await tester.tap(find.byType(DetailRow).first);
     await tester.pumpAndSettle();
 
+    expect(find.text('#0 fake stack'), findsNothing);
+  });
+
+  testWidgets('only the newest of several reports opens expanded',
+      (tester) async {
+    final older = ErrorBoxEntry(
+      id: 'e0',
+      fingerprint: 'fp0',
+      errorData: ErrorEntry(
+        source: 'AuthCubit',
+        errorType: 'AuthException',
+        errorCode: 'AUTH_001.LOGIN.DNS',
+        stackTrace: '#0 older stack',
+        timestamp: DateTime(2026, 1, 1),
+      ),
+      occurrenceCount: 1,
+      firstOccurred: DateTime(2026, 1, 1),
+      lastOccurred: DateTime(2026, 1, 1),
+    );
+    await tester.pumpWidget(_wrap(ErrorInboxScreen(
+      errors: [_entry, older],
+      onCopyAll: () {},
+      onClearAll: () {},
+      onCopy: (_) async {},
+      onReportOnGithub: (_) async {},
+      onDelete: (_) async {},
+    )));
+    await tester.pumpAndSettle();
+
     expect(find.text('#0 fake stack'), findsOneWidget);
+    expect(find.text('#0 older stack'), findsNothing);
   });
 
   testWidgets('shows empty state with no entries', (tester) async {
@@ -158,9 +191,6 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byType(DetailRow).first);
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('<delete>'));
@@ -198,8 +228,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(DetailRow).first);
-    await tester.pumpAndSettle();
     await tester.tap(find.text('<report on GitHub>'));
     await tester.pumpAndSettle();
 
