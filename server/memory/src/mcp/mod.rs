@@ -30,17 +30,47 @@ struct ErrorResponse {
     error: String,
 }
 
+/// Host header values accepted by default: loopback plus the docker-compose
+/// service hostname.
+const DEFAULT_ALLOWED_HOSTS: [&str; 4] = ["localhost", "127.0.0.1", "::1", "pocket-memory:8000"];
+
+/// Optional behaviour. The default matches a service with no extra settings.
+#[derive(Clone, Debug, Default)]
+pub struct RouterOptions {
+    /// Host header values accepted in addition to the built-in list.
+    pub extra_allowed_hosts: Vec<String>,
+    /// Whether agents get the update and delete tools.
+    pub agent_edits: bool,
+}
+
 pub fn router(service: MemoryService, cancellation: CancellationToken) -> Router {
+    router_with_options(service, cancellation, RouterOptions::default())
+}
+
+pub fn router_with_options(
+    service: MemoryService,
+    cancellation: CancellationToken,
+    options: RouterOptions,
+) -> Router {
+    let RouterOptions {
+        extra_allowed_hosts,
+        agent_edits,
+    } = options;
+    let allowed_hosts = DEFAULT_ALLOWED_HOSTS
+        .into_iter()
+        .map(str::to_owned)
+        .chain(extra_allowed_hosts)
+        .collect::<Vec<_>>();
     let health_service = service.clone();
     let mcp_service = StreamableHttpService::new(
-        move || Ok(tools::MemoryMcp::new(service.clone())),
+        move || Ok(tools::MemoryMcp::new(service.clone(), agent_edits)),
         LocalSessionManager::default().into(),
         StreamableHttpServerConfig::default()
             // Every harness reaches this service at http://pocket-memory:8000/mcp
             // (the docker-compose service hostname, hooks.memoryURL) -- rmcp's
             // default DNS-rebinding allowlist only covers loopback hosts, which
             // rejects that real inbound Host header with a 403.
-            .with_allowed_hosts(["localhost", "127.0.0.1", "::1", "pocket-memory:8000"])
+            .with_allowed_hosts(allowed_hosts)
             .with_legacy_session_mode(false)
             .with_json_response(true)
             .with_cancellation_token(cancellation),

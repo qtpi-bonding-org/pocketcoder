@@ -1,5 +1,9 @@
 # Pocket Memory
 
+The code here is a vendored copy of
+<https://github.com/qtpi-bonding/pocket-memory>; see `VENDORED`. Change it there,
+then run `tooling/scripts/sync_pocket_memory.sh`. This README is PocketCoder's own.
+
 Pocket Memory is PocketCoder's lightweight, local-first MCP memory service. It
 stores mutable agent-authored observations and interpretations in SQLite, links
 them through an ordinary many-to-many join, and retrieves them with FTS5 plus a

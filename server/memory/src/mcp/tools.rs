@@ -20,7 +20,6 @@ use crate::{
 #[derive(Clone)]
 pub(super) struct MemoryMcp {
     service: MemoryService,
-    #[allow(dead_code)]
     tool_router: ToolRouter<Self>,
 }
 
@@ -40,6 +39,19 @@ struct CreateInterpretationArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 struct IdArgs {
+    id: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct UpdateArgs {
+    kind: MemoryKind,
+    id: String,
+    body: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct DeleteArgs {
+    kind: MemoryKind,
     id: String,
 }
 
@@ -84,10 +96,14 @@ struct SearchResult {
 }
 
 impl MemoryMcp {
-    pub(super) fn new(service: MemoryService) -> Self {
+    pub(super) fn new(service: MemoryService, agent_edits: bool) -> Self {
+        let mut tool_router = Self::tool_router();
+        if agent_edits {
+            tool_router.merge(Self::edit_tool_router());
+        }
         Self {
             service,
-            tool_router: Self::tool_router(),
+            tool_router,
         }
     }
 }
@@ -272,7 +288,44 @@ impl MemoryMcp {
     }
 }
 
-#[tool_handler]
+#[tool_router(router = edit_tool_router)]
+impl MemoryMcp {
+    #[tool(
+        name = "memory_update",
+        description = "Replace the full body of an existing memory. The original author is kept."
+    )]
+    async fn update(
+        &self,
+        Parameters(args): Parameters<UpdateArgs>,
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<MemoryRecord>, McpError> {
+        let identity = identity(&context)?;
+        self.service
+            .update(&identity, args.kind, &args.id, args.body)
+            .await
+            .map(Json)
+            .map_err(map_error)
+    }
+
+    #[tool(
+        name = "memory_delete",
+        description = "Permanently delete a memory that is wrong or obsolete. An observation that is the only support for an interpretation cannot be deleted until that interpretation is."
+    )]
+    async fn delete(
+        &self,
+        Parameters(args): Parameters<DeleteArgs>,
+        context: RequestContext<RoleServer>,
+    ) -> Result<Json<MutationResult>, McpError> {
+        let identity = identity(&context)?;
+        self.service
+            .delete(&identity, args.kind, &args.id)
+            .await
+            .map(|()| Json(MutationResult { ok: true }))
+            .map_err(map_error)
+    }
+}
+
+#[tool_handler(router = self.tool_router)]
 impl ServerHandler for MemoryMcp {
     fn get_info(&self) -> ServerInfo {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
@@ -329,7 +382,7 @@ mod tests {
     #[tokio::test]
     async fn tool_schemas_do_not_ask_agents_for_identity() {
         let repository = Repository::open_in_memory().await.unwrap();
-        let server = MemoryMcp::new(MemoryService::new(repository));
+        let server = MemoryMcp::new(MemoryService::new(repository), false);
         let tools = server.tool_router.list_all();
         let names = tools
             .iter()

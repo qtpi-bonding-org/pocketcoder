@@ -21,6 +21,8 @@ script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
 cd "$repo_root"
 test "$(git rev-parse HEAD)" = "$release"
+# The memory service is a vendored copy; refuse to release local edits to it.
+tooling/scripts/sync_pocket_memory.sh --check
 mkdir -p "$artifact_dir" "$metadata_dir"
 
 catalog=deploy/release/harnesses.json
