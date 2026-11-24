@@ -11,7 +11,7 @@ pub use llama::{LlamaEmbedder, LlamaEmbedderConfig};
 pub use reconcile::{ReconcileReport, reconcile_pending};
 
 pub const MODEL_ID: &str = "intfloat/multilingual-e5-small";
-pub const MODEL_VERSION: &str = "intfloat-multilingual-e5-small-q8_0-v1";
+pub const MODEL_VERSION: &str = "intfloat-multilingual-e5-small-q8_0-v2";
 pub const QUERY_PREFIX: &str = "query: ";
 pub const DOCUMENT_PREFIX: &str = "passage: ";
 

@@ -32,8 +32,8 @@ compose_snapshot="$artifact_dir/docker-compose.prebuilt.yml"
 # lockstep with docker-compose.yml so a normal candidate build is reproducible
 # without an unrelated GitHub secret; an explicit environment override still
 # supports deliberate model changes.
-: "${POCKET_MEMORY_MODEL_URL:=https://huggingface.co/keisuke-miyako/multilingual-e5-small-gguf-q8_0/resolve/e1da94460f223e3204e75dfe51350e5491c879d4/multilingual-e5-small-Q8_0.gguf?download=true}"
-: "${POCKET_MEMORY_MODEL_SHA256:=0d5a5a0b0ad84faad6357a6145e769b0661f0efbf53acf74598afc34dab454f4}"
+: "${POCKET_MEMORY_MODEL_URL:=https://huggingface.co/janusz-bit/multilingual-e5-small-gguf/resolve/57c0a8f1481a66ca991375e4f87311c9e4bd0cc5/multilingual-e5-small-q8_0.gguf?download=true}"
+: "${POCKET_MEMORY_MODEL_SHA256:=3a98dd889ee152d923991c60df2fad21e39f7441a5ee302a0a050d5137993b60}"
 export POCKET_MEMORY_MODEL_URL POCKET_MEMORY_MODEL_SHA256
 export POCKET_MEMORY_REQUIRE_MODEL=1
 docker compose -p pocketcoder build pocketbase mcp-gateway pocket-memory

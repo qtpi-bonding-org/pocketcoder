@@ -64,11 +64,12 @@ revisions, validated against the upstream F32 model, checksum-pinned, and
 bundled so production startup needs no network access.
 
 For development, `docker compose build pocket-memory` downloads the immutable
-MIT Q8_0 artifact from `keisuke-miyako/multilingual-e5-small-gguf-q8_0` commit
-`e1da94460f223e3204e75dfe51350e5491c879d4` and verifies SHA-256
-`0d5a5a0b0ad84faad6357a6145e769b0661f0efbf53acf74598afc34dab454f4`.
+MIT Q8_0 artifact from `janusz-bit/multilingual-e5-small-gguf` commit
+`57c0a8f1481a66ca991375e4f87311c9e4bd0cc5` and verifies SHA-256
+`3a98dd889ee152d923991c60df2fad21e39f7441a5ee302a0a050d5137993b60`.
 `tests/model_compat.rs` verifies that the configured artifact loads through the
-actual adapter and produces finite, normalized multilingual embeddings. Release
+actual adapter and produces finite, normalized multilingual embeddings, and
+`tests/model_reference.rs` compares them with upstream. Release
 CI requires explicit model URL and checksum values so production can switch to
 PocketCoder's independently reproduced artifact without runtime changes.
 
