@@ -83,24 +83,25 @@ to start or perform semantic retrieval. The current Q8_0 GGUF is approximately
 
 ### Measured memory footprint
 
-Measurements taken from the release-mode Debian Bookworm container on
-2026-08-13, using the bundled Q8_0 model and CPU-only llama.cpp runtime:
+Idle is the memory held while the service waits for work; it is not zero, because
+the model stays loaded. The peak grows with the length of the text embedded, up to
+the 512-token limit, and is not released afterwards.
 
-| State | Process RSS |
+Container memory measured on 2026-11-24, arm64 Debian Bookworm, release build,
+bundled Q8_0 model, CPU only:
+
+| State | Container memory |
 | --- | ---: |
-| Ready, before the first embedding | approximately 187 MiB |
-| Warm idle, after a real embedding | approximately 197 MiB |
+| Ready, before the first embedding | approximately 265 MiB |
+| After a short note | approximately 270 MiB |
+| After a note that fills the 512-token limit | approximately 760 MiB |
 
-About 130 MiB of the warm process RSS is file-backed model data and can be
-reclaimed by the operating system under pressure, at the cost of faulting those
-pages back in later. Docker Desktop reported only approximately 91 MiB for the
-same warm container because its container accounting discounted or attributed
-shared image-backed pages elsewhere; that figure should not be used for VPS
-sizing.
+About 130 MiB of the total is file-backed model data that the operating system
+can reclaim under pressure. Measurements on other architectures may differ.
 
-Allocate 384 MiB as a practical minimum for the service and 512 MiB for
-comfortable operating headroom. These are service-level sizing numbers, not a
-whole-stack PocketCoder memory requirement.
+Allow at least 1 GiB for the service. At 512 MiB it was killed while importing
+long notes. These are service-level sizing numbers, not a whole-stack PocketCoder
+memory requirement.
 
 ## Acknowledgements and provenance
 
