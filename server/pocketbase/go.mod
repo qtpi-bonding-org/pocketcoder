@@ -1,12 +1,12 @@
 module github.com/qtpi-bonding-org/pocketcoder/backend
 
-go 1.27
+go 1.27.4
 
 require (
 	github.com/ag-ui-protocol/ag-ui/sdks/community/go v0.0.0-20260716182252-b646b4634455
 	github.com/coder/acp-go-sdk v0.13.5
 	github.com/coder/websocket v1.8.15
-	github.com/getkin/kin-openapi v0.148.0
+	github.com/getkin/kin-openapi v0.149.0
 	github.com/google/go-containerregistry v0.20.6
 	github.com/google/uuid v1.6.0
 	github.com/oapi-codegen/runtime v1.6.0
@@ -36,7 +36,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/klauspost/compress v1.18.0 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
