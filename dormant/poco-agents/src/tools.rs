@@ -255,7 +255,7 @@ impl PocoAgents {
                     let log_path = Path::new(&self.agents_dir).join(format!("{id}.log"));
                     let log = std::fs::read_to_string(&log_path).unwrap_or_default();
 
-                    return Ok(CallToolResult::success(vec![Content::text(
+                    return Ok(CallToolResult::success(vec![ContentBlock::text(
                         serde_json::to_string_pretty(&serde_json::json!({
                             "id": id,
                             "status": state.status,
@@ -268,7 +268,7 @@ impl PocoAgents {
 
                 if tokio::time::Instant::now() >= deadline {
                     info!("agent {id} timed out after {timeout_secs}s, returning async");
-                    return Ok(CallToolResult::success(vec![Content::text(
+                    return Ok(CallToolResult::success(vec![ContentBlock::text(
                         serde_json::to_string_pretty(&serde_json::json!({
                             "id": id,
                             "status": "running",
@@ -282,7 +282,7 @@ impl PocoAgents {
             }
         }
 
-        Ok(CallToolResult::success(vec![Content::text(
+        Ok(CallToolResult::success(vec![ContentBlock::text(
             serde_json::to_string_pretty(&serde_json::json!({
                 "id": id,
                 "status": "running",
@@ -362,7 +362,7 @@ impl PocoAgents {
 
         info!("continued agent {} (turn {turn})", params.id);
 
-        Ok(CallToolResult::success(vec![Content::text(
+        Ok(CallToolResult::success(vec![ContentBlock::text(
             serde_json::to_string_pretty(&serde_json::json!({
                 "id": params.id,
                 "session_id": session_id,
@@ -398,7 +398,7 @@ impl PocoAgents {
             })
             .collect();
 
-        Ok(CallToolResult::success(vec![Content::text(
+        Ok(CallToolResult::success(vec![ContentBlock::text(
             serde_json::to_string_pretty(&list).map_err(mcp_err)?,
         )]))
     }
@@ -414,7 +414,7 @@ impl PocoAgents {
             mcp_err(format!("agent {} not found", params.id))
         })?;
 
-        Ok(CallToolResult::success(vec![Content::text(
+        Ok(CallToolResult::success(vec![ContentBlock::text(
             serde_json::to_string_pretty(&serde_json::json!({
                 "id": state.meta.id,
                 "profile": state.meta.profile,
@@ -446,7 +446,7 @@ impl PocoAgents {
         )
         .ok_or_else(|| mcp_err("failed to capture pane content"))?;
 
-        Ok(CallToolResult::success(vec![Content::text(content)]))
+        Ok(CallToolResult::success(vec![ContentBlock::text(content)]))
     }
 
     #[tool(description = "Read the log file output for an agent. Omit turn for latest log.")]
@@ -481,7 +481,7 @@ impl PocoAgents {
             mcp_err(format!("failed to read log {:?}: {e}", log_path))
         })?;
 
-        Ok(CallToolResult::success(vec![Content::text(content)]))
+        Ok(CallToolResult::success(vec![ContentBlock::text(content)]))
     }
 
     #[tool(description = "List available agent profiles from the OpenCode config.")]
@@ -491,7 +491,7 @@ impl PocoAgents {
             .list_profiles(Path::new(""))
             .map_err(mcp_err)?;
 
-        Ok(CallToolResult::success(vec![Content::text(
+        Ok(CallToolResult::success(vec![ContentBlock::text(
             serde_json::to_string_pretty(&profiles).map_err(mcp_err)?,
         )]))
     }
@@ -528,7 +528,7 @@ impl PocoAgents {
             }
         }
 
-        Ok(CallToolResult::success(vec![Content::text(
+        Ok(CallToolResult::success(vec![ContentBlock::text(
             serde_json::to_string_pretty(&serde_json::json!({
                 "cleaned": cleaned,
                 "errors": errors,
