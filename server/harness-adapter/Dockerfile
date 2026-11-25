@@ -2,7 +2,7 @@
 # authenticated WebSocket adapter. Build this Dockerfile once per agent,
 # supplying the exact npm package (including version) as ACP_AGENT_PACKAGE.
 
-FROM golang:1.23-bookworm AS adapter-build
+FROM golang:1.27.4-bookworm AS adapter-build
 WORKDIR /src
 COPY server/harness-adapter/go.mod server/harness-adapter/go.sum ./
 RUN go mod download

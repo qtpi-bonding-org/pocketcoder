@@ -41,5 +41,5 @@ docker run --rm --network pocketcoder-agent \
   -e GOOSE_LIVE_MODEL="$model" \
   -e GOOSE_LIVE_TIMEOUT_SECONDS="$timeout" \
   -e GOCACHE=/tmp/go-build \
-  golang:1.24.4-alpine \
+  golang:1.27.4-alpine \
   sh -c 'go test -tags live_acp ./internal/agent/coordinator -run TestLiveRunNewSession -count=1 -v'

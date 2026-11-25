@@ -1,6 +1,6 @@
 module github.com/qtpi-bonding-org/pocketcoder/backend
 
-go 1.27
+go 1.27.4
 
 require (
 	github.com/ag-ui-protocol/ag-ui/sdks/community/go v0.0.0-20260716182252-b646b4634455

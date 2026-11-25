@@ -1,6 +1,6 @@
 module github.com/qtpi-bonding-org/pocketcoder/deploy/release-manager
 
-go 1.25.8
+go 1.26.4
 
 require github.com/sigstore/sigstore-go v1.3.0
 
